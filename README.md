@@ -4,13 +4,13 @@
 
 ## 背景
 
-经常用LaTeX进行论文、标书写作；但网上的资源比较零散，且距离实用有相当距离。这是整理我修改过的模板，希望对大家有帮助！
+经常用LaTeX进行论文、标书写作；但网上的资源比较零散，且距离实用有相当距离。这些是整理我修改过的模板，希望对大家有帮助！
 
 ## 使用
 
 > 相关技巧详见《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
 
-+ [国家自然科学基金 - 青年基金（2024版）](https://github.com/huangwb8/funding/blob/main/NSFC_Young)
++ [国家自然科学基金 - 青年基金（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Young)
 
 ## 维护者
 
@@ -18,7 +18,11 @@
 
 ## 使用许可
 
-本项目采用MIT license。详见[LICENSE](https://github.com/huangwb8/funding/blob/main/license.txt)。
+本项目采用MIT license。详见[LICENSE](https://github.com/huangwb8/ChineseResearchLaTeX/blob/main/license.txt)。
+
+## TODO
+
++ 更新中山大学博士毕业论文LaTeX模板
 
 ## 相关仓库
 
