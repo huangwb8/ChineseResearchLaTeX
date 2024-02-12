@@ -1,0 +1,246 @@
+%!TEX program = xelatex
+
+% 国家自然科学基金NSFC-青年项目-申请书正文模板（2024年版）
+
+% 测试环境：[使用VSCode编写LaTeX - 知乎](https://zhuanlan.zhihu.com/p/38178015)
+
+% 编译顺序: xelatex -> bibtex -> xelatex -> xelatex
+
+% 参考 & 鸣谢：
+% [Ruzim/NSFC-application-template-latex: 国家自然科学基金申请书正文（面上项目）LaTeX 模板（非官方）](https://github.com/Ruzim/NSFC-application-template-latex)
+% [Readon/NSFC-application-template-latex: 国家自然科学基金申请书正文（面上项目）模板（非官方）](https://github.com/Readon/NSFC-application-template-latex)
+% [Aligning equations with amsmath - Overleaf, Online LaTeX Editor](https://www.overleaf.com/learn/latex/Aligning_equations_with_amsmath)：各种格式的公式写法
+
+
+\documentclass[12pt,UTF8,AutoFakeBold=3,a4paper]{ctexart} %默认小四号字。允许楷体粗体。
+
+%%%%=================================系统设置=================================%%%%
+
+\usepackage[english]{babel} %支持混合语言
+\usepackage{xcolor}
+\usepackage{graphicx} 
+\usepackage{amsmath} %更多数学符号
+\usepackage{wasysym}
+\usepackage{geometry} %改尺寸
+\usepackage{fontspec} %字体包
+\usepackage{setspace}
+\usepackage{amsfonts} % 数学公式增强
+\usepackage{xeCJK} % 调整字间距
+
+
+%%%————————————————————————————————边距
+%latex的页边距比word的视觉效果要大一些，稍微调整一下
+\geometry{left=3.15cm,right=3.15cm,top=2.54cm,bottom=2.54cm}%2024
+\pagestyle{empty} 
+\setcounter{secnumdepth}{-2} %不让那些section和subsection自带标号，标号格式自己掌握
+
+
+%%%————————————————————————————————颜色
+\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
+% \definecolor{headercolor}{RGB}{128,128,128} % 页眉颜色
+% \definecolor{footercolor}{RGB}{128,128,128} % 页脚颜色
+\definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
+\definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
+
+%%%————————————————————————————————对象名
+\addto\captionsenglish{
+    \renewcommand{\contentsname}{目录}
+    \renewcommand{\listfigurename}{插图目录}
+    \renewcommand{\listtablename}{表格}
+    %\renewcommand{\refname}{\sihao 参考文献}
+    \renewcommand{\refname}{\sihao \kaishu \leftline{参考文献}} %这几个字默认字号稍大，改成四号字，楷书，居左(默认居中) 根据喜好自行修改，官方模板未作要求
+    \renewcommand{\abstractname}{摘要}
+    \renewcommand{\indexname}{索引}
+    \renewcommand{\tablename}{表}
+    \renewcommand{\figurename}{图}
+} %把Figure改成‘图’，reference改成‘参考文献’。如此处理是为了避免和babel包冲突。
+
+
+%%%————————————————————————————————字体
+\newcommand{\chuhao}{\fontsize{42pt}{\baselineskip}\selectfont}
+\newcommand{\xiaochuhao}{\fontsize{36pt}{\baselineskip}\selectfont}
+\newcommand{\yihao}{\fontsize{26pt}{\baselineskip}\selectfont}
+\newcommand{\erhao}{\fontsize{22pt}{\baselineskip}\selectfont}
+\newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont}
+\newcommand{\sanhao}{\fontsize{16pt}{\baselineskip}\selectfont}
+\newcommand{\sihao}{\fontsize{14pt}{\baselineskip}\selectfont}
+\newcommand{\xiaosihao}{\fontsize{12pt}{\baselineskip}\selectfont}
+\newcommand{\yemeizihao}{\fontsize{11pt}{\baselineskip}\selectfont}
+\newcommand{\wuhao}{\fontsize{10.5pt}{\baselineskip}\selectfont}
+\newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont}
+\newcommand{\liuhao}{\fontsize{7.875pt}{\baselineskip}\selectfont}
+\newcommand{\qihao}{\fontsize{5.25pt}{\baselineskip}\selectfont}
+%字号对照表
+%二号 21pt
+%四号 14
+%小四 12
+%五号 10.5
+
+%解决阿拉伯数字字体问题
+\newfontfamily\kaitichar{KaiTi}[AutoFakeBold] %定义楷体英文和数字。
+\NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } %使用模板字体代替直接使用楷书。
+\setmainfont{Times New Roman}
+
+% 字距
+% \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
+% \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
+\CJKsetecglue{\hskip 0.18em plus 0.02em minus 0.02em}
+
+
+%%%————————————————————————————————行距
+%设置行距 1.5倍
+\renewcommand{\baselinestretch}{1.5}
+\XeTeXlinebreaklocale "zh" % 中文断行
+
+
+%%%————————————————————————————————页脚页眉
+% \usepackage{fancyhdr}
+% \fancypagestyle{zjyyyzjj}{
+%   \fancyhf{} % 清除当前的页眉和页脚设置
+%   \fancyhead[C]{\fontsize{11pt}{30pt}\selectfont \color{headercolor} \textbf{\textrm{南方医科大学珠江医院院长基金项目培育申请书}}} % 在页眉中央显示自定义内容
+%   \fancyfoot[C]{\fontsize{9pt}{11pt}\selectfont \color{footercolor}\textrm{第\hspace{0.1em}\thepage\hspace{0.1em}页}}
+%   \renewcommand{\headrulewidth}{0.5pt} % 可选：去掉页眉下方的横线
+% }
+
+
+%%%————————————————————————————————图片与表格
+
+% 对于表格，推荐使用Excel的插件Excel2LaTeX自动生成LaTeX代码。详见： https://www.zhihu.com/question/307970489/answer/2305355098
+
+\usepackage{graphicx} %插图宏包
+\usepackage{float} %设置图片浮动位置的宏包
+\usepackage{subfigure} %插入多图时用子图显示的宏包
+\usepackage[section]{placeins} %避免浮动体跨过\section
+\usepackage{enumerate} %设置列表环境的包
+
+\usepackage{caption}
+\captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+% \captionsetup[table]{name={表},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+
+
+%%%————————————————————————————————超链接
+\usepackage[
+	colorlinks,
+	urlcolor=MsBlue, % 超链接的颜色。默认是芭比粉
+	linkcolor=black,
+	anchorcolor=black,
+	citecolor=black,
+	CJKbookmarks=True
+]{hyperref}
+
+
+%%%————————————————————————————————其它设置
+
+% 将每页的图片置顶展示（而不是居中）
+\makeatletter	
+	\setlength{\@fptop}{0pt}
+\makeatother
+
+% \DeclareCaptionFont{capfont}{\wuhao} % Caption font
+% \DeclareCaptionFont{subfont}{\wuhao} % Sub-caption font
+% \captionsetup{font = capfont}
+% \captionsetup[subfigure]{font = subfont}
+% \captionsetup[figure]{labelsep=space}
+
+% \ctexset用于编辑section的样式，而非目录的样式。
+\ctexset{
+	subsubsection = {
+		number = \arabic{section}.\arabic{subsection}.\arabic{subsubsection},
+		format = \zihao{4} \bfseries,
+	}
+}
+
+
+%%%%============================正  文=============================%%%%
+\begin{document}
+
+% \setcounter{page}{4} % 手动设置第一页的页码为4
+
+\begin{center}
+{\sanhao \kaishu \bfseries 报告正文}
+\end{center}
+
+{\sihao \kaishu 参照以下提纲撰写，要求内容翔实、清晰，层次分明，标题突出。{\color{MsBlue} \bfseries 请勿删除或改动下述提纲标题及括号中的文字。}}
+\vskip -5mm
+
+{\color{MsBlue} \subsection{\sihao \templatefont \quad \ （一）立项依据与研究内容\textnormal{\templatefont (建议8000字以内)：}}} %2024
+
+
+{\sihao \color{MsBlue} \templatefont 1.{\bfseries 项目的立项依据}（研究意义、国内外研究现状及发展动态分析，需结合科学研究发展趋势来论述科学意义；或结合国民经济和社会发展中迫切需要解决的关键科技问题来论述其应用前景。附主要参考文献目录）；}
+
+{\input{extraTex/1.1.立项依据.tex}}
+
+% 参考文献
+\begin{spacing}{1} % 行距
+\wuhao
+\bibliographystyle{bibtex-style/ieeetrNSFC.bst}
+\bibliography{references/myexample.bib}
+\end{spacing}
+\newpage
+
+{\sihao \color{MsBlue} \templatefont 2． {\bfseries 项目的研究内容、研究目标，以及拟解决的关键科学问题}（此部分为重点阐述内容）；}
+
+{\input{extraTex/1.2.内容目标问题.tex}}
+
+
+{\sihao \color{MsBlue} \templatefont 3．{\bfseries 拟采取的研究方案及可行性分析} （包括研究方法、技术路线、实验手段、关键技术等说明）；}
+
+{\input{extraTex/1.3.方案及可行性.tex}}
+
+
+{\sihao \color{MsBlue} \templatefont 4．{\bfseries 本项目的特色与创新之处；}}
+
+{\input{extraTex/1.4.特色与创新.tex}}
+
+
+{\sihao \color{MsBlue} \templatefont 5．{\bfseries 年度研究计划及预期研究结果}（包括拟组织的重要学术交流活动、国际合作与交流计划等）。}
+
+{\input{extraTex/1.5.研究计划.tex}}
+
+
+\vskip -5mm %可以通过类似的命令微调行距以使得排版美观
+
+
+
+{\color{MsBlue} \subsection{\sihao \templatefont \quad \ （二）研究基础与工作条件 }}
+
+{\sihao \color{MsBlue} \templatefont 1．{\bfseries 研究基础}（与本项目相关的研究工作积累和已取得的研究工作成绩）；}
+
+{\input{extraTex/2.1.研究基础.tex}}
+
+{\sihao \color{MsBlue} \templatefont 2．{\bfseries 工作条件}（包括已具备的实验条件，尚缺少的实验条件和拟解决的途径，包括利用国家实验室、国家重点实验室和部门重点实验室等研究基地的计划与落实情况）；}
+
+{\input{extraTex/2.2.工作条件.tex}}
+
+
+{\sihao \color{MsBlue} \templatefont 3．{\bfseries 正在承担的与本项目相关的科研项目情况}（申请人正在承担的与本项目相关的科研项目情况，包括国家自然科学基金的项目和国家其他科技计划项目，要注明项目的资助机构、项目类别、批准号、项目名称、获资助金额、起止年月、与本项目的关系及负责的内容等）；}
+
+{\input{extraTex/2.3.承担项目.tex}}
+
+{\sihao \color{MsBlue} \templatefont 4．{\bfseries 完成国家自然科学基金项目情况}（对申请人负责的前一个已资助期满的科学基金项目（项目名称及批准号）完成情况、后续研究进展及与本申请项目的关系加以详细说明。另附该项目的研究工作总结摘要（限500字）和相关成果详细目录）。}
+
+{\input{extraTex/2.4.项目完成情况.tex}}
+
+
+
+{\color{MsBlue} \subsection{\sihao \templatefont \quad \ （三）其他需要说明的情况 }}
+% 这里大部分人都不需要写，就直接不
+
+{\sihao \color{MsBlue} \templatefont 1. 申请人同年申请不同类型的国家自然科学基金项目情况（列明同年申请的其他项目的项目类型、项目名称信息，并说明与本项目之间的区别与联系）。 }
+
+{\input{extraTex/3.1.不同类型国基情况.tex}}
+
+{\sihao \color{MsBlue} \templatefont 2. 具有高级专业技术职务（职称）的申请人是否存在同年申请或者参与申请国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，申请或参与申请的其他项目的项目类型、项目名称、单位名称、上述人员在该项目中是申请人还是参与者，并说明单位不一致原因。}
+
+{\input{extraTex/3.2.同年单位不一致.tex}}
+
+{\sihao \color{MsBlue} \templatefont 3. 具有高级专业技术职务（职称）的申请人是否存在与正在承担的国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，正在承担项目的批准号、项目类型、项目名称、单位名称、起止年月，并说明单位不一致原因。}
+
+{\input{extraTex/3.3.承担中单位不一致.tex}}
+
+{\sihao \color{MsBlue} \templatefont 4. 其他。}
+
+{\input{extraTex/3.4.其它.tex}}
+
+\clearpage
+\end{document}
