@@ -10,7 +10,7 @@
 
 > 相关技巧详见《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
 
-+ [国家自然科学基金 - 青年基金（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Young)
++ [国家自然科学基金 - 青年项目（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Young)
 
 ## 维护者
 
