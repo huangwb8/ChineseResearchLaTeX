@@ -37,10 +37,7 @@
 
 %%%————————————————————————————————颜色
 \definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
-% \definecolor{headercolor}{RGB}{128,128,128} % 页眉颜色
-% \definecolor{footercolor}{RGB}{128,128,128} % 页脚颜色
-\definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
-\definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
+
 
 %%%————————————————————————————————对象名
 \addto\captionsenglish{
@@ -93,16 +90,6 @@
 \XeTeXlinebreaklocale "zh" % 中文断行
 
 
-%%%————————————————————————————————页脚页眉
-% \usepackage{fancyhdr}
-% \fancypagestyle{zjyyyzjj}{
-%   \fancyhf{} % 清除当前的页眉和页脚设置
-%   \fancyhead[C]{\fontsize{11pt}{30pt}\selectfont \color{headercolor} \textbf{\textrm{南方医科大学珠江医院院长基金项目培育申请书}}} % 在页眉中央显示自定义内容
-%   \fancyfoot[C]{\fontsize{9pt}{11pt}\selectfont \color{footercolor}\textrm{第\hspace{0.1em}\thepage\hspace{0.1em}页}}
-%   \renewcommand{\headrulewidth}{0.5pt} % 可选：去掉页眉下方的横线
-% }
-
-
 %%%————————————————————————————————图片与表格
 
 % 对于表格，推荐使用Excel的插件Excel2LaTeX自动生成LaTeX代码。详见： https://www.zhihu.com/question/307970489/answer/2305355098
@@ -115,7 +102,7 @@
 
 \usepackage{caption}
 \captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
-% \captionsetup[table]{name={表},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+\captionsetup[table]{name={表},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
 
 
 %%%————————————————————————————————超链接
@@ -135,12 +122,6 @@
 \makeatletter	
 	\setlength{\@fptop}{0pt}
 \makeatother
-
-% \DeclareCaptionFont{capfont}{\wuhao} % Caption font
-% \DeclareCaptionFont{subfont}{\wuhao} % Sub-caption font
-% \captionsetup{font = capfont}
-% \captionsetup[subfigure]{font = subfont}
-% \captionsetup[figure]{labelsep=space}
 
 % \ctexset用于编辑section的样式，而非目录的样式。
 \ctexset{

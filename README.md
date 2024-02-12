@@ -14,7 +14,7 @@
 
 ## 维护者
 
-+ [@huangwb8](https://t.me/hwb0307)
++ [@huangwb8](https://blognas.hwb0307.com/lyb)
 
 ## 使用许可
 
