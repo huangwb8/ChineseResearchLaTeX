@@ -207,6 +207,53 @@
   {0pt plus 0pt minus 0pt} % Space before the title
   {0pt plus 0pt minus 0pt} % Space after the title
 
+
+%%%————————————————————————————————代码
+\usepackage{listings} %代码块
+\usepackage{xcolor}%代码块
+\renewcommand{\lstlistingname}{Code}
+
+% 参考：
+% https://www.youtube.com/watch?v=qxkQgG1Y0bY
+% https://zhuanlan.zhihu.com/p/65441079
+
+% \lstset{
+% 	% language=bash,  %代码语言使用的是matlab
+% 	frame=shadowbox, %把代码用带有阴影的框圈起来
+% 	rulesepcolor=\color{red!20!green!20!blue!20},%代码块边框为淡青色
+% 	keywordstyle=\color{blue!90}\bfseries, %代码关键字的颜色为蓝色，粗体
+% 	commentstyle=\color{red!10!green!70}\textit,% 设置代码注释的颜色
+% 	showstringspaces=true,%不显示代码字符串中间的空格标记
+% 	numbers=left, % 显示行号
+% 	numberstyle=\tiny,    % 行号字体
+% 	stringstyle=\ttfamily, % 代码字符串的特殊格式
+% 	breaklines=false, %对过长的代码自动换行
+% 	extendedchars=false,  %解决代码跨页时，章节标题，页眉等汉字不显示的问题
+% 	escapebegin=\begin{CJK*},escapeend=\end{CJK*},% 代码中出现中文必须加上，否则报错
+% 	texcl=true
+% }
+
+\lstdefinestyle{codestyle01}{
+	backgroundcolor=\color{gray!12},
+	%basicstyle=\ttfamily\small,
+	basicstyle=\zihao{-5}\ttfamily,
+	commentstyle=\color{green!60!black},
+	keywordstyle=\color{magenta},
+	stringstyle=\color{blue!50!red},
+	showstringspaces=false,
+	numbers=none,
+	numberstyle=\footnotesize\color{gray},
+	numbersep=10pt,
+	stepnumber=2, %左边数字的步幅
+	tabsize=4,
+	frame=TB %顶部和底部有两条竖线。
+	% frame=tblr
+	% frame=L,
+	% framerule=1pt,
+	% rulecolor=\color{red}
+}
+
+
 %%%————————————————————————————————其它设置
 
 % 将每页的图片置顶展示（而不是居中）
@@ -214,6 +261,7 @@
 	\setlength{\@fptop}{0pt}
 \makeatother
 
+% 去除页码
 \pagestyle{empty}
 
 
