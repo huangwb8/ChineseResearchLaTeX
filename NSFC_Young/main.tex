@@ -34,10 +34,9 @@
 % \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
 % \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
 % 页边距和字距的某个组合应该可以完美复制Word。但目前没调出来。
-\geometry{left=3.19cm,right=3.19cm,top=2.54cm,bottom=2.54cm} % 页边距
+\geometry{left=3.20cm,right=3.14cm,top=2.67cm,bottom=3.27cm} % 页边距
 \CJKsetecglue{\hskip 0.3em plus 0.05em minus 0.1em} % 数字与CJK字符的间距
-
- 
+% left=3.20cm,right=3.13-3.14cm
 
 %%%————————————————————————————————颜色
 \definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
@@ -139,7 +138,7 @@
 % Custom format for section
 \titleformat{\section}
   {\color{MsBlue} \sectionzihao \templatefont} % format
-  {\quad \ } % label
+  {\hspace{1.45em}  } % label
   {0pt} % separation
   {}   % before-code
 
@@ -153,7 +152,7 @@
 % Custom format for subsubsection
 \titleformat{\subsubsection}
   {\color{MsBlue} \subsubsectionzihao \templatefont \bfseries} % format
-  {\quad \ \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}} % label
+  {\hspace{1.45em}  \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}} % label
   {0.5em} % separation
   {}   % before-code
 
@@ -200,33 +199,28 @@
 
 \section{{\bfseries（一）立项依据与研究内容}(建议8000字以内)：} %2024
 
-\subsection{\quad \ 1.~{\bfseries 项目的立项依据}（研究意义、国内外研究现状及发展动态分析，需结合科学研究发展趋势来论述科学意义；或结合国民经济和社会发展中迫切需要解决的关键科技问题来论述其应用前景。附主要参考文献目录）；}
+\subsection{\hspace{1.45em} 1.~{\bfseries 项目的立项依据}（研究意义、国内外研究现状及发展动态分析，需结合科学研究发展趋势来论述科学意义；或结合国民经济和社会发展中迫切需要解决的关键科技问题来论述其应用前景。附主要参考文献目录）；}
 
 {\input{extraTex/1.1.立项依据.tex}}
 
 % 参考文献
-\begin{spacing}{1} % 行距
-\wuhao
-\bibliographystyle{bibtex-style/ieeetrNSFC.bst}
-\bibliography{references/myexample.bib}
-\end{spacing}
-\newpage
+{\input{references/reference.tex}}
 
 
-\subsection{\quad \ 2.~{\bfseries 项目的研究内容、研究目标，以及拟解决的关键科学问题}（此部分为重点阐述内容）；}
+\subsection{\hspace{1.45em} 2.~{\bfseries 项目的研究内容、研究目标，以及拟解决的关键科学问题}（此部分为重点阐述内容）；}
 
 {\input{extraTex/1.2.内容目标问题.tex}}
 
-\subsection{\quad \ 3.~{\bfseries 拟采取的研究方案及可行性分析}（包括研究方法、技术路线、实验手段、关键技术等说明）；}
+\subsection{\hspace{1.45em}  3.~{\bfseries 拟采取的研究方案及可行性分析}（包括研究方法、技术路线、实验手段、关键技术等说明）；}
 
 {\input{extraTex/1.3.方案及可行性.tex}}
 
-\subsection{\quad \ 4.~{\bfseries 本项目的特色与创新之处；}}
+\subsection{\hspace{1.45em}  4.~{\bfseries 本项目的特色与创新之处；}}
 
 {\input{extraTex/1.4.特色与创新.tex}}
 
 
-\subsection{\quad \ 5.~{\bfseries 年度研究计划及预期研究结果}（包括拟组织的重要学术交流活动、国际合作与交流计划等）。}
+\subsection{\hspace{1.5em}  5.~{\bfseries 年度研究计划及预期研究结果}（包括拟组织的重要学术交流活动、国际合作与交流计划等）。}
 
 {\input{extraTex/1.5.研究计划.tex}}
 
@@ -237,40 +231,40 @@
 \section{{\bfseries（二）研究基础与工作条件}} %2024
 
 
-\subsection{\quad \ 1.~{\bfseries 研究基础}（与本项目相关的研究工作积累和已取得的研究工作成绩）；}
+\subsection{\hspace{1.45em}  1.~{\bfseries 研究基础}（与本项目相关的研究工作积累和已取得的研究工作成绩）；}
 
 
 {\input{extraTex/2.1.研究基础.tex}}
 
-\subsection{\quad \ 2.~{\bfseries 工作条件}（包括已具备的实验条件，尚缺少的实验条件和拟解决的途径，包括利用国家实验室、国家重点实验室和部门重点实验室等研究基地的计划与落实情况）；}
+\subsection{\hspace{1.45em}  2.~{\bfseries 工作条件}（包括已具备的实验条件，尚缺少的实验条件和拟解决的途径，包括利用国家实验室、国家重点实验室和部门重点实验室等研究基地的计划与落实情况）；}
 
 {\input{extraTex/2.2.工作条件.tex}}
 
-\subsection{\quad \ 3.~{\bfseries 正在承担的与本项目相关的科研项目情况}（申请人正在承担的与本项目相关的科研项目情况，包括国家自然科学基金的项目和国家其他科技计划项目，要注明项目的资助机构、项目类别、批准号、项目名称、获资助金额、起止年月、与本项目的关系及负责的内容等）；}
+\subsection{\hspace{1.2em}  3.~{\bfseries 正在承担的与本项目相关的科研项目情况}（申请人正在承担的与本项目相关的科研项目情况，包括国家自然科学基金的项目和国家其他科技计划项目，要注明项目的资助机构、项目类别、批准号、项目名称、获资助金额、起止年月、与本项目的关系及负责的内容等）；}
 
 {\input{extraTex/2.3.承担项目.tex}}
 
-\subsection{\quad \ 4.~{\bfseries 完成国家自然科学基金项目情况}（对申请人负责的前一个已资助期满的科学基金项目（项目名称及批准号）完成情况、后续研究进展及与本申请项目的关系加以详细说明。另附该项目的研究工作总结摘要（限500字）和相关成果详细目录）。}
+\subsection{\hspace{1.45em}  4.~{\bfseries 完成国家自然科学基金项目情况}（对申请人负责的前一个已资助期满的科学基金项目（项目名称及批准号）完成情况、后续研究进展及与本申请项目的关系加以详细说明。另附该项目的研究工作总结摘要（限500字）和相关成果详细目录）。}
 
 {\input{extraTex/2.4.项目完成情况.tex}}
 
 
 \section{{\bfseries （三）其他需要说明的情况}} %2024
 
-\subsection{\quad \ 1.~申请人同年申请不同类型的国家自然科学基金项目情况（列明同年申请的其他项目的项目类型、项目名称信息，并说明与本项目之间的区别与联系）。}
+\subsection{\hspace{1.45em}  1.~申请人同年申请不同类型的国家自然科学基金项目情况（列明同年申请的其他项目的项目类型、项目名称信息，并说明与本项目之间的区别与联系）。}
 
 
 {\input{extraTex/3.1.不同类型国基情况.tex}}
 
-\subsection{\quad \ 2.~具有高级专业技术职务（职称）的申请人是否存在同年申请或者参与申请国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，申请或参与申请的其他项目的项目类型、项目名称、单位名称、上述人员在该项目中是申请人还是参与者，并说明单位不一致原因。}
+\subsection{\hspace{1.45em}  2.~具有高级专业技术职务（职称）的申请人是否存在同年申请或者参与申请国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，申请或参与申请的其他项目的项目类型、项目名称、单位名称、上述人员在该项目中是申请人还是参与者，并说明单位不一致原因。}
 
 {\input{extraTex/3.2.同年单位不一致.tex}}
 
-\subsection{\quad \ 3.~具有高级专业技术职务（职称）的申请人是否存在与正在承担的国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，正在承担项目的批准号、项目类型、项目名称、单位名称、起止年月，并说明单位不一致原因。}
+\subsection{\hspace{1.45em}  3.~具有高级专业技术职务（职称）的申请人是否存在与正在承担的国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，正在承担项目的批准号、项目类型、项目名称、单位名称、起止年月，并说明单位不一致原因。}
 
 {\input{extraTex/3.3.承担中单位不一致.tex}}
 
-\subsection{\quad \ 4.~其他。}
+\subsection{\hspace{1.45em}  4.~其他。}
 
 {\input{extraTex/3.4.其它.tex}}
 
