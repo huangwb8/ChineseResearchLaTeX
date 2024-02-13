@@ -98,6 +98,18 @@
 \usepackage{subfigure} %插入多图时用子图显示的宏包
 \usepackage[section]{placeins} %避免浮动体跨过\section
 \usepackage{enumerate} %设置列表环境的包
+\usepackage{enumitem} % 增强自定义Bullet（即各种List前的那个标记）
+\setlist[enumerate]{
+  label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic*）},
+  leftmargin=0em, % 列表的左边界
+  itemindent=4em, % item首行缩进
+  itemsep=0em, % 列表项之间的垂直间距。
+  labelsep=0.1pt,  % label与content的距离
+  parsep=0em,  % 两个段落之间的垂直间距。效果上与itemsep类似。
+  topsep=0em % 列表与上一段对象的垂直间距。
+  % after=\vspace{5pt}
+}
+\newcommand{\itemtitlefont}[1]{\textbf{\color{MsBlue} #1}} % 定义item小标题字体；
 \usepackage{caption}
 \captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
 
@@ -128,7 +140,8 @@
 
 \usepackage{titlesec}
 
-\setcounter{secnumdepth}{3} %显示3级目录，然后再具体定制不同的目录
+\setcounter{secnumdepth}{4} %显示3级目录，然后再具体定制不同的目录
+% \setcounter{tocdepth}{4}
 
 % Define section font
 \newcommand{\sectionzihao}{\fontsize{14pt}{\baselineskip}\selectfont}
@@ -156,6 +169,20 @@
   {0.5em} % separation
   {}   % before-code
 
+% Custom format for subsubsubsection
+\titleclass{\subsubsubsection}{straight}[\subsubsection]
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{（\arabic{subsubsection}）}
+\titleformat{\subsubsubsection}
+  {\templatefont \bfseries} % format \color{MsBlue} 
+  {\hspace{1em} （\arabic{subsubsubsection}）} % label
+  {0.5pt} % separation
+  {}   % before-code
+\makeatletter
+\def\toclevel@subsubsubsection{4}
+\def\l@subsubsubsection{\@dottedtocline{4}{7.0em}{4em}}
+\makeatother
+
 % Define line stretch for section
 \titlespacing*{\section}
   {0pt} % Left indentation
@@ -170,6 +197,12 @@
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsection}
+  {0pt} % Left indentation
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
+
+% Define line stretch for subsubsection
+\titlespacing*{\subsubsubsection}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
   {0pt plus 0pt minus 0pt} % Space after the title
