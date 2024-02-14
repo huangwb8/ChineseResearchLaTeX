@@ -30,3 +30,8 @@
 
 - [Ruzim/NSFC-application-template-latex](https://github.com/Ruzim/NSFC-application-template-latex)
 - [Readon/NSFC-application-template-latex](https://github.com/Readon/NSFC-application-template-latex)
+- [MCG-NKU/NSFC-LaTex](https://github.com/MCG-NKU/NSFC-LaTex)
+- [fylimas/nsfc: nsfc - 国家自然科学基金项目LaTeX模版(青年+面上)](https://github.com/fylimas/nsfc)：这个项目还在比较活跃地更新。
+- iNSFC系列
+  - [YimianDai/iNSFC: An awesome LaTeX template for NSFC proposal.](https://github.com/YimianDai/iNSFC)：在 MacTeX 和 Overleaf 上均可编译通过。更新也挺频繁。
+  - [KimHe/iNSFC: NSFC LaTeX](https://github.com/KimHe/iNSFC)
