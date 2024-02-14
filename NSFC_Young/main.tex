@@ -77,6 +77,8 @@
 %五号 10.5
 
 %解决阿拉伯数字字体问题
+% \setCJKfamilyfont{kaitichar}[Path=./font/, AutoFakeBold=3]{Kaiti.ttf}
+% \newfontfamily{\kaitichar}[Path=./font/, AutoFakeBold=3]{Kaiti.ttf} %定义楷体英文和数字。
 \newfontfamily\kaitichar{KaiTi}[AutoFakeBold] %定义楷体英文和数字。
 \NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } %使用模板字体代替直接使用楷书。
 \setmainfont{Times New Roman}
@@ -283,7 +285,7 @@
 
 \section{{\bfseries（一）立项依据与研究内容}(建议8000字以内)：} %2024
 
-\subsection{\hspace{1.45em} 1.~{\bfseries 项目的立项依据}（研究意义、国内外研究现状及发展动态分析，需结合科学研究发展趋势来论述科学意义；或结合国民经济和社会发展中迫切需要解决的关键科技问题来论述其应用前景。附主要参考文献目录）；}
+\subsection{\hspace{1.45em} 1.~{\bfseries 项目的立项依据}（研究意义、国内外研究现状及发展动态分析，需结合科学研究发展趋势来论述科学意义；或结合国民经济和社会发展中迫切需要解决的关键科技问题来论述其应用前景。附主要参考文献目录）\hspace{-14pt} ；}
 
 {\input{extraTex/1.1.立项依据.tex}}
 
@@ -291,11 +293,11 @@
 {\input{references/reference.tex}}
 
 
-\subsection{\hspace{1.45em} 2.~{\bfseries 项目的研究内容、研究目标，以及拟解决的关键科学问题}（此部分为重点阐述内容）；}
+\subsection{\hspace{1.45em} 2.~{\bfseries 项目的研究内容、研究目标，以及拟解决的关键科学问题}（此部分为重点阐述内容）\hspace{-14pt} {\bfseries ；}}
 
 {\input{extraTex/1.2.内容目标问题.tex}}
 
-\subsection{\hspace{1.45em}  3.~{\bfseries 拟采取的研究方案及可行性分析}（包括研究方法、技术路线、实验手段、关键技术等说明）；}
+\subsection{\hspace{1.45em}  3.~{\bfseries 拟采取的研究方案及可行性分析}（包括研究方法、技术路线、实验手段、关键技术等说明）\hspace{-14pt} ；}
 
 {\input{extraTex/1.3.方案及可行性.tex}}
 
@@ -304,7 +306,7 @@
 {\input{extraTex/1.4.特色与创新.tex}}
 
 
-\subsection{\hspace{1.5em}  5.~{\bfseries 年度研究计划及预期研究结果}（包括拟组织的重要学术交流活动、国际合作与交流计划等）。}
+\subsection{\hspace{1.5em}  5.~{\bfseries 年度研究计划及预期研究结果}（包括拟组织的重要学术交流活动、国际合作与交流计划等）\hspace{-14pt} 。}
 
 {\input{extraTex/1.5.研究计划.tex}}
 
@@ -315,27 +317,27 @@
 \section{{\bfseries（二）研究基础与工作条件}} %2024
 
 
-\subsection{\hspace{1.45em}  1.~{\bfseries 研究基础}（与本项目相关的研究工作积累和已取得的研究工作成绩）；}
+\subsection{\hspace{1.45em}  1.~{\bfseries 研究基础}（与本项目相关的研究工作积累和已取得的研究工作成绩）\hspace{-14pt} ；}
 
 
 {\input{extraTex/2.1.研究基础.tex}}
 
-\subsection{\hspace{1.45em}  2.~{\bfseries 工作条件}（包括已具备的实验条件，尚缺少的实验条件和拟解决的途径，包括利用国家实验室、国家重点实验室和部门重点实验室等研究基地的计划与落实情况）；}
+\subsection{\hspace{1.45em}  2.~{\bfseries 工作条件}（包括已具备的实验条件，尚缺少的实验条件和拟解决的途径，包括利用国家实验室、国家重点实验室和部门重点实验室等研究基地的计划与落实情况）\hspace{-14pt}  ；}
 
 {\input{extraTex/2.2.工作条件.tex}}
 
-\subsection{\hspace{1.21em}  3.~{\bfseries 正在承担的与本项目相关的科研项目情况}（申请人正在承担的与本项目相关的科研项目情况，包括国家自然科学基金的项目和国家其他科技计划项目，要注明项目的资助机构、项目类别、批准号、项目{\punctstyle{banjiao}名称、获资助金额、起止年月、与本项目的关系及负责的内容等）；}}
+\subsection{\hspace{1.45em}  3.~{\bfseries 正在承担的与本项目相关的科研项目情况}（申请人正在承担的与本项目相关的科研项目情况，包括国家自然科学基金的项目和国家其他科技计划项目，要注明项目的资助机构、项目类别、批准号、项目名称、\hspace{-3pt}获资助金额、\hspace{-3pt}起止年月、\hspace{-3pt}与本项目的关系及负责的内容等）\hspace{-14pt} ；}
 
 {\input{extraTex/2.3.承担项目.tex}}
 
-\subsection{\hspace{1.45em}  4.~{\bfseries 完成国家自然科学基金项目情况}（对申请人负责的前一个已资助期满的科学基金项目（项目名称及批准号）完成情况、后续研究进展及与本申请项目的关系加以详细说明。另附该项目的研究工作总结摘要（限500字）和相关成果详细目录）。}
+\subsection{\hspace{1.45em}  4.~{\bfseries 完成国家自然科学基金项目情况}（对申请人负责的前一个已资助期满的科学基金项目（项目名称及批准号）完成情况、后续研究进展及与本申请项目的关系加以详细说明。另附该项目的研究工作总结摘要（限500字）和相关成果详细目录）\hspace{-14pt} 。}
 
 {\input{extraTex/2.4.项目完成情况.tex}}
 
 
 \section{{\bfseries （三）其他需要说明的情况}} %2024
 
-\subsection{\hspace{1.45em}  1.~申请人同年申请不同类型的国家自然科学基金项目情况（列明同年申请的其他项目的项目类型、项目名称信息，并说明与本项目之间的区别与联系）。}
+\subsection{\hspace{1.45em}  1.~申请人同年申请不同类型的国家自然科学基金项目情况（列明同年申请的其他项目的项目类型、项目名称信息，并说明与本项目之间的区别与联系）\hspace{-14pt} 。}
 
 
 {\input{extraTex/3.1.不同类型国基情况.tex}}
