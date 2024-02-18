@@ -2,6 +2,12 @@
 
 整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板、毕业论文等。
 
+# 日志
+
++ **2024-02-18**：
+  + 优化正文中文字体选择，这可能影响中文加粗。
+  + 增强对旧版本TexLive的兼容性：将`main.tex`中类似`{\input{extraTex/1.1.立项依据.tex}}`的代码改为`\input{extraTex/1.1.立项依据.tex}`，即去除最外层的大括号
+
 ## 镜像
 
 + Github源站：[huangwb8/ChineseResearchLaTeX](https://github.com/huangwb8/ChineseResearchLaTeX)
