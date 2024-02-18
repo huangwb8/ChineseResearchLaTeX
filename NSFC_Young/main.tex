@@ -76,12 +76,19 @@
 %小四 12
 %五号 10.5
 
-%解决阿拉伯数字字体问题
+% 阿拉伯数字字体
+% 利用ttf文件定义楷体英文和数字
 % \setCJKfamilyfont{kaitichar}[Path=./font/, AutoFakeBold=3]{Kaiti.ttf}
-% \newfontfamily{\kaitichar}[Path=./font/, AutoFakeBold=3]{Kaiti.ttf} %定义楷体英文和数字。
-\newfontfamily\kaitichar{KaiTi}[AutoFakeBold] %定义楷体英文和数字。
+% \newfontfamily{\kaitichar}[Path=./font/, AutoFakeBold=3]{Kaiti.ttf}
+% 利用windows自带字体定义楷体英文和数字。 
+\newfontfamily\kaitichar{KaiTi}[AutoFakeBold] 
 \NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } %使用模板字体代替直接使用楷书。
+
+% 正文字体
+% 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
 \setmainfont{Times New Roman}
+\setCJKmainfont{SimSun}[AutoFakeBold=3]
+% \setCJKmainfont{KaiTi}
 
 
 %%%————————————————————————————————行距
@@ -111,7 +118,8 @@
   topsep=0em % 列表与上一段对象的垂直间距。
   % after=\vspace{5pt}
 }
-\newcommand{\itemtitlefont}[1]{\textbf{\color{MsBlue} #1}} % 定义item小标题字体；
+% \newcommand{\itemtitlefont}[1]{\textbf{\color{MsBlue} #1}} % 定义item小标题字体；
+\newcommand{\itemtitlefont}[1]{{\bfseries \color{MsBlue} #1}} % 定义item小标题字体；
 \usepackage{caption}
 \captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
 
