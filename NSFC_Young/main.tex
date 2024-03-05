@@ -185,7 +185,8 @@
 \renewcommand\thesubsubsubsection{（\arabic{subsubsection}）}
 \titleformat{\subsubsubsection}
   {\templatefont \bfseries} % format \color{MsBlue} 
-  {\hspace{1em} （\arabic{subsubsubsection}）} % label
+  {\hspace{1em} （\arabic{subsubsubsection}）} % 类似（1）
+  % {\hspace{1em} \arabic{subsection}.\arabic{subsubsection}.\arabic{subsubsubsection}} % 类似1.1.1
   {0.5pt} % separation
   {}   % before-code
 \makeatletter
@@ -279,13 +280,16 @@
 % \punctstyle{kaiming} % 部分的标点半角
 \punctstyle{hangmobanjiao} % 末半角式，仅行末挤压。
 
+% 参考文献上标与压缩
+% \usepackage[super,square,comma,sort&compress]{natbib}
+
 %%%%============================正  文=============================%%%%
 \begin{document}
 
 % \setcounter{page}{4} % 手动设置第一页的页码为4
 
 \begin{center}
-{\sanhao \kaishu \bfseries 报告正文}
+{\sanhao \kaishu \bfseries \hspace{2em} 报告正文}
 \end{center}
 
 {\sihao \kaishu 参照以下提纲撰写，要求内容翔实、清晰，层次分明，标题突出。{\color{MsBlue} \bfseries 请勿删除或改动下述提纲标题及括号中的文字。}}
