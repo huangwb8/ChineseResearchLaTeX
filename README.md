@@ -20,7 +20,7 @@
 
 ## 使用
 
-> 相关技巧详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。编绎平台： `Windows 10 + TexLive 2022 + XeLaTeX + BibTeX`
+> 相关技巧详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。编绎平台： `Windows 10 + TexLive 2022 + XeLaTeX + BibTeX`。一般建议使用最新的[Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
 
 + [国家自然科学基金 - 青年项目（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Young)：与面上模板相比，青年模板在`立项依据与研究内容`、`正在承担的与本项目相关的科研项目情况`、`其他需要说明的情况`的第2/3点的文字略有差别；青年模板的内容宽度要略小面上；青年模板的subsection的缩进量被大量人为地调控过，很不统一，估计与面上模板不是出自同一人之手。
 + [国家自然科学基金 - 面上项目（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_General)
