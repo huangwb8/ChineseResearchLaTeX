@@ -28,6 +28,7 @@
 \usepackage{xeCJK} % 调整字间距
 \usepackage{titlesec} 
 \usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
+\usepackage{pifont} % 带圈数字
 
 
 %%%————————————————————————————————边距
@@ -49,7 +50,7 @@
     \renewcommand{\listfigurename}{插图目录}
     \renewcommand{\listtablename}{表格}
     %\renewcommand{\refname}{\sihao 参考文献}
-    \renewcommand{\refname}{\sihao \kaishu \leftline{参考文献}} %这几个字默认字号稍大，改成四号字，楷书，居左(默认居中) 根据喜好自行修改，官方模板未作要求
+    \renewcommand{\refname}{\sihao \kaishu \bfseries \leftline{参考文献} \vspace*{5mm}}  %这几个字默认字号稍大，改成四号字，楷书，居左(默认居中) 根据喜好自行修改，官方模板未作要求
     \renewcommand{\abstractname}{摘要}
     \renewcommand{\indexname}{索引}
     \renewcommand{\tablename}{表}
@@ -89,7 +90,7 @@
 % 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
 \setmainfont{Times New Roman}
 \setCJKmainfont{SimSun}[AutoFakeBold=3]
-% \setCJKmainfont{KaiTi}
+% \setCJKmainfont{KaiTi}[AutoFakeBold=3]
 
 
 %%%————————————————————————————————行距
@@ -273,6 +274,20 @@
 
 % 去除页码
 \pagestyle{empty}
+
+% 参考文献上标与压缩
+% \usepackage[super,square,comma,sort&compress]{natbib}
+
+% 参考文献中的链接字体用的是texttt
+\renewcommand{\ttdefault}{tnr} % 设置默认等宽字体为 Times New Roman
+
+% 自定义第4级小标题
+% \newcommand{\ssssubtitle}[1]{\ding{\numexpr171+#1\relax}} % 类似①
+\newcommand{\ssssubtitle}[1]{\textcircled{\raisebox{-0.8pt}{\xiaosihao #1}}}
+% \newcommand{\ssssubtitle}[1]{#1）} % 类似1）
+% \newcommand{\blackding}[1]{\ding{\numexpr181+#1\relax}}
+% \newcommand{\whitedingB}[1]{\ding{\numexpr191+#1\relax}}
+% \newcommand{\blackdingB}[1]{\ding{\numexpr201+#1\relax}}
 
 
 
