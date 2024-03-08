@@ -22,7 +22,7 @@
 
 > 相关技巧详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
 >
-> 编绎平台： `Windows 10 + TexLive 2022 + XeLaTeX + BibTeX`。
+> 测试平台： `Windows 10 + TexLive 2022`。
 >
 > 编译顺序： `xelatex -> bibtex -> xelatex -> xelatex`。
 
