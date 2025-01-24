@@ -1,0 +1,282 @@
+\usepackage[english]{babel} %支持混合语言
+\usepackage{xcolor}
+\usepackage{graphicx} 
+\usepackage{amsmath} %更多数学符号
+\usepackage{wasysym}
+\usepackage{geometry} %改尺寸
+\usepackage{fontspec} %字体包
+\usepackage{setspace}
+\usepackage{amsfonts} % 数学公式增强
+\usepackage{xeCJK} % 调整字间距
+\usepackage{titlesec} 
+\usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
+% \usepackage{ctex}
+\usepackage{pifont} % 带圈数字
+\usepackage{ifplatform} % 检测操作系统
+
+%%%————————————————————————————————边距
+% \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
+% \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
+% 页边距和字距的某个组合应该可以完美复制Word。
+\geometry{left=3.20cm,right=3.14cm,top=2.54cm,bottom=2.54cm} % 页边距
+\CJKsetecglue{\hskip 0.3em plus 0.05em minus 0.1em} % 数字与CJK字符的间距
+% left=3.20cm,right=3.13-3.14cm
+
+%%%————————————————————————————————颜色
+\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
+\definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
+\definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
+
+%%%————————————————————————————————对象名
+\addto\captionsenglish{
+    \renewcommand{\contentsname}{目录}
+    \renewcommand{\listfigurename}{插图目录}
+    \renewcommand{\listtablename}{表格}
+    %\renewcommand{\refname}{\sihao 参考文献}
+    \renewcommand{\refname}{\sihao \kaishu \bfseries \leftline{参考文献} \vspace*{5mm}} %这几个字默认字号稍大，改成四号字，楷书，居左(默认居中) 根据喜好自行修改，官方模板未作要求
+    \renewcommand{\abstractname}{摘要}
+    \renewcommand{\indexname}{索引}
+    \renewcommand{\tablename}{表}
+    \renewcommand{\figurename}{图}
+} %把Figure改成‘图’，reference改成‘参考文献’。如此处理是为了避免和babel包冲突。
+
+
+%%%————————————————————————————————字号
+\newcommand{\chuhao}{\fontsize{42pt}{\baselineskip}\selectfont}
+\newcommand{\xiaochuhao}{\fontsize{36pt}{\baselineskip}\selectfont}
+\newcommand{\yihao}{\fontsize{26pt}{\baselineskip}\selectfont}
+\newcommand{\erhao}{\fontsize{22pt}{\baselineskip}\selectfont}
+\newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont}
+\newcommand{\sanhao}{\fontsize{16pt}{\baselineskip}\selectfont}
+\newcommand{\sihao}{\fontsize{14pt}{\baselineskip}\selectfont}
+\newcommand{\xiaosihao}{\fontsize{12pt}{\baselineskip}\selectfont}
+\newcommand{\yemeizihao}{\fontsize{11pt}{\baselineskip}\selectfont}
+\newcommand{\wuhao}{\fontsize{10.5pt}{\baselineskip}\selectfont}
+\newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont}
+\newcommand{\liuhao}{\fontsize{7.875pt}{\baselineskip}\selectfont}
+\newcommand{\qihao}{\fontsize{5.25pt}{\baselineskip}\selectfont}
+%字号对照表
+%二号 21pt
+%四号 14
+%小四 12
+%五号 10.5
+
+
+%%%————————————————————————————————字体
+\ifwindows
+  \newfontfamily\kaitichar{KaiTi}[AutoFakeBold] % 利用windows自带字体定义楷体英文和数字
+  \NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } %使用模板字体代替直接使用楷书
+  \setmainfont{Times New Roman} 
+  \setCJKmainfont{KaiTi}[AutoFakeBold=3] 
+  % \setCJKmainfont{SimSun}[AutoFakeBold=3] % 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
+\else
+  \newfontfamily\kaitichar[Path=./fonts/, AutoFakeBold=3]{Kaiti.ttf} % 设置楷体字体，指定字体文件的路径
+  \NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } % 使用模板字体代替直接使用楷书
+  \setCJKfamilyfont{Times New Roman}[Path=./fonts/, AutoFakeBold=3]{TimesNewRoman.ttf} % 设置Times New Roman字体，指定字体文件的路径
+  \setmainfont{Times New Roman}  % 设置主字体
+  % \setmainfont[Path=./fonts/]{TimesNewRoman.ttf} % 设置主字体
+  \setCJKmainfont[Path=./fonts/, AutoFakeBold=3]{Kaiti.ttf} % 设置CJK主字体
+\fi
+
+%%%————————————————————————————————行距
+%设置行距 1.5倍
+\renewcommand{\baselinestretch}{1.5}
+\XeTeXlinebreaklocale "zh" % 中文断行
+
+
+%%%————————————————————————————————图片与表格
+
+% 对于表格，推荐使用Excel的插件Excel2LaTeX自动生成LaTeX代码。详见： https://www.zhihu.com/question/307970489/answer/2305355098
+
+%图片
+\usepackage{graphicx} %插图宏包
+\usepackage{float} %设置图片浮动位置的宏包
+\usepackage{subfigure} %插入多图时用子图显示的宏包
+\usepackage[section]{placeins} %避免浮动体跨过\section
+\usepackage{enumerate} %设置列表环境的包
+\usepackage{enumitem} % 增强自定义Bullet（即各种List前的那个标记）
+\setlist[enumerate]{
+  label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic*）},
+  leftmargin=0em, % 列表的左边界
+  itemindent=4em, % item首行缩进
+  itemsep=0em, % 列表项之间的垂直间距。
+  labelsep=0.1pt,  % label与content的距离
+  parsep=0em,  % 两个段落之间的垂直间距。效果上与itemsep类似。
+  topsep=0em % 列表与上一段对象的垂直间距。
+  % after=\vspace{5pt}
+}
+% \newcommand{\itemtitlefont}[1]{\textbf{\color{MsBlue} #1}} % 定义item小标题字体；
+\newcommand{\itemtitlefont}[1]{{\bfseries \color{MsBlue} #1}} % 定义item小标题字体；
+\usepackage{caption}
+\captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+
+%表格
+\usepackage{booktabs} %表格
+\usepackage{tabularx} %表格宽度
+\usepackage{multirow} %多行合并
+\usepackage{longtable} % latex 多页显示同一表格
+\usepackage{tabu} % 使用longtabu（tabularx + longtable）将长文本在单元格多行显示。
+% \captionsetup[table]{name={表},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+
+
+%%%————————————————————————————————超链接
+\usepackage[
+	colorlinks,
+	urlcolor=MsBlue, % 超链接的颜色。默认是芭比粉
+	linkcolor=black,
+	anchorcolor=black,
+	citecolor=black,
+	CJKbookmarks=True
+]{hyperref}
+
+
+%%%————————————————————————————————标题计数
+
+% [latex 标题、段落及行距 - 简书](https://www.jianshu.com/p/d7848f815e5f/)
+% [LaTeX 中的行间距](https://yinguobing.com/linespace-in-latex/)
+
+\usepackage{titlesec}
+
+\setcounter{secnumdepth}{4} %显示3级目录，然后再具体定制不同的目录
+% \setcounter{tocdepth}{4}
+
+% Define section font
+\newcommand{\sectionzihao}{\fontsize{14pt}{\baselineskip}\selectfont}
+\newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
+
+
+% Custom format for section
+\titleformat{\section}
+  {\color{MsBlue} \sectionzihao \templatefont} % format
+  {\hspace{1.45em}  } % label
+  {0pt} % separation
+  {}   % before-code
+
+% Custom format for subsection
+\titleformat{\subsection}
+  {\color{MsBlue} \subsectionzihao \templatefont \linespread{1}} % format
+  {} % label
+  {0pt} % separation
+  {}   % before-code
+
+% Custom format for subsubsection
+\titleformat{\subsubsection}
+  {\color{MsBlue} \subsubsectionzihao \templatefont \bfseries} % format
+  {\hspace{1.2em}  \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}} % label
+  {0.5em} % separation
+  {}   % before-code
+
+% Custom format for subsubsubsection
+\titleclass{\subsubsubsection}{straight}[\subsubsection]
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{（\arabic{subsubsection}）}
+\titleformat{\subsubsubsection}
+  {\templatefont \bfseries} % format \color{MsBlue} 
+  {\hspace{1em} （\arabic{subsubsubsection}）} % label
+  {0.5pt} % separation
+  {}   % before-code
+\makeatletter
+\def\toclevel@subsubsubsection{4}
+\def\l@subsubsubsection{\@dottedtocline{4}{7.0em}{4em}}
+\makeatother
+
+% Define line stretch for section
+\titlespacing*{\section}
+  {0pt} % Left indentation
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
+
+% Define line stretch for subsection
+\titlespacing*{\subsection}
+  {0pt} % Left indentation
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
+
+% Define line stretch for subsubsection
+\titlespacing*{\subsubsection}
+  {0pt} % Left indentation
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
+
+% Define line stretch for subsubsection
+\titlespacing*{\subsubsubsection}
+  {0pt} % Left indentation
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
+
+
+%%%————————————————————————————————代码
+\usepackage{listings} %代码块
+\usepackage{xcolor}%代码块
+\renewcommand{\lstlistingname}{Code}
+
+% 参考：
+% https://www.youtube.com/watch?v=qxkQgG1Y0bY
+% https://zhuanlan.zhihu.com/p/65441079
+
+% \lstset{
+% 	% language=bash,  %代码语言使用的是matlab
+% 	frame=shadowbox, %把代码用带有阴影的框圈起来
+% 	rulesepcolor=\color{red!20!green!20!blue!20},%代码块边框为淡青色
+% 	keywordstyle=\color{blue!90}\bfseries, %代码关键字的颜色为蓝色，粗体
+% 	commentstyle=\color{red!10!green!70}\textit,% 设置代码注释的颜色
+% 	showstringspaces=true,%不显示代码字符串中间的空格标记
+% 	numbers=left, % 显示行号
+% 	numberstyle=\tiny,    % 行号字体
+% 	stringstyle=\ttfamily, % 代码字符串的特殊格式
+% 	breaklines=false, %对过长的代码自动换行
+% 	extendedchars=false,  %解决代码跨页时，章节标题，页眉等汉字不显示的问题
+% 	escapebegin=\begin{CJK*},escapeend=\end{CJK*},% 代码中出现中文必须加上，否则报错
+% 	texcl=true
+% }
+
+\lstdefinestyle{codestyle01}{
+	backgroundcolor=\color{gray!12},
+	%basicstyle=\ttfamily\small,
+	basicstyle=\zihao{-5}\ttfamily,
+	commentstyle=\color{green!60!black},
+	keywordstyle=\color{magenta},
+	stringstyle=\color{blue!50!red},
+	showstringspaces=false,
+	numbers=none,
+	numberstyle=\footnotesize\color{gray},
+	numbersep=10pt,
+	stepnumber=2, %左边数字的步幅
+	tabsize=4,
+	frame=TB, %顶部和底部有两条竖线。
+  breaklines=true % 添加此行以启用自动换行
+	% frame=tblr
+	% frame=L,
+	% framerule=1pt,
+	% rulecolor=\color{red}
+}
+
+
+%%%————————————————————————————————其它设置
+
+
+\makeatletter	
+	\setlength{\@fptop}{0pt} % 图片置顶展示（而不是居中）
+  % \setlength{\textfloatsep}{1cm plus 1.0pt minus 2.0pt} % 浮动体（如figure）之间的垂直间距
+  \setlength{\intextsep}{0.5cm plus 1.0pt minus 2.0pt} % 浮动体（如figure）与文字的垂直间距
+\makeatother
+
+% 去除页码
+\pagestyle{empty}
+
+% 汉字与标点的间距；
+% \punctstyle{banjiao} % 所有标点半角
+% \punctstyle{kaiming} % 部分的标点半角
+\punctstyle{hangmobanjiao} % 末半角式，仅行末挤压。
+
+% 参考文献中的链接字体用的是texttt
+\renewcommand{\ttdefault}{tnr} % 设置默认等宽字体为 Times New Roman
+
+% 自定义第4级小标题
+% \newcommand{\ssssubtitle}[1]{\ding{\numexpr171+#1\relax}} % 类似①
+\newcommand{\ssssubtitle}[1]{\textcircled{\raisebox{-0.8pt}{\xiaosihao #1}}}
+% \newcommand{\ssssubtitle}[1]{#1）} % 类似1）
+% \newcommand{\blackding}[1]{\ding{\numexpr181+#1\relax}}
+% \newcommand{\whitedingB}[1]{\ding{\numexpr191+#1\relax}}
+% \newcommand{\blackdingB}[1]{\ding{\numexpr201+#1\relax}}

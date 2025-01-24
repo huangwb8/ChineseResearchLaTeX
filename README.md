@@ -4,6 +4,7 @@
 
 ## 日志
 
++ **2025-01-24**：2024版冻结至[v2.3.5](https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v2.3.5)。 :sparkles: :sparkles: :sparkles:更新2025版模板 :sparkles: :sparkles: :sparkles:。具体更新说明详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。在线平台[Overleaf](https://www.overleaf.com/read/xzcmbsygvtrj#d8346b)有个国青示例，但并不推荐在Overleaf中使用，因为部分符号可能并不能完全正常编绎。
 + **2024-11-18**： :sparkles: :sparkles: :sparkles:本项目即将支持2025国自然模板、支持Mac/Win等多平台！更新模板只要简单地替换main.tex文件即可。敬请期待！
 + **2024-02-26**：应小伙伴要求，新增国自然地区科学基金项目LaTeX模板。
 + **2024-02-18**：
@@ -23,12 +24,15 @@
 
 > 相关技巧详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
 >
-> 测试平台： `Windows 10 + TexLive 2022`。 编译顺序： `xelatex -> bibtex -> xelatex -> xelatex`。
+> 测试平台： Windows/MacOS
 >
+> LaTex发行版： `TexLive`
+>
+> 编译顺序： `xelatex -> bibtex -> xelatex -> xelatex`
 
-+ [国家自然科学基金 - 青年项目（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Young)：与面上模板相比，青年模板在`立项依据与研究内容`、`正在承担的与本项目相关的科研项目情况`、`其他需要说明的情况`的第2/3点的文字略有差别；青年模板的内容宽度要略小面上；青年模板的subsection的缩进量被大量人为地调控过，很不统一，估计与面上模板不是出自同一人之手。
-+ [国家自然科学基金 - 面上项目（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_General)
-+ [国家自然科学基金 - 地区项目（2024版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Local)
++ [国家自然科学基金 - 青年科学基金项目（C类；2025版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Young)
++ [国家自然科学基金 - 面上项目（2025版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_General)
++ [国家自然科学基金 - 地区项目（2025版）](https://github.com/huangwb8/ChineseResearchLaTeX/tree/main/NSFC_Local)
 
 ## 维护者
 
