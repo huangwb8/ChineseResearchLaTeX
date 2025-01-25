@@ -1,6 +1,6 @@
 # 中国科研常用LaTeX模板集
 
-整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板、毕业论文等。一般建议使用最新的[Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
+整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等。一般建议使用最新的[Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
 
 ## 日志
 
@@ -10,7 +10,7 @@
   + 优化：改善字体设置从而加强对Overleaf/MacOS平台的兼容
 
 + **2025-01-24**：2024版冻结至[v2.3.5](https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v2.3.5)。 :sparkles: :sparkles: :sparkles:更新2025版模板 :sparkles: :sparkles: :sparkles:。具体更新说明详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
-+ **2024-11-18**： :sparkles: :sparkles: :sparkles:本项目即将支持2025国自然模板、支持Mac/Win等多平台！更新模板只要简单地替换main.tex文件即可。敬请期待！
++ **2024-11-18**： :sparkles: :sparkles: :sparkles:本项目即将支持2025国自然模板、支持Mac/Win/Overleaf等多平台，敬请期待！
 
 ## 镜像
 
