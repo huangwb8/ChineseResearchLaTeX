@@ -9,7 +9,7 @@
   + 修复：面上模板的`(建议 8000 字以下)`未进行加粗
   + 优化：改善字体设置从而加强对Overleaf/MacOS平台的兼容
 
-+ **2025-01-24**：2024版冻结至[v2.3.5](https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v2.3.5)。 :sparkles: :sparkles: :sparkles:更新2025版模板 :sparkles: :sparkles: :sparkles:。具体更新说明详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。在线平台[Overleaf](https://www.overleaf.com/read/xzcmbsygvtrj#d8346b)有个国青示例，但并不推荐在Overleaf中使用，因为部分符号可能并不能完全正常编绎。
++ **2025-01-24**：2024版冻结至[v2.3.5](https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v2.3.5)。 :sparkles: :sparkles: :sparkles:更新2025版模板 :sparkles: :sparkles: :sparkles:。具体更新说明详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
 + **2024-11-18**： :sparkles: :sparkles: :sparkles:本项目即将支持2025国自然模板、支持Mac/Win等多平台！更新模板只要简单地替换main.tex文件即可。敬请期待！
 
 ## 镜像
