@@ -4,12 +4,13 @@
 
 ## 日志
 
++ **2025-01-25**：v2.4.2版本更新
+  + 修复：面上和地区基金的font文件夹缺失
+  + 修复：面上模板的`(建议 8000 字以下)`未进行加粗
+  + 优化：改善字体设置从而加强对Overleaf/MacOS平台的兼容
+
 + **2025-01-24**：2024版冻结至[v2.3.5](https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v2.3.5)。 :sparkles: :sparkles: :sparkles:更新2025版模板 :sparkles: :sparkles: :sparkles:。具体更新说明详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。在线平台[Overleaf](https://www.overleaf.com/read/xzcmbsygvtrj#d8346b)有个国青示例，但并不推荐在Overleaf中使用，因为部分符号可能并不能完全正常编绎。
 + **2024-11-18**： :sparkles: :sparkles: :sparkles:本项目即将支持2025国自然模板、支持Mac/Win等多平台！更新模板只要简单地替换main.tex文件即可。敬请期待！
-+ **2024-02-26**：应小伙伴要求，新增国自然地区科学基金项目LaTeX模板。
-+ **2024-02-18**：
-  + 优化正文中文字体选择，这可能影响中文加粗。
-  + 增强对旧版本TexLive的兼容性：将`main.tex`中类似`{\input{extraTex/1.1.立项依据.tex}}`的代码改为`\input{extraTex/1.1.立项依据.tex}`，即去除最外层的大括号
 
 ## 镜像
 
@@ -48,6 +49,13 @@
 - [ ] 中山大学博士毕业论文LaTeX模板
 - [ ] 各种常见基金标书模板
 - [ ] 基金标书 & 学位论文LaTeX模板的一致性框架开发
+
+## 历史
+
++ **2024-02-26**：应小伙伴要求，新增国自然地区科学基金项目LaTeX模板。
++ **2024-02-18**：
+  + 优化正文中文字体选择，这可能影响中文加粗。
+  + 增强对旧版本TexLive的兼容性：将`main.tex`中类似`{\input{extraTex/1.1.立项依据.tex}}`的代码改为`\input{extraTex/1.1.立项依据.tex}`，即去除最外层的大括号
 
 ## 相关仓库
 

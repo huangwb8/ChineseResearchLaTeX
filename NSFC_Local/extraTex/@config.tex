@@ -65,17 +65,19 @@
 %%%————————————————————————————————字体
 \ifwindows
   \newfontfamily\kaitichar{KaiTi}[AutoFakeBold] % 利用windows自带字体定义楷体英文和数字
-  \NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } %使用模板字体代替直接使用楷书
+  \NewDocumentCommand \templatefont   { } {\kaitichar } %使用模板字体代替直接使用楷书
   \setmainfont{Times New Roman} 
   \setCJKmainfont{KaiTi}[AutoFakeBold=3] 
+  \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
   % \setCJKmainfont{SimSun}[AutoFakeBold=3] % 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
 \else
-  \newfontfamily\kaitichar[Path=./fonts/, AutoFakeBold=3]{Kaiti.ttf} % 设置楷体字体，指定字体文件的路径
-  \NewDocumentCommand \templatefont   { } { \kaishu \kaitichar } % 使用模板字体代替直接使用楷书
+  \newfontfamily\kaitichar[Path=./fonts/, AutoFakeBold=3, PunctuationSpace=0]{Kaiti.ttf} % 设置楷体字体，指定字体文件的路径
+  \NewDocumentCommand \templatefont   { } { \kaitichar } % 使用模板字体代替直接使用楷书
   \setCJKfamilyfont{Times New Roman}[Path=./fonts/, AutoFakeBold=3]{TimesNewRoman.ttf} % 设置Times New Roman字体，指定字体文件的路径
   \setmainfont{Times New Roman}  % 设置主字体
   % \setmainfont[Path=./fonts/]{TimesNewRoman.ttf} % 设置主字体
   \setCJKmainfont[Path=./fonts/, AutoFakeBold=3]{Kaiti.ttf} % 设置CJK主字体
+  \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \fi
 
 %%%————————————————————————————————行距
@@ -163,7 +165,7 @@
 % Custom format for subsubsection
 \titleformat{\subsubsection}
   {\color{MsBlue} \subsubsectionzihao \templatefont \bfseries} % format
-  {\hspace{1.2em}  \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}} % label
+  {\hspace{1.1em}  \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}} % label
   {0.5em} % separation
   {}   % before-code
 
