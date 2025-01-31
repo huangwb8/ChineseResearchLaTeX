@@ -66,21 +66,26 @@
 
 %%%————————————————————————————————字体
 \ifwindows
-  \newfontfamily\kaitichar{KaiTi}[AutoFakeBold] % 利用windows自带字体定义楷体英文和数字
-  \NewDocumentCommand \templatefont   { } {\kaitichar } %使用模板字体代替直接使用楷书
-  \setmainfont{Times New Roman} 
-  \setCJKmainfont{KaiTi}[AutoFakeBold=3] 
+  % 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
+  \setCJKfamilyfont{sectionzhfont}{KaiTi}[AutoFakeBold=3] % 定义模板中文字体为楷体
+  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
+  \newfontfamily\sectionenfont{KaiTi}[AutoFakeBold] % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
+  \NewDocumentCommand \templatefont { } {\sectionzhfont \sectionenfont} % 模板中英文字体
+  \setmainfont{Times New Roman} % 定义主体内容的英文字体为Times New Roman
+  \setCJKmainfont{KaiTi}[AutoFakeBold=3]  % 定义主体内容的字体为Kaiti
+  % \setCJKmainfont{SimSun}[AutoFakeBold=3]  % 定义主体内容的字体为SimSun
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
-  % \setCJKmainfont{SimSun}[AutoFakeBold=3] % 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
 \else
-  \newfontfamily\kaitichar[Path=./fonts/, AutoFakeBold=3, PunctuationSpace=0]{Kaiti.ttf} % 设置楷体字体，指定字体文件的路径
-  \NewDocumentCommand \templatefont   { } { \kaitichar } % 使用模板字体代替直接使用楷书
-  \setCJKfamilyfont{Times New Roman}[Path=./fonts/, AutoFakeBold=3]{TimesNewRoman.ttf} % 设置Times New Roman字体，指定字体文件的路径
-  \setmainfont{Times New Roman}  % 设置主字体
-  % \setmainfont[Path=./fonts/]{TimesNewRoman.ttf} % 设置主字体
-  \setCJKmainfont[Path=./fonts/, AutoFakeBold=3]{Kaiti.ttf} % 设置CJK主字体
+  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中文字体为楷体
+  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
+  \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
+  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
+  \setmainfont[Path=./fonts/, Extension=.ttf]{TimesNewRoman} % 定义主体内容的英文字体为Times New Roman
+  % \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{SimSun} % 定义主体内容的字体为SimSun
+  \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义主体内容的字体为Kaiti
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \fi
+
 
 %%%————————————————————————————————行距
 %设置行距 1.5倍
