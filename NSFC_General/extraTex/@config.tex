@@ -154,7 +154,6 @@
 \newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
 \newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
 
-
 % Custom format for section
 \titleformat{\section}
   {\color{MsBlue} \sectionzihao \templatefont} % format
@@ -175,6 +174,7 @@
   {\hspace{1.1em}  \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}} % label
   {0.5em} % separation
   {}   % before-code
+\renewcommand\thesubsubsection{\arabic{subsection}.\arabic{subsubsection}} % Reference rule for subsubsection
 
 % Custom format for subsubsubsection
 \titleclass{\subsubsubsection}{straight}[\subsubsection]
