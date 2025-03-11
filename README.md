@@ -8,17 +8,26 @@
 
 ## 日志
 
++ **2025-03-12**： :warning:  :warning:  :warning:  v2.3.0版本重大更新！经大佬提醒，发现面上、地区的“3.正在承担的与本项目相关的科研项目xxx”这一段的结尾少了一个分号，请大家记得加上！之前没有看出来，真的非常抱歉！
+
+  ![Typora_EbAfToCUz1](https://chevereto.hwb0307.com/images/2025/03/12/Typora_EbAfToCUz1.webp)
+
 + **2025-03-01**：v2.4.6版本更新。修复一些小问题，基本不影响正常使用。 大家按需食用即可！
+  
   + 优化：修改main.tex中的\kaishu为\templatefont以增强字体兼容性。由于主流系统均包含\kaishu，因此可能是一个无关紧要的更新。
   + 优化：改善subsubsection的序号显示以提升\ref{}命令的使用体验；修改正文模板以演示subsubsection序号显示的最佳实践。
   + 修复：直接使用系统TimesNewRoman也适用于MacOS/Overleaf，故不再建议使用外挂TimesNewRoman。感谢[ZhangDY827](https://github.com/ZhangDY827)的提醒！
+  
 + **2025-01-31**：v2.4.3版本更新
   + 优化：改善字体设置从而增强对不同正文字体的兼容性。
+  
 + **2025-01-25**：v2.4.2版本更新
   + 修复：面上和地区基金的font文件夹缺失
   + 修复：面上模板的`(建议 8000 字以下)`未进行加粗
   + 优化：改善字体设置从而加强对Overleaf/MacOS平台的兼容
+  
 + **2025-01-24**：2024版冻结至[v2.3.5](https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v2.3.5)。 :sparkles: :sparkles: :sparkles:更新2025版模板 :sparkles: :sparkles: :sparkles:。具体更新说明详见我的博客文章《[国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)》。
+
 + **2024-11-18**： :sparkles: :sparkles: :sparkles:本项目即将支持2025国自然模板、支持Mac/Win/Overleaf等多平台，敬请期待！
 
 ## 镜像
