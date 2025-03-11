@@ -10,7 +10,7 @@
 
 + **2025-03-12**： :warning:  :warning:  :warning:  v2.5.0版本重大更新！经大佬提醒，发现面上、地区的“3.正在承担的与本项目相关的科研项目xxx”这一段的结尾少了一个分号，请大家记得加上！之前没有看出来，真的非常抱歉！
 
-  ![Typora_EbAfToCUz1](https://chevereto.hwb0307.com/images/2025/03/12/Typora_EbAfToCUz1.webp)
+  ![mQW1QFdXDq](https://chevereto.hwb0307.com/images/2025/03/12/mQW1QFdXDq.png)
 
 + **2025-03-01**：v2.4.6版本更新。修复一些小问题，基本不影响正常使用。 大家按需食用即可！
   
