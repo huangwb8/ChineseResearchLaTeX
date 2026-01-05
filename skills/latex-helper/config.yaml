@@ -1,0 +1,70 @@
+# LaTeX Helper 配置文件
+
+# 技能信息
+skill_info:
+  name: latex-helper
+  version: 1.0.0
+  description: LaTeX 模板项目辅助技能
+
+# 支持的项目类型
+supported_projects:
+  - NSFC_Young
+  - NSFC_General
+  - NSFC_Local
+
+# 支持的操作
+actions:
+  compile:
+    description: 编译 LaTeX 文档
+    engine: xelatex
+    max_runs: 3
+  validate:
+    description: 验证文档格式
+    checks:
+      - chapter_numbering
+      - reference_consistency
+      - figure_table_numbering
+  bibtex:
+    description: 管理参考文献
+    required_fields:
+      - title
+      - author
+      - journal
+      - year
+    optional_fields:
+      - volume
+      - pages
+      - doi
+      - url
+  update:
+    description: 更新模板版本
+    backup: true
+
+# 编译配置
+compile_config:
+  engine: xelatex
+  interaction_mode: nonstopmode
+  output_directory: .
+  clean_auxiliary: true
+
+# 验证规则
+validation_rules:
+  chapter_pattern: '^\\[(section|subsection)\{'
+  reference_pattern: '\\cite\{[^}]+\}'
+  label_pattern: '\\label\{[^}]+\}'
+
+# 文件路径配置
+paths:
+  projects: ./projects
+  templates: ./projects/*/template
+  figures: ./projects/*/figures
+  references: ./projects/*/references
+
+# 错误处理
+error_handling:
+  max_retries: 2
+  verbose_output: true
+  log_file: latex-helper.log
+
+# 语言设置
+language: 简体中文

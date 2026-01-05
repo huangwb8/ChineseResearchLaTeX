@@ -1,0 +1,215 @@
+# 中国科研常用LaTeX模板集 - 项目配置文件
+
+# ============================================================================
+# 项目信息
+# ============================================================================
+
+project:
+  name: ChineseResearchLaTeX
+  version: 2.3.0
+  description: 中国科研常用LaTeX模板集，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等
+  license: MIT
+  repository: https://github.com/huangwb8/ChineseResearchLaTeX
+
+# ============================================================================
+# 默认语言配置
+# ============================================================================
+
+language:
+  default: 简体中文
+  encoding: UTF-8
+  latex_engine: xelatex  # 支持中文的LaTeX编译引擎
+
+# ============================================================================
+# 支持的LaTeX项目
+# ============================================================================
+
+projects:
+  NSFC_Young:
+    description: 国自然科学基金青年基金
+    template_dir: projects/NSFC_Young/template
+    main_file: main.tex
+    output_format: pdf
+
+  NSFC_General:
+    description: 国自然科学基金面上项目
+    template_dir: projects/NSFC_General/template
+    main_file: main.tex
+    output_format: pdf
+
+  NSFC_Local:
+    description: 国自然科学基金地区基金
+    template_dir: projects/NSFC_Local/template
+    main_file: main.tex
+    output_format: pdf
+
+# ============================================================================
+# 目录结构
+# ============================================================================
+
+directory_structure:
+  scripts:
+    description: 开发辅助脚本
+    examples:
+      - build_all.py
+      - clean_auxiliary.py
+      - check_references.py
+
+  references:
+    description: 项目辅助文档
+    examples:
+      - latex-writing-guide.md
+      - nsfc-submission-checklist.md
+      - bibliography-best-practices.md
+
+  skills:
+    description: 项目专用技能
+    examples:
+      - latex-helper
+
+# ============================================================================
+# LaTeX 编译配置
+# ============================================================================
+
+latex_config:
+  engine: xelatex
+  interaction_mode: nonstopmode
+  max_runs: 3
+  clean_auxiliary: true
+
+  auxiliary_files_to_clean:
+    - .aux
+    - .log
+    - .out
+    - .toc
+    - .lof
+    - .lot
+    - .bbl
+    - .blg
+    - .fdb_latexmk
+    - .fls
+    - .synctex.gz
+
+# ============================================================================
+# 参考文献配置
+# ============================================================================
+
+bibliography:
+  format: bibtex
+  database_dir: references
+  style_files:
+    - bibtex-style/*.bst
+
+  required_fields:
+    - title
+    - author
+    - year
+
+  optional_fields:
+    - journal
+    - volume
+    - pages
+    - doi
+    - url
+
+# ============================================================================
+# 工程原则
+# ============================================================================
+
+engineering_principles:
+  - KISS (Keep It Simple, Stupid)
+  - YAGNI (You Aren't Gonna Need It)
+  - DRY (Don't Repeat Yourself)
+  - SOLID (面向对象设计五大原则)
+  - 关注点分离 (Separation of Concerns)
+  - 奥卡姆剃刀 (Occam's Razor)
+  - 最小惊讶原则 (Principle of Least Astonishment)
+
+principle_priority:
+  - 正确性
+  - 简洁性
+  - 清晰性
+  - 扩展性
+
+# ============================================================================
+# AI 辅助开发配置
+# ============================================================================
+
+ai_assistance:
+  claude_code:
+    instruction_file: CLAUDE.md
+    enabled: true
+
+  openai_codex:
+    instruction_file: AGENTS.md
+    enabled: true
+
+  default_language: 简体中文
+  auto_context: true
+
+# ============================================================================
+# Git 配置
+# ============================================================================
+
+git:
+  main_branch: main
+  protected_branches:
+    - main
+    - master
+
+  ignore_patterns:
+    - "*.aux"
+    - "*.log"
+    - "*.out"
+    - "*.toc"
+    - "*.bbl"
+    - "*.blg"
+    - ".DS_Store"
+    - "*~"
+
+# ============================================================================
+# 技能（Skills）配置
+# ============================================================================
+
+skills:
+  latex-helper:
+    enabled: true
+    config_file: skills/latex-helper/config.yaml
+    description: LaTeX 模板辅助技能
+
+# ============================================================================
+# 验证规则
+# ============================================================================
+
+validation:
+  latex_syntax:
+    enabled: true
+    strict_mode: false
+
+  bibliography:
+    check_duplicates: true
+    required_fields: true
+
+  document_structure:
+    check_chapters: true
+    check_references: true
+
+# ============================================================================
+# 交互配置
+# ============================================================================
+
+interaction:
+  confirm_destructive_actions: true
+  verbose_output: false
+  show_progress: true
+
+# ============================================================================
+# 日志配置
+# ============================================================================
+
+logging:
+  enabled: true
+  level: INFO
+  file: .latex-helper.log
+  max_size: 1MB
+  backup_count: 3
