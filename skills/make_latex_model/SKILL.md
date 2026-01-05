@@ -1,6 +1,6 @@
 ---
 name: make_latex_model
-version: 2.1.1
+version: 2.2.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
@@ -76,6 +76,170 @@ changelog: ../../CHANGELOG.md
 - **换行位置必须与 Word 完全一致**
 - 这需要精确调整：字号、字间距、行距、段间距
 
+## 0.6) 执行模式说明
+
+本技能采用**"硬编码工具 + AI 规划"**的混合模式：
+
+### 自动模式（硬编码脚本）
+以下步骤由 Python 脚本自动执行，无需 AI 干预：
+
+| 步骤 | 脚本工具 | 输入 | 输出 |
+|------|---------|------|------|
+| 状态检查 | `scripts/check_state.py` | 项目路径 | 状态报告 |
+| PDF 样式分析 | `scripts/analyze_pdf.py` | Word PDF | `*_analysis.json` |
+| 标题文字对比 | `scripts/compare_headings.py` | Word .docx + LaTeX | 对比报告 |
+| 样式参数验证 | `scripts/run_validators.py` | 项目路径 | 验证报告 |
+| 编译检查 | `xelatex` 命令 | .tex 文件 | .pdf |
+
+### AI 规划模式（需要智能决策）
+以下步骤需要 AI 根据分析结果进行规划和执行：
+
+| 决策点 | 输入数据 | AI 任务 | 输出 |
+|--------|---------|---------|------|
+| **决策点 1**: 是否需要修改样式？ | PDF 分析结果 + 当前配置 | 判断差异是否超出容忍度 | 修改清单或跳过 |
+| **决策点 2**: 生成具体修改方案 | 差异分析结果 | 规划 LaTeX 代码修改 | 具体修改内容 |
+| **决策点 3**: 应用修改到配置文件 | 修改方案 | 使用 Edit 工具修改 | 修改后的 @config.tex |
+| **决策点 4**: 验证结果是否达标 | 修改前后的验证报告 | 判断是否需要迭代 | 继续微调/完成 |
+
+### 协作流程
+
+```
+Word 模板 → [自动] analyze_pdf.py → 分析结果
+                                    ↓
+                          当前 @config.tex
+                                    ↓
+                         [AI 决策点 1] 是否需修改？
+                                    ↓
+                           是 → [AI 决策点 2] 生成方案
+                                    ↓
+                          [AI 决策点 3] 应用修改
+                                    ↓
+                          [自动] 编译 + 验证
+                                    ↓
+                         [AI 决策点 4] 是否达标？
+                                    ↓
+                     否 → 微调 → 返回 [AI 决策点 2]
+                     是 → 完成
+```
+
+**关键原则**:
+- ✅ **数据提取** 由硬编码工具完成（精确、稳定）
+- ✅ **决策判断** 由 AI 完成（灵活、可解释）
+- ✅ **代码修改** 由 AI + Edit 工具完成（可控、可回溯）
+
+## 0.7) AI 决策点规范
+
+本技能的 4 个关键决策点，AI 必须按规范执行：
+
+### 决策点 1：是否需要修改样式？
+
+**输入数据**:
+- `*_analysis.json`: Word PDF 分析结果
+- `extraTex/@config.tex`: 当前样式配置
+- `config.yaml`: 容忍度配置
+
+**判断逻辑**:
+```python
+# 伪代码
+for 参数 in ["行距", "字号", "颜色", "边距"]:
+    word_value = analysis[参数]
+    latex_value = extract_from_config(config_tex)
+    diff = abs(word_value - latex_value)
+    tolerance = config["validation"]["tolerance"][参数]
+
+    if diff > tolerance:
+        需要修改 = True
+        修改清单.append({
+            "参数": 参数,
+            "当前值": latex_value,
+            "目标值": word_value,
+            "差异": diff
+        })
+```
+
+**输出格式**:
+```markdown
+| 参数 | 当前值 | 目标值 | 差异 | 容忍度 | 是否需修改 |
+|------|--------|--------|------|--------|-----------|
+| 行距 | 1.5 | 1.2 | 0.3 | 0.1 | ✅ 是 |
+| MsBlue RGB | (0,112,190) | (0,112,192) | 2 | 2 | ⚠️ 边界 |
+```
+
+---
+
+### 决策点 2：生成修改方案
+
+**输入**: 修改清单（来自决策点 1）
+
+**AI 任务**:
+1. 定位 `@config.tex` 中的相关代码段
+2. 生成具体的 LaTeX 代码修改
+3. 确保修改符合"轻量级修改原则"（见 5.1 节）
+
+**输出示例**:
+```latex
+% 修改行距：1.5 → 1.2
+- \renewcommand{\baselinestretch}{1.5}
++ \renewcommand{\baselinestretch}{1.2}
+
+% 修改 MsBlue 颜色
+- \definecolor{MsBlue}{RGB}{0,112,190}
++ \definecolor{MsBlue}{RGB}{0,112,192}
+```
+
+**约束条件**:
+- ✅ 优先调整参数值
+- ✅ 新增自定义命令（如需要）
+- ❌ 不删除或重命名现有命令
+- ❌ 不改变宏包加载顺序
+
+---
+
+### 决策点 3：应用修改
+
+**工具**: 使用 Edit 工具精确修改
+
+**流程**:
+1. 使用 Read 工具读取 `@config.tex`
+2. 使用 Edit 工具应用每一处修改
+3. 保留原有注释和代码风格
+
+**验证**:
+```bash
+# 检查编译是否成功
+cd projects/{project}
+xelatex -interaction=nonstopmode main.tex
+```
+
+---
+
+### 决策点 4：验证结果是否达标？
+
+**输入**:
+- 修改前的验证报告（如存在）
+- 修改后的验证报告（`run_validators.py` 输出）
+
+**判断逻辑**:
+```python
+# 伪代码
+优先级1_通过 = 编译成功 and 无警告
+优先级2_通过 = 样式参数一致 and 标题文字一致
+
+if 优先级1_通过 and 优先级2_通过:
+    返回 "完成"
+elif 失败项减少:
+    返回 "方向正确，继续微调"
+elif 失败项增加:
+    返回 "回滚修改，重新分析"
+else:
+    返回 "保持现状，人工判断"
+```
+
+**迭代策略**:
+- 最多执行 3 轮迭代
+- 每轮只调整 1-2 个参数
+- 记录每轮的修改和结果
+
 ## 1) 触发条件
 用户在以下场景触发本技能：
 - NSFC 发布了新的年度 Word 模板（如 2026 年版）
@@ -92,6 +256,19 @@ changelog: ../../CHANGELOG.md
 | `dry_run` | boolean | 否 | 预览模式，不实际修改文件，默认 `false` |
 
 ## 3) 执行流程
+
+### 步骤 0：预检查（AI 必须首先执行）
+
+AI 在开始任何优化工作前，**必须先执行状态检查**：
+
+```bash
+python3 skills/make_latex_model/scripts/check_state.py projects/{project}
+```
+
+根据状态报告决定后续行动：
+- 如果 `has_baseline=false`：提示用户先生成 Word PDF
+- 如果 `compilation_status=failed`：先修复编译错误
+- 如果 `baseline_source=quicklook`：调整像素对比权重
 
 ### 步骤 1：理解现状（深度阅读）
 1. 读取 `projects/{project}/extraTex/@config.tex`，重点分析：

@@ -10,6 +10,24 @@
 
 ### Changed（变更）
 
+- **make_latex_model v2.2.0** - 架构澄清：AI 与硬编码协调改进
+  - **P0 架构澄清**：
+    - 在 SKILL.md 中新增「0.6) 执行模式说明」章节：明确硬编码工具与 AI 规划的执行边界
+    - 在 SKILL.md 中新增「0.7) AI 决策点规范」章节：定义 4 个关键决策点的输入、逻辑和输出
+    - 新增 `scripts/check_state.py`：项目状态检查工具，AI 执行前必须运行的预检查脚本
+    - 在「执行流程」中新增「步骤 0：预检查」，强制 AI 在优化前执行状态检查
+
+### Added（新增）
+
+- **make_latex_model**：新增 `check_state.py` 状态检查工具
+  - 检查项目是否已初始化（@config.tex 存在）
+  - 检查是否有 Word PDF 基准文件
+  - 检测基准来源（Word PDF / QuickLook / 未知）
+  - 检查编译状态和 PDF 分析结果
+  - 生成状态报告并导出 JSON 供 AI 读取
+
+### Changed（变更）
+
 - 更新 `AGENTS.md` 与 `CLAUDE.md` 的目录结构示例，使 `skills/` 示例与当前仓库实际技能（`make_latex_model`）一致
 - **make_latex_model**：融入 `analyze_pdf.py` 工具到工作流
 - **make_latex_model v2.1.1** - 代码库优化与配置清理

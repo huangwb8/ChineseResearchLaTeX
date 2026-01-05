@@ -1,0 +1,16 @@
+{
+  "project_path": "/Volumes/2T01/Github/ChineseResearchLaTeX/projects/NSFC_Young",
+  "check_time": "2026-01-05T23:47:45.810753",
+  "status": {
+    "initialized": true,
+    "has_baseline": true,
+    "baseline_source": "word_pdf",
+    "baseline_quality": "high",
+    "last_compilation": "2026-01-05T22:06:44.779516",
+    "compilation_status": "success",
+    "has_analysis": false
+  },
+  "recommendations": [
+    "缺少 PDF 分析结果，建议执行: python scripts/analyze_pdf.py <baseline.pdf>"
+  ]
+}

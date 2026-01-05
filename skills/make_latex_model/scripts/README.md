@@ -4,6 +4,55 @@
 
 ## 工具清单
 
+### 0. check_state.py - 项目状态检查工具
+
+**功能**: AI 执行优化前的预检查工具，了解项目当前状态
+
+**使用方法**:
+```bash
+# 检查项目状态
+python3 scripts/check_state.py projects/NSFC_Young
+```
+
+**输出内容**:
+- ✅ 项目是否已初始化（@config.tex 存在）
+- ✅ 是否有 Word PDF 基准文件
+- 🎯 基准来源检测（Word PDF / QuickLook / 未知）
+- ✅ 编译状态
+- ✅ PDF 分析结果状态
+- 💾 导出 JSON 格式状态报告
+
+**输出示例**:
+```
+============================================================
+项目状态检查报告
+============================================================
+项目路径: /Volumes/2T01/Github/ChineseResearchLaTeX/projects/NSFC_Young
+检查时间: 2026-01-05T23:47:45.810753
+
+状态概览:
+  ✅ 已初始化
+  ✅ 有基准
+  compilation_status: success
+  ⚠️ 无分析
+
+基准来源: word_pdf
+基准质量: high
+
+建议:
+  1. 缺少 PDF 分析结果，建议执行: python scripts/analyze_pdf.py <baseline.pdf>
+============================================================
+```
+
+**使用场景**:
+- AI 执行优化前的必选步骤
+- 快速了解项目当前状态
+- 诊断常见问题（缺少基准、未编译等）
+
+**状态输出**: JSON 文件保存到 `projects/{project}/artifacts/state_check.json`
+
+---
+
 ### 1. analyze_pdf.py - PDF 样式分析工具
 
 **功能**: 从 PDF（Word 导出的基准 PDF）中自动提取关键样式参数
@@ -418,6 +467,10 @@ python3 -m core.font_detector --english
 ---
 
 ## 版本历史
+
+- **v2.2.0** (2026-01-05): 架构澄清：AI 与硬编码协调改进
+  - **新增 `check_state.py`**: 项目状态检查工具，AI 执行前的必选步骤
+  - **更新 SKILL.md**: 新增「0.6) 执行模式说明」和「0.7) AI 决策点规范」章节
 
 - **v2.1.0** (2026-01-05): 核心功能完善与工作流优化
   - **验证器插件系统**: CompilationValidator, StyleValidator, HeadingValidator, VisualValidator
