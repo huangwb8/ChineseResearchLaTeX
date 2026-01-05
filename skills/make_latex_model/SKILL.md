@@ -1,8 +1,46 @@
 ---
 name: make_latex_model
-version: 2.1.0
-description: LaTeX 模板高保真优化器（通用化版本，支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程）
+version: 2.1.1
+author: ChineseResearchLaTeX Project
+maintainer: project-maintainers
+status: stable
 category: normal
+description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐和像素级 PDF 对比验证
+tags:
+  - latex
+  - template
+  - optimization
+  - nsfc
+  - pdf-analysis
+  - style-alignment
+dependencies:
+  python: ">=3.8"
+  packages:
+    - name: PyMuPDF
+      version: ">=1.23.0"
+      purpose: PDF 样式参数提取
+    - name: python-docx
+      version: ">=0.8.11"
+      purpose: Word 标题提取
+    - name: Pillow
+      version: ">=9.0.0"
+      purpose: 图像处理和像素对比
+requires:
+  - xelatex
+  - pdflatex
+  - bibtex
+compatibility:
+  platforms:
+    - macos
+    - windows
+    - linux
+  latex_templates:
+    - NSFC_Young
+    - NSFC_General
+    - NSFC_Local
+    - generic
+last_updated: 2026-01-05
+changelog: ../../CHANGELOG.md
 ---
 
 # NSFC LaTeX 模板高保真优化器
