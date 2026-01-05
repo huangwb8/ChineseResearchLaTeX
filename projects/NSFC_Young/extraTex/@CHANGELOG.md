@@ -4,6 +4,23 @@
 
 ---
 
+## [v1.2.0] - 2026-01-05
+
+### Changed（标题与提纲对齐）
+- 更新 `main.tex` 标题为“报告正文（2026版）”，按 Word 模板使用黑色说明行（含30页限制提示）。
+- 提纲重排为 Word 2026 四个章节，研究基础/其他条目文字与 Word 模板完全一致，移除旧版 2024 提示语与缩进。
+- 取消 `\titleformat{\section}` 的额外左缩进，使标题与 Word 左对齐。
+
+### Added
+- 新增“生成式人工智能使用情况”占位文件 `extraTex/3.5.生成式人工智能.tex`。
+- “其他”条目迁移为 `extraTex/3.6.其他.tex`（原 `3.5.其它.tex`）。
+
+### Validation
+- ✅ `python3 skills/make_latex_model/scripts/check_state.py projects/NSFC_Young`
+- ✅ `xelatex -interaction=nonstopmode main.tex`（编译通过；仅保留模板示例引用与字体的既有警告）
+
+---
+
 ## [v1.1.0] - 2026-01-05
 
 ### Changed（样式优化 - 基于2026年Word模板对齐）

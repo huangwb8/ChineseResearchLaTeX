@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标题文字对比报告</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .matched .value { color: #10b981; }
+        .differences .value { color: #f59e0b; }
+        .only .value { color: #ef4444; }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ddd;
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+        .item.matched {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        .item.difference {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .item.only {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .key {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .value {
+            color: #4b5563;
+        }
+        .diff-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .diff-box {
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        .diff-box.word {
+            border-left: 3px solid #3b82f6;
+        }
+        .diff-box.latex {
+            border-left: 3px solid #8b5cf6;
+        }
+        .label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .meta {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 标题文字对比报告</h1>
+        <p>生成时间: 2026-01-06 00:14:57</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card matched">
+            <h3>✅ 完全匹配</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="stat-card differences">
+            <h3>⚠️ 有差异</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="stat-card only">
+            <h3>❌ 仅在一方</h3>
+            <div class="value">20</div>
+        </div>
+    </div>
+<div class="section"><h2>❌ 仅在一方的标题</h2>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_1</div>
+        <div class="value">（一）立项依据</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_2</div>
+        <div class="value">（二）研究内容</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_3</div>
+        <div class="value">（三）研究基础</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_4</div>
+        <div class="value">（四）其他需要说明的情况</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_1</div>
+        <div class="value">（为什么要开展此项研究，研究的科学技术价值如何）</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_2</div>
+        <div class="value">（提纲不做限制，请按照研究工作的自身逻辑撰写。应提炼出特色与创新点、年度研究计划）</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_3</div>
+        <div class="value">研究内容与研究目标</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_4</div>
+        <div class="value">拟采取的研究方案及可行性分析</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_5</div>
+        <div class="value">本项目的特色与创新之处</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_2_1</div>
+        <div class="value">年度研究计划及预期研究结果</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_2_2</div>
+        <div class="value">1. 研究基础与可行性分析（与本项目相关的研究工作积累和已取得的研究工作成绩，研究风险的应对措施等）；</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_2_3</div>
+        <div class="value">2. 工作条件（包括已具备的实验条件，尚缺少的实验条件和拟解决的途径，包括利用国家实验室、全国重点实验室和部门重点实验室等研究基地的计划与落实情况）；</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_2_4</div>
+        <div class="value">3. 正在承担的与本项目相关的科研项目情况（申请人正在承担的与本项目相关的科研项目情况，包括国家自然科学基金的项目和国家其他科技计划项目，要注明项目的资助机构、项目类别、批准号、项目名称、获资助金额、起止年月、与本项目的关系及负责的内容等）；</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_2_5</div>
+        <div class="value">4. 完成国家自然科学基金项目情况（对申请人负责的前一个已资助期满的科学基金项目（项目名称及批准号）完成情况、后续研究进展及与本申请项目的关系加以详细说明。另附该项目的研究工作总结摘要（限500字）和相关成果详细目录）。</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_3_1</div>
+        <div class="value">1. 申请人同年申请不同类型的国家自然科学基金项目情况（列明同年申请的其他项目的项目类型、项目名称信息，并说明与本项目之间的区别与联系；已收到自然科学基金委不予受理或不予资助决定的，无需列出）。</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_3_2</div>
+        <div class="value">2. 具有高级专业技术职务（职称）的申请人是否存在同年申请或者参与申请国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，申请或参与申请的其他项目的项目类型、项目名称、单位名称、上述人员在该项目中是申请人还是参与者，并说明单位不一致原因。</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_3_3</div>
+        <div class="value">3. 具有高级专业技术职务（职称）的申请人是否存在与正在承担的国家自然科学基金项目的单位不一致的情况；如存在上述情况，列明所涉及人员的姓名，正在承担项目的批准号、项目类型、项目名称、单位名称、起止年月，并说明单位不一致原因。</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_3_4</div>
+        <div class="value">4. 同年以不同专业技术职务（职称）申请或参与申请科学基金项目的情况（应详细说明原因）。</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_3_5</div>
+        <div class="value">5. 申请人在撰写本申请书时使用生成式人工智能的情况，请详细说明申请书中使用的位置和内容。</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_4_1</div>
+        <div class="value">6. 其他（包括但不限于使用以他人名义申报过的申请书；如有，请详细说明）。</div>
+    </div></div>
+    <div class="meta">
+        <p>Word 文件: 2026年最新word模板-青年科学基金项目（C类）-正文.docx</p>
+        <p>LaTeX 文件: main.tex</p>
+    </div>
+</body>
+</html>
