@@ -19,6 +19,41 @@
 
 ### Added（新增）- Skills
 
+- **make_latex_model v2.1.0** - 核心功能完善与工作流优化
+  - **验证器插件系统（任务 1.1）**：
+    - 实现 `CompilationValidator`：编译状态验证（第一优先级）
+    - 实现 `StyleValidator`：样式参数验证（行距、颜色、边距、字号、标题格式）
+    - 实现 `HeadingValidator`：标题文字验证（集成 compare_headings.py）
+    - 实现 `VisualValidator`：视觉相似度验证（PDF 页面尺寸、每行字数统计）
+    - 新增 `scripts/run_validators.py`：Python 验证器运行器
+  - **PDF 像素对比工具（任务 1.2）**：
+    - 新增 `scripts/compare_pdf_pixels.py`：像素级 PDF 对比工具
+    - 支持批量对比多页 PDF
+    - 生成 HTML 差异报告和差异热图
+    - 计算差异像素比例（changed_ratio）
+  - **样式配置双向同步工具（任务 1.3）**：
+    - 新增 `scripts/sync_config.py`：LaTeX 配置解析与同步工具
+    - 解析 `@config.tex` 中的颜色、字号、边距、行距、标题格式
+    - 对比 PDF 分析结果与 LaTeX 配置
+    - 支持自动修改和预览模式
+  - **一键式优化流程（任务 2.1）**：
+    - 新增 `scripts/optimize.py`：完整优化流程自动化
+    - 8 步流程：分析 Word PDF → 提取标题 → 对比样式 → 生成建议 → 应用修改 → 编译 → 验证 → 生成报告
+    - 新增 `scripts/optimize.sh`：Shell 脚本入口
+  - **交互式配置向导（任务 2.2）**：
+    - 新增 `scripts/setup_wizard.py`：交互式项目配置向导
+    - 引导用户完成项目信息、模板选择、优化级别、Word 模板、高级选项
+    - 自动生成项目结构和配置文件
+  - **Windows 兼容性改进（任务 3.1）**：
+    - 新增 `scripts/validate.bat`：Windows 验证脚本
+    - 新增 `scripts/benchmark.bat`：Windows 性能测试脚本
+    - 新增 `scripts/optimize.bat`：Windows 优化脚本
+  - **字体路径自动检测（任务 3.2）**：
+    - 新增 `core/font_detector.py`：跨平台字体检测模块
+    - 支持 macOS/Windows/Linux 三大操作系统
+    - 自动检测常见中文字体（KaiTi、SimSun、SimHei 等）
+    - 自动检测常见英文字体（Times New Roman、Arial 等）
+
 - **make_latex_model v2.0.0** - 通用化重构
   - **核心架构重构**：实现配置与代码分离，支持任意 LaTeX 模板
   - **分层配置系统**：

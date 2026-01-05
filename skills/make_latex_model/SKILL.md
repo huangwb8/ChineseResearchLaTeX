@@ -1,7 +1,7 @@
 ---
 name: make_latex_model
-version: 1.4.0
-description: 基于 NSFC 最新 Word 模板高保真优化 LaTeX 模板（支持标题文字对齐，确保完整的样式一致性）
+version: 2.1.0
+description: LaTeX 模板高保真优化器（通用化版本，支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程）
 category: normal
 ---
 

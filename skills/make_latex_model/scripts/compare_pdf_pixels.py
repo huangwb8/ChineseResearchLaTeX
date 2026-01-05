@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+PDF 像素对比工具
+对比两个 PDF 文件的像素差异
+
+使用方法:
+    # 对比两个 PDF 文件
+    python scripts/compare_pdf_pixels.py baseline.pdf output.pdf
+
+    # 生成 HTML 报告
+    python scripts/compare_pdf_pixels.py baseline.pdf output.pdf --report diff_report.html
+
+    # 只对比第一页
+    python scripts/compare_pdf_pixels.py baseline.pdf output.pdf --page 1
+
+    # 设置容差
+    python scripts/compare_pdf_pixels.py baseline.pdf output.pdf --tolerance 5
+
+    # 生成差异热图
+    python scripts/compare_pdf_pixels.py baseline.pdf output.pdf --heatmap diff.png
+"""
+
+import argparse
+import sys
+from pathlib import Path
+from typing import List, Tuple, Dict
+import numpy as np
+from datetime import datetime
+
+
+def check_dependencies():
+    """检查依赖库"""
+    missing = []
+
+    try:
+        import fitz
+    except ImportError:
+        missing.append("PyMuPDF (fitz)")
+
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        missing.append("Pillow")
+
+    return missing
+
+
+def pdf_to_page_images(pdf_path: Path, dpi: int = 150, page_num: int = None) -> List[np.ndarray]:
+    """
+    将 PDF 页面转换为图像数组
+
+    Args:
+        pdf_path: PDF 文件路径
+        dpi: 分辨率
+        page_num: 页码（None 表示所有页面）
+
+    Returns:
+        图像数组列表
+    """
+    try:
+        import fitz
+    except ImportError:
+        print("错误: 需要安装 PyMuPDF")
+        print("安装命令: pip install PyMuPDF")
+        sys.exit(1)
+
+    doc = fitz.open(pdf_path)
+    images = []
+
+    # 确定页面范围
+    if page_num is not None:
+        pages = [page_num - 1] if page_num <= len(doc) else [0]
+    else:
+        pages = range(len(doc))
+
+    for page_num in pages:
+        page = doc[page_num]
+
+        # 渲染为图像
+        mat = fitz.Matrix(dpi / 72, dpi / 72)
+        pix = page.get_pixmap(matrix=mat)
+
+        # 转换为 numpy 数组
+        img_data = pix.tobytes("ppm")
+        from PIL import Image
+        img = Image.open(io.BytesIO(img_data))
+        img_array = np.array(img)
+
+        images.append(img_array)
+
+    doc.close()
+    return images
+
+
+def compare_images(img1: np.ndarray, img2: np.ndarray, tolerance: int = 2) -> Tuple[float, np.ndarray]:
+    """
+    对比两个图像数组
+
+    Args:
+        img1: 第一个图像
+        img2: 第二个图像
+        tolerance: 容差（RGB 值差异）
+
+    Returns:
+        (差异比例, 差异掩码)
+    """
+    # 确保图像大小相同
+    if img1.shape != img2.shape:
+        # 调整 img2 到 img1 的大小
+        from PIL import Image
+        img2_pil = Image.fromarray(img2.astype('uint8'))
+        img2_pil = img2_pil.resize((img1.shape[1], img1.shape[0]))
+        img2 = np.array(img2_pil)
+
+    # 计算像素差异
+    diff = np.abs(img1.astype(int) - img2.astype(int))
+    diff_mask = np.any(diff > tolerance, axis=2)
+
+    # 计算差异比例
+    total_pixels = diff_mask.size
+    diff_pixels = np.sum(diff_mask)
+    changed_ratio = diff_pixels / total_pixels
+
+    return changed_ratio, diff_mask
+
+
+def generate_diff_heatmap(img1: np.ndarray, img2: np.ndarray, diff_mask: np.ndarray,
+                          output_path: Path):
+    """
+    生成差异热图
+
+    Args:
+        img1: 第一个图像
+        img2: 第二个图像
+        diff_mask: 差异掩码
+        output_path: 输出路径
+    """
+    from PIL import Image, ImageDraw
+
+    # 创建热图（红色表示差异）
+    heatmap = img1.copy()
+    heatmap[diff_mask] = [255, 0, 0]  # 红色
+
+    # 保存
+    img_pil = Image.fromarray(heatmap.astype('uint8'))
+    img_pil.save(output_path)
+
+
+def generate_html_report(baseline_pdf: Path, output_pdf: Path, page_results: List[Dict],
+                        report_path: Path):
+    """生成 HTML 报告"""
+
+    total_diff = sum(r["changed_ratio"] for r in page_results)
+    avg_diff = total_diff / len(page_results) if page_results else 0
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 像素对比报告</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }}
+        .stats {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }}
+        .stat-card {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }}
+        .stat-card .value {{
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }}
+        .page-result {{
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .diff-bar {{
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }}
+        .diff-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+            transition: width 0.3s;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 PDF 像素对比报告</h1>
+        <p>生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="value">{len(page_results)}</div>
+            <div>对比页数</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{avg_diff:.2%}</div>
+            <div>平均差异</div>
+        </div>
+    </div>
+"""
+
+    for i, result in enumerate(page_results, 1):
+        diff_percent = result["changed_ratio"] * 100
+        color = "#10b981" if diff_percent < 10 else "#f59e0b" if diff_percent < 20 else "#ef4444"
+
+        html += f"""
+    <div class="page-result">
+        <h3>第 {i} 页</h3>
+        <div class="diff-bar">
+            <div class="diff-fill" style="width: {diff_percent}%; background: {color};"></div>
+        </div>
+        <p>差异比例: <strong>{diff_percent:.2f}%</strong></p>
+        <p>差异像素: {result["diff_pixels"]} / {result["total_pixels"]}</p>
+    </div>
+"""
+
+    html += """
+</body>
+</html>
+"""
+
+    report_path.write_text(html, encoding="utf-8")
+
+
+def main():
+    # 检查依赖
+    missing = check_dependencies()
+    if missing:
+        print(f"错误: 缺少依赖库: {', '.join(missing)}")
+        print("安装命令:")
+        for lib in missing:
+            print(f"  pip install {lib}")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description="PDF 像素对比工具")
+    parser.add_argument("baseline_pdf", type=Path, help="基准 PDF 文件")
+    parser.add_argument("output_pdf", type=Path, help="输出 PDF 文件")
+    parser.add_argument("--report", type=Path, help="生成 HTML 报告")
+    parser.add_argument("--page", type=int, help="只对比指定页码")
+    parser.add_argument("--tolerance", type=int, default=2, help="像素容差（默认 2）")
+    parser.add_argument("--dpi", type=int, default=150, help="渲染分辨率（默认 150）")
+    parser.add_argument("--heatmap", type=Path, help="生成差异热图")
+
+    args = parser.parse_args()
+
+    # 检查文件存在
+    if not args.baseline_pdf.exists():
+        print(f"错误: 基准 PDF 不存在: {args.baseline_pdf}")
+        sys.exit(1)
+
+    if not args.output_pdf.exists():
+        print(f"错误: 输出 PDF 不存在: {args.output_pdf}")
+        sys.exit(1)
+
+    print(f"📊 正在对比 PDF 文件...")
+    print(f"  基准: {args.baseline_pdf}")
+    print(f"  输出: {args.output_pdf}")
+    print(f"  容差: {args.tolerance}")
+    print(f"  分辨率: {args.dpi} DPI")
+
+    # 转换 PDF 为图像
+    print("\n📖 正在渲染 PDF...")
+    baseline_images = pdf_to_page_images(args.baseline_pdf, args.dpi, args.page)
+    output_images = pdf_to_page_images(args.output_pdf, args.dpi, args.page)
+
+    # 确保页数相同
+    num_pages = min(len(baseline_images), len(output_images))
+    print(f"  对比页数: {num_pages}")
+
+    # 对比每一页
+    page_results = []
+
+    for i in range(num_pages):
+        print(f"\n🔍 对比第 {i+1} 页...")
+
+        img1 = baseline_images[i]
+        img2 = output_images[i]
+
+        changed_ratio, diff_mask = compare_images(img1, img2, args.tolerance)
+
+        diff_pixels = np.sum(diff_mask)
+        total_pixels = diff_mask.size
+
+        print(f"  差异比例: {changed_ratio:.2%}")
+        print(f"  差异像素: {diff_pixels} / {total_pixels}")
+
+        page_results.append({
+            "page_num": i + 1,
+            "changed_ratio": changed_ratio,
+            "diff_pixels": diff_pixels,
+            "total_pixels": total_pixels
+        })
+
+        # 生成热图
+        if args.heatmap:
+            heatmap_path = args.heatmap.parent / f"{args.heatmap.stem}_page{i+1}{args.heatmap.suffix}"
+            generate_diff_heatmap(img1, img2, diff_mask, heatmap_path)
+            print(f"  热图已保存: {heatmap_path}")
+
+    # 计算平均差异
+    avg_diff = sum(r["changed_ratio"] for r in page_results) / len(page_results)
+
+    print(f"\n{'='*60}")
+    print(f"对比总结")
+    print(f"{'='*60}")
+    print(f"总页数: {num_pages}")
+    print(f"平均差异: {avg_diff:.2%}")
+
+    if avg_diff < 0.10:
+        print("✅ 差异很小，样式对齐良好")
+    elif avg_diff < 0.20:
+        print("⚠️  差异中等，可能需要微调")
+    else:
+        print("❌ 差异较大，需要仔细检查样式参数")
+
+    # 生成报告
+    if args.report:
+        print(f"\n📄 正在生成 HTML 报告...")
+        generate_html_report(args.baseline_pdf, args.output_pdf, page_results, args.report)
+        print(f"✅ 报告已保存: {args.report}")
+
+
+if __name__ == "__main__":
+    import io
+    main()
