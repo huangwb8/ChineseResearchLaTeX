@@ -2,6 +2,24 @@
 
 整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等。一般建议使用最新的[Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
 
+---
+
+<div align="center">
+
+### 🚧 项目开发状态提示
+
+**本项目正处于火热开发阶段！**
+
+当前代码库为活跃开发中的工作版本，功能和模板正在持续完善中。
+
+**⚠️ 建议所有用户使用正式的 [Release 版本](https://github.com/huangwb8/ChineseResearchLaTeX/releases) 以获得最佳稳定性和完整功能支持。**
+
+如需体验最新特性或参与测试，欢迎关注本仓库的开发进展，但请注意可能存在不稳定因素。
+
+</div>
+
+---
+
 <div align="center">
 
 $$\huge \color{#DE2910} \textbf{已经为2026年国自然准备好!更多炸裂特性即将支持！}$$
