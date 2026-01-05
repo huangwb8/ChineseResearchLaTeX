@@ -139,6 +139,22 @@ ChineseResearchLaTeX/
 
 当某个章节变得过于臃肿时，主动重构
 
+## CHANGELOG 维护规则
+
+**重要**：所有 skill 的版本变更记录在根级 [CHANGELOG.md](CHANGELOG.md) 中。
+
+### 维护流程
+
+当修改 skill 时：
+1. 更新根级 [CHANGELOG.md](CHANGELOG.md)（必需）
+2. 更新 SKILL.md 中的版本号（必需）
+3. 更新 config.yaml 中的版本号（如存在）
+4. **SKILL.md 中不记录详细变更历史**（避免重复）
+
+### 详细规范
+
+参见 [skills/README.md](skills/README.md) 中的"CHANGELOG 维护规范"章节。
+
 ---
 
 **提示**：修改本文档后，请同步更新 `CHANGELOG.md` 记录变更历史。
