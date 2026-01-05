@@ -121,3 +121,32 @@ latex-helper.log
 *.bak
 *.backup
 *.orig
+
+# =============================================================================
+# Python 虚拟环境（补充）
+# =============================================================================
+venv/
+env/
+ENV/
+.venv
+
+# =============================================================================
+# make_latex_model 技能特定
+# =============================================================================
+
+# 技能输出目录（保留 README）
+skills/make_latex_model/output/*.json
+skills/make_latex_model/output/*.log
+!skills/make_latex_model/output/README.md
+
+# 测试工作空间
+skills/make_latex_model/tests/*/workspace/
+skills/make_latex_model/tests/*/.test_summary.txt
+
+# PDF 分析临时文件
+skills/make_latex_model/scripts/*_analysis.json
+
+# =============================================================================
+# macOS 补充（增强）
+# =============================================================================
+._*

@@ -563,7 +563,7 @@ cat ../../CHANGELOG.md
 grep -A 10 "make_latex_model" ../../CHANGELOG.md
 ```
 
-**当前版本**：v1.4.0
+**当前版本**：v2.1.0
 
 **项目变更日志**：
 - 每次样式优化后，变更记录将追加到 `projects/{project}/extraTex/@CHANGELOG.md`

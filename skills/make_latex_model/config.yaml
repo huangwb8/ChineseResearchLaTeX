@@ -15,7 +15,7 @@
 skill_info:
   name: make_latex_model
   version: 2.1.0
-  description: LaTeX 模板高保真优化器（通用化版本，支持任意 LaTeX 模板，完整验证器插件系统）
+  description: LaTeX 模板高保真优化器（支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程）
   category: normal
 
 # ================================
@@ -86,6 +86,16 @@ optimization_strategies:
       - optimize_list_styles
       - cross_platform_validation
       - align_heading_texts
+
+# ================================
+# 样式参考基准（默认颜色系统）
+# ================================
+style_reference:
+  colors:
+    MsBlue: "RGB 0,112,192"      # Word 风格蓝色
+    header_color: "RGB 0,0,0"     # 页眉颜色
+    footer_color: "RGB 0,0,0"     # 页脚颜色
+    text_color: "RGB 0,0,0"       # 正文颜色
 
 # ================================
 # 编译配置

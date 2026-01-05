@@ -12,6 +12,17 @@
 
 - 更新 `AGENTS.md` 与 `CLAUDE.md` 的目录结构示例，使 `skills/` 示例与当前仓库实际技能（`make_latex_model`）一致
 - **make_latex_model**：融入 `analyze_pdf.py` 工具到工作流
+- **make_latex_model v2.1.1** - 代码库优化与配置清理
+  - **P0 紧急修复**：
+    - 修复 SKILL.md 版本号不一致（v1.4.0 → v2.1.0）
+    - 清理已追踪的系统垃圾文件（.DS_Store 和 __pycache__）
+    - 优化 .gitignore 配置（新增虚拟环境、技能输出目录、macOS 补充规则）
+  - **P1 核心优化**：
+    - 实施配置继承方案：删除 base.yaml 中重复的 validation.tolerance 和 validation.acceptance_priority 配置
+    - 统一颜色定义到单一数据源：在 config.yaml 中新增 style_reference.colors 配置，从 base.yaml 中删除重复的颜色定义
+  - **P2 次要改进**：
+    - 统一 config.yaml 和 SKILL.md 的技能描述文本
+    - 清理 output 目录中的运行时生成文件，添加 README.md 说明文档
   - 在 `SKILL.md` 步骤 2 中新增 "2.2 自动提取样式参数" 小节
   - 在 `scripts/README.md` 中新增 `analyze_pdf.py` 工具文档（作为工具 #1）
   - 优化 `analyze_pdf.py`：添加依赖检查、文件验证、改进输出格式

@@ -50,13 +50,8 @@ heading_structure:
 # ================================
 # 样式参考基准（2026年Word模板）
 # ================================
+# 注意：colors 配置已从 config.yaml 继承，此处仅保留模板特定样式
 style_reference:
-  # 颜色系统
-  colors:
-    MsBlue: "RGB 0,112,192"    # Word 风格蓝色
-    header_color: "RGB 0,0,0"
-    footer_color: "RGB 0,0,0"
-
   # 字体系统
   fonts:
     chinese_main: "KaiTi"       # 中文楷体
@@ -130,44 +125,14 @@ style_reference:
 # ================================
 # 验证规则
 # ================================
+# 注意：tolerance 和 acceptance_priority 配置已从 config.yaml 继承
+# 本配置文件仅指定模板特定的验证器列表
 validation:
   enabled_validators:
     - compilation
     - style_params
     - heading_consistency
     - visual_similarity
-
-  tolerance:
-    # 样式参数容忍度
-    font_size_diff: 0.5      # 字号误差容忍度（pt）
-    color_diff: 2            # 颜色误差容忍度（RGB）
-    spacing_diff: 0.05       # 间距误差容忍度（em）—— 约 0.2pt
-    margin_diff: 0.5         # 边距误差容忍度（mm）
-    line_height_diff: 0.1    # 行距误差容忍度（倍数）
-
-    # 视觉相似度容忍度
-    chars_per_line_diff: 1   # 每行字数误差容忍度（字）
-    line_position_diff: 2    # 换行位置误差容忍度（pt）
-
-    # 像素对比容忍度（仅当使用 Word 打印 PDF 基准时）
-    pixel_changed_ratio: 0.20  # 像素差异比例容忍度
-
-  # 验收优先级
-  acceptance_priority:
-    level_1: # 第一优先级：必须满足
-      - compilation_success
-      - no_warnings
-      - cross_platform_compatibility
-
-    level_2: # 第二优先级：高优先级
-      - style_parameter_consistency
-      - heading_text_consistency
-
-    level_3: # 第三优先级：中优先级
-      - visual_similarity
-
-    level_4: # 第四优先级：低优先级（辅助验证）
-      - pixel_comparison
 
 # ================================
 # 编译配置
