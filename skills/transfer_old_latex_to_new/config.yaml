@@ -1,0 +1,383 @@
+# transfer_old_latex_to_new 智能迁移技能配置文件
+# version: 1.0
+# last_updated: 2026-01-05
+
+# =============================================================================
+# 迁移核心参数
+# =============================================================================
+migration:
+  # 优化轮次控制
+  max_rounds: 5                    # 最大优化轮次（AI根据项目复杂度自动调整）
+  min_rounds: 3                    # 最小优化轮次
+  convergence_threshold: 0.05      # 收敛阈值（连续两轮改进<5%则退出）
+
+  # 备份策略
+  backup_mode: "snapshot"          # 备份模式: snapshot(快照)/copy(复制)/none(跳过)
+  backup_location: "auto"          # 备份位置: auto(../.backup/)/custom(自定义路径)
+  keep_backup_days: 30             # 自动清理备份保留天数
+
+  # 迁移模式（AI自动决策，此处为默认值）
+  default_strategy: "smart"        # smart(智能)/conservative(保守)/aggressive(激进)
+
+  # 内容生成策略
+  content_generation:
+    method: "smart"                # smart(调用技能)/placeholder(占位符)/skip(跳过)
+    placeholder_text: "\\textbf{[此部分内容需要补充]}"
+
+  # 引用处理
+  reference_handling: "preserve"   # preserve(保留原样)/update(更新编号)/recreate(重建)
+
+  # 图片与附件处理
+  figure_handling: "copy"           # copy(复制)/link(软链接)/skip(跳过)
+
+# =============================================================================
+# 质量阈值配置
+# =============================================================================
+quality_thresholds:
+  # 语义相似度（用于自动章节映射）
+  min_similarity: 0.7              # 最小语义相似度（低于此值需人工确认）
+
+  # 内容完整性
+  min_word_count: 50               # 最小章节字数（低于此值发出警告）
+  content_integrity: 0.95          # 内容完整性阈值（旧内容迁移比例）
+
+  # 引用完整性
+  max_ref_errors: 5                # 最大引用错误数（超过此值发出警告）
+  max_undefined_refs: 3            # 最大未定义引用数
+
+  # LaTeX编译
+  max_compile_warnings: 10         # 最大编译警告数
+  max_compile_errors: 0            # 最大编译错误数（必须为0）
+
+  # 逻辑连贯性
+  logical_coherence_threshold: 0.8 # 逻辑连贯性最低要求（AI评分）
+
+# =============================================================================
+# 编译参数配置
+# =============================================================================
+compilation:
+  # LaTeX引擎
+  engine: "xelatex"                # 编译引擎: xelatex/lualatex/pdflatex
+  passes: 4                        # 标准编译轮数
+  pass_sequence:                   # 编译序列
+    - "xelatex"
+    - "bibtex"
+    - "xelatex"
+    - "xelatex"
+
+  # 编译选项
+  interaction_mode: "nonstopmode"  # 交互模式: nonstopmode/batchmode/errorstopmode
+  halt_on_error: false             # 遇到错误是否立即中止
+
+  # 超时控制
+  timeout_per_pass: 120            # 单次编译超时(秒)
+  total_timeout: 600               # 总编译超时(秒)
+
+# =============================================================================
+# AI推理参数
+# =============================================================================
+ai:
+  # 模型选择
+  primary_model: "claude-opus-4-5" # 首选模型（用于复杂推理）
+  fallback_model: "claude-sonnet-4-5"  # 降级模型（用于简单任务）
+  embedding_model: "text-embedding-3-small"  # 嵌入模型（用于相似度计算）
+
+  # 生成参数
+  temperature: 0.3                 # 生成温度（低温度=更确定性的输出）
+  max_tokens_per_request: 8000     # 单次请求最大token数
+  top_p: 0.9                       # nucleus sampling参数
+  top_k: 40                        # top-k sampling参数
+
+  # 推理增强
+  enable_cot: true                 # 启用Chain-of-Thought推理
+  enable_self_reflection: true     # 启用自我反思机制
+  max_reflection_rounds: 2         # 最大反思轮次
+
+# =============================================================================
+# 输出控制
+# =============================================================================
+output:
+  # 报告生成
+  generate_report: true            # 生成迁移报告
+  generate_change_summary: true    # 生成变更摘要
+  generate_structure_comparison: true  # 生成结构对比
+
+  # 日志控制
+  verbose: true                    # 详细日志输出
+  log_level: "INFO"                # 日志级别: DEBUG/INFO/WARNING/ERROR
+  log_file: "migration.log"        # 日志文件名
+
+  # 中间文件
+  keep_intermediate: false         # 保留中间文件（用于调试）
+  intermediate_dir: ".migration_tmp"  # 中间文件目录
+
+  # 交付物
+  deliverables_dir: ".migration_deliverables"  # 交付物目录
+  deliverables:
+    - "migrated_proposal.pdf"      # 迁移后的PDF
+    - "migration_log.md"           # 迁移日志
+    - "change_summary.md"          # 变更摘要
+    - "structure_comparison.md"    # 结构对比
+    - "restore_guide.md"           # 恢复指南
+
+# =============================================================================
+# 智能决策规则（AI自主规划逻辑）
+# =============================================================================
+decision_rules:
+  # 迭代轮次决策
+  rounds_decision:
+    simple:
+      condition: "one_to_one_ratio >= 0.8"  # 简单一对一映射≥80%
+      max_rounds: 3
+    moderate:
+      condition: "one_to_many_ratio + many_to_one_ratio >= 0.3"  # 复杂映射≥30%
+      max_rounds: 5
+    complex:
+      condition: "new_added_count >= 3 OR structural_major_changes >= 2"
+      max_rounds: 7
+
+  # 迁移策略决策
+  strategy_decision:
+    conservative:
+      condition: "high_risk_issues == 0"  # 无高风险问题
+      description: "保守策略：优先保持原结构，最小化改动"
+    smart:
+      condition: "one_to_many_ratio + many_to_one_ratio >= 0.2"  # 存在复杂映射
+      description: "智能策略：AI自主决策拆分/合并策略"
+    aggressive:
+      condition: "new_added_count >= 5"  # 大量新增内容
+      description: "激进策略：大胆重组，最大化内容优化"
+
+  # 备份决策
+  backup_decision:
+    auto_snapshot:
+      condition: "backup_mode == 'snapshot'"
+      action: "create_git_stash"
+    manual_backup:
+      condition: "user_specified_backup_path"
+      action: "copy_to_specified_location"
+
+  # LaTeX编译失败处理
+  compilation_failure_handling:
+    missing_file:
+      action: "abort_and_report"
+      retry: false
+    syntax_error:
+      action: "attempt_auto_fix"
+      retry: true
+      max_retries: 3
+    reference_error:
+      action: "fix_references_and_continue"
+      retry: true
+    timeout:
+      action: "report_and_continue"
+      partial_result: true
+
+# =============================================================================
+# 结构映射启发式规则
+# =============================================================================
+mapping_heuristics:
+  # 标题相似度计算方法
+  title_similarity_method: "levenshtein"  # levenshtein/jaccard/embedding
+
+  # 标题相似度权重
+  title_similarity_weight: 0.4    # 标题相似度权重
+  content_similarity_weight: 0.3   # 内容相似度权重
+  position_proximity_weight: 0.2   # 位置接近度权重
+  structural_pattern_weight: 0.1   # 结构模式权重
+
+  # 相似度阈值
+  high_similarity_threshold: 0.85  # 高相似度阈值（自动确认）
+  medium_similarity_threshold: 0.7 # 中相似度阈值（AI推理确认）
+  low_similarity_threshold: 0.5    # 低相似度阈值（需人工确认）
+
+  # 拆分策略
+  split_strategies:
+    semantic_split:
+      description: "按语义边界拆分"
+      priority: 1
+    keyword_split:
+      description: "按关键词出现位置拆分"
+      priority: 2
+    paragraph_split:
+      description: "按段落边界拆分"
+      priority: 3
+    equal_split:
+      description: "等分拆分"
+      priority: 4  # 最后选择
+
+  # 合并策略
+  merge_strategies:
+    sequential_merge:
+      description: "顺序拼接，添加过渡段"
+      priority: 1
+    semantic_reorder:
+      description: "按语义重新排序后合并"
+      priority: 2
+    smart_merge:
+      description: "AI智能重组内容"
+      priority: 3
+
+# =============================================================================
+# 优化配置
+# =============================================================================
+optimization:
+  # 每轮优化重点
+  round_focus:
+    - round: 1
+      focus: ["logical_coherence", "transitions"]
+      tools: ["manual_review", "nsfc-writing-core"]
+    - round: 2
+      focus: ["terminology_consistency", "reference_integrity"]
+      tools: ["grep_terminology", "ref_validator"]
+    - round: 3
+      focus: ["content_depth", "evidence_quality"]
+      tools: ["nsfc-rationale-writer", "nsfc-innovation-writer"]
+    - round: 4
+      focus: ["formatting", "latex_compilation"]
+      tools: ["latex_compiler", "linter"]
+    - round: 5
+      focus: ["readability", "final_polish"]
+      tools: ["nsfc-writing-core", "human_review"]
+
+  # 收敛判断条件（满足任一即提前退出）
+  convergence_criteria:
+    - condition: "total_quality_score >= 0.9"
+      description: "总分≥90%"
+    - condition: "consecutive_improvement < 0.05 for 2 rounds"
+      description: "连续2轮改进<5%"
+    - condition: "latex_compilation == 1.0 AND all_scores >= 0.8"
+      description: "编译完美且无其他严重问题"
+    - condition: "no_issues_found"
+      description: "无发现任何问题"
+
+# =============================================================================
+# 风险评估
+# =============================================================================
+risk_assessment:
+  # 高风险定义
+  high_risk_indicators:
+    - "one_to_many拆分涉及核心章节（立项依据、研究内容）"
+    - "many_to_one合并导致逻辑跳跃"
+    - "新增关键章节（如研究基础、可行性）"
+    - "删除核心章节"
+
+  # 中风险定义
+  medium_risk_indicators:
+    - "合并章节需要添加过渡段"
+    - "引用标签需要全局更新"
+    - "LaTeX宏包不兼容"
+    - "图表引用失效"
+
+  # 低风险定义
+  low_risk_indicators:
+    - "简单一对一映射"
+    - "格式微调"
+    - "非核心章节迁移"
+
+# =============================================================================
+# 技能集成配置
+# =============================================================================
+skill_integration:
+  # 可调用的NSFC写作技能
+  available_skills:
+    nsfc-writing-core:
+      purpose: "统一术语、检查一致性"
+      trigger: "每次优化开始前"
+      priority: 1
+
+    nsfc-rationale-writer:
+      purpose: "补强立项依据"
+      trigger: "立项依据内容不足或质量低"
+      priority: 2
+
+    nsfc-aims-writer:
+      purpose: "补强研究内容与目标"
+      trigger: "研究内容章节需要优化"
+      priority: 2
+
+    nsfc-methods-feasibility-writer:
+      purpose: "补强方案可行性、生成风险应对"
+      trigger: "方案可行性章节需要优化或新增风险应对"
+      priority: 2
+
+    nsfc-innovation-writer:
+      purpose: "提炼创新点"
+      trigger: "特色与创新章节需要优化"
+      priority: 3
+
+    nsfc-foundation-conditions-writer:
+      purpose: "补强研究基础与工作条件"
+      trigger: "研究基础章节需要优化"
+      priority: 3
+
+    nsfc-workplan-writer:
+      purpose: "补强研究计划"
+      trigger: "研究计划章节需要优化"
+      priority: 3
+
+    nsfc-bib-manager:
+      purpose: "管理参考文献"
+      trigger: "引用格式不正确或缺失"
+      priority: 4
+
+  # 技能调用策略
+  call_strategy: "on_demand"        # on_demand(按需)/automatic(自动)/manual(手动)
+
+# =============================================================================
+# 调试选项
+# =============================================================================
+debug:
+  enabled: false                     # 调试模式开关
+  save_intermediate_json: true       # 保存所有中间JSON文件
+  log_ai_decisions: true             # 记录AI决策过程
+  verbose_error_messages: true       # 详细错误信息
+  performance_profiling: false       # 性能分析
+
+# =============================================================================
+# 版本兼容性
+# =============================================================================
+compatibility:
+  # 支持的NSFC模板版本
+  supported_versions:
+    - "2025"
+    - "2026"
+    - "2024"
+
+  # 版本映射表
+  version_mapping:
+    "2024_to_2025":
+      structural_changes: ["章节编号体系变化", "部分章节合并"]
+    "2025_to_2026":
+      structural_changes: ["板块重组", "新增风险应对章节"]
+
+  # 不兼容的版本对
+  incompatible_pairs: []
+
+# =============================================================================
+# 元数据
+# =============================================================================
+metadata:
+  skill_name: "transfer-old-latex-to-new"
+  skill_version: "1.0.0"
+  created_at: "2026-01-05"
+  last_updated: "2026-01-05"
+  author: "AI Agent (Claude Code)"
+  license: "MIT"
+
+  # 依赖项
+  dependencies:
+    python: ">=3.8"
+    latex: "texlive-full >= 2020"
+    required_packages:
+      - "ctex"
+      - "xcolor"
+      - "graphicx"
+      - "float"
+      - "hyperref"
+
+  # 推荐配置
+  recommended:
+    os: ["Linux", "macOS", "Windows"]
+    latex_editor: ["VSCode", "Overleaf", "TeXShop"]
+    git_integration: true
