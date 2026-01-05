@@ -31,6 +31,15 @@ skill开发的时候要遵守 '/Users/bensz/Nutstore Files/PythonCloud/Agents/pi
 请结合 plans/v202601051859.md，给出skill开发计划让我审核。
 ```
 
+## make_latex_model
+
+- 测试用脚本
+
+```
+请按步骤进行
+- 在 skills/make_latex_model/tests/Auto-Test-01 生成一个测试，评估 `make_latex_model`这个skill（下称`目标skill`）的能力。 以 projects/NSFC_Young 为例，利用 projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 对 projects/NSFC_Young 进行改造（当然，不要直接改动 projects/NSFC_Young 里的原始文件 ；所有过程都在测试目录里进行）。利用 auto-test-skill 这个skill进行自动化测试。每一轮测试完成后，目标skill都要变得更好；同时，把Auto-Test-01里上一轮测试的文件清空，在同一个测试目录里进行下一轮测试。如此循环，利用ai的智能不断地优化目标skill。直到目标skill完全正常工作或者超过10轮测试为止。
+```
+
 # Legacy
 
 - 请按 plans/v202601051748.md  这个计划设计skill，保存在当前项目的 skills 文件夹内。

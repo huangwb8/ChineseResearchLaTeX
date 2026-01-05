@@ -1,0 +1,110 @@
+# make_latex_model 测试实例配置
+# 测试版本: v202601052142
+# 测试日期: 2026-01-05
+
+test:
+  id: v202601052142
+  name: NSFC_Young 2026 Word模板转换测试
+  description: 评估make_latex_model将2026年Word模板转换为LaTeX样式的能力
+  created_at: 2026-01-05
+  skill_version: "1.3.1"
+
+source:
+  project: NSFC_Young
+  project_path: ../../../projects/NSFC_Young
+  word_template: 2026年最新word模板-青年科学基金项目（C类）-正文.doc
+  word_template_year: "2026"
+  word_template_path: ../../../projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc
+
+target:
+  output_dir: ./output
+  latex_project_dir: ./output/latex_project
+  artifacts_dir: ./output/artifacts
+  changes_dir: ./output/changes
+  baseline_dir: ./expected
+
+optimization:
+  level: moderate  # minimal | moderate | thorough
+  dry_run: false
+  max_iterations: 3
+
+validation:
+  priorities:
+    - name: compilation
+      weight: 0.40
+      required: true
+      checks:
+        - no_errors
+        - no_warnings
+        - cross_platform
+    - name: style_params
+      weight: 0.30
+      required: true
+      threshold: 0.80
+      checks:
+        - page_margins
+        - font_size
+        - line_spacing
+        - colors
+        - title_formatting
+        - list_styles
+    - name: visual_similarity
+      weight: 0.20
+      required: false
+      threshold: 0.70
+      checks:
+        - layout_similarity
+        - line_length
+        - line_breaks
+    - name: pixel_diff
+      weight: 0.10
+      required: false
+      threshold: 0.20
+      checks:
+        - changed_ratio
+        - key_regions
+
+  acceptance_criteria:
+    min_priority_1_pass: 1.0      # 100% 第一优先级必须通过
+    min_priority_2_pass: 0.80     # 80% 第二优先级
+    min_priority_3_pass: 0.70     # 70% 第三优先级
+    min_priority_4_pass: 0.0      # 第四优先级可选
+
+word_baseline:
+  # Word 打印 PDF 基准（强烈推荐）
+  path: ./expected/word_baseline.pdf
+  generation_method: libreoffice  # microsoft_word | libreoffice | online
+  resolution: 150  # DPI
+
+  # 如果没有 Word PDF 基准，可以降级使用 QuickLook（不推荐）
+  fallback:
+    use_quicklook: false
+    quicklook_resolution: 72
+    warning: "QuickLook渲染与Word不同，像素对比会失真"
+
+pixel_comparison:
+  enabled: true
+  method: image_diff  # image_diff | pdf_compare
+  resolution: 150
+  tolerance: 5
+  ignore_regions:
+    - page_numbers
+    - timestamps
+
+compilation:
+  engine: xelatex
+  passes: 4  # xelatex -> bibtex -> xelatex -> xelatex
+  timeout: 60  # seconds
+  clean_aux_files: true
+
+reporting:
+  generate_html: true
+  generate_pdf: true
+  include_diff: true
+  include_screenshots: true
+  verbosity: detailed  # minimal | normal | detailed
+
+artifacts:
+  keep_intermediate: false
+  compress: true
+  compression_format: tar.gz
