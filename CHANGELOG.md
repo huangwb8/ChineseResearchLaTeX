@@ -11,6 +11,11 @@
 ### Changed（变更）
 
 - 更新 `AGENTS.md` 与 `CLAUDE.md` 的目录结构示例，使 `skills/` 示例与当前仓库实际技能（`make_latex_model`）一致
+- **make_latex_model**：融入 `analyze_pdf.py` 工具到工作流
+  - 在 `SKILL.md` 步骤 2 中新增 "2.2 自动提取样式参数" 小节
+  - 在 `scripts/README.md` 中新增 `analyze_pdf.py` 工具文档（作为工具 #1）
+  - 优化 `analyze_pdf.py`：添加依赖检查、文件验证、改进输出格式
+  - 调整工具编号：`validate.sh` (#2)、`benchmark.sh` (#3)、`extract_headings.py` (#4)、`compare_headings.py` (#5)
 
 ### Added（新增）- Skills
 

@@ -1,10 +1,38 @@
-# make_latex_model 测试工具
+# make_latex_model 辅助工具集
 
-本目录包含 `make_latex_model` 技能的测试工具,用于自动化验证和性能基准测试。
+本目录包含 `make_latex_model` 技能的辅助工具，包括样式分析、标题对比、自动化验证和性能基准测试。
 
 ## 工具清单
 
-### 1. validate.sh - 自动化验证脚本
+### 1. analyze_pdf.py - PDF 样式分析工具
+
+**功能**: 从 PDF（Word 导出的基准 PDF）中自动提取关键样式参数
+
+**使用方法**:
+```bash
+# 安装依赖（首次使用）
+pip install PyMuPDF
+
+# 分析 Word PDF 基准
+python3 scripts/analyze_pdf.py projects/NSFC_Young/template/word_baseline.pdf
+```
+
+**输出内容**:
+- 📐 **页面布局**: 页面尺寸、边距（左/右/上/下，单位：cm）
+- 🔤 **字体统计**: 字体名称、使用频率、字号列表、颜色（RGB）
+- 📏 **行距分析**: 平均行距（pt）
+- 💾 **详细分析结果**: 自动保存为 `*_analysis.json`
+
+**使用场景**:
+- Word 模板更新时，自动提取新的样式参数
+- 对比不同年份模板的样式差异
+- 验证 LaTeX 样式配置是否正确
+
+**依赖**: `PyMuPDF` (fitz)
+
+---
+
+### 2. validate.sh - 自动化验证脚本
 
 **功能**: 自动检查技能状态和项目配置
 
@@ -45,7 +73,7 @@ cd skills/make_latex_model
 
 ---
 
-### 2. benchmark.sh - 性能基准测试
+### 3. benchmark.sh - 性能基准测试
 
 **功能**: 测量 LaTeX 编译性能
 
@@ -83,7 +111,7 @@ cd skills/make_latex_model
 
 ---
 
-### 3. extract_headings.py - 标题文字提取工具（新增）
+### 4. extract_headings.py - 标题文字提取工具
 
 **功能**: 从 Word 或 LaTeX 文件中提取标题文字结构
 
@@ -112,7 +140,7 @@ subsection_1_2: 2. 项目的研究内容、研究目标，以及拟解决的关�
 
 ---
 
-### 4. compare_headings.py - 标题文字对比工具（新增）
+### 5. compare_headings.py - 标题文字对比工具
 
 **功能**: 对比 Word 模板和 LaTeX 文件的标题文字差异
 

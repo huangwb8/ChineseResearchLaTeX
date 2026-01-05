@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 PDF 样式分析工具
 提取 PDF 中的关键样式信息:字号、颜色、间距等
+
+用于分析 Word 导出的 PDF 基准，自动提取样式参数
 """
 
 import sys
-import fitz  # PyMuPDF
 import json
 from pathlib import Path
 from collections import defaultdict
+
+# 检查依赖
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    print("❌ 错误: 缺少依赖库 PyMuPDF")
+    print("请运行: pip install PyMuPDF")
+    sys.exit(1)
 
 def extract_color_info(color):
     """提取颜色信息 (RGB 0-255)"""
@@ -148,12 +158,27 @@ def analyze_line_spacing(pdf_path, page_num=0):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python analyze_pdf.py <pdf_path>")
+        print("用法: python analyze_pdf.py <pdf_path>")
+        print("示例: python analyze_pdf.py word_baseline.pdf")
         sys.exit(1)
 
     pdf_path = sys.argv[1]
+    pdf_file = Path(pdf_path)
 
-    print(f"\n分析 PDF: {pdf_path}\n")
+    if not pdf_file.exists():
+        print(f"❌ 错误: 文件不存在: {pdf_path}")
+        sys.exit(1)
+
+    if not pdf_file.suffix.lower() == '.pdf':
+        print(f"⚠️  警告: 文件扩展名不是 .pdf: {pdf_path}")
+        print("继续分析...\n")
+
+    print(f"\n{'='*60}")
+    print(f"PDF 样式分析工具")
+    print(f"{'='*60}")
+    print(f"分析文件: {pdf_path}")
+    print(f"文件大小: {pdf_file.stat().st_size / 1024:.1f} KB")
+    print(f"{'='*60}\n")
 
     # 分析页面布局
     print("=" * 60)
@@ -193,6 +218,8 @@ def main():
     # 导出为 JSON
     output_path = Path(pdf_path).stem + "_analysis.json"
     output_data = {
+        "source_file": str(pdf_file),
+        "file_size_kb": round(pdf_file.stat().st_size / 1024, 2),
         "layout": layout,
         "fonts": fonts,
         "line_spacing_pt": line_spacing
@@ -201,7 +228,11 @@ def main():
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
-    print(f"\n详细分析结果已保存到: {output_path}")
+    print(f"\n{'='*60}")
+    print(f"✅ 分析完成")
+    print(f"{'='*60}")
+    print(f"详细分析结果已保存到: {output_path}")
+    print(f"{'='*60}\n")
 
 if __name__ == "__main__":
     main()
