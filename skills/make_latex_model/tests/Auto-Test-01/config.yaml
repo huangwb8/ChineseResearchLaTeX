@@ -1,0 +1,117 @@
+# ================================
+# Auto-Test-01 测试配置
+# ================================
+
+test_info:
+  name: "Auto-Test-01"
+  description: "自动化测试 make_latex_model skill"
+  version: "1.0.0"
+  created: "2026-01-05"
+
+# ================================
+# 目标 skill 配置
+# ================================
+target_skill:
+  name: "make_latex_model"
+  path: "/Volumes/2T01/Github/ChineseResearchLaTeX/skills/make_latex_model"
+
+# ================================
+# 测试项目配置
+# ================================
+test_project:
+  name: "NSFC_Young"
+  source_path: "/Volumes/2T01/Github/ChineseResearchLaTeX/projects/NSFC_Young"
+  workspace_path: "./workspace/NSFC_Young"
+
+# ================================
+# Word 模板配置
+# ================================
+word_template:
+  file: "2026年最新word模板-青年科学工程项目（C类）-正文.doc"
+  path: "/Volumes/2T01/Github/ChineseResearchLaTeX/projects/NSFC_Young/template"
+  year: "2026"
+  baseline_output: "./artifacts/baseline/word.pdf"
+  png_output: "./artifacts/baseline/word.png"
+  png_resolution: 150  # DPI
+
+# ================================
+# 测试轮次配置
+# ================================
+test_rounds:
+  max_rounds: 10
+  current_round: 1
+  success_criteria:
+    - all_priority_1_checks_pass
+    - at_least_80_percent_priority_2_checks_pass
+    - at_least_60_percent_priority_3_checks_pass
+
+# ================================
+# 验收标准（按优先级）
+# ================================
+acceptance_criteria:
+  priority_1:  # 必须全部通过
+    - compilation_success
+    - no_warnings
+
+  priority_2:  # 至少 80% 通过
+    - line_spacing_consistency
+    - font_size_consistency
+    - color_consistency
+    - margin_consistency
+    - heading_style_consistency
+
+  priority_3:  # 至少 60% 通过
+    - visual_similarity
+    - chars_per_line_similarity
+    - line_position_alignment
+
+  priority_4:  # 辅助验证
+    - pixel_comparison
+    - changed_ratio_threshold: 0.20
+
+# ================================
+# 自动化测试配置
+# ================================
+automation:
+  # 是否使用 auto-test-skill
+  use_auto_test_skill: true
+
+  # 每轮测试后是否自动优化 skill
+  auto_optimize_skill: true
+
+  # 是否保留所有轮次的输出
+  keep_all_rounds_output: true
+
+  # 测试超时时间（秒）
+  timeout_per_round: 300
+
+# ================================
+# 编译配置
+# ================================
+compilation:
+  engine: "xelatex"
+  interaction_mode: "nonstopmode"
+  max_runs: 4
+  sequence:
+    - xelatex
+    - bibtex
+    - xelatex
+    - xelatex
+
+# ================================
+# 像素对比配置
+# ================================
+pixel_comparison:
+  enabled: true
+  method: "image magick"  # 或 "Pillow"
+  tolerance: 0.20
+  ignore_text_content: true  # 忽略文本内容差异，只关注样式
+
+# ================================
+# 日志配置
+# ================================
+logging:
+  log_dir: "./logs"
+  summary_log: "./logs/summary.log"
+  log_level: "INFO"
+  verbose: true
