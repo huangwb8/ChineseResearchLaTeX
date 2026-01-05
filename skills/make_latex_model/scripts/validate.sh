@@ -115,11 +115,11 @@ echo "========================================="
 echo ""
 
 # 检查行距设置
-if grep -q "\\renewcommand{\\baselinestretch}{1.0}" "$CONFIG"; then
-  pass "行距设置: baselinestretch{1.0} (符合 v1.2.0 标准)"
-elif grep -q "\\renewcommand{\\baselinestretch}" "$CONFIG"; then
-  LINE_STRETCH=$(grep "\\renewcommand{\\baselinestretch}" "$CONFIG" | sed 's/.*{\(.*\)}.*/\1/')
-  warn "行距设置: baselinestretch{$LINE_STRETCH} (建议为 1.0)"
+if grep -q "baselinestretch.*1\.5" "$CONFIG"; then
+  pass "行距设置: baselinestretch{1.5} (符合 Word 2026 模板标准)"
+elif grep -q "baselinestretch" "$CONFIG"; then
+  LINE_STRETCH=$(grep "baselinestretch" "$CONFIG" | sed 's/.*{\(.*\)}.*/\1/')
+  warn "行距设置: baselinestretch{$LINE_STRETCH} (建议为 1.5)"
 else
   fail "行距设置: 未找到 baselinestretch 定义"
 fi
@@ -184,8 +184,12 @@ info "像素对比仅当使用 Word 打印 PDF 基准时才有意义"
 echo ""
 echo "如需进行像素对比:"
 echo "  1. 准备 Word 打印 PDF 基准"
+echo "     详见: docs/BASELINE_GUIDE.md"
 echo "  2. 将 PDF 转换为 PNG (pdftoppm)"
 echo "  3. 运行像素对比脚本"
+echo ""
+echo "快速生成基准:"
+echo "  使用 LibreOffice: soffice --headless --convert-to pdf --outdir baseline template.doc"
 echo ""
 warn "如使用 QuickLook 基准,像素对比指标会失真,不建议进行"
 
