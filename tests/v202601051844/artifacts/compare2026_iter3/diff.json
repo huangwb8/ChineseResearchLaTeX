@@ -1,0 +1,29 @@
+{
+  "image_a": "/Users/bensz/Documents/GitHub/ChineseResearchLaTeX/tests/v202601051844/artifacts/compare2026_iter3/latex.png",
+  "image_b": "/Users/bensz/Documents/GitHub/ChineseResearchLaTeX/tests/v202601051844/artifacts/baseline/word.png",
+  "size": {
+    "width": 1414,
+    "height": 2000
+  },
+  "threshold": 16,
+  "mean_abs_diff": 21.693711810466763,
+  "changed_pixels": 517199,
+  "total_pixels": 2828000,
+  "changed_ratio": 0.18288507779349364,
+  "crop": {
+    "box": {
+      "left": 0,
+      "top": 0,
+      "right": 1414,
+      "bottom": 1200
+    },
+    "size": {
+      "width": 1414,
+      "height": 1200
+    },
+    "mean_abs_diff": 19.800031235266385,
+    "changed_pixels": 284767,
+    "total_pixels": 1696800,
+    "changed_ratio": 0.16782590759075908
+  }
+}
