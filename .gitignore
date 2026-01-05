@@ -1,7 +1,123 @@
+# =============================================================================
+# LaTeX 编译辅助文件
+# =============================================================================
+
+# 通用辅助文件
 *.aux
-*.bbl
-*.blg
 *.log
 *.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
 *.synctex.gz
-*.code-workspace
+*.fls
+*.fdb_latexmk
+*.bcf
+*.run.xml
+*.nav
+*.snm
+*.vrb
+
+# Latexmk
+*.latexmk
+*.latexmkrc
+
+# =============================================================================
+# 系统文件
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# =============================================================================
+# 编辑器/IDE 临时文件
+# =============================================================================
+
+# Vim
+*.swp
+*.swo
+*.swn
+.*.sw*
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+
+# =============================================================================
+# Python 相关
+# =============================================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =============================================================================
+# 日志和临时文件
+# =============================================================================
+
+*.tmp
+*.temp
+latex-helper.log
+
+# =============================================================================
+# 项目特定
+# =============================================================================
+
+# 保留 workspace 配置（移除原有忽略规则）
+# *.code-workspace  <-- 已删除此行
+
+# 备份文件
+*.bak
+*.backup
+*.orig
