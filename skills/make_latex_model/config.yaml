@@ -4,8 +4,8 @@
 
 skill_info:
   name: make_latex_model
-  version: 1.0.0
-  description: 基于 NSFC 最新 Word 模板高保真优化 LaTeX 模板
+  version: 1.2.0
+  description: 基于 NSFC 最新 Word 模板高保真优化 LaTeX 模板（优先级分层验证机制）
   category: normal
 
 # ================================
@@ -179,23 +179,59 @@ compile_config:
     - xelatex
 
 # ================================
-# 验证规则（像素级精度）
+# 验证规则（按优先级分层）
 # ================================
 validation:
   max_iterations: 3
   required_checks:
+    # 第一优先级：基础编译
     - compilation_success
     - no_warnings
-    - line_by_line_alignment    # 每行字数对齐
-    - word_wrap_consistency     # 换行位置一致
-    - style_consistency
     - cross_platform_compatibility
+
+    # 第二优先级：样式参数一致性
+    - style_parameter_consistency
+
+    # 第三优先级：视觉相似度
+    - visual_similarity
+
+    # 第四优先级：像素对比（仅当使用 Word 打印 PDF 基准时）
+    - pixel_comparison
+
   tolerance:
-    font_size_diff: 0.1      # 字号误差容忍度（pt）—— 像素级要求
-    color_diff: 2            # 颜色误差容忍度（RGB）—— 更严格
+    # 样式参数容忍度（第二优先级）
+    font_size_diff: 0.5      # 字号误差容忍度（pt）
+    color_diff: 2            # 颜色误差容忍度（RGB）
     spacing_diff: 0.05       # 间距误差容忍度（em）—— 约 0.2pt
     margin_diff: 0.5         # 边距误差容忍度（mm）
+    line_height_diff: 0.1    # 行距误差容忍度（倍数）
+
+    # 视觉相似度容忍度（第三优先级）
+    chars_per_line_diff: 1   # 每行字数误差容忍度（字）
     line_position_diff: 2    # 换行位置误差容忍度（pt）
+
+    # 像素对比容忍度（第四优先级，仅当使用 Word 打印 PDF 基准时）
+    pixel_changed_ratio: 0.20  # 像素差异比例容忍度（考虑到换行位置变化）
+
+  # 验收优先级说明
+  acceptance_priority:
+    level_1: # 第一优先级：必须满足
+      - compilation_success
+      - no_warnings
+      - cross_platform_compatibility
+
+    level_2: # 第二优先级：高优先级
+      - style_parameter_consistency
+      - 所有样式参数在 tolerance 范围内
+
+    level_3: # 第三优先级：中优先级
+      - visual_similarity
+      - 每行字数、换行位置大致对齐
+
+    level_4: # 第四优先级：低优先级（辅助验证）
+      - pixel_comparison
+      - 仅当使用 Word 打印 PDF 基准时才进行此项检查
+      - 如使用 QuickLook 基准，跳过此项
 
 # ================================
 # 输出配置

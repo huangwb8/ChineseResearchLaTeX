@@ -1,0 +1,17 @@
+{
+  "test_info": {
+    "test_time": "2026-01-05T13:14:12Z",
+    "platform": "Darwin 25.2.0",
+    "machine": "arm64"
+  },
+  "compilation": {
+    "times": 3,
+    "total_time_ms": 2372,
+    "average_time_ms": 790,
+    "average_time_sec": 0.79
+  },
+  "pdf": {
+    "size_bytes": 1164515,
+    "size_mb": 1.11
+  }
+}
