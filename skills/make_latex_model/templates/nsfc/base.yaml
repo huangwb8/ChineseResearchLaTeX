@@ -1,0 +1,183 @@
+# ================================
+# NSFC 基础模板配置
+# ================================
+
+template:
+  name: "NSFC_Base"
+  display_name: "国家自然科学基金基础模板"
+  version: "2026"
+  category: "research_funding"
+
+# ================================
+# 目录结构定义
+# ================================
+structure:
+  content_dir: "extraTex"       # 内容文件目录
+  config_file: "@config.tex"    # 样式配置文件
+  main_file: "main.tex"         # 主文件
+  template_dir: "template"      # Word 模板目录
+  fonts_dir: "fonts"            # 字体目录
+  figures_dir: "figures"        # 图片目录
+
+# ================================
+# 标题结构定义
+# ================================
+heading_structure:
+  sections:
+    - id: "section_1"
+      level: 1
+      latex_command: "section"
+      max_subsections: 5
+
+    - id: "section_2"
+      level: 1
+      latex_command: "section"
+      max_subsections: 4
+
+    - id: "section_3"
+      level: 1
+      latex_command: "section"
+      max_subsections: 5
+
+  # 提取规则
+  extraction:
+    patterns:
+      section: r'\\section\*?\{([^}]+)\}'
+      subsection: r'\\subsection\*?\{([^}]+)\}'
+      subsubsection: r'\\subsubsection\*?\{([^}]+)\}'
+      paragraph: r'\\paragraph\*?\{([^}]+)\}'
+
+# ================================
+# 样式参考基准（2026年Word模板）
+# ================================
+style_reference:
+  # 颜色系统
+  colors:
+    MsBlue: "RGB 0,112,192"    # Word 风格蓝色
+    header_color: "RGB 0,0,0"
+    footer_color: "RGB 0,0,0"
+
+  # 字体系统
+  fonts:
+    chinese_main: "KaiTi"       # 中文楷体
+    english_main: "Times New Roman"
+    fake_bold_factor: 2.5
+
+  # 字号系统（单位：pt）
+  font_sizes:
+    chuhao: 42
+    xiaochuhao: 36
+    yihao: 26
+    erhao: 22
+    xiaoerhao: 18
+    sanhao: 16
+    sihao: 14
+    xiaosihao: 12
+    wuhao: 10.5
+
+  # 页面设置
+  page:
+    margin_left: "3.20cm"
+    margin_right: "3.14cm"
+    margin_top: "2.54cm"
+    margin_bottom: "2.54cm"
+    line_spacing: 1.5
+
+  # 标题样式
+  headings:
+    section:
+      font_size: 14        # 四号
+      font_weight: bold
+      color: MsBlue
+      indent: "1.45em"
+      spacing_before: 0
+      spacing_after: 0
+
+    subsection:
+      font_size: 14        # 四号
+      font_weight: normal
+      color: MsBlue
+      indent: "1.45em"
+      line_spacing: 1.0
+
+    subsubsection:
+      font_size: 13.5
+      font_weight: bold
+      color: MsBlue
+      numbered: true       # 编号格式：1.1, 1.2
+      indent: "1.1em"
+      sep: "0.5em"
+
+    subsubsubsection:
+      font_weight: bold
+      numbered: true       # 编号格式：（1）
+      indent: "1em"
+      sep: "0.5pt"
+
+  # 列表样式
+  lists:
+    enumerate:
+      label_format: "（\\arabic*）"
+      color: MsBlue
+      font_weight: bold
+      left_margin: 0
+      item_indent: "4em"
+      item_sep: 0
+      label_sep: "0.1pt"
+      parsep: 0
+      topsep: 0
+
+# ================================
+# 验证规则
+# ================================
+validation:
+  enabled_validators:
+    - compilation
+    - style_params
+    - heading_consistency
+    - visual_similarity
+
+  tolerance:
+    # 样式参数容忍度
+    font_size_diff: 0.5      # 字号误差容忍度（pt）
+    color_diff: 2            # 颜色误差容忍度（RGB）
+    spacing_diff: 0.05       # 间距误差容忍度（em）—— 约 0.2pt
+    margin_diff: 0.5         # 边距误差容忍度（mm）
+    line_height_diff: 0.1    # 行距误差容忍度（倍数）
+
+    # 视觉相似度容忍度
+    chars_per_line_diff: 1   # 每行字数误差容忍度（字）
+    line_position_diff: 2    # 换行位置误差容忍度（pt）
+
+    # 像素对比容忍度（仅当使用 Word 打印 PDF 基准时）
+    pixel_changed_ratio: 0.20  # 像素差异比例容忍度
+
+  # 验收优先级
+  acceptance_priority:
+    level_1: # 第一优先级：必须满足
+      - compilation_success
+      - no_warnings
+      - cross_platform_compatibility
+
+    level_2: # 第二优先级：高优先级
+      - style_parameter_consistency
+      - heading_text_consistency
+
+    level_3: # 第三优先级：中优先级
+      - visual_similarity
+
+    level_4: # 第四优先级：低优先级（辅助验证）
+      - pixel_comparison
+
+# ================================
+# 编译配置
+# ================================
+compile_config:
+  engine: xelatex
+  interaction_mode: nonstopmode
+  max_runs: 4
+  sequence:
+    - xelatex
+    - bibtex
+    - xelatex
+    - xelatex

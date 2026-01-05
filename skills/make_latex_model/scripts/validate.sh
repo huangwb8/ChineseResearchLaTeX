@@ -1,18 +1,34 @@
 #!/bin/bash
 # ================================
-# make_latex_model 验证自动化脚本
+# make_latex_model 验证自动化脚本（通用化版本）
 # ================================
+#
+# 使用方法:
+#   # 验证指定项目（自动检测模板）
+#   ./scripts/validate.sh --project projects/NSFC_Young
+#
+#   # 验证指定项目并指定模板
+#   ./scripts/validate.sh --project projects/MyProject --template thesis/bachelor
+#
+#   # 使用项目名称（自动查找项目）
+#   ./scripts/validate.sh --project NSFC_Young
+#
+#   # 查看帮助
+#   ./scripts/validate.sh --help
+#
 
-# 不使用 set -e,手动控制错误处理
+set -euo pipefail
 
-# 配置
+# ================================
+# 默认配置
+# ================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BASE_DIR="$(cd "$SKILL_DIR/../.." && pwd)"
-PROJECT="$BASE_DIR/projects/NSFC_Young"
-CONFIG="$PROJECT/extraTex/@config.tex"
-SKILL_MD="$SKILL_DIR/SKILL.md"
-CONFIG_YAML="$SKILL_DIR/config.yaml"
+
+# 默认项目
+DEFAULT_PROJECT="NSFC_Young"
+DEFAULT_TEMPLATE=""
 
 # 颜色定义
 GREEN='\033[0;32m'
@@ -26,33 +42,114 @@ PASS_COUNT=0
 WARN_COUNT=0
 FAIL_COUNT=0
 
+# ================================
+# 解析命令行参数
+# ================================
+PROJECT=""
+TEMPLATE=""
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --project)
+      PROJECT="$2"
+      shift 2
+      ;;
+    --template)
+      TEMPLATE="$2"
+      shift 2
+      ;;
+    --help|-h)
+      echo "用法: $0 [OPTIONS]"
+      echo ""
+      echo "选项:"
+      echo "  --project PATH    项目路径或名称（如 NSFC_Young 或 projects/NSFC_Young）"
+      echo "  --template NAME   模板名称（如 nsfc/young，留空则自动检测）"
+      echo "  --help, -h        显示帮助信息"
+      echo ""
+      echo "示例:"
+      echo "  $0 --project NSFC_Young"
+      echo "  $0 --project projects/NSFC_Young"
+      echo "  $0 --project projects/MyProject --template thesis/bachelor"
+      exit 0
+      ;;
+    *)
+      echo -e "${RED}错误: 未知参数 $1${NC}"
+      echo "使用 --help 查看帮助"
+      exit 1
+      ;;
+  esac
+done
+
+# 如果未指定项目，使用默认项目
+if [ -z "$PROJECT" ]; then
+  PROJECT="$DEFAULT_PROJECT"
+fi
+
+# ================================
+# 解析项目路径
+# ================================
+# 支持两种格式:
+# 1. 项目名称: NSFC_Young -> $BASE_DIR/projects/NSFC_Young
+# 2. 相对/绝对路径: projects/NSFC_Young -> 直接使用
+
+if [[ "$PROJECT" != /* ]] && [[ "$PROJECT" != .* ]]; then
+  # 不是绝对路径也不是相对路径，可能是项目名称
+  if [[ "$PROJECT" != *"/"* ]]; then
+    # 纯项目名称
+    PROJECT_PATH="$BASE_DIR/projects/$PROJECT"
+  else
+    # 相对路径
+    PROJECT_PATH="$BASE_DIR/$PROJECT"
+  fi
+else
+  # 绝对路径或以 . 开头的相对路径
+  PROJECT_PATH="$PROJECT"
+fi
+
+# 转换为绝对路径
+PROJECT_PATH="$(cd "$PROJECT_PATH" 2>/dev/null && pwd)" || {
+  echo -e "${RED}错误: 项目路径不存在: $PROJECT_PATH${NC}"
+  exit 1
+}
+
+# 项目配置
+CONFIG="$PROJECT_PATH/extraTex/@config.tex"
+MAIN_TEX="$PROJECT_PATH/main.tex"
+SKILL_MD="$SKILL_DIR/SKILL.md"
+CONFIG_YAML="$SKILL_DIR/config.yaml"
+
+# ================================
 # 辅助函数
+# ================================
 pass() {
   echo -e "${GREEN}✅${NC} $1"
-  ((PASS_COUNT++))
+  ((PASS_COUNT++)) || true
 }
 
 warn() {
   echo -e "${YELLOW}⚠️${NC} $1"
-  ((WARN_COUNT++))
+  ((WARN_COUNT++)) || true
 }
 
 fail() {
   echo -e "${RED}❌${NC} $1"
-  ((FAIL_COUNT++))
+  ((FAIL_COUNT++)) || true
 }
 
 info() {
   echo -e "${BLUE}ℹ️${NC} $1"
 }
 
+# ================================
 # 开始验证
+# ================================
 echo "========================================="
 echo "  make_latex_model 验证报告"
 echo "========================================="
 echo ""
 echo "测试时间: $(date)"
-echo "项目路径: $PROJECT"
+echo "项目路径: $PROJECT_PATH"
+echo "模板: ${TEMPLATE:-<自动检测>}"
 echo ""
 
 # ========================================
@@ -64,10 +161,10 @@ echo "========================================="
 echo ""
 
 # 检查项目目录
-if [ -d "$PROJECT" ]; then
-  pass "项目目录存在: $PROJECT"
+if [ -d "$PROJECT_PATH" ]; then
+  pass "项目目录存在: $PROJECT_PATH"
 else
-  fail "项目目录不存在: $PROJECT"
+  fail "项目目录不存在: $PROJECT_PATH"
 fi
 
 # 检查配置文件
@@ -77,12 +174,19 @@ else
   fail "配置文件不存在: @config.tex"
 fi
 
+# 检查主文件
+if [ -f "$MAIN_TEX" ]; then
+  pass "主文件存在: main.tex"
+else
+  fail "主文件不存在: main.tex"
+fi
+
 # 检查编译产物
-if [ -f "$PROJECT/main.pdf" ]; then
+if [ -f "$PROJECT_PATH/main.pdf" ]; then
   pass "编译成功: main.pdf 存在"
 
   # 获取文件大小
-  PDF_SIZE=$(ls -lh "$PROJECT/main.pdf" | awk '{print $5}')
+  PDF_SIZE=$(ls -lh "$PROJECT_PATH/main.pdf" | awk '{print $5}')
   info "PDF 文件大小: $PDF_SIZE"
 else
   fail "编译失败: main.pdf 不存在"
@@ -154,7 +258,7 @@ else
   warn "Section 标题格式: 未找到 titleformat 定义"
 fi
 
-# ⚠️ 新增：检查标题文字一致性
+# ⚠️ 检查标题文字一致性
 echo ""
 echo "----------------------------------------"
 echo "标题文字一致性检查"
@@ -163,15 +267,15 @@ echo "----------------------------------------"
 # 检查 Python 和 compare_headings.py 是否可用
 if command -v python3 &> /dev/null && [ -f "$SCRIPT_DIR/compare_headings.py" ]; then
   # 查找 Word 模板文件
-  WORD_TEMPLATE=$(find "$PROJECT/template" -name "*.docx" 2>/dev/null | head -n 1)
+  WORD_TEMPLATE=$(find "$PROJECT_PATH/template" -name "*.docx" 2>/dev/null | head -n 1)
 
   if [ -n "$WORD_TEMPLATE" ]; then
     info "正在对比标题文字..."
     info "Word 模板: $WORD_TEMPLATE"
-    info "LaTeX 文件: $PROJECT/main.tex"
+    info "LaTeX 文件: $MAIN_TEX"
 
     # 运行对比脚本
-    COMPARE_OUTPUT=$(python3 "$SCRIPT_DIR/compare_headings.py" "$WORD_TEMPLATE" "$PROJECT/main.tex" 2>&1)
+    COMPARE_OUTPUT=$(python3 "$SCRIPT_DIR/compare_headings.py" "$WORD_TEMPLATE" "$MAIN_TEX" 2>&1)
     COMPARE_EXIT_CODE=$?
 
     if [ $COMPARE_EXIT_CODE -eq 0 ]; then
@@ -184,7 +288,7 @@ if command -v python3 &> /dev/null && [ -f "$SCRIPT_DIR/compare_headings.py" ]; 
         pass "标题文字完全匹配 ($MATCHED 个)"
       else
         warn "标题文字存在差异: 匹配 $MATCHED | 差异 $DIFFERENCES | 仅在一方 $ONLY"
-        info "详细报告: python3 $SCRIPT_DIR/compare_headings.py $WORD_TEMPLATE $PROJECT/main.tex --report heading_report.html"
+        info "详细报告: python3 $SCRIPT_DIR/compare_headings.py $WORD_TEMPLATE $MAIN_TEX --report heading_report.html"
       fi
     else
       warn "标题对比失败: $COMPARE_OUTPUT"

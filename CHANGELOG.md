@@ -14,6 +14,27 @@
 
 ### Added（新增）- Skills
 
+- **make_latex_model v2.0.0** - 通用化重构
+  - **核心架构重构**：实现配置与代码分离，支持任意 LaTeX 模板
+  - **分层配置系统**：
+    - `config.yaml`：技能默认配置
+    - `templates/`：模板配置目录（支持继承）
+    - `.template.yaml`：项目本地配置
+  - **新增核心模块**：
+    - `core/config_loader.py`：配置加载器（支持三层合并和继承）
+    - `core/template_base.py`：模板基类
+    - `core/validator_base.py`：验证器基类
+  - **模板配置**：
+    - `templates/nsfc/base.yaml`：NSFC 基础模板
+    - `templates/nsfc/young.yaml`：青年基金模板
+    - `templates/nsfc/general.yaml`：面上项目模板
+    - `templates/nsfc/local.yaml`：地区基金模板
+  - **工具脚本重构**（支持命令行参数）：
+    - `validate.sh --project PATH [--template NAME]`
+    - `extract_headings.py --file PATH [--project PATH] [--config PATH]`
+  - **向后兼容**：现有 NSFC 项目无需修改即可继续使用
+  - **测试覆盖**：新增向后兼容性测试 `tests/test_backward_compat.py`
+
 - **make_latex_model v1.4.0** - 标题文字对齐功能
   - 新增自动化工具：
     - `scripts/extract_headings.py`：从 Word/LaTeX 提取标题文字

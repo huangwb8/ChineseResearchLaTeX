@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-标题文字提取工具
+标题文字提取工具（通用化版本）
 从 Word 模板或 LaTeX 文件中提取标题文字结构
 
 使用方法:
     # 从 Word 文档提取
     python scripts/extract_headings.py word --file template.docx
 
-    # 从 LaTeX 文件提取
+    # 从 LaTeX 文件提取（使用默认配置）
     python scripts/extract_headings.py latex --file main.tex
+
+    # 从 LaTeX 文件提取（指定模板配置）
+    python scripts/extract_headings.py latex --file main.tex --config templates/nsfc/young.yaml
 
     # 输出为 JSON
     python scripts/extract_headings.py latex --file main.tex --format json
+
+    # 指定项目路径（自动检测模板）
+    python scripts/extract_headings.py latex --file main.tex --project projects/NSFC_Young
 """
 
 import argparse
@@ -22,13 +28,24 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
+# 添加 core 模块到路径
+SCRIPT_DIR = Path(__file__).parent
+CORE_DIR = SCRIPT_DIR.parent / "core"
+sys.path.insert(0, str(CORE_DIR))
 
-def extract_from_latex(tex_file: Path) -> Dict[str, str]:
+try:
+    from config_loader import ConfigLoader
+except ImportError:
+    ConfigLoader = None
+
+
+def extract_from_latex(tex_file: Path, config: Optional[Dict] = None) -> Dict[str, str]:
     """
     从 LaTeX 文件中提取标题文字
 
     Args:
         tex_file: LaTeX 文件路径
+        config: 模板配置（可选，用于自定义标题提取规则）
 
     Returns:
         标题字典，如 {"section_1": "（一）立项依据与研究内容", "subsection_1_1": "1. 项目的立项依据"}
@@ -38,8 +55,20 @@ def extract_from_latex(tex_file: Path) -> Dict[str, str]:
     with open(tex_file, 'r', encoding='utf-8') as f:
         content = f.read()
 
+    # 如果提供了配置，使用配置中的提取规则
+    if config and "heading_structure" in config:
+        extraction_rules = config["heading_structure"].get("extraction", {})
+        patterns = extraction_rules.get("patterns", {})
+
+        # 使用配置的正则表达式
+        section_pattern = patterns.get("section", r'\\section\*?\{([^}]+)\}')
+        subsection_pattern = patterns.get("subsection", r'\\subsection\*?\{([^}]+)\}')
+    else:
+        # 默认模式
+        section_pattern = r'\\section\{([^}]+)\}'
+        subsection_pattern = r'\\subsection\{([^}]+)\}'
+
     # 提取 \section{} 标题
-    section_pattern = r'\\section\{([^}]+)\}'
     sections = re.findall(section_pattern, content)
 
     for i, section in enumerate(sections, start=1):
@@ -48,7 +77,6 @@ def extract_from_latex(tex_file: Path) -> Dict[str, str]:
         headings[f'section_{i}'] = section_clean
 
     # 提取 \subsection{} 标题
-    subsection_pattern = r'\\subsection\{([^}]+)\}'
     subsections = re.findall(subsection_pattern, content)
 
     section_num = 1
@@ -58,10 +86,26 @@ def extract_from_latex(tex_file: Path) -> Dict[str, str]:
         subsection_clean = clean_latex_text(subsection)
 
         # 判断属于哪个 section（根据 LaTeX 文件顺序）
-        # 简化处理：假设 subsection 按顺序排列
-        if subsection_num > 5:  # 假设每个 section 最多 5 个 subsection
-            section_num += 1
-            subsection_num = 1
+        # 如果有配置，使用配置中的 max_subsections
+        if config:
+            max_subsections = 5  # 默认值
+            heading_structure = config.get("heading_structure", {})
+            sections_config = heading_structure.get("sections", [])
+
+            # 尝试找到对应的 section 配置
+            for section_config in sections_config:
+                if section_config.get("id") == f"section_{section_num}":
+                    max_subsections = section_config.get("max_subsections", 5)
+                    break
+
+            if subsection_num > max_subsections:
+                section_num += 1
+                subsection_num = 1
+        else:
+            # 简化处理：假设每个 section 最多 5 个 subsection
+            if subsection_num > 5:
+                section_num += 1
+                subsection_num = 1
 
         headings[f'subsection_{section_num}_{subsection_num}'] = subsection_clean
         subsection_num += 1
@@ -138,17 +182,54 @@ def extract_from_word(doc_file: Path) -> Dict[str, str]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='从 Word 或 LaTeX 文件中提取标题文字')
+    parser = argparse.ArgumentParser(
+        description='从 Word 或 LaTeX 文件中提取标题文字',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  # 从 Word 文档提取
+  %(prog)s word --file template.docx
+
+  # 从 LaTeX 文件提取
+  %(prog)s latex --file main.tex
+
+  # 指定模板配置
+  %(prog)s latex --file main.tex --config templates/nsfc/young.yaml
+
+  # 指定项目（自动检测模板）
+  %(prog)s latex --file main.tex --project projects/NSFC_Young
+        """
+    )
+
     parser.add_argument('mode', choices=['word', 'latex'], help='提取模式')
     parser.add_argument('--file', type=Path, required=True, help='文件路径')
     parser.add_argument('--format', choices=['text', 'json'], default='text', help='输出格式')
     parser.add_argument('--output', type=Path, help='输出文件路径（可选）')
 
+    # 新增参数
+    parser.add_argument('--config', type=Path, help='模板配置文件路径（YAML）')
+    parser.add_argument('--project', type=Path, help='项目路径（用于自动检测模板）')
+
     args = parser.parse_args()
+
+    # 加载配置
+    config = None
+    if args.mode == 'latex':
+        if ConfigLoader:
+            if args.project:
+                # 从项目路径加载配置
+                skill_dir = SCRIPT_DIR.parent
+                loader = ConfigLoader(skill_dir, args.project)
+                config = loader.load()
+            elif args.config:
+                # 直接加载配置文件
+                import yaml
+                with open(args.config, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)
 
     # 提取标题
     if args.mode == 'latex':
-        headings = extract_from_latex(args.file)
+        headings = extract_from_latex(args.file, config)
     else:
         headings = extract_from_word(args.file)
 
@@ -160,6 +241,11 @@ def main():
         lines = []
         lines.append('# 标题文字提取结果')
         lines.append(f'# 源文件: {args.file}')
+
+        if config:
+            template_name = config.get('template', {}).get('name', 'Unknown')
+            lines.append(f'# 模板: {template_name}')
+
         lines.append('')
 
         # 按 section 分组输出
