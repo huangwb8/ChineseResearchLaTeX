@@ -154,6 +154,53 @@ else
   warn "Section 标题格式: 未找到 titleformat 定义"
 fi
 
+# ⚠️ 新增：检查标题文字一致性
+echo ""
+echo "----------------------------------------"
+echo "标题文字一致性检查"
+echo "----------------------------------------"
+
+# 检查 Python 和 compare_headings.py 是否可用
+if command -v python3 &> /dev/null && [ -f "$SCRIPT_DIR/compare_headings.py" ]; then
+  # 查找 Word 模板文件
+  WORD_TEMPLATE=$(find "$PROJECT/template" -name "*.docx" 2>/dev/null | head -n 1)
+
+  if [ -n "$WORD_TEMPLATE" ]; then
+    info "正在对比标题文字..."
+    info "Word 模板: $WORD_TEMPLATE"
+    info "LaTeX 文件: $PROJECT/main.tex"
+
+    # 运行对比脚本
+    COMPARE_OUTPUT=$(python3 "$SCRIPT_DIR/compare_headings.py" "$WORD_TEMPLATE" "$PROJECT/main.tex" 2>&1)
+    COMPARE_EXIT_CODE=$?
+
+    if [ $COMPARE_EXIT_CODE -eq 0 ]; then
+      # 提取统计信息
+      MATCHED=$(echo "$COMPARE_OUTPUT" | grep "完全匹配:" | grep -oE "[0-9]+" || echo "0")
+      DIFFERENCES=$(echo "$COMPARE_OUTPUT" | grep "有差异:" | grep -oE "[0-9]+" || echo "0")
+      ONLY=$(echo "$COMPARE_OUTPUT" | grep "仅在一方:" | grep -oE "[0-9]+" || echo "0")
+
+      if [ "$DIFFERENCES" -eq 0 ] && [ "$ONLY" -eq 0 ]; then
+        pass "标题文字完全匹配 ($MATCHED 个)"
+      else
+        warn "标题文字存在差异: 匹配 $MATCHED | 差异 $DIFFERENCES | 仅在一方 $ONLY"
+        info "详细报告: python3 $SCRIPT_DIR/compare_headings.py $WORD_TEMPLATE $PROJECT/main.tex --report heading_report.html"
+      fi
+    else
+      warn "标题对比失败: $COMPARE_OUTPUT"
+      info "请手动检查标题文字是否与 Word 模板一致"
+    fi
+  else
+    warn "未找到 Word 模板文件 (.docx)，跳过标题文字自动对比"
+    info "请手动检查 main.tex 中的标题文字是否与 Word 模板一致"
+  fi
+else
+  warn "未安装 python3 或 compare_headings.py 不可用，跳过标题文字自动对比"
+  info "安装 python-docx: pip install python-docx"
+  info "请手动检查标题文字是否与 Word 模板一致"
+fi
+
+
 # ========================================
 # 第三优先级：视觉相似度
 # ========================================

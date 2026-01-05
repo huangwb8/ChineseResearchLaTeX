@@ -2,7 +2,27 @@
 ai不要看这个文件，除非用户要求。
 ---
 
-# Skills开发
+# Skills 开发
+
+## CHANGELOG 维护规则
+
+**重要**：所有 skill 的版本变更记录在根级 [CHANGELOG.md](CHANGELOG.md) 中。
+
+### 维护流程
+
+当修改 skill 时：
+1. 更新根级 [CHANGELOG.md](CHANGELOG.md)（必需）
+2. 更新 SKILL.md 中的版本号（必需）
+3. 更新 config.yaml 中的版本号（如存在）
+4. **SKILL.md 中不记录详细变更历史**（避免重复）
+
+### 详细规范
+
+参见 [skills/README.md](skills/README.md) 中的"CHANGELOG 维护规范"章节。
+
+---
+
+## Skills开发
 
 ## make_latex_model
 

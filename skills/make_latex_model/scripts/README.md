@@ -16,7 +16,7 @@ cd skills/make_latex_model
 
 **检查项**:
 - ✅ 第一优先级: 基础编译检查 (项目目录、配置文件、编译状态、版本号一致性)
-- ✅ 第二优先级: 样式参数一致性 (行距、颜色、边距、标题格式)
+- ✅ 第二优先级: 样式参数一致性 (行距、颜色、边距、标题格式、**标题文字一致性**)
 - ℹ️ 第三优先级: 视觉相似度 (需人工验证)
 - ℹ️ 第四优先级: 像素对比 (需 Word 打印 PDF 基准)
 
@@ -30,16 +30,17 @@ cd skills/make_latex_model
 ✅ 项目目录存在
 ✅ 配置文件存在: @config.tex
 ✅ 编译成功: main.pdf 存在
-✅ 版本号一致: v1.3.0
+✅ 版本号一致: v1.4.0
 
 第二优先级：样式参数一致性
 ✅ 颜色定义: MsBlue RGB 0,112,192 (正确)
 ✅ 页面边距: 左 3.20cm, 右 3.14cm (符合 2026 模板)
+✅ 标题文字完全匹配 (14 个)
 
-总检查项: 9
-  通过: 6
+总检查项: 10
+  通过: 8
   警告: 2
-  失败: 1
+  失败: 0
 ```
 
 ---
@@ -79,6 +80,81 @@ cd skills/make_latex_model
   }
 }
 ```
+
+---
+
+### 3. extract_headings.py - 标题文字提取工具（新增）
+
+**功能**: 从 Word 或 LaTeX 文件中提取标题文字结构
+
+**使用方法**:
+```bash
+# 从 LaTeX 文件提取
+python3 scripts/extract_headings.py latex --file projects/NSFC_Young/main.tex
+
+# 从 Word 文档提取
+python3 scripts/extract_headings.py word --file projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx
+
+# 输出为 JSON
+python3 scripts/extract_headings.py latex --file main.tex --format json --output headings.json
+```
+
+**输出示例**:
+```
+# 标题文字提取结果
+# 源文件: main.tex
+
+section_1: （一）立项依据与研究内容
+subsection_1_1: 1. 项目的立项依据
+subsection_1_2: 2. 项目的研究内容、研究目标，以及拟解决的关键科学问题
+...
+```
+
+---
+
+### 4. compare_headings.py - 标题文字对比工具（新增）
+
+**功能**: 对比 Word 模板和 LaTeX 文件的标题文字差异
+
+**使用方法**:
+```bash
+# 对比两个文件（输出文本报告）
+python3 scripts/compare_headings.py word.docx main.tex
+
+# 生成 HTML 可视化报告
+python3 scripts/compare_headings.py word.docx main.tex --report heading_report.html
+
+# 生成 Markdown 报告
+python3 scripts/compare_headings.py word.docx main.tex --report heading_report.md
+```
+
+**输出示例**:
+```
+============================================================
+  标题文字对比报告
+============================================================
+
+总标题数: 14
+✅ 完全匹配: 12
+⚠️  有差异: 2
+❌ 仅在一方: 0
+
+# 完全匹配的标题
+✅ section_1: （一）立项依据与研究内容
+✅ subsection_1_1: 1. 项目的立项依据
+...
+
+# 有差异的标题
+⚠️  subsection_1_3:
+   Word:  3. 拟采取的研究方案及可行性分析
+   LaTeX: 3. 拟采取的研究方案及可行性
+```
+
+**HTML 报告特性**:
+- 🎨 美观的可视化界面
+- 📊 统计卡片（匹配/差异/仅在一方）
+- 🎯 颜色编码（绿色=匹配，黄色=差异，红色=仅在一方）
+- 📱 响应式设计
 
 ---
 
@@ -143,15 +219,30 @@ tests/v{TIMESTAMP}/
 
 ### Q: 验证脚本提示"行距设置: 未找到 baselinestretch 定义"?
 
-A: 这是正常的。当前项目使用 `\linespread` 而非 `\baselinestretch`,两者都是有效的行距设置方式。验证脚本未来会支持这两种方式。
+A: 这是正常的。当前项目使用 `\linespread` 而非 `\baselinestretch`,两者都是有效的行距设置方式。
+
+### Q: 如何使用标题对比工具？
+
+A: 首先安装依赖：
+```bash
+pip install python-docx
+```
+
+然后运行对比：
+```bash
+python3 scripts/compare_headings.py word.docx main.tex --report report.html
+```
+
+### Q: Word 文档是 .doc 格式，如何处理？
+
+A: 使用 LibreOffice 转换为 .docx：
+```bash
+soffice --headless --convert-to docx template.doc
+```
 
 ### Q: 性能测试中的编译时间波动很大?
 
-A: 编译时间受系统负载影响。benchmark.sh 会运行 3 次取平均值,减少波动影响。如需更精确测量,可增加测试次数:
-```bash
-# 编辑 benchmark.sh
-TIMES=5  # 改为 5 次
-```
+A: 编译时间受系统负载影响。benchmark.sh 会运行 3 次取平均值,减少波动影响。
 
 ### Q: 如何在 Windows 上运行这些脚本?
 
@@ -178,6 +269,12 @@ A: 需要 Git Bash 或 WSL (Windows Subsystem for Linux)。在 Git Bash 中直�
 ---
 
 ## 版本历史
+
+- v1.4.0 (2026-01-05): 新增标题文字工具
+  - 新增 `extract_headings.py`：从 Word/LaTeX 提取标题文字
+  - 新增 `compare_headings.py`：对比标题文字差异，生成 HTML 可视化报告
+  - 更新 `validate.sh`：集成自动标题文字一致性检查
+  - 更新工作流：支持标题对齐自动化
 
 - v1.3.0 (2026-01-05): 初始版本
   - 集成到 make_latex_model 技能
