@@ -1,0 +1,13 @@
+{
+  "image_a": "../artifacts/compare2026_baseline/latex.png",
+  "image_b": "../artifacts/baseline/word.png",
+  "size": {
+    "width": 1414,
+    "height": 2000
+  },
+  "threshold": 16,
+  "mean_abs_diff": 19.428010254596888,
+  "changed_pixels": 460665,
+  "total_pixels": 2828000,
+  "changed_ratio": 0.16289427157001415
+}

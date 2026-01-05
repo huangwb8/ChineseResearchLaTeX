@@ -1,0 +1,13 @@
+{
+  "image_a": "tests/v202601051844/artifacts/baseline/latex.png",
+  "image_b": "tests/v202601051844/artifacts/baseline/word.png",
+  "size": {
+    "width": 1414,
+    "height": 2000
+  },
+  "threshold": 16,
+  "mean_abs_diff": 21.925167256011317,
+  "changed_pixels": 478337,
+  "total_pixels": 2828000,
+  "changed_ratio": 0.1691432107496464
+}

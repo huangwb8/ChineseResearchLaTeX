@@ -1,0 +1,29 @@
+{
+  "image_a": "tests/v202601051844/artifacts/compare2026_baseline/latex.png",
+  "image_b": "tests/v202601051844/artifacts/baseline/word.png",
+  "size": {
+    "width": 1414,
+    "height": 2000
+  },
+  "threshold": 16,
+  "mean_abs_diff": 19.428010254596888,
+  "changed_pixels": 460665,
+  "total_pixels": 2828000,
+  "changed_ratio": 0.16289427157001415,
+  "crop": {
+    "box": {
+      "left": 0,
+      "top": 0,
+      "right": 1414,
+      "bottom": 1200
+    },
+    "size": {
+      "width": 1414,
+      "height": 1200
+    },
+    "mean_abs_diff": 17.425425506836397,
+    "changed_pixels": 244386,
+    "total_pixels": 1696800,
+    "changed_ratio": 0.14402758132956153
+  }
+}
