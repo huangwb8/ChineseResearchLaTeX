@@ -73,7 +73,7 @@ ChineseResearchLaTeX/
 │   └── latex-writing-guide.md
 ├── skills/                # 项目专用技能
 │   ├── README.md
-│   └── latex-helper/
+│   └── make_latex_model/
 │       ├── SKILL.md
 │       └── config.yaml
 ├── config.yaml            # 项目配置文件

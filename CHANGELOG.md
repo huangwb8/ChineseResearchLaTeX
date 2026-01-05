@@ -6,6 +6,10 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- 更新 `AGENTS.md` 与 `CLAUDE.md` 的目录结构示例，使 `skills/` 示例与当前仓库实际技能（`make_latex_model`）一致
+
 ## [1.0.0] - 2026-01-05
 
 ### Added（新增）

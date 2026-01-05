@@ -1,0 +1,224 @@
+# ================================
+# make_latex_model 技能配置文件
+# ================================
+
+skill_info:
+  name: make_latex_model
+  version: 1.0.0
+  description: 基于 NSFC 最新 Word 模板高保真优化 LaTeX 模板
+  category: normal
+
+# ================================
+# 输入参数定义
+# ================================
+parameters:
+  project:
+    type: string
+    required: true
+    description: 项目名称（NSFC_Young、NSFC_General、NSFC_Local）
+    allowed_values:
+      - NSFC_Young
+      - NSFC_General
+      - NSFC_Local
+    default: NSFC_Young
+
+  word_template_year:
+    type: string
+    required: true
+    description: Word 模板年份
+    pattern: "^\\d{4}$"
+    default: "2026"
+
+  optimization_level:
+    type: string
+    required: false
+    description: 优化级别
+    allowed_values:
+      - minimal      # 最小改动：仅修复明显错误
+      - moderate     # 中等优化：调整不一致的样式（默认）
+      - thorough     # 彻底重构：最大保真度
+    default: moderate
+
+  dry_run:
+    type: boolean
+    required: false
+    description: 预览模式，不实际修改文件
+    default: false
+
+# ================================
+# 文件路径配置
+# ================================
+paths:
+  projects_root: "./projects"
+  templates_dir: "template"
+  main_tex: "main.tex"
+  config_tex: "extraTex/@config.tex"
+  extratex_dir: "extraTex"
+  fonts_dir: "fonts"
+  figures_dir: "figures"
+
+# ================================
+# 样式参考基准（2026年Word模板）
+# ================================
+style_reference:
+  # 页面设置
+  page:
+    margin_left: "3.20cm"
+    margin_right: "3.14cm"
+    margin_top: "2.54cm"
+    margin_bottom: "2.54cm"
+    line_spacing: 1.5
+
+  # 颜色系统
+  colors:
+    MsBlue: "RGB 0,112,192"    # Word 风格蓝色
+    header_color: "RGB 0,0,0"
+    footer_color: "RGB 0,0,0"
+
+  # 字体系统
+  fonts:
+    chinese_main: "KaiTi"       # 中文楷体
+    english_main: "Times New Roman"
+    fake_bold_factor: 2.5
+
+  # 字号系统（单位：pt）
+  font_sizes:
+    chuhao: 42
+    xiaochuhao: 36
+    yihao: 26
+    erhao: 22
+    xiaoerhao: 18
+    sanhao: 16
+    sihao: 14
+    xiaosihao: 12
+    wuhao: 10.5
+
+  # 标题样式
+  headings:
+    section:
+      font_size: 14        # 四号
+      font_weight: bold
+      color: MsBlue
+      indent: "1.45em"
+      spacing_before: 0
+      spacing_after: 0
+
+    subsection:
+      font_size: 14        # 四号
+      font_weight: normal
+      color: MsBlue
+      indent: "1.45em"
+      line_spacing: 1.0
+
+    subsubsection:
+      font_size: 13.5
+      font_weight: bold
+      color: MsBlue
+      numbered: true       # 编号格式：1.1, 1.2
+      indent: "1.1em"
+      sep: "0.5em"
+
+    subsubsubsection:
+      font_weight: bold
+      numbered: true       # 编号格式：（1）
+      indent: "1em"
+      sep: "0.5pt"
+
+  # 列表样式
+  lists:
+    enumerate:
+      label_format: "（\\arabic*）"
+      color: MsBlue
+      font_weight: bold
+      left_margin: 0
+      item_indent: "4em"
+      item_sep: 0
+      label_sep: "0.1pt"
+      parsep: 0
+      topsep: 0
+
+# ================================
+# 优化策略配置
+# ================================
+optimization_strategies:
+  minimal:
+    description: "最小改动：仅修复明显错误"
+    actions:
+      - fix_color_values
+      - fix_critical_font_sizes
+      - fix_page_margins
+
+  moderate:
+    description: "中等优化：调整不一致的样式（默认）"
+    actions:
+      - fix_color_values
+      - fix_font_sizes
+      - fix_page_margins
+      - adjust_spacing
+      - align_numbering_format
+
+  thorough:
+    description: "彻底重构：最大保真度"
+    actions:
+      - complete_style_overhaul
+      - refactor_title_formatting
+      - optimize_list_styles
+      - cross_platform_validation
+
+# ================================
+# 编译配置
+# ================================
+compile_config:
+  engine: xelatex
+  interaction_mode: nonstopmode
+  max_runs: 4
+  sequence:
+    - xelatex
+    - bibtex
+    - xelatex
+    - xelatex
+
+# ================================
+# 验证规则（像素级精度）
+# ================================
+validation:
+  max_iterations: 3
+  required_checks:
+    - compilation_success
+    - no_warnings
+    - line_by_line_alignment    # 每行字数对齐
+    - word_wrap_consistency     # 换行位置一致
+    - style_consistency
+    - cross_platform_compatibility
+  tolerance:
+    font_size_diff: 0.1      # 字号误差容忍度（pt）—— 像素级要求
+    color_diff: 2            # 颜色误差容忍度（RGB）—— 更严格
+    spacing_diff: 0.05       # 间距误差容忍度（em）—— 约 0.2pt
+    margin_diff: 0.5         # 边距误差容忍度（mm）
+    line_position_diff: 2    # 换行位置误差容忍度（pt）
+
+# ================================
+# 输出配置
+# ================================
+output:
+  format: markdown
+  language: zh-CN
+  include_diff: true
+  include_validation_report: true
+  backup_before_modification: false   # 不备份（依赖 Git）
+
+# ================================
+# 兼容性配置
+# ================================
+compatibility:
+  preserve_old_commands: true
+  preserve_if_conditions: true
+  support_projects:
+    - NSFC_Young
+    - NSFC_General
+    - NSFC_Local
+  support_os:
+    - windows
+    - macos
+    - linux
+
