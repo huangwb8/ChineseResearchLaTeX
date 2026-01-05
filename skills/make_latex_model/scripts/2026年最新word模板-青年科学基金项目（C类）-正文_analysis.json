@@ -1,0 +1,34 @@
+{
+  "layout": {
+    "page_size_cm": [
+      21.0,
+      29.7
+    ],
+    "margins_cm": {
+      "left": 3.2,
+      "right": 3.02,
+      "top": 2.71,
+      "bottom": 3.11
+    }
+  },
+  "fonts": {
+    "SIL-Kai-Reg-Jian": {
+      "count": 47,
+      "sizes": [
+        14.0,
+        16.0
+      ],
+      "colors": [],
+      "is_bold": false
+    },
+    "ArialUnicodeMS": {
+      "count": 9,
+      "sizes": [
+        12.0
+      ],
+      "colors": [],
+      "is_bold": false
+    }
+  },
+  "line_spacing_pt": 22.47
+}
