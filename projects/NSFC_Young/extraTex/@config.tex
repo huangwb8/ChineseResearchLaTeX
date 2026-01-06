@@ -20,12 +20,14 @@
 % \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
 % \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
 % 页边距和字距的某个组合应该可以完美复制Word。
-\geometry{left=3.28cm,right=3.28cm,top=2.67cm,bottom=3.16cm} % 页边距（版心略收窄）
+\geometry{left=3.20cm,right=2.95cm,top=2.67cm,bottom=3.16cm} % 页边距（对齐 Word 2026 PDF）
 \CJKsetecglue{\hskip 0.5em plus 0.05em minus 0.1em} % 数字与CJK字符的间距（对齐 Word 2026 PDF）
-% left=3.20cm,right=3.13-3.14cm
+% left=3.20cm,right=2.95cm
 
 %%%————————————————————————————————颜色
-\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
+% 说明：在 XeLaTeX + xcolor 组合下，RGB(0,112,192) 在 PDF 中会被量化为 (0,111,192)；
+% 为了让最终 PDF 提取/显示为 Word 的 MsBlue：RGB(0,112,192)，这里将 G 分量 +1。
+\definecolor{MsBlue}{RGB}{0,113,192} % 目标：PDF 输出等效 RGB(0,112,192)
 \definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
 \definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
 
@@ -161,11 +163,25 @@
 \newcommand{\subsectionzihao}{\fontsize{14pt}{22pt}\selectfont}
 \newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
 
+\ExplSyntaxOn
+\cs_new_protected:Npn \nsfc_subsection_before:n #1
+  {
+    % Word 2026 模板中：括号提示行（如“（为什么要…）”）缩进略小于编号行
+    \regex_match:nnTF { \A \s* （ } {#1}
+      { \hspace*{1.5em} #1 }
+      { \hspace*{2em} #1 }
+  }
+\ExplSyntaxOff
+
+\newcommand{\NSFCSubsectionBefore}[1]{%
+  \csname nsfc_subsection_before:n\endcsname{#1}%
+}
+
 
 % Custom format for section
 \titleformat{\section}
-  {\color{MsBlue} \sectionzihao \templatefont \bfseries} % format
-  {} % label
+  {\color{MsBlue} \sectionzihao \templatefont} % format
+  {\hspace*{2em}} % label（用于缩进，不影响标题文字内容）
   {0pt} % separation
   {}   % before-code
 
@@ -174,7 +190,7 @@
   {\color{MsBlue} \subsectionzihao \templatefont} % format
   {} % label
   {0pt} % separation
-  {}   % before-code
+  {\NSFCSubsectionBefore}   % before-code（用于缩进，不影响标题文字内容）
 
 % Custom format for subsubsection
 \titleformat{\subsubsection}
