@@ -1,6 +1,6 @@
 ---
 name: make_latex_model
-version: 2.6.0
+version: 2.7.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
@@ -195,22 +195,18 @@ report_path = ws_manager.get_reports_path("NSFC_Young")
 - 迭代历史默认保留最近 10 轮
 - 可通过 `config.yaml` 的 `workspace` 节配置清理策略
 
-### 迁移说明
-
-v2.3.0 前的旧路径（如 `projects/{project}/artifacts/`）会自动迁移到新工作空间。
-
 ## 触发条件
 用户在以下场景触发本技能：
-- NSFC 发布了新的年度 Word 模板（如 2026 年版）
+- NSFC 发布了新的年度 Word 模板
 - 当前 LaTeX 模板与 Word 模板存在明显样式差异
-- 用户主动要求“对齐 Word 样式”“更新模板格式”
+- 用户主动要求"对齐 Word 样式""更新模板格式"
 
 ## 输入参数
 
 | 参数 | 类型 | 必需 | 说明 |
 |------|------|------|------|
 | `project` | string | 是 | 项目名称（如 `NSFC_Young`、`NSFC_General`） |
-| `word_template_year` | string | 是 | Word 模板年份（如 `2026`） |
+| `word_template_year` | string | 是 | Word 模板年份（如 `2025`） |
 | `optimization_level` | string | 否 | 优化级别：`minimal`（最小改动）\|`moderate`（中等）\|`thorough`（彻底），默认 `moderate` |
 | `dry_run` | boolean | 否 | 预览模式，不实际修改文件，默认 `false` |
 
@@ -279,22 +275,85 @@ for 参数 in ["行距", "字号", "颜色", "边距"]:
 
 ### 步骤 2：分析 Word 模板（像素级测量）
 
-#### 2.1 生成 Word PDF 基准
-1. 定位 `projects/{project}/template/{word_template_year}年最新word模板-*.doc*`（可能是 .doc 或 .docx）
-2. ⚠️ **必须使用 Word 打印 PDF 进行精确测量**：
-   - 在 Microsoft Word 中打开模板（.doc 或 .docx 皆可）
-   - 填充示例文本（与 main.tex 相同）
-   - **导出/打印为 PDF**（这是关键！）
-   - 使用 PDF 测量工具（如 Adobe Acrobat 的"测量工具"）精确测量
-   - **替代方案**：如无 Word，可使用 LibreOffice 命令行转换：
-     ```bash
-     soffice --headless --convert-to pdf --outdir . "template/2026年最新word模板-*.doc*"
-     ```
-3. ⚠️ **为什么必须用 Word 打印 PDF**（关键！）：
-   - **QuickLook 预览渲染引擎与 Word 不同**：QuickLook 生成的缩略图在行距、字体渲染、断行算法上与 Word 有本质差异
-   - **像素级对齐需要精确基准**：只有 Word 导出的 PDF 才能准确反映模板的真实样式
-   - **避免误导性对比**：使用 QuickLook 基准会导致正确的样式修改反而显示像素对比指标恶化（见 Q2 深度解析）
-   - **结论**：如果只能使用 QuickLook 基准，应降低像素对比指标的权重，以样式参数正确性为主要验收标准
+#### 2.1 获取 Word PDF 基准
+
+**方案 0：用户已提供 PDF**（最快）
+
+如果用户已经从 Word 模板导出了 PDF 文件，直接使用即可：
+
+```bash
+# 复制用户提供的 PDF 到工作空间
+cp /path/to/user/provided/word.pdf \
+   skills/make_latex_model/workspace/{project}/baseline/word.pdf
+```
+
+**要求**：
+- PDF 必须是 Word/LibreOffice 导出的，不能用 QuickLook 预览
+- PDF 应包含完整的模板样式（标题、正文、列表等）
+
+---
+
+**方案 1：LibreOffice 命令行自动转换**（主推）
+
+如果用户只有 Word 模板文件（.doc/.docx），使用 LibreOffice 自动转换：
+
+```bash
+# 自动检测并转换 Word 模板为 PDF
+python3 skills/make_latex_model/scripts/generate_baseline.py \
+  --project NSFC_Young \
+  --template-year 2025
+```
+
+脚本会自动完成：
+1. 定位 Word 模板文件（支持 .doc 和 .docx）
+2. 使用 LibreOffice 无头模式转换为 PDF
+3. 保存到工作空间 `workspace/{project}/baseline/word.pdf`
+4. 生成高分辨率 PNG 用于像素对比（通过 `pdftoppm`）
+
+**环境要求**：
+- LibreOffice（安装命令见下方）
+- pdftoppm（poppler-utils）
+
+**LibreOffice 安装**：
+```bash
+# macOS
+brew install --cask libreoffice
+
+# Ubuntu/Debian
+sudo apt-get install libreoffice
+
+# Windows
+# 从 https://www.libreoffice.org/ 下载安装
+```
+
+---
+
+**方案 2：Microsoft Word COM 自动化**（Windows 仅）
+
+如果在 Windows 环境且无法安装 LibreOffice，可使用 Microsoft Word COM 自动化（需 Python `pywin32` 库）：
+
+```bash
+python3 skills/make_latex_model/scripts/generate_baseline.py \
+  --project NSFC_Young \
+  --template-year 2025 \
+  --use-msword
+```
+
+---
+
+**渲染质量说明**：
+
+| 渲染引擎 | 精度 | 自动化程度 | 推荐度 |
+|---------|------|-----------|--------|
+| **用户已提供 PDF** | 取决于来源 | 零操作 | ⭐⭐⭐⭐⭐ |
+| LibreOffice | 高（与 Word 99% 一致） | 完全自动化 | ⭐⭐⭐⭐⭐ |
+| Microsoft Word COM | 最高（100% Word 原生） | 自动化（Windows 仅） | ⭐⭐⭐⭐ |
+| QuickLook 预览 | 低（断行/行距有差异） | 自动化但不准确 | ⚠️ 不推荐 |
+
+**为什么不用 QuickLook**：
+- QuickLook 预览渲染引擎与 Word 本质不同（行距、字体渲染、断行算法都有差异）
+- 使用 QuickLook 基准会导致正确的样式修改反而显示像素对比指标恶化
+- 如果只能使用 QuickLook 基准，应降低像素对比指标的权重，以样式参数正确性为主要验收标准
 
 #### 2.2 自动提取样式参数（推荐）
 使用 `analyze_pdf.py` 工具自动提取 Word PDF 的样式参数：
@@ -355,17 +414,6 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
 - ✅ **可追溯**：保存 JSON 分析结果，便于版本对比
 - ✅ **快速**：几秒内完成分析
 
-#### 2.3 手动测量（备用方案）
-如果无法使用自动化工具，可手动测量以下要素（精度要求 ±0.5pt）：
-- **页面**：边距（上、下、左、右）、版心尺寸
-- **正文**：字号（pt）、行距（倍数或 pt 值）、首行缩进（字符或 cm）
-- **一级标题**：字号、字体、颜色、加粗、缩进、段前段后间距
-- **二级标题**：同上
-- **三级标题**：编号格式、字号、缩进、与正文间距
-- **四级标题**：编号格式（如（1））、缩进
-- **列表**：编号格式、左缩进、悬挂缩进、项间距
-- **字间距**：中文字间距、英文词间距（如需微调换行）
-
 ### 步骤 2.5：提取标题结构
 
 **自动化工具**：使用 `compare_headings.py` 自动对比标题文字
@@ -379,7 +427,7 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
    ```bash
    # 生成 HTML 可视化报告
    python3 skills/make_latex_model/scripts/compare_headings.py \
-     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/template/最新word模板-青年科学基金项目（C类）-正文.docx \
      projects/NSFC_Young/main.tex \
      --report heading_report.html
    ```
@@ -395,7 +443,7 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
    ```bash
    # 检查标题内的加粗格式是否一致
    python3 skills/make_latex_model/scripts/compare_headings.py \
-     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/template/最新word模板-青年科学基金项目（C类）-正文.docx \
      projects/NSFC_Young/main.tex \
      --check-format \
      --report heading_format_report.txt
@@ -412,7 +460,7 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
    ```bash
    # 生成包含格式对比的 HTML 报告
    python3 skills/make_latex_model/scripts/compare_headings.py \
-     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/template/最新word模板-青年科学基金项目（C类）-正文.docx \
      projects/NSFC_Young/main.tex \
      --check-format \
      --report heading_format_report.html
@@ -427,7 +475,7 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
    ```bash
    # 自动生成 LaTeX 修复代码
    python3 skills/make_latex_model/scripts/compare_headings.py \
-     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/template/最新word模板-青年科学基金项目（C类）-正文.docx \
      projects/NSFC_Young/main.tex \
      --check-format \
      --fix-file heading_fix_suggestions.tex
@@ -442,15 +490,20 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
      \section{\textbf{（一）立项依据}与研究内容}
      ```
 
-7. **如果 Word 是 .doc 格式**，先转换为 .docx：
+7. **自动转换 .doc 为 .docx**（如需要）：
    ```bash
-   soffice --headless --convert-to docx --outdir . template.doc
+   # 脚本会自动检测并转换 .doc 格式
+   python3 skills/make_latex_model/scripts/compare_headings.py \
+     projects/NSFC_Young/template/最新word模板-青年科学基金项目（C类）-正文.doc \
+     projects/NSFC_Young/main.tex \
+     --auto-convert \
+     --report heading_report.html
    ```
 
-6. **手动提取标题**（备用方案）：
-   - 打开 Word 模板，复制所有标题文本
-   - 打开 LaTeX 的 `main.tex`，复制 `\section{}` 和 `\subsection{}` 中的标题
-   - 人工对比差异
+8. **手动验证**（可选，用于调试）：
+   - **⚠️ 不推荐手动对比**，应使用自动化工具
+   - 如需验证，可打开生成的 HTML 报告查看可视化结果
+   - 或使用 `--fix-file` 参数自动生成修复代码
 
 ### 步骤 3：差异分析与优化策略（像素级）
 1. **对比当前 LaTeX 样式与 Word 模板**，识别差异：
@@ -506,7 +559,7 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
    - 不改变条件判断结构（如 `\ifwindows`）
 3. **增量添加新样式**（如有必要）：
    - 新增 `\newcommand` 而非修改现有命令
-   - 使用注释标记新增内容：`% 2026年模板新增`
+   - 使用注释标记新增内容：`% 新增样式注释`
 
 ### 步骤 5：执行修改
 1. **修改 `@config.tex`**（样式配置层）：
@@ -623,7 +676,7 @@ else:
 
 本步骤实现全自动的"优化-对比-调整"循环，推荐在需要精细调整时使用。
 
-### 3.5.1 一键启动
+### 一键启动
 
 ```bash
 # 全自动迭代优化
@@ -643,7 +696,7 @@ python3 skills/make_latex_model/scripts/enhanced_optimize.py \
 
 预计耗时：5-15 分钟（取决于迭代轮数）
 
-### 3.5.2 迭代循环逻辑
+### 迭代循环逻辑
 
 ```
 WHILE 未达到收敛条件:
@@ -659,7 +712,7 @@ WHILE 未达到收敛条件:
 END WHILE
 ```
 
-### 3.5.3 收敛条件（优先级从高到低）
+### 收敛条件（优先级从高到低）
 
 | 条件 | 阈值 | 说明 |
 |------|------|------|
@@ -668,7 +721,7 @@ END WHILE
 | **连续无改善** | 3 轮 | 指标不再优化，收敛 |
 | **最大迭代** | 10 轮 | 强制停止 |
 
-### 3.5.4 智能参数调整策略
+### 智能参数调整策略
 
 脚本 `intelligent_adjust.py` 根据差异特征自动推断参数调整：
 
@@ -680,7 +733,7 @@ END WHILE
 | 左右边距差异 | geometry | ±0.05cm |
 | 标题位置偏移 | titleformat | 调整 spacing |
 
-### 3.5.5 相关脚本
+### 相关脚本
 
 | 脚本 | 功能 |
 |------|------|
@@ -694,7 +747,7 @@ END WHILE
 
 ## 输出规范
 
-### 4.1 修改摘要
+### 修改摘要
 将变更记录有机地追加到 `projects/{project}/extraTex/@CHANGELOG.md`：
 
 **记录原则**：
@@ -710,28 +763,28 @@ END WHILE
 
 **格式参考**：
 ```markdown
-## [v1.0.1] - 2026-01-XX
+## [v1.0.1] - YYYY-MM-DD
 
 ### Changed（样式优化）
-- **一级标题字号**：14pt → 15pt（Word 2026 模板要求）
+- **一级标题字号**：14pt → 15pt（Word 最新模板要求）
 - **行距**：1.5 → 1.45（通过 PDF 叠加对比确定）
 - **页边距**：调整上下边距为 2.54cm（与 Word 完全一致）
 
 ### Added（新增样式）
-- 新增三级标题编号格式 1.1、1.2（Word 2026 新增要求）
+- 新增三级标题编号格式 1.1、1.2（Word 最新模板新增要求）
 
 ### Fixed（修复）
 - 修复 MsBlue 颜色值误差（原 RGB 0,112,190 → 正确的 0,112,192）
 ```
 
-### 4.2 代码变更
+### 代码变更
 对 `@config.tex` 进行精确修改，保留：
 - 原有注释
 - 代码风格
 - 条件判断结构（如 `\ifwindows`）
 - **⚠️ 绝不触碰 `main.tex`**
 
-### 4.3 验证清单
+### 验证清单
 
 > **📋 完整验证清单**：参见第 6 节"验证清单（按优先级排序）"
 
@@ -749,7 +802,7 @@ cd skills/make_latex_model
 
 ## 核心原则（底线）
 
-### 5.0 绝对禁区（修订）
+### 绝对禁区
 ⚠️ **永不触碰 `main.tex` 中的正文段落内容**
 - `main.tex` 中的 `\input{extraTex/*.tex}` 引用的正文内容文件
 - `extraTex/*.tex` 文件中的用户撰写内容
@@ -772,14 +825,14 @@ cd skills/make_latex_model
 % extraTex/1.1.立项依据.tex 中的具体内容不修改
 ```
 
-### 5.1 轻量级修改优先
+### 轻量级修改优先
 - ✅ 调整参数值（字号 pt 值、颜色 RGB 值、间距 em/cm 值）
 - ✅ 新增自定义命令
 - ❌ 删除或重命名现有命令
 - ❌ 改变宏包加载顺序
 - ❌ 重构条件判断结构
 
-### 5.2 保真度与稳定性平衡
+### 保真度与稳定性平衡
 - **过度开发的风险**：引入 bug、破坏已有功能、增加维护成本
 - **开发不足的风险**：样式不一致、不符合基金委要求
 - **平衡策略**：
@@ -787,7 +840,7 @@ cd skills/make_latex_model
   - 仅在必要时使用 `thorough` 级别
   - 保留老样式的核心架构
 
-### 5.3 跨平台兼容性
+### 跨平台兼容性
 - 保留 `\ifwindows` 条件判断
 - 确保 Mac/Windows/Linux 都能正确编译
 - 外挂字体路径保持不变（`./fonts/`）
@@ -854,63 +907,79 @@ cd skills/make_latex_model
 
 ## 常见问题
 
-### Q1: 为什么必须使用 Word 打印 PDF 作为基准？如何获取？
+### Q1: 如何获取 Word PDF 基准？
 
-A: **⚠️ 必须使用 Word 打印 PDF，绝对不能使用 QuickLook 预览**
+A: **本技能支持用户已提供 PDF 或自动生成**
 
-#### 为什么必须用 Word 打印 PDF？
+#### 方案 0：用户已提供 PDF（最快）
+
+如果用户已经从 Word 模板导出了 PDF 文件，直接复制到工作空间即可：
+
+```bash
+# 复制用户提供的 PDF 到工作空间
+cp /path/to/user/provided/word.pdf \
+   skills/make_latex_model/workspace/{project}/baseline/word.pdf
+```
+
+**要求**：
+- PDF 必须是 Word/LibreOffice 导出的，不能用 QuickLook 预览
+- PDF 应包含完整的模板样式（标题、正文、列表等）
+
+---
+
+#### 方案 1：LibreOffice 命令行自动转换（主推）
+
+如果用户只有 Word 模板文件（.doc/.docx），使用 LibreOffice 自动转换：
+
+```bash
+# 一键生成 Word PDF 基准
+python3 skills/make_latex_model/scripts/generate_baseline.py \
+  --project NSFC_Young \
+  --template-year 2025
+```
+
+脚本会自动完成：
+1. 定位 Word 模板文件
+2. 使用 LibreOffice 无头模式转换为 PDF
+3. 保存到工作空间
+4. 生成高分辨率 PNG 用于像素对比
+
+**环境准备**：
+```bash
+# macOS
+brew install --cask libreoffice poppler
+
+# Ubuntu/Debian
+sudo apt-get install libreoffice poppler-utils
+```
+
+---
+
+#### 方案 2：Microsoft Word COM 自动化（Windows 仅）
+
+```bash
+python3 skills/make_latex_model/scripts/generate_baseline.py \
+  --project NSFC_Young \
+  --template-year 2025 \
+  --use-msword
+```
+
+---
+
+#### 渲染引擎对比
+
+| 渲染引擎 | 精度 | 自动化程度 | 推荐度 |
+|---------|------|-----------|--------|
+| **用户已提供 PDF** | 取决于来源 | 零操作 | ⭐⭐⭐⭐⭐ |
+| LibreOffice | 高（与 Word 99% 一致） | 完全自动化 | ⭐⭐⭐⭐⭐ |
+| Microsoft Word COM | 最高（100% Word 原生） | 自动化（Windows 仅） | ⭐⭐⭐⭐ |
+| QuickLook 预览 | 低（断行/行距有差异） | 自动化但不准确 | ⚠️ 不推荐 |
+
+#### 为什么不用 QuickLook？
 
 1. **渲染引擎差异**：QuickLook 预览渲染引擎与 Word 本质不同（行距、字体渲染、断行算法都有差异）
 2. **像素对比失真**：使用 QuickLook 基准会导致正确的样式修改反而显示像素对比指标恶化
-3. **精确基准**：只有 Word 导出的 PDF 才能准确反映模板的真实样式
-
-#### 如何获取 Word 打印 PDF？
-
-**方法 1：Microsoft Word（强烈推荐）**
-```bash
-# 1. 在 Microsoft Word 中打开模板文件
-# 2. 选择"文件" → "导出" → "创建 PDF"
-# 3. 保存为 artifacts/baseline/word.pdf
-```
-- **优点**：最精确，完全符合 Word 渲染效果
-- **缺点**：需要 Microsoft Word 许可证
-
-**方法 2：LibreOffice（免费替代）**
-```bash
-# 安装 LibreOffice（macOS）
-brew install --cask libreoffice
-
-# 转换 .doc/.docx 为 PDF
-soffice --headless --convert-to pdf \
-  --outdir artifacts/baseline \
-  "projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc"
-
-# 将 PDF 转换为高分辨率 PNG（用于像素对比）
-pdftoppm -png -r 150 -singlefile \
-  artifacts/baseline/word.pdf \
-  artifacts/baseline/word
-```
-- **优点**：免费、跨平台、命令行自动化
-- **缺点**：渲染效果与 Word 可能有细微差异（但远好于 QuickLook）
-
-**方法 3：在线转换（临时方案）**
-- 使用 CloudConvert、Zamzar 等在线服务
-- **注意**：不适合处理敏感内容
-
-#### 验证 PDF 质量
-
-```bash
-# 检查 PDF 信息
-pdfinfo artifacts/baseline/word.pdf
-
-# 检查页面尺寸（应与 A4 纸一致：595 x 842 pt）
-```
-
-#### ⚠️ 绝对禁止的做法
-
-- ❌ 使用 `qlmanage -t` 生成 QuickLook 缩略图作为基准
-- ❌ 使用 macOS 预览应用打开 .doc 文件截图
-- ❌ 使用任何非 Word/LibreOffice 的渲染工具
+3. **精确基准**：只有 LibreOffice 或 Word 导出的 PDF 才能准确反映模板的真实样式
 
 #### 像素对比指标的陷阱
 
@@ -921,7 +990,7 @@ pdfinfo artifacts/baseline/word.pdf
 **原因分析**：
 1. 行距减小后，每页容纳更多文本
 2. 换行位置完全改变，导致大规模像素差异
-3. 如果基准是 QuickLook 预览（而非 Word 打印 PDF），差异会更加放大
+3. 如果基准是 QuickLook 预览（而非 LibreOffice/Word PDF），差异会更加放大
 
 **正确判断**：
 - ✅ 样式参数正确（行距 1.2 倍与 Word 一致）
@@ -929,7 +998,7 @@ pdfinfo artifacts/baseline/word.pdf
 - ⚠️ 像素对比指标恶化是**副作用**，不代表修改错误
 
 **行动建议**：
-- 优先使用 Word 打印 PDF 作为基准
+- 优先使用用户提供的 PDF 或 LibreOffice/Word 生成的 PDF 作为基准
 - 如果只能用 QuickLook，应降低像素对比指标的权重
 - 以样式参数正确性和视觉相似度为主要验收标准
 
