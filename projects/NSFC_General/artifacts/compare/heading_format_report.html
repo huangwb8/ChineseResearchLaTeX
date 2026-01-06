@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标题文字对比报告（含格式）</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .matched .value { color: #10b981; }
+        .text-diff .value { color: #f59e0b; }
+        .format-diff .value { color: #f97316; }
+        .only .value { color: #ef4444; }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ddd;
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+        .item.matched {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        .item.text-diff {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .item.format-diff {
+            border-left-color: #f97316;
+            background: #fff7ed;
+        }
+        .item.only {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .key {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .diff-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .diff-box {
+            padding: 12px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        .diff-box.word {
+            border-left: 3px solid #3b82f6;
+        }
+        .diff-box.latex {
+            border-left: 3px solid #8b5cf6;
+        }
+        .label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .rendered-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #1f2937;
+        }
+        .rendered-text b {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .diff-marker {
+            margin-top: 12px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #92400e;
+        }
+        .diff-marker-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #fde68a;
+        }
+        .diff-marker-item:last-child {
+            border-bottom: none;
+        }
+        .meta {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 标题文字对比报告（含格式）</h1>
+        <p>生成时间: 2026-01-06 22:30:31</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card matched">
+            <h3>✅ 完全匹配</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="stat-card text-diff">
+            <h3>⚠️ 文本差异</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="stat-card format-diff">
+            <h3>🔶 格式差异</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="stat-card only">
+            <h3>❌ 仅在一方</h3>
+            <div class="value">8</div>
+        </div>
+    </div>
+<div class="section"><h2>❌ 仅在一方的标题</h2>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_1</div>
+        <div class="rendered-text">（一）立项依据：</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_2</div>
+        <div class="rendered-text">（二）研究内容：</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_3</div>
+        <div class="rendered-text">（三）研究基础：</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: section_4</div>
+        <div class="rendered-text">（四）其他需要说明的情况：</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_1</div>
+        <div class="rendered-text">1.45em</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_2</div>
+        <div class="rendered-text">1.45em</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_3</div>
+        <div class="rendered-text">1.45em</div>
+    </div>
+    <div class="item only">
+        <div class="key">仅在 LaTeX 文件: subsection_1_4</div>
+        <div class="rendered-text">1.45em</div>
+    </div></div>
+    <div class="meta">
+        <p>Word 文件: 2026年最新word模板-1.面上项目-正文.docx</p>
+        <p>LaTeX 文件: main.tex</p>
+    </div>
+</body>
+</html>

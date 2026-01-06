@@ -10,6 +10,7 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
+from .validator_base import ValidationResult
 
 @dataclass
 class StyleRules:
@@ -31,47 +32,6 @@ class HeadingInfo:
     text: str
     line_number: int
     max_children: int = 0
-
-
-@dataclass
-class ValidationResult:
-    """验证结果"""
-    passed: List[str]
-    warnings: List[str]
-    failed: List[str]
-
-    def __post_init__(self):
-        if self.passed is None:
-            self.passed = []
-        if self.warnings is None:
-            self.warnings = []
-        if self.failed is None:
-            self.failed = []
-
-    def is_success(self) -> bool:
-        """是否验证成功"""
-        return len(self.failed) == 0
-
-    def add_pass(self, message: str):
-        """添加通过项"""
-        self.passed.append(message)
-
-    def add_warning(self, message: str):
-        """添加警告"""
-        self.warnings.append(message)
-
-    def add_fail(self, message: str):
-        """添加失败项"""
-        self.failed.append(message)
-
-    def summary(self) -> str:
-        """生成摘要"""
-        lines = [
-            f"✅ Passed: {len(self.passed)}",
-            f"⚠️  Warnings: {len(self.warnings)}",
-            f"❌ Failed: {len(self.failed)}",
-        ]
-        return "\n".join(lines)
 
 
 class TemplateBase(ABC):

@@ -5,7 +5,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -17,6 +17,47 @@ class ValidationContext:
     template_config: Dict[str, Any]
     tolerance: Dict[str, Any]
     verbose: bool = False
+
+
+@dataclass
+class ValidationResult:
+    """验证结果"""
+    passed: List[str]
+    warnings: List[str]
+    failed: List[str]
+
+    def __post_init__(self):
+        if self.passed is None:
+            self.passed = []
+        if self.warnings is None:
+            self.warnings = []
+        if self.failed is None:
+            self.failed = []
+
+    def is_success(self) -> bool:
+        """是否验证成功"""
+        return len(self.failed) == 0
+
+    def add_pass(self, message: str):
+        """添加通过项"""
+        self.passed.append(message)
+
+    def add_warning(self, message: str):
+        """添加警告"""
+        self.warnings.append(message)
+
+    def add_fail(self, message: str):
+        """添加失败项"""
+        self.failed.append(message)
+
+    def summary(self) -> str:
+        """生成摘要"""
+        lines = [
+            f"✅ Passed: {len(self.passed)}",
+            f"⚠️  Warnings: {len(self.warnings)}",
+            f"❌ Failed: {len(self.failed)}",
+        ]
+        return "\n".join(lines)
 
 
 class ValidatorBase(ABC):
@@ -99,8 +140,6 @@ class ValidatorRegistry:
 
 if __name__ == "__main__":
     # 测试代码
-    from core.template_base import ValidationResult
-
     class ExampleValidator(ValidatorBase):
         def get_name(self) -> str:
             return "example"

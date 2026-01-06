@@ -12,7 +12,10 @@
 \usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
 % \usepackage{ctex}
 \usepackage{pifont} % 带圈数字
-\usepackage{ifplatform} % 检测操作系统
+
+% 操作系统检测（避免 ifplatform 在未开启 shell escape 时产生警告）
+\newif\ifwindows
+\IfFileExists{/dev/null}{\windowsfalse}{\windowstrue}
 
 %%%————————————————————————————————边距
 % \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
@@ -25,7 +28,9 @@
 
 
 %%%————————————————————————————————颜色
-\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
+% 说明：在 XeLaTeX + xcolor 组合下，RGB(0,112,192) 在 PDF 中可能被量化为 (0,111,192)；
+% 为了让最终 PDF 提取/显示为 Word 的 MsBlue：RGB(0,112,192)，这里将 G 分量 +1。
+\definecolor{MsBlue}{RGB}{0,113,192} % 目标：PDF 输出等效 RGB(0,112,192)
 \definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
 \definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
 
@@ -49,9 +54,9 @@
 \newcommand{\yihao}{\fontsize{26pt}{\baselineskip}\selectfont}
 \newcommand{\erhao}{\fontsize{22pt}{\baselineskip}\selectfont}
 \newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont}
-\newcommand{\sanhao}{\fontsize{16pt}{\baselineskip}\selectfont}
-\newcommand{\sihao}{\fontsize{14pt}{\baselineskip}\selectfont}
-\newcommand{\xiaosihao}{\fontsize{12pt}{\baselineskip}\selectfont}
+\newcommand{\sanhao}{\fontsize{16pt}{22pt}\selectfont}
+\newcommand{\sihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\xiaosihao}{\fontsize{12pt}{22pt}\selectfont}
 \newcommand{\yemeizihao}{\fontsize{11pt}{\baselineskip}\selectfont}
 \newcommand{\wuhao}{\fontsize{10.5pt}{\baselineskip}\selectfont}
 \newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont}
@@ -73,23 +78,17 @@
   \NewDocumentCommand \templatefont { } {\sectionzhfont \sectionenfont} % 模板中英文字体
   \setmainfont{Times New Roman} % 定义主体内容的英文字体为Times New Roman
   \setCJKmainfont{KaiTi}[AutoFakeBold=3]  % 定义主体内容的字体为Kaiti
+  \setCJKmonofont{KaiTi}[AutoFakeBold=3]  % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
   % \setCJKmainfont{SimSun}[AutoFakeBold=3]  % 定义主体内容的字体为SimSun
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \else
-  % 优先使用系统字体（用于对齐 macOS/LibreOffice 导出的 2026 Word 模板 PDF），不存在则回退到仓库内置字体
-  \IfFontExistsTF{SIL-Kai-Reg-Jian}{
-    \setCJKfamilyfont{sectionzhfont}{SIL-Kai-Reg-Jian}[AutoFakeBold=3]
-    \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}
-    \newfontfamily\sectionenfont{SIL-Kai-Reg-Jian}[AutoFakeBold=3]
-    \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}
-    \setCJKmainfont{SIL-Kai-Reg-Jian}[AutoFakeBold=3]
-  }{
-    \setCJKfamilyfont{sectionzhfont}[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中文字体为楷体
-    \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
-    \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
-    \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
-    \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义主体内容的字体为Kaiti
-  }
+  % 使用仓库内置字体，避免不同系统的字体名差异影响可复现性
+  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中文字体为楷体
+  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
+  \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
+  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
+  \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义主体内容的字体为Kaiti
+  \setCJKmonofont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti}
   % \setmainfont[Path=./fonts/, Extension=.ttf]{TimesNewRoman} % 定义主体内容的英文字体为Times New Roman。由于是外挂字体，无法自由使用英文斜体和粗体。
   \setmainfont[BoldFont=Times New Roman, AutoFakeBold=5]{Times New Roman} %使用MacOS自带的Times New Roman，可以自由使用英文斜体和粗体。
   % \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{SimSun} % 定义主体内容的字体为SimSun
@@ -98,9 +97,15 @@
 
 
 %%%————————————————————————————————行距
-%设置行距 1.5倍
-\renewcommand{\baselinestretch}{1.5}
+% Word 2026 模板使用固定行距：22 pt（“固定值 22 磅”）
+\renewcommand{\baselinestretch}{1.0}
+\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{7.8pt} % Word 模板“段后 7.8pt”
 \XeTeXlinebreaklocale "zh" % 中文断行
+
+% Word 空白段落的“视觉高度”对齐：在已有 \parskip 的情况下补足到 1 行行距
+\newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
 
 
 %%%————————————————————————————————图片与表格
@@ -127,7 +132,7 @@
 % \newcommand{\itemtitlefont}[1]{\textbf{\color{MsBlue} #1}} % 定义item小标题字体；
 \newcommand{\itemtitlefont}[1]{{\bfseries \color{MsBlue} #1}} % 定义item小标题字体；
 \usepackage{caption}
-\captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+\captionsetup{font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering}
 
 %表格
 \usepackage{booktabs} %表格
@@ -147,6 +152,9 @@
 	citecolor=black,
 	CJKbookmarks=True
 ]{hyperref}
+\pdfstringdefDisableCommands{%
+  \def\linebreak{}%
+}
 
 
 %%%————————————————————————————————标题计数
@@ -160,14 +168,14 @@
 % \setcounter{tocdepth}{4}
 
 % Define section font
-\newcommand{\sectionzihao}{\fontsize{14pt}{14pt}\selectfont}
-\newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\sectionzihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\subsectionzihao}{\fontsize{14pt}{22pt}\selectfont}
 \newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
 
 % Custom format for section
 \titleformat{\section}
   {\color{MsBlue} \sectionzihao \templatefont} % format
-  {\hspace{1.45em}  } % label
+  {\hspace*{1.45em}} % label（用于缩进，不影响标题文字内容）
   {0pt} % separation
   {}   % before-code
 
@@ -176,7 +184,7 @@
   {\color{MsBlue} \subsectionzihao \templatefont} % format
   {} % label
   {0pt} % separation
-  {}   % before-code
+  {\hspace*{2em}}   % before-code（用于首行缩进，续行自然顶格）
 
 % Custom format for subsubsection
 \titleformat{\subsubsection}
@@ -204,13 +212,13 @@
 \titlespacing*{\section}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt plus 0pt minus 0pt} % Space after the title
+  {0pt} % Space after the title（由 \parskip 控制段后）
 
 % Define line stretch for subsection
 \titlespacing*{\subsection}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt plus 0pt minus 0pt} % Space after the title
+  {0pt} % Space after the title（由 \parskip 控制段后）
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsection}

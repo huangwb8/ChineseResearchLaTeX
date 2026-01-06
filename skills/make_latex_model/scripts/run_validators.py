@@ -8,15 +8,14 @@ import argparse
 import sys
 from pathlib import Path
 
-# 添加 core 目录到路径
+# 添加 skill 根目录到路径（以便 core 作为包导入）
 SCRIPT_DIR = Path(__file__).parent
 SKILL_DIR = SCRIPT_DIR.parent
-CORE_DIR = SKILL_DIR / "core"
-sys.path.insert(0, str(CORE_DIR))
+sys.path.insert(0, str(SKILL_DIR))
 
-from config_loader import ConfigLoader
-from validator_base import ValidatorRegistry, ValidationContext
-from validators import CompilationValidator, StyleValidator, HeadingValidator, VisualValidator
+from core.config_loader import ConfigLoader
+from core.validator_base import ValidatorRegistry, ValidationContext
+from core.validators import CompilationValidator, StyleValidator, HeadingValidator, VisualValidator
 
 # 注册验证器
 ValidatorRegistry.register(CompilationValidator)
@@ -28,9 +27,9 @@ ValidatorRegistry.register(VisualValidator)
 def run_validators(project_path: Path, template: str = None, verbose: bool = False):
     """运行所有验证器"""
 
-    # 加载配置
-    loader = ConfigLoader()
-    config = loader.load_config(project_path, template)
+    # 加载配置（分层合并：skill 默认配置 + 模板配置 + 项目本地配置）
+    loader = ConfigLoader(skill_dir=SKILL_DIR, project_path=project_path, template_name=template)
+    config = loader.load()
 
     if not config:
         print(f"错误: 无法加载项目配置")

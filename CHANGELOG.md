@@ -96,6 +96,9 @@
 
 ### Changed（变更）
 
+- **make_latex_model v2.7.1** - 修复验证器运行入口
+  - 修复 `scripts/run_validators.py` 的导入路径，避免 `validators` 相对导入报错
+
 - **make_latex_model v2.2.1** - SKILL.md 文档结构优化（方案 A）
   - **P1 文档优化**：
     - 合并重复的验证清单：4.3 节改为引用第 6 节，减少约 30 行重复内容

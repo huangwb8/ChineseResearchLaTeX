@@ -1,6 +1,6 @@
 ---
 name: make_latex_model
-version: 2.7.0
+version: 2.7.1
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
