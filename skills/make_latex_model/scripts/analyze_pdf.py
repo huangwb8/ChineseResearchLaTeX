@@ -9,8 +9,15 @@ PDF 样式分析工具
 
 import sys
 import json
+import argparse
 from pathlib import Path
 from collections import defaultdict
+
+# 添加 core 目录到路径，用于导入 WorkspaceManager
+script_dir = Path(__file__).parent
+core_dir = script_dir.parent / "core"
+if str(core_dir) not in sys.path:
+    sys.path.insert(0, str(core_dir))
 
 # 检查依赖
 try:
@@ -19,6 +26,13 @@ except ImportError:
     print("❌ 错误: 缺少依赖库 PyMuPDF")
     print("请运行: pip install PyMuPDF")
     sys.exit(1)
+
+# 导入 WorkspaceManager
+try:
+    from workspace_manager import WorkspaceManager
+except ImportError:
+    print("⚠️  警告: 无法导入 WorkspaceManager，将使用当前目录保存结果")
+    WorkspaceManager = None
 
 def extract_color_info(color):
     """提取颜色信息 (RGB 0-255)"""
@@ -157,12 +171,24 @@ def analyze_line_spacing(pdf_path, page_num=0):
     return round(avg_line_spacing, 2)
 
 def main():
-    if len(sys.argv) < 2:
-        print("用法: python analyze_pdf.py <pdf_path>")
-        print("示例: python analyze_pdf.py word_baseline.pdf")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="PDF 样式分析工具 - 提取 PDF 中的关键样式信息",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python analyze_pdf.py word_baseline.pdf
+  python analyze_pdf.py projects/NSFC_General/template/word.pdf --project NSFC_General
+  python analyze_pdf.py word.pdf --output custom_analysis.json
+        """
+    )
+    parser.add_argument("pdf_path", help="PDF 文件路径")
+    parser.add_argument("--project", help="项目名称（如 NSFC_General），用于保存到工作空间")
+    parser.add_argument("--output", "-o", help="自定义输出 JSON 文件路径")
+    parser.add_argument("--no-workspace", action="store_true", help="不使用工作空间，直接保存到当前目录")
 
-    pdf_path = sys.argv[1]
+    args = parser.parse_args()
+
+    pdf_path = args.pdf_path
     pdf_file = Path(pdf_path)
 
     if not pdf_file.exists():
@@ -216,7 +242,25 @@ def main():
     print(f"平均行距: {line_spacing} pt")
 
     # 导出为 JSON
-    output_path = Path(pdf_path).stem + "_analysis.json"
+    output_path = None
+    workspace_info = ""
+
+    # 优先级 1: 用户指定了自定义输出路径
+    if args.output:
+        output_path = Path(args.output)
+        workspace_info = "(自定义路径)"
+    # 优先级 2: 用户指定了项目名称且 WorkspaceManager 可用
+    elif args.project and WorkspaceManager and not args.no_workspace:
+        ws_manager = WorkspaceManager()
+        baseline_dir = ws_manager.get_baseline_path(args.project)
+        output_path = baseline_dir / f"{pdf_file.stem}_analysis.json"
+        workspace_info = f"(工作空间: {args.project})"
+    # 默认: 使用 PDF 所在目录（向后兼容）
+    else:
+        output_path = Path(pdf_path).stem + "_analysis.json"
+        if WorkspaceManager and not args.no_workspace:
+            workspace_info = "(当前目录，建议使用 --project 参数保存到工作空间)"
+
     output_data = {
         "source_file": str(pdf_file),
         "file_size_kb": round(pdf_file.stat().st_size / 1024, 2),
@@ -225,13 +269,16 @@ def main():
         "line_spacing_pt": line_spacing
     }
 
+    # 确保输出目录存在
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
     print(f"\n{'='*60}")
     print(f"✅ 分析完成")
     print(f"{'='*60}")
-    print(f"详细分析结果已保存到: {output_path}")
+    print(f"详细分析结果已保存到: {output_path} {workspace_info}")
     print(f"{'='*60}\n")
 
 if __name__ == "__main__":

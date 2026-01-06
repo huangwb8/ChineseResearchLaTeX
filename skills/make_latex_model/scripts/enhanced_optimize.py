@@ -242,17 +242,25 @@ class EnhancedOptimizer:
             return None
 
         try:
-            # 运行分析脚本
-            result = self.run_script("analyze_pdf.py", [str(baseline_pdf)])
+            # 运行分析脚本，使用 --project 参数直接保存到工作空间
+            result = self.run_script(
+                "analyze_pdf.py",
+                [str(baseline_pdf), "--project", self.project_name]
+            )
 
-            # 移动分析结果到工作空间
-            analysis_file = Path(f"{baseline_pdf.stem}_analysis.json")
+            # 直接从工作空间读取分析结果
+            analysis_file = self.workspace / "baseline" / f"{baseline_pdf.stem}_analysis.json"
             if analysis_file.exists():
-                dest = self.workspace / "baseline" / analysis_file.name
-                shutil.move(str(analysis_file), str(dest))
-                self.log(f"分析结果已保存: {dest}", "success")
+                self.log(f"分析结果已保存: {analysis_file}", "success")
+                with open(analysis_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
 
-                with open(dest, "r", encoding="utf-8") as f:
+            # 兼容旧版本：如果工作空间没有，尝试从当前目录查找
+            old_analysis = Path(f"{baseline_pdf.stem}_analysis.json")
+            if old_analysis.exists():
+                self.log("发现旧版分析文件，正在迁移...", "warning")
+                shutil.move(str(old_analysis), str(analysis_file))
+                with open(analysis_file, "r", encoding="utf-8") as f:
                     return json.load(f)
 
             return None
