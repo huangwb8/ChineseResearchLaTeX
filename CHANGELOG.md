@@ -10,6 +10,21 @@
 
 ### Added（新增）
 
+- **make_latex_model v2.4.0** - 标题格式对比功能增强
+  - **格式对比核心功能**：
+    - 新增 `extract_formatted_text_from_word()`：从 Word 段落提取格式化文本片段（加粗信息）
+    - 新增 `extract_formatted_text_from_latex()`：从 LaTeX 代码解析 `\textbf{}` 格式
+    - 新增 `compare_formatted_text()`：对比 Word 和 LaTeX 的格式一致性
+  - **命令行参数扩展**：
+    - `compare_headings.py` 新增 `--check-format` 参数：启用格式（加粗）对比
+    - 支持向后兼容：默认行为保持不变，仅检查文本内容
+  - **报告增强**：
+    - 新增 `generate_text_report_with_format()`：生成包含格式差异的文本报告
+    - 格式差异报告显示：Word 和 LaTeX 的加粗位置对比、具体差异位置标注
+  - **文档更新**：
+    - SKILL.md 步骤 2.5 新增格式对比使用说明
+    - description 更新：添加"标题格式对比（加粗）"功能描述
+
 - **make_latex_model v2.3.0** - 迭代优化闭环与工作空间重构
   - **工作空间管理（Phase 0）**：
     - 新增 `core/workspace_manager.py`：统一管理 skill 工作目录，避免污染用户项目目录

@@ -1,11 +1,11 @@
 ---
 name: make_latex_model
-version: 2.3.0
+version: 2.4.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
 category: normal
-description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、像素级 PDF 对比验证和自动迭代优化闭环
+description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、标题格式对比（加粗）、像素级 PDF 对比验证和自动迭代优化闭环
 tags:
   - latex
   - template
@@ -392,12 +392,29 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
      - ⚠️ 有差异的标题（黄色，并排显示 Word 和 LaTeX 内容）
      - ❌ 仅在一方的标题（红色）
 
-4. **如果 Word 是 .doc 格式**，先转换为 .docx：
+4. **⚠️ 格式对比（加粗）- v2.4.0 新增**：
+   ```bash
+   # 检查标题内的加粗格式是否一致
+   python3 skills/make_latex_model/scripts/compare_headings.py \
+     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/main.tex \
+     --check-format \
+     --report heading_format_report.txt
+   ```
+
+   - Word 模板中的标题可能包含混合格式，例如"**立项依据**与研究内容"
+   - 使用 `--check-format` 参数可以检测 LaTeX 是否正确实现了加粗样式
+   - 报告会显示：
+     - ✅ 文本和格式都完全匹配
+     - ⚠️ 文本差异（传统的文字内容不匹配）
+     - 🔶 格式差异（加粗位置不一致，并标注具体位置）
+
+5. **如果 Word 是 .doc 格式**，先转换为 .docx：
    ```bash
    soffice --headless --convert-to docx --outdir . template.doc
    ```
 
-5. **手动提取标题**（备用方案）：
+6. **手动提取标题**（备用方案）：
    - 打开 Word 模板，复制所有标题文本
    - 打开 LaTeX 的 `main.tex`，复制 `\section{}` 和 `\subsection{}` 中的标题
    - 人工对比差异
