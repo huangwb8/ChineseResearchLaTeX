@@ -1,0 +1,36 @@
+{
+  "source_file": "word.pdf",
+  "file_size_kb": 164.52,
+  "layout": {
+    "page_size_cm": [
+      21.0,
+      29.7
+    ],
+    "margins_cm": {
+      "left": 3.0,
+      "right": 3.01,
+      "top": 2.67,
+      "bottom": 2.66
+    }
+  },
+  "fonts": {
+    "SIL-Kai-Reg-Jian": {
+      "count": 45,
+      "sizes": [
+        14.0,
+        16.0
+      ],
+      "colors": [],
+      "is_bold": false
+    },
+    "ArialUnicodeMS": {
+      "count": 12,
+      "sizes": [
+        12.0
+      ],
+      "colors": [],
+      "is_bold": false
+    }
+  },
+  "line_spacing_pt": 21.02
+}

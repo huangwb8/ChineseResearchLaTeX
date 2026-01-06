@@ -1,0 +1,15 @@
+{
+  "project_path": "projects/NSFC_General",
+  "check_time": "2026-01-06T20:28:36.568874",
+  "status": {
+    "initialized": true,
+    "has_baseline": true,
+    "baseline_source": "word_pdf",
+    "baseline_quality": "high",
+    "last_compilation": "2026-01-06T20:27:58.554659",
+    "compilation_status": "success",
+    "has_analysis": true,
+    "latest_analysis": "word_analysis.json"
+  },
+  "recommendations": []
+}
