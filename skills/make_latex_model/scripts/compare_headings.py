@@ -553,9 +553,31 @@ def generate_text_report(matched: List, differences: List, only_in_one: List) ->
     return '\n'.join(lines)
 
 
-def generate_html_report(matched: List, differences: List, only_in_one: List,
-                        word_file: Path, latex_file: Path) -> str:
-    """生成 HTML 格式报告"""
+def render_formatted_text_html(fragments: List[Dict]) -> str:
+    """
+    将格式片段渲染为 HTML
+
+    Args:
+        fragments: 格式片段列表
+
+    Returns:
+        HTML 字符串，加粗文本用 <b> 标签
+    """
+    html_parts = []
+    for frag in fragments:
+        text = frag["text"]
+        # HTML 转义
+        text = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        if frag.get("bold"):
+            html_parts.append(f'<b>{text}</b>')
+        else:
+            html_parts.append(text)
+    return ''.join(html_parts)
+
+
+def generate_html_report_with_format(matched: List, text_diff: List, format_diff: List, only_in_one: List,
+                                     word_file: Path, latex_file: Path) -> str:
+    """生成 HTML 格式报告（包含格式对比）"""
     html = f'''<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -750,6 +772,331 @@ def generate_html_report(matched: List, differences: List, only_in_one: List,
     return html
 
 
+def generate_html_report_with_format(matched: List, text_diff: List, format_diff: List, only_in_one: List,
+                                     word_file: Path, latex_file: Path) -> str:
+    """生成 HTML 格式报告（包含格式对比）"""
+    html = f'''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标题文字对比报告（含格式）</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }}
+        .stats {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }}
+        .stat-card {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }}
+        .stat-card h3 {{
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }}
+        .stat-card .value {{
+            font-size: 32px;
+            font-weight: bold;
+        }}
+        .matched .value {{ color: #10b981; }}
+        .text-diff .value {{ color: #f59e0b; }}
+        .format-diff .value {{ color: #f97316; }}
+        .only .value {{ color: #ef4444; }}
+        .section {{
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .section h2 {{
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }}
+        .item {{
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ddd;
+            background: #f9fafb;
+            border-radius: 4px;
+        }}
+        .item.matched {{
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }}
+        .item.text-diff {{
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }}
+        .item.format-diff {{
+            border-left-color: #f97316;
+            background: #fff7ed;
+        }}
+        .item.only {{
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }}
+        .key {{
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }}
+        .diff-pair {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }}
+        .diff-box {{
+            padding: 12px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }}
+        .diff-box.word {{
+            border-left: 3px solid #3b82f6;
+        }}
+        .diff-box.latex {{
+            border-left: 3px solid #8b5cf6;
+        }}
+        .label {{
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }}
+        .rendered-text {{
+            font-size: 15px;
+            line-height: 1.8;
+            color: #1f2937;
+        }}
+        .rendered-text b {{
+            font-weight: 700;
+            color: #1e3a8a;
+        }}
+        .diff-marker {{
+            margin-top: 12px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #92400e;
+        }}
+        .diff-marker-item {{
+            padding: 4px 0;
+            border-bottom: 1px solid #fde68a;
+        }}
+        .diff-marker-item:last-child {{
+            border-bottom: none;
+        }}
+        .meta {{
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 30px;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 标题文字对比报告（含格式）</h1>
+        <p>生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card matched">
+            <h3>✅ 完全匹配</h3>
+            <div class="value">{len(matched)}</div>
+        </div>
+        <div class="stat-card text-diff">
+            <h3>⚠️ 文本差异</h3>
+            <div class="value">{len(text_diff)}</div>
+        </div>
+        <div class="stat-card format-diff">
+            <h3>🔶 格式差异</h3>
+            <div class="value">{len(format_diff)}</div>
+        </div>
+        <div class="stat-card only">
+            <h3>❌ 仅在一方</h3>
+            <div class="value">{len(only_in_one)}</div>
+        </div>
+    </div>
+'''
+
+    # 完全匹配的标题
+    if matched:
+        html += '<div class="section"><h2>✅ 完全匹配的标题（文本+格式）</h2>'
+        for key, text, result in matched:
+            word_html = render_formatted_text_html(result.get("word_fragments", []))
+            html += f'''
+    <div class="item matched">
+        <div class="key">{key}</div>
+        <div class="rendered-text">{word_html}</div>
+    </div>'''
+        html += '</div>'
+
+    # 文本差异
+    if text_diff:
+        html += '<div class="section"><h2>⚠️ 文本差异</h2>'
+        for key, word_value, latex_value in text_diff:
+            html += f'''
+    <div class="item text-diff">
+        <div class="key">{key}</div>
+        <div class="diff-pair">
+            <div class="diff-box word">
+                <div class="label">Word 模板</div>
+                <div class="rendered-text">{word_value}</div>
+            </div>
+            <div class="diff-box latex">
+                <div class="label">LaTeX 文件</div>
+                <div class="rendered-text">{latex_value}</div>
+            </div>
+        </div>
+    </div>'''
+        html += '</div>'
+
+    # 格式差异
+    if format_diff:
+        html += '<div class="section"><h2>🔶 格式差异（加粗）</h2>'
+        for key, text, result in format_diff:
+            word_html = render_formatted_text_html(result.get("word_fragments", []))
+            latex_html = render_formatted_text_html(result.get("latex_fragments", []))
+
+            # 构建差异标记
+            diff_markers = []
+            for diff in result.get("differences", []):
+                char = diff.get("char", "")
+                pos = diff.get("position", 0)
+                word_bold = "加粗" if diff.get("word_bold") else "正常"
+                latex_bold = "加粗" if diff.get("latex_bold") else "正常"
+                diff_markers.append(f'位置 {pos}: "{char}" - Word:{word_bold}, LaTeX:{latex_bold}')
+
+            diff_marker_html = ""
+            if diff_markers:
+                diff_marker_html = '<div class="diff-marker">' + \
+                    ''.join(f'<div class="diff-marker-item">{marker}</div>' for marker in diff_markers) + \
+                    '</div>'
+
+            html += f'''
+    <div class="item format-diff">
+        <div class="key">{key}</div>
+        <div class="diff-pair">
+            <div class="diff-box word">
+                <div class="label">Word 模板</div>
+                <div class="rendered-text">{word_html}</div>
+            </div>
+            <div class="diff-box latex">
+                <div class="label">LaTeX 文件</div>
+                <div class="rendered-text">{latex_html}</div>
+            </div>
+        </div>
+        {diff_marker_html}
+    </div>'''
+        html += '</div>'
+
+    # 仅在一方的标题
+    if only_in_one:
+        html += '<div class="section"><h2>❌ 仅在一方的标题</h2>'
+        for source, key, value in only_in_one:
+            source_label = 'Word 模板' if source == 'word' else 'LaTeX 文件'
+            html += f'''
+    <div class="item only">
+        <div class="key">仅在 {source_label}: {key}</div>
+        <div class="rendered-text">{value}</div>
+    </div>'''
+        html += '</div>'
+
+    html += f'''
+    <div class="meta">
+        <p>Word 文件: {word_file.name}</p>
+        <p>LaTeX 文件: {latex_file.name}</p>
+    </div>
+</body>
+</html>'''
+
+    return html
+
+
+def generate_latex_fix_suggestions(format_diff: List) -> str:
+    """
+    生成 LaTeX 修复建议
+
+    Args:
+        format_diff: 格式差异列表
+
+    Returns:
+        LaTeX 修复代码字符串
+    """
+    lines = []
+    lines.append('% LaTeX 标题格式修复建议')
+    lines.append('% 自动生成于: ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    lines.append('% 请根据实际情况修改 main.tex 中的对应标题')
+    lines.append('')
+    lines.append('% 使用方法：')
+    lines.append('% 1. 将下面的 \\section{} 或 \\subsection{} 替换到 main.tex 中')
+    lines.append('% 2. 确保格式符合 Word 模板要求')
+    lines.append('')
+
+    if not format_diff:
+        lines.append('% ✅ 所有标题格式一致，无需修复')
+        return '\n'.join(lines)
+
+    lines.append('% 修复建议：')
+    lines.append('')
+
+    for key, text, result in format_diff:
+        word_fragments = result.get("word_fragments", [])
+
+        # 生成 LaTeX 代码
+        latex_parts = []
+        for frag in word_fragments:
+            frag_text = frag["text"]
+            if frag.get("bold"):
+                latex_parts.append(f'\\textbf{{{frag_text}}}')
+            else:
+                latex_parts.append(frag_text)
+
+        latex_code = ''.join(latex_parts)
+
+        # 判断是 section 还是 subsection
+        if key.startswith('section_'):
+            command = '\\section'
+        elif key.startswith('subsection_'):
+            command = '\\subsection'
+        else:
+            command = '\\section'
+
+        lines.append(f'% {key}: {text}')
+        lines.append(f'{command}{{{latex_code}}}')
+        lines.append('')
+
+    return '\n'.join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description='对比 Word 和 LaTeX 的标题文字')
     parser.add_argument('word_file', type=Path, help='Word 文档路径')
@@ -759,6 +1106,7 @@ def main():
                        help='报告格式（auto 根据扩展名自动判断）')
     parser.add_argument('--check-format', action='store_true',
                        help='检查格式（加粗）是否一致（默认仅检查文本）')
+    parser.add_argument('--fix-file', type=Path, help='输出 LaTeX 修复建议文件路径')
 
     args = parser.parse_args()
 
@@ -799,9 +1147,8 @@ def main():
         if args.check_format:
             # 格式对比模式
             if fmt == 'html':
-                # 暂时使用文本报告，HTML 报告的增强在 Phase 2
-                report = generate_text_report_with_format(matched, text_diff, format_diff, only_in_one)
-                print('⚠️  HTML 报告的格式对比功能将在后续版本增强')
+                report = generate_html_report_with_format(matched, text_diff, format_diff, only_in_one,
+                                                          args.word_file, args.latex_file)
             else:
                 report = generate_text_report_with_format(matched, text_diff, format_diff, only_in_one)
         else:
@@ -830,6 +1177,19 @@ def main():
         else:
             report = generate_text_report(matched, differences, only_in_one)
         print(report)
+
+    # 生成修复建议文件
+    if args.fix_file and args.check_format and format_diff:
+        fix_content = generate_latex_fix_suggestions(format_diff)
+        with open(args.fix_file, 'w', encoding='utf-8') as f:
+            f.write(fix_content)
+        print(f'🔧 LaTeX 修复建议已生成: {args.fix_file}')
+    elif args.fix_file and args.check_format and not format_diff:
+        # 无格式差异，仍然生成文件
+        fix_content = generate_latex_fix_suggestions(format_diff)
+        with open(args.fix_file, 'w', encoding='utf-8') as f:
+            f.write(fix_content)
+        print(f'✅ 所有标题格式一致，修复建议文件已生成: {args.fix_file}')
 
 
 if __name__ == '__main__':

@@ -10,6 +10,33 @@
 
 ### Added（新增）
 
+- **make_latex_model v2.5.0** - HTML 可视化报告与自动修复建议
+  - **Phase 2: HTML 报告增强**：
+    - 新增 `render_formatted_text_html()`：将格式片段渲染为 HTML（加粗用 `<b>` 标签）
+    - 新增 `generate_html_report_with_format()`：生成包含格式对比的 HTML 报告
+    - HTML 报告支持：
+      - 加粗文本可视化（`<b>` 标签深蓝色显示）
+      - 并排对比（Word vs LaTeX）
+      - 格式差异高亮（黄色背景 + 详细位置标注）
+      - 响应式设计，最大宽度 1400px
+      - 四种统计卡片：完全匹配、文本差异、格式差异、仅在一方
+  - **Phase 3: 自动修复建议**：
+    - 新增 `generate_latex_fix_suggestions()`：生成 LaTeX 修复代码
+    - `compare_headings.py` 新增 `--fix-file` 参数：输出修复建议到指定文件
+    - 自动生成可直接复制的 `\section{}` 和 `\subsection{}` 代码
+    - 根据 Word 格式生成正确的 `\textbf{}` 标记
+  - **命令行增强**：
+    - `--check-format` 模式下支持 HTML 报告（移除"后续版本增强"的临时提示）
+    - 新增 `--fix-file` 参数，与 `--check-format` 配合使用
+  - **文档更新**：
+    - SKILL.md 步骤 2.5 新增 HTML 可视化报告使用说明（第 5 条）
+    - SKILL.md 步骤 2.5 新增 LaTeX 修复建议使用说明（第 6 条）
+    - description 更新：添加"HTML 可视化报告、LaTeX 自动修复建议"
+  - **完整实现计划 v202601060836**：
+    - ✅ Phase 1（核心功能）：100% 完成
+    - ✅ Phase 2（可视化增强）：100% 完成
+    - ✅ Phase 3（自动修复建议）：100% 完成
+
 - **make_latex_model v2.4.0** - 标题格式对比功能增强
   - **格式对比核心功能**：
     - 新增 `extract_formatted_text_from_word()`：从 Word 段落提取格式化文本片段（加粗信息）

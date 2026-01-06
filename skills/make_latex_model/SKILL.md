@@ -1,11 +1,11 @@
 ---
 name: make_latex_model
-version: 2.4.0
+version: 2.5.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
 category: normal
-description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、标题格式对比（加粗）、像素级 PDF 对比验证和自动迭代优化闭环
+description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、标题格式对比（加粗）、HTML 可视化报告、LaTeX 自动修复建议和像素级 PDF 对比验证
 tags:
   - latex
   - template
@@ -409,7 +409,41 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
      - ⚠️ 文本差异（传统的文字内容不匹配）
      - 🔶 格式差异（加粗位置不一致，并标注具体位置）
 
-5. **如果 Word 是 .doc 格式**，先转换为 .docx：
+5. **🎨 HTML 可视化报告 - v2.5.0 新增**：
+   ```bash
+   # 生成包含格式对比的 HTML 报告
+   python3 skills/make_latex_model/scripts/compare_headings.py \
+     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/main.tex \
+     --check-format \
+     --report heading_format_report.html
+   ```
+
+   - HTML 报告直观显示 Word 和 LaTeX 的格式差异
+   - 加粗文本用 `<b>` 标签高亮显示
+   - 格式差异用黄色背景和详细位置标注
+   - 支持并排对比（Word vs LaTeX）
+
+6. **🔧 LaTeX 修复建议 - v2.5.0 新增**：
+   ```bash
+   # 自动生成 LaTeX 修复代码
+   python3 skills/make_latex_model/scripts/compare_headings.py \
+     projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.docx \
+     projects/NSFC_Young/main.tex \
+     --check-format \
+     --fix-file heading_fix_suggestions.tex
+   ```
+
+   - 自动生成可直接复制的 LaTeX 修复代码
+   - 根据 Word 格式生成正确的 `\textbf{}` 标记
+   - 输出文件示例：
+     ```latex
+     % LaTeX 标题格式修复建议
+     % section_1: （一）立项依据与研究内容
+     \section{\textbf{（一）立项依据}与研究内容}
+     ```
+
+7. **如果 Word 是 .doc 格式**，先转换为 .docx：
    ```bash
    soffice --headless --convert-to docx --outdir . template.doc
    ```
