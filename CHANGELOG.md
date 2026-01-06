@@ -10,6 +10,11 @@
 
 ### Added（新增）
 
+- **make_latex_model v2.6.0** - 文档格式优化
+  - 移除 SKILL.md 中所有主要章节标题前的序号（如 `## 1)` → `##`）
+  - 更新文档目录中的锚点链接以匹配新的标题格式
+  - 提升文档可读性和链接稳定性
+
 - **make_latex_model v2.5.0** - HTML 可视化报告与自动修复建议
   - **Phase 2: HTML 报告增强**：
     - 新增 `render_formatted_text_html()`：将格式片段渲染为 HTML（加粗用 `<b>` 标签）
