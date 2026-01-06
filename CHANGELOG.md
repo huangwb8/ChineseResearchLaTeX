@@ -8,6 +8,28 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- **make_latex_model v2.3.0** - 迭代优化闭环与工作空间重构
+  - **工作空间管理（Phase 0）**：
+    - 新增 `core/workspace_manager.py`：统一管理 skill 工作目录，避免污染用户项目目录
+    - 工作空间结构：`workspace/{project}/baseline/`、`iterations/`、`reports/`、`cache/`、`backup/`
+    - 支持旧路径自动迁移和缓存清理策略
+  - **基础功能增强（Phase 1）**：
+    - 新增 `scripts/prepare_main.py`：预处理 main.tex，自动注释/恢复 `\input{}` 行
+    - 新增 `scripts/generate_baseline.py`：自动检测模板文件，使用 Word/LibreOffice 转换为 PDF
+    - 新增 `scripts/convergence_detector.py`：综合判断迭代优化是否达到停止条件
+    - 新增 `scripts/enhanced_optimize.py`：一键式迭代优化入口
+  - **智能调整（Phase 2）**：
+    - 新增 `scripts/intelligent_adjust.py`：分析像素差异，根据差异特征推断参数调整建议
+  - **配置扩展**：
+    - `config.yaml` 新增 `workspace` 配置节（工作空间路径、清理策略）
+    - `config.yaml` 新增 `iteration` 配置节（最大迭代、收敛阈值、调整粒度、像素对比配置）
+    - `config.yaml` 新增 `baseline` 配置节（转换器优先级、质量验证）
+  - **文档更新**：
+    - SKILL.md 新增「0.7) 工作空间说明」章节
+    - SKILL.md 新增「3.5) 迭代优化闭环」章节
+
 ### Changed（变更）
 
 - **make_latex_model v2.2.1** - SKILL.md 文档结构优化（方案 A）

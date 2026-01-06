@@ -14,8 +14,8 @@
 
 skill_info:
   name: make_latex_model
-  version: 2.2.0
-  description: LaTeX 模板高保真优化器（支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程）
+  version: 2.3.0
+  description: LaTeX 模板高保真优化器（支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程，迭代优化闭环）
   category: normal
 
 # ================================
@@ -183,3 +183,57 @@ compatibility:
     - windows
     - macos
     - linux
+
+# ================================
+# 工作空间配置（v2.3.0 新增）
+# ================================
+workspace:
+  root: "workspace"               # 工作空间根目录（相对于 skill 根目录）
+  auto_cleanup: true              # 自动清理过期缓存
+  cache_max_age_hours: 24         # 缓存最大保留时间（小时）
+  keep_iterations: true           # 是否保留所有迭代历史
+  max_iterations_kept: 10         # 最多保留的迭代历史数量
+
+# ================================
+# 迭代优化配置（v2.3.0 新增）
+# ================================
+iteration:
+  max_iterations: 10              # 最大迭代次数
+  convergence_threshold: 0.03     # 收敛阈值（像素差异比例）
+  no_improvement_limit: 3         # 连续无改善轮数阈值
+
+  # 参数调整粒度
+  adjustment_granularity:
+    font_size_pt: 0.1             # 字号调整粒度（pt）
+    line_spacing: 0.05            # 行距调整粒度（倍数）
+    margin_cm: 0.05               # 边距调整粒度（cm）
+    color_rgb: 1                  # 颜色调整粒度（RGB 0-255）
+
+  # 回滚策略
+  rollback_on_worsening: true     # 指标恶化时是否回滚
+  save_best_config: true          # 是否保存最佳配置
+
+  # 像素对比配置
+  pixel_comparison:
+    dpi: 150                      # 渲染分辨率
+    tolerance: 2                  # 像素容差（RGB）
+    focus_areas:                  # 重点对比区域
+      - title_area                # 标题区域
+      - body_area                 # 正文区域
+      - page_margins              # 页边距
+
+# ================================
+# 基准生成配置（v2.3.0 新增）
+# ================================
+baseline:
+  # Word 转 PDF 工具优先级
+  converter_priority:
+    - word                        # Microsoft Word（最精确）
+    - libreoffice                 # LibreOffice（免费替代）
+    - quicklook                   # QuickLook（低质量，仅限 macOS）
+
+  # PDF 质量验证
+  quality_check:
+    min_page_count: 1             # 最少页数
+    expected_page_size: "A4"      # 预期页面尺寸
+    check_font_embedding: true    # 检查字体嵌入

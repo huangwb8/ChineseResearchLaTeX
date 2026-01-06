@@ -1,11 +1,11 @@
 ---
 name: make_latex_model
-version: 2.2.1
+version: 2.3.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
 category: normal
-description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐和像素级 PDF 对比验证
+description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、像素级 PDF 对比验证和自动迭代优化闭环
 tags:
   - latex
   - template
@@ -13,6 +13,7 @@ tags:
   - nsfc
   - pdf-analysis
   - style-alignment
+  - iterative-optimization
 dependencies:
   python: ">=3.8"
   packages:
@@ -25,6 +26,9 @@ dependencies:
     - name: Pillow
       version: ">=9.0.0"
       purpose: 图像处理和像素对比
+    - name: PyYAML
+      version: ">=6.0"
+      purpose: 配置文件解析
 requires:
   - xelatex
   - pdflatex
@@ -39,7 +43,7 @@ compatibility:
     - NSFC_General
     - NSFC_Local
     - generic
-last_updated: 2026-01-05
+last_updated: 2026-01-06
 changelog: ../../CHANGELOG.md
 ---
 
@@ -50,9 +54,11 @@ changelog: ../../CHANGELOG.md
 - **[0.5 深度参考](#05-深度参考)** - 文档参考范围
 - **[0 核心目标](#0-核心目标)** - 样式要素与关键点
 - **[0.6 执行模式说明](#06-执行模式说明)** - 硬编码工具 + AI 规划
+- **[0.7 工作空间说明](#07-工作空间说明)** - ⚠️ v2.3.0 新增
 - **[1 触发条件](#1-触发条件)** - 何时使用本技能
 - **[2 输入参数](#2-输入参数)** - 必需与可选参数
 - **[3 执行流程](#3-执行流程)** - 完整的 6 步工作流程
+- **[3.5 迭代优化闭环](#35-迭代优化闭环)** - ⚠️ v2.3.0 新增
 - **[4 输出规范](#4-输出规范)** - 修改摘要与代码变更
 - **[5 核心原则](#5-核心原则底线)** - 绝对禁区与修改原则
 - **[6 验证清单](#6-验证清单完成后自检按优先级排序)** - 验收标准
@@ -144,6 +150,55 @@ Word 模板 → [自动] analyze_pdf.py → 分析结果
 - ✅ **代码修改** 由 AI + Edit 工具完成（可控、可回溯）
 
 **注**：AI 决策点的详细规范已整合到"第 3 节 执行流程"的相应步骤中。
+
+## 0.7) 工作空间说明（⚠️ v2.3.0 新增）
+
+本 skill 使用专用工作空间存储所有工作产物，避免污染用户项目目录。
+
+### 工作空间结构
+
+```
+skills/make_latex_model/workspace/{project_name}/
+├── baseline/          # Word PDF 基准文件
+│   ├── word.pdf
+│   ├── word_analysis.json
+│   └── quality_report.json
+├── iterations/        # 迭代历史记录
+│   ├── iteration_001/
+│   │   ├── main.pdf
+│   │   ├── config.tex
+│   │   └── metrics.json
+│   └── iteration_002/
+├── reports/           # 生成的报告
+│   ├── diff_report.html
+│   └── optimization_report.html
+├── backup/            # 备份文件
+│   └── main_*.tex.bak
+└── cache/             # 缓存文件
+    └── pdf_renders/
+```
+
+### 路径管理
+
+所有脚本统一使用 `WorkspaceManager` 获取路径：
+
+```python
+from core.workspace_manager import WorkspaceManager
+
+ws_manager = WorkspaceManager()
+baseline_dir = ws_manager.get_baseline_path("NSFC_Young")
+report_path = ws_manager.get_reports_path("NSFC_Young")
+```
+
+### 清理策略
+
+- 缓存文件默认保留 24 小时
+- 迭代历史默认保留最近 10 轮
+- 可通过 `config.yaml` 的 `workspace` 节配置清理策略
+
+### 迁移说明
+
+v2.3.0 前的旧路径（如 `projects/{project}/artifacts/`）会自动迁移到新工作空间。
 
 ## 1) 触发条件
 用户在以下场景触发本技能：
@@ -514,6 +569,79 @@ else:
 
 ---
 
+## 3.5) 迭代优化闭环（⚠️ v2.3.0 新增）
+
+本步骤实现全自动的"优化-对比-调整"循环，推荐在需要精细调整时使用。
+
+### 3.5.1 一键启动
+
+```bash
+# 全自动迭代优化
+python3 skills/make_latex_model/scripts/enhanced_optimize.py \
+  --project NSFC_Young \
+  --max-iterations 10 \
+  --report
+```
+
+脚本会自动完成：
+1. 预处理 main.tex（注释 `\input{}` 行）
+2. 生成可靠 Word PDF 基准
+3. 分析 PDF 样式参数
+4. 迭代优化循环（最多 10 轮）
+5. 恢复 main.tex
+6. 生成详细报告
+
+预计耗时：5-15 分钟（取决于迭代轮数）
+
+### 3.5.2 迭代循环逻辑
+
+```
+WHILE 未达到收敛条件:
+  1. 编译 LaTeX 项目（xelatex -> bibtex -> xelatex -> xelatex）
+  2. 执行像素级 PDF 对比（compare_pdf_pixels.py）
+  3. 检测是否收敛（convergence_detector.py）
+  4. IF 未收敛:
+       - 分析差异特征（intelligent_adjust.py）
+       - 生成参数调整方案
+       - 应用调整到 @config.tex（需 AI 介入）
+  5. 记录本轮指标
+  6. 保存或回滚配置
+END WHILE
+```
+
+### 3.5.3 收敛条件（优先级从高到低）
+
+| 条件 | 阈值 | 说明 |
+|------|------|------|
+| **编译失败** | - | 立即停止，需人工修复 |
+| **像素差异收敛** | `changed_ratio < 0.03` | 达到像素级对齐 |
+| **连续无改善** | 3 轮 | 指标不再优化，收敛 |
+| **最大迭代** | 10 轮 | 强制停止 |
+
+### 3.5.4 智能参数调整策略
+
+脚本 `intelligent_adjust.py` 根据差异特征自动推断参数调整：
+
+| 差异特征 | 推断参数 | 调整策略 |
+|---------|---------|---------|
+| 换行位置大面积差异 | 字间距/字号 | ±0.1pt |
+| 文本垂直偏移 | 行距 | ±0.05 倍 |
+| 颜色不一致 | RGB 值 | ±1 |
+| 左右边距差异 | geometry | ±0.05cm |
+| 标题位置偏移 | titleformat | 调整 spacing |
+
+### 3.5.5 相关脚本
+
+| 脚本 | 功能 |
+|------|------|
+| `enhanced_optimize.py` | 一键迭代优化入口 |
+| `prepare_main.py` | 预处理/恢复 main.tex |
+| `generate_baseline.py` | 生成 Word PDF 基准 |
+| `convergence_detector.py` | 收敛检测与报告 |
+| `intelligent_adjust.py` | 智能参数调整建议 |
+
+---
+
 ## 4) 输出规范
 
 ### 4.1 修改摘要
@@ -784,7 +912,7 @@ cat ../../CHANGELOG.md
 grep -A 10 "make_latex_model" ../../CHANGELOG.md
 ```
 
-**当前版本**：v2.1.0
+**当前版本**：v2.3.0
 
 **项目变更日志**：
 - 每次样式优化后，变更记录将追加到 `projects/{project}/extraTex/@CHANGELOG.md`
