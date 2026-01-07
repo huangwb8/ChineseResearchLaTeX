@@ -40,8 +40,7 @@
     \renewcommand{\contentsname}{目录}
     \renewcommand{\listfigurename}{插图目录}
     \renewcommand{\listtablename}{表格}
-    %\renewcommand{\refname}{\sihao 参考文献}
-    \renewcommand{\refname}{\sihao \kaishu \bfseries \leftline{参考文献} \vspace*{5mm}} %这几个字默认字号稍大，改成四号字，楷书，居左(默认居中) 根据喜好自行修改，官方模板未作要求
+    \renewcommand{\refname}{\sihao \bfseries 参考文献} % 参考文献标题
     \renewcommand{\abstractname}{摘要}
     \renewcommand{\indexname}{索引}
     \renewcommand{\tablename}{表}
@@ -168,20 +167,21 @@
   \pretocmd{\nocite}{\global\NSFCHasCitetrue}{}{}%
 }
 \makeatletter
-\AtBeginDocument{%
-  \immediate\write\@auxout{\string\bibdata{references/myexample}}%
-  \immediate\write\@auxout{\string\bibstyle{bibtex-style/gbt7714-nsfc}}%
-}
-\AtEndDocument{%
-  \ifNSFCHasCite
-    \bibliographystyle{bibtex-style/gbt7714-nsfc}
-    \bibliography{references/myexample}
-  \else
-    % 若当前文档未使用任何引用，为了让“xe->bib->xe->xe”流程不报错，
-    % 这里写入一个“哑引用”到 aux（bibtex 能正常运行，但不会在 PDF 中输出参考文献）。
-    \immediate\write\@auxout{\string\citation{Smith1900}}%
-  \fi
-}
+% 参考文献由 main.tex 中的 \input{references/reference.tex} 手动控制
+% \AtBeginDocument{%
+%   \immediate\write\@auxout{\string\bibdata{references/myexample}}%
+%   \immediate\write\@auxout{\string\bibstyle{bibtex-style/gbt7714-nsfc}}%
+% }
+% \AtEndDocument{%
+%   \ifNSFCHasCite
+%     \bibliographystyle{bibtex-style/gbt7714-nsfc}
+%     \bibliography{references/myexample}
+%   \else
+%     % 若当前文档未使用任何引用，为了让"xe->bib->xe->xe"流程不报错，
+%     % 这里写入一个"哑引用"到 aux（bibtex 能正常运行，但不会在 PDF 中输出参考文献）。
+%     \immediate\write\@auxout{\string\citation{Smith1900}}%
+%   \fi
+% }
 \makeatother
 
 
