@@ -299,3 +299,29 @@
 | Removed | 已移除的功能 |
 | Fixed | 修复的问题 |
 | Security | 安全相关的修复 |
+
+---
+
+## 模板版本历史
+
+### 2025-03-12：v2.5.0 重大更新
+
+> :warning: 修复：面上、地区基金"3.正在承担的与本项目相关的科研项目"段落结尾缺少分号
+
+![mQW1QFdXDq](https://chevereto.hwb0307.com/images/2025/03/12/mQW1QFdXDq.png)
+
+### 2025-03-01：v2.4.6
+
+- 优化：`\kaishu` → `\templatefont` 增强字体兼容性
+- 优化：改善 `subsubsection` 序号显示
+- 修复：系统 TimesNewRoman 适用于 macOS/Overleaf
+
+### 2025-01-25：v2.4.2
+
+- 修复：面上和地区基金 `font/` 文件夹缺失
+- 修复：面上模板 `(建议 8000 字以下)` 未加粗
+- 优化：增强 Overleaf/macOS 平台兼容
+
+### 2025-01-24：2025 版发布
+
+完整更新说明详见博客文章《[国家自然科学基金的 LaTeX 模板](https://blognas.hwb0307.com/skill/5762)》。
