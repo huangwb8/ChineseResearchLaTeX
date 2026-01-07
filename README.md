@@ -100,8 +100,7 @@
 > **场景**：NSFC 发布新 Word 模板，需要 LaTeX 模板与之像素级对齐
 
 ```
-使用 skills/make_latex_model 对 projects/NSFC_Young 进行改造，
-使其与 template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 对齐
+使用 skills/make_latex_model 对 projects/NSFC_Young 进行改造，使其与 template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 对齐
 ```
 
 [详细文档 →](skills/make_latex_model/SKILL.md)
@@ -125,9 +124,7 @@
 > **场景**：快速生成示例内容，填充空白章节
 
 ```
-请你联网调研一下某研究主题，假设你要以此为题材填写 projects/NSFC_Young，
-请使用 skills/complete_example 辅助工作。最后的排版，PDF 要紧凑、美观，
-大致维持在 8 页左右。
+请你联网调研一下某研究主题，假设你要以此为题材填写 projects/NSFC_Young，请使用 skills/complete_example 辅助工作。最后的排版，PDF 要紧凑、美观，大致维持在 8 页左右。
 ```
 
 [详细文档 →](skills/complete_example/SKILL.md)
