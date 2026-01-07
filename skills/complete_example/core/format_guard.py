@@ -1,6 +1,9 @@
 """
 FormatGuard - 硬编码格式守护器
 🔧 硬编码：严格保护格式设置不被修改
+🔒 集成 SecurityManager 增强安全保护
+
+Version: 1.1.0
 """
 
 import hashlib
@@ -10,7 +13,7 @@ import subprocess
 import json
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 
 
@@ -22,6 +25,14 @@ class FormatProtectionError(Exception):
 class CompilationError(Exception):
     """编译异常"""
     pass
+
+
+# 导入安全管理器
+try:
+    from .security_manager import SecurityManager, SecurityError
+    SECURITY_MANAGER_AVAILABLE = True
+except ImportError:
+    SECURITY_MANAGER_AVAILABLE = False
 
 
 @dataclass
@@ -56,15 +67,32 @@ class FormatGuard:
         "main.tex",
     ]
 
-    def __init__(self, project_path: Path, run_dir: Path = None):
+    def __init__(
+        self,
+        project_path: Path,
+        run_dir: Path = None,
+        enable_security_manager: bool = True
+    ):
         """
         Args:
             project_path: 项目根目录（被保护的项目，不写入任何文件）
             run_dir: 运行目录（备份和日志放在这里，隔离项目污染）
+            enable_security_manager: 是否启用增强安全管理器
         """
         self.project_path = Path(project_path)
         self.run_dir = Path(run_dir) if run_dir else self.project_path
         self.format_hashes = self._compute_format_hashes()
+
+        # 🔒 集成安全管理器
+        self.security_manager: Optional[SecurityManager] = None
+        if enable_security_manager and SECURITY_MANAGER_AVAILABLE:
+            self.security_manager = SecurityManager(
+                project_path=self.project_path,
+                hash_file=self.project_path / ".format_hashes.json"
+            )
+            # 初始化哈希（如果不存在）
+            if not self.security_manager.hash_file.exists():
+                self.security_manager.initialize_hashes()
 
     def _compute_format_hashes(self) -> Dict[str, str]:
         """计算关键格式文件的哈希值"""
@@ -141,15 +169,18 @@ class FormatGuard:
         self,
         file_path: Path,
         new_content: str,
-        ai_explanation: str = None
+        ai_explanation: str = None,
+        auto_sanitize: bool = True
     ) -> bool:
         """
         🤝 协作点：AI 建议修改 + 硬编码安全检查
+        🔒 集成安全管理器进行预检查
 
         Args:
             file_path: 要修改的文件路径
             new_content: 新内容
             ai_explanation: AI 对修改的解释
+            auto_sanitize: 是否自动清理格式注入
 
         Returns:
             bool: 是否成功修改
@@ -157,10 +188,21 @@ class FormatGuard:
         Raises:
             FormatProtectionError: 格式保护失败
             CompilationError: 编译失败
+            SecurityError: 安全检查失败（通过 SecurityManager）
         """
         file_path = Path(file_path)
 
-        # 检查是否为受保护文件
+        # ========== 🔒 安全管理器预检查 ==========
+        if self.security_manager:
+            # 1. 系统文件黑名单 + 完整性校验
+            self.security_manager.pre_edit_check(file_path)
+
+            # 2. 格式注入检查 + 自动清理
+            new_content = self.security_manager.pre_apply_check(
+                file_path, new_content, auto_sanitize
+            )
+
+        # 检查是否为受保护文件（兼容旧逻辑）
         try:
             relative_path = str(file_path.relative_to(self.project_path))
         except ValueError:

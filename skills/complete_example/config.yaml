@@ -165,6 +165,53 @@ format_protection:
     engine: "xelatex"
     timeout: 60  # 秒
 
+# ========== 🔒 安全管理配置（v1.1.0 新增）==========
+security:
+  # 系统文件保护
+  system_files:
+    blacklist:
+      - "main.tex"
+      - "extraTex/@config.tex"
+      - "@config.tex"
+    # 允许编辑的文件模式（白名单，正则表达式）
+    editable_patterns:
+      - "^extraTex/\\d+\\.\\d+.*\\.tex$"  # extraTex/1.1.xxx.tex
+      - "^references/reference\\.tex$"      # 参考文献引用文件
+
+  # 格式关键词黑名单（禁止在用户文件中使用）
+  format_keywords_blacklist:
+    - "\\\\geometry{"
+    - "\\\\setlength{"
+    - "\\\\definecolor{"
+    - "\\\\setCJKfamilyfont"
+    - "\\\\setmainfont"
+    - "\\\\setCJKmainfont"
+    - "\\\\renewcommand{\\\\baselinestretch}"
+    - "\\\\titleformat{"
+    - "\\\\titlespacing"
+    - "\\\\setlist"
+    - "\\\\usepackage{"
+    - "\\\\documentclass"
+
+  # 文件完整性校验
+  integrity_check:
+    enabled: true
+    hash_algorithm: "sha256"
+    hash_file: ".format_hashes.json"
+    auto_init: true  # 如果哈希文件不存在，自动初始化
+
+  # 内容安全扫描
+  content_scanning:
+    enabled: true
+    auto_sanitize: true  # 自动清理格式注入
+    fail_on_violation: false  # 发现违规时是否失败（false 则警告并清理）
+
+  # 安全检查项开关
+  enabled_checks:
+    system_file: true       # 系统文件黑名单检查
+    integrity: true         # 完整性校验
+    format_injection: true  # 格式注入检查
+
 # ========== AI 提示词模板 ==========
 prompts:
   analyze_theme: |
