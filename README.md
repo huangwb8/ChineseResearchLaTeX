@@ -99,7 +99,51 @@
 | [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | 将旧标书内容迁移到新模板 | ✅ 稳定 |
 | [complete_example](skills/complete_example/) | 智能示例生成和补全 | ✅ 稳定 |
 
+### 1. make_latex_model - 样式对齐优化
+
+> **场景**：NSFC 发布新 Word 模板，需要 LaTeX 模板与之像素级对齐
+
+```
+使用 skills/make_latex_model 对 projects/NSFC_Young 进行改造，
+使其与 template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 对齐
+```
+
+[详细文档 →](skills/make_latex_model/SKILL.md)
+
 ---
+
+### 2. transfer_old_latex_to_new - 标书智能迁移
+
+> **场景**：旧版本标书迁移到新模板（结构变化大的情况）
+
+```
+使用 skills/transfer_old_latex_to_new 将 projects/NSFC_Young_2025 迁移到 projects/NSFC_Young
+```
+
+[详细文档 →](skills/transfer_old_latex_to_new/SKILL.md)
+
+---
+
+### 3. complete_example - 智能示例生成
+
+> **场景**：快速生成示例内容，填充空白章节
+
+```
+请你联网调研一下某研究主题，假设你要以此为题材填写 projects/NSFC_Young，
+请使用 skills/complete_example 辅助工作。最后的排版，PDF 要紧凑、美观，
+大致维持在 8 页左右。
+```
+
+[详细文档 →](skills/complete_example/SKILL.md)
+
+---
+
+### 调用方式
+
+| 工具 | 调用方式 | 示例 |
+|------|----------|------|
+| **Claude Code** | 自然语言描述 | "请将 NSFC_Young 对齐到 2026 Word 样式" |
+| **OpenAI Codex CLI** | `/skill-name` 参数 | `/complete_example NSFC_Young --content-density moderate` |
 
 ## 🔗 镜像站
 
