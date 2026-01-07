@@ -187,7 +187,7 @@ NSFC_General/
 1. 将图片放入 `figures/` 目录
 2. 使用以下代码插入图片
 
-**示例**：
+**示例 1：研究现状图**（见 [1.1.立项依据.tex](extraTex/1.1.立项依据.tex)）
 
 ```latex
 \begin{figure}[!th]
@@ -204,7 +204,23 @@ NSFC_General/
 如图 \ref{fig:research-status} 所示...
 ```
 
+**示例 2：理论框架设计图**（见 [1.2.内容目标问题.tex](extraTex/1.2.内容目标问题.tex)）
+
+```latex
+\begin{figure}[!th]
+    \begin{center}
+        \includegraphics[width=0.8\linewidth]{figures/zzmx-mobile-105.jpg}
+        \caption{理论框架设计示意图。\\
+        \raggedright \justifying \noindent
+        本图展示了研究内容1中理论框架的构建思路。}
+        \label{fig:framework-design}
+    \end{center}
+\end{figure}
+```
+
 **支持的图片格式**：`.jpg`, `.png`, `.pdf`, `.eps`
+
+**说明**：模板中已包含两个图片示例，分别在不同章节中展示不同类型的图示用途。
 
 ### 💻 代码插入
 
