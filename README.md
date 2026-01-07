@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="logo/logo.png" alt="项目 Logo" width="120"/>
+
 # 中国科研常用 LaTeX 模板集
 
 [![Version](https://img.shields.io/github/v/tag/huangwb8/ChineseResearchLaTeX?label=version&sort=semver&color=blue)](https://github.com/huangwb8/ChineseResearchLaTeX/releases)
