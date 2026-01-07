@@ -145,3 +145,14 @@
 ## ©️ 许可证
 
 本项目采用 [MIT License](license.txt)。
+
+---
+
+## 📖 推荐阅读
+
+> 💡 深入了解 AI 辅助编程和 Vibe Coding 理念，推荐阅读以下博客文章（如果您是初次接触，建议按顺序阅读以循序渐进地了解 Vibe Coding 生态）：
+
+- [Vibe Coding CLI 评测：Claude Code vs. OpenAI Codex vs. Gemini CLI](https://blognas.hwb0307.com/other/6923) - 全面对比三大 CLI AI 编程助手（2026-01-06）
+- [AI 模型评测：性价比超绝的 GLM-4.7](https://blognas.hwb0307.com/ai/6914) - 智谱 AI 开源模型的编码能力与推理性能分析（2026-01-05）
+- [Claude Code 和 Claude Skills 的工程设计](https://blognas.hwb0307.com/skill/6689) - 深入探讨 Skills 本质与系统化开发流程（2026-01-03）
+- [AI 应用系列：一个简单的 Vibe Coding 通知系统](https://blognas.hwb0307.com/ai/6659) - VibeNotification 项目实战经验（2025-12-21）
