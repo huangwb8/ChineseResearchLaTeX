@@ -24,22 +24,57 @@
 
 \clearpage
 
-【示例：表格插入】表 \ref{tab:method-comparison} 对比了不同方法的优缺点。
+【示例：表格插入】表 \ref{table1} 展示了临床特征数据的统计分析结果。
 
 \begin{table}[htbp]
     \centering
-    \caption{\textbf{研究现状对比表}}
-    \begin{tabular}{llll}
+    \fontsize{10}{10}\selectfont
+    \caption{\textbf{临床特征统计分析表}}
+    \begin{tabular}{lllll}
     \toprule
-    方法 & 优势 & 不足 & 适用场景 \\
-    \midrule
-    方法A & 计算效率高 & 精度有限 & 大规模数据处理 \\
-    方法B & 精度高 & 计算复杂度高 & 高精度要求场景 \\
-    方法C & 通用性强 & 特定场景性能一般 & 多种应用场景 \\
+            & \textbf{Characteristics} & \textbf{High (n=137)} & \textbf{Low (n=235)} & \textbf{\textit{P} value} \\
+    \toprule
+    \textbf{Gender (\%)} & Male  & 85 (62.0) & 154 (65.5) & 0.572 \\
+            & Female & 52 (38.0) & 81 (34.5) &  \\
+    \textbf{Age (mean (SD))} &       & 65.50 (10.22) & 66.06 (10.95) & 0.628 \\
+    \textbf{Race (\%)} & White & 98 (81.0) & 139 (69.5) & 0.054 \\
+            & Asian & 21 (17.4) & 51 (25.5) &  \\
+            & Other & 2 (1.7) & 10 (5.0) &  \\
+    \textbf{Tumor position (\%)} & GEJ   & 17 (12.9) & 27 (11.9) & 0.03 \\
+            & Cardia & 11 (8.3) & 36 (15.9) &  \\
+            & Fundus & 48 (36.4) & 54 (23.8) &  \\
+            & Body  & 7 (5.3) & 23 (10.1) &  \\
+            & Antrum & 49 (37.1) & 87 (38.3) &  \\
+    \textbf{Pathology (\%)} & Intestinal & 65 (52.4) & 167 (78.8) & <0.001 \\
+            & Diffuse & 52 (41.9) & 35 (16.5) &  \\
+            & Mixed & 7 (5.6) & 10 (4.7) &  \\
+    \textbf{Grade (\%)} & G1    & 1 (0.7) & 9 (4.0) & <0.001 \\
+            & G2    & 28 (20.6) & 108 (47.6) &  \\
+            & G3    & 107 (78.7) & 110 (48.5) &  \\
+    \textbf{T stage (\%)} & T1    & 2 (1.6) & 17 (7.3) & 0.009 \\
+            & T2    & 24 (18.6) & 42 (17.9) &  \\
+            & T3    & 38 (29.5) & 91 (38.9) &  \\
+            & T4    & 65 (50.4) & 84 (35.9) &  \\
+    \textbf{N stage (\%)} & N0    & 37 (29.1) & 76 (33.2) & 0.504 \\
+            & Np    & 90 (70.9) & 153 (66.8) &  \\
+    \textbf{M stage (\%)} & M0    & 121 (92.4) & 206 (93.2) & 0.933 \\
+            & M1    & 10 (7.6) & 15 (6.8) &  \\
+    \textbf{Stage (\%)} & I     & 10 (8.3) & 37 (17.1) & 0.171 \\
+            & II    & 40 (33.3) & 66 (30.6) &  \\
+            & III   & 60 (50.0) & 98 (45.4) &  \\
+            & IV    & 10 (8.3) & 15 (6.9) &  \\
+    \textbf{MSI status (\%)} & MSI-H & 21 (21.0) & 26 (19.0) & 0.001 \\
+            & MSI-L & 6 (6.0) & 32 (23.4) &  \\
+            & MSS   & 73 (73.0) & 79 (57.7) &  \\
+    \textbf{EBV infection (\%)} & Positive & 18 (18.0) & 5 (3.6) & 0.001 \\
+            & Negative & 82 (82.0) & 132 (96.4) &  \\
+    \textbf{Purity (mean (SD))} &       & 0.40 (0.17) & 0.57 (0.19) & <0.001 \\
+    \textbf{Ploidy (mean (SD))} &       & 2.37 (0.67) & 2.69 (0.90) & 0.001 \\
     \bottomrule
-    \end{tabular}
-    \label{tab:method-comparison}
-\end{table}
+    \end{tabular}%
+    \captionsetup{font={footnotesize,stretch=1.25},justification=raggedright}
+    \label{table1}%
+\end{table}%
 
 \subsubsection{拟解决的关键科学问题}
 % 建议：2–4 条；每条尽量“可检验/可量化/可证伪”，并与后续研究内容一一对应。
