@@ -12,6 +12,7 @@
 \usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
 % \usepackage{ctex}
 \usepackage{pifont} % 带圈数字
+\usepackage{etoolbox} % 轻量补丁工具（用于可选参考文献逻辑）
 
 % 操作系统检测（避免 ifplatform 在未开启 shell escape 时产生警告）
 \newif\ifwindows
@@ -155,6 +156,33 @@
 \pdfstringdefDisableCommands{%
   \def\linebreak{}%
 }
+
+%%%————————————————————————————————参考文献（兼容“xe->bib->xe->xe”）
+% 目标：
+% 1) 即使正文暂时没有任何 \cite，也能顺利执行 bibtex（不报“no \\bibdata/no \\bibstyle/no \\citation”）。
+% 2) 只有在正文实际使用了引用时，才在文末输出“参考文献”，避免空参考文献页影响版式对齐。
+\newif\ifNSFCHasCite
+\NSFCHasCitefalse
+\AtBeginDocument{%
+  \pretocmd{\cite}{\global\NSFCHasCitetrue}{}{}%
+  \pretocmd{\nocite}{\global\NSFCHasCitetrue}{}{}%
+}
+\makeatletter
+\AtBeginDocument{%
+  \immediate\write\@auxout{\string\bibdata{references/myexample}}%
+  \immediate\write\@auxout{\string\bibstyle{bibtex-style/gbt7714-nsfc}}%
+}
+\AtEndDocument{%
+  \ifNSFCHasCite
+    \bibliographystyle{bibtex-style/gbt7714-nsfc}
+    \bibliography{references/myexample}
+  \else
+    % 若当前文档未使用任何引用，为了让“xe->bib->xe->xe”流程不报错，
+    % 这里写入一个“哑引用”到 aux（bibtex 能正常运行，但不会在 PDF 中输出参考文献）。
+    \immediate\write\@auxout{\string\citation{Smith1900}}%
+  \fi
+}
+\makeatother
 
 
 %%%————————————————————————————————标题计数
