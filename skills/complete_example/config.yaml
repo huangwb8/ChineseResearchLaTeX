@@ -1,0 +1,240 @@
+skill_info:
+  name: complete_example
+  version: 1.0.0
+  description: AI 增强版 LaTeX 示例智能生成器
+  author: "ChineseResearchLaTeX Project"
+
+# ========== LLM 配置 ==========
+llm:
+  provider: "claude"  # claude / openai / local
+  model: "claude-sonnet-4-20250514"  # 或 gpt-4
+  api_key_env: "ANTHROPIC_API_KEY"  # 环境变量名
+  temperature:
+    analysis: 0.3    # 分析任务（低温度，稳定）
+    generation: 0.8  # 生成任务（高温度，创造性）
+    refinement: 0.5  # 优化任务（中温度）
+  max_tokens: 4000
+
+# ========== 参数定义 ==========
+parameters:
+  project:
+    type: string
+    required: true
+    description: 项目名称或路径
+
+  content_density:
+    type: string
+    allowed_values: ["minimal", "moderate", "comprehensive"]
+    default: "moderate"
+    description: |
+      minimal:    每章节 2 个资源，200 字
+      moderate:   每章节 4 个资源，300 字
+      comprehensive: 每章节 6 个资源，500 字
+
+  output_mode:
+    type: string
+    allowed_values: ["preview", "apply", "report"]
+    default: "preview"
+    description: |
+      preview:  只显示预览，不修改文件
+      apply:    直接修改文件（有备份）
+      report:   生成详细报告文件
+
+  target_files:
+    type: array
+    default: null
+    description: |
+      目标文件列表（相对于项目根目录）
+      null 表示自动检测所有 extraTex/*.tex
+
+  narrative_hint:
+    type: string
+    default: null
+    description: |
+      用户自定义的叙事提示，用于指导 AI 生成特定风格的示例内容。
+      这是"示例场景"而非"严肃场景"，因此 AI 可以根据提示编造相应的叙事。
+      示例：
+        - "生成一个关于深度学习在医疗影像分析中应用的示例"
+        - "创建一个使用传统机器学习方法的示例研究"
+        - "编写一个关于材料科学实验设计的示例，重点关注 XRD 表征"
+        - "模拟一个多中心临床试验的设计与分析流程"
+      null 表示 AI 根据章节主题自动推断叙事方向。
+
+# ========== 运行管理配置 ==========
+run_management:
+  # 运行输出根目录（所有输出都放在这里，不污染项目）
+  runs_root: "skills/complete_example/runs"
+
+  # 运行 ID 生成策略
+  run_id_strategy: "timestamp_uuid"  # timestamp_uuid / sequential / custom
+
+  # 保留策略
+  retention:
+    max_runs: 50              # 最多保留 50 次运行记录
+    max_age_days: 30          # 最多保留 30 天
+    auto_cleanup: true        # 自动清理过期记录
+
+  # 备份策略
+  backup:
+    location: "runs/{run_id}/backups"  # 备份位置（不在项目目录）
+    compress: false                    # 是否压缩备份文件
+    format: "tar.gz"                   # 压缩格式（如果启用压缩）
+
+  # 日志策略
+  logging:
+    location: "runs/{run_id}/logs"     # 日志位置（不在项目目录）
+    level: "INFO"                      # 日志级别
+    rotation: true                     # 日志轮转
+    max_size_mb: 10                    # 单个日志文件最大大小
+
+# ========== 资源扫描配置 ==========
+scan:
+  targets:
+    - name: "figures"
+      enabled: true
+      patterns: ["*.jpg", "*.jpeg", "*.png", "*.pdf", "*.eps"]
+      extract_metadata: true
+
+    - name: "code"
+      enabled: true
+      patterns: ["*.py", "*.m", "*.r", "*.cpp", "*.c"]
+      max_lines: 100  # 超过此行数只截取片段
+
+    - name: "references"
+      enabled: true
+      patterns: ["*.bib"]
+      parse_entries: true
+
+# ========== 内容生成配置 ==========
+generation:
+  # 资源选择策略
+  selection_strategy: "ai_score"  # ai_score / random / manual
+
+  # 相关性阈值
+  relevance_threshold: 0.5
+
+  # 每种资源类型的数量限制
+  max_figures_per_section: 2
+  max_code_per_section: 1
+  max_references_per_section: 3
+
+  # 内容模板
+  templates:
+    figure_insertion: |
+      \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=0.8\textwidth]{{{path}}}
+        \caption{{{caption}}}
+        \label{{{label}}}
+      \end{figure}
+
+    code_listing: |
+      \begin{lstlisting}[language={lang}, caption={caption}, firstline=1, lastline={lastline}]
+      {code}
+      \end{lstlisting}
+
+    reference_citation: "\\cite{{{citekey}}}"
+
+# ========== 格式保护配置 ==========
+format_protection:
+  # 受保护的 LaTeX 命令
+  protected_commands:
+    - "\\setlength"
+    - "\\geometry"
+    - "\\definecolor"
+    - "\\setCJKfamilyfont"
+    - "\\setmainfont"
+    - "\\titleformat"
+    - "\\setlist"
+    - "\\newcommand"
+    - "\\renewcommand"
+
+  # 受保护的文件（绝对不修改）
+  protected_files:
+    - "extraTex/@config.tex"
+    - "main.tex"
+
+  # 备份策略
+  backup:
+    enabled: true
+    keep_count: 5  # 保留最近 5 个备份
+
+  # 编译验证
+  compile_verify:
+    enabled: true
+    engine: "xelatex"
+    timeout: 60  # 秒
+
+# ========== AI 提示词模板 ==========
+prompts:
+  analyze_theme: |
+    你是一位专业的学术写作分析专家。请分析以下 LaTeX 章节的内容主题。
+
+    章节内容（前 {max_chars} 字符）：
+    {content}
+
+    请返回 JSON 格式的分析结果：
+    {{
+      "theme": "章节的核心主题（一句话概括）",
+      "key_concepts": ["关键概念1", "关键概念2", "关键概念3"],
+      "writing_style": "学术/技术/说明/混合",
+      "suggested_resources": ["建议的图片类型", "建议的文献领域"],
+      "tone": "正式/半正式/通俗",
+      "target_audience": "评审专家/同行/学生/大众"
+    }}
+
+  reason_relevance: |
+    你是一位专业的学术写作顾问。请评估以下资源是否适合用于指定章节。
+
+    章节信息：
+    - 主题：{section_theme}
+    - 关键概念：{key_concepts}
+    - 写作风格：{writing_style}
+
+    资源信息：
+    - 路径：{resource_path}
+    - 类型：{resource_type}
+    - 元数据：{metadata}
+
+    请返回 JSON 格式的评估结果：
+    {{
+      "relevance_score": 0.85,
+      "reason": "详细说明理由（100-200字）",
+      "suggested_usage": "建议如何使用这个资源"
+    }}
+
+  generate_narrative: |
+    你是一位经验丰富的科研写作助手，专精于国家自然科学基金申请书的撰写。
+
+    根据以下信息，生成一段连贯的示例内容。
+
+    ## 章节信息
+    - 主题：{theme}
+    - 关键概念：{key_concepts}
+    - 写作风格：{writing_style}
+    - 目标读者：{target_audience}
+
+    ## 用户叙事提示
+    {narrative_hint}
+
+    ## 上下文片段
+    {context}
+
+    ## 可用资源
+    {resources}
+
+    ## 生成要求
+    1. 生成 {target_length} 字的示例段落
+    2. 自然地引用资源
+    3. 使用正式的学术写作风格
+    4. **重要**：根据【用户叙事提示】调整内容方向和风格
+    5. **允许编造**：这是示例场景，可以根据提示编造合理的研究内容、数据和结论
+    6. 在应该插入 LaTeX 代码的地方用 {{PLACEHOLDER:资源路径}} 标记
+
+    只返回生成的文本，不要其他解释。
+
+# ========== 质量评估标准 ==========
+quality_thresholds:
+  coherence_min: 0.8        # 连贯性最低要求
+  academic_tone_min: 0.75   # 学术风格最低要求
+  overall_score_min: 0.8    # 总体评分最低要求
