@@ -133,6 +133,42 @@ ChineseResearchLaTeX/
 - 不主动添加用户未要求的功能
 - 保持现有代码风格和结构
 
+## 变更记录规范
+
+**核心原则**：项目中的任何更新都必须在根级 [CHANGELOG.md](CHANGELOG.md) 中记录，避免在分散的文档中维护重复的版本历史。
+
+### 适用范围
+
+所有可能产生版本历史的文档：
+- **计划文档**（`plans/*.md`）：不记录版本更新历史，仅在末尾注明"变更历史记录在 CHANGELOG.md"
+- **Skill 文档**（`skills/*/*/SKILL.md`）：不记录版本更新历史，版本号与 CHANGELOG.md 同步
+- **项目指令**（`CLAUDE.md`、`AGENTS.md`）：不记录版本更新历史
+- **配置文件**（`skills/*/*/config.yaml`）：版本号与 CHANGELOG.md 同步
+
+### 记录流程
+
+当修改任何项目文件时：
+1. **更新 CHANGELOG.md**（必需）：记录变更内容、版本号、日期
+2. **更新相关文件版本号**（如适用）：与 CHANGELOG.md 保持一致
+3. **不在其他文档中记录变更历史**（避免重复和维护负担）
+
+### 记录格式
+
+```markdown
+## [版本号] - YYYY-MM-DD
+
+### Added（新增）
+- 新增了 XXX 功能/章节：用途是 YYY
+
+### Changed（变更）
+- 修改了 XXX 章节：原因是 YYY，具体变更内容是 ZZZ
+
+### Fixed（修复）
+- 修复了 XXX 问题：表现是 YYY，修复方式是 ZZZ
+```
+
+---
+
 ## 有机更新原则
 
 当需要更新本文档时：
@@ -160,22 +196,7 @@ ChineseResearchLaTeX/
 
 当某个章节变得过于臃肿时，主动重构
 
-## CHANGELOG 维护规则
-
-**重要**：所有 skill 的版本变更记录在根级 [CHANGELOG.md](CHANGELOG.md) 中。
-
-### 维护流程
-
-当修改 skill 时：
-1. 更新根级 [CHANGELOG.md](CHANGELOG.md)（必需）
-2. 更新 SKILL.md 中的版本号（必需）
-3. 更新 config.yaml 中的版本号（如存在）
-4. **SKILL.md 中不记录详细变更历史**（避免重复）
-
-### 详细规范
-
-参见 [skills/README.md](skills/README.md) 中的"CHANGELOG 维护规范"章节。
-
 ---
 
 **提示**：修改本文档后，请同步更新 `CHANGELOG.md` 记录变更历史，并确保 `CLAUDE.md` 的核心内容保持一致。
+
