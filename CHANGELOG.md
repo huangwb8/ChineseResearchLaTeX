@@ -134,6 +134,15 @@
 
 ### Changed（变更）
 
+- **项目指令文档** - 新增 LaTeX 编译4步法规范
+  - **CLAUDE.md 和 AGENTS.md**：新增「LaTeX 编译规范」章节
+    - 说明 PDF 渲染4步法：`xelatex → bibtex → xelatex → xelatex`
+    - 每步的作用说明（生成辅助文件、处理参考文献、解析文献引用、确保交叉引用正确）
+    - 使用原则：修改参考文献后必须完整执行4步，仅修改正文时可省略 bibtex 步骤
+  - **有机整合**：与现有「LaTeX 标题换行控制」章节并列，形成完整的 LaTeX 操作规范
+
+### Changed（变更）
+
 - **make_latex_model v2.7.1** - 修复验证器运行入口
   - 修复 `scripts/run_validators.py` 的导入路径，避免 `validators` 相对导入报错
 

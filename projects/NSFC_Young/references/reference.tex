@@ -1,6 +1,12 @@
-\begin{spacing}{1} % 行距
-\wuhao
-\bibliographystyle{bibtex-style/gbt7714-nsfc.bst}
+% 参考文献
+% 对作者个数作了限制以适合申请书
+% 当作者个数小于等于5个时，予以全部保留，当作者个数大于5个时，只保留3个，加et al
+
+\vspace{15pt} % 标题与上文的间距（增大以更明显）
+\begingroup
+\setstretch{0.8} % 行距调整为0.8（避免太紧凑）
+\xiaowuhao
+\bibliographystyle{bibtex-style/gbt7714-nsfc}
 \bibliography{references/myexample.bib}
-\end{spacing}
-\newpage
+\endgroup
+\vspace{-5pt} % 减少标题后的额外间距
