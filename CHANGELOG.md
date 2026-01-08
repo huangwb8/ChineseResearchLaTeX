@@ -10,6 +10,13 @@
 
 ### Changed（变更）
 
+- **transfer_old_latex_to_new** - 脚本目录结构优化
+  - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
+  - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位
+  - 更新两个脚本的路径引用(`Path(__file__).parent.parent`)以适配新位置
+  - 新增 [scripts/README.md](skills/transfer_old_latex_to_new/scripts/README.md)：文档化所有脚本用途与使用场景
+  - 技能根目录更清爽,仅保留配置文件和文档
+
 - **transfer_old_latex_to_new** - LaTeX 中间文件隔离优化
   - 修改 [compiler.py](skills/transfer_old_latex_to_new/core/compiler.py)：使用 `-output-directory` 参数将 LaTeX 编译中间文件(.aux/.log/.bbl/.blg/.out/.toc 等)重定向到 `runs/<run_id>/logs/latex_aux/` 目录
   - 编译成功后自动复制 `main.pdf` 到项目根目录,方便用户查看
