@@ -1,0 +1,55 @@
+# ================================
+# nsfc-justification-writer 默认配置
+# ================================
+
+skill_info:
+  name: nsfc-justification-writer
+  version: 0.1.0
+  template_year: "2026"
+  category: writing
+
+parameters:
+  project_root:
+    type: string
+    required: true
+    description: 项目根目录（如 projects/NSFC_Young 或你的标书项目路径）
+  output_mode:
+    type: string
+    required: false
+    default: apply
+    allowed_values: [preview, apply]
+    description: preview 仅输出建议文本；apply 则写入目标 .tex 文件（如由平台/工具支持）
+
+targets:
+  justification_tex: extraTex/1.1.立项依据.tex
+
+guardrails:
+  allowed_write_files:
+    - extraTex/1.1.立项依据.tex
+  forbidden_write_files:
+    - main.tex
+    - extraTex/@config.tex
+  forbidden_write_globs:
+    - "**/*.cls"
+    - "**/*.sty"
+
+latex_style_contract:
+  keep_commands:
+    - "\\justifying"
+    - "\\indent"
+  avoid_commands:
+    - "\\section"
+    - "\\subsection"
+    - "\\input"
+    - "\\include"
+
+quality_contract:
+  must_include:
+    - 价值与必要性（为什么要做）
+    - 国内外现状与不足（现有不足）
+    - 科学问题/核心假说（切入点）
+    - 本项目贡献与小结（承上启下）
+  avoid:
+    - 无法核验的绝对表述（例如“国内首次”“国际领先”）
+    - 幻觉引用（未核验即给出作者/年份/期刊/DOI）
+

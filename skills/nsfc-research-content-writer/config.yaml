@@ -1,0 +1,52 @@
+# ================================
+# nsfc-research-content-writer 默认配置
+# ================================
+
+skill_info:
+  name: nsfc-research-content-writer
+  version: 0.1.0
+  template_year: "2026"
+  category: writing
+
+parameters:
+  project_root:
+    type: string
+    required: true
+    description: 项目根目录（如 projects/NSFC_Young 或你的标书项目路径）
+  output_mode:
+    type: string
+    required: false
+    default: apply
+    allowed_values: [preview, apply]
+
+targets:
+  research_content_tex: extraTex/2.1.研究内容.tex
+  innovation_tex: extraTex/2.2.特色与创新.tex
+  yearly_plan_tex: extraTex/2.3.年度研究计划.tex
+
+guardrails:
+  allowed_write_files:
+    - extraTex/2.1.研究内容.tex
+    - extraTex/2.2.特色与创新.tex
+    - extraTex/2.3.年度研究计划.tex
+  forbidden_write_files:
+    - main.tex
+    - extraTex/@config.tex
+  forbidden_write_globs:
+    - "**/*.cls"
+    - "**/*.sty"
+
+quality_contract:
+  research_content_must_cover:
+    - 研究问题与总体目标
+    - 3–4 个可检验子目标（指标/对照/数据来源）
+    - 研究内容与任务分解（对齐子目标）
+    - 技术路线与验证口径（防泄漏/对照/消融/统计）
+  innovation_must_be:
+    - 可理解（评审能看懂）
+    - 可对照（相对坐标系）
+    - 可验证（至少有指标或验证实验）
+  yearly_plan_must_include:
+    - 三年分年任务（不跨年）
+    - 里程碑与可交付成果（每年都有）
+

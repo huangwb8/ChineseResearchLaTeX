@@ -53,8 +53,8 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 | 模板 | 状态 | Overleaf 演示 |
 |------|------|---------------|
-| [青年科学基金项目](projects/NSFC_Young/) | ✅ 2026 就绪 | ⏳ 待更新 |
-| [面上项目](projects/NSFC_General/) | ✅ 2026 就绪 | ⏳ 待更新 |
+| [青年科学基金项目](projects/NSFC_Young/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/jchdzdmdkkpj#423009) |
+| [面上项目](projects/NSFC_General/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/trpmsszhsyvt#c3eb06) |
 | 地区科学基金项目 | ⏸️ 暂未更新，[有需要请提交 Issue](https://github.com/huangwb8/ChineseResearchLaTeX/issues) | ⏳ 待更新 |
 
 ---
@@ -65,6 +65,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 - **测试平台**：Windows / macOS / Overleaf
 - **LaTeX 发行版**：TeX Live（推荐）或 MacTeX
+- **编译器**：**必须使用 XeLaTeX**（Overleaf 上请在 Menu → Compiler 中选择 XeLaTeX）
 - **编译顺序**：`xelatex -> bibtex -> xelatex -> xelatex`
 
 ### 推荐软件平台
