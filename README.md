@@ -25,9 +25,12 @@
 
 ## ✨ 概览
 
-2025 年，AI 辅助工具（如 Claude Code）彻底改变了内容创作范式。**科研写作正从纯手工转向人机协作**——AI 负责机械性工作，人类专注创造性思维。为适应这一变革，本项目基于 **Vibe Coding** 理念重构：AI 自动规划模板、迭代优化、持续监督，人类开发者把控质量与方向，共同打造高效、可靠的 LaTeX 写作体验。
+2024-2025 年，AI 辅助开发迎来了真正的范式转移。2023 年，[GitHub Copilot](https://github.com/features/copilot) 普及了 AI 代码补全，但 AI 仍处于"被动响应"角色。2024 年初，[Cursor](https://cursor.sh) 率先将 AI 转变为"主动协作伙伴"，引入 AI 原生开发环境。随后，[Manus](https://manus.im)、[Windsurf](https://windsurf.ai) 等产品持续推动多 Agent 协作和深度 IDE 集成。到了 2024 年末，[Claude Code](https://docs.anthropic.com/en/docs/build-with-claude/claude-code) 和 [OpenAI Codex CLI](https://github.com/openai/openaicode) 将这一理念带入命令行领域，实现了真正的"AI 作为第一公民"。这一演进背后的核心理念被称为 **Vibe Coding**——AI 不再是工具，而是合作伙伴。传统模式下，人类写代码、AI 补全，指令是单向的、生成是一次性的。而在 Vibe Coding 模式下，AI 主动规划并执行任务，人类负责监督和决策；双方通过双向对话持续迭代优化，AI 成为真正的"合作开发者"。
 
-**核心特性**：
+<h3>🔥 科研写作正从纯手工转向这种人机协作模式（我称之为 <strong>Vibe Writing</strong>）</h3>
+
+AI 负责格式对齐、参考文献管理、章节重构等机械性工作，人类则专注研究设计、学术观点、创新提炼等创造性思维。为适应这一变革，本项目基于 Vibe Coding 理念重构：AI 智能分析模板结构并自动识别需要优化的样式模块，提出优化方案后由人类审核决策，AI 执行并自动编译测试，人类把控最终质量。同时，项目构建了可扩展的 Agent Skills 体系，支持灵活组合与升级，从而在"AI 辅助标书写作"这一任务里充分地压榨 AI 的智能。**本项目的核心特性**：
+
 - 🤖 **AI 驱动**：智能模板规划、自动样式对齐、代码审查测试
 - 🧩 **模块化技能**：可扩展的 AI 技能体系，支持灵活组合与升级
 - 👥 **人机协作**：AI 处理机械任务，人类聚焦创意与决策
