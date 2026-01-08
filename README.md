@@ -120,7 +120,7 @@
 
 ### 🔮 AI 辅助写作技能
 
-> 符合 Agent Skills 的强大 Skills，Codex/Claude Code 兼容！**未来 2-3 周陆续推出，值得期待！**
+> 符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，Codex/Claude Code 兼容！**未来 2-3 周陆续推出，值得期待！**
 
 - **立项依据生成**：基于研究主题自动生成研究意义和国内外现状
 - **研究内容规划**：将科学问题拆解为可验证的研究目标和内容
