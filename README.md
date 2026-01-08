@@ -92,7 +92,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## 🤖 Skills
 
-项目内置多个 AI 技能，辅助 LaTeX 写作和模板优化。**兼容 Claude Code 和 OpenAI Codex CLI！**
+项目内置多个符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，辅助 LaTeX 写作和模板优化。**兼容 Claude Code 和 OpenAI Codex CLI！**
 
 | 技能 | 类型 | 功能 | 状态 |
 |------|------|------|------|
@@ -111,19 +111,6 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 - **GitHub 源站**：[huangwb8/ChineseResearchLaTeX](https://github.com/huangwb8/ChineseResearchLaTeX)
 - **Gitee 镜像**：[huangwb8/ChineseResearchLaTeX](https://gitee.com/huangwb8/ChineseResearchLaTeX)（方便中国大陆访问）
 
----
-
-## 📝 待办事项
-
-### 🔮 AI 辅助写作技能
-
-> 符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，Codex/Claude Code 兼容！
-
-**开发中**（🚧）：
-- **立项依据写作**（[nsfc-justification-writer](skills/nsfc-justification-writer/)）：基于研究主题自动生成研究意义和国内外现状
-- **研究内容编排写作**（[nsfc-research-content-writer](skills/nsfc-research-content-writer/)）：将科学问题拆解为可验证的研究目标和内容
-- **研究基础编排写作**（[nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/)）：自动撰写四维可行性（理论/技术/团队/条件）
-- **特色与创新提炼**：帮助识别和表述项目的核心创新点（整合在 nsfc-research-content-writer 中）
 
 ---
 
