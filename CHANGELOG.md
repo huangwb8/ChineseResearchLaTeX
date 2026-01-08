@@ -8,6 +8,14 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- **transfer_old_latex_to_new** - LaTeX 中间文件隔离优化
+  - 修改 [compiler.py](skills/transfer_old_latex_to_new/core/compiler.py)：使用 `-output-directory` 参数将 LaTeX 编译中间文件(.aux/.log/.bbl/.blg/.out/.toc 等)重定向到 `runs/<run_id>/logs/latex_aux/` 目录
+  - 编译成功后自动复制 `main.pdf` 到项目根目录,方便用户查看
+  - 项目目录保持清洁,不再产生编译"垃圾"文件
+  - 更新 [SKILL.md](skills/transfer_old_latex_to_new/SKILL.md)：文档化目录结构与编译隔离机制
+
 ### Added（新增）
 
 - 新增 `transfer_old_latex_to_new` v1.3.0 详细改进计划：`plans/v202601081102.md`
@@ -224,6 +232,9 @@
     - 每步的作用说明（生成辅助文件、处理参考文献、解析文献引用、确保交叉引用正确）
     - 使用原则：修改参考文献后必须完整执行4步，仅修改正文时可省略 bibtex 步骤
   - **有机整合**：与现有「LaTeX 标题换行控制」章节并列，形成完整的 LaTeX 操作规范
+
+- **项目指令文档** - 指令规范精炼与一致性增强
+  - **CLAUDE.md 和 AGENTS.md**：精炼「项目目标」「联网与搜索」表述，补充“不自动清理/删除 `.DS_Store`”边界，并统一核心章节一致性提示
 
 ### Changed（变更）
 

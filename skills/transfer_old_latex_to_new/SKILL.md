@@ -72,9 +72,23 @@ runs/<run_id>/
 ├── analysis/           # 结构分析JSON（sections_map_*.json, structure_diff.json）
 ├── plan/               # 迁移计划（migration_plan.json）
 ├── backup/             # Apply前新项目快照（用于restore）
-├── logs/               # 执行日志（apply_result.json）
+├── logs/               # 执行日志与编译输出
+│   ├── apply_result.json        # 迁移执行结果
+│   ├── compile_summary.json     # 编译摘要
+│   ├── compile_*_*.out.txt      # 编译标准输出
+│   ├── compile_*_*.err.txt      # 编译标准错误
+│   └── latex_aux/               # LaTeX 中间文件隔离目录
+│       ├── main.aux             # 辅助文件
+│       ├── main.log             # 编译日志
+│       ├── main.bbl             # BibTeX 输出
+│       ├── main.blg             # BibTeX 日志
+│       ├── main.out             # hyperref 输出
+│       ├── main.toc             # 目录文件
+│       └── *.aux                # 其他辅助文件
 └── deliverables/       # 交付物（PDF、报告、指南）
 ```
+
+**中间文件隔离**: 所有 LaTeX 编译中间文件(.aux/.log/.bbl等)自动保存在 `logs/latex_aux/` 目录,避免在项目目录产生"垃圾"文件。最终 PDF 自动复制回项目根目录。
 
 ---
 
@@ -286,6 +300,12 @@ validation_result = validate_resource_integrity(new_project, scan_result.resourc
 ```bash
 xelatex → bibtex → xelatex → xelatex
 ```
+
+**编译隔离机制**:
+- 所有中间文件(.aux/.log/.bbl/.blg/.out/.toc等)写入 `runs/<run_id>/logs/latex_aux/`
+- 使用 `-output-directory` 参数实现路径隔离
+- 编译成功后自动复制 `main.pdf` 到项目根目录
+- 项目目录保持清洁,无编译"垃圾"文件
 
 **交付物生成** (`runs/<run_id>/deliverables/`):
 - `migrated_proposal.pdf` - 迁移后PDF
