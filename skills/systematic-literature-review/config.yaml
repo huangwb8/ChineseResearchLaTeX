@@ -1,0 +1,294 @@
+# systematic-literature-review 配置（轻量化：相关性评分 + 专家写作）
+
+# ============================================================================
+# 档位与别名
+# ============================================================================
+review_levels:
+  default: "premium"
+  supported:
+    - "premium"
+    - "standard"
+    - "basic"
+  aliases:
+    # Premium（旗舰级）：真正的顶刊综述
+    "旗舰级": "premium"
+    "旗舰": "premium"
+    "顶刊级": "premium"
+    "顶刊": "premium"
+    "premium": "premium"
+    "flagship": "premium"
+    "top": "premium"
+    "高级": "premium"
+
+    # Standard（标准级）：覆盖 80% 实际需求
+    "标准级": "standard"
+    "标准": "standard"
+    "standard": "standard"
+    "中等": "standard"
+    "常规": "standard"
+
+    # Basic（基础级）：快速调研与入门
+    "快速级": "basic"
+    "快速": "basic"
+    "基础级": "basic"
+    "基础": "basic"
+    "basic": "basic"
+    "入门": "basic"
+    "express": "basic"
+    "fast": "basic"
+    "quick": "basic"
+
+# ============================================================================
+# 检索配置
+# ============================================================================
+search:
+  max_results_per_query: 50         # 单查询抓取的最大结果数（多查询模式）
+  max_total_results: 500            # 合并后的最大结果数上限
+  provider_priority:                # 可按需调整搜索源优先级
+    - "mcp"
+    - "openalex"
+    - "duckduckgo"
+
+# ============================================================================
+# 评分与写作目标
+# ============================================================================
+scoring:
+  # 正文字数默认范围（可被用户覆盖）
+  default_word_range:
+    premium:
+      min: 10000
+      max: 15000
+    standard:
+      min: 6000
+      max: 10000
+    basic:
+      min: 3000
+      max: 6000
+
+  # 参考文献数量默认范围（可被用户覆盖）
+  default_ref_range:
+    premium:
+      min: 80
+      max: 150
+    standard:
+      min: 50
+      max: 90
+    basic:
+      min: 30
+      max: 60
+
+  # 高分优先比例：选文时优先取前 60–80% 高分段，再补足目标数量
+  high_score_priority:
+    fraction_min: 0.6
+    fraction_max: 0.8
+
+  score_scale:
+    min: 1
+    max: 10
+
+# ============================================================================
+# 选文策略（保持简单，无子主题硬约束）
+# ============================================================================
+selection:
+  ensure_subtopic_diversity: false   # 默认不强制子主题配额
+  allow_lower_scores_to_fill: true   # 高分段不足时允许低分补足
+
+# ============================================================================
+# 字数预算（70/30 + 综/述拆分）
+# ============================================================================
+word_budget:
+  ratio:
+    cited: 0.7           # 引用段落占比
+    non_cited: 0.3       # 无引用段落（摘要/展望/结论等）占比
+  summary_ratio: 0.55    # “综”占单文献字数的基准比例
+  commentary_ratio: 0.45 # “述”占单文献字数的基准比例
+  seeds: [17, 23, 43]    # 三次独立采样的随机种子
+  noise_strength: 0.1    # softmax/Dirichlet 扰动强度，避免平均主义
+  tolerance: 0.05        # 总字数误差容忍度（≤5%）
+  outputs:
+    run_pattern: "word_budget_run{n}.csv"
+    final: "word_budget_final.csv"
+    non_cited: "non_cited_budget.csv"
+
+# ============================================================================
+# 校验阈值（渲染前的硬门槛）
+# ============================================================================
+validation:
+  words:
+    min:
+      premium: 10000
+      standard: 6000
+      basic: 3000
+    max:
+      premium: 15000
+      standard: 10000
+      basic: 6000
+  references:
+    min:
+      premium: 80
+      standard: 50
+      basic: 30
+    max:
+      premium: 150
+      standard: 90
+      basic: 60
+
+# ============================================================================
+# LaTeX/PDF 与 Word 导出
+# ============================================================================
+latex:
+  template_path: "latex-template/nature-reviews-template.tex"
+  template_path_override: ""        # 可选：显式指定任务目录中的模板路径，留空则使用默认模板并自动回退
+  bibliographystyle: "gbt7714-nsfc"
+  pandoc_options:
+    - "--standalone"
+    - "--pdf-engine=xelatex"
+  chinese_font_support: true
+  chinese_font: "SimSun"
+
+word:
+  extract_review_draft_only: true
+  heading_level_shift: 2
+  include_toc: false
+  include_numbering: false
+
+# ============================================================================
+# API 配置
+# ============================================================================
+api:
+  semantic_scholar:
+    base_url: "https://api.semanticscholar.org/graph/v1"
+    timeout: 10
+    rate_limit: 100
+  openalex:
+    base_url: "https://api.openalex.org"
+    timeout: 10
+    polite_sleep: 0.25
+
+# ============================================================================
+# 目录与输出
+# ============================================================================
+layout:
+  hidden_dir_name: ".systematic-literature-review"
+  artifacts_dir_name: "artifacts"
+  cache_dir_name: "cache"
+  reference_dir_name: "reference"
+  reference_data_extraction_name: "data_extraction_table.md"
+  # 注意：状态保存在 {hidden_dir}/pipeline_state.json，不再使用单独的 checkpoints/ 目录
+
+output:
+  working_conditions: "{topic}_工作条件.md"
+  review_tex: "{topic}_review.tex"
+  references_bib: "{topic}_参考文献.bib"
+  review_pdf: "{topic}_review.pdf"
+  review_word: "{topic}_review.docx"
+  validation_report: "{topic}_验证报告.md"
+  dedupe_map: "dedupe_map_{topic}.json"
+
+# ============================================================================
+# 去重策略
+# ============================================================================
+dedupe:
+  title_similarity_threshold: 0.92
+  token_jaccard_threshold: 0.80
+  year_window: 1
+
+# ============================================================================
+# 脚本路径
+# ============================================================================
+scripts:
+  score_relevance: "scripts/score_relevance.py"
+  select_references: "scripts/select_references.py"
+  build_reference_bib: "scripts/build_reference_bib_from_papers.py"
+  update_data_extraction: "scripts/update_working_conditions_data_extraction.py"
+  dedupe: "scripts/dedupe_papers.py"
+  compile_pdf: "scripts/compile_latex_with_bibtex.py"
+  convert_latex_to_word: "scripts/convert_latex_to_word.py"
+  openalex_search: "scripts/openalex_search.py"
+  pipeline_cost: "scripts/pipeline_cost.py"
+
+# ============================================================================
+# 成本追踪配置
+# ============================================================================
+cost_tracking:
+  # 启用成本追踪（可选功能，不影响文献综述核心流程）
+  enabled: true
+
+  # 关注的模型商（AI 将自动查询这些厂商的模型价格）
+  model_providers:
+    - OpenAI
+    - Anthropic
+    - 智谱清言
+
+  # 价格缓存有效期（天）
+  price_cache_max_days: 30
+
+  # 货币转换率
+  currency_rates:
+    USD_TO_CNY: 7.2
+
+# ============================================================================
+# 多语言支持配置
+# ============================================================================
+multilingual:
+  # 启用多语言支持
+  enabled: true
+
+  # 支持的语言配置
+  supported_languages:
+    - code: en
+      name: English
+      keywords: ["英语", "英文", "English", "en"]
+      latex_packages: []
+      ctex_options: null
+
+    - code: zh
+      name: Chinese
+      keywords: ["中文", "汉语", "Chinese", "zh"]
+      latex_packages: ["ctex"]
+      ctex_options: null
+
+    - code: ja
+      name: Japanese
+      keywords: ["日语", "日文", "Japanese", "ja"]
+      latex_packages: ["luatexja-preset"]
+      ctex_options: "ja"
+      font_fallback: "Harano Aji Gothic"
+
+    - code: de
+      name: German
+      keywords: ["德语", "德文", "German", "de", "Deutsch"]
+      latex_packages: ["babel", "ngerman"]
+      ctex_options: null
+
+    - code: fr
+      name: French
+      keywords: ["法语", "法文", "French", "fr", "Français", "french"]
+      latex_packages: ["babel", "french"]
+      ctex_options: null
+
+    - code: es
+      name: Spanish
+      keywords: ["西班牙语", "西班牙文", "Spanish", "es", "Español"]
+      latex_packages: ["babel", "spanish"]
+      ctex_options: null
+
+  # 编译重试配置
+  max_compile_retries: 99        # 实际无上限
+  compile_timeout: 300           # 单次编译 5 分钟
+  total_timeout: 1800            # 总计 30 分钟
+
+  # AI 翻译提示模板
+  translation_prompt_template: |
+    你是一位学术翻译专家。请将以下综述正文翻译为{language}。
+
+    要求：
+    1. 保持学术语气、专业性和逻辑连贯性
+    2. 保留所有 \cite{key} 引用标记及其位置，绝对不可修改
+    3. 保留所有 LaTeX 结构命令（\section, \subsection, \begin{itemize}, \begin{enumerate} 等）
+    4. 保留所有数学公式（$...$, \[...\], \begin{equation} 等）
+    5. 保留图表标签和引用（\label{}, \ref{} 等）
+    6. 专业术语可保留原文或添加译注（如"Transformer（变换器）"）
+    7. 缩略词首次出现时展开（如"Artificial Intelligence (AI)"）
+
+    仅输出翻译后的 LaTeX 源码，不要包含任何解释性文字。

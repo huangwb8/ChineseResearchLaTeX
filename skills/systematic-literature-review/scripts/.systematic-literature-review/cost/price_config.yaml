@@ -1,0 +1,109 @@
+metadata:
+  fetched_at: '2026-01-02T23:30:00'
+  fetched_by: native_ai
+  notes: 价格来自官方网站，2026年1月2日获取
+  providers_queried:
+  - OpenAI
+  - Anthropic
+  - 智谱清言
+  saved_at: '2026-01-02T23:22:25.637377'
+  version: '1.0'
+models:
+  claude-haiku-4-5:
+    currency: USD
+    display_name: Claude Haiku 4.5
+    input: 1.0
+    output: 5.0
+    provider: Anthropic
+    source_url: https://platform.claude.com/docs/en/about-claude/pricing
+  claude-opus-4-5:
+    currency: USD
+    display_name: Claude Opus 4.5
+    input: 5.0
+    output: 25.0
+    provider: Anthropic
+    source_url: https://www.anthropic.com/news/claude-opus-4-5
+  claude-sonnet-4-5:
+    currency: USD
+    display_name: Claude Sonnet 4.5
+    input: 3.0
+    output: 15.0
+    provider: Anthropic
+    source_url: https://www.anthropic.com/news/claude-sonnet-4-5
+  glm-4.5:
+    currency: CNY
+    display_name: 智谱 GLM-4.5
+    input: 2.0
+    output: 8.0
+    provider: 智谱清言
+    source_url: https://bigmodel.cn/pricing
+  glm-4.5-air:
+    currency: CNY
+    display_name: 智谱 GLM-4.5 Air
+    input: 0.8
+    output: 2.0
+    provider: 智谱清言
+    source_url: https://bigmodel.cn/pricing
+  glm-4.5-flash:
+    currency: CNY
+    display_name: 智谱 GLM-4.5 Flash (免费)
+    input: 0.0
+    output: 0.0
+    provider: 智谱清言
+    source_url: https://bigmodel.cn/pricing
+  glm-4.6:
+    currency: CNY
+    display_name: 智谱 GLM-4.6
+    input: 2.0
+    output: 8.0
+    provider: 智谱清言
+    source_url: https://bigmodel.cn/pricing
+  glm-4.7:
+    currency: CNY
+    display_name: 智谱 GLM-4.7
+    input: 2.0
+    output: 8.0
+    provider: 智谱清言
+    source_url: https://bigmodel.cn/pricing
+  gpt-4o:
+    currency: USD
+    display_name: GPT-4o
+    input: 2.5
+    output: 10.0
+    provider: OpenAI
+    source_url: https://platform.openai.com/docs/pricing
+  gpt-4o-mini:
+    currency: USD
+    display_name: GPT-4o Mini
+    input: 0.15
+    output: 0.6
+    provider: OpenAI
+    source_url: https://platform.openai.com/docs/pricing
+  gpt-5-mini:
+    currency: USD
+    display_name: GPT-5 Mini
+    input: 0.25
+    output: 2.0
+    provider: OpenAI
+    source_url: https://platform.openai.com/docs/pricing
+  gpt-5.2:
+    currency: USD
+    display_name: GPT-5.2
+    input: 1.75
+    output: 14.0
+    provider: OpenAI
+    source_url: https://platform.openai.com/docs/pricing
+  o1:
+    currency: USD
+    display_name: O1
+    input: 15.0
+    output: 60.0
+    provider: OpenAI
+    source_url: https://platform.openai.com/docs/pricing
+  o3:
+    currency: USD
+    display_name: O3
+    input: 2.0
+    output: 8.0
+    provider: OpenAI
+    source_url: https://platform.openai.com/docs/pricing

@@ -1,0 +1,119 @@
+% Nature Reviews Style Template (Simplified)
+% Based on Nature Reviews Materials Template
+% Simplified for better compatibility - uses standard article class
+% Uses biblatex for modern reference management
+
+\documentclass[11pt,a4paper]{article}
+
+% Language and encoding
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+% Chinese support (for mixed English-Chinese content)
+% Let ctex auto-detect available fonts (for xelatex)
+\usepackage{ctex}
+
+% Page layout
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{calc}
+
+% Fonts and math
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+
+% Bibliography (BibTeX + bst)
+\usepackage[numbers,sort&compress]{natbib}
+\renewcommand*{\bibfont}{\footnotesize}
+
+% Links
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=cyan,
+    pdfcreator={Pandoc},
+    % PDF bookmarks support
+    bookmarks=true,
+    bookmarksopen=true,
+    bookmarksnumbered=true,
+    % Document metadata
+    pdfauthor={$for(authors)$$authors$$sep$, $endfor$},
+    pdftitle={$title$},
+    pdfsubject={Systematic Literature Review},
+}
+
+% Custom citation command: blue superscript link
+% Usage: \citehref{url}{citation text}
+\newcommand{\real}[1]{#1}
+\newcommand{\citesup}[1]{\textsuperscript{#1}}
+\newcommand{\citehref}[2]{%
+  \textsuperscript{\href{#1}{\textcolor{blue}{#2}}}%
+}
+
+% Figures and tables
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+
+% Section formatting (Nature-like style)
+\usepackage{titlesec}
+\titleformat{\section}
+  {\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% Abstract formatting
+\usepackage{abstract}
+\setlength{\abstitleskip}{-0.5em}
+
+% Pandoc metadata variables
+\title{$title$}
+\author{$for(authors)$$authors$$sep$, $endfor$}
+\date{\today}
+
+% Pandoc-specific definitions
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\begin{document}
+
+\maketitle
+% Enable numbering for sections/subsections/subsubsections to improve navigation
+\setcounter{secnumdepth}{3}
+
+$if(abstract)$
+\begin{abstract}
+$abstract$
+\end{abstract}
+$endif$
+
+$if(toc)$
+$tableofcontents$
+\newpage
+$endif$
+
+$body$
+
+% Print bibliography if references exist
+% 默认样式从 config.yaml 的 latex.bibliographystyle 读取；如未指定，compile_latex_with_bibtex.py 会注入 gbt7714-nsfc
+$if(references)$
+$if(bibliographystyle)$
+\bibliographystyle{$bibliographystyle$}
+$endif$
+$if(bibliography)$
+\bibliography{$bibliography$}
+$else$
+\bibliography{references}
+$endif$
+$endif$
+
+\end{document}

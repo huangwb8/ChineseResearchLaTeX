@@ -1,0 +1,380 @@
+{
+  "scenario": "feng_zhang_pre_cong2013_literature_review",
+  "source_paper": {
+    "doi": "10.1126/science.1231143",
+    "title": "Multiplex Genome Engineering Using CRISPR/Cas Systems",
+    "published": [
+      2013,
+      2,
+      15
+    ],
+    "url": "https://doi.org/10.1126/science.1231143"
+  },
+  "cutoff": {
+    "rule": "calendar_minus_6_months",
+    "date": [
+      2012,
+      8,
+      15
+    ]
+  },
+  "gold": {
+    "definition": "Cong et al. 2013 reference list items with DOI and published on/before cutoff (by Crossref issued date).",
+    "count": 29,
+    "items": [
+      {
+        "doi": "10.1146/annurev-food-022811-101134",
+        "title": "CRISPR: New Horizons in Phage Resistance and Strain Identification",
+        "first_author": "Barrangou",
+        "issued": [
+          2012,
+          4,
+          10
+        ],
+        "url": "https://doi.org/10.1146/annurev-food-022811-101134"
+      },
+      {
+        "doi": "10.1146/annurev-genet-110410-132430",
+        "title": "CRISPR-Cas Systems in Bacteria and Archaea: Versatile Small RNAs for Adaptive Defense and Regulation",
+        "first_author": "Bhaya",
+        "issued": [
+          2011,
+          12,
+          15
+        ],
+        "url": "https://doi.org/10.1146/annurev-genet-110410-132430"
+      },
+      {
+        "doi": "10.1126/science.1178811",
+        "title": "Breaking the Code of DNA Binding Specificity of TAL-Type III Effectors",
+        "first_author": "Boch",
+        "issued": [
+          2009,
+          12,
+          11
+        ],
+        "url": "https://doi.org/10.1126/science.1178811"
+      },
+      {
+        "doi": "10.1126/science.1159689",
+        "title": "Small CRISPR RNAs Guide Antiviral Defense in Prokaryotes",
+        "first_author": "Brouns",
+        "issued": [
+          2008,
+          8,
+          15
+        ],
+        "url": "https://doi.org/10.1126/science.1159689"
+      },
+      {
+        "doi": "10.1038/nbt.1590",
+        "title": "Genome engineering",
+        "first_author": "Carr",
+        "issued": [
+          2009,
+          12
+        ],
+        "url": "https://doi.org/10.1038/nbt.1590"
+      },
+      {
+        "doi": "10.1038/nmeth.1648",
+        "title": "Tracking genome engineering outcome at individual DNA breakpoints",
+        "first_author": "Certo",
+        "issued": [
+          2011,
+          7,
+          10
+        ],
+        "url": "https://doi.org/10.1038/nmeth.1648"
+      },
+      {
+        "doi": "10.1534/genetics.110.120717",
+        "title": "Targeting DNA Double-Strand Breaks with TAL Effector Nucleases",
+        "first_author": "Christian",
+        "issued": [
+          2010,
+          10,
+          1
+        ],
+        "url": "https://doi.org/10.1534/genetics.110.120717"
+      },
+      {
+        "doi": "10.1038/nature09886",
+        "title": "CRISPR RNA maturation by trans-encoded small RNA and host factor RNase III",
+        "first_author": "Deltcheva",
+        "issued": [
+          2011,
+          3
+        ],
+        "url": "https://doi.org/10.1038/nature09886"
+      },
+      {
+        "doi": "10.1128/jb.01412-07",
+        "title": "Phage Response to CRISPR-Encoded Resistance in\n                    <i>Streptococcus thermophilus</i>",
+        "first_author": "Deveau",
+        "issued": [
+          2008,
+          2,
+          15
+        ],
+        "url": "https://doi.org/10.1128/jb.01412-07"
+      },
+      {
+        "doi": "10.1146/annurev.micro.112408.134123",
+        "title": "CRISPR/Cas System and Its Role in Phage-Bacteria Interactions",
+        "first_author": "Deveau",
+        "issued": [
+          2010,
+          10,
+          13
+        ],
+        "url": "https://doi.org/10.1146/annurev.micro.112408.134123"
+      },
+      {
+        "doi": "10.1038/nature09523",
+        "title": "The CRISPR/Cas bacterial immune system cleaves bacteriophage and plasmid DNA",
+        "first_author": "Garneau",
+        "issued": [
+          2010,
+          11,
+          3
+        ],
+        "url": "https://doi.org/10.1038/nature09523"
+      },
+      {
+        "doi": "10.1007/978-1-60761-753-2_15",
+        "title": "A Rapid and General Assay for Monitoring Endogenous Gene Modification",
+        "first_author": "Guschin",
+        "issued": [
+          2010
+        ],
+        "url": "https://doi.org/10.1007/978-1-60761-753-2_15"
+      },
+      {
+        "doi": "10.1126/science.1179555",
+        "title": "CRISPR/Cas, the Immune System of Bacteria and Archaea",
+        "first_author": "Horvath",
+        "issued": [
+          2010,
+          1,
+          8
+        ],
+        "url": "https://doi.org/10.1126/science.1179555"
+      },
+      {
+        "doi": "10.1038/nature07755",
+        "title": "A three-dimensional view of the molecular machinery of RNA interference",
+        "first_author": "Jinek",
+        "issued": [
+          2008,
+          1,
+          21
+        ],
+        "url": "https://doi.org/10.1038/nature07755"
+      },
+      {
+        "doi": "10.1371/journal.pone.0040913",
+        "title": "Cleavage of Phage DNA by the Streptococcus thermophilus CRISPR3-Cas System",
+        "first_author": "Magadán",
+        "issued": [
+          2012,
+          7,
+          20
+        ],
+        "url": "https://doi.org/10.1371/journal.pone.0040913"
+      },
+      {
+        "doi": "10.1038/nrmicro2577",
+        "title": "Evolution and classification of the CRISPR–Cas systems",
+        "first_author": "Makarova",
+        "issued": [
+          2011,
+          5,
+          9
+        ],
+        "url": "https://doi.org/10.1038/nrmicro2577"
+      },
+      {
+        "doi": "10.1016/j.cell.2009.01.045",
+        "title": "Small RNAs as Guardians of the Genome",
+        "first_author": "Malone",
+        "issued": [
+          2009,
+          2
+        ],
+        "url": "https://doi.org/10.1016/j.cell.2009.01.045"
+      },
+      {
+        "doi": "10.1038/nature02873",
+        "title": "Mechanisms of gene silencing by double-stranded RNA",
+        "first_author": "Meister",
+        "issued": [
+          2004,
+          9
+        ],
+        "url": "https://doi.org/10.1038/nature02873"
+      },
+      {
+        "doi": "10.1038/nbt.1755",
+        "title": "A TALE nuclease architecture for efficient genome editing",
+        "first_author": "Miller",
+        "issued": [
+          2010,
+          12,
+          22
+        ],
+        "url": "https://doi.org/10.1038/nbt.1755"
+      },
+      {
+        "doi": "10.1038/nbt1319",
+        "title": "An improved zinc-finger nuclease architecture for highly specific genome editing",
+        "first_author": "Miller",
+        "issued": [
+          2007,
+          7
+        ],
+        "url": "https://doi.org/10.1038/nbt1319"
+      },
+      {
+        "doi": "10.1099/mic.0.023960-0",
+        "title": "Short motif sequences determine the targets of the prokaryotic CRISPR defence system",
+        "first_author": "Mojica",
+        "issued": [
+          2009,
+          3,
+          1
+        ],
+        "url": "https://doi.org/10.1099/mic.0.023960-0"
+      },
+      {
+        "doi": "10.1126/science.1178817",
+        "title": "A Simple Cipher Governs DNA Recognition by TAL Effectors",
+        "first_author": "Moscou",
+        "issued": [
+          2009,
+          12,
+          11
+        ],
+        "url": "https://doi.org/10.1126/science.1178817"
+      },
+      {
+        "doi": "10.1126/science.1078395",
+        "title": "Chimeric Nucleases Stimulate Gene Targeting in Human Cells",
+        "first_author": "Porteus",
+        "issued": [
+          2003,
+          5,
+          2
+        ],
+        "url": "https://doi.org/10.1126/science.1078395"
+      },
+      {
+        "doi": "10.1038/nbt.2170",
+        "title": "FLASH assembly of TALENs for high-throughput genome editing",
+        "first_author": "Reyon",
+        "issued": [
+          2012,
+          4,
+          8
+        ],
+        "url": "https://doi.org/10.1038/nbt.2170"
+      },
+      {
+        "doi": "10.1038/nmeth.1542",
+        "title": "Selection-free zinc-finger-nuclease engineering by context-dependent assembly (CoDA)",
+        "first_author": "Sander",
+        "issued": [
+          2010,
+          12,
+          12
+        ],
+        "url": "https://doi.org/10.1038/nmeth.1542"
+      },
+      {
+        "doi": "10.1093/nar/gkr606",
+        "title": "The Streptococcus thermophilus CRISPR/Cas system provides immunity in Escherichia coli",
+        "first_author": "Sapranauskas",
+        "issued": [
+          2011,
+          8,
+          3
+        ],
+        "url": "https://doi.org/10.1093/nar/gkr606"
+      },
+      {
+        "doi": "10.1017/s0033583505004063",
+        "title": "Homing endonuclease structure and function",
+        "first_author": "Stoddard",
+        "issued": [
+          2005,
+          2
+        ],
+        "url": "https://doi.org/10.1017/s0033583505004063"
+      },
+      {
+        "doi": "10.1126/science.1207773",
+        "title": "Targeted Genome Editing Across Species Using ZFNs and TALENs",
+        "first_author": "Wood",
+        "issued": [
+          2011,
+          7,
+          15
+        ],
+        "url": "https://doi.org/10.1126/science.1207773"
+      },
+      {
+        "doi": "10.1038/nbt.1775",
+        "title": "Efficient construction of sequence-specific TAL effectors for modulating mammalian transcription",
+        "first_author": "Zhang",
+        "issued": [
+          2011,
+          1,
+          19
+        ],
+        "url": "https://doi.org/10.1038/nbt.1775"
+      }
+    ]
+  },
+  "excluded": {
+    "count": 3,
+    "items": [
+      {
+        "doi": "10.1126/science.1225829",
+        "title": "A Programmable Dual-RNA–Guided DNA Endonuclease in Adaptive Bacterial Immunity",
+        "first_author": "Jinek",
+        "issued": [
+          2012,
+          8,
+          17
+        ],
+        "url": "https://doi.org/10.1126/science.1225829",
+        "excluded_reason": "published_after_cutoff"
+      },
+      {
+        "doi": "10.1073/pnas.1208507109",
+        "title": "Cas9–crRNA ribonucleoprotein complex mediates specific DNA cleavage for adaptive immunity in bacteria",
+        "first_author": "Gasiunas",
+        "issued": [
+          2012,
+          9,
+          4
+        ],
+        "url": "https://doi.org/10.1073/pnas.1208507109",
+        "excluded_reason": "published_after_cutoff"
+      },
+      {
+        "doi": "10.1126/science.1232033",
+        "title": "RNA-Guided Human Genome Engineering via Cas9",
+        "first_author": "Mali",
+        "issued": [
+          2013,
+          2,
+          15
+        ],
+        "url": "https://doi.org/10.1126/science.1232033",
+        "excluded_reason": "published_after_cutoff"
+      }
+    ]
+  },
+  "generated_by": "Crossref API"
+}

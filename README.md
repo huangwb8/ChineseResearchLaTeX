@@ -99,6 +99,10 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | [make_latex_model](skills/make_latex_model/) | 🔧 开发 | 基于 Word 模板高保真优化 LaTeX 样式 | ✅ 稳定 |
 | [complete_example](skills/complete_example/) | 🔧 开发 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | 📝 日常 | 将旧标书内容迁移到新模板 | ✅ 稳定 |
+| [systematic-literature-review](skills/systematic-literature-review/) | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
+| [nsfc-justification-writer](skills/nsfc-justification-writer/) | 📝 日常 | NSFC 立项依据写作 | 🚧 开发中 |
+| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
+| [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 
 > 📖 **详细使用说明和 Prompt 模板**：请查阅 [skills/README.md](skills/README.md)
 
@@ -113,12 +117,13 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ### 🔮 AI 辅助写作技能
 
-> 符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，Codex/Claude Code 兼容！**未来 2-3 周陆续推出，值得期待！**
+> 符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，Codex/Claude Code 兼容！
 
-- **立项依据生成**：基于研究主题自动生成研究意义和国内外现状
-- **研究内容规划**：将科学问题拆解为可验证的研究目标和内容
-- **可行性分析**：自动撰写四维可行性（理论/技术/团队/条件）
-- **特色与创新提炼**：帮助识别和表述项目的核心创新点
+**开发中**（🚧）：
+- **立项依据写作**（[nsfc-justification-writer](skills/nsfc-justification-writer/)）：基于研究主题自动生成研究意义和国内外现状
+- **研究内容编排写作**（[nsfc-research-content-writer](skills/nsfc-research-content-writer/)）：将科学问题拆解为可验证的研究目标和内容
+- **研究基础编排写作**（[nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/)）：自动撰写四维可行性（理论/技术/团队/条件）
+- **特色与创新提炼**：帮助识别和表述项目的核心创新点（整合在 nsfc-research-content-writer 中）
 
 ---
 
