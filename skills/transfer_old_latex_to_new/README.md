@@ -1,7 +1,7 @@
 # LaTeX 标书智能迁移器
 
 **技能名称**: `migrating-latex-templates`
-**版本**: v1.3.1
+**版本**: v1.4.0
 **最后更新**: 2026-01-08
 
 ---
@@ -154,12 +154,14 @@ bibtex --version
 | **配置指南** | [docs/config_guide.md](docs/config_guide.md) | config.yaml 关键块说明 |
 | **接口参考** | [docs/api_reference.md](docs/api_reference.md) | CLI/模块/产物格式 |
 | **故障排除** | [docs/troubleshooting.md](docs/troubleshooting.md) | 常见问题与处理建议 |
+| **FAQ** | [docs/faq.md](docs/faq.md) | 高频问题速查 |
+| **迁移案例** | [docs/case_study_2025_to_2026.md](docs/case_study_2025_to_2026.md) | 2025→2026 迁移流程示例 |
 
 ---
 
 ## 📋 版本与变更
 
-**当前版本**: v1.3.1（与 [config.yaml](config.yaml) 同步）
+**当前版本**: v1.4.0（与 [config.yaml](config.yaml) 同步）
 
 **变更记录**: 见根级 [CHANGELOG.md](../../../CHANGELOG.md)
 

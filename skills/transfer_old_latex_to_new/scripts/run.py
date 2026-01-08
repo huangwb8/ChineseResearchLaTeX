@@ -6,8 +6,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+sys.dont_write_bytecode = True
 
 skill_root_for_import = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(skill_root_for_import))
@@ -63,6 +66,81 @@ def _print_friendly_error(exc: BaseException) -> None:
         print("提示：请检查 LaTeX 环境（`xelatex`/`bibtex`）是否已安装并在 PATH 中。", file=sys.stderr)
 
     print("如需将运行产物隔离到指定目录，可加 `--runs-root /path/to/runs`。", file=sys.stderr)
+
+def cmd_runs_list(args: argparse.Namespace) -> int:
+    skill_root = Path(__file__).resolve().parent.parent
+    config = load_config(skill_root)
+    runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
+    if not runs_root.exists():
+        print(f"runs_root 不存在：{runs_root}")
+        return 0
+
+    run_dirs = [p for p in runs_root.iterdir() if p.is_dir()]
+    run_dirs.sort(key=lambda p: p.name, reverse=bool(args.desc))
+
+    if args.limit:
+        run_dirs = run_dirs[: int(args.limit)]
+
+    for p in run_dirs:
+        # 轻量状态：是否有计划/是否 apply/是否 compile
+        plan_ok = (p / "plan" / "migration_plan.json").exists()
+        apply_ok = (p / "logs" / "apply_result.json").exists()
+        compile_ok = (p / "logs" / "compile_summary.json").exists()
+        tags = []
+        if plan_ok:
+            tags.append("plan")
+        if apply_ok:
+            tags.append("apply")
+        if compile_ok:
+            tags.append("compile")
+        tag_str = ",".join(tags) if tags else "-"
+        print(f"{p.name}\t{tag_str}")
+
+    return 0
+
+
+def cmd_runs_show(args: argparse.Namespace) -> int:
+    skill_root = Path(__file__).resolve().parent.parent
+    config = load_config(skill_root)
+    runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
+    run = get_run(runs_root, args.run_id)
+
+    print(f"run_id={run.run_id}")
+    print(f"run_root={run.run_root}")
+    for label, path in [
+        ("analysis_dir", run.analysis_dir),
+        ("plan_file", run.plan_dir / "migration_plan.json"),
+        ("apply_result", run.logs_dir / "apply_result.json"),
+        ("compile_summary", run.logs_dir / "compile_summary.json"),
+        ("deliverables_dir", run.deliverables_dir),
+        ("backup_dir", run.backup_dir),
+    ]:
+        print(f"{label}={path}" if path.exists() else f"{label}=(missing)")
+    return 0
+
+
+def cmd_runs_delete(args: argparse.Namespace) -> int:
+    skill_root = Path(__file__).resolve().parent.parent
+    config = load_config(skill_root)
+    runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
+    target = (runs_root / args.run_id).resolve()
+    try:
+        target.relative_to(runs_root.resolve())
+    except Exception:
+        raise RuntimeError(f"非法删除路径（不在 runs_root 内）：{target}")
+
+    if not target.exists():
+        print(f"run_id 不存在：{target}")
+        return 0
+
+    if not args.yes:
+        print(f"将删除：{target}")
+        print("为避免误删，请加参数 `--yes` 确认。")
+        return 2
+
+    shutil.rmtree(target)
+    print(f"已删除：{target}")
+    return 0
 
 
 def cmd_analyze(args: argparse.Namespace) -> int:
@@ -204,6 +282,26 @@ def main() -> int:
         description="NSFC LaTeX 标书迁移（可执行 MVP：analyze/apply/compile/restore）",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p_runs = sub.add_parser("runs", help="管理 runs（list/show/delete）")
+    runs_sub = p_runs.add_subparsers(dest="runs_command", required=True)
+
+    p_runs_list = runs_sub.add_parser("list", help="列出 runs（默认按 run_id 升序）")
+    p_runs_list.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录")
+    p_runs_list.add_argument("--limit", default=None, help="最多显示多少条")
+    p_runs_list.add_argument("--desc", action="store_true", help="按 run_id 倒序")
+    p_runs_list.set_defaults(func=cmd_runs_list)
+
+    p_runs_show = runs_sub.add_parser("show", help="显示某个 run 的关键路径/产物")
+    p_runs_show.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录")
+    p_runs_show.add_argument("--run-id", required=True, help="run_id")
+    p_runs_show.set_defaults(func=cmd_runs_show)
+
+    p_runs_del = runs_sub.add_parser("delete", help="删除某个 run（危险操作）")
+    p_runs_del.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录")
+    p_runs_del.add_argument("--run-id", required=True, help="run_id")
+    p_runs_del.add_argument("--yes", action="store_true", help="确认删除")
+    p_runs_del.set_defaults(func=cmd_runs_delete)
 
     p_analyze = sub.add_parser("analyze", help="解析旧新项目结构并生成迁移计划（不写入 new）")
     p_analyze.add_argument("--old", required=True, help="旧项目根目录")

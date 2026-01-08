@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "generated_at": "2026-01-08T16:15:00",
+    "strategy": "smart"
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "type": "placeholder_new_added",
+      "priority": "low",
+      "source": null,
+      "target": "extraTex/B.tex",
+      "confidence": null,
+      "score": null,
+      "reason": null,
+      "notes": "新模板新增章节：默认写入占位符：\\textbf{[此部分内容需要补充]}"
+    }
+  ],
+  "warnings": [
+    "存在 1 个旧章节未映射（将导出到 deliverables 供人工处理）。"
+  ]
+}

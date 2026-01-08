@@ -29,6 +29,12 @@
   - 进度反馈：[migrator.py](skills/transfer_old_latex_to_new/core/migrator.py) 集成进度条（rich 可用则使用，否则回退到文本）
   - 文档拆分：新增 [docs/](skills/transfer_old_latex_to_new/docs/) 并精简 [SKILL.md](skills/transfer_old_latex_to_new/SKILL.md)
 
+- **transfer_old_latex_to_new v1.4.0** - P1 质量保障落地
+  - 新增配置校验工具：[scripts/validate_config.py](skills/transfer_old_latex_to_new/scripts/validate_config.py)（类型/范围/编译序列等常见错误提前拦截）
+  - runs 管理子命令：[scripts/run.py](skills/transfer_old_latex_to_new/scripts/run.py) 新增 `runs list/show/delete`（迁移历史可追溯，删除需 `--yes`）
+  - 文档补齐：新增 [docs/faq.md](skills/transfer_old_latex_to_new/docs/faq.md) 与 [docs/case_study_2025_to_2026.md](skills/transfer_old_latex_to_new/docs/case_study_2025_to_2026.md)
+  - 运行更干净：脚本默认不写 `__pycache__`（避免在项目目录产生中间文件）
+
 ### Added（新增）
 
 - 新增 `transfer_old_latex_to_new` v1.3.0 详细改进计划：`plans/v202601081102.md`

@@ -1,6 +1,6 @@
 ---
 name: migrating-latex-templates
-version: 1.3.1
+version: 1.4.0
 description: 智能迁移NSFC LaTeX标书到新版模板，基于五阶段工作流（分析→映射→规划→执行→验证），自动处理结构变化、内容重组、引用更新；支持AI驱动语义匹配与启发式回退，并提供 runs 输出隔离（--runs-root）与一键迁移脚本（migrate.sh）。
 author: AI Agent (Claude Code)
 metadata:
@@ -39,7 +39,13 @@ references: skills/transfer_old_latex_to_new/references/
 >
 > **参考文档**：[references/](references/)
 >
-> **拆分文档**：[docs/quickstart.md](docs/quickstart.md) / [docs/config_guide.md](docs/config_guide.md) / [docs/api_reference.md](docs/api_reference.md) / [docs/troubleshooting.md](docs/troubleshooting.md)
+> **拆分文档**：
+> [docs/quickstart.md](docs/quickstart.md) /
+> [docs/config_guide.md](docs/config_guide.md) /
+> [docs/api_reference.md](docs/api_reference.md) /
+> [docs/troubleshooting.md](docs/troubleshooting.md) /
+> [docs/faq.md](docs/faq.md) /
+> [docs/case_study_2025_to_2026.md](docs/case_study_2025_to_2026.md)
 
 ---
 
@@ -137,7 +143,7 @@ runs/<run_id>/
 
 ## 📋 版本与变更
 
-**当前版本**: v1.3.1（与 [config.yaml](config.yaml) 同步）
+**当前版本**: v1.4.0（与 [config.yaml](config.yaml) 同步）
 
 **变更记录**: 见根级 [CHANGELOG.md](../../../CHANGELOG.md)
 

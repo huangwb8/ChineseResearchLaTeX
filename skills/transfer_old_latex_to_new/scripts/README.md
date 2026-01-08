@@ -24,6 +24,8 @@ python scripts/run.py restore --run-id <run_id> --new <新项目>
 
 **详细文档**: 见 [../SKILL.md](../SKILL.md)
 
+补充：P1 起 `run.py` 增加了 `runs list/show/delete` 子命令，用于管理 runs（迁移历史可追溯）。
+
 ---
 
 ### `migrate.sh` - 一键迁移脚本
@@ -42,6 +44,22 @@ bash scripts/migrate.sh --old <旧项目> --new <新项目> --runs-root /path/to
 - 不想手动复制粘贴 run_id
 - 需要“一条命令跑完整流程”
 - 希望把 runs 输出放到指定目录（保持项目干净）
+
+---
+
+### `validate_config.py` - 配置校验工具（P1）
+
+用于提前发现 `config.yaml` 常见配置错误（类型、范围、关键字段组合等）。
+
+```bash
+python scripts/validate_config.py
+
+# 可选：应用 profile 再校验
+python scripts/validate_config.py --profile balanced
+
+# 可选：打印最终合并后的配置（调试）
+python scripts/validate_config.py --print-effective
+```
 
 ---
 

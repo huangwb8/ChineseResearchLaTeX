@@ -8,9 +8,17 @@
 - `apply`：按计划写入新项目（默认跳过低置信度/需人工任务），并生成 `deliverables/change_summary.md`。
 - `compile`：对新项目执行 4 步编译，日志隔离到 `logs/latex_aux/`，并生成 `logs/compile_summary.json`。
 - `restore`：将新项目恢复到 apply 前快照（`backup/`）。
+- `runs list/show/delete`：runs 管理（迁移历史可追溯；删除需 `--yes`）。
 
 通用建议参数：
 - `--runs-root /path/to/runs`：指定 runs 输出根目录（用于隔离输出/测试/批处理）。
+
+## 配置校验（scripts/validate_config.py）
+
+在执行迁移前运行一次配置校验，用于提前发现：
+- 阈值越界/类型错误
+- 轮次配置不合理
+- 编译序列偏离推荐 4 步法（警告）
 
 ## 关键产物（格式）
 
@@ -34,4 +42,3 @@ apply 执行结果（applied/skipped/warnings/resources/references/optimization/
 - `core/migrator.py`：执行迁移 +（可选）内容优化 +（可选）字数适配 + 资源复制 + 引用完整性检查。
 - `core/compiler.py`：编译 4 步法；中间文件隔离到 `logs/latex_aux/`，成功后复制 `main.pdf` 回项目根目录。
 - `core/security_manager.py`：写入白名单校验（禁止触碰模板系统文件）。
-

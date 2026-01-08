@@ -1,0 +1,8 @@
+run_id=20260108_161459_961351
+run_root=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081610/runs/20260108_161459_961351
+analysis_dir=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081610/runs/20260108_161459_961351/analysis
+plan_file=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081610/runs/20260108_161459_961351/plan/migration_plan.json
+apply_result=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081610/runs/20260108_161459_961351/logs/apply_result.json
+compile_summary=(missing)
+deliverables_dir=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081610/runs/20260108_161459_961351/deliverables
+backup_dir=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081610/runs/20260108_161459_961351/backup

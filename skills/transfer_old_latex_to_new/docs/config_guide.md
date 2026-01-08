@@ -23,7 +23,19 @@ python skills/transfer_old_latex_to_new/scripts/run.py analyze \
 
 这样不用改配置，就能把“迁移产物/日志/快照”完全隔离到指定目录（尤其适合测试或批处理）。
 
+## 配置校验（P1）
+
+在运行迁移前，建议先跑一次配置校验：
+
+```bash
+python skills/transfer_old_latex_to_new/scripts/validate_config.py
+```
+
+常见可提前发现的问题包括：
+- 数值阈值越界（如相似度/超时）
+- 轮次配置不合理（`max_rounds < min_rounds`）
+- 编译序列不符合推荐 4 步法（会给出警告）
+
 ## 可选依赖：rich 进度条
 
 本技能会尝试使用 `rich` 显示更美观的进度条；若环境未安装 `rich`，会自动回退到纯文本进度显示，不影响功能。
-

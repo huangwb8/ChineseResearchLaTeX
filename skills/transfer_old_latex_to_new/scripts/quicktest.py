@@ -7,6 +7,8 @@ import sys
 import asyncio
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 # 添加技能根目录到路径(现在脚本在 scripts/ 子目录)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

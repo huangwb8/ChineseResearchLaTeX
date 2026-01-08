@@ -53,6 +53,16 @@ python skills/transfer_old_latex_to_new/scripts/run.py restore \
 - `--adapt-word-count`：迁移后做字数适配（需在配置启用）。
 - `--runs-root /path/to/runs`：将 runs 产物输出到指定目录（用于隔离输出/测试）。
 
+### runs 管理（P1）
+
+```bash
+# 列出 runs（默认输出：run_id 及状态标签）
+python skills/transfer_old_latex_to_new/scripts/run.py runs list --runs-root /path/to/runs
+
+# 查看某次 run 的关键产物路径
+python skills/transfer_old_latex_to_new/scripts/run.py runs show --runs-root /path/to/runs --run-id <run_id>
+```
+
 ## 输出目录（runs）
 
 默认输出在 `skills/transfer_old_latex_to_new/runs/<run_id>/`；如果使用了 `--runs-root`，则输出在你指定的目录。
@@ -69,4 +79,3 @@ runs/<run_id>/
 ```
 
 交付物（Markdown 报告）主要在 `deliverables/`，编译相关日志在 `logs/`。
-
