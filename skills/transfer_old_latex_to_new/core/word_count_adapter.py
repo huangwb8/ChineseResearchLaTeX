@@ -4,9 +4,11 @@
 """
 
 import re
-import json
 from pathlib import Path
-from typing import Dict, Tuple, Optional
+from typing import Any, Dict, Optional
+
+from .ai_integration import AIIntegration
+from .reference_guardian import ReferenceGuardian
 
 
 class WordCountAdapter:
@@ -15,6 +17,11 @@ class WordCountAdapter:
     def __init__(self, config: dict, skill_root: str):
         self.config = config
         self.skill_root = Path(skill_root)
+        wc_cfg = (config.get("word_count_adaptation", {}) or {}) if isinstance(config, dict) else {}
+        self.tolerance = int(wc_cfg.get("target_tolerance", 50))
+        self.auto_expand = bool(wc_cfg.get("auto_expand", True))
+        self.auto_compress = bool(wc_cfg.get("auto_compress", True))
+        self.ref_guardian = ReferenceGuardian(config)
         self.version_requirements = self._load_version_requirements()
 
     def _load_version_requirements(self) -> dict:
@@ -45,33 +52,133 @@ class WordCountAdapter:
             }
         }
 
-    async def adapt_content(self, content: str, section_title: str, version_pair: str) -> dict:
-        """适配内容到新版本字数要求"""
+    async def adapt_content(
+        self,
+        content: str,
+        section_title: str,
+        target_word_count: int,
+        ai_integration: Optional[AIIntegration] = None,
+    ) -> dict:
+        """适配内容到目标字数（以中文字符计，排除 LaTeX 命令）"""
+        if target_word_count <= 0:
+            return {
+                "action": "invalid_target",
+                "original_count": self._count_chinese_words(content),
+                "target_count": target_word_count,
+                "final_count": self._count_chinese_words(content),
+                "adapted_content": content,
+                "method": "none",
+            }
+
+        if ai_integration is None:
+            ai_integration = AIIntegration(enable_ai=True, config=self.config)
+
+        current_count = self._count_chinese_words(content)
+        deficit = int(target_word_count) - int(current_count)
+
+        if abs(deficit) <= self.tolerance:
+            return {
+                "action": "within_tolerance",
+                "original_count": current_count,
+                "target_count": int(target_word_count),
+                "final_count": current_count,
+                "adapted_content": content,
+                "method": "none",
+            }
+
+        # 保护引用，避免在扩写/压缩中破坏 \ref/\cite
+        protected_content, ref_map = self.ref_guardian.protect_references(content)
+
+        if deficit > 0:
+            if not self.auto_expand:
+                return {
+                    "action": "expand_skipped",
+                    "original_count": current_count,
+                    "target_count": int(target_word_count),
+                    "final_count": current_count,
+                    "adapted_content": content,
+                    "method": "disabled",
+                }
+
+            expanded = await self._ai_expand_content(protected_content, section_title, deficit, ai_integration)
+            restored = self.ref_guardian.restore_references(expanded, ref_map)
+            final_count = self._count_chinese_words(restored)
+            changed = restored != content
+            return {
+                "action": "expanded" if changed else "expand_no_change",
+                "original_count": current_count,
+                "target_count": int(target_word_count),
+                "final_count": final_count,
+                "delta": final_count - current_count,
+                "adapted_content": restored,
+                "method": "ai" if ai_integration.is_available() else "ai_unavailable",
+            }
+
+        # deficit < 0：需要精简
+        if not self.auto_compress:
+            return {
+                "action": "compress_skipped",
+                "original_count": current_count,
+                "target_count": int(target_word_count),
+                "final_count": current_count,
+                "adapted_content": content,
+                "method": "disabled",
+            }
+
+        compressed = await self._ai_compress_content(protected_content, section_title, -deficit, ai_integration)
+        restored = self.ref_guardian.restore_references(compressed, ref_map)
+        final_count = self._count_chinese_words(restored)
+        changed = restored != content
+        return {
+            "action": "compressed" if changed else "compress_no_change",
+            "original_count": current_count,
+            "target_count": int(target_word_count),
+            "final_count": final_count,
+            "delta": final_count - current_count,
+            "adapted_content": restored,
+            "method": "ai" if ai_integration.is_available() else "ai_unavailable",
+        }
+
+    async def adapt_content_by_version_pair(
+        self,
+        content: str,
+        section_title: str,
+        version_pair: str,
+        ai_integration: Optional[AIIntegration] = None,
+    ) -> dict:
+        """兼容旧接口：根据版本对的字数范围做适配（以新版本目标范围的中位数为目标）"""
         requirements = self.version_requirements.get(version_pair, {})
         section_req = requirements.get(section_title)
-
         if not section_req:
             return {"status": "skip", "reason": "无字数要求"}
 
-        old_min, old_max = section_req["old"]
         new_min, new_max = section_req["new"]
         current_count = self._count_chinese_words(content)
-
-        # 判断是否需要适配
         if new_min <= current_count <= new_max:
             return {"status": "ok", "current_count": current_count}
 
-        # 字数不足：扩展内容
-        if current_count < new_min:
-            return await self._expand_content(content, section_title, current_count, new_min, new_max)
+        target = int((new_min + new_max) / 2)
+        result = await self.adapt_content(content, section_title, target, ai_integration=ai_integration)
+        return {
+            "status": "adapted",
+            "current_count": current_count,
+            "target_range": (new_min, new_max),
+            **result,
+        }
 
-        # 字数过多：精简内容
-        if current_count > new_max:
-            return await self._compress_content(content, section_title, current_count, new_min, new_max)
-
-    async def _expand_content(self, content: str, section_title: str, current: int, target_min: int, target_max: int) -> dict:
+    async def _expand_content(
+        self,
+        content: str,
+        section_title: str,
+        current: int,
+        target_min: int,
+        target_max: int,
+        ai_integration: Optional[AIIntegration] = None,
+    ) -> dict:
         """扩展内容到目标字数"""
         deficit = target_min - current
+        if ai_integration is None:
+            ai_integration = AIIntegration(enable_ai=True, config=self.config)
 
         # 策略1: 调用对应写作技能扩展
         skill_mapping = {
@@ -89,7 +196,7 @@ class WordCountAdapter:
             pass
 
         # 策略2: AI 直接扩展（使用当前 AI 环境）
-        expanded = await self._ai_expand_content(content, section_title, deficit)
+        expanded = await self._ai_expand_content(content, section_title, deficit, ai_integration)
         new_count = self._count_chinese_words(expanded)
 
         return {
@@ -101,12 +208,22 @@ class WordCountAdapter:
             "method": "ai_direct"
         }
 
-    async def _compress_content(self, content: str, section_title: str, current: int, target_min: int, target_max: int) -> dict:
+    async def _compress_content(
+        self,
+        content: str,
+        section_title: str,
+        current: int,
+        target_min: int,
+        target_max: int,
+        ai_integration: Optional[AIIntegration] = None,
+    ) -> dict:
         """精简内容到目标字数"""
         excess = current - target_max
+        if ai_integration is None:
+            ai_integration = AIIntegration(enable_ai=True, config=self.config)
 
         # AI 精简内容（使用当前 AI 环境）
-        compressed = await self._ai_compress_content(content, section_title, excess)
+        compressed = await self._ai_compress_content(content, section_title, excess, ai_integration)
         new_count = self._count_chinese_words(compressed)
 
         return {
@@ -118,15 +235,18 @@ class WordCountAdapter:
             "method": "ai_compression"
         }
 
-    async def _ai_expand_content(self, content: str, section_title: str, deficit: int) -> str:
-        """AI 直接扩展内容（使用当前 AI 环境）"""
-        # 使用 Skill 工具调用当前 AI
-        from skill_core import call_ai
-
+    async def _ai_expand_content(
+        self,
+        content: str,
+        section_title: str,
+        deficit: int,
+        ai_integration: AIIntegration,
+    ) -> str:
+        """AI 直接扩展内容（优雅降级）"""
         prompt = f"""你是 NSFC 标书写作专家。请扩展以下"{section_title}"的内容。
 
 要求：
-1. 扩展约 {deficit} 字（当前 {self._count_chinese_words(content)} 字，目标约 {self._count_chinese_words(content) + deficit} 字）
+1. 扩展约 {deficit} 字（当前约 {self._count_chinese_words(content)} 字，目标约 {self._count_chinese_words(content) + deficit} 字）
 2. 保持原有逻辑和核心论点
 3. 增加论据、案例、数据支撑
 4. 深化分析层次
@@ -137,23 +257,29 @@ class WordCountAdapter:
 
 请直接输出扩展后的完整内容，不要解释。"""
 
-        try:
-            response = await call_ai(prompt, max_tokens=4000)
-            return response.strip()
-        except Exception as e:
-            # AI 调用失败时返回原内容
-            print(f"[WordCountAdapter] AI 扩展失败: {e}")
+        def fallback() -> str:
             return content
 
-    async def _ai_compress_content(self, content: str, section_title: str, excess: int) -> str:
-        """AI 精简内容（使用当前 AI 环境）"""
-        # 使用 Skill 工具调用当前 AI
-        from skill_core import call_ai
+        result = await ai_integration.process_request(
+            task="expand_content",
+            prompt=prompt,
+            fallback=fallback,
+            output_format="text",
+        )
+        return str(result or content).strip() or content
 
+    async def _ai_compress_content(
+        self,
+        content: str,
+        section_title: str,
+        excess: int,
+        ai_integration: AIIntegration,
+    ) -> str:
+        """AI 精简内容（优雅降级）"""
         prompt = f"""你是 NSFC 标书写作专家。请精简以下"{section_title}"的内容。
 
 要求：
-1. 精简约 {excess} 字（当前 {self._count_chinese_words(content)} 字，目标约 {self._count_chinese_words(content) - excess} 字）
+1. 精简约 {excess} 字（当前约 {self._count_chinese_words(content)} 字，目标约 {self._count_chinese_words(content) - excess} 字）
 2. 保留所有核心论点和关键信息
 3. 删除冗余表述和重复内容
 4. 保持逻辑连贯性
@@ -164,13 +290,16 @@ class WordCountAdapter:
 
 请直接输出精简后的完整内容，不要解释。"""
 
-        try:
-            response = await call_ai(prompt, max_tokens=4000)
-            return response.strip()
-        except Exception as e:
-            # AI 调用失败时返回原内容
-            print(f"[WordCountAdapter] AI 精简失败: {e}")
+        def fallback() -> str:
             return content
+
+        result = await ai_integration.process_request(
+            task="compress_content",
+            prompt=prompt,
+            fallback=fallback,
+            output_format="text",
+        )
+        return str(result or content).strip() or content
 
     def _count_chinese_words(self, content: str) -> int:
         """统计中文字数（排除 LaTeX 命令）"""

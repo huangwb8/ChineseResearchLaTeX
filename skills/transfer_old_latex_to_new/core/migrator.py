@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import json
 import shutil
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
+from .ai_integration import AIIntegration
 from .latex_utils import safe_read_text
 from .reference_validator import validate_migration_reference_integrity
 from .resource_manager import copy_resources, scan_project_resources, validate_resource_integrity
@@ -34,6 +35,8 @@ class ApplyResult:
     warnings: List[str]
     resources: Dict[str, Any]  # 资源文件处理结果
     references: Dict[str, Any]  # 引用完整性验证结果
+    optimization: List[Dict[str, Any]] = field(default_factory=list)
+    adaptation: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -42,6 +45,8 @@ class ApplyResult:
             "warnings": self.warnings,
             "resources": self.resources,
             "references": self.references,
+            "optimization": self.optimization,
+            "adaptation": self.adaptation,
         }
 
 
@@ -76,7 +81,54 @@ def restore_snapshot(new_project: Path, backup_root: Path, security: SecurityMan
     return restored
 
 
-def apply_plan(
+def _infer_target_word_count(section_title: str, config: Dict[str, Any]) -> int:
+    word_count_config = (config.get("word_count_adaptation", {}) or {}) if isinstance(config, dict) else {}
+    targets = (word_count_config.get("targets", {}) or {}) if isinstance(word_count_config, dict) else {}
+    if isinstance(targets, dict):
+        for key, value in targets.items():
+            if key and (key in section_title or section_title in key):
+                try:
+                    return int(value)
+                except Exception:
+                    pass
+
+    default_targets = {
+        "立项依据": 4000,
+        "研究内容": 6000,
+        "研究目标": 2000,
+        "关键科学问题": 2000,
+        "研究方案": 4000,
+        "特色与创新": 1500,
+        "研究基础": 3000,
+        "工作条件": 1500,
+    }
+    for key, target in default_targets.items():
+        if key in section_title or section_title in key:
+            return int(target)
+
+    try:
+        return int(word_count_config.get("default_target", 3000))
+    except Exception:
+        return 3000
+
+
+def _optimization_goals_from_config(config: Dict[str, Any]) -> Dict[str, bool]:
+    opt = (config.get("content_optimization", {}) or {}) if isinstance(config, dict) else {}
+    types = opt.get("optimization_types", []) if isinstance(opt, dict) else []
+    goals = {
+        "remove_redundancy": "redundancy" in types,
+        "improve_logic": "logic" in types,
+        "add_evidence": "evidence" in types,
+        "improve_clarity": "clarity" in types,
+        "reorganize_structure": "structure" in types,
+    }
+    # 若未配置 types，默认不开启具体目标（保持最小惊讶）
+    if not any(goals.values()):
+        return {}
+    return goals
+
+
+async def apply_plan(
     old_project: Path,
     new_project: Path,
     plan: Dict[str, Any],
@@ -84,6 +136,9 @@ def apply_plan(
     security: SecurityManager,
     backup_root: Path,
     allow_low_confidence: bool = False,
+    enable_optimization: bool = False,
+    enable_word_count_adaptation: bool = False,
+    ai_enabled: bool = True,
 ) -> ApplyResult:
     tasks = (plan or {}).get("tasks") or []
     placeholder = ((config.get("migration", {}) or {}).get("content_generation", {}) or {}).get(
@@ -145,7 +200,101 @@ def apply_plan(
     if skipped:
         warnings.append(f"有 {len(skipped)} 个任务未自动执行，详见 apply 结果。")
 
-    # ========== 第二步：扫描并迁移资源文件 ==========
+    # ========== 第二步：内容优化（可选） ==========
+    optimization_log: List[Dict[str, Any]] = []
+    opt_cfg = (config.get("content_optimization", {}) or {}) if isinstance(config, dict) else {}
+    opt_enabled_in_config = bool(opt_cfg.get("enabled", False)) if isinstance(opt_cfg, dict) else False
+    min_improvement = float(opt_cfg.get("min_improvement_threshold", 0.1)) if isinstance(opt_cfg, dict) else 0.1
+
+    ai_integration = AIIntegration(enable_ai=bool(ai_enabled), config=config)
+
+    if enable_optimization and opt_enabled_in_config and applied:
+        from .content_optimizer import ContentOptimizer
+
+        optimizer = ContentOptimizer(config, skill_root=str(new_project))
+        goals = _optimization_goals_from_config(config)
+
+        for task in applied:
+            if task.get("status") != "copied":
+                continue
+            target_rel = task.get("target")
+            if not target_rel:
+                continue
+            target_abs = (new_project / target_rel).resolve()
+            try:
+                content = safe_read_text(target_abs)
+                section_title = Path(target_rel).stem
+                result = await optimizer.optimize_content(
+                    content=content,
+                    section_title=section_title,
+                    optimization_goals=goals,
+                    ai_integration=ai_integration,
+                )
+
+                optimized = result.get("optimized_content") if isinstance(result, dict) else None
+                improvement_score = float(result.get("improvement_score", 0) or 0) if isinstance(result, dict) else 0.0
+                applied_count = len((result.get("optimization_log") or [])) if isinstance(result, dict) else 0
+
+                if isinstance(optimized, str) and optimized and optimized != content and improvement_score >= min_improvement:
+                    _atomic_write(target_abs, optimized)
+                    task["status"] = "optimized"
+                    optimization_log.append(
+                        {
+                            "file": target_rel,
+                            "improvement_score": round(improvement_score, 3),
+                            "optimization_applied": int(applied_count),
+                        }
+                    )
+            except Exception as e:
+                task["optimization_error"] = str(e)
+                warnings.append(f"内容优化失败：{target_rel}: {e}")
+
+    # ========== 第三步：字数适配（可选） ==========
+    adaptation_log: List[Dict[str, Any]] = []
+    wc_cfg = (config.get("word_count_adaptation", {}) or {}) if isinstance(config, dict) else {}
+    wc_enabled_in_config = bool(wc_cfg.get("enabled", False)) if isinstance(wc_cfg, dict) else False
+
+    if enable_word_count_adaptation and wc_enabled_in_config and applied:
+        from .word_count_adapter import WordCountAdapter
+
+        adapter = WordCountAdapter(config, skill_root=str(new_project))
+
+        for task in applied:
+            if task.get("status") not in {"copied", "optimized"}:
+                continue
+            target_rel = task.get("target")
+            if not target_rel:
+                continue
+            target_abs = (new_project / target_rel).resolve()
+            try:
+                content = safe_read_text(target_abs)
+                section_title = Path(target_rel).stem
+                target_count = _infer_target_word_count(section_title, config)
+                result = await adapter.adapt_content(
+                    content=content,
+                    section_title=section_title,
+                    target_word_count=target_count,
+                    ai_integration=ai_integration,
+                )
+
+                adapted = result.get("adapted_content") if isinstance(result, dict) else None
+                if isinstance(adapted, str) and adapted and adapted != content:
+                    _atomic_write(target_abs, adapted)
+                    task["status"] = "adapted"
+                    adaptation_log.append(
+                        {
+                            "file": target_rel,
+                            "original_count": int(result.get("original_count", 0) or 0),
+                            "target_count": int(result.get("target_count", target_count) or target_count),
+                            "final_count": int(result.get("final_count", 0) or 0),
+                            "action": result.get("action", ""),
+                        }
+                    )
+            except Exception as e:
+                task["adaptation_error"] = str(e)
+                warnings.append(f"字数适配失败：{target_rel}: {e}")
+
+    # ========== 第四步：扫描并迁移资源文件 ==========
     # 资源文件处理配置
     resource_config = (config.get("migration", {}) or {}).get("figure_handling", "copy")
     copy_resources_enabled = resource_config == "copy"
@@ -162,7 +311,7 @@ def apply_plan(
 
     if copy_resources_enabled and applied:
         # 收集已迁移的 .tex 文件列表
-        migrated_tex_files = [t["target"] for t in applied if t.get("status") == "copied"]
+        migrated_tex_files = [t["target"] for t in applied if t.get("status") in {"copied", "optimized", "adapted"}]
 
         if migrated_tex_files:
             # 扫描旧项目的资源文件
@@ -207,7 +356,7 @@ def apply_plan(
                     "可能导致编译失败。请检查 resources 部分。"
                 )
 
-    # ========== 第三步：验证引用完整性 ==========
+    # ========== 第五步：验证引用完整性 ==========
     references_result: Dict[str, Any] = {
         "validated": False,
         "old_report": {},
@@ -218,7 +367,7 @@ def apply_plan(
 
     if applied:
         # 收集已迁移的 .tex 文件列表
-        migrated_tex_files = [t["target"] for t in applied if t.get("status") == "copied"]
+        migrated_tex_files = [t["target"] for t in applied if t.get("status") in {"copied", "optimized", "adapted"}]
 
         if migrated_tex_files:
             # 获取参考文献文件
@@ -256,5 +405,6 @@ def apply_plan(
         warnings=warnings,
         resources=resources_result,
         references=references_result,
+        optimization=optimization_log,
+        adaptation=adaptation_log,
     )
-

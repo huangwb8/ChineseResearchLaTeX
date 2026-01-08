@@ -5,9 +5,10 @@ AI 内容智能优化器
 
 import json
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 from pathlib import Path
 
+from .ai_integration import AIIntegration
 from .reference_guardian import ReferenceGuardian
 
 
@@ -19,21 +20,32 @@ class ContentOptimizer:
         self.skill_root = Path(skill_root)
         self.ref_guardian = ReferenceGuardian(config)
 
-    async def optimize_content(self, content: str, section_title: str, optimization_goals: dict) -> dict:
+    async def optimize_content(
+        self,
+        content: str,
+        section_title: str,
+        optimization_goals: dict,
+        ai_integration: Optional[AIIntegration] = None,
+    ) -> dict:
         """智能优化内容"""
+        if ai_integration is None:
+            ai_integration = AIIntegration(enable_ai=True, config=self.config)
+
         # 第一步：保护引用
         protected_content, ref_map = self.ref_guardian.protect_references(content)
         original_refs = self.ref_guardian._extract_all_references(content)
 
         # 第二步：AI 分析优化点
-        analysis = await self._analyze_optimization_points(protected_content, section_title, optimization_goals)
+        analysis = await self._analyze_optimization_points(
+            protected_content, section_title, optimization_goals, ai_integration
+        )
 
         # 第三步：执行优化
         optimized_content = protected_content
         optimization_log = []
 
         for point in analysis.get("optimization_points", []):
-            result = await self._apply_optimization(optimized_content, point)
+            result = await self._apply_optimization(optimized_content, point, ai_integration)
             if result.get("success"):
                 optimized_content = result["content"]
                 optimization_log.append({
@@ -56,10 +68,14 @@ class ContentOptimizer:
             "improvement_score": analysis.get("improvement_potential", 0)
         }
 
-    async def _analyze_optimization_points(self, content: str, section_title: str, goals: dict) -> dict:
+    async def _analyze_optimization_points(
+        self,
+        content: str,
+        section_title: str,
+        goals: dict,
+        ai_integration: AIIntegration,
+    ) -> dict:
         """AI 分析优化点（使用当前 AI 环境）"""
-        from skill_core import call_ai
-
         # 构建分析提示
         goal_desc = []
         if goals.get("remove_redundancy"):
@@ -101,39 +117,66 @@ JSON 格式：
 
 请直接输出 JSON："""
 
-        try:
-            response = await call_ai(prompt, max_tokens=2000)
-            # 尝试解析 JSON
-            json_match = re.search(r'\{[\s\S]*\}', response)
-            if json_match:
-                return json.loads(json_match.group())
-        except Exception as e:
-            print(f"[ContentOptimizer] AI 分析失败: {e}")
+        def fallback() -> dict:
+            return self._heuristic_analysis(content, goals)
 
-        # 回退到启发式分析
-        return self._heuristic_analysis(content, goals)
+        result = await ai_integration.process_request(
+            task="analyze_optimization_points",
+            prompt=prompt,
+            fallback=fallback,
+            output_format="json",
+        )
+
+        return result if isinstance(result, dict) else fallback()
 
     def _heuristic_analysis(self, content: str, goals: dict) -> dict:
         """启发式分析（AI 失败时的回退方案）"""
         optimization_points = []
 
         if goals.get("remove_redundancy"):
-            # 检测重复词
-            words = re.findall(r'[\u4e00-\u9fff]{2,}', content)
-            word_counts = {}
-            for word in words:
-                word_counts[word] = word_counts.get(word, 0) + 1
+            # 检测重复词（粗略启发式）
+            # 1) 统计较短的中文片段出现次数（更能捕捉“测试测试测试...”这类重复）
+            chunks = re.findall(r"[\u4e00-\u9fff]+", content)
+            bigrams: Dict[str, int] = {}
+            for chunk in chunks:
+                if len(chunk) < 2:
+                    continue
+                for i in range(0, len(chunk) - 1):
+                    bg = chunk[i : i + 2]
+                    bigrams[bg] = bigrams.get(bg, 0) + 1
 
-            for word, count in word_counts.items():
-                if count > 8:
-                    optimization_points.append({
-                        "type": "redundancy",
-                        "description": f"词语'{word}'重复{count}次",
-                        "location": "全文",
-                        "severity": "medium",
-                        "suggestion": "替换同义词或重组表述"
-                    })
-                    break
+            if bigrams:
+                bg, count = max(bigrams.items(), key=lambda x: x[1])
+                if count >= 15:
+                    optimization_points.append(
+                        {
+                            "type": "redundancy",
+                            "description": f"短语'{bg}'重复{count}次（疑似冗余）",
+                            "location": "全文",
+                            "severity": "medium",
+                            "suggestion": "替换同义词或重组表述",
+                        }
+                    )
+
+            # 2) 统计连续中文“词块”重复（适合有分隔符的场景）
+            if not optimization_points:
+                words = re.findall(r"[\u4e00-\u9fff]{2,}", content)
+                word_counts: Dict[str, int] = {}
+                for word in words:
+                    word_counts[word] = word_counts.get(word, 0) + 1
+
+                for word, count in word_counts.items():
+                    if count > 8:
+                        optimization_points.append(
+                            {
+                                "type": "redundancy",
+                                "description": f"词语'{word}'重复{count}次",
+                                "location": "全文",
+                                "severity": "medium",
+                                "suggestion": "替换同义词或重组表述",
+                            }
+                        )
+                        break
 
         if goals.get("improve_logic"):
             # 检测段落连接
@@ -161,10 +204,8 @@ JSON 格式：
             "improvement_potential": min(0.7, len(optimization_points) * 0.2)
         }
 
-    async def _apply_optimization(self, content: str, optimization_point: dict) -> dict:
+    async def _apply_optimization(self, content: str, optimization_point: dict, ai_integration: AIIntegration) -> dict:
         """应用单个优化点（使用当前 AI 环境）"""
-        from skill_core import call_ai
-
         opt_type = optimization_point["type"]
         description = optimization_point["description"]
 
@@ -247,16 +288,20 @@ JSON 格式：
 
         prompt = prompt_template.replace("{content}", content[:2000])  # 限制长度
 
-        try:
-            response = await call_ai(prompt, max_tokens=3000)
-            return {
-                "success": True,
-                "content": response.strip(),
-                "action": f"优化{opt_type}"
-            }
-        except Exception as e:
-            print(f"[ContentOptimizer] AI 优化失败: {e}")
-            return {"success": False, "reason": str(e)}
+        def fallback() -> str:
+            return ""
+
+        response = await ai_integration.process_request(
+            task=f"apply_optimization_{opt_type}",
+            prompt=prompt,
+            fallback=fallback,
+            output_format="text",
+        )
+
+        response_text = str(response or "").strip()
+        if response_text:
+            return {"success": True, "content": response_text, "action": f"优化{opt_type}"}
+        return {"success": False, "reason": "AI 不可用或未返回内容"}
 
     def generate_optimization_report(self, content: str, section_title: str) -> dict:
         """生成优化报告（不执行优化，仅分析）"""

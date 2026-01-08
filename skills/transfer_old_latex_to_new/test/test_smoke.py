@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 import sys
+import asyncio
 
 skill_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(skill_root))
@@ -77,13 +78,15 @@ def test_mvp_flow() -> bool:
 
         security = SecurityManager.for_new_project(new, runs)
         backup_root = runs / "run_x" / "backup"
-        result = apply_plan(
-            old_project=old,
-            new_project=new,
-            plan=plan,
-            config=config,
-            security=security,
-            backup_root=backup_root,
+        result = asyncio.run(
+            apply_plan(
+                old_project=old,
+                new_project=new,
+                plan=plan,
+                config=config,
+                security=security,
+                backup_root=backup_root,
+            )
         ).to_dict()
 
         target = new / "extraTex/1.项目的立项依据.tex"
@@ -106,4 +109,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

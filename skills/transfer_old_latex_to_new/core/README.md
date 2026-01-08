@@ -10,15 +10,17 @@
 
 - **版本支持**：2024→2025、2025→2026 的字数要求映射
 - **智能适配**：自动扩展或精简内容到目标字数范围
-- **AI 集成**：使用当前 AI 环境（Claude Code/Codex）进行内容扩展/精简
+- **AI 集成**：通过 `AIIntegration` 统一入口（未接入真实 AI 时自动回退）
 - **中文字数统计**：准确统计中文字符，排除 LaTeX 命令
 
 ### 使用示例
 
 ```python
+from core.ai_integration import AIIntegration
 from core.word_count_adapter import WordCountAdapter
 
 adapter = WordCountAdapter(config, ".")
+ai = AIIntegration(enable_ai=False)  # 默认优雅降级（不依赖外部 AI 客户端）
 
 # 获取字数报告
 report = adapter.generate_word_count_report(content, "立项依据", "2025_to_2026")
@@ -26,12 +28,14 @@ print(f"当前字数: {report['current_count']}")
 print(f"新版本要求: {report['new_requirement']}")
 print(f"是否需要适配: {report['needs_adaptation']}")
 
-# 执行适配（async）
-result = await adapter.adapt_content(content, "立项依据", "2025_to_2026")
-if result['status'] == 'expanded':
-    print(f"扩展了 {result['expansion']} 字")
-elif result['status'] == 'compressed':
-    print(f"精简了 {result['reduction']} 字")
+# 执行适配（async，版本范围 → 以中位数为目标）
+result = await adapter.adapt_content_by_version_pair(content, "立项依据", "2025_to_2026", ai_integration=ai)
+print(result["status"])
+
+# 或：直接指定目标字数
+target = 2200
+result2 = await adapter.adapt_content(content, "立项依据", target, ai_integration=ai)
+print(result2["action"])
 ```
 
 ### 版本字数要求
@@ -157,6 +161,7 @@ for log in result['optimization_log']:
 
 ```python
 import asyncio
+from core.ai_integration import AIIntegration
 from core.word_count_adapter import WordCountAdapter
 from core.reference_guardian import ReferenceGuardian
 from core.content_optimizer import ContentOptimizer
@@ -164,15 +169,17 @@ from core.content_optimizer import ContentOptimizer
 async def migrate_section(content: str, section_title: str) -> str:
     """迁移单个章节到新版本"""
 
+    ai = AIIntegration(enable_ai=False)
+
     # 1. 字数适配
     adapter = WordCountAdapter(config, ".")
-    adapt_result = await adapter.adapt_content(content, section_title, "2025_to_2026")
-    adapted_content = adapt_result.get("content", content)
+    adapt_result = await adapter.adapt_content(content, section_title, target_word_count=2000, ai_integration=ai)
+    adapted_content = adapt_result.get("adapted_content", content)
 
     # 2. 内容优化
     optimizer = ContentOptimizer(config, ".")
     goals = {"remove_redundancy": True, "improve_logic": True}
-    opt_result = await optimizer.optimize_content(adapted_content, section_title, goals)
+    opt_result = await optimizer.optimize_content(adapted_content, section_title, goals, ai_integration=ai)
 
     # 3. 验证引用完整性
     if not opt_result['reference_validation']['valid']:
@@ -235,13 +242,13 @@ python run_tests.py
 
 ### AI 集成
 
-- 所有 AI 调用通过 `from skill_core import call_ai` 实现
-- 在 Claude Code/Codex 环境中自动使用当前 AI
-- AI 调用失败时会回退到启发式算法
+- 所有 AI 调用统一通过 `core/ai_integration.py` 的 `AIIntegration` 入口
+- 未接入真实 AI responder 时，自动回退到启发式/不改写策略（保证流程可用）
 
 ### Async API
 
 - `WordCountAdapter.adapt_content()` 是 async 方法
+- `WordCountAdapter.adapt_content_by_version_pair()` 是 async 方法（兼容旧接口）
 - `ContentOptimizer.optimize_content()` 是 async 方法
 - `ReferenceGuardian` 所有方法都是同步的
 

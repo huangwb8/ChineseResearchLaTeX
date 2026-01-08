@@ -13,6 +13,7 @@ from pathlib import Path
 # 添加 core 到路径
 sys.path.insert(0, str(Path(__file__).parent))
 
+from core.ai_integration import AIIntegration
 from core.word_count_adapter import WordCountAdapter
 from core.reference_guardian import ReferenceGuardian
 from core.content_optimizer import ContentOptimizer
@@ -122,7 +123,7 @@ async def demo_content_optimizer():
 
 
 async def demo_ai_integration():
-    """演示 AI 集成功能（需要真实 AI 环境）"""
+    """演示 AI 集成功能（未接入真实 AI 时将自动回退）"""
     print("=" * 60)
     print("🤖 演示：AI 集成功能")
     print("=" * 60)
@@ -141,19 +142,17 @@ async def demo_ai_integration():
     print(content)
     print("\n尝试 AI 优化...")
 
-    try:
-        result = await optimizer.optimize_content(
-            content,
-            "测试章节",
-            {"remove_redundancy": True}
-        )
+    ai = AIIntegration(enable_ai=False)
+    result = await optimizer.optimize_content(
+        content,
+        "测试章节",
+        {"remove_redundancy": True},
+        ai_integration=ai,
+    )
 
-        print(f"✅ AI 优化完成")
-        print(f"   优化日志: {len(result['optimization_log'])} 条")
-        print(f"   引用保护: {'✅ 有效' if result['reference_validation']['valid'] else '❌ 失效'}")
-
-    except Exception as e:
-        print(f"⚠️ AI 调用失败（正常，因为 demo 环境无 AI）: {e}")
+    print("✅ 调用完成（AI 未接入时会自动回退）")
+    print(f"   优化日志: {len(result['optimization_log'])} 条")
+    print(f"   引用保护: {'✅ 有效' if result['reference_validation']['valid'] else '❌ 失效'}")
 
     print()
 

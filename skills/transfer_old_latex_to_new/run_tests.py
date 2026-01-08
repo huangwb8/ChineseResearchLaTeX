@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from core.word_count_adapter import WordCountAdapter
 from core.reference_guardian import ReferenceGuardian
 from core.content_optimizer import ContentOptimizer
+from core.ai_integration import AIIntegration
 
 
 def test_word_count_adapter():
@@ -91,15 +92,13 @@ async def test_async_integration():
     print("测试异步集成...")
 
     optimizer = ContentOptimizer({"reference_protection": {"enabled": True}}, ".")
+    ai = AIIntegration(enable_ai=False)
 
-    # 测试异步优化（会因无 AI 而失败，但结构正确）
+    # 测试异步优化（无 AI 时应优雅降级，不抛异常）
     content = "测试内容"
-    try:
-        result = await optimizer.optimize_content(content, "测试", {})
-        assert "original_content" in result
-    except Exception as e:
-        # AI 调用失败是预期的
-        assert "call_ai" in str(e) or "skill_core" in str(e) or "name 'call_ai' is not defined" in str(e)
+    result = await optimizer.optimize_content(content, "测试", {}, ai_integration=ai)
+    assert "original_content" in result
+    assert result["optimized_content"]
 
     print("  ✅ 异步集成测试通过")
     return True

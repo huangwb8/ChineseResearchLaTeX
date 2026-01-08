@@ -118,6 +118,15 @@
     - `FormatGuard`：格式守护器（格式保护、哈希验证、自动回滚）
     - `CompleteExampleSkill`：主控制器（完整工作流协调）
   - **工具模块**：LLM 客户端、LaTeX 解析、BibTeX 解析、文件操作
+
+### Fixed（修复）
+
+- 修复并落地 `transfer_old_latex_to_new`（对齐 `plans/v202601081102.md` 的核心问题）
+  - 新增 `skills/transfer_old_latex_to_new/core/ai_integration.py`：统一 AI 接口，未接入真实 AI 时优雅降级
+  - 修复错误导入：移除 `get_ai_config` 与 `skill_core` 依赖，避免运行时 `ModuleNotFoundError`
+  - 集成可选后处理：`apply_plan()` 支持 `--optimize` 内容优化与 `--adapt-word-count` 字数适配
+  - CLI 扩展：`skills/transfer_old_latex_to_new/scripts/run.py` 新增 `--no-ai/--optimize/--adapt-word-count`
+  - 同步更新文档与测试：保证默认环境下功能可用且用法一致
   - **使用示例**：基本用法、高级用法（医疗影像、材料科学、临床试验、传统 ML）
   - **配置文件**：完整的 YAML 配置（LLM、参数、运行管理、资源扫描、格式保护、AI 提示词）
   - **测试框架**：单元测试、集成测试、AI 能力测试

@@ -3,6 +3,8 @@
 """
 
 import pytest
+import asyncio
+from core.ai_integration import AIIntegration
 from core.word_count_adapter import WordCountAdapter
 
 
@@ -12,7 +14,7 @@ def test_count_chinese_words():
     adapter = WordCountAdapter(config, ".")
 
     # 测试纯中文
-    content = "这是一段中文内容，一共二十个字。"
+    content = "一二三四五六七八九十" * 2  # 20 个中文字符
     count = adapter._count_chinese_words(content)
     assert count == 20
 
@@ -48,7 +50,8 @@ def test_adapt_content_skip():
     adapter = WordCountAdapter(config, ".")
 
     content = "测试内容"
-    result = adapter.adapt_content(content, "不存在章节", "2025_to_2026")
+    ai = AIIntegration(enable_ai=False)
+    result = asyncio.run(adapter.adapt_content_by_version_pair(content, "不存在章节", "2025_to_2026", ai_integration=ai))
 
     assert result["status"] == "skip"
 
@@ -60,11 +63,26 @@ def test_adapt_content_ok():
 
     # 构造符合新字数要求的内容
     content = "中文内容" * 500  # 约 1000 字
-    result = adapter.adapt_content(content, "研究内容", "2025_to_2026")
+    ai = AIIntegration(enable_ai=False)
+    result = asyncio.run(adapter.adapt_content_by_version_pair(content, "研究内容", "2025_to_2026", ai_integration=ai))
 
     # 由于实际字数可能不在范围内，这里只测试返回结构
     assert "status" in result
     assert "current_count" in result
+
+
+def test_adapt_content_target_within_tolerance():
+    """测试目标字数在容忍范围内不调整"""
+    config = {"word_count_adaptation": {"target_tolerance": 50}}
+    adapter = WordCountAdapter(config, ".")
+    ai = AIIntegration(enable_ai=False)
+
+    content = "中文内容" * 100  # 约 400 字
+    current = adapter._count_chinese_words(content)
+    result = asyncio.run(adapter.adapt_content(content, "测试章节", current + 10, ai_integration=ai))
+
+    assert result["action"] == "within_tolerance"
+    assert result["adapted_content"] == content
 
 
 def test_generate_report():

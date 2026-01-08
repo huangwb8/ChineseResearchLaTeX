@@ -86,6 +86,15 @@ class MappingThresholds:
 
 
 def get_mapping_thresholds(config: Dict[str, Any]) -> MappingThresholds:
+    mapping = config.get("mapping", {}) or {}
+    thresholds = (mapping.get("thresholds") or {}) if isinstance(mapping, dict) else {}
+    if isinstance(thresholds, dict) and thresholds:
+        return MappingThresholds(
+            high=float(thresholds.get("high", 0.85)),
+            medium=float(thresholds.get("medium", 0.7)),
+            low=float(thresholds.get("low", 0.5)),
+        )
+
     mh = config.get("mapping_heuristics", {}) or {}
     return MappingThresholds(
         high=float(mh.get("high_similarity_threshold", 0.85)),
@@ -97,4 +106,3 @@ def get_mapping_thresholds(config: Dict[str, Any]) -> MappingThresholds:
 def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
     runs_dir = (config.get("workspace", {}) or {}).get("runs_dir", "runs")
     return (Path(skill_root) / runs_dir).resolve()
-

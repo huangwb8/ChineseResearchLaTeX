@@ -1,6 +1,6 @@
 ---
 name: transfer-old-latex-to-new
-version: 1.0.0
+version: 1.3.0
 description: 智能迁移NSFC标书到新版模板，支持任意年份版本互迁
 author: AI Agent (Claude Code)
 tags: [latex, nsfc, migration, version-upgrade]
@@ -43,15 +43,17 @@ python skills/transfer_old_latex_to_new/scripts/run.py analyze \
 python skills/transfer_old_latex_to_new/scripts/run.py apply \
   --old /path/to/NSFC_2025 \
   --new /path/to/NSFC_2026 \
-  --run_id <上一步输出的run_id>
+  --run-id <上一步输出的run_id>
 
 # 一键编译（验证迁移结果）
 python skills/transfer_old_latex_to_new/scripts/run.py compile \
+  --run-id <run_id> \
   --new /path/to/NSFC_2026
 
 # 一键恢复（回滚到apply前状态）
 python skills/transfer_old_latex_to_new/scripts/run.py restore \
-  --run_id <run_id>
+  --run-id <run_id> \
+  --new /path/to/NSFC_2026
 ```
 
 **输出目录**: `skills/transfer_old_latex_to_new/runs/<run_id>/`
@@ -136,9 +138,9 @@ run = create_run(runs_root, run_id=args.run_id)
 
 **输出**: `analysis/structure_diff.json`
 
-**核心特性：AI 语义判断**
+**核心特性：AIIntegration + 启发式回退**
 
-不再是硬编码的相似度公式，而是让 AI 真正理解文件内容后判断映射关系：
+当前版本提供 `AIIntegration` 作为统一 AI 接口：若未接入真实 AI responder，将自动回退到启发式规则（文件名匹配/包含关系/Jaccard 相似度），保证可用性。
 
 | 判断维度 | AI 考虑因素 | 示例 |
 |----------|-------------|------|
@@ -235,10 +237,11 @@ SecurityManager.for_new_project(new_project, runs_root)
 
 | 类型 | 实现函数 | 关键逻辑 |
 |------|----------|----------|
-| **一对一** | `migrator.apply_plan` | 直接复制+资源文件扫描+完整性验证 |
-| **一对多** | `migrator._migrate_one_to_many` | AI语义拆分+过渡段生成 |
-| **多对一** | `migrator._migrate_many_to_one` | 顺序拼接+去重+过渡段 |
-| **新增内容** | `migrator._generate_new_content` | 调用写作技能（见 [config.yaml#L287-L329](config.yaml#L287-L329)） |
+| **一对一** | `migrator.apply_plan`（async） | 直接复制内容 + 资源文件处理 + 引用完整性验证 |
+| **新增章节** | `migrator.apply_plan`（async） | 写入占位符（`placeholder_new_added`） |
+| **低置信度映射** | `migration_plan.py` + `--allow-low` | 默认标记为 `needs_manual`，不自动写入 |
+| **内容优化（可选）** | `migrator.apply_plan` + `--optimize` | 迁移后对已复制文件做优化（无 AI 时不改写） |
+| **字数适配（可选）** | `migrator.apply_plan` + `--adapt-word-count` | 迁移后按目标字数扩写/精简（无 AI 时不改写） |
 
 **资源文件处理**：
 
@@ -363,7 +366,7 @@ cat runs/<run_id>/analysis/structure_diff.json
 
 ```bash
 # 一键恢复到apply前状态
-python skills/transfer_old_latex_to_new/scripts/run.py restore --run_id <run_id>
+python skills/transfer_old_latex_to_new/scripts/run.py restore --run-id <run_id> --new /path/to/NSFC_2026
 ```
 
 ---
@@ -397,7 +400,7 @@ python skills/transfer_old_latex_to_new/scripts/run.py restore --run_id <run_id>
 | **运行管理** | [core/run_manager.py](core/run_manager.py) | 创建/获取run、目录结构管理 |
 | **安全检查** | [core/security_manager.py](core/security_manager.py) | 白名单验证、路径安全检查 |
 | **项目分析** | [core/project_analyzer.py](core/project_analyzer.py) | 解析LaTeX项目结构、章节树 |
-| **映射引擎** | [core/mapping_engine.py](core/mapping_engine.py) | AI驱动结构差异分析、映射推断 |
+| **映射引擎** | [core/mapping_engine.py](core/mapping_engine.py) | AIIntegration（可选）+ 启发式结构差异分析与映射推断 |
 | **迁移计划** | [core/migration_plan.py](core/migration_plan.py) | 生成迁移计划、任务分解 |
 | **迁移执行** | [core/migrator.py](core/migrator.py) | 执行内容迁移、资源文件处理 |
 | **资源管理** | [core/resource_manager.py](core/resource_manager.py) | 资源文件扫描、复制、完整性验证 |
@@ -419,11 +422,13 @@ AI: 检测到迁移需求 → 触发本技能 → 执行完整工作流
 ### 程序化调用
 
 ```python
+import asyncio
+
 from core.migrator import apply_plan
 from core.config_loader import load_config
 
 config = load_config(skill_root)
-result = apply_plan(old_project, new_project, plan, config, security, backup_root)
+result = asyncio.run(apply_plan(old_project, new_project, plan, config, security, backup_root))
 ```
 
 ---
@@ -432,11 +437,11 @@ result = apply_plan(old_project, new_project, plan, config, security, backup_roo
 
 ## 📋 版本与变更
 
-**当前版本**: v1.2.0（与 [config.yaml](config.yaml) 同步）
+**当前版本**: v1.3.0（与 [config.yaml](config.yaml) 同步）
 
 **变更记录**: 见根级 [CHANGELOG.md](../../../CHANGELOG.md)
 
-**优化计划**: v1.3.0 优化方案见 [plans/v202601081002.md](plans/v202601081002.md)
+**优化计划**: v1.3.0 详细计划见 `plans/v202601081102.md`（仓库根级）
 
 ---
 

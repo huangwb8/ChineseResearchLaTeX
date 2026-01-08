@@ -8,7 +8,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from .config_loader import get_ai_config, get_mapping_thresholds
+from .ai_integration import AIIntegration
+from .config_loader import get_mapping_thresholds
 from .latex_utils import safe_read_text
 from .project_analyzer import ProjectAnalysis
 
@@ -189,12 +190,10 @@ async def _ai_judge_mapping(
     old_rel: str,
     new_rel: str,
     config: Dict,
+    ai_integration: AIIntegration,
 ) -> Optional[Dict[str, Any]]:
     """
     让 AI 判断两个文件是否应该映射，返回结构化结果
-
-    注意：这是一个异步函数占位符。在实际集成时，需要通过
-    Skill 工具调用 AI 模型进行判断。
     """
     # 构建上下文
     context = _build_file_context(old_analysis, new_analysis, old_rel, new_rel)
@@ -227,8 +226,38 @@ async def _ai_judge_mapping(
 - score < 0.5: 不应该映射
 """
 
-    # TODO: 这里需要实际调用 AI 模型
-    # 目前返回 None 表示使用回退策略（简单的字符串匹配）
+    def fallback() -> Optional[Dict[str, Any]]:
+        score, reason = _fallback_score_pair(old_rel, new_rel)
+        if score < 0.5:
+            return None
+        if score >= 0.85:
+            confidence = "high"
+        elif score >= 0.7:
+            confidence = "medium"
+        else:
+            confidence = "low"
+        return {
+            "should_map": True,
+            "confidence": confidence,
+            "score": float(score),
+            "reason": f"回退策略：{reason}",
+        }
+
+    result = await ai_integration.process_request(
+        task="judge_file_mapping",
+        prompt=prompt,
+        fallback=fallback,
+        output_format="json",
+    )
+
+    if isinstance(result, dict) and result.get("should_map"):
+        return {
+            "should_map": True,
+            "confidence": result.get("confidence", "medium"),
+            "score": float(result.get("score", 0.7)),
+            "reason": result.get("reason", ""),
+        }
+
     return None
 
 
@@ -266,7 +295,8 @@ async def compute_structure_diff_async(
     old_analysis: ProjectAnalysis,
     new_analysis: ProjectAnalysis,
     config: Dict,
-    ai_available: bool = True,
+    ai_integration: Optional[AIIntegration] = None,
+    ai_available: Optional[bool] = None,  # 兼容旧参数
 ) -> StructureDiff:
     """
     AI 驱动的结构差异分析（异步版本）
@@ -282,17 +312,23 @@ async def compute_structure_diff_async(
     """
     thresholds = get_mapping_thresholds(config)
 
+    if ai_integration is None:
+        if ai_available is None:
+            mapping = config.get("mapping", {}) or {}
+            ai_available = bool((mapping.get("strategy") or "fallback") == "ai_driven")
+        ai_integration = AIIntegration(enable_ai=bool(ai_available), config=config)
+
     old_candidates = [p for p in old_analysis.extra_tex_files if p != "extraTex/@config.tex"]
     new_candidates = [p for p in new_analysis.extra_tex_files if p != "extraTex/@config.tex"]
 
     scored: List[MappingCandidate] = []
 
-    # 如果 AI 可用，使用 AI 判断
-    if ai_available:
+    # 如果 AI 可用，使用 AI 判断；否则使用启发式策略
+    if ai_integration.is_available():
         for o in old_candidates:
             for n in new_candidates:
                 # 调用 AI 判断
-                ai_result = await _ai_judge_mapping(old_analysis, new_analysis, o, n, config)
+                ai_result = await _ai_judge_mapping(old_analysis, new_analysis, o, n, config, ai_integration)
 
                 if ai_result:
                     scored.append(
@@ -401,21 +437,29 @@ async def compute_structure_diff_async(
     )
 
 
-def compute_structure_diff(old_analysis: ProjectAnalysis, new_analysis: ProjectAnalysis, config: Dict) -> StructureDiff:
+def compute_structure_diff(
+    old_analysis: ProjectAnalysis,
+    new_analysis: ProjectAnalysis,
+    config: Dict,
+    ai_available: Optional[bool] = None,
+) -> StructureDiff:
     """
     结构差异分析（同步版本，兼容旧代码）
-
-    注意：这是同步版本，实际上不会调用 AI。
-    如果需要 AI 功能，请使用 compute_structure_diff_async
     """
     import asyncio
 
-    # 创建事件循环（如果不存在）
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    if ai_available is None:
+        mapping = config.get("mapping", {}) or {}
+        ai_available = bool((mapping.get("strategy") or "fallback") == "ai_driven")
 
-    # 运行异步版本（AI 不可用，使用回退策略）
-    return loop.run_until_complete(compute_structure_diff_async(old_analysis, new_analysis, config, ai_available=False))
+    ai_integration = AIIntegration(enable_ai=bool(ai_available), config=config)
+
+    try:
+        running = asyncio.get_running_loop()
+    except RuntimeError:
+        running = None
+
+    if running is not None:
+        raise RuntimeError("当前已有运行中的事件循环，请改用 compute_structure_diff_async()")
+
+    return asyncio.run(compute_structure_diff_async(old_analysis, new_analysis, config, ai_integration=ai_integration))
