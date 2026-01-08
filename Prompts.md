@@ -36,6 +36,12 @@ ai不要看这个文件，除非用户要求。
 
 ## `transfer_old_latex_to_new`
 
+- 干活
+
+```
+请基于`transfer_old_latex_to_new`这个skill把/Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026 这个旧项目迁移到/Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026_TEST01 这个文件夹里；新项目的模板是 ./projects/NSFC_Young。 注意，千万不能修改或者删除 /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026 里面的任何文件（完全只读）； 只需要在 NSFC_Young_2026_TEST01 里按要求生成内容就行。 如果你工作时有测试文件/中间文件要生成，请一律放在 ./tests/v202601081624里；测试/中间文件必须要保存在该测试目录里，不要到处“拉屎“。
+```
+
 - 测试
 
 ```
