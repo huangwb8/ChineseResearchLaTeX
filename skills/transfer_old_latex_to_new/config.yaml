@@ -13,7 +13,7 @@ migration:
 
   # 备份策略
   backup_mode: "snapshot"          # 备份模式: snapshot(快照)/copy(复制)/none(跳过)
-  backup_location: "auto"          # 备份位置: auto(../.backup/)/custom(自定义路径)
+  backup_location: "runs"          # 备份位置: runs(默认，输出到 runs/<run_id>/backup/)/custom(自定义路径)
   keep_backup_days: 30             # 自动清理备份保留天数
 
   # 迁移模式（AI自动决策，此处为默认值）
@@ -109,16 +109,22 @@ output:
 
   # 中间文件
   keep_intermediate: false         # 保留中间文件（用于调试）
-  intermediate_dir: ".migration_tmp"  # 中间文件目录
+  intermediate_dir: "intermediate"  # 中间文件目录（相对 runs/<run_id>/）
 
   # 交付物
-  deliverables_dir: ".migration_deliverables"  # 交付物目录
+  deliverables_dir: "deliverables"  # 交付物目录（相对 runs/<run_id>/）
   deliverables:
     - "migrated_proposal.pdf"      # 迁移后的PDF
     - "migration_log.md"           # 迁移日志
     - "change_summary.md"          # 变更摘要
     - "structure_comparison.md"    # 结构对比
     - "restore_guide.md"           # 恢复指南
+
+# =============================================================================
+# 工作空间（本 skill 运行目录）
+# =============================================================================
+workspace:
+  runs_dir: "runs"                 # 运行产物根目录：skills/transfer_old_latex_to_new/runs/<run_id>/
 
 # =============================================================================
 # 智能决策规则（AI自主规划逻辑）

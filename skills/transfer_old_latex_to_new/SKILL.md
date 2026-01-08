@@ -29,6 +29,7 @@ description: 智能迁移旧版NSFC标书到新版模板：分析旧新项目结
 **✅ 只修改以下内容**:
 - `extraTex/*.tex` 内容文件（**排除** `@config.tex`）
 - 新项目中的 `references/*.bib` 参考文献文件（如需更新引用格式）
+- 本技能运行产物：`skills/transfer_old_latex_to_new/runs/**`（日志、分析、计划、交付物、快照备份）
 
 **❌ 绝不修改以下内容**:
 - `main.tex` 模板结构文件（任何情况下）
@@ -38,7 +39,7 @@ description: 智能迁移旧版NSFC标书到新版模板：分析旧新项目结
 
 ### 0.2 流程约束
 
-- **迁移前必须自动备份**原项目（除非用户明确跳过）
+- **迁移前必须自动备份**新项目的目标文件（apply 前快照；默认写入 `runs/<run_id>/backup/`，除非用户明确跳过）
 - **LaTeX编译必须通过**才算迁移完成（无致命错误）
 - **内容完整性优先于格式完美**（先保证内容不丢失，再优化格式）
 
@@ -49,6 +50,27 @@ description: 智能迁移旧版NSFC标书到新版模板：分析旧新项目结
 - 引用错误必须修复（`\ref`、`\cite`）
 
 ---
+
+## 0.4) 实现状态（MVP，已落地）
+
+本技能当前提供“可执行闭环”的最小实现，核心入口脚本为：
+
+```bash
+python skills/transfer_old_latex_to_new/scripts/run.py --help
+```
+
+**已实现**：
+- `analyze`：解析旧/新项目结构，输出 `sections_map_*.json`、`structure_diff.json`、`migration_plan.json`
+- `apply`：按计划写入 `new_project/extraTex`（默认跳过低置信度任务），apply 前自动快照到 `runs/<run_id>/backup/`
+- `compile`：对新项目执行 4 步法编译（如环境具备 xelatex/bibtex），输出编译日志与摘要
+- `restore`：一键恢复新项目到 apply 前快照
+
+**交付物目录**（默认）：
+- `skills/transfer_old_latex_to_new/runs/<run_id>/deliverables/`
+
+**尚未实现（规划中）**：
+- 一对多拆分/多对一合并的 AI 增强迁移
+- 新增章节的智能生成（当前默认占位符）
 
 ## 1) 触发条件识别
 
@@ -70,7 +92,7 @@ description: 智能迁移旧版NSFC标书到新版模板：分析旧新项目结
 |------|--------|------|
 | `old_project_path` | 必填 | 旧项目根目录（绝对路径） |
 | `new_project_path` | 必填 | 新项目根目录（绝对路径） |
-| `backup_path` | 自动生成 | 备份目录（默认：`../.backup/项目名_时间戳`） |
+| `run_id` | 自动生成 | 本次运行标识（输出到 `runs/<run_id>/`，可用于复现与恢复） |
 | `max_rounds` | 5 | 最大优化轮次 |
 | `strategy` | "smart" | 迁移策略：smart（智能）/ conservative（保守）/ aggressive（激进） |
 | `content_generation` | "smart" | 新增内容生成：smart（调用技能）/ placeholder（占位）/ skip（跳过） |
@@ -116,12 +138,10 @@ detect_project_version(project_path):
 #### 0.3 创建备份
 ```python
 create_backup(old_project_path, new_project_path):
-    # 默认备份到 ../.backup/项目名_YYYYMMDD_HHMMSS/
-    # 仅备份用户可编辑的内容：
-    # - extraTex/*.tex
-    # - references/*.bib
-    # - figures/（如有）
-    # 不备份：main.tex、.cls、.sty
+    # ✅ 实现口径（MVP）：
+    # - apply 前对 new_project 的目标文件做快照
+    # - 快照输出到 skills/transfer_old_latex_to_new/runs/<run_id>/backup/
+    # - 不触碰：main.tex、extraTex/@config.tex、.cls、.sty
 ```
 
 **输出**: 备份路径、版本识别结果
@@ -134,7 +154,7 @@ create_backup(old_project_path, new_project_path):
 
 #### 1.1 旧项目结构分析
 
-**执行**: 使用 `scripts/analyze_structure.py` 或手动解析
+**执行（MVP）**: 使用 `scripts/run.py analyze` 自动解析
 
 **输出**: `sections_map_old.json`
 
@@ -278,7 +298,7 @@ create_backup(old_project_path, new_project_path):
 | **迭代轮次** | 项目规模、结构复杂度 | 规则：<br>- 简单一对一迁移：3轮<br>- 中等复杂度：5轮<br>- 高复杂度：7轮<br>- 收敛即提前退出 | `max_rounds: 5` |
 | **迁移策略** | 结构差异分析结果 | 规则：<br>- one_to_one ≥ 80%：conservative<br>- one_to_many/many_to_one ≥ 30%：smart<br>- new_added ≥ 3：smart | `strategy: "smart"` |
 | **新增内容生成** | 缺失章节、旧项目上下文 | 规则：<br>- 高优先级缺失：调用写作技能<br>- 中优先级：基于上下文生成<br>- 低优先级：占位符 | `content_generation: "smart"` |
-| **备份方式** | 项目路径、时间戳 | 规则：<br>- 自动创建快照到 `../.backup/`<br>- 跳过已存在的备份（用户可指定覆盖） | `backup_path: "../.backup/项目名_20260105_192456"` |
+| **备份方式** | 项目路径、时间戳 | 规则：<br>- apply 前自动创建快照到 `skills/transfer_old_latex_to_new/runs/<run_id>/backup/`<br>- 快照只覆盖白名单写入目标文件 | `run_id: "20260105_192456_ab12cd"` |
 | **LaTeX编译失败处理** | 错误类型、严重程度 | 规则：<br>- 缺失文件：中止并报告<br>- 语法错误：尝试自动修复<br>- 引用错误：修复后继续<br>- 超过3次失败：中止并保留日志 | `action: "attempt_fix_then_abort"` |
 
 #### 2.2 生成迁移计划
@@ -893,7 +913,9 @@ def generate_deliverables(new_project, optimization_report, validation_results):
     """
     生成完整的交付物
     """
-    deliverables_dir = Path(new_project) / '.migration_deliverables'
+    # ✅ 实现口径（MVP）：
+    # deliverables_dir = skills/transfer_old_latex_to_new/runs/<run_id>/deliverables/
+    deliverables_dir = Path(".../runs/<run_id>/deliverables")
     deliverables_dir.mkdir(exist_ok=True)
 
     # 1. PDF输出

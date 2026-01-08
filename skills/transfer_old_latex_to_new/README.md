@@ -1,8 +1,8 @@
 # LaTeX 标书智能迁移器 - 用户指南
 
 **技能名称**: `transfer-old-latex-to-new`
-**版本**: v1.0
-**最后更新**: 2026-01-05
+**版本**: v1.1
+**最后更新**: 2026-01-08
 **开发者**: AI Agent (Claude Code)
 
 ---
@@ -28,12 +28,11 @@
 
 ### 核心特性
 
-✅ **全自动**: 只需提供旧新项目路径，AI 自动完成所有迁移工作
-✅ **智能规划**: 自主决策迁移策略，无需人工干预
-✅ **内容完整**: 保证 100% 内容迁移，无遗漏
-✅ **多轮优化**: 最多 5 轮迭代优化，提升迁移质量
-✅ **编译验证**: 确保 LaTeX 编译通过
-✅ **可逆操作**: 自动备份，支持恢复
+✅ **可执行闭环（MVP）**：结构分析 → 生成迁移计划 → 写入新模板 →（可选）编译验证 → 交付物  
+✅ **硬编码兜底**：受保护文件不允许写入（`main.tex`、`extraTex/@config.tex`、`.cls/.sty`）  
+✅ **可逆操作**：apply 前自动快照，支持一键恢复  
+✅ **内容不丢失**：无法自动映射的旧章节会导出到交付物，便于人工迁移  
+⚠️ **AI 增强（规划中）**：一对多拆分/多对一合并/新增章节生成将在后续版本补齐（当前默认使用占位符）
 
 ### 适用范围
 
@@ -47,65 +46,23 @@
 
 ### 最简用法（默认配置）
 
+```bash
+# 1) 结构分析 + 生成迁移计划（不写入新项目）
+python skills/transfer_old_latex_to_new/scripts/run.py analyze --old /path/to/old_project --new /path/to/new_project
+
+# 输出会打印 run_id，例如：run_id=20260108_084300_ab12cd
+
+# 2) 应用迁移（写入 new_project/extraTex，apply 前自动快照）
+python skills/transfer_old_latex_to_new/scripts/run.py apply --run-id <run_id> --old /path/to/old_project --new /path/to/new_project
+
+# 3)（可选）编译验证（4 步法：xelatex→bibtex→xelatex→xelatex）
+python skills/transfer_old_latex_to_new/scripts/run.py compile --run-id <run_id> --new /path/to/new_project
+
+# 4)（可选）一键恢复（恢复到 apply 前快照）
+python skills/transfer_old_latex_to_new/scripts/run.py restore --run-id <run_id> --new /path/to/new_project
 ```
-用户: 帮我把去年的标书迁移到今年的新模板
 
-AI: 好的，我将启动智能迁移流程。
-
-请提供以下信息：
-1. 旧项目路径（去年标书的位置）
-2. 新项目路径（今年模板的位置）
-
-用户:
-1. /Users/xxx/NSFC_2025
-2. /Users/xxx/NSFC_2026
-
-AI: 收到。开始迁移...
-
-[Phase 0] 准备阶段...
-✓ 路径验证通过
-✓ 版本识别: 2025 → 2026
-✓ 备份已创建: ../.backup/NSFC_2025_20260105_192456
-
-[Phase 1] 结构分析...
-✓ 旧项目结构已解析
-✓ 新项目结构已解析
-✓ 差异分析完成
-
-[Phase 2] 智能规划...
-✓ 迁移策略: smart（智能模式）
-✓ 迁移计划已生成（23个任务）
-
-[Phase 3] 内容迁移...
-✓ 一对一迁移: 9个章节
-✓ 一对多迁移: 1个章节（研究方案 → 研究方案 + 可行性分析）
-✓ 新增内容: 4个章节（风险应对等）
-
-[Phase 4] 迭代优化（5轮）...
-✓ 第1轮: 逻辑连贯性检查 → 发现3个问题 → 已修复
-✓ 第2轮: 术语一致性检查 → 发现5个问题 → 已修复
-✓ 第3轮: 内容深度优化 → 已补充2处证据
-✓ 第4轮: LaTeX编译验证 → 无错误
-✓ 第5轮: 最终润色 → 完成
-
-[Phase 5] 最终验证...
-✓ LaTeX编译通过
-✓ 所有章节非空
-✓ 引用完整性验证通过
-✓ 质量评分: 92/100
-
-✅ 迁移完成！
-
-交付物已生成到: /Users/xxx/NSFC_2026/.migration_deliverables/
-- migrated_proposal.pdf（迁移后的标书PDF）
-- migration_log.md（详细迁移日志）
-- change_summary.md（变更摘要）
-- structure_comparison.md（结构对比）
-- restore_guide.md（恢复指南）
-
-备份位置: ../.backup/NSFC_2025_20260105_192456
-如需恢复，请参考恢复指南。
-```
+**交付物位置**：`skills/transfer_old_latex_to_new/runs/<run_id>/deliverables/`
 
 ---
 
@@ -322,19 +279,16 @@ quality_thresholds:
 
 ### Q2: 迁移会丢失内容吗？
 
-**答**: **不会**。技能保证：
-- 内容完整性 ≥ 95%（旧内容100%迁移）
-- 所有旧章节内容都有对应位置
-- 如无法自动映射，会生成占位符并标记
+**答**: 旧项目内容不会被删除；新模板侧的自动迁移以“确定性映射”为主。对于无法可靠映射的旧章节，本技能会将其导出到交付物 `unmapped_old_content.md`，用于后续人工迁移，避免科学内容丢失。
 
 ---
 
 ### Q3: 如果迁移结果不满意怎么办？
 
 **答**: 提供了两种方案：
-1. **自动恢复**: 使用备份恢复原项目
+1. **自动恢复**: 使用 apply 前快照恢复新项目
    ```bash
-   # 参考 .migration_deliverables/restore_guide.md
+   python skills/transfer_old_latex_to_new/scripts/run.py restore --run-id <run_id> --new /path/to/new_project
    ```
 2. **继续优化**: 增加优化轮次
    ```
@@ -346,20 +300,13 @@ quality_thresholds:
 
 ### Q4: 新增的"研究风险应对"章节怎么生成？
 
-**答**: 技能会自动：
-1. 从"可行性分析"中提取风险点
-2. 调用 `nsfc-methods-feasibility-writer` 技能
-3. 生成符合NSFC规范的风险应对内容
+**答**: 当前版本默认写入占位符（可在 `config.yaml` 中配置占位符文本）。AI 增强生成（含风险应对）在规划中。
 
 ---
 
 ### Q5: LaTeX编译失败怎么办？
 
-**答**: 技能会自动：
-1. 识别错误类型
-2. 尝试自动修复（如更新引用）
-3. 如果无法修复，会详细报告错误
-4. 生成错误日志供人工修复参考
+**答**: 当前版本会执行编译并输出日志摘要（`compile_summary.json` + 编译 stdout/stderr）。自动修复与多轮编译修复策略在规划中。
 
 ---
 
@@ -511,7 +458,7 @@ quality_thresholds:
 
 - **文档**: 见 `references/` 目录
 - **配置**: 见 `config.yaml`
-- **日志**: 见 `.migration_deliverables/migration_log.md`
+- **日志/交付物**: 见 `skills/transfer_old_latex_to_new/runs/<run_id>/`
 
 ---
 
@@ -525,10 +472,15 @@ quality_thresholds:
 - ✅ 5轮迭代优化机制
 - ✅ 完整的交付物生成
 
+### v1.1 (2026-01-08)
+- ✅ 落地可执行闭环（`analyze/apply/compile/restore`）
+- ✅ 运行产物集中到 `runs/<run_id>/`，避免污染用户项目目录
+- ✅ apply 前快照备份 + 一键恢复
+
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2026-01-05
+**文档版本**: v1.1
+**最后更新**: 2026-01-08
 **维护者**: AI Agent (Claude Code)
 
-**祝你标书迁移顺利！🎉**
+**祝你标书迁移顺利！**
