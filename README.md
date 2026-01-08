@@ -88,6 +88,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | 工具 | 推荐模型 | 适用场景 |
 |------|----------|----------|
 | **Codex CLI** | GPT-5.2 High | **首选**：复杂任务、长上下文、高质量输出（速度较慢） |
+| **Codex CLI** | GPT-5.2 Medium | 轻至中量调整、格式修复（指令遵循不错、全局把控力好） |
 | **Claude Code** | Claude 4.5 Opus | 复杂任务、高质量输出（比较昂贵） |
 | **Claude Code** | GLM-4.7 | 轻量调整、格式修复、快速迭代 |
 
@@ -97,6 +98,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 - **稳定高质量**：推荐使用 [我的专属邀请链接](https://x.dogenet.win/i/kUOGvGyo) 获取稳定、高质量的 API 服务。如果您累计充值满4美元（约 20 元人民币）后填写邀请码，我们均可获得 20 美元 ClaudeCode 专用抵扣额度。此额度仅能通过[指定活动端点](https://apic1.ohmycdn.com/api/v1/ai/openai/cc-omg)使用，额度有效期为 60 天。
 - **性价比之选**：可考虑 [DMXAPI](https://www.dmxapi.cn/register?aff=HIeH)，这家 API 价格相对便宜，适合预算有限的用户。
+- **Codex 平价拼车**：可考虑 Packycode 的 Codex 站 [codex.packycode.com](https://codex.packycode.com)（日/周/月限额度）。登录/服务相对原始，偏 Team 账号拼车；实测使用 1 个多月整体较稳，个人开发基本够用。价格优势明显；发票需联系站长办理（相对麻烦），但支持对公报销是巨大优势。
 
 ---
 
