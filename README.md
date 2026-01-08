@@ -59,6 +59,13 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ---
 
+## 🔗 镜像站
+
+- **GitHub 源站**：[huangwb8/ChineseResearchLaTeX](https://github.com/huangwb8/ChineseResearchLaTeX)
+- **Gitee 镜像**：[huangwb8/ChineseResearchLaTeX](https://gitee.com/huangwb8/ChineseResearchLaTeX)（方便中国大陆访问）
+
+---
+
 ## 🚀 使用
 
 ### 环境要求
@@ -105,12 +112,6 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 
 > 📖 **详细使用说明和 Prompt 模板**：请查阅 [skills/README.md](skills/README.md)
-
-## 🔗 镜像站
-
-- **GitHub 源站**：[huangwb8/ChineseResearchLaTeX](https://github.com/huangwb8/ChineseResearchLaTeX)
-- **Gitee 镜像**：[huangwb8/ChineseResearchLaTeX](https://gitee.com/huangwb8/ChineseResearchLaTeX)（方便中国大陆访问）
-
 
 ---
 
