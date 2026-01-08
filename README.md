@@ -92,7 +92,7 @@
 | 技能 | 功能 | 状态 |
 |------|------|------|
 | [make_latex_model](skills/make_latex_model/) | 基于 Word 模板高保真优化 LaTeX 样式 | ✅ 稳定 |
-| [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | 将旧标书内容迁移到新模板 | ✅ 稳定 |
+| [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | 将旧标书内容迁移到新模板 | 🚧 Beta（开发中） |
 | [complete_example](skills/complete_example/) | 智能示例生成和补全 | ✅ 稳定 |
 
 ### 1. make_latex_model - 样式对齐优化
@@ -109,6 +109,8 @@
 
 ### 2. transfer_old_latex_to_new - 标书智能迁移
 
+> **⚠️ 开发中警告**：该技能目前处于 Beta 开发阶段，功能尚未完全稳定，**暂不建议正式使用**。欢迎试用并提供反馈！
+>
 > **场景**：旧版本标书迁移到新模板（结构变化大的情况）
 
 ```
