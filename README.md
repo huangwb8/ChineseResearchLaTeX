@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo/logo.png" alt="项目 Logo" width="120"/>
+<img src="logo/logo.png" alt="项目 Logo" width="200"/>
 
 # 中国科研常用 LaTeX 模板集
 
