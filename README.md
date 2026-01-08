@@ -42,7 +42,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## ⚠️ 免责和安全性声明
 
-📄 **完整声明请查阅**：[logo/SECURITY.md](logo/SECURITY.md)
+> 使用本项目前，**务必仔细阅读** [logo/SECURITY.md](logo/SECURITY.md) **完整声明文档**。请在充分了解相关风险的情况下使用本项目。
 
 ---
 
@@ -69,9 +69,14 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 ### 推荐软件平台
 
 - **VS Code + LaTeX Workshop**：本地开发的最佳选择，充分发挥 Vibe Coding 工具的超强能力
-- **Claude Code / OpenAI Codex CLI**：AI 辅助写作，与本项目的 AI 技能完美配合
+- **Claude Code / OpenAI Codex CLI**（VS Code 插件）：**最佳选择**，AI 辅助写作，与本项目的 AI 技能完美配合。VS Code 扩展市场搜索"Claude Code"或"OpenAI Codex"即可安装
+- **Office Viewer**（VS Code 插件）：推荐安装，提供 Markdown 和 Word 文档的实时预览功能，提升文档编辑体验
 
-#### AI 模型配置建议
+> 💡 **说明**：由于在本地使用 Vibe Coding 的体验很好，因此**不推荐**在 Overleaf 等在线平台使用本模板。但本项目**会持续支持 Overleaf 平台**，用户可自由选择使用方式。
+
+---
+
+### AI 模型配置建议
 
 | 工具 | 推荐模型 | 适用场景 |
 |------|----------|----------|
@@ -99,23 +104,6 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 - **GitHub 源站**：[huangwb8/ChineseResearchLaTeX](https://github.com/huangwb8/ChineseResearchLaTeX)
 - **Gitee 镜像**：[huangwb8/ChineseResearchLaTeX](https://gitee.com/huangwb8/ChineseResearchLaTeX)（方便中国大陆访问）
-
----
-
-## 📚 相关资源
-
-### 指南与教程
-
-- [LaTeX 写作指南](references/latex-writing-guide.md)：科研论文写作最佳实践
-- [博客文章](https://blognas.hwb0307.com/skill/5762)：国家自然科学基金 LaTeX 模板详解
-
-### 相关仓库
-
-- [Ruzim/NSFC-application-template-latex](https://github.com/Ruzim/NSFC-application-template-latex)
-- [Readon/NSFC-application-template-latex](https://github.com/Readon/NSFC-application-template-latex)
-- [MCG-NKU/NSFC-LaTex](https://github.com/MCG-NKU/NSFC-LaTex)
-- [fylimas/nsfc](https://github.com/fylimas/nsfc)：活跃更新的国自然模板
-- [YimianDai/iNSFC](https://github.com/YimianDai/iNSFC)：MacTeX 和 Overleaf 通用模板
 
 ---
 
@@ -156,11 +144,23 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ---
 
-## 📖 推荐阅读
+## 📚 相关资源
 
-> 💡 深入了解 AI 辅助编程和 Vibe Coding 理念，推荐阅读我的博客文章（如果您是初次接触，建议按顺序阅读以循序渐进地了解 Vibe Coding 生态）：
+### 指南与教程
 
-- [Vibe Coding CLI 评测：Claude Code vs. OpenAI Codex vs. Gemini CLI](https://blognas.hwb0307.com/other/6923) - 全面对比三大 CLI AI 编程助手（2026-01-06）
+> 💡 **提示**：深入了解 AI 辅助编程和 Vibe Coding 理念，推荐阅读上述博客文章（如果您是初次接触，建议按顺序阅读以循序渐进地了解 Vibe Coding 生态）
+
+- [LaTeX 写作指南](references/latex-writing-guide.md)：科研论文写作最佳实践
+- [博客文章](https://blognas.hwb0307.com/skill/5762) ：国家自然科学基金 LaTeX 模板详解
+- [Vibe Coding CLI 评测：Claude Code vs. OpenAI Codex vs.Gemini CLI](https://blognas.hwb0307.com/other/6923) - 全面对比三大 CLI AI 编程助手（2026-01-06）
 - [AI 模型评测：性价比超绝的 GLM-4.7](https://blognas.hwb0307.com/ai/6914) - 智谱 AI 开源模型的编码能力与推理性能分析（2026-01-05）
 - [Claude Code 和 Claude Skills 的工程设计](https://blognas.hwb0307.com/skill/6689) - 深入探讨 Skills 本质与系统化开发流程（2026-01-03）
 - [AI 应用系列：一个简单的 Vibe Coding 通知系统](https://blognas.hwb0307.com/ai/6659) - VibeNotification 项目实战经验（2025-12-21）
+
+### 相关仓库
+
+- [Ruzim/NSFC-application-template-latex](https://github.com/Ruzim/NSFC-application-template-latex)
+- [Readon/NSFC-application-template-latex](https://github.com/Readon/NSFC-application-template-latex)
+- [MCG-NKU/NSFC-LaTex](https://github.com/MCG-NKU/NSFC-LaTex)
+- [fylimas/nsfc](https://github.com/fylimas/nsfc)：活跃更新的国自然模板
+- [YimianDai/iNSFC](https://github.com/YimianDai/iNSFC)：MacTeX 和 Overleaf 通用模板
