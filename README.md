@@ -127,7 +127,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## 👨‍💻 维护者
 
-[@huangwb8](https://blognas.hwb0307/lyb)
+[@huangwb8](https://blognas.hwb0307.com/lyb)
 
 ---
 
