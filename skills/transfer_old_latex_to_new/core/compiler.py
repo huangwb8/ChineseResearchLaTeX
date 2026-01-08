@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -49,6 +50,7 @@ def _run(cmd: List[str], cwd: Path, stdout_path: Path, stderr_path: Path, timeou
         stderr=stderr_path.open("w", encoding="utf-8"),
         timeout=timeout_s,
         check=False,
+        env=os.environ.copy(),
         text=True,
     )
     return int(p.returncode)
@@ -90,7 +92,27 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
         stderr_path = logs_dir / f"compile_{idx}_{step}.err.txt"
 
         try:
-            rc = _run(cmd, cwd=run_cwd, stdout_path=stdout_path, stderr_path=stderr_path, timeout_s=timeout)
+            # bibtex 在 latex_aux_dir 运行时，.aux 内的 bst/bib 路径通常是相对 new_project 的；
+            # 通过 BSTINPUTS/BIBINPUTS 将 new_project 加入搜索路径，避免 “I couldn't open style/database file”。
+            if step == "bibtex":
+                env = os.environ.copy()
+                for key in ("BSTINPUTS", "BIBINPUTS"):
+                    existing = env.get(key, "")
+                    prefix = str(new_project) + os.pathsep
+                    env[key] = prefix + existing
+                rc = subprocess.run(
+                    cmd,
+                    cwd=str(run_cwd),
+                    stdout=stdout_path.open("w", encoding="utf-8"),
+                    stderr=stderr_path.open("w", encoding="utf-8"),
+                    timeout=timeout,
+                    check=False,
+                    text=True,
+                    env=env,
+                ).returncode
+                rc = int(rc)
+            else:
+                rc = _run(cmd, cwd=run_cwd, stdout_path=stdout_path, stderr_path=stderr_path, timeout_s=timeout)
         except FileNotFoundError:
             # 缺少 xelatex/bibtex 等环境时，输出可读错误
             stdout_path.write_text("", encoding="utf-8")
@@ -110,8 +132,8 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
             )
         )
 
-        if rc != 0 and step != "bibtex":
-            # 非 bibtex 步骤失败通常不可恢复
+        if rc != 0:
+            # 任一阶段失败通常不可恢复
             break
 
     # 简易汇总：读取 main.log（若存在）统计未定义引用等
@@ -129,7 +151,7 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
         import shutil
         shutil.copy2(pdf_source, pdf_target)
 
-    success = steps and all(s.returncode == 0 for s in steps if s.command[0] != "bibtex") and error_count == 0
+    success = steps and all(s.returncode == 0 for s in steps) and error_count == 0
 
     return CompileSummary(
         success=bool(success),
@@ -138,4 +160,3 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
         undefined_ref_count=undef_ref,
         undefined_cite_count=undef_cite,
     )
-

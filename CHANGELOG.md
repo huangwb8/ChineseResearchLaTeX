@@ -37,6 +37,8 @@
 
 ### Added（新增）
 
+- 新增迁移验证记录：`tests/v202601081624/TEST_REPORT.md`
+
 - 新增 `transfer_old_latex_to_new` v1.3.0 详细改进计划：`plans/v202601081102.md`
   - **核心修复**：移除所有 AI 功能占位符，实现真实的 AI 集成
   - **AI 集成层**：创建 `core/ai_integration.py`，利用 Claude Code/Codex 当前环境（无需额外配置）
@@ -92,6 +94,10 @@
       - 其他文件：`\import{path}{file}`
 
 ### Fixed（修复）
+
+- **transfer_old_latex_to_new** - 修复 `compile_project()` 在 `-output-directory` 隔离中间文件时，`bibtex` 因工作目录切换导致无法定位 `.bst/.bib` 的问题
+  - 在 `bibtex` 步骤注入 `BSTINPUTS/BIBINPUTS` 搜索路径（指向项目根目录），确保可读取 `bibtex-style/` 与 `references/`
+  - 编译成功判定纳入 `bibtex` 返回码，避免“引用未生成但仍显示成功”
 
 - **transfer_old_latex_to_new** - 修复 `ReferenceGuardian.restore_references()` 在 Python 3.12 下替换 `\\ref/\\cite` 等内容时触发 `re.error: bad escape` 的问题
   - **增强迁移流程**（`core/migrator.py`）：

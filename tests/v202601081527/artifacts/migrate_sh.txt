@@ -1,9 +1,0 @@
-==> analyze
-run_id=20260108_160458_739741
-analysis_dir=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081527/runs/20260108_160458_739741/analysis
-plan_file=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081527/runs/20260108_160458_739741/plan/migration_plan.json
-==> apply (run_id=20260108_160458_739741)
-  迁移内容文件完成 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00 0:00:00
-run_id=20260108_160458_739741
-apply_result=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081527/runs/20260108_160458_739741/logs/apply_result.json
-✅ 完成：run_id=20260108_160458_739741

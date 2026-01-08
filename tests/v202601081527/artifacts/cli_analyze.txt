@@ -1,3 +1,0 @@
-run_id=20260108_160458_0bdcad
-analysis_dir=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081527/runs/20260108_160458_0bdcad/analysis
-plan_file=/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081527/runs/20260108_160458_0bdcad/plan/migration_plan.json
