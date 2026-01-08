@@ -4,9 +4,7 @@
 
 ## 项目目标
 
-整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等。一般建议使用最新的[Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
-
-本工作区的核心目标是 整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等。一般建议使用最新的[Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。。
+整理中国科研常用的 LaTeX 模板（国自然科学基金正文模板、毕业论文等），维护可直接使用的项目结构与说明文档；一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
 
 ## 核心工作流
 
@@ -55,7 +53,7 @@
 
 ## 联网与搜索
 
-默认优先使用项目内文件与本地上下文；确需联网获取信息时，优先使用本地 SearXNG（如已通过 MCP 配置）。仅当 SearXNG 不足以满足需求时再使用其它联网手段，并说明原因与保留关键链接。
+默认优先使用项目内文件与本地上下文；确需联网获取信息时，优先使用可复现的搜索来源（如本地搜索工具或 SearXNG）；仅当仍不足时再使用其它联网手段，并说明原因与保留关键链接。
 
 ## 目录结构
 
@@ -152,6 +150,8 @@ xelatex → bibtex → xelatex → xelatex
 - 仅修改与当前任务直接相关的文件
 - 不主动添加用户未要求的功能
 - 保持现有代码风格和结构
+- 不自动清理/删除 `.DS_Store`（通常由 Git 全局忽略或 `.gitignore` 管理；除非用户明确要求，否则不做清理类变更）
+- `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致；优先在 `AGENTS.md` 修改后同步到 `CLAUDE.md`
 
 ## 变更记录规范
 
@@ -218,5 +218,4 @@ xelatex → bibtex → xelatex → xelatex
 
 ---
 
-**提示**：修改本文档后，请同步更新 `CHANGELOG.md` 记录变更历史。
-
+**提示**：修改本文档后，请同步更新 `CHANGELOG.md` 记录变更历史，并确保 `CLAUDE.md` 与 `AGENTS.md` 的核心内容保持一致。
