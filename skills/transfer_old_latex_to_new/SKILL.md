@@ -235,12 +235,35 @@ SecurityManager.for_new_project(new_project, runs_root)
 
 | 类型 | 实现函数 | 关键逻辑 |
 |------|----------|----------|
-| **一对一** | `migrator._migrate_one_to_one` | 直接复制+语法检查+引用更新 |
+| **一对一** | `migrator.apply_plan` | 直接复制+资源文件扫描+完整性验证 |
 | **一对多** | `migrator._migrate_one_to_many` | AI语义拆分+过渡段生成 |
 | **多对一** | `migrator._migrate_many_to_one` | 顺序拼接+去重+过渡段 |
 | **新增内容** | `migrator._generate_new_content` | 调用写作技能（见 [config.yaml#L287-L329](config.yaml#L287-L329)） |
 
-**配置参考**: [config.yaml#L20-L28](config.yaml#L20-L28) - `migration.strategy` / `content_generation`
+**资源文件处理**：
+
+迁移过程**自动处理资源文件**（图片、代码等），保证引用完整性：
+
+```python
+# 1. 扫描旧项目资源文件
+scan_result = scan_project_resources(old_project, migrated_tex_files)
+# → 识别 \includegraphics, \lstinputlisting 等引用的资源
+
+# 2. 复制资源文件到新项目
+copy_result = copy_resources(old_project, new_project, scan_result.resources)
+# → 只复制新项目中不存在的资源（避免覆盖）
+
+# 3. 验证引用完整性
+validation_result = validate_resource_integrity(new_project, scan_result.resources)
+# → 检查所有资源是否在新项目中存在
+```
+
+**支持资源类型**：
+- 图片：`\includegraphics{figures/fig1.pdf}`
+- 代码：`\lstinputlisting{code/algo.py}`
+- 其他文件：`\import{path}{file}`
+
+**配置参考**: [config.yaml#L30-L35](config.yaml#L30-L35) - `migration.figure_handling`
 
 ---
 
@@ -347,13 +370,13 @@ python skills/transfer_old_latex_to_new/scripts/run.py restore --run_id <run_id>
 
 ## 扩展开发
 
-### 新增迁移策略
+### 自定义迁移策略
 
 1. 更新 [config.yaml#L145-L156](config.yaml#L145-L156) - `decision_rules.strategy_decision`
 2. 在 [core/mapping_engine.py](core/mapping_engine.py) 实现映射逻辑
 3. 在 [core/migrator.py](core/migrator.py) 实现迁移逻辑
 
-### 新增写作技能集成
+### 集成写作技能
 
 1. 更新 [config.yaml#L287-L329](config.yaml#L287-L329) - `skill_integration.available_skills`
 2. 在 [core/migrator.py:_generate_new_content](core/migrator.py) 调用新技能
@@ -374,20 +397,13 @@ python skills/transfer_old_latex_to_new/scripts/run.py restore --run_id <run_id>
 | **运行管理** | [core/run_manager.py](core/run_manager.py) | 创建/获取run、目录结构管理 |
 | **安全检查** | [core/security_manager.py](core/security_manager.py) | 白名单验证、路径安全检查 |
 | **项目分析** | [core/project_analyzer.py](core/project_analyzer.py) | 解析LaTeX项目结构、章节树 |
-| **映射引擎** | [core/mapping_engine.py](core/mapping_engine.py) | 计算结构差异、推断映射关系 |
+| **映射引擎** | [core/mapping_engine.py](core/mapping_engine.py) | AI驱动结构差异分析、映射推断 |
 | **迁移计划** | [core/migration_plan.py](core/migration_plan.py) | 生成迁移计划、任务分解 |
-| **迁移执行** | [core/migrator.py](core/migrator.py) | 执行内容迁移、引用修复 |
+| **迁移执行** | [core/migrator.py](core/migrator.py) | 执行内容迁移、资源文件处理 |
+| **资源管理** | [core/resource_manager.py](core/resource_manager.py) | 资源文件扫描、复制、完整性验证 |
 | **LaTeX编译** | [core/compiler.py](core/compiler.py) | 4步法编译、错误提取 |
 | **快照管理** | [core/snapshot.py](core/snapshot.py) | 项目快照、恢复 |
 | **报告生成** | [core/reports.py](core/reports.py) | 生成交付物Markdown/JSON |
-
----
-
-## 版本与变更
-
-**当前版本**: v1.1.0（与 [config.yaml#metadata](config.yaml#L368-L374) 同步）
-
-**变更历史**: 记录于根级 [CHANGELOG.md](../../../CHANGELOG.md)
 
 ---
 

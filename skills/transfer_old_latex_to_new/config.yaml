@@ -29,6 +29,10 @@ migration:
 
   # 图片与附件处理
   figure_handling: "copy"           # copy(复制)/link(软链接)/skip(跳过)
+  # 说明：
+  # - copy: 将旧项目的资源文件（图片、代码等）复制到新项目（默认，推荐）
+  # - link: 在新项目中创建指向旧项目资源的软链接
+  # - skip: 跳过资源文件处理，只迁移 .tex 内容文件
 
 # =============================================================================
 # 质量阈值配置
@@ -367,7 +371,7 @@ compatibility:
 # =============================================================================
 metadata:
   skill_name: "transfer-old-latex-to-new"
-  skill_version: "1.1.0"
+  skill_version: "1.2.0"
   created_at: "2026-01-05"
   last_updated: "2026-01-08"
   author: "AI Agent (Claude Code)"

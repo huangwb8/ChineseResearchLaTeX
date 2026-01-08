@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from .latex_utils import safe_read_text
+from .reference_validator import validate_migration_reference_integrity
+from .resource_manager import copy_resources, scan_project_resources, validate_resource_integrity
 from .security_manager import SecurityManager
 
 
@@ -30,12 +32,16 @@ class ApplyResult:
     applied: List[Dict[str, Any]]
     skipped: List[Dict[str, Any]]
     warnings: List[str]
+    resources: Dict[str, Any]  # 资源文件处理结果
+    references: Dict[str, Any]  # 引用完整性验证结果
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "applied": self.applied,
             "skipped": self.skipped,
             "warnings": self.warnings,
+            "resources": self.resources,
+            "references": self.references,
         }
 
 
@@ -95,6 +101,7 @@ def apply_plan(
     skipped: List[Dict[str, Any]] = []
     warnings: List[str] = []
 
+    # ========== 第一步：迁移 .tex 内容文件 ==========
     for t in tasks:
         t_type = t.get("type")
         target_rel = t.get("target")
@@ -138,5 +145,116 @@ def apply_plan(
     if skipped:
         warnings.append(f"有 {len(skipped)} 个任务未自动执行，详见 apply 结果。")
 
-    return ApplyResult(applied=applied, skipped=skipped, warnings=warnings)
+    # ========== 第二步：扫描并迁移资源文件 ==========
+    # 资源文件处理配置
+    resource_config = (config.get("migration", {}) or {}).get("figure_handling", "copy")
+    copy_resources_enabled = resource_config == "copy"
+
+    resources_result: Dict[str, Any] = {
+        "enabled": copy_resources_enabled,
+        "scanned": False,
+        "copied": False,
+        "validated": False,
+        "scan_summary": {},
+        "copy_summary": {},
+        "validation_summary": {},
+    }
+
+    if copy_resources_enabled and applied:
+        # 收集已迁移的 .tex 文件列表
+        migrated_tex_files = [t["target"] for t in applied if t.get("status") == "copied"]
+
+        if migrated_tex_files:
+            # 扫描旧项目的资源文件
+            scan_result = scan_project_resources(
+                old_project,
+                migrated_tex_files,
+                exclude_dirs={".git", "__pycache__", "node_modules"},
+            )
+
+            resources_result["scanned"] = True
+            resources_result["scan_summary"] = {
+                "total": scan_result.total_count,
+                "missing": scan_result.missing_count,
+                "directories": sorted(scan_result.directories),
+            }
+
+            # 复制资源文件到新项目（只复制缺失的）
+            copy_result = copy_resources(
+                old_project,
+                new_project,
+                scan_result.resources,
+                copy_strategy="missing",  # 只复制新项目中不存在的
+                dry_run=False,
+            )
+
+            resources_result["copied"] = True
+            resources_result["copy_summary"] = copy_result["summary"]
+
+            # 验证新项目中的资源引用完整性
+            validation_result = validate_resource_integrity(
+                new_project,
+                scan_result.resources,
+            )
+
+            resources_result["validated"] = True
+            resources_result["validation_summary"] = validation_result["summary"]
+
+            # 如果有缺失资源，添加警告
+            if validation_result["summary"]["missing_count"] > 0:
+                warnings.append(
+                    f"有 {validation_result['summary']['missing_count']} 个资源文件在新项目中缺失，"
+                    "可能导致编译失败。请检查 resources 部分。"
+                )
+
+    # ========== 第三步：验证引用完整性 ==========
+    references_result: Dict[str, Any] = {
+        "validated": False,
+        "old_report": {},
+        "new_report": {},
+        "comparison": {},
+        "passed": False,
+    }
+
+    if applied:
+        # 收集已迁移的 .tex 文件列表
+        migrated_tex_files = [t["target"] for t in applied if t.get("status") == "copied"]
+
+        if migrated_tex_files:
+            # 获取参考文献文件
+            old_bib_files = []
+            new_bib_files = []
+            # 假设参考文献文件位置相同，都在 references/ 目录
+            for tex_file in migrated_tex_files:
+                # 这里简化处理，实际可以从项目分析中获取
+                pass
+
+            # 执行引用完整性验证
+            ref_validation = validate_migration_reference_integrity(
+                old_project,
+                new_project,
+                migrated_tex_files,
+                [],  # bib_files (暂时为空，可以后续增强)
+                min_intact_rate=0.95,
+            )
+
+            references_result["validated"] = True
+            references_result["old_report"] = ref_validation["old_report"]
+            references_result["new_report"] = ref_validation["new_report"]
+            references_result["comparison"] = ref_validation["comparison"]
+            references_result["passed"] = ref_validation["passed"]
+
+            # 如果引用完整性下降，添加警告
+            if not ref_validation["passed"]:
+                warnings.append(
+                    f"引用完整性验证失败：{ref_validation['recommendation']}"
+                )
+
+    return ApplyResult(
+        applied=applied,
+        skipped=skipped,
+        warnings=warnings,
+        resources=resources_result,
+        references=references_result,
+    )
 

@@ -9,6 +9,9 @@ from typing import Iterable, List, Set, Tuple
 
 
 INPUT_RE = re.compile(r"\\(input|include)\{([^}]+)\}")
+GRAPHICS_RE = re.compile(r"\\(includegraphics|epsfig)(?:\[[^\]]*\])?\{([^}]+)\}")
+LSTINPUTLISTING_RE = re.compile(r"\\lstinputlisting(?:\[[^\]]*\])?\{([^}]+)\}")
+IMPORT_RE = re.compile(r"\\(import|includefrom)\*?(?:\{[^}]+\})?\{([^}]+)\}")
 
 
 def strip_comments(tex: str) -> str:
@@ -67,6 +70,44 @@ def extract_cites(tex: str) -> Set[str]:
             if k:
                 keys.add(k)
     return keys
+
+
+def extract_graphics(tex: str) -> Set[str]:
+    """
+    提取图片引用路径
+    支持: \includegraphics[options]{path}, \epsfig[options]{file=path}
+    """
+    tex = strip_comments(tex)
+    return set(m.group(2).strip() for m in GRAPHICS_RE.finditer(tex))
+
+
+def extract_lstinputlisting(tex: str) -> Set[str]:
+    """
+    提取代码文件引用路径
+    支持: \lstinputlisting[options]{path}
+    """
+    tex = strip_comments(tex)
+    return set(m.group(1).strip() for m in LSTINPUTLISTING_RE.finditer(tex))
+
+
+def extract_imports(tex: str) -> Set[str]:
+    """
+    提取 LaTeX import 路径
+    支持: \import{path}{file}, \includefrom{path}{file}
+    """
+    tex = strip_comments(tex)
+    return set(m.group(2).strip() for m in IMPORT_RE.finditer(tex))
+
+
+def extract_all_resource_paths(tex: str) -> Set[str]:
+    """
+    提取所有外部资源文件路径（图片、代码、其他文件）
+    """
+    resources: Set[str] = set()
+    resources.update(extract_graphics(tex))
+    resources.update(extract_lstinputlisting(tex))
+    resources.update(extract_imports(tex))
+    return resources
 
 
 def strip_commands_for_summary(tex: str, max_chars: int = 240) -> str:

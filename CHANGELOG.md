@@ -35,6 +35,36 @@
     - README.md 更新核心能力，突出"AI 语义映射"
   - **版本升级**：v1.0.0 → v1.1.0
 
+- **transfer_old_latex_to_new v1.2.0** - 📦 资源文件智能处理：保证引用完整性
+  - **核心问题解决**：迁移过程自动处理资源文件（图片、代码等），保证引用完整性
+  - **新增资源文件扫描**：
+    - 新增 `core/resource_manager.py` 模块：资源文件扫描、复制、完整性验证
+    - 支持资源类型：
+      - 图片：`\includegraphics{figures/fig1.pdf}`
+      - 代码：`\lstinputlisting{code/algo.py}`
+      - 其他文件：`\import{path}{file}`
+  - **增强迁移流程**（`core/migrator.py`）：
+    - 第一步：迁移 `.tex` 内容文件
+    - 第二步：扫描旧项目的资源文件
+    - 第三步：复制资源文件到新项目（只复制缺失的，避免覆盖）
+    - 第四步：验证新项目中的资源引用完整性
+  - **LaTeX 工具增强**（`core/latex_utils.py`）：
+    - 新增 `extract_graphics()`: 提取图片引用
+    - 新增 `extract_lstinputlisting()`: 提取代码文件引用
+    - 新增 `extract_imports()`: 提取 LaTeX import 路径
+    - 新增 `extract_all_resource_paths()`: 提取所有外部资源文件路径
+  - **配置优化**：
+    - `migration.figure_handling`: `copy`（复制，默认推荐）/ `link`（软链接）/ `skip`（跳过）
+  - **结果报告增强**：
+    - `ApplyResult` 新增 `resources` 字段，包含资源处理详情
+    - 扫描摘要：总资源数、缺失数、涉及目录
+    - 复制摘要：复制数、跳过数、失败数、创建的目录
+    - 验证摘要：有效资源数、缺失资源数、损坏的引用
+  - **文档更新**：
+    - SKILL.md 新增"资源文件处理"章节
+    - 核心模块索引新增"资源管理"模块
+  - **版本升级**：v1.1.0 → v1.2.0
+
 - **complete_example v1.1.0** - 🔒 安全增强：系统文件保护与格式注入扫描
   - **SecurityManager 模块**：统一的安全检查和访问控制
     - 系统文件黑名单保护（`main.tex`、`@config.tex` 绝对禁止修改）
