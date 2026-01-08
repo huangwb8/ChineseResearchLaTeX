@@ -1,0 +1,13 @@
+usage: transfer-old-latex-to-new [-h] {analyze,apply,compile,restore} ...
+
+NSFC LaTeX 标书迁移（可执行 MVP：analyze/apply/compile/restore）
+
+positional arguments:
+  {analyze,apply,compile,restore}
+    analyze             解析旧新项目结构并生成迁移计划（不写入 new）
+    apply               按迁移计划写入 new_project/extraTex（默认跳过低置信度）
+    compile             对新项目执行 4 步编译并输出日志摘要
+    restore             将 new 项目恢复到 apply 前快照
+
+options:
+  -h, --help            show this help message and exit

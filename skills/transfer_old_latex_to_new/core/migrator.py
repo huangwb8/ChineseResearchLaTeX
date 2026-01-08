@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .ai_integration import AIIntegration
 from .latex_utils import safe_read_text
+from .progress_utils import progress
 from .reference_validator import validate_migration_reference_integrity
 from .resource_manager import copy_resources, scan_project_resources, validate_resource_integrity
 from .security_manager import SecurityManager
@@ -184,6 +185,7 @@ async def apply_plan(
     placeholder = ((config.get("migration", {}) or {}).get("content_generation", {}) or {}).get(
         "placeholder_text", "\\textbf{[此部分内容需要补充]}"
     )
+    verbose = bool((config.get("output", {}) or {}).get("verbose", True)) if isinstance(config, dict) else True
 
     target_files: List[str] = []
     for t in tasks:
@@ -197,6 +199,7 @@ async def apply_plan(
     warnings: List[str] = []
 
     # ========== 第一步：迁移 .tex 内容文件 ==========
+    p1 = progress("迁移内容文件", total=len(tasks), enabled=verbose)
     for t in tasks:
         t_type = t.get("type")
         target_rel = t.get("target")
@@ -204,14 +207,17 @@ async def apply_plan(
 
         if t_type == "needs_manual":
             skipped.append({**t, "skip_reason": "needs_manual"})
+            p1.update()
             continue
 
         if t.get("confidence") == "low" and not allow_low_confidence:
             skipped.append({**t, "skip_reason": "low_confidence"})
+            p1.update()
             continue
 
         if not target_rel:
             skipped.append({**t, "skip_reason": "missing_target"})
+            p1.update()
             continue
 
         target_abs = (new_project / target_rel).resolve()
@@ -220,22 +226,28 @@ async def apply_plan(
         if t_type == "copy_one_to_one":
             if not source_rel:
                 skipped.append({**t, "skip_reason": "missing_source"})
+                p1.update()
                 continue
             source_abs = (old_project / source_rel).resolve()
             if not source_abs.exists():
                 skipped.append({**t, "skip_reason": f"source_not_found: {source_rel}"})
+                p1.update()
                 continue
             content = safe_read_text(source_abs)
             _atomic_write(target_abs, content)
             applied.append({**t, "status": "copied"})
+            p1.update()
             continue
 
         if t_type == "placeholder_new_added":
             _atomic_write(target_abs, placeholder + "\n")
             applied.append({**t, "status": "placeholder_written"})
+            p1.update()
             continue
 
         skipped.append({**t, "skip_reason": f"unknown_task_type: {t_type}"})
+        p1.update()
+    p1.finish("迁移内容文件完成")
 
     if skipped:
         warnings.append(f"有 {len(skipped)} 个任务未自动执行，详见 apply 结果。")
@@ -254,11 +266,14 @@ async def apply_plan(
         optimizer = ContentOptimizer(config, skill_root=str(new_project))
         goals = _optimization_goals_from_config(config)
 
+        p2 = progress("内容优化", total=len(applied), enabled=verbose)
         for task in applied:
             if task.get("status") != "copied":
+                p2.update()
                 continue
             target_rel = task.get("target")
             if not target_rel:
+                p2.update()
                 continue
             target_abs = (new_project / target_rel).resolve()
             try:
@@ -288,6 +303,9 @@ async def apply_plan(
             except Exception as e:
                 task["optimization_error"] = str(e)
                 warnings.append(f"内容优化失败：{target_rel}: {e}")
+            finally:
+                p2.update()
+        p2.finish("内容优化完成")
 
     # ========== 第三步：字数适配（可选） ==========
     adaptation_log: List[Dict[str, Any]] = []
@@ -299,11 +317,14 @@ async def apply_plan(
 
         adapter = WordCountAdapter(config, skill_root=str(new_project))
 
+        p3 = progress("字数适配", total=len(applied), enabled=verbose)
         for task in applied:
             if task.get("status") not in {"copied", "optimized"}:
+                p3.update()
                 continue
             target_rel = task.get("target")
             if not target_rel:
+                p3.update()
                 continue
             target_abs = (new_project / target_rel).resolve()
             try:
@@ -333,6 +354,9 @@ async def apply_plan(
             except Exception as e:
                 task["adaptation_error"] = str(e)
                 warnings.append(f"字数适配失败：{target_rel}: {e}")
+            finally:
+                p3.update()
+        p3.finish("字数适配完成")
 
     # ========== 第四步：扫描并迁移资源文件 ==========
     # 资源文件处理配置

@@ -23,6 +23,12 @@
   - 项目目录保持清洁,不再产生编译"垃圾"文件
   - 更新 [SKILL.md](skills/transfer_old_latex_to_new/SKILL.md)：文档化目录结构与编译隔离机制
 
+- **transfer_old_latex_to_new v1.3.1** - 易用性与可测试性增强
+  - 新增一键迁移脚本：[scripts/migrate.sh](skills/transfer_old_latex_to_new/scripts/migrate.sh)（analyze→apply→(可选)compile）
+  - CLI 增强：[scripts/run.py](skills/transfer_old_latex_to_new/scripts/run.py) 支持 `--runs-root` 隔离 runs 输出，并补充路径校验与更友好的错误提示
+  - 进度反馈：[migrator.py](skills/transfer_old_latex_to_new/core/migrator.py) 集成进度条（rich 可用则使用，否则回退到文本）
+  - 文档拆分：新增 [docs/](skills/transfer_old_latex_to_new/docs/) 并精简 [SKILL.md](skills/transfer_old_latex_to_new/SKILL.md)
+
 ### Added（新增）
 
 - 新增 `transfer_old_latex_to_new` v1.3.0 详细改进计划：`plans/v202601081102.md`
@@ -50,7 +56,7 @@
   - 新增可执行脚本入口：`skills/transfer_old_latex_to_new/scripts/run.py`（`analyze/apply/compile/restore`）
   - 新增 `runs/<run_id>/` 工作空间：结构分析、迁移计划、日志、交付物与快照备份集中管理
   - 新增核心模块：结构分析、映射生成、迁移执行（原子写入+白名单保护）、编译日志摘要、交付物生成
-  - 新增最小烟雾测试：`skills/transfer_old_latex_to_new/test/test_smoke.py`
+  - 新增最小烟雾测试：`skills/transfer_old_latex_to_new/tests/test_smoke.py`
 
 - **transfer_old_latex_to_new v1.1.0** - 🤖 AI 驱动映射引擎：让 AI 真正理解文件映射关系
   - **移除硬编码相似度公式**：不再使用固定权重（`0.7 * stem + 0.2 * title + 0.1 * content`）计算相似度
@@ -78,6 +84,10 @@
       - 图片：`\includegraphics{figures/fig1.pdf}`
       - 代码：`\lstinputlisting{code/algo.py}`
       - 其他文件：`\import{path}{file}`
+
+### Fixed（修复）
+
+- **transfer_old_latex_to_new** - 修复 `ReferenceGuardian.restore_references()` 在 Python 3.12 下替换 `\\ref/\\cite` 等内容时触发 `re.error: bad escape` 的问题
   - **增强迁移流程**（`core/migrator.py`）：
     - 第一步：迁移 `.tex` 内容文件
     - 第二步：扫描旧项目的资源文件

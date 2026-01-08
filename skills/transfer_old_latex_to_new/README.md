@@ -1,7 +1,7 @@
 # LaTeX 标书智能迁移器
 
 **技能名称**: `migrating-latex-templates`
-**版本**: v1.3.0
+**版本**: v1.3.1
 **最后更新**: 2026-01-08
 
 ---
@@ -43,6 +43,12 @@
 ```
 
 AI 会自动执行迁移并输出结果。
+
+也可以直接使用脚本一键迁移（推荐）：
+
+```bash
+bash scripts/migrate.sh --old /path/to/NSFC_2025 --new /path/to/NSFC_2026
+```
 
 ---
 
@@ -144,12 +150,16 @@ bibtex --version
 | **版本差异指南** | [references/version_differences_2025_2026.md](references/version_differences_2025_2026.md) | 2025→2026 结构变化详解 |
 | **映射指南** | [references/structure_mapping_guide.md](references/structure_mapping_guide.md) | 章节映射决策参考 |
 | **迁移模式库** | [references/migration_patterns.md](references/migration_patterns.md) | 常见迁移模式案例 |
+| **快速开始** | [docs/quickstart.md](docs/quickstart.md) | 命令速查与 runs 目录说明 |
+| **配置指南** | [docs/config_guide.md](docs/config_guide.md) | config.yaml 关键块说明 |
+| **接口参考** | [docs/api_reference.md](docs/api_reference.md) | CLI/模块/产物格式 |
+| **故障排除** | [docs/troubleshooting.md](docs/troubleshooting.md) | 常见问题与处理建议 |
 
 ---
 
 ## 📋 版本与变更
 
-**当前版本**: v1.3.0（与 [config.yaml](config.yaml) 同步）
+**当前版本**: v1.3.1（与 [config.yaml](config.yaml) 同步）
 
 **变更记录**: 见根级 [CHANGELOG.md](../../../CHANGELOG.md)
 

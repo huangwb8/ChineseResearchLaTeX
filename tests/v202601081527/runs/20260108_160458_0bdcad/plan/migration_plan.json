@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "generated_at": "2026-01-08T16:04:58",
+    "strategy": "smart"
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "type": "copy_one_to_one",
+      "priority": "medium",
+      "source": "extraTex/1.1.立项依据.tex",
+      "target": "extraTex/1.项目的立项依据.tex",
+      "confidence": "medium",
+      "score": 0.8,
+      "reason": "文件名包含关系: 立项依据 <-> 项目的立项依据",
+      "notes": null
+    }
+  ],
+  "warnings": []
+}

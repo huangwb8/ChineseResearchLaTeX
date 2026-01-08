@@ -79,10 +79,15 @@ class SecurityManager:
 
             rel_str = str(rel).replace("\\", "/")
             if self._is_blacklisted(rel_str):
-                raise SystemFileModificationError(f"禁止写入系统文件: {allowed.root}/{rel_str}")
+                raise SystemFileModificationError(
+                    f"禁止写入系统文件: {allowed.root}/{rel_str}（只允许修改 extraTex/*.tex(排除@config.tex)、references/*.bib）"
+                )
 
             if any(p.match(rel_str) for p in allowed.patterns):
                 return
 
-        raise SecurityError(f"写入路径不在白名单中: {file_path}")
-
+        raise SecurityError(
+            "写入路径不在白名单中: "
+            f"{file_path}\n"
+            "允许范围：new_project/extraTex/*.tex(排除@config.tex)、new_project/references/*.bib、以及 runs/**。"
+        )

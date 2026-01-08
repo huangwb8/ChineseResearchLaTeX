@@ -74,7 +74,10 @@ class ReferenceGuardian:
         for placeholder in sorted(ref_map.keys(), key=len, reverse=True):
             # 使用正则表达式精确替换（word boundary）
             pattern = re.escape(placeholder)
-            restored_content = re.sub(pattern, ref_map[placeholder], restored_content)
+            # 注意：replacement 字符串若包含反斜杠（如 \cite/\ref），直接传给 re.sub 会触发转义解析；
+            # 用函数替换可避免 "bad escape"。
+            replacement = ref_map[placeholder]
+            restored_content = re.sub(pattern, lambda _m, r=replacement: r, restored_content)
 
         return restored_content
 

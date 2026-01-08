@@ -1,0 +1,35 @@
+{
+  "project_path": "/Volumes/2T01/Github/ChineseResearchLaTeX/tests/v202601081527/fixtures/old_iJbv6y",
+  "main_tex": "main.tex",
+  "input_files": [
+    "extraTex/1.1.立项依据.tex"
+  ],
+  "extra_tex_files": [
+    "extraTex/1.1.立项依据.tex"
+  ],
+  "references_bib_files": [],
+  "tex_files": {
+    "main.tex": {
+      "path": "main.tex",
+      "exists": true,
+      "headings": [],
+      "labels": [],
+      "refs": [],
+      "cites": [],
+      "char_count": 82,
+      "summary": ""
+    },
+    "extraTex/1.1.立项依据.tex": {
+      "path": "extraTex/1.1.立项依据.tex",
+      "exists": true,
+      "headings": [],
+      "labels": [
+        "sec:rationale"
+      ],
+      "refs": [],
+      "cites": [],
+      "char_count": 33,
+      "summary": "旧内容：立项依据正文。"
+    }
+  }
+}

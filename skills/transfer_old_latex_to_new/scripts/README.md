@@ -26,6 +26,25 @@ python scripts/run.py restore --run-id <run_id> --new <新项目>
 
 ---
 
+### `migrate.sh` - 一键迁移脚本
+
+对 `run.py` 的简单封装：`analyze → apply → (可选) compile`。
+
+```bash
+# 最小用法：一键迁移
+bash scripts/migrate.sh --old <旧项目> --new <新项目>
+
+# 将 runs 输出隔离到指定目录（建议：测试/CI 使用）
+bash scripts/migrate.sh --old <旧项目> --new <新项目> --runs-root /path/to/runs
+```
+
+**适用场景**:
+- 不想手动复制粘贴 run_id
+- 需要“一条命令跑完整流程”
+- 希望把 runs 输出放到指定目录（保持项目干净）
+
+---
+
 ### `demo.py` - 核心功能演示
 
 演示三大核心功能的独立脚本:
