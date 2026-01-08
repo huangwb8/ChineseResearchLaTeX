@@ -51,7 +51,7 @@
 |------|------|---------------|
 | [青年科学基金项目](projects/NSFC_Young/) | ✅ 2026 就绪 | ⏳ 待更新 |
 | [面上项目](projects/NSFC_General/) | ✅ 2026 就绪 | ⏳ 待更新 |
-| 地区科学基金项目 | ⏸️ 暂未更新（需求较少） | ⏳ 待更新 |
+| 地区科学基金项目 | ⏸️ 暂未更新，[有需要请提交 Issue](https://github.com/huangwb8/ChineseResearchLaTeX/issues) | ⏳ 待更新 |
 
 ---
 
