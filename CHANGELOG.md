@@ -10,6 +10,15 @@
 
 ### Added（新增）
 
+- 新增 `transfer_old_latex_to_new` v1.3.0 详细改进计划：`plans/v202601081102.md`
+  - **核心修复**：移除所有 AI 功能占位符，实现真实的 AI 集成
+  - **AI 集成层**：创建 `core/ai_integration.py`，利用 Claude Code/Codex 当前环境（无需额外配置）
+  - **迁移策略**：实现一对多/多对一迁移（`core/strategies.py`）
+  - **模块集成**：集成 `ContentOptimizer`、`ReferenceGuardian`、`WordCountAdapter` 到主流程
+  - **CLI 扩展**：添加 `--optimize`、`--adapt-word-count`、`--ai-enabled` 选项
+  - **实施计划**：4 个 Sprint，预计 6-8 小时
+  - **问题诊断**：彻底代码审查发现 AI 功能虚假实现、依赖不存在模块、迁移策略不完整
+
 - 新增 `transfer_old_latex_to_new` v1.3.0 优化计划：`plans/v202601081002.md`
   - **性能优化**：引入分层缓存机制、批量 AI 调用、并行化处理（预期性能提升 5-10 倍）
   - **质量保证**：建立测试体系（pytest，目标覆盖率 80%）
