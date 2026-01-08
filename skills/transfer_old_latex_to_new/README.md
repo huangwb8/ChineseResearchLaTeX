@@ -1,6 +1,6 @@
 # LaTeX 标书智能迁移器
 
-**技能名称**: `transfer-old-latex-to-new`
+**技能名称**: `migrating-latex-templates`
 **版本**: v1.3.0
 **最后更新**: 2026-01-08
 
@@ -37,12 +37,44 @@
 直接告诉 AI 你的需求：
 
 ```
-请使用 skills/transfer-old-latex-to-new 迁移标书：
+请使用 migrating-latex-templates 迁移标书：
 - 旧项目：/Users/xxx/Documents/NSFC_Old
 - 新项目：/Users/xxx/Documents/NSFC_New
 ```
 
 AI 会自动执行迁移并输出结果。
+
+---
+
+## 🔧 环境要求
+
+### Python 环境
+
+```bash
+python --version  # 需要 >= 3.8
+```
+
+### LaTeX 环境
+
+**macOS**:
+```bash
+brew install --cask mactex
+```
+
+**Ubuntu/Debian**:
+```bash
+sudo apt-get install texlive-full
+```
+
+**Windows**:
+下载并安装 TeX Live: https://tug.org/texlive/
+
+### 验证安装
+
+```bash
+xelatex --version
+bibtex --version
+```
 
 ---
 
