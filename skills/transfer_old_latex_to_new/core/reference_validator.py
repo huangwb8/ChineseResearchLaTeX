@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Set
 
+from .config_utils import ConfigDefaults
 from .latex_utils import extract_cites, extract_labels, extract_refs, safe_read_text
 
 
@@ -139,7 +140,7 @@ def validate_migration_reference_integrity(
     new_project: Path,
     tex_files: List[str],
     bib_files: List[str],
-    min_intact_rate: float = 0.95,
+    min_intact_rate: float = ConfigDefaults.REFERENCE_INTACT_RATE_MIN,
 ) -> Dict[str, any]:
     """
     验证迁移后的引用完整性

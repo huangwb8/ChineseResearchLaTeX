@@ -9,6 +9,8 @@ from typing import Dict, List, Optional
 from pathlib import Path
 
 from .ai_integration import AIIntegration
+from .config_utils import ConfigDefaults
+from .prompt_templates import OPTIMIZE_ANALYZE_TEMPLATE, OPTIMIZE_TYPE_PROMPTS
 from .reference_guardian import ReferenceGuardian
 
 
@@ -91,31 +93,12 @@ class ContentOptimizer:
 
         goals_str = "、".join(goal_desc) if goal_desc else "整体质量"
 
-        prompt = f"""你是学术写作专家。请分析以下"{section_title}"的内容在{goals_str}方面的问题。
-
-要求：
-1. 识别 2-4 个最需要优化的问题点
-2. 每个问题点包括：类型、位置、严重程度（high/medium/low）、改进建议
-3. 仅输出 JSON 格式，不要额外解释
-
-JSON 格式：
-{{
-  "optimization_points": [
-    {{
-      "type": "redundancy|logic|evidence|clarity|structure",
-      "description": "问题描述",
-      "location": "第X段",
-      "severity": "high|medium|low",
-      "suggestion": "改进建议"
-    }}
-  ],
-  "improvement_potential": 0.7
-}}
-
-原文：
-{content[:1500]}
-
-请直接输出 JSON："""
+        # 使用提示词模板
+        prompt = OPTIMIZE_ANALYZE_TEMPLATE.format(
+            section_title=section_title,
+            goals_str=goals_str,
+            content=content[:ConfigDefaults.LATEX_AI_PROMPT_LENGTH],
+        )
 
         def fallback() -> dict:
             return self._heuristic_analysis(content, goals)
@@ -209,84 +192,13 @@ JSON 格式：
         opt_type = optimization_point["type"]
         description = optimization_point["description"]
 
-        # 根据类型构建优化提示
-        prompts = {
-            "redundancy": f"""请删除以下内容中的冗余表述。
-
-问题：{description}
-
-要求：
-1. 删除重复或不必要的表述
-2. 保留核心信息和论点
-3. 保持逻辑连贯
-
-原文：
-{{content}}
-
-请直接输出优化后的内容：""",
-
-            "logic": f"""请改进以下内容的逻辑连贯性。
-
-问题：{description}
-
-要求：
-1. 添加适当的过渡句
-2. 调整段落顺序使其更连贯
-3. 保持原有论点不变
-
-原文：
-{{content}}
-
-请直接输出优化后的内容：""",
-
-            "evidence": f"""请为以下内容补充证据支持。
-
-问题：{description}
-
-要求：
-1. 在适当位置添加[此处需补充数据/案例]标记
-2. 不要大幅改动原有内容
-3. 保持学术严谨性
-
-原文：
-{{content}}
-
-请直接输出优化后的内容：""",
-
-            "clarity": f"""请提高以下内容的表述清晰度。
-
-问题：{description}
-
-要求：
-1. 简化复杂句式
-2. 替换模糊表述
-3. 保持专业性
-
-原文：
-{{content}}
-
-请直接输出优化后的内容：""",
-
-            "structure": f"""请重组以下内容的段落结构。
-
-问题：{description}
-
-要求：
-1. 调整段落顺序
-2. 合理分段
-3. 保持内容完整性
-
-原文：
-{{content}}
-
-请直接输出优化后的内容："""
-        }
-
-        prompt_template = prompts.get(opt_type)
+        # 从模板中获取提示词
+        prompt_template = OPTIMIZE_TYPE_PROMPTS.get(opt_type)
         if not prompt_template:
             return {"success": False, "reason": f"未知优化类型: {opt_type}"}
 
-        prompt = prompt_template.replace("{content}", content[:2000])  # 限制长度
+        prompt = prompt_template.format(description=description)
+        prompt = prompt.replace("{content}", content[:ConfigDefaults.LATEX_AI_MAX_LENGTH])
 
         def fallback() -> str:
             return ""

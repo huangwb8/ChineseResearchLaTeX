@@ -3,8 +3,8 @@
 保护 LaTeX 引用不被 AI 破坏
 """
 
+import hashlib
 import re
-import uuid
 from typing import Dict, List, Tuple, Set
 
 
@@ -22,6 +22,10 @@ class ReferenceGuardian:
         "includegraphics": r'\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}',
         "lstinputlisting": r'\\lstinputlisting(?:\[[^\]]*\])?\{([^}]+)\}',
     }
+
+    # 占位符前缀（使用特殊字符避免与正文冲突）
+    PLACEHOLDER_PREFIX = "___REF_"
+    PLACEHOLDER_SUFFIX = "___"
 
     def __init__(self, config: dict):
         self.config = config
@@ -42,19 +46,25 @@ class ReferenceGuardian:
                 original = match.group(0)
                 ref_key = match.group(1)
 
-                # 生成唯一占位符
-                placeholder = f"__REF_{ref_type.upper()}_{uuid.uuid4().hex[:8]}__"
+                # 生成唯一占位符（使用 SHA256 哈希确保唯一性）
+                hash_input = f"{ref_type}:{ref_key}:{id(original)}".encode('utf-8')
+                hash_hex = hashlib.sha256(hash_input).hexdigest()[:12]
+                placeholder = f"{self.PLACEHOLDER_PREFIX}{ref_type.upper()}_{hash_hex}{self.PLACEHOLDER_SUFFIX}"
 
                 # 记录映射关系
                 ref_map[placeholder] = original
 
-                # 替换为占位符
+                # 替换为占位符（只替换第一个匹配，避免重复替换）
                 protected_content = protected_content.replace(original, placeholder, 1)
 
         return protected_content, ref_map
 
     def restore_references(self, protected_content: str, ref_map: Dict[str, str]) -> str:
-        """恢复所有引用"""
+        """
+        恢复所有引用
+
+        使用正则表达式确保精确匹配占位符，避免部分替换问题
+        """
         if not self.enabled or not ref_map:
             return protected_content
 
@@ -62,7 +72,9 @@ class ReferenceGuardian:
 
         # 按占位符长度降序恢复（避免部分替换）
         for placeholder in sorted(ref_map.keys(), key=len, reverse=True):
-            restored_content = restored_content.replace(placeholder, ref_map[placeholder])
+            # 使用正则表达式精确替换（word boundary）
+            pattern = re.escape(placeholder)
+            restored_content = re.sub(pattern, ref_map[placeholder], restored_content)
 
         return restored_content
 
@@ -108,19 +120,35 @@ class ReferenceGuardian:
         return report
 
     def repair_references(self, content: str, ref_map: Dict[str, str]) -> str:
-        """尝试修复被破坏的引用"""
+        """
+        尝试修复被破坏的引用
+
+        使用模糊匹配来恢复被部分修改的占位符
+        """
         if not self.enabled or not ref_map:
             return content
 
         repaired_content = content
 
-        # 查找被部分破坏的引用（如 __REF_CITE_1234__ → __REF_CITE）
+        # 查找被部分破坏的引用
         for placeholder, original in ref_map.items():
             if placeholder not in repaired_content:
-                # 尝试模糊匹配
-                partial = placeholder[:20]  # 取前20个字符
-                if partial in repaired_content:
-                    repaired_content = repaired_content.replace(partial, placeholder)
+                # 尝试模糊匹配（占位符可能被 AI 修改）
+                # 检查是否包含类型标识
+                ref_type = placeholder.split("_")[2] if "_" in placeholder else ""
+                type_pattern = f"{self.PLACEHOLDER_PREFIX}{ref_type}"
+
+                # 查找可能的损坏占位符
+                for match in re.finditer(re.escape(type_pattern) + r"_[A-Fa-f0-9]+", repaired_content):
+                    damaged = match.group(0)
+                    # 尝试修复（检查哈希长度是否正确）
+                    hash_part = damaged.split("_")[-1].replace(self.PLACEHOLDER_SUFFIX, "")
+                    if len(hash_part) < 12:  # 哈希被截断
+                        # 查找最接近的占位符
+                        for ref_placeholder in ref_map.keys():
+                            if ref_placeholder.startswith(type_pattern):
+                                repaired_content = repaired_content.replace(damaged, ref_placeholder)
+                                break
 
         # 恢复引用
         return self.restore_references(repaired_content, ref_map)

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Awaitable, Callable, Dict, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 
 JsonDict = Dict[str, Any]
@@ -17,9 +17,10 @@ class AIIntegration:
     AI 集成层（优雅降级）
 
     说明：
-    - 本仓库内的 Python 脚本默认不假设“可直接调用宿主 AI”。
+    - 本仓库内的 Python 脚本默认不假设"可直接调用宿主 AI"。
     - 若未提供 responder（或 enable_ai=False），将自动回退到 fallback。
     - 该接口为后续真正的 AI 调用预留扩展点，同时保证当前功能可用。
+    - 支持批量调用优化（v1.3.0）
     """
 
     def __init__(
@@ -35,6 +36,12 @@ class AIIntegration:
         self.fallback_mode = False
         self.request_count = 0
         self.success_count = 0
+        self.batch_count = 0  # 批量调用计数
+
+        # 批量配置
+        ai_cfg = (config.get("ai", {}) or {}) if isinstance(config, dict) else {}
+        self.batch_mode = bool(ai_cfg.get("batch_mode", False))
+        self.batch_size = int(ai_cfg.get("batch_size", 10))
 
     def is_available(self) -> bool:
         return bool(self.enable_ai and (not self.fallback_mode) and (self.responder is not None))
@@ -45,7 +52,9 @@ class AIIntegration:
             "fallback_mode": self.fallback_mode,
             "request_count": self.request_count,
             "success_count": self.success_count,
+            "batch_count": self.batch_count,
             "success_rate": self.success_count / max(self.request_count, 1),
+            "batch_mode_enabled": self.batch_mode,
         }
 
     async def process_request(
@@ -139,3 +148,121 @@ class AIIntegration:
             logger.info("[AIIntegration] fallback task=%s reason=%s", task, reason)
         else:
             logger.warning("[AIIntegration] fallback task=%s reason=%s", task, reason)
+
+    async def process_batch_requests(
+        self,
+        *,
+        task: str,
+        prompts: List[str],
+        fallback: Callable[[], List[Any]],
+        output_format: str = "json",
+    ) -> List[Any]:
+        """
+        批量处理 AI 请求（优化网络开销）
+
+        Args:
+            task: 任务名称
+            prompts: 提示词列表
+            fallback: 回退函数
+            output_format: 输出格式
+
+        Returns:
+            结果列表
+        """
+        self.batch_count += 1
+        self.request_count += len(prompts)
+
+        if not self.enable_ai or self.responder is None:
+            self.fallback_mode = True
+            self._log_fallback(task, reason="AI disabled or No responder")
+            return fallback()
+
+        try:
+            # 构建批量提示词
+            batch_prompt = self._build_batch_prompt(prompts, output_format)
+
+            # 调用 AI
+            raw = self.responder(task, batch_prompt, output_format)
+            if hasattr(raw, "__await__"):
+                raw = await raw  # type: ignore[misc]
+
+            if raw is None:
+                raise ValueError("Empty AI response")
+
+            # 解析批量结果
+            if output_format == "json":
+                results = self._parse_batch_json_response(raw)
+                self.success_count += len(results)
+                return results
+            elif output_format == "text":
+                # 文本模式下，按行分割返回
+                text = str(raw).strip()
+                results = [line.strip() for line in text.split("\n") if line.strip()]
+                self.success_count += len(results)
+                return results
+            else:
+                raise ValueError(f"Unsupported output_format: {output_format}")
+
+        except Exception as e:
+            self.fallback_mode = True
+            self._log_fallback(task, reason=str(e))
+            return fallback()
+
+    def _build_batch_prompt(self, prompts: List[str], output_format: str) -> str:
+        """构建批量提示词"""
+        batch_prompt = "请批量处理以下请求，返回 JSON 数组：\n\n"
+        for i, prompt in enumerate(prompts, 1):
+            batch_prompt += f"\n## 请求 {i}\n{prompt}\n"
+
+        if output_format == "json":
+            batch_prompt += "\n## 输出格式\n"
+            batch_prompt += "请返回 JSON 数组，每个元素对应一个请求的结果：\n"
+            batch_prompt += "```json\n[结果1, 结果2, ...]\n```\n"
+
+        return batch_prompt
+
+    def _parse_batch_json_response(self, response: Any) -> List[Any]:
+        """解析批量 JSON 响应"""
+        response_text = str(response)
+
+        # 尝试提取 JSON 数组
+        try:
+            # 1) 提取 fenced code block 中的 JSON
+            if "```json" in response_text:
+                start = response_text.find("```json") + 7
+                end = response_text.find("```", start)
+                if end != -1:
+                    json_str = response_text[start:end].strip()
+                    data = json.loads(json_str)
+                    if isinstance(data, list):
+                        return data
+            elif "```" in response_text:
+                # 尝试无语言标记的代码块
+                start = response_text.find("```") + 3
+                end = response_text.find("```", start)
+                if end != -1:
+                    json_str = response_text[start:end].strip()
+                    data = json.loads(json_str)
+                    if isinstance(data, list):
+                        return data
+
+            # 2) 直接解析整个响应
+            data = json.loads(response_text)
+            if isinstance(data, list):
+                return data
+
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # 3) 尝试提取多个 JSON 对象
+        results = []
+        for match in response_text.split("{"):
+            if not match.strip():
+                continue
+            try:
+                obj = json.loads("{" + match.split("}")[0] + "}")
+                results.append(obj)
+            except (json.JSONDecodeError, ValueError, IndexError):
+                continue
+
+        return results if len(results) > 1 else []

@@ -50,9 +50,17 @@ class ApplyResult:
         }
 
 
-def snapshot_targets(new_project: Path, backup_root: Path, targets: List[str], security: SecurityManager) -> None:
+def snapshot_targets(new_project: Path, backup_root: Path, targets: List[str], security: SecurityManager) -> Dict[str, str]:
+    """
+    备份目标文件到备份目录
+
+    Returns:
+        备份文件映射 {相对路径: 备份文件绝对路径}
+    """
     new_project = new_project.resolve()
     backup_root = backup_root.resolve()
+    backup_map: Dict[str, str] = {}
+
     for rel in targets:
         abs_path = (new_project / rel).resolve()
         if not abs_path.exists():
@@ -61,14 +69,45 @@ def snapshot_targets(new_project: Path, backup_root: Path, targets: List[str], s
         backup_path = (backup_root / rel).resolve()
         backup_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(abs_path, backup_path)
+        backup_map[rel] = str(backup_path)
+
+    return backup_map
 
 
-def restore_snapshot(new_project: Path, backup_root: Path, security: SecurityManager) -> List[str]:
+def restore_snapshot(new_project: Path, backup_root: Path, security: SecurityManager, files: Optional[List[str]] = None) -> List[str]:
+    """
+    恢复备份文件
+
+    Args:
+        new_project: 新项目路径
+        backup_root: 备份目录路径
+        security: 安全管理器
+        files: 要恢复的文件列表（None 表示恢复所有）
+
+    Returns:
+        已恢复的文件列表
+    """
     restored: List[str] = []
     new_project = new_project.resolve()
     backup_root = backup_root.resolve()
+
     if not backup_root.exists():
         return restored
+
+    # 如果指定了文件列表，只恢复这些文件
+    if files:
+        for rel in files:
+            backup_path = (backup_root / rel).resolve()
+            if not backup_path.exists():
+                continue
+            target = (new_project / rel).resolve()
+            security.assert_can_write(target)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(backup_path, target)
+            restored.append(str(rel).replace("\\", "/"))
+        return restored
+
+    # 否则恢复所有文件
     for file_path in backup_root.rglob("*"):
         if not file_path.is_file():
             continue
@@ -78,6 +117,7 @@ def restore_snapshot(new_project: Path, backup_root: Path, security: SecurityMan
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file_path, target)
         restored.append(str(rel).replace("\\", "/"))
+
     return restored
 
 

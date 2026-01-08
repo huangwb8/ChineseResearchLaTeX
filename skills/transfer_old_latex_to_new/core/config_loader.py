@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -44,6 +44,52 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "workspace": {
         "runs_dir": "runs",
+    },
+    # 预设配置（profiles）
+    "profiles": {
+        "quick": {
+            "description": "快速模式（适合小项目，<20 个文件）",
+            "ai": {
+                "batch_mode": False,
+                "max_workers": 2,
+            },
+            "cache": {
+                "enabled": False,
+            },
+            "content_optimization": {
+                "max_rounds": 3,
+            },
+        },
+        "balanced": {
+            "description": "平衡模式（适合中型项目，20-100 个文件）",
+            "ai": {
+                "batch_mode": True,
+                "batch_size": 10,
+                "max_workers": 4,
+            },
+            "cache": {
+                "enabled": True,
+                "memory_max_size": 1000,
+            },
+            "content_optimization": {
+                "max_rounds": 5,
+            },
+        },
+        "thorough": {
+            "description": "精确模式（适合大型项目，>100 个文件）",
+            "ai": {
+                "batch_mode": True,
+                "batch_size": 20,
+                "max_workers": 8,
+            },
+            "cache": {
+                "enabled": True,
+                "memory_max_size": 2000,
+            },
+            "content_optimization": {
+                "max_rounds": 7,
+            },
+        },
     },
 }
 
@@ -106,3 +152,77 @@ def get_mapping_thresholds(config: Dict[str, Any]) -> MappingThresholds:
 def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
     runs_dir = (config.get("workspace", {}) or {}).get("runs_dir", "runs")
     return (Path(skill_root) / runs_dir).resolve()
+
+
+def apply_profile(config: Dict[str, Any], profile_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    应用配置预设（profile）
+
+    Args:
+        config: 原始配置
+        profile_name: 预设名称（quick/balanced/thorough），None 表示不应用
+
+    Returns:
+        应用预设后的配置
+    """
+    if not profile_name:
+        return config
+
+    profiles = config.get("profiles", {})
+    profile = profiles.get(profile_name, {})
+
+    if not profile:
+        return config
+
+    return _deep_merge(config, profile)
+
+
+def list_profiles(config: Optional[Dict[str, Any]] = None) -> List[str]:
+    """
+    列出可用的配置预设
+
+    Args:
+        config: 配置字典（None 则使用默认配置）
+
+    Returns:
+        预设名称列表
+    """
+    if config is None:
+        config = DEFAULT_CONFIG
+
+    profiles = config.get("profiles", {})
+    return list(profiles.keys())
+
+
+def get_profile_description(config: Dict[str, Any], profile_name: str) -> Optional[str]:
+    """
+    获取预设的描述
+
+    Args:
+        config: 配置字典
+        profile_name: 预设名称
+
+    Returns:
+        预设描述，不存在返回 None
+    """
+    profiles = config.get("profiles", {})
+    profile = profiles.get(profile_name, {})
+    return profile.get("description") if isinstance(profile, dict) else None
+
+
+def load_config_with_profile(
+    skill_root: Path,
+    profile: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    加载配置并应用预设
+
+    Args:
+        skill_root: 技能根目录
+        profile: 预设名称（可选）
+
+    Returns:
+        最终配置
+    """
+    config = load_config(skill_root)
+    return apply_profile(config, profile)

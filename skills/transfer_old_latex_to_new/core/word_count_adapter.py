@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .ai_integration import AIIntegration
+from .config_utils import ConfigDefaults
+from .prompt_templates import WORD_COUNT_COMPRESS_TEMPLATE, WORD_COUNT_EXPAND_TEMPLATE
 from .reference_guardian import ReferenceGuardian
 
 
@@ -18,7 +20,7 @@ class WordCountAdapter:
         self.config = config
         self.skill_root = Path(skill_root)
         wc_cfg = (config.get("word_count_adaptation", {}) or {}) if isinstance(config, dict) else {}
-        self.tolerance = int(wc_cfg.get("target_tolerance", 50))
+        self.tolerance = int(wc_cfg.get("target_tolerance", ConfigDefaults.WORD_COUNT_TOLERANCE))
         self.auto_expand = bool(wc_cfg.get("auto_expand", True))
         self.auto_compress = bool(wc_cfg.get("auto_compress", True))
         self.ref_guardian = ReferenceGuardian(config)
@@ -243,19 +245,17 @@ class WordCountAdapter:
         ai_integration: AIIntegration,
     ) -> str:
         """AI 直接扩展内容（优雅降级）"""
-        prompt = f"""你是 NSFC 标书写作专家。请扩展以下"{section_title}"的内容。
+        current_count = self._count_chinese_words(content)
+        target_count = current_count + deficit
 
-要求：
-1. 扩展约 {deficit} 字（当前约 {self._count_chinese_words(content)} 字，目标约 {self._count_chinese_words(content) + deficit} 字）
-2. 保持原有逻辑和核心论点
-3. 增加论据、案例、数据支撑
-4. 深化分析层次
-5. 保持学术严谨性
-
-原文：
-{content}
-
-请直接输出扩展后的完整内容，不要解释。"""
+        # 使用提示词模板
+        prompt = WORD_COUNT_EXPAND_TEMPLATE.format(
+            section_title=section_title,
+            deficit=deficit,
+            current_count=current_count,
+            target_count=target_count,
+            content=content,
+        )
 
         def fallback() -> str:
             return content
@@ -276,19 +276,17 @@ class WordCountAdapter:
         ai_integration: AIIntegration,
     ) -> str:
         """AI 精简内容（优雅降级）"""
-        prompt = f"""你是 NSFC 标书写作专家。请精简以下"{section_title}"的内容。
+        current_count = self._count_chinese_words(content)
+        target_count = current_count - excess
 
-要求：
-1. 精简约 {excess} 字（当前约 {self._count_chinese_words(content)} 字，目标约 {self._count_chinese_words(content) - excess} 字）
-2. 保留所有核心论点和关键信息
-3. 删除冗余表述和重复内容
-4. 保持逻辑连贯性
-5. 保持学术严谨性
-
-原文：
-{content}
-
-请直接输出精简后的完整内容，不要解释。"""
+        # 使用提示词模板
+        prompt = WORD_COUNT_COMPRESS_TEMPLATE.format(
+            section_title=section_title,
+            excess=excess,
+            current_count=current_count,
+            target_count=target_count,
+            content=content,
+        )
 
         def fallback() -> str:
             return content
