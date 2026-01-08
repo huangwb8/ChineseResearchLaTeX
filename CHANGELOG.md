@@ -17,6 +17,24 @@
   - 新增核心模块：结构分析、映射生成、迁移执行（原子写入+白名单保护）、编译日志摘要、交付物生成
   - 新增最小烟雾测试：`skills/transfer_old_latex_to_new/test/test_smoke.py`
 
+- **transfer_old_latex_to_new v1.1.0** - 🤖 AI 驱动映射引擎：让 AI 真正理解文件映射关系
+  - **移除硬编码相似度公式**：不再使用固定权重（`0.7 * stem + 0.2 * title + 0.1 * content`）计算相似度
+  - **AI 语义判断**：让 AI 真正理解文件内容（文件名、章节结构、内容语义、迁移合理性）后判断映射关系
+  - **映射引擎重构**：
+    - 新增 `_build_file_context()`: 为 AI 构建文件上下文（路径、结构、摘要、预览）
+    - 新增 `_ai_judge_mapping()`: AI 判断映射关系的异步函数（占位符，待集成实际 AI 调用）
+    - 新增 `compute_structure_diff_async()`: 异步版本的结构差异分析
+    - 保留 `_fallback_score_pair()`: 当 AI 不可用时使用简单启发式规则
+  - **配置文件优化**：
+    - 移除硬编码权重配置（`title_similarity_weight`、`content_similarity_weight` 等）
+    - 新增 `mapping.strategy`: `ai_driven`（AI 语义判断）/ `fallback`（简单启发式）
+    - 新增 `mapping.thresholds`: AI 判断阈值（high/medium/low）
+    - 新增 `mapping.fallback`: 回退策略配置（文件名匹配、包含关系、Jaccard 相似度）
+  - **文档更新**：
+    - SKILL.md 新增"AI 语义判断"章节，详细说明 AI 判断流程和判断维度
+    - README.md 更新核心能力，突出"AI 语义映射"
+  - **版本升级**：v1.0.0 → v1.1.0
+
 - **complete_example v1.1.0** - 🔒 安全增强：系统文件保护与格式注入扫描
   - **SecurityManager 模块**：统一的安全检查和访问控制
     - 系统文件黑名单保护（`main.tex`、`@config.tex` 绝对禁止修改）

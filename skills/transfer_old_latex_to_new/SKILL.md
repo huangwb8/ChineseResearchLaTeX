@@ -1,6 +1,24 @@
 ---
 name: transfer-old-latex-to-new
-description: 智能迁移旧版NSFC标书到新版模板：分析结构→AI规划→执行迁移→迭代优化→编译验证。支持2024/2025/2026版NSFC模板互迁。详见《CLAUDE.md》变更规范。
+version: 1.0.0
+description: 智能迁移NSFC标书到新版模板，支持任意年份版本互迁
+author: AI Agent (Claude Code)
+tags: [latex, nsfc, migration, version-upgrade]
+triggers:
+  - 迁移标书
+  - 升级模板
+  - 跨版本迁移
+  - 旧标书转新模板
+  - 项目结构变化
+  - 内容重组
+dependencies:
+  - python: ">=3.8"
+  - latex: texlive-full
+  - scripts/run.py
+  - core/
+entry_point: python skills/transfer_old_latex_to_new/scripts/run.py
+config: skills/transfer_old_latex_to_new/config.yaml
+references: skills/transfer_old_latex_to_new/references/
 ---
 
 # LaTeX 标书智能迁移器
@@ -112,28 +130,77 @@ run = create_run(runs_root, run_id=args.run_id)
 
 ---
 
-### Phase 2: 智能差异分析与映射
+### Phase 2: AI 驱动差异分析与映射
 
 **执行**: [core/mapping_engine.py:compute_structure_diff](core/mapping_engine.py)
 
 **输出**: `analysis/structure_diff.json`
 
+**核心特性：AI 语义判断**
+
+不再是硬编码的相似度公式，而是让 AI 真正理解文件内容后判断映射关系：
+
+| 判断维度 | AI 考虑因素 | 示例 |
+|----------|-------------|------|
+| **文件名语义** | 文件名是否表示相同或相似的内容 | `立项依据.tex` → `立项依据.tex` ✓ |
+| **章节结构** | LaTeX 章节结构是否对应 | `\section{立项依据}` 对应 ✓ |
+| **内容语义** | 内容的主题和目的是否一致 | 都在写"研究意义" ✓ |
+| **迁移合理性** | 将旧文件内容迁移到新文件是否符合逻辑 | 逻辑连贯 ✓ |
+
+**AI 判断流程**：
+```python
+# 1. 为每对文件构建上下文（文件路径、章节结构、内容预览）
+context = _build_file_context(old_file, new_file)
+
+# 2. AI 基于上下文进行语义判断
+ai_result = await _ai_judge_mapping(context)
+# 返回: {
+#   "should_map": true/false,
+#   "confidence": "high/medium/low",
+#   "score": 0.0-1.0,
+#   "reason": "详细说明理由（中文）"
+# }
+
+# 3. 根据置信度和分数决定映射策略
+# - score >= 0.85: high confidence → 自动确认
+# - 0.7 <= score < 0.85: medium confidence → AI 推理确认
+# - 0.5 <= score < 0.7: low confidence → 需人工确认
+# - score < 0.5: 不映射
+```
+
 **映射类型**:
 ```json
 {
   "mapping": {
-    "one_to_one": [{"old": "...", "new": "...", "similarity": 0.95}],
-    "one_to_many": [{"old": "...", "new": ["...", "..."], "split_strategy": "semantic_split"}],
-    "many_to_one": [{"old": ["...", "..."], "new": "...", "merge_strategy": "sequential_merge"}],
-    "new_added": [{"file": "...", "content_source": "generate_from_context"}],
-    "removed": [{"file": "...", "reason": "..."}]
+    "one_to_one": [
+      {
+        "old": "extraTex/立项依据.tex",
+        "new": "extraTex/立项依据.tex",
+        "score": 0.95,
+        "confidence": "high",
+        "reason": "AI判断：文件名、章节结构、内容主题高度一致，应该映射"
+      }
+    ],
+    "new_added": [{"file": "...", "reason": "新模板存在但未映射"}],
+    "removed": [{"file": "...", "reason": "未找到可靠映射"}],
+    "low_confidence": [
+      {
+        "old": "...",
+        "new": "...",
+        "score": "0.650",
+        "reason": "AI判断：内容有相关性但不确定是否应该映射",
+        "action": "needs_review"
+      }
+    ]
   }
 }
 ```
 
-**配置参考**: [config.yaml#L185-L226](config.yaml#L185-L226) - `mapping_heuristics`
+**配置参考**: [config.yaml#L185-L227](config.yaml#L185-L227) - `mapping`
 
-**AI决策规则**: [config.yaml#L132-L181](config.yaml#L132-L181) - `decision_rules`
+**回退策略**: 当 AI 不可用时，使用简单启发式规则（文件名匹配、包含关系、Jaccard 相似度）
+
+**AI决策规则**: [config.yaml#L132-L155](config.yaml#L132-L155) - `decision_rules.strategy_decision`
 
 ---
 
@@ -318,7 +385,7 @@ python skills/transfer_old_latex_to_new/scripts/run.py restore --run_id <run_id>
 
 ## 版本与变更
 
-**当前版本**: v1.0.0（与 [config.yaml#metadata](config.yaml#L366-L372) 同步）
+**当前版本**: v1.1.0（与 [config.yaml#metadata](config.yaml#L368-L374) 同步）
 
 **变更历史**: 记录于根级 [CHANGELOG.md](../../../CHANGELOG.md)
 

@@ -180,27 +180,29 @@ decision_rules:
       partial_result: true
 
 # =============================================================================
-# 结构映射启发式规则
+# 结构映射配置（AI 驱动）
 # =============================================================================
-mapping_heuristics:
-  # 标题相似度计算方法
-  title_similarity_method: "levenshtein"  # levenshtein/jaccard/embedding
+mapping:
+  # AI 映射策略
+  strategy: "ai_driven"             # ai_driven(AI语义判断)/fallback(简单启发式)
 
-  # 标题相似度权重
-  title_similarity_weight: 0.4    # 标题相似度权重
-  content_similarity_weight: 0.3   # 内容相似度权重
-  position_proximity_weight: 0.2   # 位置接近度权重
-  structural_pattern_weight: 0.1   # 结构模式权重
+  # AI 判断阈值
+  thresholds:
+    high: 0.85                      # 高置信度阈值（AI 认为高度确定）
+    medium: 0.7                     # 中置信度阈值（AI 认为比较确定）
+    low: 0.5                        # 低置信度阈值（需人工确认）
 
-  # 相似度阈值
-  high_similarity_threshold: 0.85  # 高相似度阈值（自动确认）
-  medium_similarity_threshold: 0.7 # 中相似度阈值（AI推理确认）
-  low_similarity_threshold: 0.5    # 低相似度阈值（需人工确认）
+  # 回退策略（当 AI 不可用时）
+  fallback:
+    enable_filename_exact_match: true   # 文件名完全匹配
+    enable_filename_contains: true      # 文件名包含关系
+    enable_jaccard_similarity: true     # Jaccard 相似度
+    min_jaccard_threshold: 0.5          # 最小 Jaccard 相似度
 
-  # 拆分策略
+  # 拆分策略（用于一对多映射）
   split_strategies:
     semantic_split:
-      description: "按语义边界拆分"
+      description: "按语义边界拆分（AI 判断）"
       priority: 1
     keyword_split:
       description: "按关键词出现位置拆分"
@@ -212,7 +214,7 @@ mapping_heuristics:
       description: "等分拆分"
       priority: 4  # 最后选择
 
-  # 合并策略
+  # 合并策略（用于多对一映射）
   merge_strategies:
     sequential_merge:
       description: "顺序拼接，添加过渡段"
@@ -365,9 +367,9 @@ compatibility:
 # =============================================================================
 metadata:
   skill_name: "transfer-old-latex-to-new"
-  skill_version: "1.0.0"
+  skill_version: "1.1.0"
   created_at: "2026-01-05"
-  last_updated: "2026-01-05"
+  last_updated: "2026-01-08"
   author: "AI Agent (Claude Code)"
   license: "MIT"
 
