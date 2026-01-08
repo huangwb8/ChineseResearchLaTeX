@@ -10,6 +10,13 @@
 
 ### Added（新增）
 
+- 新增 `transfer_old_latex_to_new` v1.3.0 优化计划：`plans/v202601081002.md`
+  - **性能优化**：引入分层缓存机制、批量 AI 调用、并行化处理（预期性能提升 5-10 倍）
+  - **质量保证**：建立测试体系（pytest，目标覆盖率 80%）
+  - **用户体验**：实时进度反馈、细粒度错误恢复、简化配置（预设模板）
+  - **高级功能**：智能版本检测、AI 写作风格评分、插件化架构
+  - **分阶段实施计划**：5 个阶段，预计 8-11 周
+
 - 新增 `transfer_old_latex_to_new` 工程化落地优化计划：`plans/v202601080843.md`
 - **transfer_old_latex_to_new（MVP 可执行闭环）**
   - 新增可执行脚本入口：`skills/transfer_old_latex_to_new/scripts/run.py`（`analyze/apply/compile/restore`）

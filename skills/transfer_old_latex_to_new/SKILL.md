@@ -428,6 +428,18 @@ result = apply_plan(old_project, new_project, plan, config, security, backup_roo
 
 ---
 
+---
+
+## 📋 版本与变更
+
+**当前版本**: v1.2.0（与 [config.yaml](config.yaml) 同步）
+
+**变更记录**: 见根级 [CHANGELOG.md](../../../CHANGELOG.md)
+
+**优化计划**: v1.3.0 优化方案见 [plans/v202601081002.md](plans/v202601081002.md)
+
+---
+
 **最后更新**: 2026-01-08
 **维护者**: AI Agent (Claude Code)
 **许可证**: MIT

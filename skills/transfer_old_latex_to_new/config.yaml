@@ -1,6 +1,44 @@
 # transfer_old_latex_to_new 智能迁移技能配置文件
-# version: 1.0
-# last_updated: 2026-01-05
+# version: 1.2.0
+# last_updated: 2026-01-08
+#
+# 优化计划: v1.3.0 优化方案见 plans/v202601081002.md
+
+# =============================================================================
+# 预设模板（简化配置使用）
+# =============================================================================
+profiles:
+  quick:
+    description: "快速模式（适合小项目，<20 个文件）"
+    ai:
+      batch_mode: false
+      max_workers: 2
+    cache:
+      enabled: false
+    optimization:
+      max_rounds: 3
+
+  balanced:
+    description: "平衡模式（适合中型项目，20-100 个文件）"
+    ai:
+      batch_mode: true
+      batch_size: 10
+      max_workers: 4
+    cache:
+      enabled: true
+    optimization:
+      max_rounds: 5
+
+  thorough:
+    description: "精确模式（适合大型项目，>100 个文件）"
+    ai:
+      batch_mode: true
+      batch_size: 20
+      max_workers: 8
+    cache:
+      enabled: true
+    optimization:
+      max_rounds: 7
 
 # =============================================================================
 # 迁移核心参数
@@ -15,6 +53,7 @@ migration:
   backup_mode: "snapshot"          # 备份模式: snapshot(快照)/copy(复制)/none(跳过)
   backup_location: "runs"          # 备份位置: runs(默认，输出到 runs/<run_id>/backup/)/custom(自定义路径)
   keep_backup_days: 30             # 自动清理备份保留天数
+  fine_grained_rollback: true      # 细粒度回滚（支持单文件恢复，v1.3.0）
 
   # 迁移模式（AI自动决策，此处为默认值）
   default_strategy: "smart"        # smart(智能)/conservative(保守)/aggressive(激进)
@@ -78,6 +117,16 @@ compilation:
   total_timeout: 600               # 总编译超时(秒)
 
 # =============================================================================
+# 缓存配置（v1.3.0 新增）
+# =============================================================================
+cache:
+  enabled: true                    # 启用缓存
+  strategy: "layered"              # 分层策略: layered(三层)/simple(单层)/none(禁用)
+  memory_max_size: 1000            # 内存缓存最大条目数
+  disk_db_path: "cache/mapping_cache.db"  # 磁盘缓存路径（相对 runs/<run_id>/）
+  ttl_days: 30                     # 缓存过期天数
+
+# =============================================================================
 # AI推理参数
 # =============================================================================
 ai:
@@ -85,6 +134,12 @@ ai:
   primary_model: "claude-opus-4-5" # 首选模型（用于复杂推理）
   fallback_model: "claude-sonnet-4-5"  # 降级模型（用于简单任务）
   embedding_model: "text-embedding-3-small"  # 嵌入模型（用于相似度计算）
+
+  # 批量调用配置（v1.3.0 新增）
+  batch_mode: true                 # 启用批量模式
+  batch_size: 10                   # 每批处理数量
+  max_concurrent_batches: 3        # 最大并发批次数
+  max_workers: 4                   # 最大并行 worker 数（默认 CPU 核心数）
 
   # 生成参数
   temperature: 0.3                 # 生成温度（低温度=更确定性的输出）
@@ -344,7 +399,7 @@ debug:
   save_intermediate_json: true       # 保存所有中间JSON文件
   log_ai_decisions: true             # 记录AI决策过程
   verbose_error_messages: true       # 详细错误信息
-  performance_profiling: false       # 性能分析
+  performance_profiling: true        # 性能分析（v1.3.0 启用）
 
 # =============================================================================
 # 版本兼容性
@@ -365,6 +420,30 @@ compatibility:
 
   # 不兼容的版本对
   incompatible_pairs: []
+
+  # 自动版本检测（v1.3.0 新增）
+  auto_detect: true                 # 自动检测项目版本
+  warn_on_unsupported: true         # 遇到不支持版本时警告
+
+# =============================================================================
+# 插件系统（v1.3.0 新增）
+# =============================================================================
+plugins:
+  enabled: false                    # 插件系统开关（默认关闭）
+  plugin_dir: "plugins"             # 插件目录
+  auto_load: true                   # 自动加载插件
+
+# =============================================================================
+# 写作风格评分（v1.3.0 新增）
+# =============================================================================
+style_scoring:
+  enabled: true                     # 启用写作风格评分
+  criteria:
+    - "clarity"                     # 清晰度
+    - "conciseness"                 # 简洁性
+    - "coherence"                   # 连贯性
+    - "academic_tone"               # 学术性
+  threshold: 0.75                   # 最低质量阈值（低于此值会警告）
 
 # =============================================================================
 # 元数据
