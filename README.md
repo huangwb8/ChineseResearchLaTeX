@@ -81,7 +81,7 @@
 - 复杂重构：GPT-5.2 High（稳定输出，适合长任务）
 - 紧急救援：Claude 4.5 Opus（最强推理能力）
 
-> 💡 **API 获取建议**：如果您还没有可用的 API，推荐使用 [我的专属邀请链接](https://x.dogenet.win/i/kUOGvGyo) 获取稳定、高质量的 API 服务。
+> 💡 **API 获取建议**：如果您还没有可用的 API，推荐使用 [我的专属邀请链接](https://x.dogenet.win/i/kUOGvGyo) 获取稳定、高质量的 API 服务。如果您累计充值满4美元（约 20 元人民币）后填写邀请码，我们均可获得 20 美元 ClaudeCode 专用抵扣额度。此额度仅能通过[指定活动端点](https://apic1.ohmycdn.com/api/v1/ai/openai/cc-omg)使用，额度有效期为 60 天。
 
 ---
 
