@@ -39,6 +39,8 @@
 
 - 新增迁移验证记录：`tests/v202601081624/TEST_REPORT.md`
 
+- 新增 NSFC 2026 新模板写作 Skill 迁移建议计划（已脱敏）：`plans/v202601081910.md`
+
 - 新增 `transfer_old_latex_to_new` v1.3.0 详细改进计划：`plans/v202601081102.md`
   - **核心修复**：移除所有 AI 功能占位符，实现真实的 AI 集成
   - **AI 集成层**：创建 `core/ai_integration.py`，利用 Claude Code/Codex 当前环境（无需额外配置）
