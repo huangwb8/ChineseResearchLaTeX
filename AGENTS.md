@@ -63,9 +63,6 @@ ChineseResearchLaTeX/
 │   ├── NSFC_General/      # 面上项目模板
 │   ├── NSFC_Local/        # 地区项目模板
 │   └── NSFC_Young/        # 青年基金模板
-├── scripts/               # 开发辅助脚本
-│   ├── README.md
-│   └── build_all.py
 ├── references/            # 项目辅助文档
 │   ├── README.md
 │   └── latex-writing-guide.md
@@ -74,6 +71,8 @@ ChineseResearchLaTeX/
 │   └── make_latex_model/
 │       ├── SKILL.md
 │       └── config.yaml
+├── plans/                 # 计划文档（可选）
+├── tests/                 # 测试/验证记录（可选）
 ├── config.yaml            # 项目配置文件
 ├── CLAUDE.md              # Claude Code 项目指令
 ├── AGENTS.md              # OpenAI Codex 项目指令
@@ -81,6 +80,8 @@ ChineseResearchLaTeX/
 ├── README.md              # 项目说明
 └── license.txt            # 许可证
 ```
+
+> **说明**：本仓库当前不维护根级 `scripts/` 目录；可执行脚本主要随各个 Skill 提供（如 `skills/*/scripts/`）。当需要“批量检查/编译/验证”时，优先查阅对应 Skill 的 `README.md` / `scripts/README.md`。
 
 ## Codex CLI 特定说明
 

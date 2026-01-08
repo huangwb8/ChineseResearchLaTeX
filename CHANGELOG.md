@@ -10,6 +10,11 @@
 
 ### Changed（变更）
 
+- 更新 [README.md](README.md)：在“AI 模型配置建议”中补充 Claude Code + Claude 4.5 Opus “比较昂贵”的提示
+- 更新 [AGENTS.md](AGENTS.md)：修正目录结构，移除不存在的根级 `scripts/`，并说明脚本主要位于 `skills/*/scripts/`
+- 更新 [CLAUDE.md](CLAUDE.md)：修正目录结构，移除不存在的根级 `scripts/`，并说明脚本主要位于 `skills/*/scripts/`
+- 更新 `skills/make_latex_model/README.md`：补充“优先用 Prompt 调用 Skill”的推荐用法，并将脚本流程作为备选
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位
@@ -36,6 +41,8 @@
   - 运行更干净：脚本默认不写 `__pycache__`（避免在项目目录产生中间文件）
 
 ### Added（新增）
+
+- 新增 `make_latex_model` 入口文档：`skills/make_latex_model/README.md`
 
 - 新增迁移验证记录：`tests/v202601081624/TEST_REPORT.md`
 
