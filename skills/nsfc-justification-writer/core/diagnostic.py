@@ -31,6 +31,9 @@ class Tier1Report:
 class DiagnosticReport:
     tier1: Tier1Report
     tier2: Optional[Dict[str, Any]] = None
+    dimension_coverage: Optional[Dict[str, Any]] = None
+    boastful_expressions: Optional[Dict[str, Any]] = None
+    word_target: Optional[Dict[str, Any]] = None
     notes: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -48,6 +51,9 @@ class DiagnosticReport:
                 "avoid_commands_hits": self.tier1.avoid_commands_hits,
             },
             "tier2": self.tier2,
+            "dimension_coverage": self.dimension_coverage,
+            "boastful_expressions": self.boastful_expressions,
+            "word_target": self.word_target,
             "notes": self.notes,
         }
 
@@ -69,7 +75,7 @@ def _check_structure(text: str, rule: StructureRule) -> tuple[bool, int, List[st
 
 def _check_quality(text: str, rule: QualityRule) -> tuple[List[str], List[str]]:
     t = strip_comments(text)
-    forbidden_hits = [p for p in rule.forbidden_phrases if p and (p in t)]
+    forbidden_hits = [p for p in rule.high_risk_examples if p and (p in t)]
     cmd_hits = [c for c in rule.avoid_commands if c and (c in t)]
     return forbidden_hits, cmd_hits
 
@@ -132,7 +138,7 @@ def format_tier1(report: Tier1Report) -> str:
     lines.append(f"- ℹ️ 字数统计（中文字符，不含注释）：{report.word_count}")
 
     if report.forbidden_phrases_hits:
-        lines.append(f"- ⚠️ 不可核验表述：{', '.join(report.forbidden_phrases_hits)}")
+        lines.append(f"- ⚠️ 高风险表述（示例命中）：{', '.join(report.forbidden_phrases_hits)}")
     if report.avoid_commands_hits:
         lines.append(f"- ⚠️ 可能破坏模板的命令：{', '.join(report.avoid_commands_hits)}")
 

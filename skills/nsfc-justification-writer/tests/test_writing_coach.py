@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from core.word_target import WordTargetSpec
 from core.writing_coach import CoachInput, _fallback_markdown, _infer_stage
 
 
@@ -52,9 +53,16 @@ def test_infer_stage_final_when_ready() -> None:
 
 
 def test_fallback_markdown_contains_actionable_blocks() -> None:
-    inp = CoachInput(stage="draft", info_form_text="", tex_text="x", tier1={"structure_ok": True, "citation_ok": True, "word_count": 1000}, term_matrix_md="")
+    inp = CoachInput(
+        stage="draft",
+        info_form_text="",
+        tex_text="x",
+        tier1={"structure_ok": True, "citation_ok": True, "word_count": 1000},
+        term_matrix_md="",
+        word_target=WordTargetSpec(target=4000, tolerance=200, source="config_default"),
+        dimension_coverage_md="- ⚠️ 内容维度覆盖度：0/4\n  - ❌ 价值与必要性",
+    )
     md = _fallback_markdown(inp, "draft")
     assert "## 本轮只做三件事" in md
     assert "## 需要你补充/确认的问题" in md
     assert "## 下一步可直接复制的写作提示词" in md
-

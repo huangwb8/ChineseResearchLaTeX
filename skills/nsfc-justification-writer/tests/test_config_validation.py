@@ -28,7 +28,7 @@ def test_validate_config_reports_type_errors(tmp_path: Path) -> None:
     }
     errs = validate_config(skill_root=tmp_path, config=bad)
     assert any("targets.bib_globs" in e for e in errs)
-    assert any("structure.expected_subsubsections" in e for e in errs)
+    assert any("structure.(expected_subsubsections|recommended_subsubsections)" in e for e in errs)
     assert any("structure.min_subsubsection_count" in e for e in errs)
     assert any("ai.tier2_chunk_size" in e for e in errs)
 

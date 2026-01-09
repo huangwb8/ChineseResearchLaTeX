@@ -11,9 +11,11 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .ai_integration import AIIntegration
 from .diagnostic import run_tier1
+from .dimension_coverage import format_dimension_coverage_markdown
 from .io_utils import read_text_streaming
 from .prompt_templates import get_prompt
 from .term_consistency import CrossChapterValidator, format_term_matrices_markdown
+from .word_target import WordTargetSpec, resolve_word_target
 
 WritingStage = Literal["auto", "skeleton", "draft", "revise", "polish", "final"]
 
@@ -25,15 +27,27 @@ class CoachInput:
     tex_text: str
     tier1: Dict[str, Any]
     term_matrix_md: str
+    word_target: WordTargetSpec
+    dimension_coverage_md: str
 
 
-def _infer_stage(*, tex_text: str, tier1: Dict[str, Any], word_target: int, tol: int) -> WritingStage:
+def _infer_stage(
+    *,
+    tex_text: str,
+    tier1: Dict[str, Any],
+    word_target: int,
+    tol: int,
+    fallback_rules: Optional[Dict[str, Any]] = None,
+) -> WritingStage:
+    rules = fallback_rules or {}
+    draft_ratio = float(rules.get("draft_threshold_ratio", 0.4))
+    draft_min_chars = int(rules.get("draft_min_chars", 600))
     if not tex_text.strip():
         return "skeleton"
     if not bool(tier1.get("structure_ok")):
         return "skeleton"
     wc = int(tier1.get("word_count", 0))
-    if wc < max(int(word_target * 0.4), 600):
+    if wc < max(int(word_target * draft_ratio), draft_min_chars):
         return "draft"
     if not bool(tier1.get("citation_ok")) or tier1.get("forbidden_phrases_hits") or tier1.get("avoid_commands_hits"):
         return "revise"
@@ -42,7 +56,7 @@ def _infer_stage(*, tex_text: str, tier1: Dict[str, Any], word_target: int, tol:
     return "final"
 
 
-def _suggest_questions(*, stage: WritingStage, tier1: Dict[str, Any]) -> List[str]:
+def _suggest_questions(*, stage: WritingStage, tier1: Dict[str, Any], dimension_coverage_md: str) -> List[str]:
     base = [
         "你的一句话问题定义是什么（评审听得懂的版本）？",
         "现有方案的 2–4 条瓶颈分别是什么（尽量可量化）？",
@@ -50,6 +64,8 @@ def _suggest_questions(*, stage: WritingStage, tier1: Dict[str, Any]) -> List[st
         "你准备如何验证（数据/指标/对照/消融）？",
         "本项目相对现有工作的差异化切口是什么？",
     ]
+    if "缺失维度" in dimension_coverage_md:
+        base.append("哪些维度缺失？请优先补齐“价值/现状/科学问题/切入点”对应段落。")
     if stage in {"skeleton", "draft"}:
         base.append("四个小标题是否要沿用模板默认（研究背景/现状/局限/切入点）？如要改标题，请明确新标题列表。")
     if not bool(tier1.get("citation_ok", True)):
@@ -84,7 +100,7 @@ def _copyable_prompt(*, stage: WritingStage) -> str:
 
 
 def _fallback_markdown(inp: CoachInput, stage: WritingStage) -> str:
-    qs = _suggest_questions(stage=stage, tier1=inp.tier1)
+    qs = _suggest_questions(stage=stage, tier1=inp.tier1, dimension_coverage_md=inp.dimension_coverage_md)
     tasks = {
         "skeleton": [
             "补齐 4 个 \\subsubsection 标题骨架（先不追求字数）。",
@@ -129,8 +145,85 @@ def _fallback_markdown(inp: CoachInput, stage: WritingStage) -> str:
         "```",
         _copyable_prompt(stage=stage).rstrip(),
         "```",
+        "",
+        f"## 目标字数：{inp.word_target.target}（容差 ±{inp.word_target.tolerance}，来源：{inp.word_target.source}{'；线索：'+inp.word_target.evidence if inp.word_target.evidence else ''}）",
+        "",
+        "## 内容维度覆盖（价值/现状/科学问题/切入点）",
+        inp.dimension_coverage_md.strip(),
     ]
     return "\n".join(md).strip() + "\n"
+
+
+async def _infer_stage_auto(
+    *,
+    tex_text: str,
+    tier1: Dict[str, Any],
+    word_target: WordTargetSpec,
+    fallback_rules: Dict[str, Any],
+    ai: Optional[AIIntegration],
+    cache_dir: Optional[Path],
+    config: Dict[str, Any],
+) -> WritingStage:
+    fallback_stage = _infer_stage(
+        tex_text=tex_text,
+        tier1=tier1,
+        word_target=word_target.target,
+        tol=word_target.tolerance,
+        fallback_rules=fallback_rules,
+    )
+
+    coach_cfg = config.get("writing_coach", {}) or {}
+    if not bool(coach_cfg.get("enable_ai_stage_inference", True)):
+        return fallback_stage
+    ai_mode = str(coach_cfg.get("ai_inference_mode", "auto") or "auto").lower()
+    if ai is None or not ai.is_available():
+        if ai_mode == "ai_only":
+            return "auto"
+        return fallback_stage
+
+    prompt = f"""
+请分析以下立项依据文本，判断当前处于哪个写作阶段。
+
+写作阶段定义：
+1) skeleton（骨架）：刚起步，仅有结构框架，内容严重不足
+2) draft（草稿）：有基本内容，但逻辑不完整/论证不充分/需要大量补充
+3) revise（修订）：内容基本完整，但有问题（引用缺失/不可核验表述/逻辑跳跃）
+4) polish（润色）：内容完整且无重大质量问题，但字数不达标需要压缩/扩写
+5) final（定稿）：内容完整、质量合格、字数达标，可最终检查
+
+输入信息：
+- 当前字数：{tier1.get('word_count', 0)}（目标：{word_target.target}，容差：±{word_target.tolerance}）
+- 结构状态：{'✅ 完整' if tier1.get('structure_ok') else '❌ 不完整'}（小节数：{tier1.get('subsubsection_count', 0)}）
+- 引用状态：{'✅ 正常' if tier1.get('citation_ok') else '❌ 缺失引用'}
+- 质量问题：高风险表述 {tier1.get('forbidden_phrases_hits', [])}，危险命令 {tier1.get('avoid_commands_hits', [])}
+
+文本内容（去注释后，最多 3000 字）：{tex_text[:3000]}
+
+返回 JSON：
+{{
+  "stage": "skeleton|draft|revise|polish|final",
+  "confidence": 0.0,
+  "reasoning": "判断依据（2-3 句）",
+  "next_steps": ["下一步建议1", "下一步建议2", "下一步建议3"],
+  "blocked_by": ["引用缺失", "不可核验表述"]
+}}
+""".strip()
+
+    def _fallback() -> Dict[str, Any]:
+        return {"stage": fallback_stage}
+
+    obj = await ai.process_request(
+        task="infer_writing_stage",
+        prompt=prompt,
+        fallback=_fallback,
+        output_format="json",
+        cache_dir=cache_dir,
+    )
+    if isinstance(obj, dict):
+        stage = str(obj.get("stage") or "").strip()
+        if stage in {"skeleton", "draft", "revise", "polish", "final"}:
+            return stage  # type: ignore[return-value]
+    return fallback_stage
 
 
 async def coach_markdown(
@@ -171,18 +264,53 @@ async def coach_markdown(
     term_matrix_md = format_term_matrices_markdown(CrossChapterValidator(files=files, terminology_config=terminology_cfg).build())
 
     wc_cfg = config.get("word_count", {}) or {}
-    word_target = int(wc_cfg.get("target", 4000))
-    tol = int(wc_cfg.get("tolerance", 200))
+    word_spec = resolve_word_target(
+        config=config,
+        user_intent_text="",
+        info_form_text=info_form_text,
+    )
 
-    auto_stage = _infer_stage(tex_text=tex_text, tier1=tier1, word_target=word_target, tol=tol)
-    chosen_stage: WritingStage = auto_stage if stage == "auto" else stage
-
-    inp = CoachInput(stage=chosen_stage, info_form_text=info_form_text, tex_text=tex_text, tier1=tier1, term_matrix_md=term_matrix_md)
+    coach_cfg = config.get("writing_coach", {}) or {}
+    fallback_rules = coach_cfg.get("fallback_rules", {}) if isinstance(coach_cfg.get("fallback_rules"), dict) else {}
 
     ai_obj = ai
     if ai_obj is None:
         ai_cfg = config.get("ai", {}) or {}
         ai_obj = AIIntegration(enable_ai=bool(ai_cfg.get("enabled", True)), config=config)
+
+    ai_cfg = config.get("ai", {}) or {}
+    cache_dir = (skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+
+    auto_stage = await _infer_stage_auto(
+        tex_text=tex_text,
+        tier1=tier1,
+        word_target=word_spec,
+        fallback_rules=fallback_rules,
+        ai=ai_obj,
+        cache_dir=cache_dir,
+        config=config,
+    )
+    chosen_stage: WritingStage = auto_stage if stage == "auto" else stage
+
+    # 内容维度覆盖（尽量不失败）
+    dimension_md = ""
+    try:
+        from .dimension_coverage import DimensionCoverageAI
+
+        dim_obj = await DimensionCoverageAI(ai_obj).check(tex_text=tex_text, cache_dir=cache_dir)
+        dimension_md = format_dimension_coverage_markdown(dim_obj)
+    except Exception:
+        dimension_md = "（未启用内容维度覆盖检查）"
+
+    inp = CoachInput(
+        stage=chosen_stage,
+        info_form_text=info_form_text,
+        tex_text=tex_text,
+        tier1=tier1,
+        term_matrix_md=term_matrix_md,
+        word_target=word_spec,
+        dimension_coverage_md=dimension_md,
+    )
 
     prompt = get_prompt(
         name="writing_coach",
@@ -203,6 +331,8 @@ async def coach_markdown(
         "info_form": (info_form_text or "").strip(),
         "tier1": tier1,
         "term_matrix": (term_matrix_md or "").strip(),
+        "word_target": {"target": word_spec.target, "tolerance": word_spec.tolerance, "source": word_spec.source},
+        "dimension_coverage": dimension_md,
         "tex": (tex_text or "")[:12000],
     }
     filled = prompt.format(

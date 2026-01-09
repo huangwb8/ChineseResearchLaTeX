@@ -14,10 +14,12 @@ from .config_loader import get_runs_dir, load_config
 from .diagnostic import DiagnosticReport, format_tier1, run_tier1
 from .errors import MissingCitationKeysError, SectionNotFoundError, TargetFileNotFoundError
 from .editor import ApplyResult, apply_new_content
+from .dimension_coverage import DimensionCoverageAI, format_dimension_coverage_markdown
 from .example_matcher import recommend_examples_markdown
 from .io_utils import iter_text_chunks_by_subsubsection_mark, read_text_streaming
 from .latex_parser import match_title_via_ai, replace_subsubsection_body_hybrid, suggest_titles
 from .observability import Observability, ensure_run_dir, make_run_id
+from .boastful_expression_checker import BoastfulExpressionAI
 from .reference_validator import check_citations
 from .security import build_write_policy, resolve_target_path, validate_write_target
 from .term_consistency import term_consistency_report
@@ -26,6 +28,7 @@ from .prompt_templates import get_prompt, TIER2_DIAGNOSTIC_PROMPT
 from .review_advice import generate_review_markdown
 from .writing_coach import coach_markdown
 from .quality_gate import check_new_body_quality
+from .word_target import resolve_word_target
 
 
 @dataclass(frozen=True)
@@ -112,9 +115,48 @@ class HybridCoordinator:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
         tex = read_text_streaming(target).text if target.exists() else ""
+        info_form_text = ""
+        for candidate in [
+            project_root / "info_form.md",
+            project_root / "references" / "info_form.md",
+        ]:
+            if candidate.exists():
+                try:
+                    info_form_text = candidate.read_text(encoding="utf-8", errors="ignore")
+                    break
+                except Exception:
+                    continue
+        word_spec = resolve_word_target(config=self.config, user_intent_text="", info_form_text=info_form_text)
         tier1 = run_tier1(tex_text=tex, project_root=project_root, config=self.config)
-        report = DiagnosticReport(tier1=tier1, tier2=None, notes=[])
+        report = DiagnosticReport(
+            tier1=tier1,
+            tier2=None,
+            dimension_coverage=None,
+            boastful_expressions=None,
+            word_target={"target": word_spec.target, "tolerance": word_spec.tolerance, "source": word_spec.source, "evidence": word_spec.evidence},
+            notes=[],
+        )
         self.obs.add("diagnose.tier1", **report.to_dict()["tier1"])
+
+        ai_cfg = self.config.get("ai", {}) or {}
+        cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+
+        # 内容维度覆盖检查（AI 不可用时自动回退启发式）
+        if (self.config.get("structure", {}) or {}).get("enable_dimension_coverage_check", False):
+            try:
+                report.dimension_coverage = asyncio.run(DimensionCoverageAI(self.ai).check(tex_text=tex, cache_dir=cache_dir, fresh=bool(tier2_fresh)))
+            except Exception:
+                report.dimension_coverage = None
+
+        # 吹牛式表述检查（AI 语义判断）
+        quality_cfg = self.config.get("quality", {}) or {}
+        if quality_cfg.get("enable_ai_judgment", True):
+            try:
+                report.boastful_expressions = asyncio.run(
+                    BoastfulExpressionAI(self.ai).check(tex_text=tex, cache_dir=cache_dir, fresh=bool(tier2_fresh))
+                )
+            except Exception:
+                report.boastful_expressions = None
 
         if not include_tier2:
             return report
@@ -131,10 +173,8 @@ class HybridCoordinator:
                 config=self.config,
                 variant=str(self.config.get("active_preset", "") or "").strip() or None,
             )
-            ai_cfg = self.config.get("ai", {}) or {}
             max_chars = int(tier2_chunk_size or ai_cfg.get("tier2_chunk_size", 12000))
             max_chunks = int(tier2_max_chunks or ai_cfg.get("tier2_max_chunks", 20))
-            cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
             chunks: List[str]
             # 超大文件：优先流式分块，避免一次性加载后再切块造成峰值内存
             if target.exists() and int(target.stat().st_size) > 5 * 1024 * 1024:
@@ -202,6 +242,29 @@ class HybridCoordinator:
 
     def format_diagnose(self, report: DiagnosticReport) -> str:
         out = ["诊断结果：", format_tier1(report.tier1).rstrip()]
+        if report.word_target:
+            tgt = report.word_target
+            src = tgt.get("source", "")
+            ev = tgt.get("evidence", "")
+            out.append(f"- 🎯 目标字数：{tgt.get('target')}（容差 ±{tgt.get('tolerance')}，来源：{src}{'，线索：'+ev if ev else ''}）")
+        if report.dimension_coverage:
+            out.append("")
+            out.append("内容维度覆盖（价值/现状/科学问题/切入点）：")
+            out.append(format_dimension_coverage_markdown(report.dimension_coverage).rstrip())
+        if report.boastful_expressions:
+            issues = report.boastful_expressions.get("issues", []) if isinstance(report.boastful_expressions, dict) else []
+            if issues:
+                out.append("")
+                out.append("可能引起评审不适的表述（AI 语义判断）：")
+                for it in issues[:6]:
+                    if not isinstance(it, dict):
+                        continue
+                    cat = str(it.get("category", "") or "")
+                    txt = str(it.get("text", "") or "")
+                    reason = str(it.get("reason", "") or "")
+                    out.append(f"- [{cat}] {txt}")
+                    if reason:
+                        out.append(f"  - 原因：{reason}")
         if report.tier2:
             out.append("")
             out.append("Tier2（AI 语义分析）：")
@@ -289,7 +352,9 @@ class HybridCoordinator:
         quality_cfg = self.config.get("quality", {}) or {}
         strict_on_apply = bool(quality_cfg.get("strict_on_apply", False)) or bool(strict_quality)
         if strict_on_apply:
-            qr = check_new_body_quality(new_body=new_body, config=self.config)
+            ai_cfg = self.config.get("ai", {}) or {}
+            cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+            qr = check_new_body_quality(new_body=new_body, config=self.config, ai=self.ai, cache_dir=cache_dir)
             if not qr.ok:
                 from .errors import QualityGateError
 
@@ -321,8 +386,26 @@ class HybridCoordinator:
         wc_cfg = self.config.get("word_count", {}) or {}
         used_mode = str(mode or wc_cfg.get("mode", "cjk_only")).strip() or "cjk_only"
         current = count_cjk_chars(tex, mode=used_mode).cjk_count
-        target_n = int(wc_cfg.get("target", 4000))
-        tol = int(wc_cfg.get("tolerance", 200))
+
+        info_form_text = ""
+        for candidate in [
+            project_root / "info_form.md",
+            project_root / "references" / "info_form.md",
+        ]:
+            if candidate.exists():
+                try:
+                    info_form_text = candidate.read_text(encoding="utf-8", errors="ignore")
+                    break
+                except Exception:
+                    continue
+
+        word_spec = resolve_word_target(
+            config=self.config,
+            user_intent_text="",
+            info_form_text=info_form_text,
+        )
+        target_n = int(word_spec.target)
+        tol = int(word_spec.tolerance)
         status = "within_tolerance" if abs(current - target_n) <= tol else ("need_expand" if current < target_n else "need_compress")
         self.obs.add("wordcount", current=current, target=target_n, tolerance=tol, status=status)
         return {
@@ -331,6 +414,8 @@ class HybridCoordinator:
             "mode_definition": describe_word_count_mode(used_mode),
             "target": target_n,
             "tolerance": tol,
+            "source": word_spec.source,
+            "evidence": word_spec.evidence,
             "status": status,
             "delta": current - target_n,
         }

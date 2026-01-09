@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.6.1
+  version: 0.7.0
   template_year: "2026"
   category: writing
 
@@ -23,12 +23,12 @@ parameters:
     type: integer
     required: false
     default: 4000
-    description: 目标字数（中文字符数，不含 LaTeX 命令/注释）
+    description: 目标字数（中文字符数，不含 LaTeX 命令/注释；兜底值，优先从用户意图/信息表/学科预设解析）
   word_count_tolerance:
     type: integer
     required: false
     default: 200
-    description: 允许偏差范围（±200 字）
+    description: 允许偏差范围（兜底值；若用户给出区间/±范围则优先使用）
 
 targets:
   justification_tex: extraTex/1.1.立项依据.tex
@@ -59,15 +59,19 @@ references:
   allow_missing_citations: false
 
 structure:
-  expected_subsubsections:
+  # 仅作为“推荐模板”，不再用作严格标题匹配的硬性规则（标题是形式，内容维度是本质）
+  recommended_subsubsections:
     - 研究背景
     - 国内外研究现状
     - 现有研究的局限性
     - 研究切入点
-  strict_title_match: true
+  # 默认 false：允许用户改写标题用词（结构检查不再机械匹配标题字符串）
+  strict_title_match: false
   # strict_title_match=false 时启用“模糊标题匹配”（必要时会调用 AI 在候选标题中做语义匹配）
   min_title_similarity: 0.6
   min_subsubsection_count: 4
+  # 启用“内容维度覆盖检查”（不依赖标题用词；AI 不可用时回退启发式）
+  enable_dimension_coverage_check: true
 
 guardrails:
   allowed_write_files:
@@ -100,11 +104,17 @@ quality_contract:
     - 幻觉引用（未核验即给出作者/年份/期刊/DOI）
 
 quality:
-  forbidden_phrases:
+  # 高风险示例（用于快速提示；不穷举同义词变体）
+  high_risk_examples:
     - 国际领先
     - 国内首次
     - 世界领先
     - 填补空白
+  # 默认 false：示例词命中仅警告，不作为阻断（避免“玩文字游戏”）
+  strict_mode: false
+  # 启用 AI 语义判断（识别“可能引起评审不适的表述”）
+  enable_ai_judgment: true
+  ai_judgment_mode: semantic  # semantic | keyword（兜底）
   avoid_commands:
     - "\\section"
     - "\\subsection"
@@ -114,6 +124,7 @@ quality:
 word_count:
   target: 4000
   tolerance: 200
+  _note: "4000 字为示例兜底值；实际目标字数优先从用户意图/信息表/学科预设动态解析"
   # cjk_only: 仅剔除注释后统计 CJK 字符数（默认）
   # cjk_strip_commands: 粗剔除命令/数学环境/类代码环境后统计（更接近“正文字符数”的估计）
   mode: cjk_only
@@ -123,6 +134,8 @@ terminology:
   # ai:   强制尝试 AI（不可用则回退）
   # legacy: 仅使用硬编码维度/别名组
   mode: auto
+  enable_ai_semantic_check: true
+  ai_mode: auto  # auto | semantic_only | legacy_only
   ai:
     enabled: true
     max_chars: 20000
@@ -133,3 +146,11 @@ terminology:
       准确率: ["准确率", "精确度"]
     术语:
       深度学习: ["深度学习", "DL"]
+
+writing_coach:
+  # 默认启用 AI 阶段推断（AI 不可用时自动回退到硬编码规则）
+  enable_ai_stage_inference: true
+  ai_inference_mode: auto  # auto | ai_only | fallback
+  fallback_rules:
+    draft_threshold_ratio: 0.4
+    draft_min_chars: 600

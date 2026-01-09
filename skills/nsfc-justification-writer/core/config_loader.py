@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence
 DEFAULT_CONFIG: Dict[str, Any] = {
     "skill_info": {
         "name": "nsfc-justification-writer",
-        "version": "0.6.1",
+        "version": "0.7.0",
         "template_year": "2026",
         "category": "writing",
     },
@@ -27,9 +27,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "bib_globs": ["references/*.bib", "references/**/*.bib"],
     },
     "structure": {
-        "expected_subsubsections": ["研究背景", "国内外研究现状", "现有研究的局限性", "研究切入点"],
-        "strict_title_match": True,
+        "recommended_subsubsections": ["研究背景", "国内外研究现状", "现有研究的局限性", "研究切入点"],
+        "strict_title_match": False,
         "min_subsubsection_count": 4,
+        "enable_dimension_coverage_check": True,
     },
     # 安全关键项：即使 YAML 依赖缺失，也必须默认生效（避免“空策略”导致任意写入）。
     "guardrails": {
@@ -54,8 +55,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         ],
     },
     "quality": {
-        "forbidden_phrases": ["国际领先", "国内首次", "世界领先", "填补空白"],
+        "high_risk_examples": ["国际领先", "国内首次", "世界领先", "填补空白"],
         "avoid_commands": ["\\section", "\\subsection", "\\input", "\\include"],
+        "strict_mode": False,
+        "enable_ai_judgment": True,
+        "ai_judgment_mode": "semantic",
     },
     "ai": {
         "enabled": True,
@@ -75,10 +79,13 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "word_count": {
         "target": 4000,
         "tolerance": 200,
+        "_note": "4000 字为示例兜底值；实际目标字数优先从用户意图/信息表/学科预设动态解析",
         "mode": "cjk_only",
     },
     "terminology": {
         "mode": "auto",
+        "enable_ai_semantic_check": True,
+        "ai_mode": "auto",
         "ai": {
             "enabled": True,
             "max_chars": 20000,
@@ -88,6 +95,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             "指标": {"准确率": ["准确率", "精确度"]},
             "术语": {"深度学习": ["深度学习", "DL"]},
         },
+    },
+    "writing_coach": {
+        "enable_ai_stage_inference": True,
+        "ai_inference_mode": "auto",
+        "fallback_rules": {"draft_threshold_ratio": 0.4, "draft_min_chars": 600},
     },
 }
 
@@ -183,9 +195,14 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
     if not isinstance(structure, dict):
         err("structure 必须是 dict")
     else:
-        expected = structure.get("expected_subsubsections", [])
-        if not _is_seq_str(expected) or not expected:
-            err("structure.expected_subsubsections 必须是非空字符串列表")
+        expected = structure.get("expected_subsubsections", None)
+        recommended = structure.get("recommended_subsubsections", None)
+        if (expected is None) and (recommended is None):
+            err("structure.expected_subsubsections 或 structure.recommended_subsubsections 必须至少存在一个")
+        else:
+            seq = recommended if recommended is not None else expected
+            if not _is_seq_str(seq) or not seq:
+                err("structure.(expected_subsubsections|recommended_subsubsections) 必须是非空字符串列表")
         m = structure.get("min_subsubsection_count")
         if not isinstance(m, int) or m <= 0:
             err("structure.min_subsubsection_count 必须是正整数")
@@ -194,10 +211,18 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
     if not isinstance(quality, dict):
         err("quality 必须是 dict")
     else:
-        if not _is_seq_str(quality.get("forbidden_phrases", [])):
+        if "forbidden_phrases" in quality and not _is_seq_str(quality.get("forbidden_phrases", [])):
             err("quality.forbidden_phrases 必须是字符串列表")
+        if "high_risk_examples" in quality and not _is_seq_str(quality.get("high_risk_examples", [])):
+            err("quality.high_risk_examples 必须是字符串列表")
         if not _is_seq_str(quality.get("avoid_commands", [])):
             err("quality.avoid_commands 必须是字符串列表")
+        if "strict_mode" in quality and not isinstance(quality.get("strict_mode"), bool):
+            err("quality.strict_mode 必须是 bool")
+        if "enable_ai_judgment" in quality and not isinstance(quality.get("enable_ai_judgment"), bool):
+            err("quality.enable_ai_judgment 必须是 bool")
+        if "ai_judgment_mode" in quality and not isinstance(quality.get("ai_judgment_mode"), str):
+            err("quality.ai_judgment_mode 必须是 str")
 
     wc = config.get("word_count", {})
     if not isinstance(wc, dict):
@@ -242,8 +267,12 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
         err("terminology 必须是 dict")
     elif isinstance(terminology, dict):
         mode = str(terminology.get("mode", "auto")).strip().lower()
-        if mode not in {"auto", "ai", "legacy"}:
-            err("terminology.mode 必须是 auto|ai|legacy")
+        if mode not in {"auto", "ai", "legacy", "semantic_only", "legacy_only"}:
+            err("terminology.mode 必须是 auto|ai|legacy|semantic_only|legacy_only")
+        if "enable_ai_semantic_check" in terminology and not isinstance(terminology.get("enable_ai_semantic_check"), bool):
+            err("terminology.enable_ai_semantic_check 必须是 bool")
+        if "ai_mode" in terminology and not isinstance(terminology.get("ai_mode"), str):
+            err("terminology.ai_mode 必须是 str")
         ai_cfg = terminology.get("ai", {})
         if ai_cfg is not None and not isinstance(ai_cfg, dict):
             err("terminology.ai 必须是 dict")
@@ -266,6 +295,17 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
         elif "alias_groups" in terminology:
             if not _is_alias_groups(terminology.get("alias_groups")):
                 err("terminology.alias_groups 必须是 dict[str, list[str]]")
+
+    writing_coach = config.get("writing_coach")
+    if writing_coach is not None and not isinstance(writing_coach, dict):
+        err("writing_coach 必须是 dict")
+    elif isinstance(writing_coach, dict):
+        if "enable_ai_stage_inference" in writing_coach and not isinstance(writing_coach.get("enable_ai_stage_inference"), bool):
+            err("writing_coach.enable_ai_stage_inference 必须是 bool")
+        if "ai_inference_mode" in writing_coach and not isinstance(writing_coach.get("ai_inference_mode"), str):
+            err("writing_coach.ai_inference_mode 必须是 str")
+        if "fallback_rules" in writing_coach and not isinstance(writing_coach.get("fallback_rules"), dict):
+            err("writing_coach.fallback_rules 必须是 dict")
 
     return errors
 

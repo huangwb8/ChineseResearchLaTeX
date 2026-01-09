@@ -273,11 +273,17 @@ def term_consistency_report(
 ) -> str:
     terminology_cfg = config.get("terminology", {}) or {}
     mode = str(terminology_cfg.get("mode", "auto")).strip().lower()
+    alt_mode = str(terminology_cfg.get("ai_mode", "") or "").strip().lower()
+    if alt_mode in {"auto", "ai", "legacy", "legacy_only", "semantic_only"}:
+        mode = alt_mode
+    if mode == "legacy_only":
+        mode = "legacy"
+    enable_ai_semantic = bool(terminology_cfg.get("enable_ai_semantic_check", True))
     ai_cfg = terminology_cfg.get("ai", {}) if isinstance(terminology_cfg.get("ai", {}), dict) else {}
     ai_enabled = bool(ai_cfg.get("enabled", True))
     legacy_md = _legacy_report(files=files, terminology_config=terminology_cfg)
 
-    if mode == "legacy":
+    if (not enable_ai_semantic) or mode == "legacy":
         return legacy_md
 
     ai_obj = ai
@@ -289,4 +295,6 @@ def term_consistency_report(
     max_chars = int(ai_cfg.get("max_chars", 20000))
     obj = asyncio.run(TermConsistencyAI(ai_obj).check(files=files, max_chars=max_chars, cache_dir=cache_dir, fresh=fresh))
     ai_md = TermConsistencyAI.format_markdown(obj)
+    if mode == "semantic_only":
+        return ai_md
     return ai_md.rstrip() + "\n\n" + legacy_md

@@ -89,6 +89,16 @@
   - 文档补齐：新增 [docs/faq.md](skills/transfer_old_latex_to_new/docs/faq.md) 与 [docs/case_study_2025_to_2026.md](skills/transfer_old_latex_to_new/docs/case_study_2025_to_2026.md)
   - 运行更干净：脚本默认不写 `__pycache__`（避免在项目目录产生中间文件）
 
+## [0.7.0] - 2026-01-09
+
+### Added（新增）
+- **nsfc-justification-writer**：新增“内容维度覆盖检查”AI（价值/现状/科学问题/切入点），不依赖标题用词；新增“吹牛式表述”AI 语义识别（绝对化/填补空白/无依据夸大/自我定性），输出改写建议
+- **nsfc-justification-writer**：新增字数解析器（优先解析用户意图/信息表中的目标字数/区间/±容差，兜底才用配置），coach 在 `--stage auto` 支持 AI 阶段判断
+
+### Changed（变更）
+- **nsfc-justification-writer**：默认 `strict_title_match=false`，结构检查以“至少 4 小节 + 内容维度覆盖”为主；质量配置改为高风险示例提示 + 可选 AI 语义阻断，写入质量闸门在 AI 可用时叠加语义检查
+- **nsfc-justification-writer 文档**（README/SKILL）：同步新版工作流与能力亮点，明确 AI 依赖“原生智能环境”无需外部 API Key
+
 ### Added（新增）
 
 - 新增 `make_latex_model` 入口文档：`skills/make_latex_model/README.md`
