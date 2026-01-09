@@ -81,7 +81,13 @@ async def generate_review_markdown(
         ai_cfg = config.get("ai", {}) or {}
         ai_obj = AIIntegration(enable_ai=bool(ai_cfg.get("enabled", True)), config=config)
 
-    prompt = get_prompt(name="review_suggestions", default="", skill_root=skill_root, config=config)
+    prompt = get_prompt(
+        name="review_suggestions",
+        default="",
+        skill_root=skill_root,
+        config=config,
+        variant=str(config.get("active_preset", "") or "").strip() or None,
+    )
 
     def _fallback() -> str:
         return _fallback_review_markdown(report=report, dod_checklist=dod_checklist)
@@ -97,4 +103,3 @@ async def generate_review_markdown(
     )
     obj = await ai_obj.process_request(task="review_suggestions", prompt=filled, fallback=_fallback, output_format="text")
     return str(obj).strip() + "\n"
-

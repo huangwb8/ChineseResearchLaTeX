@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +14,8 @@ try:
     import yaml  # type: ignore
 except Exception:  # pragma: no cover - 允许在无 PyYAML 环境降级
     yaml = None
+
+from .ai_integration import AIIntegration
 
 
 @dataclass(frozen=True)
@@ -135,3 +139,139 @@ def format_example_recommendations(matches: List[ExampleMatch]) -> str:
         suffix = f"（{m.description}）" if m.description else ""
         lines.append(f"- {m.category}: {m.path}{suffix}")
     return "\n".join(lines).strip() + "\n"
+
+
+def _example_relpath(skill_root: Path, p: Path) -> str:
+    try:
+        return str(Path(p).resolve().relative_to(Path(skill_root).resolve()))
+    except Exception:
+        return str(Path(p).resolve())
+
+
+class ExampleRecommenderAI:
+    """
+    AI 主导的示例推荐（语义匹配），并提供可解释理由。
+    - AI 不可用时回退到关键词/类别启发式（recommend_examples）
+    """
+
+    def __init__(self, ai: AIIntegration) -> None:
+        self.ai = ai
+
+    async def recommend(
+        self,
+        *,
+        skill_root: Path,
+        query: str,
+        top_k: int = 3,
+        cache_dir: Optional[Path] = None,
+        fresh: bool = False,
+    ) -> List[Dict[str, Any]]:
+        skill_root = Path(skill_root).resolve()
+        items: List[Dict[str, Any]] = []
+        for category, path, meta in _iter_example_files(skill_root):
+            try:
+                tex = Path(path).read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                tex = ""
+            keywords = meta.get("keywords", []) if isinstance(meta, dict) else []
+            if not isinstance(keywords, list):
+                keywords = []
+            items.append(
+                {
+                    "relpath": _example_relpath(skill_root, path),
+                    "category": str(meta.get("category") or category),
+                    "keywords": [str(x) for x in keywords if str(x).strip()][:20],
+                    "description": str(meta.get("description", "") or "").strip(),
+                    "excerpt": (tex or "")[:600],
+                }
+            )
+
+        prompt = (
+            "你是示例推荐器。用户会给出一个主题/方向，请从候选示例中选择最相关的若干个。\n"
+            "要求：\n"
+            "1) 只输出 JSON（不要解释）\n"
+            "2) 只从候选 relpath 中选；不要编造不存在的示例\n"
+            "3) 给出简短推荐理由（1 句即可）\n\n"
+            f"用户查询：{query}\n\n"
+            "候选示例（JSON 数组，字段：relpath/category/keywords/description/excerpt）：\n"
+            f"{json.dumps(items, ensure_ascii=False, indent=2)[:24000]}\n\n"
+            "返回 JSON：\n"
+            "{\n"
+            '  "recommendations": [\n'
+            '    {"rank": 1, "relpath": "...", "title": "...(可选)", "reason": "..."}\n'
+            "  ]\n"
+            "}\n"
+        )
+
+        def _fallback() -> Dict[str, Any]:
+            return {"recommendations": []}
+
+        obj = await self.ai.process_request(
+            task="recommend_examples",
+            prompt=prompt,
+            output_format="json",
+            fallback=_fallback,
+            cache_dir=cache_dir,
+            fresh=fresh,
+        )
+        recs = obj.get("recommendations", []) if isinstance(obj, dict) else []
+        if not isinstance(recs, list):
+            return []
+
+        allowed = {it["relpath"] for it in items if isinstance(it.get("relpath"), str)}
+        out: List[Dict[str, Any]] = []
+        for r in recs[: max(int(top_k), 1)]:
+            if not isinstance(r, dict):
+                continue
+            rel = str(r.get("relpath", "") or "").strip()
+            if rel and rel in allowed:
+                out.append(
+                    {
+                        "rank": int(r.get("rank", len(out) + 1) or (len(out) + 1)),
+                        "relpath": rel,
+                        "reason": str(r.get("reason", "") or "").strip(),
+                        "title": str(r.get("title", "") or "").strip(),
+                    }
+                )
+        return out
+
+    @staticmethod
+    def format_markdown(recs: List[Dict[str, Any]]) -> str:
+        if not recs:
+            return "（未找到可用示例）\n"
+        lines = ["推荐示例："]
+        for r in recs:
+            rel = str(r.get("relpath", "") or "").strip()
+            reason = str(r.get("reason", "") or "").strip()
+            title = str(r.get("title", "") or "").strip()
+            suffix = f"（{title}）" if title else ""
+            if reason:
+                lines.append(f"- {rel}{suffix}：{reason}")
+            else:
+                lines.append(f"- {rel}{suffix}")
+        return "\n".join(lines).strip() + "\n"
+
+
+def recommend_examples_markdown(
+    *,
+    skill_root: Path,
+    query: str,
+    top_k: int = 3,
+    ai: Optional[AIIntegration] = None,
+    cache_dir: Optional[Path] = None,
+    fresh: bool = False,
+) -> str:
+    if ai is not None and ai.is_available():
+        recs = asyncio.run(
+            ExampleRecommenderAI(ai).recommend(
+                skill_root=Path(skill_root),
+                query=query,
+                top_k=top_k,
+                cache_dir=cache_dir,
+                fresh=fresh,
+            )
+        )
+        if recs:
+            return ExampleRecommenderAI.format_markdown(recs)
+    matches = recommend_examples(skill_root=Path(skill_root), query=query, top_k=top_k)
+    return format_example_recommendations(matches)

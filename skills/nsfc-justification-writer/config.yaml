@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.5.0
+  version: 0.6.0
   template_year: "2026"
   category: writing
 
@@ -66,6 +66,8 @@ structure:
     - 现有研究的局限性
     - 研究切入点
   strict_title_match: true
+  # strict_title_match=false 时启用“模糊标题匹配”（必要时会调用 AI 在候选标题中做语义匹配）
+  min_title_similarity: 0.6
   min_subsubsection_count: 4
 
 guardrails:
@@ -115,6 +117,13 @@ word_count:
   tolerance: 200
 
 terminology:
+  # auto: AI 可用则叠加 AI 语义检查，否则仅 legacy 规则矩阵
+  # ai:   强制尝试 AI（不可用则回退）
+  # legacy: 仅使用硬编码维度/别名组
+  mode: auto
+  ai:
+    enabled: true
+    max_chars: 20000
   dimensions:
     研究对象:
       研究对象: ["患者", "病例", "受试者", "样本"]

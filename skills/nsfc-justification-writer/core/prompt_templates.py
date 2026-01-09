@@ -115,24 +115,49 @@ def _read_text_if_exists(path: Path) -> Optional[str]:
     return None
 
 
+def _looks_like_path(s: str) -> bool:
+    t = (s or "").strip()
+    if not t:
+        return False
+    if "\n" in t or "\r" in t:
+        return False
+    if t.endswith((".txt", ".md")):
+        return True
+    # prompts/<name>.txt 或任意相对/绝对路径
+    return ("/" in t) or ("\\" in t)
+
+
 def get_prompt(
     *,
     name: str,
     default: str,
     skill_root: Optional[Path] = None,
     config: Optional[Dict[str, Any]] = None,
+    variant: Optional[str] = None,
 ) -> str:
     skill_root = (skill_root or _default_skill_root()).resolve()
     cfg = config or {}
     prompt_cfg = cfg.get("prompts", {}) or {}
-    override = prompt_cfg.get(name)
-    if override:
-        p = Path(str(override))
-        if not p.is_absolute():
-            p = (skill_root / p).resolve()
-        txt = _read_text_if_exists(p)
-        if txt:
-            return txt
+    override_key = name
+    if variant:
+        v = str(variant).strip()
+        if v:
+            override_key = f"{name}_{v}"
+            if override_key not in prompt_cfg:
+                # 常见：preset=medical/engineering，但用户用 medical_tier2_diagnostic 之类的命名
+                override_key = name
+
+    override = prompt_cfg.get(override_key) or prompt_cfg.get(name)
+    if isinstance(override, str) and override.strip():
+        if _looks_like_path(override):
+            p = Path(str(override))
+            if not p.is_absolute():
+                p = (skill_root / p).resolve()
+            txt = _read_text_if_exists(p)
+            if txt:
+                return txt
+        # 允许在 override.yaml / preset.yaml 里直接写多行 prompt
+        return override.strip() + "\n"
 
     # default location: prompts/<name>.txt
     txt = _read_text_if_exists((skill_root / "prompts" / f"{name}.txt").resolve())

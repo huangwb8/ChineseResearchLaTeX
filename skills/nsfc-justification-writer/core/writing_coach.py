@@ -11,8 +11,9 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .ai_integration import AIIntegration
 from .diagnostic import run_tier1
+from .io_utils import read_text_streaming
 from .prompt_templates import get_prompt
-from .term_consistency import build_term_matrix
+from .term_consistency import CrossChapterValidator, format_term_matrices_markdown
 
 WritingStage = Literal["auto", "skeleton", "draft", "revise", "polish", "final"]
 
@@ -146,7 +147,7 @@ async def coach_markdown(
     targets = config.get("targets", {}) or {}
     rel = str(targets.get("justification_tex", "extraTex/1.1.立项依据.tex"))
     target = (project_root / rel).resolve()
-    tex_text = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+    tex_text = read_text_streaming(target).text if target.exists() else ""
 
     tier1_obj = run_tier1(tex_text=tex_text, project_root=project_root, config=config)
     tier1 = {
@@ -166,8 +167,8 @@ async def coach_markdown(
     files = {"立项依据": target}
     for label, relpath in related.items():
         files[label] = (project_root / str(relpath)).resolve()
-    alias_groups = (config.get("terminology", {}) or {}).get("alias_groups", {}) or {}
-    term_matrix_md = build_term_matrix(files=files, alias_groups=alias_groups).to_markdown()
+    terminology_cfg = config.get("terminology", {}) or {}
+    term_matrix_md = format_term_matrices_markdown(CrossChapterValidator(files=files, terminology_config=terminology_cfg).build())
 
     wc_cfg = config.get("word_count", {}) or {}
     word_target = int(wc_cfg.get("target", 4000))
@@ -188,6 +189,7 @@ async def coach_markdown(
         default="",
         skill_root=skill_root,
         config=config,
+        variant=str(config.get("active_preset", "") or "").strip() or None,
     )
 
     def _fallback() -> str:

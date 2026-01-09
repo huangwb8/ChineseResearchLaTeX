@@ -47,6 +47,15 @@
   - 新增 `skills/nsfc-justification-writer/docs/workflows/`：补齐典型工作流文档（已有草稿迭代、引用/DOI 核验）
   - 更新 `skills/nsfc-justification-writer/tests/`：补齐 AI 集成/配置校验/分块与缓存/术语维度等测试用例
 
+- **nsfc-justification-writer v0.6.0** - 按 v202601091932 完成“AI 主导 + 优雅降级”的全缺陷修复
+  - 新增 `skills/nsfc-justification-writer/core/io_utils.py`：流式读取与按 `\\subsubsection` 边界分块（降低大文件峰值内存）
+  - 更新 `skills/nsfc-justification-writer/core/latex_parser.py`：替换正则解析为更稳健的结构解析（支持嵌套花括号/可选短标题/更可靠的注释剥离），并新增“标题候选 + AI 语义匹配”能力
+  - 更新 `skills/nsfc-justification-writer/core/hybrid_coordinator.py` 与 `skills/nsfc-justification-writer/scripts/run.py`：`apply-section` 增强错误提示与修复建议，新增 `--suggest-alias`；Tier2 对超大文件优先流式分块
+  - 更新 `skills/nsfc-justification-writer/core/term_consistency.py`、`skills/nsfc-justification-writer/core/writing_coach.py` 与 `skills/nsfc-justification-writer/config.yaml`：新增 `terminology.mode=auto|ai|legacy`，AI 可用时叠加语义一致性检查并自动回退到矩阵规则
+  - 更新 `skills/nsfc-justification-writer/core/prompt_templates.py` 与 `skills/nsfc-justification-writer/core/config_loader.py`：Prompt 支持“路径或多行内联文本”，并支持按 `--preset` 变体覆盖（如 `prompts.tier2_diagnostic_medical`）
+  - 更新 `skills/nsfc-justification-writer/core/example_matcher.py`：AI 语义示例推荐（带理由）+ 关键词 fallback
+  - 更新 `skills/nsfc-justification-writer/config.yaml`、`skills/nsfc-justification-writer/core/config_loader.py` 与 `skills/nsfc-justification-writer/SKILL.md`：版本升级至 v0.6.0，并同步文档
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位

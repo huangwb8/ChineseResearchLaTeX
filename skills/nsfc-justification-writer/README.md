@@ -74,6 +74,16 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \\
   --body-file /path/to/new_body.txt
 ```
 
+标题未命中时输出候选（便于修正 `--title`）：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py apply-section \\
+  --project-root projects/NSFC_Young \\
+  --title "现状" \\
+  --body-file /path/to/new_body.txt \\
+  --suggest-alias
+```
+
 可视化诊断报告（HTML）：
 
 ```bash
@@ -84,8 +94,8 @@ python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root p
 
 - **Q：为什么 `apply-section` 会拒绝写入？**  
   A：默认严格：若新正文里出现 `\\cite{...}` 但项目 `references/*.bib` 找不到对应 key，会拒绝写入以避免“幻觉引用”。先用 `refs` 生成提示词交给 `nsfc-bib-manager` 补齐后再写入。
-- **Q：我想按学科调整术语 alias_groups 怎么做？**  
-  A：先试 `--preset medical/engineering`，或写一个 `override.yaml` 覆盖 `terminology.alias_groups`。
+- **Q：我想按学科调整术语一致性检查怎么做？**  
+  A：先试 `--preset medical/engineering`，或写一个 `override.yaml` 覆盖 `terminology.dimensions`（或兼容的 `terminology.alias_groups`）。如需叠加 AI 语义检查，可设置 `terminology.mode: auto/ai`（AI 不可用时会自动回退到矩阵规则）。
 - **Q：行号怎么复制？**  
   A：HTML 报告里点击行号会复制 `Lxx`；`Shift+点击` 复制带锚点链接（便于讨论定位）。
 

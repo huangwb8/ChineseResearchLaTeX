@@ -18,10 +18,11 @@ sys.path.insert(0, str(skill_root_for_import))
 
 from core.config_loader import load_config, get_runs_dir, validate_config
 from core.bib_manager_integration import BibFixSuggestion
-from core.errors import MissingCitationKeysError, BackupNotFoundError
+from core.errors import BackupNotFoundError, MissingCitationKeysError, SectionNotFoundError, SkillError
 from core.html_report import render_diagnostic_html
 from core.hybrid_coordinator import HybridCoordinator
 from core.info_form import copy_info_form_template, interactive_collect_info_form, write_info_form_file
+from core.latex_parser import parse_subsubsections
 from core.observability import make_run_id
 from core.versioning import find_backup_for_run, list_runs, rollback_from_backup, unified_diff
 
@@ -208,16 +209,30 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
             allow_missing_citations=bool(args.allow_missing_citations),
         )
     except MissingCitationKeysError as e:
-        print("❌ 检测到缺失引用 bibkey（为避免幻觉引用，已拒绝写入）：", file=sys.stderr)
-        for k in e.missing_keys[:20]:
-            print(f"- {k}", file=sys.stderr)
-        print("建议：先补齐 .bib（或使用 nsfc-bib-manager 核验 DOI/条目）后再写入。", file=sys.stderr)
-        print("如你确实要忽略该检查，可加 --allow-missing-citations。", file=sys.stderr)
+        print(f"❌ {e}", file=sys.stderr)
+        if e.missing_keys:
+            print("\n缺失的 bibkey：", file=sys.stderr)
+            for k in e.missing_keys[:50]:
+                print(f"- {k}", file=sys.stderr)
+        if getattr(e, "fix_suggestion", ""):
+            print("\n💡 修复建议：", file=sys.stderr)
+            print(getattr(e, "fix_suggestion", ""), file=sys.stderr)
         return 2
-
-    if not result.changed:
-        print("未修改：未找到对应小标题，或新内容与原内容一致。")
-        return 1
+    except SectionNotFoundError as e:
+        print(f"❌ {e}", file=sys.stderr)
+        if getattr(e, "fix_suggestion", ""):
+            print("\n💡 修复建议：", file=sys.stderr)
+            print(getattr(e, "fix_suggestion", ""), file=sys.stderr)
+        if bool(getattr(args, "suggest_alias", False)):
+            target = coord.target_path(project_root=Path(args.project_root))
+            if target.exists():
+                tex = target.read_text(encoding="utf-8", errors="ignore")
+                titles = [s.title for s in parse_subsubsections(tex)]
+                if titles:
+                    print("\n可用的小标题（全部）：", file=sys.stderr)
+                    for t in titles[:80]:
+                        print(f"- {t}", file=sys.stderr)
+        return 2
 
     print(f"✅ 已写入：{result.target_path}")
     if result.backup_path:
@@ -463,6 +478,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_apply.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
     p_apply.add_argument("--log-json", action="store_true", help="写入 runs/.../logs/apply_result.json")
     p_apply.add_argument("--allow-missing-citations", action="store_true", help="允许存在缺失 bibkey 的 \\cite{...}（不推荐）")
+    p_apply.add_argument("--suggest-alias", action="store_true", help="当标题未命中时，输出可用标题候选（便于改 title）")
     p_apply.set_defaults(func=cmd_apply_section)
 
     p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + preset + override）")
@@ -477,6 +493,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         return int(args.func(args))
     except SystemExit:
         raise
+    except SkillError as e:
+        print(f"❌ {e}", file=sys.stderr)
+        if getattr(e, "fix_suggestion", ""):
+            print("\n💡 修复建议：", file=sys.stderr)
+            print(getattr(e, "fix_suggestion", ""), file=sys.stderr)
+        return 2
     except Exception as e:
         if bool(getattr(args, "verbose", False)):
             traceback.print_exc()

@@ -3,11 +3,15 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from .ai_integration import AIIntegration
+from .io_utils import read_text_streaming
 from .latex_parser import strip_comments
 
 
@@ -161,3 +165,128 @@ class CrossChapterValidator:
     def to_markdown(self) -> str:
         mats = self.build()
         return format_term_matrices_markdown(mats)
+
+
+def _legacy_report(*, files: Mapping[str, Path], terminology_config: Mapping[str, object]) -> str:
+    validator = CrossChapterValidator(files=files, terminology_config=terminology_config)
+    return validator.to_markdown()
+
+
+class TermConsistencyAI:
+    """
+    AI 主导的跨章节术语一致性检查。
+
+    说明：
+    - 仅在 ai.is_available() 时尝试调用 AI；否则使用 legacy 规则矩阵作为 fallback
+    - 主要目的：减少“手写别名组”的维护成本，并捕捉隐含同义词/缩写混用
+    """
+
+    def __init__(self, ai: AIIntegration) -> None:
+        self.ai = ai
+
+    async def check(
+        self,
+        *,
+        files: Mapping[str, Path],
+        max_chars: int = 20000,
+        cache_dir: Optional[Path] = None,
+        fresh: bool = False,
+    ) -> Dict[str, Any]:
+        file_contents: Dict[str, str] = {}
+        for label, path in files.items():
+            try:
+                res = read_text_streaming(Path(path), max_bytes=None)
+                # 只给 AI 看“去注释后”的文本，降低噪音
+                file_contents[str(label)] = strip_comments(res.text)[: max(int(max_chars), 1000)]
+            except Exception:
+                file_contents[str(label)] = ""
+
+        prompt = (
+            "请分析以下 LaTeX 文档内容的术语/缩写/指标口径一致性。\n"
+            "要求：\n"
+            "1) 只输出 JSON（不要解释）\n"
+            "2) 不要杜撰文献引用与 DOI\n"
+            "3) 输出尽量具体：指出冲突的两种/多种表述分别出现在哪里\n\n"
+            "输入（JSON，key 为章节名，value 为去注释后的 LaTeX 文本，可能截断）：\n"
+            f"{json.dumps(file_contents, ensure_ascii=False, indent=2)[: max(int(max_chars), 1000)]}\n\n"
+            "返回 JSON 结构：\n"
+            "{\n"
+            '  "issues": [\n'
+            '    {"category": "research_objects|metrics|terminology|abbrev", "detail": "...", "examples": ["..."]}\n'
+            "  ],\n"
+            '  "suggestions": ["..."]\n'
+            "}\n"
+        )
+
+        def _fallback() -> Dict[str, Any]:
+            return {"issues": [], "suggestions": []}
+
+        obj = await self.ai.process_request(
+            task="term_consistency",
+            prompt=prompt,
+            output_format="json",
+            fallback=_fallback,
+            cache_dir=cache_dir,
+            fresh=fresh,
+        )
+        return obj if isinstance(obj, dict) else _fallback()
+
+    @staticmethod
+    def format_markdown(obj: Dict[str, Any]) -> str:
+        issues = obj.get("issues", []) if isinstance(obj.get("issues"), list) else []
+        suggestions = obj.get("suggestions", []) if isinstance(obj.get("suggestions"), list) else []
+
+        lines = ["## 术语一致性检查（AI 语义分析）", ""]
+        if not issues:
+            lines.append("- ✅ 未发现明显术语不一致（AI 视角）")
+        else:
+            for it in issues[:30]:
+                if not isinstance(it, dict):
+                    continue
+                cat = str(it.get("category", "") or "").strip() or "terminology"
+                detail = str(it.get("detail", "") or "").strip()
+                ex = it.get("examples", [])
+                ex_list = [str(x) for x in ex] if isinstance(ex, list) else []
+                if detail:
+                    lines.append(f"- ⚠️ [{cat}] {detail}")
+                    for e in ex_list[:5]:
+                        if e.strip():
+                            lines.append(f"  - {e.strip()}")
+
+        if suggestions:
+            lines.append("")
+            lines.append("### 修改建议")
+            for s in suggestions[:20]:
+                if str(s).strip():
+                    lines.append(f"- {str(s).strip()}")
+
+        return "\n".join(lines).strip() + "\n"
+
+
+def term_consistency_report(
+    *,
+    files: Mapping[str, Path],
+    config: Mapping[str, Any],
+    ai: Optional[AIIntegration] = None,
+    cache_dir: Optional[Path] = None,
+    fresh: bool = False,
+) -> str:
+    terminology_cfg = config.get("terminology", {}) or {}
+    mode = str(terminology_cfg.get("mode", "auto")).strip().lower()
+    ai_cfg = terminology_cfg.get("ai", {}) if isinstance(terminology_cfg.get("ai", {}), dict) else {}
+    ai_enabled = bool(ai_cfg.get("enabled", True))
+    legacy_md = _legacy_report(files=files, terminology_config=terminology_cfg)
+
+    if mode == "legacy":
+        return legacy_md
+
+    ai_obj = ai
+    if ai_obj is None:
+        return legacy_md
+    if not ai_enabled or not ai_obj.is_available():
+        return legacy_md
+
+    max_chars = int(ai_cfg.get("max_chars", 20000))
+    obj = asyncio.run(TermConsistencyAI(ai_obj).check(files=files, max_chars=max_chars, cache_dir=cache_dir, fresh=fresh))
+    ai_md = TermConsistencyAI.format_markdown(obj)
+    return ai_md.rstrip() + "\n\n" + legacy_md

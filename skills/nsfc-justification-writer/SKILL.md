@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.5.0
+version: 0.6.0
 description: 为 NSFC 2026 新模板正文“（一）立项依据”写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改“立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点”等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -57,7 +57,16 @@ references: skills/nsfc-justification-writer/references/
 ## 配置校验与大文件支持（可选）
 
 - 配置校验：`python skills/nsfc-justification-writer/scripts/run.py validate-config`
-- 大文件 Tier2：`diagnose/review --tier2 --chunk-size 12000 --max-chunks 20`（支持 `.cache/ai` 缓存；用 `--fresh` 强制重算）
+- 大文件 Tier2：`diagnose/review --tier2 --chunk-size 12000 --max-chunks 20`（支持 `.cache/ai` 缓存；超大文件会优先使用流式分块以降低峰值内存；用 `--fresh` 强制重算）
+
+## Prompt 模板可配置化（可选）
+
+`config.yaml` / `preset.yaml` / `override.yaml` 的 `prompts.*` 支持两种形式：
+
+- **文件路径**：如 `prompts/tier2_diagnostic.txt`
+- **直接写多行 Prompt**：在 YAML 中用 `|` 写入多行文本（适合不同领域改侧重点）
+
+也支持按 preset 变体覆盖：例如当 `--preset medical` 时，可提供 `prompts.tier2_diagnostic_medical`。
 
 ## 推荐 `\\subsubsection` 标题与内容映射
 
@@ -78,11 +87,13 @@ references: skills/nsfc-justification-writer/references/
 
 - **Tier1 硬编码诊断**：结构（4 个 `\subsubsection`）/引用键是否存在于 `.bib`/DOI 缺失与格式异常提示/字数统计/不可核验表述与危险命令扫描
 - **跨章节一致性矩阵**：基于 `config.yaml` 的 `terminology.dimensions`（研究对象/指标/术语）做跨章节一致性提示
+- **AI 术语一致性（可选）**：当 AI 可用且 `terminology.mode=auto/ai` 时，额外给出语义视角的“同义词/缩写混用”检查与修改建议（不可用则仅输出矩阵）
 - **安全写入工具**：按 `\subsubsection{...}` 精确定位并替换正文，写入白名单文件 + 备份（产物放在 `skills/nsfc-justification-writer/runs/`）
 - **评审建议生成器**：基于 DoD + 诊断结果输出“评审人会问什么 + 怎么改”（`scripts/run.py review`）
 - **可视化 HTML 诊断报告**：快速定位问题（`scripts/run.py diagnose --html-report auto`）
 - **版本 diff/回滚**：基于 runs 备份做差异查看与一键回滚（`scripts/run.py diff/rollback`）
 - **示例推荐**：从 `examples/` 读取 `*.metadata.yaml` 关键词，辅助按主题匹配参考骨架（`scripts/run.py coach --topic ...` / `scripts/run.py examples`）
+- **AI 示例推荐（可选）**：当 AI 可用时，优先进行语义匹配并给出“推荐理由”（不可用则回退到关键词/类别启发式）
 - **配置覆盖与预设**：支持 `--preset medical/engineering` 与 `~/.config/nsfc-justification-writer/override.yaml` 覆盖术语维度等参数（需要时可用 `--no-user-override` 关闭）
 
 脚本入口：`skills/nsfc-justification-writer/scripts/run.py`（用法见 `skills/nsfc-justification-writer/scripts/README.md`）。

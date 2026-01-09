@@ -69,6 +69,8 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \
 - 备份默认写入 `skills/nsfc-justification-writer/runs/`（不污染标书项目目录）
 - 仅允许写入 `extraTex/1.1.立项依据.tex`（由 `config.yaml` 的 guardrails 控制）
 - 默认严格：若新正文中出现 `\cite{...}` 但 `.bib` 不存在对应 key，将拒绝写入（防止幻觉引用）
+- 标题未命中时：可加 `--suggest-alias` 输出当前文档所有 `\subsubsection` 标题，便于修正 `--title`
+- 如需允许“标题不完全一致也能匹配”：在 `config.yaml` 里设置 `structure.strict_title_match: false`（会启用模糊匹配；AI 可用时会先做语义匹配）
 
 ## HTML 可视化诊断报告
 

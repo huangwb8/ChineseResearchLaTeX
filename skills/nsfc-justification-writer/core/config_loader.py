@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence
 DEFAULT_CONFIG: Dict[str, Any] = {
     "skill_info": {
         "name": "nsfc-justification-writer",
-        "version": "0.5.0",
+        "version": "0.6.0",
         "template_year": "2026",
         "category": "writing",
     },
@@ -53,6 +53,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "tolerance": 200,
     },
     "terminology": {
+        "mode": "auto",
+        "ai": {
+            "enabled": True,
+            "max_chars": 20000,
+        },
         "dimensions": {
             "研究对象": {"研究对象": ["患者", "病例", "受试者", "样本"]},
             "指标": {"准确率": ["准确率", "精确度"]},
@@ -91,6 +96,17 @@ def _default_user_override_path() -> Optional[Path]:
         home / ".config" / "nsfc-justification-writer" / "override.yml",
     ]
     return next((p for p in candidates if p.exists() and p.is_file()), None)
+
+
+def _looks_like_path(s: str) -> bool:
+    t = (s or "").strip()
+    if not t:
+        return False
+    if "\n" in t or "\r" in t:
+        return False
+    if t.endswith((".txt", ".md", ".yaml", ".yml")):
+        return True
+    return ("/" in t) or ("\\" in t)
 
 def _is_seq_str(x: Any) -> bool:
     return isinstance(x, list) and all(isinstance(it, str) for it in x)
@@ -183,17 +199,29 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
             if not isinstance(v, str) or not v.strip():
                 err(f"prompts.{k} 必须是非空字符串")
                 continue
-            # 如果是相对路径，做一次存在性检查（避免拼错文件名）
-            p = Path(v)
-            if not p.is_absolute():
-                maybe = (Path(skill_root).resolve() / p).resolve()
-                if not maybe.exists():
-                    err(f"prompts.{k} 路径不存在：{v}")
+            # 允许：1) 文件路径；2) 直接写多行 prompt（用于 override/preset）
+            if _looks_like_path(v):
+                p = Path(v)
+                if not p.is_absolute():
+                    maybe = (Path(skill_root).resolve() / p).resolve()
+                    if not maybe.exists():
+                        err(f"prompts.{k} 路径不存在：{v}")
 
     terminology = config.get("terminology", {})
     if terminology is not None and not isinstance(terminology, dict):
         err("terminology 必须是 dict")
     elif isinstance(terminology, dict):
+        mode = str(terminology.get("mode", "auto")).strip().lower()
+        if mode not in {"auto", "ai", "legacy"}:
+            err("terminology.mode 必须是 auto|ai|legacy")
+        ai_cfg = terminology.get("ai", {})
+        if ai_cfg is not None and not isinstance(ai_cfg, dict):
+            err("terminology.ai 必须是 dict")
+        elif isinstance(ai_cfg, dict):
+            if "enabled" in ai_cfg and not isinstance(ai_cfg.get("enabled"), bool):
+                err("terminology.ai.enabled 必须是 bool")
+            if "max_chars" in ai_cfg and not isinstance(ai_cfg.get("max_chars"), int):
+                err("terminology.ai.max_chars 必须是 int")
         if "dimensions" in terminology:
             dims = terminology.get("dimensions")
             if not isinstance(dims, dict) or not dims:
@@ -230,6 +258,9 @@ def load_config(
         preset_path = (skill_root / "config" / "presets" / f"{preset}.yaml").resolve()
         if preset_path.exists():
             config = _deep_merge(config, _load_yaml_dict(preset_path))
+        config["active_preset"] = str(preset)
+    else:
+        config["active_preset"] = ""
 
     disable_user_override = str(os.environ.get("NSFC_JUSTIFICATION_WRITER_DISABLE_USER_OVERRIDE", "")).strip().lower() in {
         "1",

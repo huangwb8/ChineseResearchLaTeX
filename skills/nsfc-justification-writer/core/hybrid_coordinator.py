@@ -12,14 +12,15 @@ from typing import Any, Dict, List, Optional
 from .ai_integration import AIIntegration
 from .config_loader import get_runs_dir, load_config
 from .diagnostic import DiagnosticReport, format_tier1, run_tier1
-from .errors import MissingCitationKeysError
+from .errors import MissingCitationKeysError, SectionNotFoundError, TargetFileNotFoundError
 from .editor import ApplyResult, apply_new_content
-from .example_matcher import format_example_recommendations, recommend_examples
-from .latex_parser import replace_subsubsection_body
+from .example_matcher import recommend_examples_markdown
+from .io_utils import iter_text_chunks_by_subsubsection_mark, read_text_streaming
+from .latex_parser import match_title_via_ai, replace_subsubsection_body_hybrid, suggest_titles
 from .observability import Observability, ensure_run_dir, make_run_id
 from .reference_validator import check_citations
 from .security import build_write_policy, resolve_target_path, validate_write_target
-from .term_consistency import CrossChapterValidator, format_term_matrices_markdown
+from .term_consistency import term_consistency_report
 from .wordcount import count_cjk_chars
 from .prompt_templates import get_prompt, TIER2_DIAGNOSTIC_PROMPT
 from .review_advice import generate_review_markdown
@@ -109,7 +110,7 @@ class HybridCoordinator:
     ) -> DiagnosticReport:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
-        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        tex = read_text_streaming(target).text if target.exists() else ""
         tier1 = run_tier1(tex_text=tex, project_root=project_root, config=self.config)
         report = DiagnosticReport(tier1=tier1, tier2=None, notes=[])
         self.obs.add("diagnose.tier1", **report.to_dict()["tier1"])
@@ -127,16 +128,29 @@ class HybridCoordinator:
                 default=TIER2_DIAGNOSTIC_PROMPT,
                 skill_root=self.skill_root,
                 config=self.config,
+                variant=str(self.config.get("active_preset", "") or "").strip() or None,
             )
             ai_cfg = self.config.get("ai", {}) or {}
             max_chars = int(tier2_chunk_size or ai_cfg.get("tier2_chunk_size", 12000))
             max_chunks = int(tier2_max_chunks or ai_cfg.get("tier2_max_chunks", 20))
             cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
-
-            chunks = _split_tex_by_subsubsection(tex, max_chars=max_chars)
-            if max_chunks > 0 and len(chunks) > max_chunks:
-                report.notes.append(f"Tier2 分块过多：仅处理前 {max_chunks}/{len(chunks)} 块（可调 --chunk-size/--max-chunks）")
-                chunks = chunks[:max_chunks]
+            chunks: List[str]
+            # 超大文件：优先流式分块，避免一次性加载后再切块造成峰值内存
+            if target.exists() and int(target.stat().st_size) > 5 * 1024 * 1024:
+                chunks = list(
+                    iter_text_chunks_by_subsubsection_mark(
+                        target,
+                        max_chars=max_chars,
+                        max_chunks=max_chunks if max_chunks > 0 else 10**9,
+                    )
+                )
+            else:
+                chunks = _split_tex_by_subsubsection(tex, max_chars=max_chars)
+                if max_chunks > 0 and len(chunks) > max_chunks:
+                    report.notes.append(
+                        f"Tier2 分块过多：仅处理前 {max_chunks}/{len(chunks)} 块（可调 --chunk-size/--max-chunks）"
+                    )
+                    chunks = chunks[:max_chunks]
 
             def _fallback() -> Dict[str, Any]:
                 return {
@@ -218,13 +232,11 @@ class HybridCoordinator:
         for label, relpath in related.items():
             files[label] = resolve_target_path(project_root, str(relpath))
 
-        terminology_cfg = self.config.get("terminology", {}) or {}
-        validator = CrossChapterValidator(files=files, terminology_config=terminology_cfg)
-        mats = validator.build()
-        issues = sum(len(m.issues) for m in mats.values())
-        rows = sum(len(m.rows) for m in mats.values())
-        self.obs.add("terms.matrix", dims=len(mats), issues=issues, rows=rows)
-        return format_term_matrices_markdown(mats)
+        ai_cfg = self.config.get("ai", {}) or {}
+        cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+        md = term_consistency_report(files=files, config=self.config, ai=self.ai, cache_dir=cache_dir)
+        self.obs.add("terms.report", ai=self.ai.is_available())
+        return md
 
     def apply_section_body(
         self,
@@ -240,11 +252,34 @@ class HybridCoordinator:
         target = self._resolve_target(project_root)
         policy = build_write_policy(self.config)
         validate_write_target(project_root=project_root, target_path=target, policy=policy)
+        if not target.exists():
+            raise TargetFileNotFoundError(target_relpath=self._target_relpath(), project_root=str(project_root))
 
-        src = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
-        new_text, changed = replace_subsubsection_body(src, title, new_body)
+        src = read_text_streaming(target).text
+        structure_cfg = self.config.get("structure", {}) or {}
+        strict = bool(structure_cfg.get("strict_title_match", True))
+        min_sim = float(structure_cfg.get("min_title_similarity", 0.6))
+
+        # strict=False 时：先做“候选标题提示”，并在 AI 可用时尝试语义匹配
+        chosen = title
+        if not strict:
+            cands = suggest_titles(src, query=title, limit=30)
+            if self.ai.is_available() and cands:
+                ai_cfg = self.config.get("ai", {}) or {}
+                cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+                matched = asyncio.run(match_title_via_ai(query=title, candidates=cands, ai=self.ai, cache_dir=cache_dir))
+                if matched:
+                    chosen = matched
+
+        new_text, changed, matched_title = replace_subsubsection_body_hybrid(
+            src,
+            title=chosen,
+            new_body=new_body,
+            strict=strict,
+            min_similarity=min_sim,
+        )
         if not changed:
-            return ApplyResult(changed=False, target_path=target, backup_path=None)
+            raise SectionNotFoundError(title=title, suggestions=suggest_titles(src, query=title, limit=12))
 
         ref_cfg = (self.config.get("references", {}) or {})
         allow_missing = bool(ref_cfg.get("allow_missing_citations", False)) or bool(allow_missing_citations)
@@ -259,7 +294,7 @@ class HybridCoordinator:
         run_dir = ensure_run_dir(self.paths.runs_root, run_id)
         backup_root = (run_dir / "backup").resolve() if backup else None
         result = apply_new_content(target_path=target, new_text=new_text, backup_root=backup_root, run_id=run_id)
-        self.obs.add("apply.section", title=title, changed=result.changed)
+        self.obs.add("apply.section", title=str(matched_title or title), changed=result.changed)
         if result.backup_path:
             self.obs.add("apply.backup", path=str(result.backup_path))
         return result
@@ -267,7 +302,7 @@ class HybridCoordinator:
     def word_count_status(self, *, project_root: Path) -> Dict[str, Any]:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
-        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        tex = read_text_streaming(target).text if target.exists() else ""
         current = count_cjk_chars(tex).cjk_count
         wc_cfg = self.config.get("word_count", {}) or {}
         target_n = int(wc_cfg.get("target", 4000))
@@ -283,8 +318,9 @@ class HybridCoordinator:
         }
 
     def recommend_examples(self, *, query: str, top_k: int = 3) -> str:
-        matches = recommend_examples(skill_root=self.skill_root, query=query, top_k=top_k)
-        return format_example_recommendations(matches)
+        ai_cfg = self.config.get("ai", {}) or {}
+        cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+        return recommend_examples_markdown(skill_root=self.skill_root, query=query, top_k=top_k, ai=self.ai, cache_dir=cache_dir)
 
     def coach(self, *, project_root: Path, stage: str = "auto", info_form_text: str = "") -> str:
         return asyncio.run(
@@ -309,7 +345,7 @@ class HybridCoordinator:
     ) -> str:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
-        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        tex = read_text_streaming(target).text if target.exists() else ""
         report = self.diagnose(
             project_root=project_root,
             include_tier2=include_tier2,
