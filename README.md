@@ -96,7 +96,9 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 ### 推荐软件平台
 
 - **VS Code + LaTeX Workshop**：本地开发的最佳选择，充分发挥 Vibe Coding 工具的超强能力
-- **Claude Code / OpenAI Codex CLI**（VS Code 插件）：**最佳选择**，AI 辅助写作，与本项目的 AI 技能完美配合。VS Code 扩展市场搜索"Claude Code"或"OpenAI Codex"即可安装
+- **Claude Code / OpenAI Codex CLI**（VS Code 插件）：**最佳选择**，AI 辅助写作，与本项目的 AI 技能完美配合。VS Code 扩展市场搜索"Claude Code"或"OpenAI Codex"即可安装。macOS 已成为 AI 时代开发首选操作系统，体验最佳；Windows 用户建议使用 WSL（Windows Subsystem for Linux）环境以获得更稳定的性能
+  - **Claude Code**：详见[安装教程](https://claudefa.st/blog/guide/installation-guide)
+  - **Codex CLI**：详见[WSL 安装指南](https://1v0.dev/posts/25-openai-codexcli-wsl/) 或 [Ubuntu/WSL 配置教程](https://cdkagaya.design.blog/2025/10/16/install-and-configure-openai-codex-cli-on-ubuntu-wsl/)
 - **Office Viewer**（VS Code 插件）：推荐安装，提供 Markdown 和 Word 文档的实时预览功能，提升文档编辑体验
 
 > 💡 **说明**：由于在本地使用 Vibe Coding 的体验很好，因此**不推荐**在 Overleaf 等在线平台使用本模板。但本项目**会持续支持 Overleaf 平台**，用户可自由选择使用方式。
