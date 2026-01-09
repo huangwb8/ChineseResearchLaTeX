@@ -129,6 +129,11 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 项目内置多个符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，辅助 LaTeX 写作和模板优化。**兼容 Claude Code 和 OpenAI Codex CLI！**
 
+> 💡 **快速安装**：打开 Claude Code 或 Codex 后，输入以下 Prompt：
+> ```
+> 下载 https://github.com/huangwb8/skills/tree/main/install-bensz-skills 到本项目的 skills 文件夹里，然后使用 install-bensz-skills 将本项目的 skills 安装到本设备的 Codex 和 Claude Code 里。
+> ```
+
 | 技能 | 类型 | 功能 | 状态 |
 |------|------|------|------|
 | [make_latex_model](skills/make_latex_model/) | 🔧 开发 | 基于 Word 模板高保真优化 LaTeX 样式 | ✅ 稳定 |
