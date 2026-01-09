@@ -45,6 +45,26 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ---
 
+## 👥 社区支持
+
+欢迎加入项目微信群聊，与其他用户交流经验、分享心得！无论您是对以下哪个话题感兴趣，都欢迎扫码进群：
+
+- 📚 **科研写作**：LaTeX 使用、论文写作、标书撰写
+- 📝 **国自然标书**：申请经验、模板使用、格式优化
+- 🤖 **AI Agents**：智能代理开发、技能体系搭建
+- 🔌 **API 使用**：模型调用、API 配置、成本优化
+- ✨ **Vibe Coding/Writing**：AI 辅助编程与写作，人机协作式创作
+
+<div align="center">
+
+<img src="logo/wechat-group-01.JPG" alt="微信群二维码" width="300"/>
+
+</div>
+
+> 💡 **温馨提示**：微信群主要用于经验交流和问题讨论，如需报告 Bug 或提交功能建议，请通过 [GitHub Issues](https://github.com/huangwb8/ChineseResearchLaTeX/issues) 提交，以便更好地跟踪和管理。
+
+---
+
 ## 📋 模板列表
 
 > ⚠️ **建议使用正式的 [Release 版本](https://github.com/huangwb8/ChineseResearchLaTeX/releases) 以获得最佳稳定性**
