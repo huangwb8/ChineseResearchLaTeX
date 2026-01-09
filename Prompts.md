@@ -7,6 +7,9 @@ ai不要看这个文件，除非用户要求。
 
 ## Skills开发
 
+## nsfc-justification-writer
+
+请在彻底了解 skills/nsfc-justification-writer 的工作代码/文件后回答： 目前skill的开发度如何？有哪些缺陷？如果有，请指出并将改良计划保存在 plans/v2026010xxxxx.md 里。
 
 
 ## complete_example
