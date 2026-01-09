@@ -89,6 +89,8 @@
 
 - 新增 NSFC 2026 新模板写作 Skill 迁移建议计划（已脱敏）：`plans/v202601081910.md`
 
+- 新增 nsfc-justification-writer v0.6.0 代码审查与改良计划：`plans/v202601092056.md`
+
 - **nsfc-justification-writer v0.2.0** - 硬编码确定性能力与配套脚本
   - 新增脚本入口：`skills/nsfc-justification-writer/scripts/run.py`（diagnose/wordcount/terms/apply-section）
   - 新增核心模块：`skills/nsfc-justification-writer/core/`（结构解析、引用核验、字数统计、术语矩阵、安全写入、可观测性）
