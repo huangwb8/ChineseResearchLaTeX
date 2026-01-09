@@ -5,9 +5,9 @@
 # 中国科研常用 LaTeX 模板集
 
 [![Version](https://img.shields.io/github/v/tag/huangwb8/ChineseResearchLaTeX?label=version&sort=semver&color=blue)](https://github.com/huangwb8/ChineseResearchLaTeX/releases)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](license.txt)
-[![Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Win%20%7C%20Overleaf-lightgrey.svg)](#使用)
-[![Built with](https://img.shields.io/badge/AI%20Powered-Vibe%20Coding-orange.svg)](#ai-驱动开发)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Win%20%7C%20Overleaf-lightgrey.svg)
+![Built with](https://img.shields.io/badge/AI%20Powered-Vibe%20Coding-orange.svg)
 
 </div>
 
