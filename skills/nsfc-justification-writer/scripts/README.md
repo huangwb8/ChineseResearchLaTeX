@@ -71,6 +71,19 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \
 - 默认严格：若新正文中出现 `\cite{...}` 但 `.bib` 不存在对应 key，将拒绝写入（防止幻觉引用）
 - 标题未命中时：可加 `--suggest-alias` 输出当前文档所有 `\subsubsection` 标题，便于修正 `--title`
 - 如需允许“标题不完全一致也能匹配”：在 `config.yaml` 里设置 `structure.strict_title_match: false`（会启用模糊匹配；AI 可用时会先做语义匹配）
+- 若你使用了 `--allow-missing-citations` 放宽引用约束，建议同时加 `--strict-quality` 启用“新正文质量闸门”（命中绝对化表述/危险命令将拒绝写入）
+
+## 运行产物（runs/cache）
+
+- `skills/nsfc-justification-writer/runs/`：每次写入/回滚的备份、diff、报告与日志（可随时删除某些旧 run）
+- `skills/nsfc-justification-writer/.cache/ai/`：Tier2/术语一致性等可选 AI 计算缓存（可用 `--fresh` 忽略缓存）
+
+清理示例：
+
+```bash
+rm -rf skills/nsfc-justification-writer/runs/*
+rm -rf skills/nsfc-justification-writer/.cache/*
+```
 
 ## HTML 可视化诊断报告
 

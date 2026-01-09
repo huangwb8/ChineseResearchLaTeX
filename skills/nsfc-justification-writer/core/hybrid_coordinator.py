@@ -21,10 +21,11 @@ from .observability import Observability, ensure_run_dir, make_run_id
 from .reference_validator import check_citations
 from .security import build_write_policy, resolve_target_path, validate_write_target
 from .term_consistency import term_consistency_report
-from .wordcount import count_cjk_chars
+from .wordcount import count_cjk_chars, describe_word_count_mode
 from .prompt_templates import get_prompt, TIER2_DIAGNOSTIC_PROMPT
 from .review_advice import generate_review_markdown
 from .writing_coach import coach_markdown
+from .quality_gate import check_new_body_quality
 
 
 @dataclass(frozen=True)
@@ -247,6 +248,7 @@ class HybridCoordinator:
         backup: bool = True,
         run_id: Optional[str] = None,
         allow_missing_citations: bool = False,
+        strict_quality: bool = False,
     ) -> ApplyResult:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
@@ -283,6 +285,19 @@ class HybridCoordinator:
 
         ref_cfg = (self.config.get("references", {}) or {})
         allow_missing = bool(ref_cfg.get("allow_missing_citations", False)) or bool(allow_missing_citations)
+
+        quality_cfg = self.config.get("quality", {}) or {}
+        strict_on_apply = bool(quality_cfg.get("strict_on_apply", False)) or bool(strict_quality)
+        if strict_on_apply:
+            qr = check_new_body_quality(new_body=new_body, config=self.config)
+            if not qr.ok:
+                from .errors import QualityGateError
+
+                raise QualityGateError(
+                    forbidden_phrases=qr.forbidden_phrases_hits,
+                    avoid_commands=qr.avoid_commands_hits,
+                )
+
         if not allow_missing:
             targets = self.config.get("targets", {}) or {}
             bib_globs = targets.get("bib_globs", ["references/*.bib"])
@@ -299,18 +314,21 @@ class HybridCoordinator:
             self.obs.add("apply.backup", path=str(result.backup_path))
         return result
 
-    def word_count_status(self, *, project_root: Path) -> Dict[str, Any]:
+    def word_count_status(self, *, project_root: Path, mode: Optional[str] = None) -> Dict[str, Any]:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
         tex = read_text_streaming(target).text if target.exists() else ""
-        current = count_cjk_chars(tex).cjk_count
         wc_cfg = self.config.get("word_count", {}) or {}
+        used_mode = str(mode or wc_cfg.get("mode", "cjk_only")).strip() or "cjk_only"
+        current = count_cjk_chars(tex, mode=used_mode).cjk_count
         target_n = int(wc_cfg.get("target", 4000))
         tol = int(wc_cfg.get("tolerance", 200))
         status = "within_tolerance" if abs(current - target_n) <= tol else ("need_expand" if current < target_n else "need_compress")
         self.obs.add("wordcount", current=current, target=target_n, tolerance=tol, status=status)
         return {
             "current": current,
+            "mode": used_mode,
+            "mode_definition": describe_word_count_mode(used_mode),
             "target": target_n,
             "tolerance": tol,
             "status": status,

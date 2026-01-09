@@ -24,6 +24,7 @@ from core.hybrid_coordinator import HybridCoordinator
 from core.info_form import copy_info_form_template, interactive_collect_info_form, write_info_form_file
 from core.latex_parser import parse_subsubsections
 from core.observability import make_run_id
+from core.quality_gate import check_new_body_quality
 from core.versioning import find_backup_for_run, list_runs, rollback_from_backup, unified_diff
 
 
@@ -42,12 +43,19 @@ def _load_config_for_args(skill_root: Path, args: argparse.Namespace) -> Dict[st
     preset = getattr(args, "preset", None)
     override = getattr(args, "override", None)
     no_user_override = bool(getattr(args, "no_user_override", False))
-    return load_config(
+    cfg = load_config(
         skill_root,
         preset=str(preset) if preset else None,
         override_path=str(override) if override else None,
         load_user_override=(not no_user_override),
     )
+    meta = cfg.get("_config_loader", {}) or {}
+    warnings = list(meta.get("warnings", []) or [])
+    for w in warnings[:10]:
+        print(f"⚠️ 配置加载警告：{w}", file=sys.stderr)
+    if len(warnings) > 10:
+        print(f"⚠️ 配置加载警告：更多 {len(warnings) - 10} 条已省略", file=sys.stderr)
+    return cfg
 
 
 def cmd_diagnose(args: argparse.Namespace) -> int:
@@ -107,7 +115,7 @@ def cmd_wordcount(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
-    status = coord.word_count_status(project_root=Path(args.project_root))
+    status = coord.word_count_status(project_root=Path(args.project_root), mode=getattr(args, "mode", None))
     print(json.dumps(status, ensure_ascii=False, indent=2))
     return 0
 
@@ -199,6 +207,24 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
         return 2
 
     run_id = args.run_id or make_run_id("apply")
+    # 若用户选择放宽引用约束，建议至少启用“新正文质量闸门”（可选阻断）。
+    if bool(getattr(args, "allow_missing_citations", False)) and (not bool(getattr(args, "strict_quality", False))):
+        strict_cfg = bool((config.get("quality", {}) or {}).get("strict_on_apply", False))
+        if not strict_cfg:
+            qr = check_new_body_quality(new_body=body, config=config)
+            if not qr.ok:
+                if qr.forbidden_phrases_hits:
+                    print(
+                        "⚠️ 新正文包含不可核验表述（建议改写或启用 --strict-quality 阻断写入）："
+                        + "、".join(qr.forbidden_phrases_hits[:10]),
+                        file=sys.stderr,
+                    )
+                if qr.avoid_commands_hits:
+                    print(
+                        "⚠️ 新正文包含可能破坏模板的命令（建议移除或启用 --strict-quality 阻断写入）："
+                        + "、".join(qr.avoid_commands_hits[:10]),
+                        file=sys.stderr,
+                    )
     try:
         result = coord.apply_section_body(
             project_root=Path(args.project_root),
@@ -207,6 +233,7 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
             backup=not bool(args.no_backup),
             run_id=run_id,
             allow_missing_citations=bool(args.allow_missing_citations),
+            strict_quality=bool(getattr(args, "strict_quality", False)),
         )
     except MissingCitationKeysError as e:
         print(f"❌ {e}", file=sys.stderr)
@@ -409,6 +436,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_wc = sub.add_parser("wordcount", help="统计 1.1 立项依据字数并给出偏差")
     p_wc.add_argument("--project-root", required=True)
+    p_wc.add_argument(
+        "--mode",
+        default=None,
+        choices=["cjk_only", "cjk_strip_commands"],
+        help="统计口径：cjk_only（默认）或 cjk_strip_commands（更接近正文估计）",
+    )
     p_wc.set_defaults(func=cmd_wordcount)
 
     p_refs = sub.add_parser("refs", help="引用核验摘要 + 生成 nsfc-bib-manager 可复制提示词")
@@ -478,6 +511,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_apply.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
     p_apply.add_argument("--log-json", action="store_true", help="写入 runs/.../logs/apply_result.json")
     p_apply.add_argument("--allow-missing-citations", action="store_true", help="允许存在缺失 bibkey 的 \\cite{...}（不推荐）")
+    p_apply.add_argument("--strict-quality", action="store_true", help="启用“新正文质量闸门”：命中绝对化表述/危险命令则拒绝写入")
     p_apply.add_argument("--suggest-alias", action="store_true", help="当标题未命中时，输出可用标题候选（便于改 title）")
     p_apply.set_defaults(func=cmd_apply_section)
 

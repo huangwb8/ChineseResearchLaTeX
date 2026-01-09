@@ -23,13 +23,14 @@ def test_validate_config_reports_type_errors(tmp_path: Path) -> None:
         "structure": {"expected_subsubsections": "研究背景", "min_subsubsection_count": "4"},
         "quality": {"forbidden_phrases": ["国际领先"], "avoid_commands": ["\\\\section"]},
         "word_count": {"target": 4000, "tolerance": 200},
-        "ai": {"enabled": True, "min_success_rate_to_enable": 0.8},
+        "ai": {"enabled": True, "tier2_chunk_size": "12000"},
         "prompts": {},
     }
     errs = validate_config(skill_root=tmp_path, config=bad)
     assert any("targets.bib_globs" in e for e in errs)
     assert any("structure.expected_subsubsections" in e for e in errs)
     assert any("structure.min_subsubsection_count" in e for e in errs)
+    assert any("ai.tier2_chunk_size" in e for e in errs)
 
 
 def test_load_config_raises_on_invalid_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

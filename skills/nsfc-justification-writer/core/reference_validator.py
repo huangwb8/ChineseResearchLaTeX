@@ -10,6 +10,8 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+from .latex_parser import strip_comments
+
 
 _BIBKEY_RE = re.compile(r"@[A-Za-z]+\s*\{\s*([^,\s]+)\s*,")
 _CITE_RE = re.compile(r"\\cite[a-zA-Z\*]*\s*(?:\[[^\]]*\]\s*)*\{([^}]*)\}")
@@ -25,6 +27,33 @@ class CitationCheckResult:
     missing_keys: List[str]
     missing_doi_keys: List[str]
     invalid_doi_keys: List[str]
+
+
+def _strip_ignored_environments(tex_text: str, *, envs: Set[str]) -> str:
+    """
+    为引用扫描剔除“类代码/原样输出”环境内容（避免把示例代码里的 \\cite{...} 当成真实引用）。
+    仅做近似：按行状态机识别 \\begin{env} ... \\end{env}。
+    """
+    source = tex_text or ""
+    in_env: Optional[str] = None
+    out_lines: List[str] = []
+    for line in source.splitlines():
+        probe = line
+        if in_env is None:
+            for e in envs:
+                if f"\\begin{{{e}}}" in probe:
+                    in_env = e
+                    break
+            out_lines.append(line)
+            continue
+
+        # in ignored env
+        if f"\\end{{{in_env}}}" in probe:
+            in_env = None
+            out_lines.append(line)
+        else:
+            out_lines.append("")
+    return "\n".join(out_lines)
 
 
 def normalize_doi(raw: str) -> str:
@@ -45,8 +74,10 @@ def parse_bib_keys(bib_text: str) -> Set[str]:
 
 
 def parse_cite_keys(tex_text: str) -> List[str]:
+    scan = strip_comments(tex_text or "")
+    scan = _strip_ignored_environments(scan, envs={"verbatim", "lstlisting", "minted"})
     keys: List[str] = []
-    for m in _CITE_RE.finditer(tex_text):
+    for m in _CITE_RE.finditer(scan):
         raw = (m.group(1) or "").strip()
         if not raw:
             continue

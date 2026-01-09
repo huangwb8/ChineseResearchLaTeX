@@ -15,6 +15,16 @@ def test_count_cjk_chars_ignores_comments() -> None:
     assert count_cjk_chars(tex).cjk_count == 6
 
 
+def test_count_cjk_chars_strip_commands_mode() -> None:
+    tex = (
+        "中文\\textbf{加粗} $数学中文$\n"
+        "\\begin{equation}\n中文\n\\end{equation}\n"
+        "\\begin{verbatim}\n中文\\cite{X}\n\\end{verbatim}\n"
+    )
+    assert count_cjk_chars(tex, mode="cjk_only").cjk_count == 12
+    assert count_cjk_chars(tex, mode="cjk_strip_commands").cjk_count == 4
+
+
 def test_run_tier1_structure_and_citations(tmp_path: Path) -> None:
     (tmp_path / "references").mkdir()
     (tmp_path / "references" / "t.bib").write_text("@article{Key,\n}\n", encoding="utf-8")

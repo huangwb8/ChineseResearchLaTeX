@@ -33,6 +33,9 @@
 
 # Skill workspaces (runtime artifacts)
 skills/transfer_old_latex_to_new/runs/
+skills/nsfc-justification-writer/runs/
+skills/nsfc-justification-writer/.cache/
+skills/nsfc-justification-writer/**/__pycache__/
 .AppleDouble
 .LSOverride
 

@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.6.0
+  version: 0.6.1
   template_year: "2026"
   category: writing
 
@@ -44,7 +44,6 @@ workspace:
 
 ai:
   enabled: true
-  min_success_rate_to_enable: 0.8
   tier2_chunk_size: 12000
   tier2_max_chunks: 20
   cache_dir: .cache/ai
@@ -115,6 +114,9 @@ quality:
 word_count:
   target: 4000
   tolerance: 200
+  # cjk_only: 仅剔除注释后统计 CJK 字符数（默认）
+  # cjk_strip_commands: 粗剔除命令/数学环境/类代码环境后统计（更接近“正文字符数”的估计）
+  mode: cjk_only
 
 terminology:
   # auto: AI 可用则叠加 AI 语义检查，否则仅 legacy 规则矩阵

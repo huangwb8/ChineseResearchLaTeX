@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence
 DEFAULT_CONFIG: Dict[str, Any] = {
     "skill_info": {
         "name": "nsfc-justification-writer",
-        "version": "0.6.0",
+        "version": "0.6.1",
         "template_year": "2026",
         "category": "writing",
     },
@@ -31,13 +31,37 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "strict_title_match": True,
         "min_subsubsection_count": 4,
     },
+    # 安全关键项：即使 YAML 依赖缺失，也必须默认生效（避免“空策略”导致任意写入）。
+    "guardrails": {
+        "allowed_write_files": ["extraTex/1.1.立项依据.tex"],
+        "forbidden_write_files": ["main.tex", "extraTex/@config.tex"],
+        "forbidden_write_globs": ["**/*.cls", "**/*.sty"],
+    },
+    "latex_style_contract": {
+        "keep_commands": ["\\justifying", "\\indent"],
+        "avoid_commands": ["\\section", "\\subsection", "\\input", "\\include"],
+    },
+    "quality_contract": {
+        "must_include": [
+            "价值与必要性（为什么要做）",
+            "国内外现状与不足（现有不足）",
+            "科学问题/核心假说（切入点）",
+            "本项目贡献与小结（承上启下）",
+        ],
+        "avoid": [
+            "无法核验的绝对表述（例如“国内首次”“国际领先”）",
+            "幻觉引用（未核验即给出作者/年份/期刊/DOI）",
+        ],
+    },
     "quality": {
         "forbidden_phrases": ["国际领先", "国内首次", "世界领先", "填补空白"],
         "avoid_commands": ["\\section", "\\subsection", "\\input", "\\include"],
     },
     "ai": {
         "enabled": True,
-        "min_success_rate_to_enable": 0.8,
+        "tier2_chunk_size": 12000,
+        "tier2_max_chunks": 20,
+        "cache_dir": ".cache/ai",
     },
     "prompts": {
         "intent_parse": "prompts/intent_parse.txt",
@@ -51,6 +75,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "word_count": {
         "target": 4000,
         "tolerance": 200,
+        "mode": "cjk_only",
     },
     "terminology": {
         "mode": "auto",
@@ -77,16 +102,18 @@ def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any
     return merged
 
 
-def _load_yaml_dict(path: Path) -> Dict[str, Any]:
+def _load_yaml_dict_with_warning(path: Path) -> tuple[Dict[str, Any], str]:
     try:
         import yaml  # type: ignore
     except Exception:
-        return {}
+        return {}, "未安装 PyYAML，已跳过 YAML 配置加载（建议 `pip install pyyaml`）"
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore")) or {}
-        return raw if isinstance(raw, dict) else {}
+        if not isinstance(raw, dict):
+            return {}, "YAML 顶层不是 mapping（dict），已忽略"
+        return raw, ""
     except Exception:
-        return {}
+        return {}, "YAML 解析失败，已忽略（请检查语法）"
 
 
 def _default_user_override_path() -> Optional[Path]:
@@ -187,9 +214,12 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
     else:
         if not isinstance(ai.get("enabled", True), bool):
             err("ai.enabled 必须是 bool")
-        msr = ai.get("min_success_rate_to_enable", 0.8)
-        if not isinstance(msr, (int, float)) or not (0.0 <= float(msr) <= 1.0):
-            err("ai.min_success_rate_to_enable 必须在 0~1 之间")
+        if "tier2_chunk_size" in ai and not isinstance(ai.get("tier2_chunk_size"), int):
+            err("ai.tier2_chunk_size 必须是 int")
+        if "tier2_max_chunks" in ai and not isinstance(ai.get("tier2_max_chunks"), int):
+            err("ai.tier2_max_chunks 必须是 int")
+        if "cache_dir" in ai and not isinstance(ai.get("cache_dir"), str):
+            err("ai.cache_dir 必须是 str")
 
     prompts = config.get("prompts", {})
     if prompts is not None and not isinstance(prompts, dict):
@@ -249,15 +279,27 @@ def load_config(
 ) -> Dict[str, Any]:
     skill_root = Path(skill_root).resolve()
     config: Dict[str, Any] = dict(DEFAULT_CONFIG)
+    meta: Dict[str, Any] = {"yaml_available": True, "loaded_files": [], "warnings": []}
+
+    def _merge_yaml(path: Path, *, label: str) -> None:
+        nonlocal config, meta
+        if not path.exists():
+            return
+        data, warn = _load_yaml_dict_with_warning(path)
+        if warn:
+            meta["warnings"].append(f"{label}: {warn} -> {path}")
+            if "未安装 PyYAML" in warn:
+                meta["yaml_available"] = False
+            return
+        config = _deep_merge(config, data)
+        meta["loaded_files"].append(str(path))
 
     config_path = (skill_root / "config.yaml").resolve()
-    if config_path.exists():
-        config = _deep_merge(config, _load_yaml_dict(config_path))
+    _merge_yaml(config_path, label="repo config.yaml")
 
     if preset:
         preset_path = (skill_root / "config" / "presets" / f"{preset}.yaml").resolve()
-        if preset_path.exists():
-            config = _deep_merge(config, _load_yaml_dict(preset_path))
+        _merge_yaml(preset_path, label=f"preset={preset}")
         config["active_preset"] = str(preset)
     else:
         config["active_preset"] = ""
@@ -271,14 +313,15 @@ def load_config(
         env_override = os.environ.get("NSFC_JUSTIFICATION_WRITER_OVERRIDE_PATH")
         user_path = Path(env_override).expanduser().resolve() if env_override else _default_user_override_path()
         if user_path and user_path.exists():
-            config = _deep_merge(config, _load_yaml_dict(Path(user_path)))
+            _merge_yaml(Path(user_path), label="user override")
 
     if override_path:
         p = Path(override_path).expanduser()
         if not p.is_absolute():
             p = (Path.cwd() / p).resolve()
-        if p.exists():
-            config = _deep_merge(config, _load_yaml_dict(p))
+        _merge_yaml(p, label="--override")
+
+    config["_config_loader"] = meta
 
     disable_validation = str(os.environ.get("NSFC_JUSTIFICATION_WRITER_DISABLE_CONFIG_VALIDATION", "")).strip().lower() in {
         "1",

@@ -92,7 +92,9 @@ def run_tier1(
     )
     citation_ok = len(cite_result.missing_keys) == 0
 
-    wc: WordCountResult = count_cjk_chars(tex_text)
+    wc_cfg = config.get("word_count", {}) or {}
+    mode = str(wc_cfg.get("mode", "cjk_only")).strip() or "cjk_only"
+    wc: WordCountResult = count_cjk_chars(tex_text, mode=mode)
     forbidden_hits, cmd_hits = _check_quality(tex_text, quality_rule)
 
     return Tier1Report(

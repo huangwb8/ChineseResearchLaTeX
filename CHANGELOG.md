@@ -56,6 +56,14 @@
   - 更新 `skills/nsfc-justification-writer/core/example_matcher.py`：AI 语义示例推荐（带理由）+ 关键词 fallback
   - 更新 `skills/nsfc-justification-writer/config.yaml`、`skills/nsfc-justification-writer/core/config_loader.py` 与 `skills/nsfc-justification-writer/SKILL.md`：版本升级至 v0.6.0，并同步文档
 
+- **nsfc-justification-writer v0.6.1** - 按 v202601092056 解决 P0–P2（安全/准确性/可维护性）
+  - 更新 `skills/nsfc-justification-writer/core/config_loader.py` 与 `skills/nsfc-justification-writer/scripts/run.py`：无 PyYAML 时不再静默退化；内置安全兜底（guardrails 默认生效）并在 CLI 输出配置加载警告
+  - 更新 `skills/nsfc-justification-writer/core/reference_validator.py` 与 `skills/nsfc-justification-writer/tests/test_reference_validator.py`：引用解析剔除注释与 `verbatim|lstlisting|minted` 环境，减少缺失 bibkey 误报
+  - 新增 `skills/nsfc-justification-writer/core/quality_gate.py`，并更新 `skills/nsfc-justification-writer/core/hybrid_coordinator.py`、`skills/nsfc-justification-writer/scripts/run.py`：`apply-section --strict-quality` 对“本次新增正文”启用质量闸门（危险命令/绝对化表述可阻断；放宽引用约束时会提示建议开启）
+  - 更新 `.gitignore` 与 `skills/nsfc-justification-writer/scripts/README.md`：明确并忽略 `runs/`、`.cache/` 等运行产物，避免污染工作区
+  - 更新 `skills/nsfc-justification-writer/core/wordcount.py`、`skills/nsfc-justification-writer/core/diagnostic.py`、`skills/nsfc-justification-writer/scripts/run.py`：字数统计新增 `cjk_strip_commands` 口径（粗剔除命令/数学/类代码环境），并在输出中注明口径说明
+  - 更新 `skills/nsfc-justification-writer/config.yaml`、`skills/nsfc-justification-writer/README.md` 与 `skills/nsfc-justification-writer/SKILL.md`：移除误导性的 `ai.min_success_rate_to_enable` 配置项，并明确 AI 可用性取决于 responder 注入（不可用自动回退）
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位

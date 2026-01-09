@@ -62,3 +62,24 @@ class SectionNotFoundError(SkillError):
             f"未找到匹配的小标题：{title}",
             fix_suggestion=("可用的小标题候选：\n" + sug + "\n\n提示：可加 `--suggest-alias` 输出更多候选。"),
         )
+
+
+class QualityGateError(SkillError):
+    def __init__(self, *, forbidden_phrases: list[str], avoid_commands: list[str]) -> None:
+        self.forbidden_phrases = [str(x) for x in (forbidden_phrases or []) if str(x).strip()]
+        self.avoid_commands = [str(x) for x in (avoid_commands or []) if str(x).strip()]
+        parts = []
+        if self.forbidden_phrases:
+            parts.append("不可核验表述：" + "、".join(self.forbidden_phrases[:10]))
+        if self.avoid_commands:
+            parts.append("可能破坏模板的命令：" + "、".join(self.avoid_commands[:10]))
+        detail = "；".join(parts) if parts else "命中质量闸门"
+        super().__init__(
+            f"新正文命中质量闸门，已拒绝写入（{detail}）",
+            fix_suggestion=(
+                "建议：\n"
+                "- 删除/替换上述绝对化表述，改为“可核验的证据链”表述\n"
+                "- 避免在正文中直接使用 \\section/\\subsection/\\input/\\include 等结构命令\n"
+                "- 修订后重试；如确需跳过该闸门：不要使用 `--strict-quality`\n"
+            ),
+        )
