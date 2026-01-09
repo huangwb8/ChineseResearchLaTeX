@@ -67,7 +67,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## 📋 模板列表
 
-> ⚠️ **建议使用正式的 [Release 版本](https://github.com/huangwb8/ChineseResearchLaTeX/releases) 以获得最佳稳定性**
+> ⚠️ **建议使用正式的 [Release 版本](https://github.com/huangwb8/ChineseResearchLaTeX/releases) 以获得最佳稳定性**。借助 [make_latex_model](skills/make_latex_model/) 技能，现已支持像素级 `Word/PDF 模板 → LaTeX 模板` 的快速转换，如有定制需求欢迎提交 Issue。
 
 | 模板 | 状态 | Overleaf 演示 |
 |------|------|---------------|
