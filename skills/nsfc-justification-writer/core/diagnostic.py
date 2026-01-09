@@ -20,6 +20,7 @@ class Tier1Report:
     missing_subsubsections: List[str]
     citation_ok: bool
     missing_citation_keys: List[str]
+    missing_doi_keys: List[str]
     word_count: int
     forbidden_phrases_hits: List[str]
     avoid_commands_hits: List[str]
@@ -39,6 +40,7 @@ class DiagnosticReport:
                 "missing_subsubsections": self.tier1.missing_subsubsections,
                 "citation_ok": self.tier1.citation_ok,
                 "missing_citation_keys": self.tier1.missing_citation_keys,
+                "missing_doi_keys": self.tier1.missing_doi_keys,
                 "word_count": self.tier1.word_count,
                 "forbidden_phrases_hits": self.tier1.forbidden_phrases_hits,
                 "avoid_commands_hits": self.tier1.avoid_commands_hits,
@@ -97,6 +99,7 @@ def run_tier1(
         missing_subsubsections=missing_sections,
         citation_ok=citation_ok,
         missing_citation_keys=cite_result.missing_keys,
+        missing_doi_keys=cite_result.missing_doi_keys,
         word_count=wc.cjk_count,
         forbidden_phrases_hits=forbidden_hits,
         avoid_commands_hits=cmd_hits,
@@ -116,6 +119,9 @@ def format_tier1(report: Tier1Report) -> str:
     else:
         lines.append(f"- ❌ 引用缺失：.bib 未找到 keys：{', '.join(report.missing_citation_keys)}")
 
+    if report.missing_doi_keys:
+        lines.append(f"- ⚠️ DOI 缺失：建议补齐（或走 nsfc-bib-manager 核验）keys：{', '.join(report.missing_doi_keys[:10])}")
+
     lines.append(f"- ℹ️ 字数统计（中文字符，不含注释）：{report.word_count}")
 
     if report.forbidden_phrases_hits:
@@ -124,4 +130,3 @@ def format_tier1(report: Tier1Report) -> str:
         lines.append(f"- ⚠️ 可能破坏模板的命令：{', '.join(report.avoid_commands_hits)}")
 
     return "\n".join(lines).strip() + "\n"
-

@@ -1,0 +1,15 @@
+你是 NSFC 立项依据“语义诊断器”。请基于以下 LaTeX 文本，输出诊断要点（JSON）：
+
+字段：
+- logic: 逻辑连贯性问题（列表）
+- terminology: 术语/缩写不一致问题（列表）
+- evidence: 证据不足/不可量化陈述（列表）
+- suggestions: 3-6 条可执行修改建议（列表）
+
+要求：
+- 只输出 JSON
+- 不生成新的引用；若需要引用，请提示“需用户提供 DOI/链接或走 nsfc-bib-manager 核验”
+
+LaTeX 文本：
+{tex}
+

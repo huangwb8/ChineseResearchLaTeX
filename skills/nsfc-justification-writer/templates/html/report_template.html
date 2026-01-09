@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>$title</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #111936;
+        --text: #e7ecff;
+        --muted: #a7b1d6;
+        --ok: #5eead4;
+        --warn: #fbbf24;
+        --bad: #fb7185;
+        --codebg: #0a0f22;
+        --line: rgba(255, 255, 255, 0.08);
+        --hl: rgba(251, 191, 36, 0.22);
+        --hlbad: rgba(251, 113, 133, 0.26);
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+        background: radial-gradient(1200px 700px at 10% 0%, rgba(94, 234, 212, 0.12), transparent),
+          radial-gradient(1200px 700px at 90% 20%, rgba(251, 191, 36, 0.10), transparent), var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+      a { color: inherit; text-decoration: none; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 18px 16px 36px; }
+      .top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+      h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
+      .meta { color: var(--muted); font-size: 12px; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+      @media (min-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
+      .card {
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 12px;
+        padding: 12px 12px 10px;
+        backdrop-filter: blur(8px);
+      }
+      .card h2 { margin: 0 0 8px; font-size: 14px; color: #d8deff; }
+      .kvs { display: grid; grid-template-columns: 1fr; gap: 6px; }
+      .kv { display: flex; gap: 8px; align-items: baseline; }
+      .k { color: var(--muted); font-size: 12px; min-width: 120px; }
+      .v { font-size: 13px; }
+      .ok { color: var(--ok); }
+      .warn { color: var(--warn); }
+      .bad { color: var(--bad); }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      .code {
+        background: var(--codebg);
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .codehdr {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.04);
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .codelines { margin: 0; padding: 0; list-style: none; }
+      .line {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 12px;
+        padding: 0 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+      }
+      .ln {
+        color: rgba(167, 177, 214, 0.75);
+        border-right: 1px solid rgba(255,255,255,0.06);
+        padding: 4px 0;
+        text-align: right;
+        padding-right: 12px;
+      }
+      .src {
+        padding: 4px 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-left: 6px; }
+      .tag.ok { background: rgba(94, 234, 212, 0.14); border: 1px solid rgba(94, 234, 212, 0.35); }
+      .tag.warn { background: rgba(251, 191, 36, 0.14); border: 1px solid rgba(251, 191, 36, 0.35); }
+      .tag.bad { background: rgba(251, 113, 133, 0.14); border: 1px solid rgba(251, 113, 133, 0.35); }
+      .hl { background: var(--hl); border-radius: 4px; padding: 0 2px; }
+      .hlbad { background: var(--hlbad); border-radius: 4px; padding: 0 2px; }
+      .sec { margin-top: 12px; }
+      .md { color: #d9def8; font-size: 13px; }
+      .md ul { margin: 8px 0 0 18px; padding: 0; }
+      .md li { margin: 4px 0; }
+      table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 10px; }
+      th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; font-size: 12px; }
+      th { text-align: left; color: var(--muted); }
+      tr:hover td { background: rgba(255,255,255,0.03); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <h1>$headline</h1>
+        <div class="meta">$meta</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Tier1 诊断摘要</h2>
+          $tier1_summary_html
+        </div>
+        <div class="card">
+          <h2>下一步建议</h2>
+          $next_steps_html
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="card">
+          <h2>Tier2（可选）</h2>
+          $tier2_html
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="card">
+          <h2>跨章节术语一致性</h2>
+          $terms_html
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="code">
+          <div class="codehdr">
+            <div>文件：<span class="mono">$target_relpath</span></div>
+            <div>行号可点击定位</div>
+          </div>
+          <ol class="codelines">$code_lines_html</ol>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

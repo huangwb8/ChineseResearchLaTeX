@@ -1,6 +1,6 @@
 # nsfc-justification-writer scripts
 
-这些脚本提供“硬编码确定性能力”（结构/引用/字数/术语检查 + 安全写入），用于配合 AI 写作流程：
+这些脚本提供“硬编码确定性能力”（诊断/术语/字数/评审建议/可视化报告 + 安全写入 + 版本回滚），用于配合 AI 写作流程：
 - AI 负责生成/重写文字
 - 脚本负责**定位段落**、**写入白名单文件**、**备份与可复现诊断**
 
@@ -9,8 +9,35 @@
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root projects/NSFC_Young
 python skills/nsfc-justification-writer/scripts/run.py wordcount --project-root projects/NSFC_Young
+python skills/nsfc-justification-writer/scripts/run.py refs --project-root projects/NSFC_Young
 python skills/nsfc-justification-writer/scripts/run.py terms --project-root projects/NSFC_Young
+python skills/nsfc-justification-writer/scripts/run.py coach --project-root projects/NSFC_Young --stage auto
+python skills/nsfc-justification-writer/scripts/run.py review --project-root projects/NSFC_Young
 ```
+
+## 信息表生成（推荐）
+
+生成模板（用于你手工填写）：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py init --out /path/to/info_form.md
+```
+
+交互式填写并生成：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py init --interactive --out /path/to/info_form_filled.md
+```
+
+## 渐进式写作引导（主推）
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py coach --project-root projects/NSFC_Young --stage auto --topic "你的课题一句话"
+```
+
+说明：
+- 输出会告诉你“本轮只做三件事”，并给出“可复制提示词”（用于生成某个小标题正文）
+- 你每轮只需要改一个 `\subsubsection` 的正文，然后用 `apply-section` 写入
 
 ## 安全写入：替换指定小标题正文
 
@@ -26,4 +53,30 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \
 说明：
 - 备份默认写入 `skills/nsfc-justification-writer/runs/`（不污染标书项目目录）
 - 仅允许写入 `extraTex/1.1.立项依据.tex`（由 `config.yaml` 的 guardrails 控制）
+- 默认严格：若新正文中出现 `\cite{...}` 但 `.bib` 不存在对应 key，将拒绝写入（防止幻觉引用）
 
+## HTML 可视化诊断报告
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root projects/NSFC_Young --html-report auto
+```
+
+## 版本 diff / 回滚
+
+列出 runs：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py list-runs
+```
+
+查看某次写入的备份与当前文件差异：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py diff --project-root projects/NSFC_Young --run-id <run_id>
+```
+
+从某次备份回滚（需要显式确认）：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py rollback --project-root projects/NSFC_Young --run-id <run_id> --yes
+```

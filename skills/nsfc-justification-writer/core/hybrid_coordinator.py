@@ -11,13 +11,18 @@ from typing import Any, Dict, Optional
 from .ai_integration import AIIntegration
 from .config_loader import get_runs_dir, load_config
 from .diagnostic import DiagnosticReport, format_tier1, run_tier1
+from .errors import MissingCitationKeysError
 from .editor import ApplyResult, apply_new_content
+from .example_matcher import recommend_examples
 from .latex_parser import replace_subsubsection_body
 from .observability import Observability, ensure_run_dir, make_run_id
+from .reference_validator import check_citations
 from .security import build_write_policy, resolve_target_path, validate_write_target
 from .term_consistency import build_term_matrix
 from .wordcount import count_cjk_chars
-from .prompt_templates import TIER2_DIAGNOSTIC_PROMPT
+from .prompt_templates import get_prompt, TIER2_DIAGNOSTIC_PROMPT
+from .review_advice import generate_review_markdown
+from .writing_coach import coach_markdown
 
 
 @dataclass(frozen=True)
@@ -49,6 +54,9 @@ class HybridCoordinator:
     def _resolve_target(self, project_root: Path) -> Path:
         return resolve_target_path(project_root, self._target_relpath())
 
+    def target_path(self, *, project_root: Path) -> Path:
+        return self._resolve_target(Path(project_root).resolve())
+
     def diagnose(self, *, project_root: Path, include_tier2: bool = False) -> DiagnosticReport:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
@@ -65,7 +73,13 @@ class HybridCoordinator:
             return report
 
         async def _run() -> Optional[Dict[str, Any]]:
-            prompt = TIER2_DIAGNOSTIC_PROMPT.format(tex=tex[:12000])
+            tpl = get_prompt(
+                name="tier2_diagnostic",
+                default=TIER2_DIAGNOSTIC_PROMPT,
+                skill_root=self.skill_root,
+                config=self.config,
+            )
+            prompt = tpl.format(tex=tex[:12000])
 
             def _fallback() -> Dict[str, Any]:
                 return {
@@ -130,6 +144,7 @@ class HybridCoordinator:
         new_body: str,
         backup: bool = True,
         run_id: Optional[str] = None,
+        allow_missing_citations: bool = False,
     ) -> ApplyResult:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
@@ -140,6 +155,15 @@ class HybridCoordinator:
         new_text, changed = replace_subsubsection_body(src, title, new_body)
         if not changed:
             return ApplyResult(changed=False, target_path=target, backup_path=None)
+
+        ref_cfg = (self.config.get("references", {}) or {})
+        allow_missing = bool(ref_cfg.get("allow_missing_citations", False)) or bool(allow_missing_citations)
+        if not allow_missing:
+            targets = self.config.get("targets", {}) or {}
+            bib_globs = targets.get("bib_globs", ["references/*.bib"])
+            cite_result = check_citations(tex_text=new_text, project_root=project_root, bib_globs=bib_globs)
+            if cite_result.missing_keys:
+                raise MissingCitationKeysError(cite_result.missing_keys)
 
         run_id = run_id or make_run_id("apply")
         run_dir = ensure_run_dir(self.paths.runs_root, run_id)
@@ -168,3 +192,38 @@ class HybridCoordinator:
             "delta": current - target_n,
         }
 
+    def recommend_examples(self, *, query: str, top_k: int = 3) -> str:
+        matches = recommend_examples(skill_root=self.skill_root, query=query, top_k=top_k)
+        if not matches:
+            return "（未找到可用示例）\n"
+        lines = ["推荐示例："]
+        for m in matches:
+            lines.append(f"- {m.category}: {m.path}")
+        return "\n".join(lines).strip() + "\n"
+
+    def coach(self, *, project_root: Path, stage: str = "auto", info_form_text: str = "") -> str:
+        return asyncio.run(
+            coach_markdown(
+                skill_root=self.skill_root,
+                project_root=Path(project_root),
+                config=self.config,
+                stage=stage,  # type: ignore[arg-type]
+                info_form_text=info_form_text,
+                ai=self.ai,
+            )
+        )
+
+    def reviewer_advice(self, *, project_root: Path, include_tier2: bool = False) -> str:
+        project_root = Path(project_root).resolve()
+        target = self._resolve_target(project_root)
+        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        report = self.diagnose(project_root=project_root, include_tier2=include_tier2)
+        return asyncio.run(
+            generate_review_markdown(
+                skill_root=self.skill_root,
+                config=self.config,
+                report=report,
+                tex_text=tex,
+                ai=self.ai,
+            )
+        )

@@ -20,6 +20,13 @@
   - 更新 `skills/nsfc-justification-writer/references/info_form.md`：8 项信息表（必填/选填标识），与 `extraTex/1.1.立项依据.tex` 的 4 个 `\subsubsection` 对齐
   - 更新 `skills/nsfc-justification-writer/config.yaml` 与 `skills/nsfc-justification-writer/SKILL.md`：加入字数参数、术语 alias_groups、Tier1/Tier2（可选）诊断说明
 
+- **nsfc-justification-writer v0.3.0** - 落地改进计划（P1–P3），主推“渐进式写作引导”
+  - 更新 `skills/nsfc-justification-writer/scripts/run.py`：新增 `init/coach/review/refs` 与 `diff/rollback/list-runs` 子命令，`diagnose` 支持 `--html-report`
+  - 更新 `skills/nsfc-justification-writer/core/term_consistency.py`：术语矩阵改为“按章节统计命中次数”，并识别“同章内不一致”
+  - 更新 `skills/nsfc-justification-writer/core/reference_validator.py` 与 `skills/nsfc-justification-writer/core/diagnostic.py`：增加 DOI 缺失提示（可核验性增强）
+  - 更新 `skills/nsfc-justification-writer/core/hybrid_coordinator.py`：`apply-section` 默认严格拒绝“缺失 bibkey 的 \\cite{...}”（防止幻觉引用）
+  - 更新 `skills/nsfc-justification-writer/README.md`、`skills/nsfc-justification-writer/SKILL.md`、`skills/nsfc-justification-writer/scripts/README.md`：补齐渐进式写作闭环与新命令用法
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位
@@ -59,6 +66,16 @@
   - 新增单元测试：`skills/nsfc-justification-writer/tests/`（pytest）
   - 新增示例与模板：`skills/nsfc-justification-writer/examples/`、`skills/nsfc-justification-writer/templates/`
   - 新增诊断示例：`skills/nsfc-justification-writer/references/diagnostic_examples.md`
+
+- **nsfc-justification-writer v0.3.0** - 渐进式写作与可视化/版本能力
+  - 新增渐进式写作引导：`skills/nsfc-justification-writer/core/writing_coach.py`（coach）
+  - 新增交互式信息表收集：`skills/nsfc-justification-writer/core/info_form.py`（init --interactive）
+  - 新增评审建议生成：`skills/nsfc-justification-writer/core/review_advice.py`（review）
+  - 新增 HTML 诊断报告：`skills/nsfc-justification-writer/core/html_report.py`、`skills/nsfc-justification-writer/templates/html/report_template.html`
+  - 新增版本 diff/回滚：`skills/nsfc-justification-writer/core/versioning.py`
+  - 新增示例推荐：`skills/nsfc-justification-writer/core/example_matcher.py`（coach --topic / examples）
+  - 新增 prompts 外部化：`skills/nsfc-justification-writer/prompts/`
+  - 新增端到端测试：`skills/nsfc-justification-writer/tests/e2e/test_cli_flow.py`
 
 - 新增 NSFC 2026 新模板写作主技能（MVP，按新板块契约落到 `extraTex/*.tex`）
   - `skills/nsfc-justification-writer/`：对应 `（一）立项依据`

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -10,7 +11,7 @@ from typing import Any, Dict
 DEFAULT_CONFIG: Dict[str, Any] = {
     "skill_info": {
         "name": "nsfc-justification-writer",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "template_year": "2026",
         "category": "writing",
     },
@@ -37,6 +38,15 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "ai": {
         "enabled": True,
         "min_success_rate_to_enable": 0.8,
+    },
+    "prompts": {
+        "intent_parse": "prompts/intent_parse.txt",
+        "tier2_diagnostic": "prompts/tier2_diagnostic.txt",
+        "review_suggestions": "prompts/review_suggestions.txt",
+        "writing_coach": "prompts/writing_coach.txt",
+    },
+    "references": {
+        "allow_missing_citations": False,
     },
     "word_count": {
         "target": 4000,
@@ -83,6 +93,11 @@ def load_config(skill_root: Path) -> Dict[str, Any]:
 
 
 def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
+    env_override = os.environ.get("NSFC_JUSTIFICATION_WRITER_RUNS_DIR")
+    if env_override:
+        p = Path(env_override)
+        if not p.is_absolute():
+            p = (Path(skill_root) / p).resolve()
+        return p.resolve()
     runs_dir = (config.get("workspace", {}) or {}).get("runs_dir", "runs")
     return (Path(skill_root) / str(runs_dir)).resolve()
-

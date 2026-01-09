@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any, Dict, Optional
 
-INTENT_PARSE_PROMPT = """\
+DEFAULT_INTENT_PARSE_PROMPT = """\
 你是 NSFC 标书写作助手的“意图解析器”。
 
 任务：把用户指令解析为 JSON，字段：
@@ -22,7 +24,7 @@ INTENT_PARSE_PROMPT = """\
 """
 
 
-TIER2_DIAGNOSTIC_PROMPT = """\
+DEFAULT_TIER2_DIAGNOSTIC_PROMPT = """\
 你是 NSFC 立项依据“语义诊断器”。请基于以下 LaTeX 文本，输出诊断要点（JSON）：
 
 字段：
@@ -39,3 +41,108 @@ LaTeX 文本：
 {tex}
 """
 
+
+DEFAULT_REVIEW_SUGGESTIONS_PROMPT = """\
+你是 NSFC 立项依据的“评审人视角质疑生成器”。
+
+输入：
+- dod_checklist: 验收清单（要点）
+- tier1: 硬编码诊断结果（结构/引用/字数/不可核验表述）
+- tex: 立项依据正文（可截断）
+
+任务：输出 markdown（不要写 LaTeX），包含两部分：
+1) 评审人可能会问的 8-12 个问题（每条可直接用于修改）
+2) 对应的 8-12 条可执行修改建议（尽量给到“改哪里/怎么改/验证标准”）
+
+约束：
+- 不要杜撰引用与 DOI；如需要引用，用“需补充 DOI/链接或走 nsfc-bib-manager 核验”
+- 避免绝对化表述（国际领先/国内首次等）
+
+dod_checklist:
+{dod_checklist}
+
+tier1(json):
+{tier1_json}
+
+tex:
+{tex}
+"""
+
+
+DEFAULT_WRITING_COACH_PROMPT = """\
+你是 NSFC 立项依据的“渐进式写作教练”。
+
+目标：帮助用户用最小压力完成 1.1 立项依据，从“骨架 → 段落 → 逻辑闭环 → 润色 → 验收”逐步推进。
+
+输入：
+- stage: skeleton|draft|revise|polish|final（或 auto）
+- info_form: 用户已提供的信息（可能不完整）
+- tier1: 结构/引用/字数/质量硬编码诊断
+- term_matrix: 跨章节术语一致性矩阵（可为空）
+- tex: 当前立项依据（可为空）
+
+输出：markdown，格式固定为：
+## 当前阶段判断
+一句话说明当前处于哪个阶段以及原因。
+
+## 本轮只做三件事
+1) ...
+2) ...
+3) ...
+
+## 需要你补充/确认的问题（不超过 8 个）
+- ...
+
+## 下一步可直接复制的写作提示词
+给出 1 段可复制的提示词，用于让写作助手生成/修改某个 \\subsubsection 的正文（必须强调：不新增引用/引用先核验）。
+
+约束：
+- 永远先保证结构不被破坏
+- 永远优先可核验性与术语一致性
+"""
+
+
+def _default_skill_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _read_text_if_exists(path: Path) -> Optional[str]:
+    try:
+        if path.is_file():
+            return path.read_text(encoding="utf-8", errors="ignore").strip() + "\n"
+    except Exception:
+        return None
+    return None
+
+
+def get_prompt(
+    *,
+    name: str,
+    default: str,
+    skill_root: Optional[Path] = None,
+    config: Optional[Dict[str, Any]] = None,
+) -> str:
+    skill_root = (skill_root or _default_skill_root()).resolve()
+    cfg = config or {}
+    prompt_cfg = cfg.get("prompts", {}) or {}
+    override = prompt_cfg.get(name)
+    if override:
+        p = Path(str(override))
+        if not p.is_absolute():
+            p = (skill_root / p).resolve()
+        txt = _read_text_if_exists(p)
+        if txt:
+            return txt
+
+    # default location: prompts/<name>.txt
+    txt = _read_text_if_exists((skill_root / "prompts" / f"{name}.txt").resolve())
+    if txt:
+        return txt
+    return default.strip() + "\n"
+
+
+# Backward-compatible constants (loaded from prompts/ when present)
+INTENT_PARSE_PROMPT = get_prompt(name="intent_parse", default=DEFAULT_INTENT_PARSE_PROMPT)
+TIER2_DIAGNOSTIC_PROMPT = get_prompt(name="tier2_diagnostic", default=DEFAULT_TIER2_DIAGNOSTIC_PROMPT)
+REVIEW_SUGGESTIONS_PROMPT = get_prompt(name="review_suggestions", default=DEFAULT_REVIEW_SUGGESTIONS_PROMPT)
+WRITING_COACH_PROMPT = get_prompt(name="writing_coach", default=DEFAULT_WRITING_COACH_PROMPT)

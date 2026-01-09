@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.2.0
+  version: 0.3.0
   template_year: "2026"
   category: writing
 
@@ -45,6 +45,16 @@ workspace:
 ai:
   enabled: true
   min_success_rate_to_enable: 0.8
+
+prompts:
+  intent_parse: prompts/intent_parse.txt
+  tier2_diagnostic: prompts/tier2_diagnostic.txt
+  review_suggestions: prompts/review_suggestions.txt
+  writing_coach: prompts/writing_coach.txt
+
+references:
+  # 默认严格：发现缺失 bibkey 的 \\cite{...} 直接拒绝写入（防止幻觉引用）
+  allow_missing_citations: false
 
 structure:
   expected_subsubsections:
