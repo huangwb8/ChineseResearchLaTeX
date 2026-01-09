@@ -2,7 +2,7 @@
 
 用于 NSFC 2026 新模板正文 `（一）立项依据` 的写作/重构：把“价值与必要性、现状不足、科学问题/假说、切入点与贡献”写成一段可直接落到 LaTeX 模板的正文，并保持模板结构不被破坏。
 
-> v0.3.0 起：主推“渐进式写作引导”（coach），配合“诊断→（分步写作）→安全写入→验收”形成闭环。
+> 主推“渐进式写作引导”（coach），配合“诊断→（分步写作）→安全写入→验收”形成闭环。
 
 ## 推荐用法（Prompt 模板）
 
@@ -39,6 +39,21 @@ python skills/nsfc-justification-writer/scripts/run.py coach --project-root proj
 
 - `extraTex/1.1.立项依据.tex`
 
+## 配置（可选）
+
+全局配置加载顺序（后者覆盖前者）：
+1. `skills/nsfc-justification-writer/config.yaml`
+2. `skills/nsfc-justification-writer/config/presets/<preset>.yaml`（可选）
+3. `~/.config/nsfc-justification-writer/override.yaml`（可选，可用 `--no-user-override` 关闭）
+4. `--override /path/to/override.yaml`（可选，优先级最高）
+
+示例：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py --preset medical diagnose --project-root projects/NSFC_Young
+python skills/nsfc-justification-writer/scripts/run.py --override /path/to/override.yaml terms --project-root projects/NSFC_Young
+```
+
 ## 配套脚本（可选但推荐）
 
 ```bash
@@ -64,6 +79,20 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \\
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root projects/NSFC_Young --html-report auto
 ```
+
+## FAQ
+
+- **Q：为什么 `apply-section` 会拒绝写入？**  
+  A：默认严格：若新正文里出现 `\\cite{...}` 但项目 `references/*.bib` 找不到对应 key，会拒绝写入以避免“幻觉引用”。先用 `refs` 生成提示词交给 `nsfc-bib-manager` 补齐后再写入。
+- **Q：我想按学科调整术语 alias_groups 怎么做？**  
+  A：先试 `--preset medical/engineering`，或写一个 `override.yaml` 覆盖 `terminology.alias_groups`。
+- **Q：行号怎么复制？**  
+  A：HTML 报告里点击行号会复制 `Lxx`；`Shift+点击` 复制带锚点链接（便于讨论定位）。
+
+## 更多文档
+
+- `skills/nsfc-justification-writer/docs/tutorial.md`
+- `skills/nsfc-justification-writer/docs/architecture.md`
 
 版本回滚：
 

@@ -35,9 +35,21 @@ def _read_body_file(body_file: Optional[str]) -> str:
     return Path(body_file).read_text(encoding="utf-8", errors="ignore")
 
 
+def _load_config_for_args(skill_root: Path, args: argparse.Namespace) -> Dict[str, Any]:
+    preset = getattr(args, "preset", None)
+    override = getattr(args, "override", None)
+    no_user_override = bool(getattr(args, "no_user_override", False))
+    return load_config(
+        skill_root,
+        preset=str(preset) if preset else None,
+        override_path=str(override) if override else None,
+        load_user_override=(not no_user_override),
+    )
+
+
 def cmd_diagnose(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
 
     report = coord.diagnose(project_root=Path(args.project_root), include_tier2=bool(args.tier2))
@@ -75,7 +87,7 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
 
 def cmd_wordcount(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     status = coord.word_count_status(project_root=Path(args.project_root))
     print(json.dumps(status, ensure_ascii=False, indent=2))
@@ -84,7 +96,7 @@ def cmd_wordcount(args: argparse.Namespace) -> int:
 
 def cmd_refs(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
 
     report = coord.diagnose(project_root=Path(args.project_root), include_tier2=False)
@@ -103,9 +115,18 @@ def cmd_refs(args: argparse.Namespace) -> int:
 
 def cmd_terms(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     md = coord.term_consistency_report(project_root=Path(args.project_root))
+    targets = config.get("targets", {}) or {}
+    related = targets.get("related_tex", {}) or {}
+    if related:
+        md = (
+            md.rstrip()
+            + "\n\n## 建议同步到以下章节\n\n"
+            + "\n".join([f"- {k}: `{v}`" for k, v in related.items()])
+            + "\n"
+        )
     if args.out:
         Path(args.out).write_text(md, encoding="utf-8")
         print(f"已输出：{args.out}")
@@ -116,7 +137,7 @@ def cmd_terms(args: argparse.Namespace) -> int:
 
 def cmd_apply_section(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
 
     body = _read_body_file(args.body_file).strip()
@@ -167,7 +188,7 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
 
 def cmd_init(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     version = str((config.get("skill_info", {}) or {}).get("version", ""))
     runs_root = get_runs_dir(skill_root, config)
     run_id = args.run_id or make_run_id("init")
@@ -193,7 +214,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 def cmd_review(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     md = coord.reviewer_advice(project_root=Path(args.project_root), include_tier2=bool(args.tier2))
     if args.out:
@@ -206,7 +227,7 @@ def cmd_review(args: argparse.Namespace) -> int:
 
 def cmd_coach(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     info_form_text = ""
     if args.info_form:
@@ -224,7 +245,7 @@ def cmd_coach(args: argparse.Namespace) -> int:
 
 def cmd_examples(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     print(coord.recommend_examples(query=str(args.query), top_k=int(args.top_k)), end="")
     return 0
@@ -232,7 +253,7 @@ def cmd_examples(args: argparse.Namespace) -> int:
 
 def cmd_list_runs(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     runs_root = get_runs_dir(skill_root, config)
     runs = list_runs(runs_root=runs_root)
     if not runs:
@@ -245,7 +266,7 @@ def cmd_list_runs(args: argparse.Namespace) -> int:
 
 def cmd_diff(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     runs_root = get_runs_dir(skill_root, config)
     target = coord.target_path(project_root=Path(args.project_root))
@@ -272,7 +293,7 @@ def cmd_rollback(args: argparse.Namespace) -> int:
         print("❌ 回滚需要显式确认：请加 --yes", file=sys.stderr)
         return 2
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     runs_root = get_runs_dir(skill_root, config)
     target = coord.target_path(project_root=Path(args.project_root))
@@ -294,6 +315,9 @@ def cmd_rollback(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="nsfc-justification-writer", add_help=True)
+    p.add_argument("--preset", help="加载 config/presets/<name>.yaml（可选）")
+    p.add_argument("--override", help="额外配置覆盖文件（yaml，可选，优先级最高）")
+    p.add_argument("--no-user-override", action="store_true", help="不加载 ~/.config/nsfc-justification-writer/override.yaml")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     p_diag = sub.add_parser("diagnose", help="Tier1/Tier2 诊断（结构/引用/字数/表述）")

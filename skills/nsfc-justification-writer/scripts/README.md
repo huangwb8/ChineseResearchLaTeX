@@ -15,6 +15,21 @@ python skills/nsfc-justification-writer/scripts/run.py coach --project-root proj
 python skills/nsfc-justification-writer/scripts/run.py review --project-root projects/NSFC_Young
 ```
 
+## 配置覆盖与学科预设（可选）
+
+全局参数需要放在子命令前：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py --preset medical diagnose --project-root projects/NSFC_Young
+python skills/nsfc-justification-writer/scripts/run.py --preset engineering terms --project-root projects/NSFC_Young
+python skills/nsfc-justification-writer/scripts/run.py --override /path/to/override.yaml coach --project-root projects/NSFC_Young --stage auto
+python skills/nsfc-justification-writer/scripts/run.py --no-user-override diagnose --project-root projects/NSFC_Young
+```
+
+说明：
+- `--preset <name>` 会加载 `skills/nsfc-justification-writer/config/presets/<name>.yaml`
+- 默认会尝试加载 `~/.config/nsfc-justification-writer/override.yaml`（如存在）；用 `--no-user-override` 关闭
+
 ## 信息表生成（推荐）
 
 生成模板（用于你手工填写）：

@@ -64,6 +64,18 @@
         color: var(--muted);
         font-size: 12px;
       }
+      .actions { display: flex; align-items: center; gap: 10px; }
+      .hint { color: rgba(167, 177, 214, 0.85); }
+      .btn {
+        border: 1px solid rgba(255,255,255,0.14);
+        background: rgba(255,255,255,0.06);
+        color: var(--text);
+        padding: 4px 10px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .btn:hover { background: rgba(255,255,255,0.10); }
       .codelines { margin: 0; padding: 0; list-style: none; }
       .line {
         display: grid;
@@ -98,6 +110,19 @@
       th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; font-size: 12px; }
       th { text-align: left; color: var(--muted); }
       tr:hover td { background: rgba(255,255,255,0.03); }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: rgba(17, 25, 54, 0.92);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        z-index: 9999;
+      }
     </style>
   </head>
   <body>
@@ -132,16 +157,51 @@
         </div>
       </div>
 
-      <div class="sec">
-        <div class="code">
-          <div class="codehdr">
-            <div>文件：<span class="mono">$target_relpath</span></div>
-            <div>行号可点击定位</div>
-          </div>
-          <ol class="codelines">$code_lines_html</ol>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
+	      <div class="sec">
+	        <div class="code">
+	          <div class="codehdr">
+	            <div>文件：<span class="mono">$target_relpath</span></div>
+	            <div class="actions">
+	              <span class="hint">点击行号：跳转并复制行号；Shift+点击：复制链接</span>
+	              <button class="btn" id="copy-page-link" type="button">复制页面链接</button>
+	            </div>
+	          </div>
+	          <ol class="codelines">$code_lines_html</ol>
+	        </div>
+	      </div>
+	    </div>
+	    <div id="toast" class="toast" style="display:none;"></div>
+	    <script>
+	      const toast = document.getElementById("toast");
+	      const showToast = (msg) => {
+	        if (!toast) return;
+	        toast.textContent = msg;
+	        toast.style.display = "block";
+	        clearTimeout(window.__toastTimer);
+	        window.__toastTimer = setTimeout(() => { toast.style.display = "none"; }, 1200);
+	      };
+	      const copyText = async (text) => {
+	        try {
+	          await navigator.clipboard.writeText(text);
+	          showToast("已复制：" + text);
+	        } catch (e) {
+	          showToast("复制失败（浏览器权限限制）");
+	        }
+	      };
+	      document.addEventListener("click", (ev) => {
+	        const ln = ev.target && ev.target.closest ? ev.target.closest("a.ln") : null;
+	        if (!ln) return;
+	        const id = (ln.getAttribute("id") || "").trim();
+	        if (!id) return;
+	        const base = window.location.href.split("#")[0];
+	        const text = ev.shiftKey ? (base + "#" + id) : id;
+	        copyText(text);
+	      });
+	      const btn = document.getElementById("copy-page-link");
+	      if (btn) {
+	        btn.addEventListener("click", () => copyText(window.location.href));
+	      }
+	    </script>
+	  </body>
+	</html>
+	

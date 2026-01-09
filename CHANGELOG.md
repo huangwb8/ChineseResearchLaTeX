@@ -29,6 +29,15 @@
   - 更新 `skills/nsfc-justification-writer/core/hybrid_coordinator.py`：`apply-section` 默认严格拒绝“缺失 bibkey 的 \\cite{...}”（防止幻觉引用）
   - 更新 `skills/nsfc-justification-writer/README.md`、`skills/nsfc-justification-writer/SKILL.md`、`skills/nsfc-justification-writer/scripts/README.md`：补齐渐进式写作闭环与新命令用法
 
+- **nsfc-justification-writer v0.4.0** - 对齐配置/示例/体验与可扩展性
+  - 更新 `skills/nsfc-justification-writer/SKILL.md`：补齐“4 段闭环”与 4 个 `\\subsubsection` 标题的映射表，并修正工作流编号
+  - 更新 `skills/nsfc-justification-writer/templates/structure_template.tex`：为每个 `\\subsubsection` 增加写作要点注释
+  - 更新 `skills/nsfc-justification-writer/core/example_matcher.py` 与 `skills/nsfc-justification-writer/examples/`：引入 `*.metadata.yaml` 关键词元数据，扩展多学科示例与匹配逻辑
+  - 更新 `skills/nsfc-justification-writer/templates/html/report_template.html`：新增“点击行号复制/复制页面链接”的交互与更清晰的定位说明
+  - 更新 `skills/nsfc-justification-writer/core/config_loader.py`、`skills/nsfc-justification-writer/config/presets/`、`skills/nsfc-justification-writer/scripts/run.py`：支持 `--preset` 学科预设与用户 `override.yaml` 配置覆盖（可用 `--no-user-override` 关闭）
+  - 更新 `skills/nsfc-justification-writer/tests/`：补齐 diagnostic/writing_coach/example_matcher 单测与 integration 流程用例
+  - 新增 `skills/nsfc-justification-writer/docs/`：补齐教程与架构说明
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位

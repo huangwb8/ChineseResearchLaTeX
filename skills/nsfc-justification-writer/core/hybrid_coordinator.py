@@ -13,7 +13,7 @@ from .config_loader import get_runs_dir, load_config
 from .diagnostic import DiagnosticReport, format_tier1, run_tier1
 from .errors import MissingCitationKeysError
 from .editor import ApplyResult, apply_new_content
-from .example_matcher import recommend_examples
+from .example_matcher import format_example_recommendations, recommend_examples
 from .latex_parser import replace_subsubsection_body
 from .observability import Observability, ensure_run_dir, make_run_id
 from .reference_validator import check_citations
@@ -194,12 +194,7 @@ class HybridCoordinator:
 
     def recommend_examples(self, *, query: str, top_k: int = 3) -> str:
         matches = recommend_examples(skill_root=self.skill_root, query=query, top_k=top_k)
-        if not matches:
-            return "（未找到可用示例）\n"
-        lines = ["推荐示例："]
-        for m in matches:
-            lines.append(f"- {m.category}: {m.path}")
-        return "\n".join(lines).strip() + "\n"
+        return format_example_recommendations(matches)
 
     def coach(self, *, project_root: Path, stage: str = "auto", info_form_text: str = "") -> str:
         return asyncio.run(

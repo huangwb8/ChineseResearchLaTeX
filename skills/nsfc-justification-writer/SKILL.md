@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.3.0
+version: 0.4.0
 description: 为 NSFC 2026 新模板正文“（一）立项依据”写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改“立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点”等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -50,11 +50,24 @@ references: skills/nsfc-justification-writer/references/
    - 现状与不足：主流路线/代表性工作→2–4 个明确不足（尽量可量化/可验证）。
    - 科学问题/核心假说：一句假说 + 1–3 个关键科学问题（断点式），指向“可验证”。
    - 本项目切入点与贡献：本项目相对现有工作的“差异化切口”，并用 1 句过渡到研究内容。
-4. **可核验性与引用守护**：
+5. **可核验性与引用守护**：
    - 不写“国际领先/国内首次”等不可证明表述；需要对外部工作举证时，先让用户提供 DOI/链接或调用 `nsfc-bib-manager` 核验后再写 `\cite{...}`。
-5. **跨章节一致性检查**：检查术语/缩写/指标口径是否能与 `2.1 研究内容` 对齐；必要时列出需用户确认的 3–5 个关键名词与指标。
+6. **跨章节一致性检查**：检查术语/缩写/指标口径是否能与 `2.1 研究内容` 对齐；必要时列出需用户确认的 3–5 个关键名词与指标。
 
-## 关键能力（v0.3.0）
+## 推荐 `\\subsubsection` 标题与内容映射
+
+说明：模板与 `config.yaml` 默认要求 4 个 `\\subsubsection` 标题（`structure.expected_subsubsections`），而“4 段闭环”是内容叙事逻辑。为避免用户困惑，推荐按下表映射写作：
+
+| `\\subsubsection` 标题 | 对应叙事段落 | 核心写作要素 |
+|---|---|---|
+| 研究背景 | 价值与必要性 | 痛点→影响范围/成本→为何现在必须做 |
+| 国内外研究现状 | 现状与不足 | 主流路线→代表性工作→2–4 条不足（可验证/可量化） |
+| 现有研究的局限性 | 科学问题/核心假说 | 可证伪假说→关键科学问题→验证维度（数据/指标/对照） |
+| 研究切入点 | 本项目切入点与贡献 | 差异化切口→可交付/指标→承上启下到 2.1 研究内容 |
+
+如用户确需改小标题：建议仍保持 4 段结构，并先统一标题骨架（见 `templates/structure_template.tex`），避免被 Tier1 结构检查误判。
+
+## 关键能力
 
 用于“先诊断→再生成→再安全写入→再验收”的闭环：
 
@@ -64,6 +77,8 @@ references: skills/nsfc-justification-writer/references/
 - **评审建议生成器**：基于 DoD + 诊断结果输出“评审人会问什么 + 怎么改”（`scripts/run.py review`）
 - **可视化 HTML 诊断报告**：快速定位问题（`scripts/run.py diagnose --html-report auto`）
 - **版本 diff/回滚**：基于 runs 备份做差异查看与一键回滚（`scripts/run.py diff/rollback`）
+- **示例推荐**：从 `examples/` 读取 `*.metadata.yaml` 关键词，辅助按主题匹配参考骨架（`scripts/run.py coach --topic ...` / `scripts/run.py examples`）
+- **配置覆盖与预设**：支持 `--preset medical/engineering` 与 `~/.config/nsfc-justification-writer/override.yaml` 覆盖 `alias_groups` 等参数（需要时可用 `--no-user-override` 关闭）
 
 脚本入口：`skills/nsfc-justification-writer/scripts/run.py`（用法见 `skills/nsfc-justification-writer/scripts/README.md`）。
 

@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "skill_info": {
         "name": "nsfc-justification-writer",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "template_year": "2026",
         "category": "writing",
     },
@@ -72,24 +72,65 @@ def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any
     return merged
 
 
-def load_config(skill_root: Path) -> Dict[str, Any]:
-    config_path = Path(skill_root) / "config.yaml"
-    config: Dict[str, Any] = dict(DEFAULT_CONFIG)
-    if not config_path.exists():
-        return config
-
+def _load_yaml_dict(path: Path) -> Dict[str, Any]:
     try:
         import yaml  # type: ignore
     except Exception:
-        return config
-
+        return {}
     try:
-        raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-        if not isinstance(raw, dict):
-            return config
-        return _deep_merge(config, raw)
+        raw = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore")) or {}
+        return raw if isinstance(raw, dict) else {}
     except Exception:
-        return config
+        return {}
+
+
+def _default_user_override_path() -> Optional[Path]:
+    home = Path.home()
+    candidates = [
+        home / ".config" / "nsfc-justification-writer" / "override.yaml",
+        home / ".config" / "nsfc-justification-writer" / "override.yml",
+    ]
+    return next((p for p in candidates if p.exists() and p.is_file()), None)
+
+
+def load_config(
+    skill_root: Path,
+    *,
+    preset: Optional[str] = None,
+    override_path: Optional[str] = None,
+    load_user_override: bool = True,
+) -> Dict[str, Any]:
+    skill_root = Path(skill_root).resolve()
+    config: Dict[str, Any] = dict(DEFAULT_CONFIG)
+
+    config_path = (skill_root / "config.yaml").resolve()
+    if config_path.exists():
+        config = _deep_merge(config, _load_yaml_dict(config_path))
+
+    if preset:
+        preset_path = (skill_root / "config" / "presets" / f"{preset}.yaml").resolve()
+        if preset_path.exists():
+            config = _deep_merge(config, _load_yaml_dict(preset_path))
+
+    disable_user_override = str(os.environ.get("NSFC_JUSTIFICATION_WRITER_DISABLE_USER_OVERRIDE", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if load_user_override and (not disable_user_override):
+        env_override = os.environ.get("NSFC_JUSTIFICATION_WRITER_OVERRIDE_PATH")
+        user_path = Path(env_override).expanduser().resolve() if env_override else _default_user_override_path()
+        if user_path and user_path.exists():
+            config = _deep_merge(config, _load_yaml_dict(Path(user_path)))
+
+    if override_path:
+        p = Path(override_path).expanduser()
+        if not p.is_absolute():
+            p = (Path.cwd() / p).resolve()
+        if p.exists():
+            config = _deep_merge(config, _load_yaml_dict(p))
+
+    return config
 
 
 def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
