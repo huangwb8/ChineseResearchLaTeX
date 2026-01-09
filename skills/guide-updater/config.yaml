@@ -1,0 +1,18 @@
+skill_info:
+  name: guide-updater
+  version: 1.0.0
+  description: |
+    将对话中新产生的可复用写作洞见实时沉淀到项目指南文件。
+    调用时必须指定指南文件路径（用户可在 Prompt 中说明路径或使用 --guide-path 参数）。
+  author: "ChineseResearchLaTeX Project"
+
+parameters:
+  guide_path:
+    type: string
+    required: true
+    description: |
+      项目指南文件的路径（相对于项目根目录或绝对路径）。
+      用户可以通过以下方式指定：
+      - "更新项目指南（路径：projects/MyProject/项目指南.md）"
+      - "/guide-updater --guide-path docs/写作指南.md"
+      - 在对话中明确说明指南文件位置
