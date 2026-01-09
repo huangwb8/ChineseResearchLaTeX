@@ -10,7 +10,9 @@
 
 ### Changed（变更）
 
-- 更新 [README.md](README.md)：在“AI 模型配置建议”中补充 Claude Code + Claude 4.5 Opus “比较昂贵”的提示，新增 Codex CLI + GPT-5.2 Medium 的推荐组合，并在“API 获取建议”中补充 Packycode Codex 站点说明与扩写 DMXAPI 介绍
+- 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"核心工作流/执行流程"中新增"计划制定原则"，要求任务按优先级从上到下罗列，不使用时间限制表述（如"第1-2周"、"第3-4周"等）；同时更新 CLAUDE.md 的"任务管理"章节同步此原则
+
+- 更新 [README.md](README.md)：在"AI 模型配置建议"中补充 Claude Code + Claude 4.5 Opus "比较昂贵"的提示，新增 Codex CLI + GPT-5.2 Medium 的推荐组合，并在"API 获取建议"中补充 Packycode Codex 站点说明与扩写 DMXAPI 介绍
 - 更新 [AGENTS.md](AGENTS.md)：修正目录结构，移除不存在的根级 `scripts/`，并说明脚本主要位于 `skills/*/scripts/`
 - 更新 [CLAUDE.md](CLAUDE.md)：修正目录结构，移除不存在的根级 `scripts/`，并说明脚本主要位于 `skills/*/scripts/`
 - 更新 `skills/make_latex_model/README.md`：补充“优先用 Prompt 调用 Skill”的推荐用法，并将脚本流程作为备选
