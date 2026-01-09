@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, List, Optional
+
+
+@dataclass(frozen=True)
+class WritePolicy:
+    allowed_relpaths: List[str]
+    forbidden_relpaths: List[str]
+    forbidden_globs: List[str]
+
+
+def build_write_policy(config: dict) -> WritePolicy:
+    guard = config.get("guardrails", {}) or {}
+    return WritePolicy(
+        allowed_relpaths=[str(x) for x in (guard.get("allowed_write_files", []) or [])],
+        forbidden_relpaths=[str(x) for x in (guard.get("forbidden_write_files", []) or [])],
+        forbidden_globs=[str(x) for x in (guard.get("forbidden_write_globs", []) or [])],
+    )
+
+
+def _matches_any_glob(path: Path, globs: Iterable[str]) -> bool:
+    for pat in globs:
+        if path.match(pat):
+            return True
+    return False
+
+
+def validate_write_target(
+    *,
+    project_root: Path,
+    target_path: Path,
+    policy: WritePolicy,
+) -> None:
+    project_root = project_root.resolve()
+    target_path = target_path.resolve()
+    try:
+        rel = target_path.relative_to(project_root)
+    except Exception as e:
+        raise RuntimeError(f"写入目标不在 project_root 内：{target_path}") from e
+
+    rel_str = rel.as_posix()
+
+    if policy.forbidden_relpaths and rel_str in set(policy.forbidden_relpaths):
+        raise RuntimeError(f"禁止写入文件：{rel_str}")
+
+    if policy.forbidden_globs and _matches_any_glob(rel, policy.forbidden_globs):
+        raise RuntimeError(f"禁止写入路径（glob 命中）：{rel_str}")
+
+    if policy.allowed_relpaths:
+        if rel_str not in set(policy.allowed_relpaths):
+            raise RuntimeError(f"写入目标不在白名单：{rel_str}")
+
+
+def resolve_target_path(project_root: Path, relpath: str) -> Path:
+    return (project_root / relpath).resolve()
+

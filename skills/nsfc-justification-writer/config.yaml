@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.1.0
+  version: 0.2.0
   template_year: "2026"
   category: writing
 
@@ -19,9 +19,41 @@ parameters:
     default: apply
     allowed_values: [preview, apply]
     description: preview 仅输出建议文本；apply 则写入目标 .tex 文件（如由平台/工具支持）
+  word_count_target:
+    type: integer
+    required: false
+    default: 4000
+    description: 目标字数（中文字符数，不含 LaTeX 命令/注释）
+  word_count_tolerance:
+    type: integer
+    required: false
+    default: 200
+    description: 允许偏差范围（±200 字）
 
 targets:
   justification_tex: extraTex/1.1.立项依据.tex
+  related_tex:
+    research_content: extraTex/2.1.研究内容.tex
+    research_foundation: extraTex/3.1.研究基础.tex
+  bib_globs:
+    - references/*.bib
+    - references/**/*.bib
+
+workspace:
+  runs_dir: runs
+
+ai:
+  enabled: true
+  min_success_rate_to_enable: 0.8
+
+structure:
+  expected_subsubsections:
+    - 研究背景
+    - 国内外研究现状
+    - 现有研究的局限性
+    - 研究切入点
+  strict_title_match: true
+  min_subsubsection_count: 4
 
 guardrails:
   allowed_write_files:
@@ -53,3 +85,24 @@ quality_contract:
     - 无法核验的绝对表述（例如“国内首次”“国际领先”）
     - 幻觉引用（未核验即给出作者/年份/期刊/DOI）
 
+quality:
+  forbidden_phrases:
+    - 国际领先
+    - 国内首次
+    - 世界领先
+    - 填补空白
+  avoid_commands:
+    - "\\section"
+    - "\\subsection"
+    - "\\input"
+    - "\\include"
+
+word_count:
+  target: 4000
+  tolerance: 200
+
+terminology:
+  alias_groups:
+    研究对象: ["患者", "病例", "受试者", "样本"]
+    准确率: ["准确率", "精确度"]
+    深度学习: ["深度学习", "DL"]

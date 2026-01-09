@@ -14,6 +14,9 @@
 - 更新 [AGENTS.md](AGENTS.md)：修正目录结构，移除不存在的根级 `scripts/`，并说明脚本主要位于 `skills/*/scripts/`
 - 更新 [CLAUDE.md](CLAUDE.md)：修正目录结构，移除不存在的根级 `scripts/`，并说明脚本主要位于 `skills/*/scripts/`
 - 更新 `skills/make_latex_model/README.md`：补充“优先用 Prompt 调用 Skill”的推荐用法，并将脚本流程作为备选
+- **nsfc-justification-writer v0.2.0** - 升级信息表与文档，并补齐可复现的“诊断→写入→验收”闭环
+  - 更新 `skills/nsfc-justification-writer/references/info_form.md`：8 项信息表（必填/选填标识），与 `extraTex/1.1.立项依据.tex` 的 4 个 `\subsubsection` 对齐
+  - 更新 `skills/nsfc-justification-writer/config.yaml` 与 `skills/nsfc-justification-writer/SKILL.md`：加入字数参数、术语 alias_groups、Tier1/Tier2（可选）诊断说明
 
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
@@ -47,6 +50,13 @@
 - 新增迁移验证记录：`tests/v202601081624/TEST_REPORT.md`
 
 - 新增 NSFC 2026 新模板写作 Skill 迁移建议计划（已脱敏）：`plans/v202601081910.md`
+
+- **nsfc-justification-writer v0.2.0** - 硬编码确定性能力与配套脚本
+  - 新增脚本入口：`skills/nsfc-justification-writer/scripts/run.py`（diagnose/wordcount/terms/apply-section）
+  - 新增核心模块：`skills/nsfc-justification-writer/core/`（结构解析、引用核验、字数统计、术语矩阵、安全写入、可观测性）
+  - 新增单元测试：`skills/nsfc-justification-writer/tests/`（pytest）
+  - 新增示例与模板：`skills/nsfc-justification-writer/examples/`、`skills/nsfc-justification-writer/templates/`
+  - 新增诊断示例：`skills/nsfc-justification-writer/references/diagnostic_examples.md`
 
 - 新增 NSFC 2026 新模板写作主技能（MVP，按新板块契约落到 `extraTex/*.tex`）
   - `skills/nsfc-justification-writer/`：对应 `（一）立项依据`

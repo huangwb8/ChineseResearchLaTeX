@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from __future__ import annotations
+
+import asyncio
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+from .ai_integration import AIIntegration
+from .config_loader import get_runs_dir, load_config
+from .diagnostic import DiagnosticReport, format_tier1, run_tier1
+from .editor import ApplyResult, apply_new_content
+from .latex_parser import replace_subsubsection_body
+from .observability import Observability, ensure_run_dir, make_run_id
+from .security import build_write_policy, resolve_target_path, validate_write_target
+from .term_consistency import build_term_matrix
+from .wordcount import count_cjk_chars
+from .prompt_templates import TIER2_DIAGNOSTIC_PROMPT
+
+
+@dataclass(frozen=True)
+class CoordinatorPaths:
+    skill_root: Path
+    runs_root: Path
+
+
+class HybridCoordinator:
+    def __init__(
+        self,
+        *,
+        skill_root: Path,
+        config: Optional[Dict[str, Any]] = None,
+        ai_integration: Optional[AIIntegration] = None,
+        observability: Optional[Observability] = None,
+    ) -> None:
+        self.skill_root = Path(skill_root).resolve()
+        self.config = config or load_config(self.skill_root)
+        ai_cfg = self.config.get("ai", {}) or {}
+        self.ai = ai_integration or AIIntegration(enable_ai=bool(ai_cfg.get("enabled", True)), config=self.config)
+        self.obs = observability or Observability()
+        self.paths = CoordinatorPaths(skill_root=self.skill_root, runs_root=get_runs_dir(self.skill_root, self.config))
+
+    def _target_relpath(self) -> str:
+        targets = self.config.get("targets", {}) or {}
+        return str(targets.get("justification_tex", "extraTex/1.1.立项依据.tex"))
+
+    def _resolve_target(self, project_root: Path) -> Path:
+        return resolve_target_path(project_root, self._target_relpath())
+
+    def diagnose(self, *, project_root: Path, include_tier2: bool = False) -> DiagnosticReport:
+        project_root = Path(project_root).resolve()
+        target = self._resolve_target(project_root)
+        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        tier1 = run_tier1(tex_text=tex, project_root=project_root, config=self.config)
+        report = DiagnosticReport(tier1=tier1, tier2=None, notes=[])
+        self.obs.add("diagnose.tier1", **report.to_dict()["tier1"])
+
+        if not include_tier2:
+            return report
+
+        if not tier1.structure_ok:
+            report.notes.append("结构缺失：已跳过 Tier2（避免浪费 AI 资源）")
+            return report
+
+        async def _run() -> Optional[Dict[str, Any]]:
+            prompt = TIER2_DIAGNOSTIC_PROMPT.format(tex=tex[:12000])
+
+            def _fallback() -> Dict[str, Any]:
+                return {
+                    "logic": [],
+                    "terminology": [],
+                    "evidence": [],
+                    "suggestions": ["AI 不可用：仅完成 Tier1 硬编码诊断。"],
+                }
+
+            obj = await self.ai.process_request(
+                task="diagnose_tier2", prompt=prompt, fallback=_fallback, output_format="json"
+            )
+            return obj if isinstance(obj, dict) else _fallback()
+
+        report.tier2 = asyncio.run(_run())
+        self.obs.add("diagnose.tier2", enabled=self.ai.is_available())
+        return report
+
+    def format_diagnose(self, report: DiagnosticReport) -> str:
+        out = ["诊断结果：", format_tier1(report.tier1).rstrip()]
+        if report.tier2:
+            out.append("")
+            out.append("Tier2（AI 语义分析）：")
+            for k in ["logic", "terminology", "evidence", "suggestions"]:
+                v = report.tier2.get(k) if isinstance(report.tier2, dict) else None
+                if not v:
+                    continue
+                out.append(f"- {k}:")
+                if isinstance(v, list):
+                    for item in v[:10]:
+                        out.append(f"  - {item}")
+                else:
+                    out.append(f"  - {v}")
+        if report.notes:
+            out.append("")
+            out.append("备注：")
+            for n in report.notes:
+                out.append(f"- {n}")
+        return "\n".join(out).strip() + "\n"
+
+    def term_consistency_report(self, *, project_root: Path) -> str:
+        project_root = Path(project_root).resolve()
+        targets = self.config.get("targets", {}) or {}
+        related = targets.get("related_tex", {}) or {}
+
+        files = {
+            "立项依据": resolve_target_path(project_root, self._target_relpath()),
+        }
+        for label, relpath in related.items():
+            files[label] = resolve_target_path(project_root, str(relpath))
+
+        alias_groups = (self.config.get("terminology", {}) or {}).get("alias_groups", {}) or {}
+        matrix = build_term_matrix(files=files, alias_groups=alias_groups)
+        self.obs.add("terms.matrix", issues=len(matrix.issues), rows=len(matrix.rows))
+        return matrix.to_markdown()
+
+    def apply_section_body(
+        self,
+        *,
+        project_root: Path,
+        title: str,
+        new_body: str,
+        backup: bool = True,
+        run_id: Optional[str] = None,
+    ) -> ApplyResult:
+        project_root = Path(project_root).resolve()
+        target = self._resolve_target(project_root)
+        policy = build_write_policy(self.config)
+        validate_write_target(project_root=project_root, target_path=target, policy=policy)
+
+        src = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        new_text, changed = replace_subsubsection_body(src, title, new_body)
+        if not changed:
+            return ApplyResult(changed=False, target_path=target, backup_path=None)
+
+        run_id = run_id or make_run_id("apply")
+        run_dir = ensure_run_dir(self.paths.runs_root, run_id)
+        backup_root = (run_dir / "backup").resolve() if backup else None
+        result = apply_new_content(target_path=target, new_text=new_text, backup_root=backup_root, run_id=run_id)
+        self.obs.add("apply.section", title=title, changed=result.changed)
+        if result.backup_path:
+            self.obs.add("apply.backup", path=str(result.backup_path))
+        return result
+
+    def word_count_status(self, *, project_root: Path) -> Dict[str, Any]:
+        project_root = Path(project_root).resolve()
+        target = self._resolve_target(project_root)
+        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        current = count_cjk_chars(tex).cjk_count
+        wc_cfg = self.config.get("word_count", {}) or {}
+        target_n = int(wc_cfg.get("target", 4000))
+        tol = int(wc_cfg.get("tolerance", 200))
+        status = "within_tolerance" if abs(current - target_n) <= tol else ("need_expand" if current < target_n else "need_compress")
+        self.obs.add("wordcount", current=current, target=target_n, tolerance=tol, status=status)
+        return {
+            "current": current,
+            "target": target_n,
+            "tolerance": tol,
+            "status": status,
+            "delta": current - target_n,
+        }
+
