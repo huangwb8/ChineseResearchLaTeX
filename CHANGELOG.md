@@ -10,6 +10,8 @@
 
 ### Changed（变更）
 
+- 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"变更记录规范"中新增"Skill 文档编写原则"子章节，明确 Skill 文档（SKILL.md）应始终展示最新状态，不包含版本标记等对 AI 执行无用的元信息；包括内容优先于版本、简洁标题、单一职责等原则及设计公式
+
 - 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"核心工作流/执行流程"中新增"计划制定原则"，要求任务按优先级从上到下罗列，不使用时间限制表述（如"第1-2周"、"第3-4周"等）；同时更新 CLAUDE.md 的"任务管理"章节同步此原则
 
 - 更新 [README.md](README.md)：在"AI 模型配置建议"中补充 Claude Code + Claude 4.5 Opus "比较昂贵"的提示，新增 Codex CLI + GPT-5.2 Medium 的推荐组合，并在"API 获取建议"中补充 Packycode Codex 站点说明与扩写 DMXAPI 介绍
