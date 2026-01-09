@@ -7,11 +7,15 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 
 _BIBKEY_RE = re.compile(r"@[A-Za-z]+\s*\{\s*([^,\s]+)\s*,")
 _CITE_RE = re.compile(r"\\cite[a-zA-Z\*]*\s*(?:\[[^\]]*\]\s*)*\{([^}]*)\}")
-_DOI_FIELD_RE = re.compile(r"(?i)\\bdoi\\s*=\\s*(?:\\{([^}]*)\\}|\"([^\"]*)\")")
+_DOI_FIELD_RE = re.compile(r'(?i)\bdoi\s*=\s*(?:\{([^}]*)\}|"([^"]*)")')
+_DOI_PREFIX_RE = re.compile(r"(?i)^(?:doi\s*:)?\s*https?://(?:dx\.)?doi\.org/")
+_DOI_FORMAT_RE = re.compile(r"(?i)^10\.\d{4,9}/\S+$")
 
 
 @dataclass(frozen=True)
@@ -20,6 +24,15 @@ class CitationCheckResult:
     bib_keys: List[str]
     missing_keys: List[str]
     missing_doi_keys: List[str]
+    invalid_doi_keys: List[str]
+
+
+def normalize_doi(raw: str) -> str:
+    d = (raw or "").strip().strip("{}").strip()
+    if not d:
+        return ""
+    d = _DOI_PREFIX_RE.sub("", d).strip()
+    return d
 
 
 def parse_bib_keys(bib_text: str) -> Set[str]:
@@ -70,7 +83,7 @@ def _parse_bib_doi_map(bib_text: str) -> Dict[str, str]:
         dm = _DOI_FIELD_RE.search(chunk)
         if not dm:
             continue
-        doi = (dm.group(1) or dm.group(2) or "").strip().strip("{}").strip()
+        doi = normalize_doi(dm.group(1) or dm.group(2) or "")
         if doi:
             entries[key] = doi
     return entries
@@ -100,9 +113,33 @@ def check_citations(
     missing = sorted({k for k in cite_keys if k not in set(bib_keys)})
     doi_map = load_project_bib_doi_map(project_root, bib_globs)
     missing_doi = sorted({k for k in cite_keys if (k in set(bib_keys)) and (not doi_map.get(k))})
+    invalid_doi = sorted(
+        {k for k in cite_keys if (k in set(bib_keys)) and doi_map.get(k) and (not _DOI_FORMAT_RE.match(doi_map.get(k, "")))}
+    )
     return CitationCheckResult(
         cite_keys=cite_keys,
         bib_keys=bib_keys,
         missing_keys=missing,
         missing_doi_keys=missing_doi,
+        invalid_doi_keys=invalid_doi,
     )
+
+
+def verify_doi_via_crossref(*, doi: str, timeout_s: float = 5.0) -> bool:
+    """
+    可选联网校验：通过 Crossref API 检查 DOI 是否存在对应 works。
+    失败/超时返回 False（调用方应把 False 视为“需人工核验”，而非断言不存在）。
+    """
+    d = normalize_doi(doi)
+    if not d or (not _DOI_FORMAT_RE.match(d)):
+        return False
+    url = f"https://api.crossref.org/works/{quote(d)}"
+    try:
+        req = Request(url, headers={"User-Agent": "ChineseResearchLaTeX/nsfc-justification-writer"})
+        with urlopen(req, timeout=float(timeout_s)) as resp:
+            if int(getattr(resp, "status", 200)) != 200:
+                return False
+            body = resp.read().decode("utf-8", errors="ignore")
+            return "\"message\"" in body and "\"DOI\"" in body
+    except Exception:
+        return False

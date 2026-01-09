@@ -11,6 +11,7 @@ from typing import List
 class BibFixSuggestion:
     missing_bibkeys: List[str]
     missing_doi_keys: List[str]
+    invalid_doi_keys: List[str]
 
     def to_markdown(self, *, project_root: str) -> str:
         lines = [
@@ -30,6 +31,12 @@ class BibFixSuggestion:
                 "## DOI 缺失的条目（.bib 有该 key，但缺 doi 字段，建议补齐以便可核验）",
                 "",
             ] + [f"- {k}" for k in self.missing_doi_keys]
+        if self.invalid_doi_keys:
+            lines += [
+                "",
+                "## DOI 疑似不合法的条目（.bib 有 doi 字段，但格式看起来不对，建议核验）",
+                "",
+            ] + [f"- {k}" for k in self.invalid_doi_keys]
 
         lines += [
             "",
@@ -51,9 +58,14 @@ class BibFixSuggestion:
                 ", ".join(self.missing_doi_keys),
                 "说明：这些 key 在 .bib 存在，但缺 doi 字段；请在不杜撰的前提下补齐 doi（如无法确定，请明确提示需要我提供 DOI/链接）。",
             ]
+        if self.invalid_doi_keys:
+            lines += [
+                "需要核验/修正 DOI 的 bibkey：",
+                ", ".join(self.invalid_doi_keys),
+                "说明：这些 key 的 doi 字段疑似不合规（例如写成 URL/带多余字符/缺 10.x 前缀等）；请核验后修正为标准 DOI 格式（如无法确定，请明确提示需要我提供 DOI/链接）。",
+            ]
         lines += [
             "输出：更新项目 references/*.bib（或你认为合适的 .bib），并给出每条的题目/作者/年份/期刊/DOI 核验结果。",
             "```",
         ]
         return "\n".join(lines).strip() + "\n"
-

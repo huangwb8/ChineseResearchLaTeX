@@ -102,3 +102,62 @@ def build_term_matrix(
         rows.append((canonical, cells, conclusion))
 
     return TermMatrix(headers=headers, rows=rows, issues=issues)
+
+
+def build_term_matrices(
+    *,
+    files: Mapping[str, Path],
+    dimensions: Mapping[str, Mapping[str, Sequence[str]]],
+) -> Dict[str, TermMatrix]:
+    out: Dict[str, TermMatrix] = {}
+    for dim_name, alias_groups in dimensions.items():
+        if not alias_groups:
+            continue
+        out[str(dim_name)] = build_term_matrix(files=files, alias_groups=alias_groups)
+    return out
+
+
+def format_term_matrices_markdown(mats: Mapping[str, TermMatrix]) -> str:
+    if not mats:
+        return "（未配置术语一致性规则：terminology.dimensions 或 terminology.alias_groups 为空）\n"
+    parts: List[str] = []
+    for name, mat in mats.items():
+        parts.append(f"## {name}\n")
+        parts.append(mat.to_markdown().rstrip() + "\n")
+    return "\n".join(parts).strip() + "\n"
+
+
+class CrossChapterValidator:
+    def __init__(self, *, files: Mapping[str, Path], terminology_config: Mapping[str, object]) -> None:
+        self.files = dict(files)
+        self.terminology_config = dict(terminology_config)
+
+    def build(self) -> Dict[str, TermMatrix]:
+        dims = self.terminology_config.get("dimensions")
+        if isinstance(dims, dict) and dims:
+            # dimensions: {dim_name: {canonical: [aliases...]}}
+            safe_dims: Dict[str, Dict[str, Sequence[str]]] = {}
+            for dn, groups in dims.items():
+                if not isinstance(dn, str) or not isinstance(groups, dict):
+                    continue
+                safe_groups: Dict[str, Sequence[str]] = {}
+                for k, v in groups.items():
+                    if isinstance(k, str) and isinstance(v, list):
+                        safe_groups[k] = [str(x) for x in v if str(x).strip()]
+                if safe_groups:
+                    safe_dims[dn] = safe_groups
+            return build_term_matrices(files=self.files, dimensions=safe_dims)
+
+        alias_groups = self.terminology_config.get("alias_groups")
+        if isinstance(alias_groups, dict) and alias_groups:
+            safe_groups: Dict[str, Sequence[str]] = {}
+            for k, v in alias_groups.items():
+                if isinstance(k, str) and isinstance(v, list):
+                    safe_groups[k] = [str(x) for x in v if str(x).strip()]
+            return build_term_matrices(files=self.files, dimensions={"术语": safe_groups})
+
+        return {}
+
+    def to_markdown(self) -> str:
+        mats = self.build()
+        return format_term_matrices_markdown(mats)

@@ -24,3 +24,16 @@ def test_check_citations_missing(tmp_path: Path) -> None:
     tex = "x \\cite{A,B}"
     result = check_citations(tex_text=tex, project_root=tmp_path, bib_globs=["references/*.bib"])
     assert result.missing_keys == ["B"]
+
+
+def test_check_citations_detects_invalid_doi(tmp_path: Path) -> None:
+    (tmp_path / "references").mkdir()
+    (tmp_path / "references" / "t.bib").write_text(
+        "@article{A,\n  doi={https://doi.org/10.5555/12345678}\n}\n"
+        "@article{B,\n  doi={not_a_doi}\n}\n",
+        encoding="utf-8",
+    )
+    tex = "x \\cite{A,B}"
+    result = check_citations(tex_text=tex, project_root=tmp_path, bib_globs=["references/*.bib"])
+    assert result.missing_doi_keys == []
+    assert result.invalid_doi_keys == ["B"]

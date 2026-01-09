@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 JsonDict = Dict[str, Any]
@@ -55,8 +57,30 @@ class AIIntegration:
         prompt: str,
         fallback: Callable[[], Any],
         output_format: str = "json",
+        cache_dir: Optional[Path] = None,
+        fresh: bool = False,
     ) -> Any:
         self.request_count += 1
+
+        cache_path: Optional[Path] = None
+        if cache_dir is not None:
+            cache_dir = Path(cache_dir).resolve()
+            cache_key = hashlib.sha256(f"{task}\n{output_format}\n{prompt}".encode("utf-8", errors="ignore")).hexdigest()
+            safe_task = "".join([c if (c.isalnum() or c in {"-", "_"}) else "_" for c in str(task)])[:64] or "task"
+            suffix = ".json" if output_format == "json" else ".txt"
+            cache_path = (cache_dir / f"{safe_task}_{cache_key}{suffix}").resolve()
+            if (not fresh) and cache_path.exists():
+                try:
+                    if output_format == "json":
+                        obj = json.loads(cache_path.read_text(encoding="utf-8", errors="ignore"))
+                        if isinstance(obj, dict):
+                            self.success_count += 1
+                            return obj
+                    elif output_format == "text":
+                        self.success_count += 1
+                        return cache_path.read_text(encoding="utf-8", errors="ignore").strip()
+                except Exception:
+                    pass
 
         if not self.enable_ai:
             self.fallback_mode = True
@@ -79,16 +103,26 @@ class AIIntegration:
             if output_format == "json":
                 if isinstance(raw, dict):
                     self.success_count += 1
+                    if cache_path is not None:
+                        cache_path.parent.mkdir(parents=True, exist_ok=True)
+                        cache_path.write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
                     return raw
                 parsed = self._parse_json_response(str(raw))
                 if parsed is None:
                     raise ValueError("Failed to parse JSON response")
                 self.success_count += 1
+                if cache_path is not None:
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    cache_path.write_text(json.dumps(parsed, ensure_ascii=False, indent=2), encoding="utf-8")
                 return parsed
 
             if output_format == "text":
+                text = str(raw).strip()
                 self.success_count += 1
-                return str(raw).strip()
+                if cache_path is not None:
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    cache_path.write_text(text, encoding="utf-8")
+                return text
 
             raise ValueError(f"Unsupported output_format: {output_format}")
         except Exception as e:
@@ -139,4 +173,3 @@ class AIIntegration:
             logger.info("[AIIntegration] fallback task=%s reason=%s", task, reason)
         else:
             logger.warning("[AIIntegration] fallback task=%s reason=%s", task, reason)
-

@@ -40,6 +40,6 @@ def test_run_tier1_detects_structure_citations_quality_and_doi(tmp_path: Path) -
     assert report.citation_ok is False
     assert report.missing_citation_keys == ["B"]
     assert report.missing_doi_keys == ["A"]
+    assert report.invalid_doi_keys == []
     assert report.forbidden_phrases_hits == ["国际领先"]
     assert report.avoid_commands_hits == ["\\section"]
-

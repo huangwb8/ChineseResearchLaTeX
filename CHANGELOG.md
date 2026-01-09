@@ -38,6 +38,15 @@
   - 更新 `skills/nsfc-justification-writer/tests/`：补齐 diagnostic/writing_coach/example_matcher 单测与 integration 流程用例
   - 新增 `skills/nsfc-justification-writer/docs/`：补齐教程与架构说明
 
+- **nsfc-justification-writer v0.5.0** - 按改良计划完成 P0–P2（稳定性/体验/可扩展性）
+  - 更新 `skills/nsfc-justification-writer/core/config_loader.py` 与 `skills/nsfc-justification-writer/scripts/run.py`：新增 `validate-config` 配置校验命令，并默认做关键字段类型校验（可用 `NSFC_JUSTIFICATION_WRITER_DISABLE_CONFIG_VALIDATION=1` 关闭）
+  - 更新 `skills/nsfc-justification-writer/core/ai_integration.py`、`skills/nsfc-justification-writer/core/hybrid_coordinator.py` 与 `skills/nsfc-justification-writer/scripts/run.py`：Tier2 支持分块处理与 `.cache/ai` 缓存（`--chunk-size/--max-chunks/--fresh`）
+  - 更新 `skills/nsfc-justification-writer/core/term_consistency.py` 与 `skills/nsfc-justification-writer/config.yaml`：跨章节一致性升级为“研究对象/指标/术语”三维矩阵（`terminology.dimensions`）
+  - 更新 `skills/nsfc-justification-writer/core/reference_validator.py`、`skills/nsfc-justification-writer/core/diagnostic.py` 与 `skills/nsfc-justification-writer/core/bib_manager_integration.py`：修复 bib DOI 解析并新增 DOI 格式异常提示，`refs` 支持可选 Crossref 联网校验（`--verify-doi crossref`）
+  - 更新 `skills/nsfc-justification-writer/examples/` 与 `skills/nsfc-justification-writer/core/example_matcher.py`：新增 chemistry/biology/math 示例与领域加权提示
+  - 新增 `skills/nsfc-justification-writer/docs/workflows/`：补齐典型工作流文档（已有草稿迭代、引用/DOI 核验）
+  - 更新 `skills/nsfc-justification-writer/tests/`：补齐 AI 集成/配置校验/分块与缓存/术语维度等测试用例
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位

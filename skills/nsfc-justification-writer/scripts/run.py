@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import traceback
+import webbrowser
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -14,7 +16,7 @@ sys.dont_write_bytecode = True
 skill_root_for_import = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(skill_root_for_import))
 
-from core.config_loader import load_config, get_runs_dir
+from core.config_loader import load_config, get_runs_dir, validate_config
 from core.bib_manager_integration import BibFixSuggestion
 from core.errors import MissingCitationKeysError, BackupNotFoundError
 from core.html_report import render_diagnostic_html
@@ -52,7 +54,15 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
     config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
 
-    report = coord.diagnose(project_root=Path(args.project_root), include_tier2=bool(args.tier2))
+    if args.tier2 and getattr(args, "verbose", False):
+        print("⏳ 正在运行诊断（含 Tier2）...", file=sys.stderr)
+    report = coord.diagnose(
+        project_root=Path(args.project_root),
+        include_tier2=bool(args.tier2),
+        tier2_chunk_size=int(args.chunk_size) if args.chunk_size is not None else None,
+        tier2_max_chunks=int(args.max_chunks) if args.max_chunks is not None else None,
+        tier2_fresh=bool(getattr(args, "fresh", False)),
+    )
     text = coord.format_diagnose(report)
     print(text, end="")
 
@@ -60,6 +70,8 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
         _write_json(Path(args.json_out), report.to_dict())
 
     if args.html_report:
+        if getattr(args, "verbose", False):
+            print("⏳ 正在生成 HTML 报告...", file=sys.stderr)
         run_id = args.run_id or make_run_id("diagnose")
         runs_root = get_runs_dir(skill_root, config)
         out_path = Path(args.html_report)
@@ -82,6 +94,11 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(html_text, encoding="utf-8")
         print(f"🧩 HTML 报告：{out_path}")
+        if bool(getattr(args, "open", False)):
+            try:
+                webbrowser.open(out_path.resolve().as_uri())
+            except Exception:
+                pass
     return 0
 
 
@@ -103,8 +120,30 @@ def cmd_refs(args: argparse.Namespace) -> int:
     sug = BibFixSuggestion(
         missing_bibkeys=list(report.tier1.missing_citation_keys or []),
         missing_doi_keys=list(getattr(report.tier1, "missing_doi_keys", []) or []),
+        invalid_doi_keys=list(getattr(report.tier1, "invalid_doi_keys", []) or []),
     )
     md = sug.to_markdown(project_root=str(Path(args.project_root)))
+    if str(getattr(args, "verify_doi", "none")).strip().lower() == "crossref":
+        from core.reference_validator import load_project_bib_doi_map, parse_cite_keys, verify_doi_via_crossref
+
+        target = coord.target_path(project_root=Path(args.project_root))
+        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
+        cite_keys = parse_cite_keys(tex)
+        targets = config.get("targets", {}) or {}
+        bib_globs = targets.get("bib_globs", ["references/*.bib"])
+        doi_map = load_project_bib_doi_map(Path(args.project_root), bib_globs)
+        pairs = [(k, doi_map.get(k, "")) for k in cite_keys if doi_map.get(k)]
+
+        failed = []
+        timeout_s = float(getattr(args, "doi_timeout", 5.0))
+        for k, doi in pairs[:200]:
+            ok = verify_doi_via_crossref(doi=doi, timeout_s=timeout_s)
+            if not ok:
+                failed.append(f"- {k}: {doi}")
+        if failed:
+            md = md.rstrip() + "\n\n## Crossref（可选联网）校验失败/超时的 DOI（需人工核验）\n\n" + "\n".join(failed) + "\n"
+        else:
+            md = md.rstrip() + "\n\n## Crossref（可选联网）校验\n\n- ✅ 未发现明显失败（仍建议抽查关键引用）\n"
     if args.out:
         Path(args.out).write_text(md, encoding="utf-8")
         print(f"已输出：{args.out}")
@@ -132,6 +171,19 @@ def cmd_terms(args: argparse.Namespace) -> int:
         print(f"已输出：{args.out}")
         return 0
     print(md, end="")
+    return 0
+
+
+def cmd_validate_config(args: argparse.Namespace) -> int:
+    skill_root = Path(__file__).resolve().parent.parent
+    config = _load_config_for_args(skill_root, args)
+    errs = validate_config(skill_root=skill_root, config=config)
+    if errs:
+        print("❌ 配置校验失败：", file=sys.stderr)
+        for e in errs:
+            print(f"- {e}", file=sys.stderr)
+        return 2
+    print("✅ 配置有效")
     return 0
 
 
@@ -216,7 +268,13 @@ def cmd_review(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
-    md = coord.reviewer_advice(project_root=Path(args.project_root), include_tier2=bool(args.tier2))
+    md = coord.reviewer_advice(
+        project_root=Path(args.project_root),
+        include_tier2=bool(args.tier2),
+        tier2_chunk_size=int(args.chunk_size) if args.chunk_size is not None else None,
+        tier2_max_chunks=int(args.max_chunks) if args.max_chunks is not None else None,
+        tier2_fresh=bool(getattr(args, "fresh", False)),
+    )
     if args.out:
         Path(args.out).write_text(md, encoding="utf-8")
         print(f"已输出：{args.out}")
@@ -315,6 +373,7 @@ def cmd_rollback(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="nsfc-justification-writer", add_help=True)
+    p.add_argument("--verbose", action="store_true", help="输出更详细的错误信息（包含堆栈）")
     p.add_argument("--preset", help="加载 config/presets/<name>.yaml（可选）")
     p.add_argument("--override", help="额外配置覆盖文件（yaml，可选，优先级最高）")
     p.add_argument("--no-user-override", action="store_true", help="不加载 ~/.config/nsfc-justification-writer/override.yaml")
@@ -323,8 +382,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_diag = sub.add_parser("diagnose", help="Tier1/Tier2 诊断（结构/引用/字数/表述）")
     p_diag.add_argument("--project-root", required=True)
     p_diag.add_argument("--tier2", action="store_true", help="启用 AI Tier2（需要 responder 环境）")
+    p_diag.add_argument("--chunk-size", type=int, default=12000, help="Tier2 分块大小（字符数），用于大文件；<=0 表示不分块")
+    p_diag.add_argument("--max-chunks", type=int, default=20, help="Tier2 最多处理的分块数（防止超长文件过慢）")
+    p_diag.add_argument("--fresh", action="store_true", help="忽略 AI 缓存，强制重新计算 Tier2")
     p_diag.add_argument("--json-out", help="可选：输出 JSON 报告到文件")
     p_diag.add_argument("--html-report", help="可选：输出 HTML 报告到文件；用 auto 输出到 runs/...")
+    p_diag.add_argument("--open", action="store_true", help="若生成 HTML 报告则尝试自动打开浏览器")
     p_diag.add_argument("--no-terms", action="store_true", help="HTML 报告不附带术语一致性矩阵")
     p_diag.add_argument("--run-id", help="可选：diagnose 的 run_id（用于 html-report=auto）")
     p_diag.set_defaults(func=cmd_diagnose)
@@ -335,6 +398,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_refs = sub.add_parser("refs", help="引用核验摘要 + 生成 nsfc-bib-manager 可复制提示词")
     p_refs.add_argument("--project-root", required=True)
+    p_refs.add_argument("--verify-doi", default="none", choices=["none", "crossref"], help="可选：联网用 Crossref 校验 DOI")
+    p_refs.add_argument("--doi-timeout", default=5.0, type=float, help="Crossref 校验超时时间（秒）")
     p_refs.add_argument("--out", help="可选：输出到文件（markdown）")
     p_refs.set_defaults(func=cmd_refs)
 
@@ -352,6 +417,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_review = sub.add_parser("review", help="评审人视角质疑与建议（可选 Tier2）")
     p_review.add_argument("--project-root", required=True)
     p_review.add_argument("--tier2", action="store_true", help="启用 AI Tier2（需要 responder 环境）")
+    p_review.add_argument("--chunk-size", type=int, default=12000, help="Tier2 分块大小（字符数），用于大文件；<=0 表示不分块")
+    p_review.add_argument("--max-chunks", type=int, default=20, help="Tier2 最多处理的分块数（防止超长文件过慢）")
+    p_review.add_argument("--fresh", action="store_true", help="忽略 AI 缓存，强制重新计算 Tier2")
     p_review.add_argument("--out", help="可选：输出到文件（markdown）")
     p_review.set_defaults(func=cmd_review)
 
@@ -397,12 +465,25 @@ def build_parser() -> argparse.ArgumentParser:
     p_apply.add_argument("--allow-missing-citations", action="store_true", help="允许存在缺失 bibkey 的 \\cite{...}（不推荐）")
     p_apply.set_defaults(func=cmd_apply_section)
 
+    p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + preset + override）")
+    p_cfg.set_defaults(func=cmd_validate_config)
+
     return p
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
-    return int(args.func(args))
+    try:
+        return int(args.func(args))
+    except SystemExit:
+        raise
+    except Exception as e:
+        if bool(getattr(args, "verbose", False)):
+            traceback.print_exc()
+            raise
+        print(f"❌ {type(e).__name__}: {e}", file=sys.stderr)
+        print("建议：加 --verbose 查看详细堆栈；或先运行 validate-config 检查配置。", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

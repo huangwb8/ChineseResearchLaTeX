@@ -21,6 +21,7 @@ class Tier1Report:
     citation_ok: bool
     missing_citation_keys: List[str]
     missing_doi_keys: List[str]
+    invalid_doi_keys: List[str]
     word_count: int
     forbidden_phrases_hits: List[str]
     avoid_commands_hits: List[str]
@@ -41,6 +42,7 @@ class DiagnosticReport:
                 "citation_ok": self.tier1.citation_ok,
                 "missing_citation_keys": self.tier1.missing_citation_keys,
                 "missing_doi_keys": self.tier1.missing_doi_keys,
+                "invalid_doi_keys": self.tier1.invalid_doi_keys,
                 "word_count": self.tier1.word_count,
                 "forbidden_phrases_hits": self.tier1.forbidden_phrases_hits,
                 "avoid_commands_hits": self.tier1.avoid_commands_hits,
@@ -100,6 +102,7 @@ def run_tier1(
         citation_ok=citation_ok,
         missing_citation_keys=cite_result.missing_keys,
         missing_doi_keys=cite_result.missing_doi_keys,
+        invalid_doi_keys=cite_result.invalid_doi_keys,
         word_count=wc.cjk_count,
         forbidden_phrases_hits=forbidden_hits,
         avoid_commands_hits=cmd_hits,
@@ -121,6 +124,8 @@ def format_tier1(report: Tier1Report) -> str:
 
     if report.missing_doi_keys:
         lines.append(f"- ⚠️ DOI 缺失：建议补齐（或走 nsfc-bib-manager 核验）keys：{', '.join(report.missing_doi_keys[:10])}")
+    if report.invalid_doi_keys:
+        lines.append(f"- ⚠️ DOI 格式疑似不合法：建议核验/修正 keys：{', '.join(report.invalid_doi_keys[:10])}")
 
     lines.append(f"- ℹ️ 字数统计（中文字符，不含注释）：{report.word_count}")
 

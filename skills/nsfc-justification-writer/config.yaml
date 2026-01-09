@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.4.0
+  version: 0.5.0
   template_year: "2026"
   category: writing
 
@@ -45,6 +45,9 @@ workspace:
 ai:
   enabled: true
   min_success_rate_to_enable: 0.8
+  tier2_chunk_size: 12000
+  tier2_max_chunks: 20
+  cache_dir: .cache/ai
 
 prompts:
   intent_parse: prompts/intent_parse.txt
@@ -112,7 +115,10 @@ word_count:
   tolerance: 200
 
 terminology:
-  alias_groups:
-    研究对象: ["患者", "病例", "受试者", "样本"]
-    准确率: ["准确率", "精确度"]
-    深度学习: ["深度学习", "DL"]
+  dimensions:
+    研究对象:
+      研究对象: ["患者", "病例", "受试者", "样本"]
+    指标:
+      准确率: ["准确率", "精确度"]
+    术语:
+      深度学习: ["深度学习", "DL"]
