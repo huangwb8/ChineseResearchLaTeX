@@ -5,11 +5,22 @@
 
 ---
 
+## 推荐工作流
+
+```
+systematic-literature-review（文献综述） → guide-updater（优化指南）
+                   ↓
+      在与 AI 的持续交互中明确标书关键部分，
+      深化对项目的理解，形成可复用的写作规范
+```
+
+这是 `guide-updater` 最强大的使用场景——先用 `systematic-literature-review` 进行文献综述，然后将综述中沉淀的洞察融会贯通，有机地、增量地优化项目指南。
+
+---
+
 ## 快速开始
 
 ### 开发者推荐：从文献综述融会贯通更新项目指南
-
-这是 `guide-updater` 最强大的使用场景——将既往文献综述的洞察系统化沉淀到项目指南中：
 
 ```
 我之前用 systematic-literature-review 这个skill做了很多文献综述的工作，
