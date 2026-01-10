@@ -21,7 +21,7 @@
 使用 Claude Code / Codex CLI 时，建议先让 skill 在本轮对话全局生效，便于多轮迭代优化：
 
 ```
-接下来，我要使用 nsfc-justification-writer 这个skill 优化立项依据。仅使用skill，不要修改skill的任何文件。保持这个skill在本轮对话全局生效。你准备好了吗？
+接下来，我要使用 nsfc-justification-writer 这个skill 优化立项依据。仅使用skill，不要修改skill的任何文件。保持这个skill在本轮对话全局生效。先做好准备，不要开始干活。你准备好了吗？
 ```
 
 然后在同一轮对话中持续使用 coach→diagnose→apply 的闭环，直到满意为止。
