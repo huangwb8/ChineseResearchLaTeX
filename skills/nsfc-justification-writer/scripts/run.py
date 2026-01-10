@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import argparse
 import json
 import logging
@@ -200,6 +201,61 @@ def cmd_validate_config(args: argparse.Namespace) -> int:
             logger.error("- %s", e)
         return 2
     print("✅ 配置有效")
+    return 0
+
+
+def cmd_check_ai(args: argparse.Namespace) -> int:
+    skill_root = Path(__file__).resolve().parent.parent
+    config = _load_config_for_args(skill_root, args)
+    coord = HybridCoordinator(skill_root=skill_root, config=config)
+
+    ai_cfg = get_mapping(config, "ai")
+    enabled = bool(get_bool(ai_cfg, "enabled", True))
+
+    print("AI 可用性自检：")
+    print(f"- {'✅' if enabled else '⚠️'} ai.enabled = {enabled}")
+
+    if not enabled:
+        print("- ⚠️ AI 已在配置中关闭：所有 AI 功能将自动回退到硬编码能力")
+        return 0
+
+    if coord.ai.responder is None:
+        print("- ⚠️ responder 未注入：当前运行在“优雅降级模式”（AI 功能会回退）")
+        print("- 💡 提示：本仓库脚本不会主动直连外部大模型；需由运行环境/上层工具注入 responder")
+        return 0
+
+    print("- ✅ responder 已注入")
+
+    async def _run() -> Any:
+        def _fallback() -> Dict[str, Any]:
+            return {"ok": False, "reason": "fallback"}
+
+        return await coord.ai.process_request(
+            task="check_ai_echo",
+            prompt='请只输出 JSON：{"ok": true}',
+            fallback=_fallback,
+            output_format="json",
+            cache_dir=None,
+            fresh=True,
+        )
+
+    try:
+        obj = asyncio.run(_run())
+    except RuntimeError:
+        obj = None
+
+    stats = coord.ai.get_stats()
+    if isinstance(obj, dict) and (not bool(stats.get("fallback_mode", False))) and int(stats.get("success_count", 0)) > 0:
+        print("- ✅ AI 测试请求成功")
+    else:
+        print("- ⚠️ AI 测试请求未成功（已回退或响应不可用）")
+
+    print(
+        "- stats:",
+        f"fallback_mode={bool(stats.get('fallback_mode', False))},",
+        f"request_count={int(stats.get('request_count', 0))},",
+        f"success_count={int(stats.get('success_count', 0))}",
+    )
     return 0
 
 
@@ -522,6 +578,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + preset + override）")
     p_cfg.set_defaults(func=cmd_validate_config)
+
+    p_check_ai = sub.add_parser("check-ai", help="AI 可用性自检（responder 注入/降级模式）")
+    p_check_ai.set_defaults(func=cmd_check_ai)
 
     return p
 

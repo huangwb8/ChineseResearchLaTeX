@@ -1,7 +1,16 @@
 terminology:
-  alias_groups:
-    时延: ["时延", "延迟", "latency"]
-    吞吐: ["吞吐", "吞吐量", "throughput"]
-    鲁棒性: ["鲁棒性", "robustness"]
-    资源约束: ["算力", "资源约束", "compute budget"]
-
+  dimensions:
+    研究对象:
+      系统/平台: ["系统", "平台", "框架", "架构", "pipeline"]
+      数据集: ["数据集", "数据", "dataset", "benchmark"]
+      基线方法: ["基线", "baseline", "对照方法", "对照组"]
+    指标:
+      时延: ["时延", "延迟", "latency", "响应时间"]
+      吞吐: ["吞吐", "吞吐量", "throughput", "QPS", "TPS"]
+      资源约束: ["算力", "计算预算", "资源约束", "compute budget", "显存", "内存"]
+      能耗: ["能耗", "功耗", "energy", "power"]
+      鲁棒性: ["鲁棒性", "robustness", "稳定性"]
+    术语:
+      消融: ["消融", "ablation", "消融实验"]
+      泛化: ["泛化", "generalization", "泛化能力"]
+      可扩展性: ["可扩展性", "scalability", "扩展性"]

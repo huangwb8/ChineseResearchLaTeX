@@ -87,6 +87,13 @@
   - 更新 `skills/nsfc-justification-writer/core/*`：统一配置访问到 `core/config_access.py` 的 `get_*` 辅助方法，减少重复样式
   - 轻量测试：新增 `tests/v202601100803/`（fixture + override + TEST_PLAN/TEST_REPORT）
 
+- **nsfc-justification-writer v0.7.3** - 落地 `plans/v202601100850.md` 的可选改进（文档透明度/AI 自检/预设示例）
+  - 更新 `skills/nsfc-justification-writer/SKILL.md`：新增“AI 功能清单（是否需要 AI / Fallback 行为）”表格，并补充 `check-ai` 自检命令入口
+  - 更新 `skills/nsfc-justification-writer/scripts/run.py`、`skills/nsfc-justification-writer/scripts/README.md`：新增 `check-ai` 子命令，用于诊断当前是否处于 responder 未注入的降级模式
+  - 更新 `skills/nsfc-justification-writer/config/presets/medical.yaml`、`skills/nsfc-justification-writer/config/presets/engineering.yaml`：补齐更丰富的 `terminology.dimensions` 示例（降低用户配置门槛）
+  - 更新 `skills/nsfc-justification-writer/docs/architecture.md`、`skills/nsfc-justification-writer/README.md`：同步预设覆盖口径说明与术语维度定制示例
+  - 更新 `skills/nsfc-justification-writer/config.yaml`：版本升级至 v0.7.3
+
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录
   - 移动 `run_tests.py` → [scripts/quicktest.py](skills/transfer_old_latex_to_new/scripts/quicktest.py)：快速测试工具重命名并归位

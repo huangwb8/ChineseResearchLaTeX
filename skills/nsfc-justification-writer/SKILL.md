@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.2
+version: 0.7.3
 description: 为 NSFC 2026 新模板正文“（一）立项依据”写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改“立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点”等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -91,6 +91,20 @@ references: skills/nsfc-justification-writer/references/
 ## 关键能力
 
 用于“先诊断→再生成→再安全写入→再验收”的闭环：
+
+### AI 功能清单（可选增强）
+
+| 功能 | 是否需要 AI | Fallback 行为 |
+|------|-----------|--------------|
+| Tier1 诊断（结构/引用/字数/高风险示例/危险命令） | ❌ | N/A |
+| 内容维度覆盖检查 | ✅ | 启发式关键词检测（兜底） |
+| 吹牛式表述识别（语义） | ✅ | 不阻断；仅依赖 Tier1 高风险示例提示 |
+| 术语一致性（语义） | ✅ | 仅输出硬编码矩阵（`terminology.dimensions`） |
+| AI 示例推荐（带理由） | ✅ | 关键词/类别启发式匹配 |
+| AI 阶段判断（coach --stage auto） | ✅ | 硬编码阈值规则 |
+| Tier2 深度诊断（diagnose --tier2） | ✅ | 跳过（仅输出 Tier1） |
+
+> AI 是否可用取决于运行环境是否注入 responder；可用 `skills/nsfc-justification-writer/scripts/run.py check-ai` 自检。
 
 - **Tier1 硬编码诊断**：结构（≥4 个 `\subsubsection`）/引用键是否存在于 `.bib`/DOI 缺失与格式异常提示/字数统计/高风险表述提示与危险命令扫描
 - **内容维度覆盖检查（AI）**：不依赖标题用词，检查“价值与必要性/现状与不足/科学问题/切入点”是否被覆盖

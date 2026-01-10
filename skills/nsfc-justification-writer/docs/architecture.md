@@ -33,7 +33,6 @@
 
 ## 可扩展点
 
-- **学科预设**：在 `config/presets/` 增加 `<preset>.yaml`，主要覆盖 `terminology.alias_groups`
+- **学科预设**：在 `config/presets/` 增加 `<preset>.yaml`，优先覆盖 `terminology.dimensions`（推荐；三维矩阵），也兼容 `terminology.alias_groups`
 - **示例库**：在 `examples/<category>/` 增加 `.tex` 与 `*.metadata.yaml`（keywords/description）
 - **质量规则**：在 `config.yaml` 的 `quality.forbidden_phrases/avoid_commands` 里增补规则
-

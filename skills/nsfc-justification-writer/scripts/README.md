@@ -13,7 +13,18 @@ python skills/nsfc-justification-writer/scripts/run.py refs --project-root proje
 python skills/nsfc-justification-writer/scripts/run.py terms --project-root projects/NSFC_Young
 python skills/nsfc-justification-writer/scripts/run.py coach --project-root projects/NSFC_Young --stage auto
 python skills/nsfc-justification-writer/scripts/run.py review --project-root projects/NSFC_Young
+python skills/nsfc-justification-writer/scripts/run.py check-ai
 ```
+
+## AI 可用性自检（可选）
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py check-ai
+```
+
+说明：
+- 本仓库脚本不会主动直连外部大模型；AI 能力是否可用取决于运行环境是否注入 responder
+- 自检会输出 `ai.enabled`、responder 注入情况，并尝试发起一个最小测试请求（若可用）
 
 ## 配置覆盖与学科预设（可选）
 
