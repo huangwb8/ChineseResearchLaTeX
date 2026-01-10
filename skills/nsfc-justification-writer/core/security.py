@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Mapping, Optional
+
+from .config_access import get_mapping, get_seq_str
 
 
 @dataclass(frozen=True)
@@ -15,12 +17,12 @@ class WritePolicy:
     forbidden_globs: List[str]
 
 
-def build_write_policy(config: dict) -> WritePolicy:
-    guard = config.get("guardrails", {}) or {}
+def build_write_policy(config: Mapping[str, Any]) -> WritePolicy:
+    guard = get_mapping(config, "guardrails")
     return WritePolicy(
-        allowed_relpaths=[str(x) for x in (guard.get("allowed_write_files", []) or [])],
-        forbidden_relpaths=[str(x) for x in (guard.get("forbidden_write_files", []) or [])],
-        forbidden_globs=[str(x) for x in (guard.get("forbidden_write_globs", []) or [])],
+        allowed_relpaths=list(get_seq_str(guard, "allowed_write_files")),
+        forbidden_relpaths=list(get_seq_str(guard, "forbidden_write_files")),
+        forbidden_globs=list(get_seq_str(guard, "forbidden_write_globs")),
     )
 
 
@@ -59,4 +61,3 @@ def validate_write_target(
 
 def resolve_target_path(project_root: Path, relpath: str) -> Path:
     return (project_root / relpath).resolve()
-

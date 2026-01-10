@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .config_access import get_mapping
 from .hard_rules import QualityRule, StructureRule, load_quality_rule, load_structure_rule
 from .latex_parser import parse_subsubsections, strip_comments
 from .reference_validator import CitationCheckResult, check_citations
@@ -91,14 +92,14 @@ def run_tier1(
 
     structure_ok, count, missing_sections = _check_structure(tex_text, structure_rule)
 
-    targets = config.get("targets", {}) or {}
+    targets = get_mapping(config, "targets")
     bib_globs = targets.get("bib_globs", ["references/*.bib"])
     cite_result: CitationCheckResult = check_citations(
         tex_text=tex_text, project_root=project_root, bib_globs=bib_globs
     )
     citation_ok = len(cite_result.missing_keys) == 0
 
-    wc_cfg = config.get("word_count", {}) or {}
+    wc_cfg = get_mapping(config, "word_count")
     mode = str(wc_cfg.get("mode", "cjk_only")).strip() or "cjk_only"
     wc: WordCountResult = count_cjk_chars(tex_text, mode=mode)
     forbidden_hits, cmd_hits = _check_quality(tex_text, quality_rule)

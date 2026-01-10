@@ -7,6 +7,9 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
+from .config_access import get_mapping, get_int
+from .limits import word_target_range
+
 
 @dataclass(frozen=True)
 class WordTargetSpec:
@@ -42,7 +45,6 @@ def parse_word_target_from_text(text: str) -> Optional[Tuple[int, int, str]]:
     if m:
         target = int(m.group("n"))
         tol = int(m.group("tol"))
-        target = _clamp_int(target, lo=100, hi=20000)
         tol = _clamp_int(tol, lo=0, hi=5000)
         return target, tol, m.group(0)
 
@@ -53,13 +55,12 @@ def parse_word_target_from_text(text: str) -> Optional[Tuple[int, int, str]]:
         lo, hi = (a, b) if a <= b else (b, a)
         target = int(round((lo + hi) / 2))
         tol = int(max(50, round(abs(hi - lo) / 2)))
-        target = _clamp_int(target, lo=100, hi=20000)
         tol = _clamp_int(tol, lo=0, hi=5000)
         return target, tol, m.group(0)
 
     m = _SINGLE_RE.search(t)
     if m:
-        target = _clamp_int(int(m.group("n")), lo=100, hi=20000)
+        target = int(m.group("n"))
         tol = 200
         return target, tol, m.group(0)
 
@@ -82,20 +83,25 @@ def resolve_word_target(
     parsed = parse_word_target_from_text(user_intent_text)
     if parsed:
         target, tol, ev = parsed
+        lo, hi = word_target_range(config)
+        target = _clamp_int(target, lo=lo, hi=hi)
         return WordTargetSpec(target=target, tolerance=tol, source="user_intent", evidence=ev)
 
     parsed = parse_word_target_from_text(info_form_text)
     if parsed:
         target, tol, ev = parsed
+        lo, hi = word_target_range(config)
+        target = _clamp_int(target, lo=lo, hi=hi)
         return WordTargetSpec(target=target, tolerance=tol, source="info_form", evidence=ev)
 
-    wc_cfg = config.get("word_count", {}) or {}
-    target = int(wc_cfg.get("target", 4000))
-    tol = int(wc_cfg.get("tolerance", 200))
+    wc_cfg = get_mapping(config, "word_count")
+    target = get_int(wc_cfg, "target", 4000)
+    tol = get_int(wc_cfg, "tolerance", 200)
+    lo, hi = word_target_range(config)
+    target = _clamp_int(target, lo=lo, hi=hi)
 
     preset = str(config.get("active_preset", "") or "").strip()
     if preset:
         return WordTargetSpec(target=target, tolerance=tol, source=f"preset:{preset}", evidence="")
 
     return WordTargetSpec(target=target, tolerance=tol, source="config_default", evidence="")
-

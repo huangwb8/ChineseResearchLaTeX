@@ -11,8 +11,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .ai_integration import AIIntegration
+from .config_access import get_bool, get_int, get_mapping, get_str
 from .io_utils import read_text_streaming
 from .latex_parser import strip_comments
+from .limits import ai_max_input_chars
 
 
 @dataclass(frozen=True)
@@ -188,16 +190,17 @@ class TermConsistencyAI:
         self,
         *,
         files: Mapping[str, Path],
-        max_chars: int = 20000,
+        max_chars: int,
         cache_dir: Optional[Path] = None,
         fresh: bool = False,
     ) -> Dict[str, Any]:
+        max_chars = max(int(max_chars), 1000)
         file_contents: Dict[str, str] = {}
         for label, path in files.items():
             try:
                 res = read_text_streaming(Path(path), max_bytes=None)
                 # 只给 AI 看“去注释后”的文本，降低噪音
-                file_contents[str(label)] = strip_comments(res.text)[: max(int(max_chars), 1000)]
+                file_contents[str(label)] = strip_comments(res.text)[:max_chars]
             except Exception:
                 file_contents[str(label)] = ""
 
@@ -208,7 +211,7 @@ class TermConsistencyAI:
             "2) 不要杜撰文献引用与 DOI\n"
             "3) 输出尽量具体：指出冲突的两种/多种表述分别出现在哪里\n\n"
             "输入（JSON，key 为章节名，value 为去注释后的 LaTeX 文本，可能截断）：\n"
-            f"{json.dumps(file_contents, ensure_ascii=False, indent=2)[: max(int(max_chars), 1000)]}\n\n"
+            f"{json.dumps(file_contents, ensure_ascii=False, indent=2)[:max_chars]}\n\n"
             "返回 JSON 结构：\n"
             "{\n"
             '  "issues": [\n'
@@ -271,16 +274,16 @@ def term_consistency_report(
     cache_dir: Optional[Path] = None,
     fresh: bool = False,
 ) -> str:
-    terminology_cfg = config.get("terminology", {}) or {}
-    mode = str(terminology_cfg.get("mode", "auto")).strip().lower()
-    alt_mode = str(terminology_cfg.get("ai_mode", "") or "").strip().lower()
+    terminology_cfg = get_mapping(config, "terminology")
+    mode = get_str(terminology_cfg, "mode", "auto").strip().lower()
+    alt_mode = get_str(terminology_cfg, "ai_mode", "").strip().lower()
     if alt_mode in {"auto", "ai", "legacy", "legacy_only", "semantic_only"}:
         mode = alt_mode
     if mode == "legacy_only":
         mode = "legacy"
-    enable_ai_semantic = bool(terminology_cfg.get("enable_ai_semantic_check", True))
-    ai_cfg = terminology_cfg.get("ai", {}) if isinstance(terminology_cfg.get("ai", {}), dict) else {}
-    ai_enabled = bool(ai_cfg.get("enabled", True))
+    enable_ai_semantic = get_bool(terminology_cfg, "enable_ai_semantic_check", True)
+    ai_cfg = get_mapping(terminology_cfg, "ai")
+    ai_enabled = get_bool(ai_cfg, "enabled", True)
     legacy_md = _legacy_report(files=files, terminology_config=terminology_cfg)
 
     if (not enable_ai_semantic) or mode == "legacy":
@@ -292,7 +295,7 @@ def term_consistency_report(
     if not ai_enabled or not ai_obj.is_available():
         return legacy_md
 
-    max_chars = int(ai_cfg.get("max_chars", 20000))
+    max_chars = get_int(ai_cfg, "max_chars", ai_max_input_chars(config))
     obj = asyncio.run(TermConsistencyAI(ai_obj).check(files=files, max_chars=max_chars, cache_dir=cache_dir, fresh=fresh))
     ai_md = TermConsistencyAI.format_markdown(obj)
     if mode == "semantic_only":

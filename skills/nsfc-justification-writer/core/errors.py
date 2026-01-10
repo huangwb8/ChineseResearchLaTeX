@@ -4,13 +4,9 @@
 from __future__ import annotations
 
 
-class NSFCJustificationWriterError(Exception):
-    """兼容旧命名：保留作为所有异常的基类。"""
-
-
-class SkillError(NSFCJustificationWriterError):
+class SkillError(Exception):
     """
-    统一的 Skill 异常类型：携带可读的修复建议（供 CLI 友好输出）。
+    统一的 Skill 异常基类：携带可读的修复建议（供 CLI 友好输出）。
     """
 
     def __init__(self, message: str, *, fix_suggestion: str = "") -> None:

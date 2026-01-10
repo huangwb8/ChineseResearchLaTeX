@@ -25,6 +25,7 @@ class BoastfulExpressionAI:
         self,
         *,
         tex_text: str,
+        max_chars: int,
         cache_dir: Optional[Any] = None,
         fresh: bool = False,
     ) -> Dict[str, Any]:
@@ -63,8 +64,9 @@ class BoastfulExpressionAI:
 }
 """.strip()
 
-        cleaned = strip_comments(tex_text or "")[:20000]
-        prompt = prompt + "\n\n文本内容（去注释后，最多 20000 字符）：\n" + cleaned
+        max_chars = max(int(max_chars), 1000)
+        cleaned = strip_comments(tex_text or "")[:max_chars]
+        prompt = prompt + f"\n\n文本内容（去注释后，最多 {max_chars} 字符）：\n" + cleaned
 
         def _fallback() -> Dict[str, Any]:
             return {"issues": [], "summary": {"total_issues": 0, "by_category": {}}, "_mode": "fallback"}
@@ -81,4 +83,3 @@ class BoastfulExpressionAI:
             return _fallback()
         obj.setdefault("_mode", "ai" if self.ai.is_available() else "fallback")
         return obj
-

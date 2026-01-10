@@ -6,26 +6,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-DEFAULT_INTENT_PARSE_PROMPT = """\
-你是 NSFC 标书写作助手的“意图解析器”。
-
-任务：把用户指令解析为 JSON，字段：
-- action: expand|compress|rewrite|restructure|diagnose
-- target: 目标段落/小标题（优先匹配 \\subsubsection 标题）
-- focus: 关注点（可为空）
-- constraints: 约束（可为空，例如 年份范围、字数、必须保留信息点）
-
-要求：
-- 只输出 JSON（不要解释）
-- 若无法判断 action/target，请用 null，并说明 reason 字段
-
-用户指令：
-{instruction}
-"""
-
-
+from .config_access import get_mapping
 DEFAULT_TIER2_DIAGNOSTIC_PROMPT = """\
-你是 NSFC 立项依据“语义诊断器”。请基于以下 LaTeX 文本，输出诊断要点（JSON）：
+你是 NSFC 立项依据"语义诊断器"。请基于以下 LaTeX 文本，输出诊断要点（JSON）：
 
 字段：
 - logic: 逻辑连贯性问题（列表）
@@ -35,7 +18,7 @@ DEFAULT_TIER2_DIAGNOSTIC_PROMPT = """\
 
 要求：
 - 只输出 JSON
-- 不生成新的引用；若需要引用，请提示“需用户提供 DOI/链接或走 nsfc-bib-manager 核验”
+- 不生成新的引用；若需要引用，请提示"需用户提供 DOI/链接或走 nsfc-bib-manager 核验"
 
 LaTeX 文本：
 {tex}
@@ -43,7 +26,7 @@ LaTeX 文本：
 
 
 DEFAULT_REVIEW_SUGGESTIONS_PROMPT = """\
-你是 NSFC 立项依据的“评审人视角质疑生成器”。
+你是 NSFC 立项依据的"评审人视角质疑生成器"。
 
 输入：
 - dod_checklist: 验收清单（要点）
@@ -52,10 +35,10 @@ DEFAULT_REVIEW_SUGGESTIONS_PROMPT = """\
 
 任务：输出 markdown（不要写 LaTeX），包含两部分：
 1) 评审人可能会问的 8-12 个问题（每条可直接用于修改）
-2) 对应的 8-12 条可执行修改建议（尽量给到“改哪里/怎么改/验证标准”）
+2) 对应的 8-12 条可执行修改建议（尽量给到"改哪里/怎么改/验证标准"）
 
 约束：
-- 不要杜撰引用与 DOI；如需要引用，用“需补充 DOI/链接或走 nsfc-bib-manager 核验”
+- 不要杜撰引用与 DOI；如需要引用，用"需补充 DOI/链接或走 nsfc-bib-manager 核验"
 - 避免绝对化表述（国际领先/国内首次等）
 
 dod_checklist:
@@ -70,9 +53,9 @@ tex:
 
 
 DEFAULT_WRITING_COACH_PROMPT = """\
-你是 NSFC 立项依据的“渐进式写作教练”。
+你是 NSFC 立项依据的"渐进式写作教练"。
 
-目标：帮助用户用最小压力完成 1.1 立项依据，从“骨架 → 段落 → 逻辑闭环 → 润色 → 验收”逐步推进。
+目标：帮助用户用最小压力完成 1.1 立项依据，从"骨架 → 段落 → 逻辑闭环 → 润色 → 验收"逐步推进。
 
 输入：
 - stage: skeleton|draft|revise|polish|final（或 auto）
@@ -137,7 +120,7 @@ def get_prompt(
 ) -> str:
     skill_root = (skill_root or _default_skill_root()).resolve()
     cfg = config or {}
-    prompt_cfg = cfg.get("prompts", {}) or {}
+    prompt_cfg = get_mapping(cfg, "prompts")
     override_key = name
     if variant:
         v = str(variant).strip()
@@ -167,7 +150,6 @@ def get_prompt(
 
 
 # Backward-compatible constants (loaded from prompts/ when present)
-INTENT_PARSE_PROMPT = get_prompt(name="intent_parse", default=DEFAULT_INTENT_PARSE_PROMPT)
 TIER2_DIAGNOSTIC_PROMPT = get_prompt(name="tier2_diagnostic", default=DEFAULT_TIER2_DIAGNOSTIC_PROMPT)
 REVIEW_SUGGESTIONS_PROMPT = get_prompt(name="review_suggestions", default=DEFAULT_REVIEW_SUGGESTIONS_PROMPT)
 WRITING_COACH_PROMPT = get_prompt(name="writing_coach", default=DEFAULT_WRITING_COACH_PROMPT)

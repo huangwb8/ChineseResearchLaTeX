@@ -12,6 +12,7 @@ from .ai_integration import AIIntegration
 from .boastful_expression_checker import BoastfulExpressionAI
 from .hard_rules import load_quality_rule
 from .latex_parser import strip_comments
+from .limits import ai_max_input_chars
 
 
 @dataclass(frozen=True)
@@ -52,7 +53,14 @@ def check_new_body_quality(
     ai_used = False
     if rule.enable_ai_judgment and (ai is not None) and ai.is_available() and (str(rule.ai_judgment_mode).strip().lower() == "semantic"):
         try:
-            obj = asyncio.run(BoastfulExpressionAI(ai).check(tex_text=new_body, cache_dir=cache_dir, fresh=fresh))
+            obj = asyncio.run(
+                BoastfulExpressionAI(ai).check(
+                    tex_text=new_body,
+                    max_chars=ai_max_input_chars(config),
+                    cache_dir=cache_dir,
+                    fresh=fresh,
+                )
+            )
             issues = obj.get("issues", []) if isinstance(obj, dict) else []
             if isinstance(issues, list):
                 ai_issues = [it for it in issues if isinstance(it, dict)]

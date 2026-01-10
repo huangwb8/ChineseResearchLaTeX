@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, List, Mapping
+
+from .config_access import get_bool, get_mapping, get_seq_str, get_str, get_int
 
 
 @dataclass(frozen=True)
@@ -23,24 +25,25 @@ class QualityRule:
     ai_judgment_mode: str
 
 
-def load_structure_rule(config: Dict[str, Any]) -> StructureRule:
-    s = config.get("structure", {}) or {}
+def load_structure_rule(config: Mapping[str, Any]) -> StructureRule:
+    s = get_mapping(config, "structure")
     expected = s.get("recommended_subsubsections", None)
     if expected is None:
         expected = s.get("expected_subsubsections", []) or []
     return StructureRule(
         expected_subsubsections=[str(x) for x in expected],
-        strict_title_match=bool(s.get("strict_title_match", False)),
-        min_subsubsection_count=int(s.get("min_subsubsection_count", 4)),
+        strict_title_match=get_bool(s, "strict_title_match", False),
+        min_subsubsection_count=get_int(s, "min_subsubsection_count", 4),
     )
 
 
-def load_quality_rule(config: Dict[str, Any]) -> QualityRule:
-    q = config.get("quality", {}) or {}
+def load_quality_rule(config: Mapping[str, Any]) -> QualityRule:
+    q = get_mapping(config, "quality")
+    high_risk = get_seq_str(q, "high_risk_examples") or get_seq_str(q, "forbidden_phrases")
     return QualityRule(
-        high_risk_examples=[str(x) for x in (q.get("high_risk_examples", q.get("forbidden_phrases", [])) or [])],
-        avoid_commands=[str(x) for x in (q.get("avoid_commands", []) or [])],
-        strict_mode=bool(q.get("strict_mode", False)),
-        enable_ai_judgment=bool(q.get("enable_ai_judgment", True)),
-        ai_judgment_mode=str(q.get("ai_judgment_mode", "semantic") or "semantic"),
+        high_risk_examples=list(high_risk),
+        avoid_commands=list(get_seq_str(q, "avoid_commands")),
+        strict_mode=get_bool(q, "strict_mode", False),
+        enable_ai_judgment=get_bool(q, "enable_ai_judgment", True),
+        ai_judgment_mode=get_str(q, "ai_judgment_mode", "semantic") or "semantic",
     )

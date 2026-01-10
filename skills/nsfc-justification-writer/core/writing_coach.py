@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
 from .ai_integration import AIIntegration
+from .config_access import get_bool, get_mapping, get_str
 from .diagnostic import run_tier1
 from .dimension_coverage import format_dimension_coverage_markdown
 from .io_utils import read_text_streaming
+from .limits import ai_max_input_chars, writing_coach_preview_chars
 from .prompt_templates import get_prompt
 from .term_consistency import CrossChapterValidator, format_term_matrices_markdown
 from .word_target import WordTargetSpec, resolve_word_target
@@ -172,15 +174,17 @@ async def _infer_stage_auto(
         fallback_rules=fallback_rules,
     )
 
-    coach_cfg = config.get("writing_coach", {}) or {}
-    if not bool(coach_cfg.get("enable_ai_stage_inference", True)):
+    coach_cfg = get_mapping(config, "writing_coach")
+    if not get_bool(coach_cfg, "enable_ai_stage_inference", True):
         return fallback_stage
-    ai_mode = str(coach_cfg.get("ai_inference_mode", "auto") or "auto").lower()
+    ai_mode = get_str(coach_cfg, "ai_inference_mode", "auto").strip().lower()
     if ai is None or not ai.is_available():
         if ai_mode == "ai_only":
             return "auto"
         return fallback_stage
 
+    preview_chars = writing_coach_preview_chars(config)
+    preview = (tex_text or "")[:preview_chars]
     prompt = f"""
 请分析以下立项依据文本，判断当前处于哪个写作阶段。
 
@@ -197,7 +201,7 @@ async def _infer_stage_auto(
 - 引用状态：{'✅ 正常' if tier1.get('citation_ok') else '❌ 缺失引用'}
 - 质量问题：高风险表述 {tier1.get('forbidden_phrases_hits', [])}，危险命令 {tier1.get('avoid_commands_hits', [])}
 
-文本内容（去注释后，最多 3000 字）：{tex_text[:3000]}
+文本内容（去注释后，最多 {preview_chars} 字）：{preview}
 
 返回 JSON：
 {{
@@ -237,8 +241,8 @@ async def coach_markdown(
 ) -> str:
     skill_root = Path(skill_root).resolve()
     project_root = Path(project_root).resolve()
-    targets = config.get("targets", {}) or {}
-    rel = str(targets.get("justification_tex", "extraTex/1.1.立项依据.tex"))
+    targets = get_mapping(config, "targets")
+    rel = get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
     target = (project_root / rel).resolve()
     tex_text = read_text_streaming(target).text if target.exists() else ""
 
@@ -256,30 +260,29 @@ async def coach_markdown(
     }
 
     # 术语矩阵（尽量不失败）
-    related = targets.get("related_tex", {}) or {}
+    related = get_mapping(targets, "related_tex")
     files = {"立项依据": target}
     for label, relpath in related.items():
         files[label] = (project_root / str(relpath)).resolve()
-    terminology_cfg = config.get("terminology", {}) or {}
+    terminology_cfg = get_mapping(config, "terminology")
     term_matrix_md = format_term_matrices_markdown(CrossChapterValidator(files=files, terminology_config=terminology_cfg).build())
 
-    wc_cfg = config.get("word_count", {}) or {}
     word_spec = resolve_word_target(
         config=config,
         user_intent_text="",
         info_form_text=info_form_text,
     )
 
-    coach_cfg = config.get("writing_coach", {}) or {}
-    fallback_rules = coach_cfg.get("fallback_rules", {}) if isinstance(coach_cfg.get("fallback_rules"), dict) else {}
+    coach_cfg = get_mapping(config, "writing_coach")
+    fallback_rules = get_mapping(coach_cfg, "fallback_rules")
 
     ai_obj = ai
     if ai_obj is None:
-        ai_cfg = config.get("ai", {}) or {}
-        ai_obj = AIIntegration(enable_ai=bool(ai_cfg.get("enabled", True)), config=config)
+        ai_cfg = get_mapping(config, "ai")
+        ai_obj = AIIntegration(enable_ai=get_bool(ai_cfg, "enabled", True), config=config)
 
-    ai_cfg = config.get("ai", {}) or {}
-    cache_dir = (skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+    ai_cfg = get_mapping(config, "ai")
+    cache_dir = (skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
 
     auto_stage = await _infer_stage_auto(
         tex_text=tex_text,
@@ -297,7 +300,11 @@ async def coach_markdown(
     try:
         from .dimension_coverage import DimensionCoverageAI
 
-        dim_obj = await DimensionCoverageAI(ai_obj).check(tex_text=tex_text, cache_dir=cache_dir)
+        dim_obj = await DimensionCoverageAI(ai_obj).check(
+            tex_text=tex_text,
+            max_chars=ai_max_input_chars(config),
+            cache_dir=cache_dir,
+        )
         dimension_md = format_dimension_coverage_markdown(dim_obj)
     except Exception:
         dimension_md = "（未启用内容维度覆盖检查）"

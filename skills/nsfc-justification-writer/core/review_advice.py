@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .ai_integration import AIIntegration
+from .config_access import get_bool, get_mapping
 from .diagnostic import DiagnosticReport
 from .prompt_templates import get_prompt
 
@@ -78,8 +79,8 @@ async def generate_review_markdown(
 
     ai_obj = ai
     if ai_obj is None:
-        ai_cfg = config.get("ai", {}) or {}
-        ai_obj = AIIntegration(enable_ai=bool(ai_cfg.get("enabled", True)), config=config)
+        ai_cfg = get_mapping(config, "ai")
+        ai_obj = AIIntegration(enable_ai=get_bool(ai_cfg, "enabled", True), config=config)
 
     prompt = get_prompt(
         name="review_suggestions",

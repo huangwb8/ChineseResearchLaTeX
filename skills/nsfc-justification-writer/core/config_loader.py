@@ -8,98 +8,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# 配置单一真相来源（Single Source of Truth）说明：
+# config.yaml 是权威配置文件，DEFAULT_CONFIG 仅作为"兜底值"
+# 修改配置时，请优先编辑 config.yaml，而非此文件
+# ═══════════════════════════════════════════════════════════════════════
+
 DEFAULT_CONFIG: Dict[str, Any] = {
-    "skill_info": {
-        "name": "nsfc-justification-writer",
-        "version": "0.7.0",
-        "template_year": "2026",
-        "category": "writing",
-    },
-    "workspace": {
-        "runs_dir": "runs",
-    },
-    "targets": {
-        "justification_tex": "extraTex/1.1.立项依据.tex",
-        "related_tex": {
-            "research_content": "extraTex/2.1.研究内容.tex",
-            "research_foundation": "extraTex/3.1.研究基础.tex",
-        },
-        "bib_globs": ["references/*.bib", "references/**/*.bib"],
-    },
-    "structure": {
-        "recommended_subsubsections": ["研究背景", "国内外研究现状", "现有研究的局限性", "研究切入点"],
-        "strict_title_match": False,
-        "min_subsubsection_count": 4,
-        "enable_dimension_coverage_check": True,
-    },
-    # 安全关键项：即使 YAML 依赖缺失，也必须默认生效（避免“空策略”导致任意写入）。
+    # 安全关键项：即使 YAML 缺失也必须生效的默认值（避免"空策略"导致任意写入）
     "guardrails": {
         "allowed_write_files": ["extraTex/1.1.立项依据.tex"],
         "forbidden_write_files": ["main.tex", "extraTex/@config.tex"],
         "forbidden_write_globs": ["**/*.cls", "**/*.sty"],
-    },
-    "latex_style_contract": {
-        "keep_commands": ["\\justifying", "\\indent"],
-        "avoid_commands": ["\\section", "\\subsection", "\\input", "\\include"],
-    },
-    "quality_contract": {
-        "must_include": [
-            "价值与必要性（为什么要做）",
-            "国内外现状与不足（现有不足）",
-            "科学问题/核心假说（切入点）",
-            "本项目贡献与小结（承上启下）",
-        ],
-        "avoid": [
-            "无法核验的绝对表述（例如“国内首次”“国际领先”）",
-            "幻觉引用（未核验即给出作者/年份/期刊/DOI）",
-        ],
-    },
-    "quality": {
-        "high_risk_examples": ["国际领先", "国内首次", "世界领先", "填补空白"],
-        "avoid_commands": ["\\section", "\\subsection", "\\input", "\\include"],
-        "strict_mode": False,
-        "enable_ai_judgment": True,
-        "ai_judgment_mode": "semantic",
-    },
-    "ai": {
-        "enabled": True,
-        "tier2_chunk_size": 12000,
-        "tier2_max_chunks": 20,
-        "cache_dir": ".cache/ai",
-    },
-    "prompts": {
-        "intent_parse": "prompts/intent_parse.txt",
-        "tier2_diagnostic": "prompts/tier2_diagnostic.txt",
-        "review_suggestions": "prompts/review_suggestions.txt",
-        "writing_coach": "prompts/writing_coach.txt",
-    },
-    "references": {
-        "allow_missing_citations": False,
-    },
-    "word_count": {
-        "target": 4000,
-        "tolerance": 200,
-        "_note": "4000 字为示例兜底值；实际目标字数优先从用户意图/信息表/学科预设动态解析",
-        "mode": "cjk_only",
-    },
-    "terminology": {
-        "mode": "auto",
-        "enable_ai_semantic_check": True,
-        "ai_mode": "auto",
-        "ai": {
-            "enabled": True,
-            "max_chars": 20000,
-        },
-        "dimensions": {
-            "研究对象": {"研究对象": ["患者", "病例", "受试者", "样本"]},
-            "指标": {"准确率": ["准确率", "精确度"]},
-            "术语": {"深度学习": ["深度学习", "DL"]},
-        },
-    },
-    "writing_coach": {
-        "enable_ai_stage_inference": True,
-        "ai_inference_mode": "auto",
-        "fallback_rules": {"draft_threshold_ratio": 0.4, "draft_min_chars": 600},
     },
 }
 
@@ -146,6 +66,7 @@ def _looks_like_path(s: str) -> bool:
     if t.endswith((".txt", ".md", ".yaml", ".yml")):
         return True
     return ("/" in t) or ("\\" in t)
+
 
 def _is_seq_str(x: Any) -> bool:
     return isinstance(x, list) and all(isinstance(it, str) for it in x)
@@ -245,6 +166,26 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
             err("ai.tier2_max_chunks 必须是 int")
         if "cache_dir" in ai and not isinstance(ai.get("cache_dir"), str):
             err("ai.cache_dir 必须是 str")
+
+    limits = config.get("limits", {})
+    if limits is not None and not isinstance(limits, dict):
+        err("limits 必须是 dict")
+    elif isinstance(limits, dict):
+        if "max_file_size_mb" in limits and not isinstance(limits.get("max_file_size_mb"), int):
+            err("limits.max_file_size_mb 必须是 int")
+        if "ai_max_input_chars" in limits and not isinstance(limits.get("ai_max_input_chars"), int):
+            err("limits.ai_max_input_chars 必须是 int")
+        if "writing_coach_preview_chars" in limits and not isinstance(limits.get("writing_coach_preview_chars"), int):
+            err("limits.writing_coach_preview_chars 必须是 int")
+        if "word_target" in limits:
+            wt = limits.get("word_target")
+            if wt is not None and not isinstance(wt, dict):
+                err("limits.word_target 必须是 dict")
+            elif isinstance(wt, dict):
+                if "min" in wt and not isinstance(wt.get("min"), int):
+                    err("limits.word_target.min 必须是 int")
+                if "max" in wt and not isinstance(wt.get("max"), int):
+                    err("limits.word_target.max 必须是 int")
 
     prompts = config.get("prompts", {})
     if prompts is not None and not isinstance(prompts, dict):
@@ -383,5 +324,7 @@ def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
         if not p.is_absolute():
             p = (Path(skill_root) / p).resolve()
         return p.resolve()
-    runs_dir = (config.get("workspace", {}) or {}).get("runs_dir", "runs")
+    workspace = config.get("workspace", {})
+    workspace = workspace if isinstance(workspace, dict) else {}
+    runs_dir = workspace.get("runs_dir", "runs")
     return (Path(skill_root) / str(runs_dir)).resolve()

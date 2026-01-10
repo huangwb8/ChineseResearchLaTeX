@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.0
+version: 0.7.1
 description: 为 NSFC 2026 新模板正文“（一）立项依据”写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改“立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点”等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -62,6 +62,9 @@ references: skills/nsfc-justification-writer/references/
 - 配置校验：`python skills/nsfc-justification-writer/scripts/run.py validate-config`
 - 大文件 Tier2：`diagnose/review --tier2 --chunk-size 12000 --max-chunks 20`（支持 `.cache/ai` 缓存；超大文件会优先使用流式分块以降低峰值内存；用 `--fresh` 强制重算）
 - 说明：本仓库脚本层不会“默认直连外部大模型”；AI 能力是否可用取决于运行环境是否注入 responder（不可用会自动回退到硬编码能力）
+- 相关设计说明：
+  - 内容维度覆盖检查：`skills/nsfc-justification-writer/references/dimension_coverage_design.md`
+  - “可能引起评审不适的表述”判别与改写：`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
 
 ## Prompt 模板可配置化（可选）
 

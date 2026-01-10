@@ -59,10 +59,22 @@
 - **nsfc-justification-writer v0.6.1** - 按 v202601092056 解决 P0–P2（安全/准确性/可维护性）
   - 更新 `skills/nsfc-justification-writer/core/config_loader.py` 与 `skills/nsfc-justification-writer/scripts/run.py`：无 PyYAML 时不再静默退化；内置安全兜底（guardrails 默认生效）并在 CLI 输出配置加载警告
   - 更新 `skills/nsfc-justification-writer/core/reference_validator.py` 与 `skills/nsfc-justification-writer/tests/test_reference_validator.py`：引用解析剔除注释与 `verbatim|lstlisting|minted` 环境，减少缺失 bibkey 误报
-  - 新增 `skills/nsfc-justification-writer/core/quality_gate.py`，并更新 `skills/nsfc-justification-writer/core/hybrid_coordinator.py`、`skills/nsfc-justification-writer/scripts/run.py`：`apply-section --strict-quality` 对“本次新增正文”启用质量闸门（危险命令/绝对化表述可阻断；放宽引用约束时会提示建议开启）
+  - 新增 `skills/nsfc-justification-writer/core/quality_gate.py`，并更新 `skills/nsfc-justification-writer/core/hybrid_coordinator.py`、`skills/nsfc-justification-writer/scripts/run.py`：`apply-section --strict-quality` 对"本次新增正文"启用质量闸门（危险命令/绝对化表述可阻断；放宽引用约束时会提示建议开启）
   - 更新 `.gitignore` 与 `skills/nsfc-justification-writer/scripts/README.md`：明确并忽略 `runs/`、`.cache/` 等运行产物，避免污染工作区
   - 更新 `skills/nsfc-justification-writer/core/wordcount.py`、`skills/nsfc-justification-writer/core/diagnostic.py`、`skills/nsfc-justification-writer/scripts/run.py`：字数统计新增 `cjk_strip_commands` 口径（粗剔除命令/数学/类代码环境），并在输出中注明口径说明
   - 更新 `skills/nsfc-justification-writer/config.yaml`、`skills/nsfc-justification-writer/README.md` 与 `skills/nsfc-justification-writer/SKILL.md`：移除误导性的 `ai.min_success_rate_to_enable` 配置项，并明确 AI 可用性取决于 responder 注入（不可用自动回退）
+
+- **nsfc-justification-writer v0.7.0** - 按 v202601100716 完成代码审查与清理（P0/P1 任务）
+  - **配置 SSoT 重构**：确立 `config.yaml` 为单一真相来源（Single Source of Truth），精简 `core/config_loader.py` 的 `DEFAULT_CONFIG`（从约 100 行 → 10 行，仅保留安全关键项 guardrails），在两文件顶部添加 SSoT 声明注释
+  - **残留代码清理**：删除未使用的 `core/intent_parser.py` 模块和 `prompts/intent_parse.txt`，移除 `core/errors.py` 中的 `NSFCJustificationWriterError` 基类（`SkillError` 直接继承 `Exception`），删除 `config.yaml` 中的 `latex_style_contract` 和 `quality_contract` 未使用配置项
+  - **代码精简**：`core/config_loader.py`（-79 行，-20%）、`core/prompt_templates.py`（-19 行，-11%）、`config.yaml`（-18 行，-11%）
+
+- **nsfc-justification-writer v0.7.1** - 按 v202601100716 完成 P2（可维护性/类型安全/文档）
+  - 新增 `config.yaml` 的 `limits` 配置节：统一管理文件大小阈值、AI 输入上限、写作教练预览长度、字数目标范围
+  - 新增 `skills/nsfc-justification-writer/core/config_access.py` 与 `skills/nsfc-justification-writer/core/limits.py`：消除 `config.get(... ) or {}` 访问模式，并替换硬编码阈值
+  - 更新 `skills/nsfc-justification-writer/core/__init__.py`：补齐聚合导出并声明为内部入口
+  - 新增设计说明：`skills/nsfc-justification-writer/references/dimension_coverage_design.md`、`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
+  - 轻量测试：新增 `tests/v202601100716/`（fixture + override + TEST_PLAN/TEST_REPORT）
 
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录

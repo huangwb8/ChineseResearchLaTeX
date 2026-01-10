@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .ai_integration import AIIntegration
+from .config_access import get_bool, get_int, get_mapping, get_str
 from .config_loader import get_runs_dir, load_config
 from .diagnostic import DiagnosticReport, format_tier1, run_tier1
 from .errors import MissingCitationKeysError, SectionNotFoundError, TargetFileNotFoundError
@@ -29,6 +30,7 @@ from .review_advice import generate_review_markdown
 from .writing_coach import coach_markdown
 from .quality_gate import check_new_body_quality
 from .word_target import resolve_word_target
+from .limits import ai_max_input_chars, max_file_bytes
 
 
 @dataclass(frozen=True)
@@ -88,14 +90,14 @@ class HybridCoordinator:
     ) -> None:
         self.skill_root = Path(skill_root).resolve()
         self.config = config or load_config(self.skill_root)
-        ai_cfg = self.config.get("ai", {}) or {}
-        self.ai = ai_integration or AIIntegration(enable_ai=bool(ai_cfg.get("enabled", True)), config=self.config)
+        ai_cfg = get_mapping(self.config, "ai")
+        self.ai = ai_integration or AIIntegration(enable_ai=get_bool(ai_cfg, "enabled", True), config=self.config)
         self.obs = observability or Observability()
         self.paths = CoordinatorPaths(skill_root=self.skill_root, runs_root=get_runs_dir(self.skill_root, self.config))
 
     def _target_relpath(self) -> str:
-        targets = self.config.get("targets", {}) or {}
-        return str(targets.get("justification_tex", "extraTex/1.1.立项依据.tex"))
+        targets = get_mapping(self.config, "targets")
+        return get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
 
     def _resolve_target(self, project_root: Path) -> Path:
         return resolve_target_path(project_root, self._target_relpath())
@@ -138,22 +140,35 @@ class HybridCoordinator:
         )
         self.obs.add("diagnose.tier1", **report.to_dict()["tier1"])
 
-        ai_cfg = self.config.get("ai", {}) or {}
-        cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+        ai_cfg = get_mapping(self.config, "ai")
+        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
 
         # 内容维度覆盖检查（AI 不可用时自动回退启发式）
-        if (self.config.get("structure", {}) or {}).get("enable_dimension_coverage_check", False):
+        structure_cfg = get_mapping(self.config, "structure")
+        if get_bool(structure_cfg, "enable_dimension_coverage_check", False):
             try:
-                report.dimension_coverage = asyncio.run(DimensionCoverageAI(self.ai).check(tex_text=tex, cache_dir=cache_dir, fresh=bool(tier2_fresh)))
+                report.dimension_coverage = asyncio.run(
+                    DimensionCoverageAI(self.ai).check(
+                        tex_text=tex,
+                        max_chars=ai_max_input_chars(self.config),
+                        cache_dir=cache_dir,
+                        fresh=bool(tier2_fresh),
+                    )
+                )
             except Exception:
                 report.dimension_coverage = None
 
         # 吹牛式表述检查（AI 语义判断）
-        quality_cfg = self.config.get("quality", {}) or {}
-        if quality_cfg.get("enable_ai_judgment", True):
+        quality_cfg = get_mapping(self.config, "quality")
+        if get_bool(quality_cfg, "enable_ai_judgment", True):
             try:
                 report.boastful_expressions = asyncio.run(
-                    BoastfulExpressionAI(self.ai).check(tex_text=tex, cache_dir=cache_dir, fresh=bool(tier2_fresh))
+                    BoastfulExpressionAI(self.ai).check(
+                        tex_text=tex,
+                        max_chars=ai_max_input_chars(self.config),
+                        cache_dir=cache_dir,
+                        fresh=bool(tier2_fresh),
+                    )
                 )
             except Exception:
                 report.boastful_expressions = None
@@ -173,11 +188,11 @@ class HybridCoordinator:
                 config=self.config,
                 variant=str(self.config.get("active_preset", "") or "").strip() or None,
             )
-            max_chars = int(tier2_chunk_size or ai_cfg.get("tier2_chunk_size", 12000))
-            max_chunks = int(tier2_max_chunks or ai_cfg.get("tier2_max_chunks", 20))
+            max_chars = int(tier2_chunk_size or get_int(ai_cfg, "tier2_chunk_size", 12000))
+            max_chunks = int(tier2_max_chunks or get_int(ai_cfg, "tier2_max_chunks", 20))
             chunks: List[str]
             # 超大文件：优先流式分块，避免一次性加载后再切块造成峰值内存
-            if target.exists() and int(target.stat().st_size) > 5 * 1024 * 1024:
+            if target.exists() and int(target.stat().st_size) > max_file_bytes(self.config):
                 chunks = list(
                     iter_text_chunks_by_subsubsection_mark(
                         target,
@@ -287,8 +302,8 @@ class HybridCoordinator:
 
     def term_consistency_report(self, *, project_root: Path) -> str:
         project_root = Path(project_root).resolve()
-        targets = self.config.get("targets", {}) or {}
-        related = targets.get("related_tex", {}) or {}
+        targets = get_mapping(self.config, "targets")
+        related = get_mapping(targets, "related_tex")
 
         files = {
             "立项依据": resolve_target_path(project_root, self._target_relpath()),
@@ -296,8 +311,8 @@ class HybridCoordinator:
         for label, relpath in related.items():
             files[label] = resolve_target_path(project_root, str(relpath))
 
-        ai_cfg = self.config.get("ai", {}) or {}
-        cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+        ai_cfg = get_mapping(self.config, "ai")
+        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
         md = term_consistency_report(files=files, config=self.config, ai=self.ai, cache_dir=cache_dir)
         self.obs.add("terms.report", ai=self.ai.is_available())
         return md
@@ -321,17 +336,20 @@ class HybridCoordinator:
             raise TargetFileNotFoundError(target_relpath=self._target_relpath(), project_root=str(project_root))
 
         src = read_text_streaming(target).text
-        structure_cfg = self.config.get("structure", {}) or {}
-        strict = bool(structure_cfg.get("strict_title_match", True))
-        min_sim = float(structure_cfg.get("min_title_similarity", 0.6))
+        structure_cfg = get_mapping(self.config, "structure")
+        strict = get_bool(structure_cfg, "strict_title_match", True)
+        try:
+            min_sim = float(structure_cfg.get("min_title_similarity", 0.6))
+        except Exception:
+            min_sim = 0.6
 
         # strict=False 时：先做“候选标题提示”，并在 AI 可用时尝试语义匹配
         chosen = title
         if not strict:
             cands = suggest_titles(src, query=title, limit=30)
             if self.ai.is_available() and cands:
-                ai_cfg = self.config.get("ai", {}) or {}
-                cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+                ai_cfg = get_mapping(self.config, "ai")
+                cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
                 matched = asyncio.run(match_title_via_ai(query=title, candidates=cands, ai=self.ai, cache_dir=cache_dir))
                 if matched:
                     chosen = matched
@@ -346,14 +364,14 @@ class HybridCoordinator:
         if not changed:
             raise SectionNotFoundError(title=title, suggestions=suggest_titles(src, query=title, limit=12))
 
-        ref_cfg = (self.config.get("references", {}) or {})
-        allow_missing = bool(ref_cfg.get("allow_missing_citations", False)) or bool(allow_missing_citations)
+        ref_cfg = get_mapping(self.config, "references")
+        allow_missing = get_bool(ref_cfg, "allow_missing_citations", False) or bool(allow_missing_citations)
 
-        quality_cfg = self.config.get("quality", {}) or {}
-        strict_on_apply = bool(quality_cfg.get("strict_on_apply", False)) or bool(strict_quality)
+        quality_cfg = get_mapping(self.config, "quality")
+        strict_on_apply = get_bool(quality_cfg, "strict_on_apply", False) or bool(strict_quality)
         if strict_on_apply:
-            ai_cfg = self.config.get("ai", {}) or {}
-            cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+            ai_cfg = get_mapping(self.config, "ai")
+            cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
             qr = check_new_body_quality(new_body=new_body, config=self.config, ai=self.ai, cache_dir=cache_dir)
             if not qr.ok:
                 from .errors import QualityGateError
@@ -364,7 +382,7 @@ class HybridCoordinator:
                 )
 
         if not allow_missing:
-            targets = self.config.get("targets", {}) or {}
+            targets = get_mapping(self.config, "targets")
             bib_globs = targets.get("bib_globs", ["references/*.bib"])
             cite_result = check_citations(tex_text=new_text, project_root=project_root, bib_globs=bib_globs)
             if cite_result.missing_keys:
@@ -383,7 +401,7 @@ class HybridCoordinator:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
         tex = read_text_streaming(target).text if target.exists() else ""
-        wc_cfg = self.config.get("word_count", {}) or {}
+        wc_cfg = get_mapping(self.config, "word_count")
         used_mode = str(mode or wc_cfg.get("mode", "cjk_only")).strip() or "cjk_only"
         current = count_cjk_chars(tex, mode=used_mode).cjk_count
 
@@ -421,8 +439,8 @@ class HybridCoordinator:
         }
 
     def recommend_examples(self, *, query: str, top_k: int = 3) -> str:
-        ai_cfg = self.config.get("ai", {}) or {}
-        cache_dir = (self.skill_root / str(ai_cfg.get("cache_dir", ".cache/ai"))).resolve()
+        ai_cfg = get_mapping(self.config, "ai")
+        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
         return recommend_examples_markdown(skill_root=self.skill_root, query=query, top_k=top_k, ai=self.ai, cache_dir=cache_dir)
 
     def coach(self, *, project_root: Path, stage: str = "auto", info_form_text: str = "") -> str:

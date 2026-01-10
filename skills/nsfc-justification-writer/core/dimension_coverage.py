@@ -65,6 +65,7 @@ class DimensionCoverageAI:
         self,
         *,
         tex_text: str,
+        max_chars: int,
         cache_dir: Optional[Any] = None,
         fresh: bool = False,
     ) -> Dict[str, Any]:
@@ -93,8 +94,9 @@ class DimensionCoverageAI:
 """.strip()
 
         cleaned = strip_comments(tex_text or "")
-        cleaned = cleaned[:20000]
-        prompt = prompt + "\n\n文本内容（去注释后，最多 20000 字符）：\n" + cleaned
+        max_chars = max(int(max_chars), 1000)
+        cleaned = cleaned[:max_chars]
+        prompt = prompt + f"\n\n文本内容（去注释后，最多 {max_chars} 字符）：\n" + cleaned
 
         def _fallback() -> Dict[str, Any]:
             fb = _fallback_heuristic(cleaned)
@@ -151,4 +153,3 @@ def format_dimension_coverage_markdown(obj: Dict[str, Any]) -> str:
     if mode:
         lines.append(f"  - 来源：{mode}")
     return "\n".join(lines).strip() + "\n"
-
