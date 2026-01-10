@@ -1,6 +1,22 @@
 ---
 name: nsfc-bib-manager
-description: NSFC 标书引用与 Bib 管理：新增/核验论文信息（题目/作者/年份/期刊/DOI）并写入 `references/ccs.bib` 或 `references/mypaper.bib`，保证不出现幻觉引用；用于用户要求“加引用/补参考文献/核对论文信息/写bibtex/更新.bib”。
+description: NSFC 标书引用与 Bib 管理：新增/核验论文信息（题目/作者/年份/期刊/DOI）并写入 `references/ccs.bib` 或 `references/mypaper.bib`，保证不出现幻觉引用；用于用户要求"加引用/补参考文献/核对论文信息/写bibtex/更新.bib"。
+metadata:
+  short-description: NSFC 标书引用与 Bib 管理
+  keywords:
+    - nsfc
+    - bibtex
+    - 参考文献
+    - 引用管理
+    - 文献核验
+    - bib 文件
+  triggers:
+    - 加引用
+    - 补参考文献
+    - 核对论文信息
+    - 写 bibtex
+    - 更新 bib
+config: skills/nsfc-bib-manager/config.yaml
 ---
 
 # 引用与 Bib 管理器
