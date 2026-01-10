@@ -10,7 +10,9 @@
 
 ### Changed（变更）
 
-- 更新 `plans/v202601100803.md`：将“代码审查报告”重构为可执行的改进计划，去除时间线表述，补齐目标/范围/交付物/验收标准，并声明计划文档不记录版本历史（统一在 `CHANGELOG.md`）
+- 更新 [skills/README.md](skills/README.md)：新增"推荐工作流"章节，展示从文献调研到标书写作的完整流程（get-review-theme → systematic-literature-review → guide-updater → nsfc系列skills），并新增 get-review-theme 与 guide-updater 两个技能的说明，同时更新"技能类型说明"表
+
+- 更新 `plans/v202601100803.md`：将"代码审查报告"重构为可执行的改进计划，去除时间线表述，补齐目标/范围/交付物/验收标准，并声明计划文档不记录版本历史（统一在 `CHANGELOG.md`）
 
 - 新增 `plans/v202601100912.md`：审阅 `nsfc-justification-writer` 的安全措施与潜在缺陷，重点指出 `guardrails` 可能被 override 置空导致白名单失效，并给出按优先级排序的改进建议与验收标准
 
