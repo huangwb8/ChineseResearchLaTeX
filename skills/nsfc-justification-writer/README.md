@@ -10,6 +10,7 @@
 - AI 语义识别“吹牛式表述”（绝对化/填补空白/无依据夸大/自我定性）并给出改写建议，高风险词仅提示不做机械阻断
 - 目标字数优先从用户意图/信息表的“字数/范围/±容差”解析，再用配置兜底
 - `coach --stage auto` 支持 AI 阶段判断（skeleton/draft/revise/polish/final），AI 不可用则回退到硬编码阈值
+- 写作导向可配置：`style.mode=theoretical|mixed|engineering`（默认 `theoretical`）
 
 ## 推荐用法（Prompt 模板）
 

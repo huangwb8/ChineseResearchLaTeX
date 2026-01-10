@@ -10,7 +10,12 @@
 
 ### Added（新增）
 
+- **nsfc-justification-writer v0.7.6**：修复 P0 语法阻断并补齐 `style.mode` 写作导向开关（见下方 Changed/Fixed）
+
 - 新增 `plans/v202601101300.md`：对 `skills/nsfc-justification-writer`「理论创新导向优化」做源代码审查，记录 P0 语法阻断缺陷与一致性改进建议
+
+- 新增 `skills/nsfc-justification-writer/core/style.py`：写作导向（`style.mode`）统一入口，并提供可注入到 Prompt 的最小“写作导向”约束文本
+- 新增 `tests/v202601101300/`：nsfc-justification-writer 轻量测试会话目录（含 `TEST_PLAN.md`、`TEST_REPORT.md`、测试输出与 `override.yaml`）
 
 - **nsfc-justification-writer 理论创新导向优化**（v0.7.5）：新增 `references/theoretical_innovation_guidelines.md`，默认优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（理论证明/定理/数值验证），而非工程落地细节
   - 更新 `references/dod_checklist.md`：在验收标准中新增"理论创新导向（默认）"要求
@@ -44,6 +49,11 @@
 - **跨项目标准化**：将"技能版本号管理规范"有机融入 `/Volumes/2T01/winE/PythonCloud/Agents/pipelines/skills` 的 [AGENTS.md](/Volumes/2T01/winE/PythonCloud/Agents/pipelines/skills/AGENTS.md)，建立统一的技能版本管理标准（config.yaml 作为 SSoT，语义化版本命名，版本同步机制）
 
 ### Changed（变更）
+
+- 更新 `skills/nsfc-justification-writer/config.yaml`：新增 `style.mode=theoretical|mixed|engineering`（默认 `theoretical`）
+- 更新 `skills/nsfc-justification-writer/prompts/writing_coach.txt`、`skills/nsfc-justification-writer/prompts/review_suggestions.txt`：引入 `{style_preamble}` 注入，确保“理论创新导向/工程导向”约束在 AI 可用时也显式生效
+- 更新 `skills/nsfc-justification-writer/core/writing_coach.py`、`skills/nsfc-justification-writer/core/review_advice.py`：将 `style.mode` 贯通到回退路径与 Prompt 填充，减少 AI/回退口径不一致
+- 更新 `skills/nsfc-justification-writer/SKILL.md`、`skills/nsfc-justification-writer/README.md`：补充 `style.mode` 使用说明
 
 - 更新 [README.md](README.md)：删除"快速开始指南"章节，保持文档简洁（详细使用示例请查阅各技能的 README.md）
 - 更新 [README.md](README.md)：技能表格从 7 个扩展到 10 个，新增 nsfc-bib-manager、get-review-theme、guide-updater、complete_example
@@ -266,6 +276,9 @@
       - 其他文件：`\import{path}{file}`
 
 ### Fixed（修复）
+
+- 修复 `skills/nsfc-justification-writer/core/writing_coach.py`、`skills/nsfc-justification-writer/core/review_advice.py` 的字符串未转义导致的 `SyntaxError`，恢复脚本入口可运行性
+- 更新 `skills/nsfc-justification-writer/core/config_loader.py`：新增 `style` 配置字段的轻量校验，避免无效取值静默生效
 
 - **transfer_old_latex_to_new** - 修复 `compile_project()` 在 `-output-directory` 隔离中间文件时，`bibtex` 因工作目录切换导致无法定位 `.bst/.bib` 的问题
   - 在 `bibtex` 步骤注入 `BSTINPUTS/BIBINPUTS` 搜索路径（指向项目根目录），确保可读取 `bibtex-style/` 与 `references/`
@@ -566,8 +579,6 @@
 - 配置项目工程原则和工作流
 
 ### Changed（变更）
-
-### Fixed（修复）
 
 ---
 

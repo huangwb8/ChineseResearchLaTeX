@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.5
+version: 0.7.6
 description: 为 NSFC 2026 新模板正文"（一）立项依据"写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改"立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点"等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -33,6 +33,7 @@ references: skills/nsfc-justification-writer/references/
 - **写作目标**：把"为什么要做"讲清楚，并为 `（二）研究内容` 铺垫"科学问题/假说与切入点"。
 - **AI 依赖**：默认使用运行环境提供的 Claude Code / Codex 原生智能（无需配置任何外部 API Key，AI 不可用会自动回退到硬编码能力）
 - **理论创新导向（默认）**：优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（详见 [theoretical_innovation_guidelines.md](references/theoretical_innovation_guidelines.md)）
+- **写作导向可配置**：在 `skills/nsfc-justification-writer/config.yaml` 中用 `style.mode=theoretical|mixed|engineering` 切换（默认 `theoretical`）
 
 ## 必需输入（最小信息表）
 

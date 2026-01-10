@@ -7,9 +7,16 @@
 
 skill_info:
   name: nsfc-justification-writer
-  version: 0.7.5
+  version: 0.7.6
   template_year: "2026"
   category: writing
+
+# 写作导向（可配置）
+# - theoretical：理论创新导向（默认）
+# - mixed：理论 + 应用混合导向
+# - engineering：工程/应用导向
+style:
+  mode: theoretical
 
 parameters:
   project_root:

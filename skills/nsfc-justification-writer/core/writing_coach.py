@@ -16,6 +16,7 @@ from .dimension_coverage import format_dimension_coverage_markdown
 from .io_utils import read_text_streaming
 from .limits import ai_max_input_chars, writing_coach_preview_chars
 from .prompt_templates import get_prompt
+from .style import get_style_mode, style_preamble_text
 from .term_consistency import CrossChapterValidator, format_term_matrices_markdown
 from .word_target import WordTargetSpec, resolve_word_target
 
@@ -25,6 +26,8 @@ WritingStage = Literal["auto", "skeleton", "draft", "revise", "polish", "final"]
 @dataclass(frozen=True)
 class CoachInput:
     stage: WritingStage
+    style_mode: str
+    style_preamble: str
     info_form_text: str
     tex_text: str
     tier1: Dict[str, Any]
@@ -58,14 +61,30 @@ def _infer_stage(
     return "final"
 
 
-def _suggest_questions(*, stage: WritingStage, tier1: Dict[str, Any], dimension_coverage_md: str) -> List[str]:
-    base = [
-        "你的一句话问题定义是什么（评审听得懂的版本）？",
-        "现有方案在**理论层面**的 2–4 条瓶颈分别是什么（如假设过强/框架不统一/因果缺失/界不紧）？",
-        "你的核心假说是什么（能被验证/否证的一句话，指向理论阐明/证明）？",
-        "你准备如何验证（理论证明/定理/数值验证/对照实验）？",
-        "本项目相对现有工作的**理论差异化切口**是什么（如新表征/新方法学/统一框架）？",
-    ]
+def _suggest_questions(
+    *,
+    stage: WritingStage,
+    tier1: Dict[str, Any],
+    dimension_coverage_md: str,
+    style_mode: str,
+) -> List[str]:
+    base: List[str]
+    if style_mode == "engineering":
+        base = [
+            "你的一句话问题定义是什么（评审听得懂的版本）？",
+            "应用场景/对象/边界条件是什么（哪些情况不适用）？",
+            "现有方案的 2–4 条不足分别是什么（尽量可量化/可验证）？",
+            "你准备如何验证（对照实验/数据来源/评价指标/统计检验）？",
+            "本项目相对现有工作的差异化切口是什么（方法学/系统设计/流程改造中的关键一处）？",
+        ]
+    else:
+        base = [
+            "你的一句话问题定义是什么（评审听得懂的版本）？",
+            "现有方案在理论层面的 2–4 条瓶颈分别是什么（如假设过强/框架不统一/因果缺失/界不紧）？",
+            "你的核心假说是什么（能被验证/否证的一句话，指向理论阐明/证明）？",
+            "你准备如何验证（理论证明/定理/数值验证/对照实验）？",
+            "本项目相对现有工作的理论差异化切口是什么（如新表征/新方法学/统一框架）？",
+        ]
     if "缺失维度" in dimension_coverage_md:
         base.append("哪些维度缺失？请优先补齐“价值/现状/科学问题/切入点”对应段落。")
     if stage in {"skeleton", "draft"}:
@@ -79,7 +98,7 @@ def _suggest_questions(*, stage: WritingStage, tier1: Dict[str, Any], dimension_
     return base[:8]
 
 
-def _copyable_prompt(*, stage: WritingStage) -> str:
+def _copyable_prompt(*, stage: WritingStage, style_preamble: str) -> str:
     focus = {
         "skeleton": "先生成 4 个 \\subsubsection 骨架（不写引用）。",
         "draft": "只写其中 1 个 \\subsubsection 的正文段落（不新增引用）。",
@@ -89,21 +108,27 @@ def _copyable_prompt(*, stage: WritingStage) -> str:
         "auto": "按当前阶段输出下一步。",
     }.get(stage, "按当前阶段输出下一步。")
 
+    pre = style_preamble.strip()
     return (
         "请用 nsfc-justification-writer 的写作规范帮我修改立项依据：\n"
-        "约束：\n"
-        "- 不修改任何标题层级（仅改正文段落）\n"
-        "- 不新增引用；如必须引用，请先提示"需用户提供 DOI/链接或走 nsfc-bib-manager 核验"\n"
-        "- 避免不可核验绝对表述（国际领先/国内首次等），改为可验证指标/对照维度\n"
-        "- **默认采用理论创新导向**：优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（详见 theoretical_innovation_guidelines.md）\n"
-        f"任务：{focus}\n"
-        "输入：我会提供（1）信息表（2）当前 tex（如有）。\n"
-        "输出：只给出需要替换的正文文本（不要包裹 \\subsubsection）。\n"
+        + "约束：\n"
+        + "- 不修改任何标题层级（仅改正文段落）\n"
+        + '- 不新增引用；如必须引用，请先提示“需用户提供 DOI/链接或走 nsfc-bib-manager 核验”\n'
+        + "- 避免不可核验绝对表述（国际领先/国内首次等），改为可验证指标/对照维度\n"
+        + ((pre + "\n") if pre else "")
+        + f"任务：{focus}\n"
+        + "输入：我会提供（1）信息表（2）当前 tex（如有）。\n"
+        + "输出：只给出需要替换的正文文本（不要包裹 \\subsubsection）。\n"
     )
 
 
 def _fallback_markdown(inp: CoachInput, stage: WritingStage) -> str:
-    qs = _suggest_questions(stage=stage, tier1=inp.tier1, dimension_coverage_md=inp.dimension_coverage_md)
+    qs = _suggest_questions(
+        stage=stage,
+        tier1=inp.tier1,
+        dimension_coverage_md=inp.dimension_coverage_md,
+        style_mode=inp.style_mode,
+    )
     tasks = {
         "skeleton": [
             "补齐 4 个 \\subsubsection 标题骨架（先不追求字数）。",
@@ -112,7 +137,7 @@ def _fallback_markdown(inp: CoachInput, stage: WritingStage) -> str:
         ],
         "draft": [
             "选 1 个小标题先写成 1–2 段（每段 3–5 句）。",
-            "每段都包含"可验证维度"（理论证明/定理/数值验证/对照实验）。",
+            "每段都包含“可验证维度”（理论证明/定理/数值验证/对照实验）。",
             "再逐小标题扩写到接近目标字数。",
         ],
         "revise": [
@@ -146,7 +171,7 @@ def _fallback_markdown(inp: CoachInput, stage: WritingStage) -> str:
         "",
         "## 下一步可直接复制的写作提示词",
         "```",
-        _copyable_prompt(stage=stage).rstrip(),
+        _copyable_prompt(stage=stage, style_preamble=inp.style_preamble).rstrip(),
         "```",
         "",
         f"## 目标字数：{inp.word_target.target}（容差 ±{inp.word_target.tolerance}，来源：{inp.word_target.source}{'；线索：'+inp.word_target.evidence if inp.word_target.evidence else ''}）",
@@ -246,6 +271,8 @@ async def coach_markdown(
     rel = get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
     target = (project_root / rel).resolve()
     tex_text = read_text_streaming(target).text if target.exists() else ""
+    style_mode = get_style_mode(config)
+    style_preamble = style_preamble_text(style_mode).strip()
 
     tier1_obj = run_tier1(tex_text=tex_text, project_root=project_root, config=config)
     tier1 = {
@@ -312,6 +339,8 @@ async def coach_markdown(
 
     inp = CoachInput(
         stage=chosen_stage,
+        style_mode=style_mode,
+        style_preamble=style_preamble,
         info_form_text=info_form_text,
         tex_text=tex_text,
         tier1=tier1,
@@ -345,6 +374,7 @@ async def coach_markdown(
     }
     filled = prompt.format(
         stage=chosen_stage,
+        style_preamble=style_preamble,
         info_form=payload["info_form"],
         tier1_json=json.dumps(payload["tier1"], ensure_ascii=False, indent=2),
         term_matrix=payload["term_matrix"],

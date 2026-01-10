@@ -1,0 +1,11 @@
+# 测试专用 override：确保所有产物落在 tests/v202601101300 下
+
+ai:
+  enabled: false
+  cache_dir: ../../tests/v202601101300/.cache/ai
+
+style:
+  mode: theoretical
+
+workspace:
+  runs_dir: ../../tests/v202601101300/runs

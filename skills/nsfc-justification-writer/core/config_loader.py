@@ -173,6 +173,14 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
         if not isinstance(skill_info.get("version"), str) or not str(skill_info.get("version")).strip():
             err("skill_info.version 必须是非空字符串")
 
+    style = config.get("style", {})
+    if style is not None and not isinstance(style, dict):
+        err("style 必须是 dict")
+    elif isinstance(style, dict) and style:
+        mode = str(style.get("mode", "theoretical")).strip().lower()
+        if mode not in {"theoretical", "mixed", "engineering"}:
+            err("style.mode 必须是 theoretical|mixed|engineering")
+
     targets = config.get("targets")
     if not isinstance(targets, dict):
         err("targets 必须是 dict")

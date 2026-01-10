@@ -55,6 +55,8 @@ def test_infer_stage_final_when_ready() -> None:
 def test_fallback_markdown_contains_actionable_blocks() -> None:
     inp = CoachInput(
         stage="draft",
+        style_mode="theoretical",
+        style_preamble="写作导向：理论创新导向（默认，可配置）",
         info_form_text="",
         tex_text="x",
         tier1={"structure_ok": True, "citation_ok": True, "word_count": 1000},
