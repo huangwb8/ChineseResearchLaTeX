@@ -1,12 +1,11 @@
 ---
 name: nsfc-justification-writer
 version: 0.7.7
-description: 为 NSFC 2026 新模板正文"（一）立项依据"写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改"立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点"等场景。
+description: 为科研申请书"立项依据"章节写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于 NSFC 及各类科研基金申请书的立项依据写作场景。
 author: ChineseResearchLaTeX Project
 metadata:
-  short-description: NSFC 2026（立项依据）写作/重构
+  short-description: 科研立项依据写作/重构
   keywords:
-    - nsfc
     - 立项依据
     - 研究意义
     - 国内外现状
@@ -24,7 +23,7 @@ config: skills/nsfc-justification-writer/config.yaml
 references: skills/nsfc-justification-writer/references/
 ---
 
-# NSFC 2026（ 一）立项依据 写作器
+# 科研立项依据写作器
 
 ## 目标输出（契约）
 

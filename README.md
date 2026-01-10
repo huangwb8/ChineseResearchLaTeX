@@ -159,7 +159,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 #### ✍️ 标书写作阶段
 
-- **nsfc-justification-writer**：立项依据写作，构建"价值与必要性 → 现状与不足 → 科学问题/假说 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述
+- **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/假说 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
 
 - **nsfc-research-content-writer**：研究内容编排，同步生成"研究内容 + 特色与创新 + 三年年度计划"，确保子目标带"指标/对照/验证方案"三件套，创新点用"相对坐标系"表达
 
@@ -182,7 +182,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | [nsfc-bib-manager](skills/nsfc-bib-manager/) | v1.0.0 | 📝 日常 | NSFC 标书引用与 Bib 管理 | 🚧 开发中 |
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
-| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.7 | 📝 日常 | NSFC 立项依据写作（默认理论创新导向） | 🚧 开发中 |
+| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.7 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.1.0 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.0 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 
