@@ -20,6 +20,7 @@
 - 新增 `skills/get-review-theme/config.yaml`：添加技能版本信息（v1.0.0）
 - 更新 `skills/systematic-literature-review/config.yaml`：添加技能版本信息（v1.0.0）
 - 更新 `skills/transfer_old_latex_to_new/config.yaml`：添加 skill_info 节，统一版本号为 v1.4.0
+- **跨项目标准化**：将"技能版本号管理规范"有机融入 `/Volumes/2T01/winE/PythonCloud/Agents/pipelines/skills` 的 [AGENTS.md](/Volumes/2T01/winE/PythonCloud/Agents/pipelines/skills/AGENTS.md)，建立统一的技能版本管理标准（config.yaml 作为 SSoT，语义化版本命名，版本同步机制）
 
 ### Changed（变更）
 
