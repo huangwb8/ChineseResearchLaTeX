@@ -14,6 +14,11 @@
 
 - 新增 `plans/v202601100912.md`：审阅 `nsfc-justification-writer` 的安全措施与潜在缺陷，重点指出 `guardrails` 可能被 override 置空导致白名单失效，并给出按优先级排序的改进建议与验收标准
 
+- 更新 `skills/nsfc-justification-writer/core/config_loader.py`：加固 `guardrails`（强校验 + 校验关闭时仍强制安全兜底），无 PyYAML 时跳过强校验并给出明确提示，新增 `prompts.*` 指向 skill_root 外路径的风险 warning
+- 更新 `skills/nsfc-justification-writer/core/security.py`：`build_write_policy()` 不允许“空策略”，缺失/无效配置时回退到最小写入白名单与默认禁止规则
+- 更新 `skills/nsfc-justification-writer/core/editor.py`、`skills/nsfc-justification-writer/core/versioning.py`、`skills/nsfc-justification-writer/core/hybrid_coordinator.py`、`skills/nsfc-justification-writer/scripts/run.py`：备份/回滚优先按目标相对路径定位（并兼容旧版按文件名回退），`apply_result.json` 记录 `target_relpath`，Crossref DOI 校验增加“将联网”的提示，`validate-config` 在无 PyYAML 时友好降级
+- 新增 `tests/v202601100912/`：轻量测试计划/报告与脚本，验证 P0–P2 修复（所有中间文件限定在测试目录树内）
+
 - 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"变更记录规范"中新增"Skill 文档编写原则"子章节，明确 Skill 文档（SKILL.md）应始终展示最新状态，不包含版本标记等对 AI 执行无用的元信息；包括内容优先于版本、简洁标题、单一职责等原则及设计公式
 
 - 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"核心工作流/执行流程"中新增"计划制定原则"，要求任务按优先级从上到下罗列，不使用时间限制表述（如"第1-2周"、"第3-4周"等）；同时更新 CLAUDE.md 的"任务管理"章节同步此原则

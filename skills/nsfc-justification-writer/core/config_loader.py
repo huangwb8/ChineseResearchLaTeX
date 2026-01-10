@@ -57,17 +57,6 @@ def _default_user_override_path() -> Optional[Path]:
     return next((p for p in candidates if p.exists() and p.is_file()), None)
 
 
-def _looks_like_path(s: str) -> bool:
-    t = (s or "").strip()
-    if not t:
-        return False
-    if "\n" in t or "\r" in t:
-        return False
-    if t.endswith((".txt", ".md", ".yaml", ".yml")):
-        return True
-    return ("/" in t) or ("\\" in t)
-
-
 def _is_seq_str(x: Any) -> bool:
     return isinstance(x, list) and all(isinstance(it, str) for it in x)
 
@@ -81,6 +70,88 @@ def _is_alias_groups(x: Any) -> bool:
         if not _is_seq_str(v):
             return False
     return True
+
+
+def _is_nonempty_seq_str(x: Any) -> bool:
+    return isinstance(x, list) and all(isinstance(it, str) and str(it).strip() for it in x) and len(x) > 0
+
+
+def _looks_like_path(s: str) -> bool:
+    t = (s or "").strip()
+    if not t:
+        return False
+    if "\n" in t or "\r" in t:
+        return False
+    if t.endswith((".txt", ".md", ".yaml", ".yml")):
+        return True
+    return ("/" in t) or ("\\" in t)
+
+
+def _resolve_prompt_path(skill_root: Path, value: str) -> Optional[Path]:
+    v = str(value or "").strip()
+    if not v or (not _looks_like_path(v)):
+        return None
+    p = Path(v).expanduser()
+    if not p.is_absolute():
+        p = (Path(skill_root).resolve() / p).resolve()
+    return p.resolve()
+
+
+def _collect_config_warnings(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
+    warnings: List[str] = []
+    prompts = config.get("prompts", {})
+    if isinstance(prompts, dict):
+        for k, v in prompts.items():
+            if not isinstance(k, str):
+                continue
+            if not isinstance(v, str) or (not v.strip()):
+                continue
+            p = _resolve_prompt_path(skill_root, v)
+            if p is None:
+                continue
+            # 仅做风险提示：外部路径内容可能被拼入 prompt（若上层注入 responder）
+            if Path(v).expanduser().is_absolute():
+                warnings.append(f"prompts.{k} 使用绝对路径：{v}（注意：该文件内容可能被拼入 prompt）")
+            try:
+                p.relative_to(Path(skill_root).resolve())
+            except ValueError:
+                warnings.append(f"prompts.{k} 指向 skill_root 之外：{v} -> {p}（注意：该文件内容可能被拼入 prompt）")
+    return warnings
+
+
+def _harden_guardrails(*, config: Dict[str, Any], meta: Dict[str, Any]) -> None:
+    """
+    安全关键项加固：
+    - guardrails 必须存在且为 dict
+    - allowed_write_files 不允许为空；若无效则回退到 DEFAULT_CONFIG（并给出 warning）
+    - forbidden_write_files/forbidden_write_globs 若无效也回退到 DEFAULT_CONFIG（避免误放开 .cls/.sty 等）
+    """
+    default_guard = DEFAULT_CONFIG.get("guardrails", {})
+    if not isinstance(default_guard, dict):
+        default_guard = {}
+
+    guard = config.get("guardrails")
+    if not isinstance(guard, dict):
+        config["guardrails"] = dict(default_guard)
+        meta.setdefault("warnings", []).append("guardrails 非 dict（或被置空），已回退到安全默认值（白名单写入保持启用）")
+        return
+
+    allowed = guard.get("allowed_write_files")
+    if not _is_nonempty_seq_str(allowed):
+        guard["allowed_write_files"] = list(default_guard.get("allowed_write_files", ["extraTex/1.1.立项依据.tex"]))
+        meta.setdefault("warnings", []).append(
+            "guardrails.allowed_write_files 为空/无效，已回退到安全默认值（避免白名单失效）"
+        )
+
+    forbidden_files = guard.get("forbidden_write_files")
+    if not _is_seq_str(forbidden_files):
+        guard["forbidden_write_files"] = list(default_guard.get("forbidden_write_files", []))
+        meta.setdefault("warnings", []).append("guardrails.forbidden_write_files 无效，已回退到安全默认值")
+
+    forbidden_globs = guard.get("forbidden_write_globs")
+    if not _is_seq_str(forbidden_globs):
+        guard["forbidden_write_globs"] = list(default_guard.get("forbidden_write_globs", []))
+        meta.setdefault("warnings", []).append("guardrails.forbidden_write_globs 无效，已回退到安全默认值")
 
 
 def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
@@ -203,6 +274,17 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
                     if not maybe.exists():
                         err(f"prompts.{k} 路径不存在：{v}")
 
+    guardrails = config.get("guardrails")
+    if not isinstance(guardrails, dict):
+        err("guardrails 必须是 dict（安全关键项）")
+    else:
+        if not _is_nonempty_seq_str(guardrails.get("allowed_write_files")):
+            err("guardrails.allowed_write_files 必须是非空字符串列表（安全关键项：写入白名单不可为空）")
+        if not _is_seq_str(guardrails.get("forbidden_write_files", [])):
+            err("guardrails.forbidden_write_files 必须是字符串列表")
+        if not _is_seq_str(guardrails.get("forbidden_write_globs", [])):
+            err("guardrails.forbidden_write_globs 必须是字符串列表")
+
     terminology = config.get("terminology", {})
     if terminology is not None and not isinstance(terminology, dict):
         err("terminology 必须是 dict")
@@ -302,6 +384,7 @@ def load_config(
             p = (Path.cwd() / p).resolve()
         _merge_yaml(p, label="--override")
 
+    meta["warnings"].extend(_collect_config_warnings(skill_root=skill_root, config=config))
     config["_config_loader"] = meta
 
     disable_validation = str(os.environ.get("NSFC_JUSTIFICATION_WRITER_DISABLE_CONFIG_VALIDATION", "")).strip().lower() in {
@@ -309,10 +392,18 @@ def load_config(
         "true",
         "yes",
     }
+    # 无 PyYAML：只能运行 DEFAULT_CONFIG（至少保证 guardrails 生效），跳过强校验避免“承诺降级但实际失败”
+    if not bool(meta.get("yaml_available", True)):
+        disable_validation = True
+        meta["warnings"].append("未安装 PyYAML：已跳过配置强校验（当前仅保证 guardrails 等安全兜底生效）")
+
     if not disable_validation:
         errs = validate_config(skill_root=skill_root, config=config)
         if errs:
             raise ValueError("配置校验失败：\n- " + "\n- ".join(errs))
+
+    # 即使用户显式关闭校验，也不允许安全关键项被“置空/移除”
+    _harden_guardrails(config=config, meta=meta)
 
     return config
 

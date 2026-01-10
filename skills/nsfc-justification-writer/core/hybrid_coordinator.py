@@ -391,7 +391,17 @@ class HybridCoordinator:
         run_id = run_id or make_run_id("apply")
         run_dir = ensure_run_dir(self.paths.runs_root, run_id)
         backup_root = (run_dir / "backup").resolve() if backup else None
-        result = apply_new_content(target_path=target, new_text=new_text, backup_root=backup_root, run_id=run_id)
+        try:
+            rel = target.relative_to(project_root).as_posix()
+        except ValueError:
+            rel = self._target_relpath()
+        result = apply_new_content(
+            target_path=target,
+            new_text=new_text,
+            backup_root=backup_root,
+            run_id=run_id,
+            target_relpath=rel,
+        )
         self.obs.add("apply.section", title=str(matched_title or title), changed=result.changed)
         if result.backup_path:
             self.obs.add("apply.backup", path=str(result.backup_path))

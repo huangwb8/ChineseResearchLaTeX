@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Iterable, List, Mapping, Optional
 
 from .config_access import get_mapping, get_seq_str
+from .config_loader import DEFAULT_CONFIG
 
 
 @dataclass(frozen=True)
@@ -19,10 +20,13 @@ class WritePolicy:
 
 def build_write_policy(config: Mapping[str, Any]) -> WritePolicy:
     guard = get_mapping(config, "guardrails")
+    if not guard:
+        # 兜底：即使上层未通过 config_loader.load_config() 加载，也不允许“空策略”导致任意写入
+        guard = get_mapping(DEFAULT_CONFIG, "guardrails")
     return WritePolicy(
-        allowed_relpaths=list(get_seq_str(guard, "allowed_write_files")),
-        forbidden_relpaths=list(get_seq_str(guard, "forbidden_write_files")),
-        forbidden_globs=list(get_seq_str(guard, "forbidden_write_globs")),
+        allowed_relpaths=list(get_seq_str(guard, "allowed_write_files")) or ["extraTex/1.1.立项依据.tex"],
+        forbidden_relpaths=list(get_seq_str(guard, "forbidden_write_files")) or ["main.tex", "extraTex/@config.tex"],
+        forbidden_globs=list(get_seq_str(guard, "forbidden_write_globs")) or ["**/*.cls", "**/*.sty"],
     )
 
 

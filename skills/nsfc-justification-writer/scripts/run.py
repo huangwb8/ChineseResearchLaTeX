@@ -29,7 +29,7 @@ from core.latex_parser import parse_subsubsections
 from core.logging_utils import configure_logging
 from core.observability import make_run_id
 from core.quality_gate import check_new_body_quality
-from core.versioning import find_backup_for_run, list_runs, rollback_from_backup, unified_diff
+from core.versioning import find_backup_for_run_v2, list_runs, rollback_from_backup, unified_diff
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +141,7 @@ def cmd_refs(args: argparse.Namespace) -> int:
     )
     md = sug.to_markdown(project_root=str(Path(args.project_root)))
     if str(getattr(args, "verify_doi", "none")).strip().lower() == "crossref":
+        logger.warning("⚠️ 将联网请求 Crossref API 校验 DOI（可用 --doi-timeout 调整超时；失败/超时不会断言不存在）")
         from core.reference_validator import load_project_bib_doi_map, parse_cite_keys, verify_doi_via_crossref
 
         target = coord.target_path(project_root=Path(args.project_root))
@@ -194,6 +195,12 @@ def cmd_terms(args: argparse.Namespace) -> int:
 def cmd_validate_config(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
+    meta = get_mapping(config, "_config_loader")
+    if not bool(meta.get("yaml_available", True)):
+        print("⚠️ 未安装 PyYAML：无法加载/校验 YAML 配置文件。")
+        print("   - 当前仅保证 guardrails 等安全兜底生效。")
+        print("   - 建议：安装 PyYAML 后再运行 validate-config（`pip install pyyaml`）。")
+        return 0
     errs = validate_config(skill_root=skill_root, config=config)
     if errs:
         logger.error("❌ 配置校验失败：")
@@ -329,11 +336,14 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
     if args.log_json:
         runs_root = get_runs_dir(skill_root, config)
         log_path = (runs_root / run_id / "logs" / "apply_result.json").resolve()
+        targets = get_mapping(config, "targets")
+        target_relpath = get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
         _write_json(
             log_path,
             {
                 "run_id": run_id,
                 "target": str(result.target_path),
+                "target_relpath": str(target_relpath),
                 "backup": str(result.backup_path) if result.backup_path else None,
             },
         )
@@ -431,8 +441,15 @@ def cmd_diff(args: argparse.Namespace) -> int:
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     runs_root = get_runs_dir(skill_root, config)
     target = coord.target_path(project_root=Path(args.project_root))
+    targets = get_mapping(config, "targets")
+    target_relpath = get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
     try:
-        backup = find_backup_for_run(runs_root=runs_root, run_id=str(args.run_id), filename=target.name)
+        backup = find_backup_for_run_v2(
+            runs_root=runs_root,
+            run_id=str(args.run_id),
+            target_relpath=target_relpath,
+            filename_fallback=target.name,
+        )
     except BackupNotFoundError:
         logger.error("❌ 未找到 run_id=%s 的备份文件。", str(args.run_id))
         return 2
@@ -458,11 +475,14 @@ def cmd_rollback(args: argparse.Namespace) -> int:
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     runs_root = get_runs_dir(skill_root, config)
     target = coord.target_path(project_root=Path(args.project_root))
+    targets = get_mapping(config, "targets")
+    target_relpath = get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
     try:
         used = rollback_from_backup(
             runs_root=runs_root,
             run_id=str(args.run_id),
             target_path=target,
+            target_relpath=target_relpath,
             backup_current=not bool(args.no_backup),
             rollback_run_id=args.new_run_id,
         )
