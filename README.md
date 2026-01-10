@@ -133,32 +133,39 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## 🤖 Skills
 
-项目内置多个符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，辅助 LaTeX 写作和模板优化。**兼容 Claude Code、OpenAI Codex、Cursor、GitHub Actions、VS Code！**
+项目内置多个符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，辅助 LaTeX 写作和模板优化。**兼容 Claude Code、OpenAI Codex、Cursor、GitHub Actions、VS Code！** 📖 **详细使用说明和 Prompt 模板**：[skills/README.md](skills/README.md)
 
-> 💡 **快速安装**：打开 Claude Code 或 Codex 后，输入以下 Prompt：
-> ```
-> 下载 https://github.com/huangwb8/skills/tree/main/install-bensz-skills 到本项目的 skills 文件夹里，然后使用 install-bensz-skills 将本项目的 skills 安装到本设备的 Codex 和 Claude Code 里。
-> ```
+### 快速安装
 
-### 技能生态系统
+打开 Claude Code 或 Codex 后，输入以下 Prompt：
+
+```
+使用 https://github.com/huangwb8/skills/tree/main/install-bensz-skills 这个skill 将本项目的所有 skills 安装到我的设备的 Codex 和 Claude Code 里。
+```
+
+### 🧩 技能生态系统
 
 本项目提供多个 AI 技能，覆盖标书写作全流程：
 
-#### 文献调研阶段
+#### 📚 文献调研阶段
 - **get-review-theme**：主题提取（从文件/图片/URL/自然语言描述提取结构化综述主题）
 - **systematic-literature-review**：系统综述（AI 自定检索词，多源检索→去重→AI 逐篇阅读并评分，生成专家级综述）
 
-#### 标书准备阶段
+#### 📋 标书准备阶段
 - **guide-updater**：指南优化（基于文献综述结果优化项目指南，明确研究方向和亮点）
 - **transfer_old_latex_to_new**：标书迁移（将旧标书内容迁移到新模板）
 
-#### 标书写作阶段
-- **nsfc-justification-writer**：立项依据
-- **nsfc-research-content-writer**：研究内容
-- **nsfc-research-foundation-writer**：研究基础
-- **nsfc-bib-manager**：引用管理（新增/核验论文信息并写入 .bib 文件，保证不出现幻觉引用）
+#### ✍️ 标书写作阶段
 
-#### 模板开发阶段（开发者专用，普通用户可忽略）
+- **nsfc-justification-writer**：立项依据写作，构建"价值与必要性 → 现状与不足 → 科学问题/假说 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述
+
+- **nsfc-research-content-writer**：研究内容编排，同步生成"研究内容 + 特色与创新 + 三年年度计划"，确保子目标带"指标/对照/验证方案"三件套，创新点用"相对坐标系"表达
+
+- **nsfc-research-foundation-writer**：研究基础编排，同步生成"研究基础 + 工作条件 + 风险应对措施"，用"证据链 + 条件对位 + 风险预案"证明项目可行性
+
+- **nsfc-bib-manager**：引用管理，新增/核验论文信息（题目/作者/年份/期刊/DOI）并写入 .bib 文件，拒绝幻觉引用，只引"可核验"文献
+
+#### 🔧 模板开发阶段（开发者专用，普通用户可忽略）
 - **make_latex_model**：样式对齐（基于 Word 模板高保真优化 LaTeX 样式）
 - **complete_example**：示例生成（智能示例生成和补全）
 
@@ -176,45 +183,6 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.3 | 📝 日常 | NSFC 立项依据写作 | 🚧 开发中 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.1.0 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.0 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
-
-> 📖 **详细使用说明和 Prompt 模板**：请查阅 [skills/README.md](skills/README.md)
-
-### 推荐工作流
-
-以下是完整的文献调研与标书写作工作流：
-
-```mermaid
-graph LR
-    A[get-review-theme<br>提取综述主题] --> B[systematic-literature-review<br>规范化文献综述]
-    B --> C[guide-updater<br>优化项目指南]
-    C --> D[nsfc系列skills<br>标书各部分写作]
-    D --> E[nsfc-bib-manager<br>管理参考文献]
-```
-
-**第一步：提取综述主题**（get-review-theme）
-- 从文件/图片/URL/自然语言描述提取结构化综述主题
-- 获得主题、关键词、核心问题的清晰定义
-
-**第二步：规范化文献综述**（systematic-literature-review）
-- AI 自定检索词，多源检索→去重→AI 逐篇阅读并评分
-- 按高分优先比例选文，生成专家级综述文档
-- 支持 Premium/Standard/Basic 三档，强制导出 PDF 与 Word
-
-**第三步：优化项目指南**（guide-updater）⭐ 重要
-- 基于综述结果优化项目指南
-- 明确"为什么要做"、"研究的亮点在哪里"、"现有研究的局限与不足"
-- 为后续标书写作提供清晰的方向指引
-
-**第四步：标书各部分写作**（nsfc 系列技能）
-- 基于优化后的项目指南进行标书写作
-- nsfc-justification-writer：立项依据
-- nsfc-research-content-writer：研究内容
-- nsfc-research-foundation-writer：研究基础
-
-**第五步：管理参考文献**（nsfc-bib-manager）
-- 贯穿全程，可在任何阶段调用
-- 新增/核验论文信息并写入 .bib 文件
-- 保证不出现幻觉引用
 
 ---
 
