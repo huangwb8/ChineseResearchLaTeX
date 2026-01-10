@@ -50,10 +50,7 @@ def _count_alias_hits(text: str, aliases: Sequence[str]) -> Dict[str, int]:
         a = str(a)
         if not a:
             continue
-        try:
-            n = len(re.findall(re.escape(a), text))
-        except Exception:
-            n = 0
+        n = len(re.findall(re.escape(a), text))
         if n > 0:
             hits[a] = n
     return hits
@@ -76,7 +73,7 @@ def build_term_matrix(
     for label, path in files.items():
         try:
             contents[label] = strip_comments(path.read_text(encoding="utf-8", errors="ignore"))
-        except Exception:
+        except (OSError, UnicodeError):
             contents[label] = ""
 
     rows: List[Tuple[str, List[str], str]] = []
@@ -201,7 +198,7 @@ class TermConsistencyAI:
                 res = read_text_streaming(Path(path), max_bytes=None)
                 # 只给 AI 看“去注释后”的文本，降低噪音
                 file_contents[str(label)] = strip_comments(res.text)[:max_chars]
-            except Exception:
+            except (OSError, UnicodeError):
                 file_contents[str(label)] = ""
 
         prompt = (

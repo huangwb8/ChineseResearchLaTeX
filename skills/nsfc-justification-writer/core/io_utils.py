@@ -34,7 +34,7 @@ def read_text_streaming(
     p = Path(path).resolve()
     try:
         total = int(p.stat().st_size)
-    except Exception:
+    except OSError:
         total = 0
 
     decoder = codecs.getincrementaldecoder(encoding)(errors=errors)

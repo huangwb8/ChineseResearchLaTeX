@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import traceback
 import webbrowser
@@ -17,15 +18,19 @@ skill_root_for_import = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(skill_root_for_import))
 
 from core.config_loader import load_config, get_runs_dir, validate_config
+from core.config_access import get_bool, get_mapping, get_seq_str, get_str
 from core.bib_manager_integration import BibFixSuggestion
 from core.errors import BackupNotFoundError, MissingCitationKeysError, SectionNotFoundError, SkillError
 from core.html_report import render_diagnostic_html
 from core.hybrid_coordinator import HybridCoordinator
 from core.info_form import copy_info_form_template, interactive_collect_info_form, write_info_form_file
 from core.latex_parser import parse_subsubsections
+from core.logging_utils import configure_logging
 from core.observability import make_run_id
 from core.quality_gate import check_new_body_quality
 from core.versioning import find_backup_for_run, list_runs, rollback_from_backup, unified_diff
+
+logger = logging.getLogger(__name__)
 
 
 def _write_json(path: Path, data: Dict[str, Any]) -> None:
@@ -49,12 +54,12 @@ def _load_config_for_args(skill_root: Path, args: argparse.Namespace) -> Dict[st
         override_path=str(override) if override else None,
         load_user_override=(not no_user_override),
     )
-    meta = cfg.get("_config_loader", {}) or {}
+    meta = get_mapping(cfg, "_config_loader")
     warnings = list(meta.get("warnings", []) or [])
     for w in warnings[:10]:
-        print(f"⚠️ 配置加载警告：{w}", file=sys.stderr)
+        logger.warning("⚠️ 配置加载警告：%s", w)
     if len(warnings) > 10:
-        print(f"⚠️ 配置加载警告：更多 {len(warnings) - 10} 条已省略", file=sys.stderr)
+        logger.warning("⚠️ 配置加载警告：更多 %s 条已省略", str(len(warnings) - 10))
     return cfg
 
 
@@ -64,7 +69,7 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
     coord = HybridCoordinator(skill_root=skill_root, config=config)
 
     if args.tier2 and getattr(args, "verbose", False):
-        print("⏳ 正在运行诊断（含 Tier2）...", file=sys.stderr)
+        logger.info("⏳ 正在运行诊断（含 Tier2）...")
     report = coord.diagnose(
         project_root=Path(args.project_root),
         include_tier2=bool(args.tier2),
@@ -80,14 +85,15 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
 
     if args.html_report:
         if getattr(args, "verbose", False):
-            print("⏳ 正在生成 HTML 报告...", file=sys.stderr)
+            logger.info("⏳ 正在生成 HTML 报告...")
         run_id = args.run_id or make_run_id("diagnose")
         runs_root = get_runs_dir(skill_root, config)
         out_path = Path(args.html_report)
         if str(args.html_report).strip().lower() == "auto":
             out_path = (runs_root / run_id / "reports" / "diagnose.html").resolve()
 
-        target_relpath = str((config.get("targets", {}) or {}).get("justification_tex", "extraTex/1.1.立项依据.tex"))
+        targets = get_mapping(config, "targets")
+        target_relpath = get_str(targets, "justification_tex", "extraTex/1.1.立项依据.tex")
         target = coord.target_path(project_root=Path(args.project_root))
         tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
         include_terms = not bool(getattr(args, "no_terms", False))
@@ -106,8 +112,9 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
         if bool(getattr(args, "open", False)):
             try:
                 webbrowser.open(out_path.resolve().as_uri())
-            except Exception:
-                pass
+            except (OSError, ValueError, webbrowser.Error) as e:
+                if bool(getattr(args, "verbose", False)):
+                    logger.warning("⚠️ 打开浏览器失败：%s: %s", type(e).__name__, str(e))
     return 0
 
 
@@ -138,8 +145,8 @@ def cmd_refs(args: argparse.Namespace) -> int:
         target = coord.target_path(project_root=Path(args.project_root))
         tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
         cite_keys = parse_cite_keys(tex)
-        targets = config.get("targets", {}) or {}
-        bib_globs = targets.get("bib_globs", ["references/*.bib"])
+        targets = get_mapping(config, "targets")
+        bib_globs = list(get_seq_str(targets, "bib_globs")) or ["references/*.bib"]
         doi_map = load_project_bib_doi_map(Path(args.project_root), bib_globs)
         pairs = [(k, doi_map.get(k, "")) for k in cite_keys if doi_map.get(k)]
 
@@ -166,8 +173,8 @@ def cmd_terms(args: argparse.Namespace) -> int:
     config = _load_config_for_args(skill_root, args)
     coord = HybridCoordinator(skill_root=skill_root, config=config)
     md = coord.term_consistency_report(project_root=Path(args.project_root))
-    targets = config.get("targets", {}) or {}
-    related = targets.get("related_tex", {}) or {}
+    targets = get_mapping(config, "targets")
+    related = get_mapping(targets, "related_tex")
     if related:
         md = (
             md.rstrip()
@@ -188,9 +195,9 @@ def cmd_validate_config(args: argparse.Namespace) -> int:
     config = _load_config_for_args(skill_root, args)
     errs = validate_config(skill_root=skill_root, config=config)
     if errs:
-        print("❌ 配置校验失败：", file=sys.stderr)
+        logger.error("❌ 配置校验失败：")
         for e in errs:
-            print(f"- {e}", file=sys.stderr)
+            logger.error("- %s", e)
         return 2
     print("✅ 配置有效")
     return 0
@@ -203,27 +210,25 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
 
     body = _read_body_file(args.body_file).strip()
     if not body:
-        print("❌ body 为空：请通过 --body-file 或 stdin 提供新正文", file=sys.stderr)
+        logger.error("❌ body 为空：请通过 --body-file 或 stdin 提供新正文")
         return 2
 
     run_id = args.run_id or make_run_id("apply")
     # 若用户选择放宽引用约束，建议至少启用“新正文质量闸门”（可选阻断）。
     if bool(getattr(args, "allow_missing_citations", False)) and (not bool(getattr(args, "strict_quality", False))):
-        strict_cfg = bool((config.get("quality", {}) or {}).get("strict_on_apply", False))
+        strict_cfg = get_bool(get_mapping(config, "quality"), "strict_on_apply", False)
         if not strict_cfg:
             qr = check_new_body_quality(new_body=body, config=config)
             if not qr.ok:
                 if qr.forbidden_phrases_hits:
-                    print(
-                        "⚠️ 新正文包含不可核验表述（建议改写或启用 --strict-quality 阻断写入）："
-                        + "、".join(qr.forbidden_phrases_hits[:10]),
-                        file=sys.stderr,
+                    logger.warning(
+                        "⚠️ 新正文包含不可核验表述（建议改写或启用 --strict-quality 阻断写入）：%s",
+                        "、".join(qr.forbidden_phrases_hits[:10]),
                     )
                 if qr.avoid_commands_hits:
-                    print(
-                        "⚠️ 新正文包含可能破坏模板的命令（建议移除或启用 --strict-quality 阻断写入）："
-                        + "、".join(qr.avoid_commands_hits[:10]),
-                        file=sys.stderr,
+                    logger.warning(
+                        "⚠️ 新正文包含可能破坏模板的命令（建议移除或启用 --strict-quality 阻断写入）：%s",
+                        "、".join(qr.avoid_commands_hits[:10]),
                     )
     try:
         result = coord.apply_section_body(
@@ -236,29 +241,29 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
             strict_quality=bool(getattr(args, "strict_quality", False)),
         )
     except MissingCitationKeysError as e:
-        print(f"❌ {e}", file=sys.stderr)
+        logger.error("❌ %s", str(e))
         if e.missing_keys:
-            print("\n缺失的 bibkey：", file=sys.stderr)
+            logger.error("\n缺失的 bibkey：")
             for k in e.missing_keys[:50]:
-                print(f"- {k}", file=sys.stderr)
+                logger.error("- %s", k)
         if getattr(e, "fix_suggestion", ""):
-            print("\n💡 修复建议：", file=sys.stderr)
-            print(getattr(e, "fix_suggestion", ""), file=sys.stderr)
+            logger.error("\n💡 修复建议：")
+            logger.error("%s", getattr(e, "fix_suggestion", ""))
         return 2
     except SectionNotFoundError as e:
-        print(f"❌ {e}", file=sys.stderr)
+        logger.error("❌ %s", str(e))
         if getattr(e, "fix_suggestion", ""):
-            print("\n💡 修复建议：", file=sys.stderr)
-            print(getattr(e, "fix_suggestion", ""), file=sys.stderr)
+            logger.error("\n💡 修复建议：")
+            logger.error("%s", getattr(e, "fix_suggestion", ""))
         if bool(getattr(args, "suggest_alias", False)):
             target = coord.target_path(project_root=Path(args.project_root))
             if target.exists():
                 tex = target.read_text(encoding="utf-8", errors="ignore")
                 titles = [s.title for s in parse_subsubsections(tex)]
                 if titles:
-                    print("\n可用的小标题（全部）：", file=sys.stderr)
+                    logger.error("\n可用的小标题（全部）：")
                     for t in titles[:80]:
-                        print(f"- {t}", file=sys.stderr)
+                        logger.error("- %s", t)
         return 2
 
     print(f"✅ 已写入：{result.target_path}")
@@ -283,7 +288,7 @@ def cmd_apply_section(args: argparse.Namespace) -> int:
 def cmd_init(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    version = str((config.get("skill_info", {}) or {}).get("version", ""))
+    version = get_str(get_mapping(config, "skill_info"), "version", "")
     runs_root = get_runs_dir(skill_root, config)
     run_id = args.run_id or make_run_id("init")
 
@@ -294,7 +299,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     if not args.interactive:
         ok = copy_info_form_template(template_path=template_path, out_path=out_path)
         if not ok:
-            print("❌ 未找到 info_form 模板。", file=sys.stderr)
+            logger.error("❌ 未找到 info_form 模板。")
             return 2
         print(f"✅ 已生成信息表模板：{out_path}")
         return 0
@@ -373,7 +378,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
     try:
         backup = find_backup_for_run(runs_root=runs_root, run_id=str(args.run_id), filename=target.name)
     except BackupNotFoundError:
-        print(f"❌ 未找到 run_id={args.run_id} 的备份文件。", file=sys.stderr)
+        logger.error("❌ 未找到 run_id=%s 的备份文件。", str(args.run_id))
         return 2
     old = backup.read_text(encoding="utf-8", errors="ignore")
     new = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
@@ -390,7 +395,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
 def cmd_rollback(args: argparse.Namespace) -> int:
     if not args.yes:
-        print("❌ 回滚需要显式确认：请加 --yes", file=sys.stderr)
+        logger.error("❌ 回滚需要显式确认：请加 --yes")
         return 2
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
@@ -406,7 +411,7 @@ def cmd_rollback(args: argparse.Namespace) -> int:
             rollback_run_id=args.new_run_id,
         )
     except BackupNotFoundError:
-        print(f"❌ 未找到 run_id={args.run_id} 的备份文件。", file=sys.stderr)
+        logger.error("❌ 未找到 run_id=%s 的备份文件。", str(args.run_id))
         return 2
     print(f"✅ 已回滚：{target}")
     print(f"📦 使用备份：{used}")
@@ -523,22 +528,23 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
+    configure_logging(verbose=bool(getattr(args, "verbose", False)))
     try:
         return int(args.func(args))
     except SystemExit:
         raise
     except SkillError as e:
-        print(f"❌ {e}", file=sys.stderr)
+        logger.error("❌ %s", str(e))
         if getattr(e, "fix_suggestion", ""):
-            print("\n💡 修复建议：", file=sys.stderr)
-            print(getattr(e, "fix_suggestion", ""), file=sys.stderr)
+            logger.error("\n💡 修复建议：")
+            logger.error("%s", getattr(e, "fix_suggestion", ""))
         return 2
     except Exception as e:
         if bool(getattr(args, "verbose", False)):
             traceback.print_exc()
             raise
-        print(f"❌ {type(e).__name__}: {e}", file=sys.stderr)
-        print("建议：加 --verbose 查看详细堆栈；或先运行 validate-config 检查配置。", file=sys.stderr)
+        logger.error("❌ %s: %s", type(e).__name__, str(e))
+        logger.error("建议：加 --verbose 查看详细堆栈；或先运行 validate-config 检查配置。")
         return 2
 
 

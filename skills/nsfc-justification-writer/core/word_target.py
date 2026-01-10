@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-from .config_access import get_mapping, get_int
+from .config_access import get_mapping, get_int, get_str
 from .limits import word_target_range
 
 
@@ -100,7 +100,7 @@ def resolve_word_target(
     lo, hi = word_target_range(config)
     target = _clamp_int(target, lo=lo, hi=hi)
 
-    preset = str(config.get("active_preset", "") or "").strip()
+    preset = get_str(config, "active_preset", "").strip()
     if preset:
         return WordTargetSpec(target=target, tolerance=tol, source=f"preset:{preset}", evidence="")
 

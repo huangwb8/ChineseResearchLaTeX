@@ -306,7 +306,7 @@ async def coach_markdown(
             cache_dir=cache_dir,
         )
         dimension_md = format_dimension_coverage_markdown(dim_obj)
-    except Exception:
+    except (ModuleNotFoundError, ImportError, RuntimeError):
         dimension_md = "（未启用内容维度覆盖检查）"
 
     inp = CoachInput(
@@ -324,7 +324,7 @@ async def coach_markdown(
         default="",
         skill_root=skill_root,
         config=config,
-        variant=str(config.get("active_preset", "") or "").strip() or None,
+        variant=get_str(config, "active_preset", "").strip() or None,
     )
 
     def _fallback() -> str:

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .ai_integration import AIIntegration
-from .config_access import get_bool, get_mapping
+from .config_access import get_bool, get_mapping, get_str
 from .diagnostic import DiagnosticReport
 from .prompt_templates import get_prompt
 
@@ -87,7 +87,7 @@ async def generate_review_markdown(
         default="",
         skill_root=skill_root,
         config=config,
-        variant=str(config.get("active_preset", "") or "").strip() or None,
+        variant=get_str(config, "active_preset", "").strip() or None,
     )
 
     def _fallback() -> str:

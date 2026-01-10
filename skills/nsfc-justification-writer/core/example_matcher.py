@@ -12,7 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 try:
     import yaml  # type: ignore
-except Exception:  # pragma: no cover - 允许在无 PyYAML 环境降级
+except (ModuleNotFoundError, ImportError):  # pragma: no cover - 允许在无 PyYAML 环境降级
     yaml = None
 
 from .ai_integration import AIIntegration
@@ -41,7 +41,7 @@ def _read_example_metadata(tex_path: Path) -> Dict[str, Any]:
     try:
         raw = yaml.safe_load(meta_path.read_text(encoding="utf-8", errors="ignore")) or {}
         return raw if isinstance(raw, dict) else {}
-    except Exception:
+    except (OSError, UnicodeError, ValueError, AttributeError, yaml.YAMLError):  # type: ignore[attr-defined]
         return {}
 
 
@@ -144,7 +144,7 @@ def format_example_recommendations(matches: List[ExampleMatch]) -> str:
 def _example_relpath(skill_root: Path, p: Path) -> str:
     try:
         return str(Path(p).resolve().relative_to(Path(skill_root).resolve()))
-    except Exception:
+    except ValueError:
         return str(Path(p).resolve())
 
 
@@ -171,7 +171,7 @@ class ExampleRecommenderAI:
         for category, path, meta in _iter_example_files(skill_root):
             try:
                 tex = Path(path).read_text(encoding="utf-8", errors="ignore")
-            except Exception:
+            except (OSError, UnicodeError):
                 tex = ""
             keywords = meta.get("keywords", []) if isinstance(meta, dict) else []
             if not isinstance(keywords, list):

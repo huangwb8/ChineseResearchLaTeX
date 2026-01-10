@@ -64,7 +64,7 @@ def _highlight_line(
             return
         try:
             t = re.sub(re.escape(pattern), lambda m: f'<span class="{cls}">{m.group(0)}</span>', t)
-        except Exception:
+        except re.error:
             return
 
     for p in forbidden_phrases:
@@ -82,7 +82,7 @@ def _highlight_line(
 
         try:
             t = re.sub(r"(\\cite[a-zA-Z\\*]*\s*(?:\[[^\\]]*\\]\s*)*\{([^}]*)\})", _cite_repl, t)
-        except Exception:
+        except re.error:
             pass
 
     return t

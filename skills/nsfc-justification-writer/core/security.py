@@ -43,7 +43,7 @@ def validate_write_target(
     target_path = target_path.resolve()
     try:
         rel = target_path.relative_to(project_root)
-    except Exception as e:
+    except ValueError as e:
         raise RuntimeError(f"写入目标不在 project_root 内：{target_path}") from e
 
     rel_str = rel.as_posix()

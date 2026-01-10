@@ -10,6 +10,8 @@
 
 ### Changed（变更）
 
+- 更新 `plans/v202601100803.md`：将“代码审查报告”重构为可执行的改进计划，去除时间线表述，补齐目标/范围/交付物/验收标准，并声明计划文档不记录版本历史（统一在 `CHANGELOG.md`）
+
 - 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"变更记录规范"中新增"Skill 文档编写原则"子章节，明确 Skill 文档（SKILL.md）应始终展示最新状态，不包含版本标记等对 AI 执行无用的元信息；包括内容优先于版本、简洁标题、单一职责等原则及设计公式
 
 - 更新 [AGENTS.md](AGENTS.md) 和 [CLAUDE.md](CLAUDE.md)：在"核心工作流/执行流程"中新增"计划制定原则"，要求任务按优先级从上到下罗列，不使用时间限制表述（如"第1-2周"、"第3-4周"等）；同时更新 CLAUDE.md 的"任务管理"章节同步此原则
@@ -75,6 +77,15 @@
   - 更新 `skills/nsfc-justification-writer/core/__init__.py`：补齐聚合导出并声明为内部入口
   - 新增设计说明：`skills/nsfc-justification-writer/references/dimension_coverage_design.md`、`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
   - 轻量测试：新增 `tests/v202601100716/`（fixture + override + TEST_PLAN/TEST_REPORT）
+
+- **nsfc-justification-writer v0.7.2** - 按 `plans/v202601100803.md` 完成 P0–P2（异常边界/Prompt SSoT/日志口径/配置访问统一）
+  - 更新 `skills/nsfc-justification-writer/config.yaml` 与 `skills/nsfc-justification-writer/SKILL.md`：版本升级至 v0.7.2，并明确版本号呈现策略（口径集中）
+  - 更新 `skills/nsfc-justification-writer/core/config_loader.py` 与 `skills/nsfc-justification-writer/README.md`：放宽 `terminology.dimensions` 为空 dict 的校验边界，并与文档口径一致
+  - 更新 `skills/nsfc-justification-writer/core/prompt_templates.py` 与 `skills/nsfc-justification-writer/prompts/*.txt`：Prompt 改为文件单一来源，移除内联重复模板，并提供缺失提示兜底
+  - 更新 `skills/nsfc-justification-writer/scripts/run.py` 与新增 `skills/nsfc-justification-writer/core/logging_utils.py`：统一 CLI 与核心模块的日志口径（stderr、级别随 `--verbose` 控制），减少 `print`/`logging` 混用
+  - 更新 `skills/nsfc-justification-writer/core/*`：收紧多处 `except Exception`（优先使用更具体异常；必要处保留堆栈/日志），提升可诊断性
+  - 更新 `skills/nsfc-justification-writer/core/*`：统一配置访问到 `core/config_access.py` 的 `get_*` 辅助方法，减少重复样式
+  - 轻量测试：新增 `tests/v202601100803/`（fixture + override + TEST_PLAN/TEST_REPORT）
 
 - **transfer_old_latex_to_new** - 脚本目录结构优化
   - 移动 `demo_core_features.py` → [scripts/demo.py](skills/transfer_old_latex_to_new/scripts/demo.py)：演示脚本归位到 scripts/ 目录

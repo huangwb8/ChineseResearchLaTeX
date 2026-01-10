@@ -37,7 +37,7 @@ def get_int(cfg: Mapping[str, Any], key: str, default: int) -> int:
     v = cfg.get(key, default)
     try:
         return int(v)
-    except Exception:
+    except (TypeError, ValueError):
         return int(default)
 
 
@@ -46,4 +46,3 @@ def get_seq_str(cfg: Mapping[str, Any], key: str) -> Sequence[str]:
     if isinstance(v, list):
         return [str(x) for x in v if str(x).strip()]
     return []
-

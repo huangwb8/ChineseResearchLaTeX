@@ -79,8 +79,8 @@ class AIIntegration:
                     elif output_format == "text":
                         self.success_count += 1
                         return cache_path.read_text(encoding="utf-8", errors="ignore").strip()
-                except Exception:
-                    pass
+                except (OSError, UnicodeError, json.JSONDecodeError, ValueError):
+                    logging.getLogger(__name__).debug("[AIIntegration] ignore broken cache: %s", str(cache_path))
 
         if not self.enable_ai:
             self.fallback_mode = True
@@ -127,7 +127,12 @@ class AIIntegration:
             raise ValueError(f"Unsupported output_format: {output_format}")
         except Exception as e:
             self.fallback_mode = True
-            self._log_fallback(task, reason=str(e))
+            logging.getLogger(__name__).warning(
+                "[AIIntegration] fallback task=%s reason=%s",
+                task,
+                str(e),
+                exc_info=True,
+            )
             return fallback()
 
     @staticmethod
@@ -141,7 +146,7 @@ class AIIntegration:
                 try:
                     obj = json.loads(candidate)
                     return obj if isinstance(obj, dict) else None
-                except Exception:
+                except json.JSONDecodeError:
                     return None
 
         # 2) first balanced {...}
@@ -161,7 +166,7 @@ class AIIntegration:
                     try:
                         obj = json.loads(candidate)
                         return obj if isinstance(obj, dict) else None
-                    except Exception:
+                    except json.JSONDecodeError:
                         return None
 
         return None

@@ -37,15 +37,15 @@ def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any
 def _load_yaml_dict_with_warning(path: Path) -> tuple[Dict[str, Any], str]:
     try:
         import yaml  # type: ignore
-    except Exception:
+    except (ModuleNotFoundError, ImportError):
         return {}, "未安装 PyYAML，已跳过 YAML 配置加载（建议 `pip install pyyaml`）"
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore")) or {}
         if not isinstance(raw, dict):
             return {}, "YAML 顶层不是 mapping（dict），已忽略"
         return raw, ""
-    except Exception:
-        return {}, "YAML 解析失败，已忽略（请检查语法）"
+    except (OSError, UnicodeError, ValueError, yaml.YAMLError) as e:  # type: ignore[attr-defined]
+        return {}, f"YAML 解析失败（{type(e).__name__}: {e}），已忽略（请检查语法）"
 
 
 def _default_user_override_path() -> Optional[Path]:
@@ -224,9 +224,9 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
                 err("terminology.ai.max_chars 必须是 int")
         if "dimensions" in terminology:
             dims = terminology.get("dimensions")
-            if not isinstance(dims, dict) or not dims:
-                err("terminology.dimensions 必须是非空 dict")
-            else:
+            if not isinstance(dims, dict):
+                err("terminology.dimensions 必须是 dict")
+            elif dims:
                 for dim_name, groups in dims.items():
                     if not isinstance(dim_name, str) or not dim_name.strip():
                         err("terminology.dimensions 的 key 必须是非空字符串")

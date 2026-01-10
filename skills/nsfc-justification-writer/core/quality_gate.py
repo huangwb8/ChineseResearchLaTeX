@@ -66,7 +66,7 @@ def check_new_body_quality(
                 ai_issues = [it for it in issues if isinstance(it, dict)]
             ai_summary = obj.get("summary") if isinstance(obj.get("summary"), dict) else {}
             ai_used = True
-        except Exception:
+        except RuntimeError:
             ai_used = False
 
     return QualityGateResult(

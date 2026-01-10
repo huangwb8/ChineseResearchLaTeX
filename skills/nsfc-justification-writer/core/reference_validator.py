@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 from urllib.parse import quote
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .latex_parser import strip_comments
@@ -96,7 +97,7 @@ def load_project_bib_keys(project_root: Path, bib_globs: Iterable[str]) -> Set[s
                 continue
             try:
                 all_keys |= parse_bib_keys(bib_path.read_text(encoding="utf-8", errors="ignore"))
-            except Exception:
+            except (OSError, UnicodeError):
                 continue
     return all_keys
 
@@ -128,7 +129,7 @@ def load_project_bib_doi_map(project_root: Path, bib_globs: Iterable[str]) -> Di
                 continue
             try:
                 out.update(_parse_bib_doi_map(bib_path.read_text(encoding="utf-8", errors="ignore")))
-            except Exception:
+            except (OSError, UnicodeError, ValueError):
                 continue
     return out
 
@@ -172,5 +173,5 @@ def verify_doi_via_crossref(*, doi: str, timeout_s: float = 5.0) -> bool:
                 return False
             body = resp.read().decode("utf-8", errors="ignore")
             return "\"message\"" in body and "\"DOI\"" in body
-    except Exception:
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError):
         return False

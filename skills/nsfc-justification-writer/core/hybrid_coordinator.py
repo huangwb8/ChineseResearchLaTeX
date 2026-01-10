@@ -126,7 +126,7 @@ class HybridCoordinator:
                 try:
                     info_form_text = candidate.read_text(encoding="utf-8", errors="ignore")
                     break
-                except Exception:
+                except (OSError, UnicodeError):
                     continue
         word_spec = resolve_word_target(config=self.config, user_intent_text="", info_form_text=info_form_text)
         tier1 = run_tier1(tex_text=tex, project_root=project_root, config=self.config)
@@ -155,7 +155,7 @@ class HybridCoordinator:
                         fresh=bool(tier2_fresh),
                     )
                 )
-            except Exception:
+            except RuntimeError:
                 report.dimension_coverage = None
 
         # 吹牛式表述检查（AI 语义判断）
@@ -170,7 +170,7 @@ class HybridCoordinator:
                         fresh=bool(tier2_fresh),
                     )
                 )
-            except Exception:
+            except RuntimeError:
                 report.boastful_expressions = None
 
         if not include_tier2:
@@ -186,7 +186,7 @@ class HybridCoordinator:
                 default=TIER2_DIAGNOSTIC_PROMPT,
                 skill_root=self.skill_root,
                 config=self.config,
-                variant=str(self.config.get("active_preset", "") or "").strip() or None,
+                variant=get_str(self.config, "active_preset", "").strip() or None,
             )
             max_chars = int(tier2_chunk_size or get_int(ai_cfg, "tier2_chunk_size", 12000))
             max_chunks = int(tier2_max_chunks or get_int(ai_cfg, "tier2_max_chunks", 20))
@@ -340,7 +340,7 @@ class HybridCoordinator:
         strict = get_bool(structure_cfg, "strict_title_match", True)
         try:
             min_sim = float(structure_cfg.get("min_title_similarity", 0.6))
-        except Exception:
+        except (TypeError, ValueError):
             min_sim = 0.6
 
         # strict=False 时：先做“候选标题提示”，并在 AI 可用时尝试语义匹配
@@ -414,7 +414,7 @@ class HybridCoordinator:
                 try:
                     info_form_text = candidate.read_text(encoding="utf-8", errors="ignore")
                     break
-                except Exception:
+                except (OSError, UnicodeError):
                     continue
 
         word_spec = resolve_word_target(

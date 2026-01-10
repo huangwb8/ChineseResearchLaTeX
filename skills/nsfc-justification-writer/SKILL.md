@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.1
+version: 0.7.2
 description: 为 NSFC 2026 新模板正文“（一）立项依据”写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改“立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点”等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -116,3 +116,4 @@ references: skills/nsfc-justification-writer/references/
 ## 变更记录
 
 - 本技能不在本文档内维护变更历史；统一记录在根级 `CHANGELOG.md`。
+- 版本号仅在 `skills/nsfc-justification-writer/config.yaml`（`skill_info.version`）与本文件 frontmatter 中维护，避免口径分散。

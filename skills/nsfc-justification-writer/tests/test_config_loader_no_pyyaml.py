@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from core.config_loader import load_config
+from core.config_access import get_mapping
 from core.security import build_write_policy, validate_write_target
 
 
@@ -25,7 +26,7 @@ def test_load_config_without_pyyaml_still_enforces_guardrails(monkeypatch: pytes
     monkeypatch.setattr(builtins, "__import__", _fake_import)
 
     cfg = load_config(skill_root, load_user_override=False)
-    meta = cfg.get("_config_loader", {}) or {}
+    meta = get_mapping(cfg, "_config_loader")
     assert meta.get("yaml_available") is False
     assert any("未安装 PyYAML" in str(w) for w in (meta.get("warnings", []) or []))
 
@@ -46,4 +47,3 @@ def test_load_config_without_pyyaml_still_enforces_guardrails(monkeypatch: pytes
     # 非白名单目标拒绝（主模板等）
     with pytest.raises(RuntimeError):
         validate_write_target(project_root=tmp_path, target_path=(tmp_path / "main.tex"), policy=policy)
-
