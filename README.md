@@ -133,6 +133,8 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## 🤖 Skills
 
+> ⚠️ 注意：标记为 `🚧 开发中` 的 skill 暂时不建议小白用户使用，因为它们往往还没有被充分地测试，功能和安全性没有保障。
+
 项目内置多个符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，辅助 LaTeX 写作和模板优化。**兼容 Claude Code、OpenAI Codex、Cursor、GitHub Actions、VS Code！** 通过灵活运用 skills，加上多轮对话进行优化，才能保证最佳效果。**详细使用说明和 Prompt 模板**：[skills/README.md](skills/README.md)
 
 ### 快速安装
