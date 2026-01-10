@@ -90,16 +90,16 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ---
 
-## 🚀 使用
+## 🚀 环境
 
-### 环境要求
+### LaTex版本
 
 - **测试平台**：Windows / macOS / Overleaf
 - **LaTeX 发行版**：TeX Live（推荐）或 MacTeX
 - **编译器**：**必须使用 XeLaTeX**（Overleaf 上请在 Menu → Compiler 中选择 XeLaTeX）
 - **编译顺序**：`xelatex -> bibtex -> xelatex -> xelatex`
 
-### 推荐软件平台
+### 工作软件
 
 - **VS Code + LaTeX Workshop**：本地开发的最佳选择，充分发挥 Vibe Coding 工具的超强能力
 - **Claude Code / OpenAI Codex CLI**（VS Code 插件）：**最佳选择**，AI 辅助写作，与本项目的 AI 技能完美配合。VS Code 扩展市场搜索"Claude Code"或"OpenAI Codex"即可安装。macOS 已成为 AI 时代开发首选操作系统，体验最佳；Windows 用户建议使用 WSL（Windows Subsystem for Linux）环境以获得更稳定的性能
@@ -108,8 +108,6 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 - **Office Viewer**（VS Code 插件）：推荐安装，提供 Markdown 和 Word 文档的实时预览功能，提升文档编辑体验
 
 > 💡 **说明**：由于在本地使用 Vibe Coding 的体验很好，因此**不推荐**在 Overleaf 等在线平台使用本模板。但本项目**会持续支持 Overleaf 平台**，用户可自由选择使用方式。
-
----
 
 ### AI 模型配置建议
 
@@ -158,20 +156,14 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 - **transfer_old_latex_to_new**：标书迁移（将旧标书内容迁移到新模板）
 
 #### ✍️ 标书写作阶段
-
 - **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/假说 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
-
 - **nsfc-research-content-writer**：研究内容编排，同步生成"研究内容 + 特色与创新 + 三年年度计划"，确保子目标带"指标/对照/验证方案"三件套，创新点用"相对坐标系"表达
-
 - **nsfc-research-foundation-writer**：研究基础编排，同步生成"研究基础 + 工作条件 + 风险应对措施"，用"证据链 + 条件对位 + 风险预案"证明项目可行性
-
 - **nsfc-bib-manager**：引用管理，新增/核验论文信息（题目/作者/年份/期刊/DOI）并写入 .bib 文件，拒绝幻觉引用，只引"可核验"文献
 
 #### 🔧 模板开发阶段（开发者专用，普通用户可忽略）
 - **make_latex_model**：样式对齐（基于 Word 模板高保真优化 LaTeX 样式）
 - **complete_example**：示例生成（智能示例生成和补全）
-
----
 
 | 技能 | 版本 | 类型 | 功能 | 状态 |
 |------|------|------|------|------|
