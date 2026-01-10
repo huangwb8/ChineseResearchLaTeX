@@ -10,6 +10,13 @@
 
 ### Added（新增）
 
+- **nsfc-justification-writer v0.7.7**：强化"科学问题与假说为核心"的设计理念，防止用方法学术语稀释立项依据主线
+  - 更新 `references/dod_checklist.md`：新增"方法学术语使用规范（重要）"章节，明确禁止用方法术语撑段落主线，并提供检查方法
+  - 更新 `references/theoretical_innovation_guidelines.md`：新增"方法学术语误用警示"章节，提供常见误用模式对比表格和检查清单
+  - 更新 `prompts/writing_coach.txt`：在写作教练约束中增加"方法学术语使用规范"，引导用户聚焦科学问题
+  - 新增 `references/methodology_term_examples.md`：提供详细的"方法术语撑主线"vs"科学问题驱动"四段闭环对比示例，含快速检查清单和学科适配参考
+  - 更新 `SKILL.md`：在相关设计说明中新增 `methodology_term_examples.md` 引用
+
 - **nsfc-justification-writer v0.7.6**：修复 P0 语法阻断并补齐 `style.mode` 写作导向开关（见下方 Changed/Fixed）
 
 - 新增 `plans/v202601101300.md`：对 `skills/nsfc-justification-writer`「理论创新导向优化」做源代码审查，记录 P0 语法阻断缺陷与一致性改进建议

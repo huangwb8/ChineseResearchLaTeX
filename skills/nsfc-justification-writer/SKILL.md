@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.6
+version: 0.7.7
 description: 为 NSFC 2026 新模板正文"（一）立项依据"写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改"立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点"等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -67,7 +67,8 @@ references: skills/nsfc-justification-writer/references/
 - 相关设计说明：
   - 内容维度覆盖检查：`skills/nsfc-justification-writer/references/dimension_coverage_design.md`
   - "可能引起评审不适的表述"判别与改写：`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
-  - **理论创新导向写作指南**：`skills/nsfc-justification-writer/references/theoretical_innovation_guidelines.md`（新增）
+  - **理论创新导向写作指南**：`skills/nsfc-justification-writer/references/theoretical_innovation_guidelines.md`（含方法学术语误用警示）
+  - **方法学术语误用对比示例**：`skills/nsfc-justification-writer/references/methodology_term_examples.md`（新增）
 
 ## Prompt 模板可配置化（可选）
 

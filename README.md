@@ -182,7 +182,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | [nsfc-bib-manager](skills/nsfc-bib-manager/) | v1.0.0 | 📝 日常 | NSFC 标书引用与 Bib 管理 | 🚧 开发中 |
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
-| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.5 | 📝 日常 | NSFC 立项依据写作（默认理论创新导向） | 🚧 开发中 |
+| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.7 | 📝 日常 | NSFC 立项依据写作（默认理论创新导向） | 🚧 开发中 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.1.0 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.0 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 
