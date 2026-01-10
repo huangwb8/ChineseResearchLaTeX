@@ -8,8 +8,27 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- 更新 [README.md](README.md)：新增"技能生态系统"章节，按功能阶段分类展示多个 AI 技能（文献调研/标书准备/标书写作/模板开发）
+- 更新 [README.md](README.md)：新增"推荐工作流"章节，展示完整的文献调研与标书写作工作流（含 Mermaid 流程图）
+- 更新 [README.md](README.md)：技能表格新增"版本"列，显示各技能的版本号（v2.7.1、v0.7.3、v1.4.0 等）
+- 更新 [skills/README.md](skills/README.md)：新增"技能依赖关系"章节，说明技能之间的协作关系和推荐使用顺序
+- 更新 [skills/README.md](skills/README.md)：新增 nsfc-bib-manager 完整技能说明（功能、使用场景、Prompt 模板、技能特点）
+- 新增 [CLAUDE.md](CLAUDE.md) 和 [AGENTS.md](AGENTS.md)：新增"技能版本号管理规范"章节，规定所有技能版本号统一通过 config.yaml 管理（Single Source of Truth）
+- 新增 `skills/nsfc-bib-manager/config.yaml`：添加技能版本信息（v1.0.0）
+- 新增 `skills/get-review-theme/config.yaml`：添加技能版本信息（v1.0.0）
+- 更新 `skills/systematic-literature-review/config.yaml`：添加技能版本信息（v1.0.0）
+- 更新 `skills/transfer_old_latex_to_new/config.yaml`：添加 skill_info 节，统一版本号为 v1.4.0
+
 ### Changed（变更）
 
+- 更新 [README.md](README.md)：删除"快速开始指南"章节，保持文档简洁（详细使用示例请查阅各技能的 README.md）
+- 更新 [README.md](README.md)：技能表格从 7 个扩展到 10 个，新增 nsfc-bib-manager、get-review-theme、guide-updater、complete_example
+- 更新 [README.md](README.md)：修正技能状态：nsfc-bib-manager、get-review-theme、nsfc-justification-writer 均为 🚧 开发中
+- 更新 [README.md](README.md)：更新 systematic-literature-review、nsfc-bib-manager、get-review-theme 版本号为 v1.0.0
+- 更新 [skills/README.md](skills/README.md)：修正技能状态：nsfc-bib-manager、get-review-theme、nsfc-justification-writer 均为 🚧 开发中；guide-updater 为 ✅ 稳定（v1.0.0）
+- 更新 [skills/README.md](skills/README.md)：技能编号从 9 个扩展到 10 个，新增 nsfc-bib-manager（编号 8），其他编号相应顺延
 - 更新 [skills/README.md](skills/README.md)：新增"推荐工作流"章节，展示从文献调研到标书写作的完整流程（get-review-theme → systematic-literature-review → guide-updater → nsfc系列skills），并新增 get-review-theme 与 guide-updater 两个技能的说明，同时更新"技能类型说明"表
 
 - 更新 `plans/v202601100803.md`：将"代码审查报告"重构为可执行的改进计划，去除时间线表述，补齐目标/范围/交付物/验收标准，并声明计划文档不记录版本历史（统一在 `CHANGELOG.md`）

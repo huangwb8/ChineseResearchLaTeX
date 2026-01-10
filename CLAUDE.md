@@ -217,6 +217,119 @@ xelatex → bibtex → xelatex → xelatex
 
 ---
 
+## 技能版本号管理规范
+
+本项目所有技能的版本号统一通过 `config.yaml` 管理，遵循单一真相来源（Single Source of Truth）原则。
+
+### 技能配置文件结构
+
+每个技能的 `config.yaml` 必须包含 `skill_info` 节：
+
+```yaml
+skill_info:
+  name: skill-name              # 技能名称（kebab-case）
+  version: x.y.z                # 版本号（遵循语义化版本 Semver）
+  description: 技能功能描述      # 简洁描述技能用途
+  category: writing|development|normal  # 技能分类
+```
+
+### 版本号命名规则
+
+| 类型 | 格式 | 示例 | 说明 |
+|------|------|------|------|
+| **稳定版** | v1.0.0、v2.7.1 | v1.0.0 | 功能完整，经过充分测试 |
+| **开发中** | v0.1.0、v0.7.3 | v0.7.3 | 核心功能可用，持续优化中 |
+| **实验性** | v0.0.1 | v0.0.1 | 功能验证阶段 |
+
+**版本号递增规则**：
+- **主版本号（Major）**：不兼容的 API 变更
+- **次版本号（Minor）**：向下兼容的功能性新增
+- **修订号（Patch）**：向下兼容的问题修正
+
+### 版本号同步机制
+
+1. **config.yaml 为唯一真相来源**
+   - 所有版本号变更必须首先更新 `config.yaml` 中的 `skill_info.version`
+   - 其他文档（README.md、CHANGELOG.md）的版本号必须与 config.yaml 保持一致
+
+2. **README.md 技能表格**
+   - 版本号列直接引用 config.yaml 中的版本号
+   - 格式：`v{版本号}`（如 v1.0.0、v2.7.1）
+
+3. **CHANGELOG.md 记录**
+   - 每次版本更新必须在 CHANGELOG.md 中记录变更内容
+   - 格式参考上面的"记录格式"章节
+
+4. **技能状态标记**
+   - ✅ 稳定：v1.0.0 及以上版本
+   - 🚧 开发中：v0.x.x 版本
+   - ⚠️ 实验性：v0.0.x 版本
+
+### 新建技能时的版本号初始化
+
+当创建新技能时，按以下步骤初始化版本管理：
+
+1. **创建 config.yaml**（必需）
+   ```bash
+   skills/your-skill/
+   ├── SKILL.md           # 技能功能文档
+   ├── config.yaml        # 技能配置（包含版本信息）
+   └── scripts/           # 可选脚本
+   ```
+
+2. **config.yaml 模板**
+   ```yaml
+   skill_info:
+     name: your-skill
+     version: 1.0.0        # 初始版本号
+     description: 技能功能描述
+     category: writing     # 根据实际情况选择
+
+   # 其他配置项...
+   ```
+
+3. **更新 README.md**
+   - 在技能表格中添加新技能行
+   - 版本号列填写 `v1.0.0`（与 config.yaml 一致）
+
+4. **更新 CHANGELOG.md**
+   ```markdown
+   ### Added
+   - 新增 your-skill 技能（v1.0.0）：功能描述
+   ```
+
+### 版本号检查命令
+
+使用以下命令快速检查所有技能的版本号：
+
+```bash
+# 列出所有技能的版本号
+for dir in skills/*/; do
+  if [ -f "${dir}config.yaml" ]; then
+    name=$(basename "$dir")
+    version=$(grep -A 1 "skill_info:" "${dir}config.yaml" | grep "version:" | awk '{print $2}')
+    echo "$name: $version"
+  fi
+done
+```
+
+---
+
+```markdown
+## [版本号] - YYYY-MM-DD
+
+### Added（新增）
+- 新增了 XXX 功能/章节：用途是 YYY
+
+### Changed（变更）
+- 修改了 XXX 章节：原因是 YYY，具体变更内容是 ZZZ
+
+### Fixed（修复）
+- 修复了 XXX 问题：表现是 YYY，修复方式是 ZZZ
+```
+
+---
+
 ## 有机更新原则
 
 当需要更新本文档时：

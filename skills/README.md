@@ -119,7 +119,7 @@ graph LR
 
 ### 4. nsfc-justification-writer - 立项依据写作
 
-**状态**：🟡 可用（v0.2.0）
+**状态**：🚧 开发中（v0.7.3）
 
 **类型**：📝 日常
 
@@ -232,7 +232,36 @@ graph LR
 
 ---
 
-### 8. get-review-theme - 综述主题提取
+### 8. nsfc-bib-manager - 引用与 Bib 管理
+
+**状态**：🚧 开发中
+
+**类型**：📝 日常
+
+**功能**：NSFC 标书引用与 Bib 管理：新增/核验论文信息（题目/作者/年份/期刊/DOI）并写入 `references/ccs.bib` 或 `references/mypaper.bib`，保证不出现幻觉引用
+
+**使用场景**：
+- 用户要求"加引用/补参考文献/核对论文信息/写bibtex/更新.bib"
+- 为标书各部分添加可核验的文献支持
+- 管理项目参考文献库
+
+**推荐 Prompt 模板**：
+
+```
+请使用 nsfc-bib-manager 为以下内容添加引用：
+[内容]
+```
+
+**技能特点**：
+- 不凭记忆编造 DOI/卷期页码
+- 优先联网检索并核验元数据
+- 只写可核验信息，无法核验标注"待核验"
+
+---
+
+### 9. get-review-theme - 综述主题提取
+
+**状态**：🚧 开发中
 
 **类型**：📝 日常
 
@@ -257,7 +286,9 @@ graph LR
 
 ---
 
-### 9. guide-updater - 项目指南优化
+### 10. guide-updater - 项目指南优化
+
+**状态**：✅ 稳定（v1.0.0）
 
 **类型**：📝 日常
 
@@ -279,6 +310,32 @@ graph LR
 - 梳理文献综述的核心发现
 - 提炼研究切入点和创新性
 - 生成结构化的项目指南文档
+
+---
+
+## 技能依赖关系
+
+某些技能依赖其他技能的输出，形成完整的工作流：
+
+### 工作流中的技能协作
+
+- **get-review-theme**：前置步骤，提取主题关键词
+- **systematic-literature-review**：核心文献综述（可选依赖 get-review-theme 的输出）
+- **guide-updater**：中间优化，基于综述结果沉淀写作规范（依赖 systematic-literature-review 的输出）
+- **nsfc-bib-manager**：贯穿全程，管理参考文献（可在任何阶段调用）
+- **nsfc系列skills**：最终撰写标书各模块（可选依赖 guide-updater 优化的指南）
+
+### 推荐使用顺序
+
+对于 NSFC 标书写作，建议按以下顺序使用技能：
+
+1. **get-review-theme** → 提取综述主题
+2. **systematic-literature-review** → 生成文献综述
+3. **guide-updater** → 优化项目指南（⭐ 重要环节）
+4. **nsfc-justification-writer** → 撰写立项依据
+5. **nsfc-research-content-writer** → 撰写研究内容
+6. **nsfc-research-foundation-writer** → 撰写研究基础
+7. **nsfc-bib-manager** → 全程管理参考文献
 
 ---
 

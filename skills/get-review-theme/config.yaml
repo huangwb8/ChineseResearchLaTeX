@@ -1,0 +1,5 @@
+skill_info:
+  name: get-review-theme
+  version: 1.0.0
+  description: 从任意输入源提取结构化综述主题：支持文件（PDF/Word/Markdown/Tex）、文件夹、图片、自然语言描述、网页 URL 等
+  category: writing
