@@ -57,6 +57,12 @@ python skills/nsfc-justification-writer/scripts/run.py coach --project-root proj
 补充信息：<按 references/info_form.md 缺啥补啥>
 ```
 
+开发者建议的Prompt如下：
+
+```
+立项依据的{某个写得不满意的部分} 和前面的xxx主题差得有点远{或者其它你觉得不满意的地方}。 请使用nsfc-justification-writer这个skill进行优化。
+```
+
 ## 输出文件
 
 - `extraTex/1.1.立项依据.tex`
