@@ -10,6 +10,8 @@
 
 ### Added（新增）
 
+- 新增 `plans/v202601101300.md`：对 `skills/nsfc-justification-writer`「理论创新导向优化」做源代码审查，记录 P0 语法阻断缺陷与一致性改进建议
+
 - **nsfc-justification-writer 理论创新导向优化**（v0.7.5）：新增 `references/theoretical_innovation_guidelines.md`，默认优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（理论证明/定理/数值验证），而非工程落地细节
   - 更新 `references/dod_checklist.md`：在验收标准中新增"理论创新导向（默认）"要求
   - 更新 `references/info_form.md`：引导用户提供理论层面的信息（如"假设过强/框架不统一/因果缺失/界不紧"等理论瓶颈）
