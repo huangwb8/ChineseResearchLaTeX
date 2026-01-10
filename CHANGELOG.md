@@ -10,6 +10,15 @@
 
 ### Added（新增）
 
+- **nsfc-justification-writer 理论创新导向优化**（v0.7.5）：新增 `references/theoretical_innovation_guidelines.md`，默认优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（理论证明/定理/数值验证），而非工程落地细节
+  - 更新 `references/dod_checklist.md`：在验收标准中新增"理论创新导向（默认）"要求
+  - 更新 `references/info_form.md`：引导用户提供理论层面的信息（如"假设过强/框架不统一/因果缺失/界不紧"等理论瓶颈）
+  - 更新 `templates/phrase_patterns.md`：新增理论创新导向的常用句式（如"理论空白/认知缺失/假设过强/框架不统一/因果缺失"等）
+  - 更新 `prompts/writing_coach.txt`：在写作教练提示中融入理论创新导向
+  - 更新 `core/writing_coach.py`：修改 `_suggest_questions()` 和 `_copyable_prompt()`，引导用户关注理论层面的问题
+  - 更新 `core/review_advice.py`：修改 `_fallback_review_markdown()`，评审问题聚焦理论层面的瓶颈和验证方式
+  - 更新 `SKILL.md`：在"目标输出（契约）"中新增"理论创新导向（默认）"说明，更新"推荐 `\\subsubsection` 标题与内容映射"表格
+
 - 新增 `skills/nsfc-justification-writer/core/review_integration.py`：systematic-literature-review 集成模块，支持只读访问 systematic-literature-review 生成的文献综述目录
   - 目录检测：`detect_slr_directory(path)` 识别 systematic-literature-review 目录（支持运行中的 pipeline 和已完成的输出目录）
   - 目录分析：`analyze_review_directory(path)` 返回目录结构信息（.tex/.bib 文件列表、只读状态）

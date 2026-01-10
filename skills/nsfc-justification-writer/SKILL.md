@@ -1,6 +1,6 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.4
+version: 0.7.5
 description: 为 NSFC 2026 新模板正文"（一）立项依据"写作/重构 LaTeX 正文内容，基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于用户要写/改"立项依据、研究意义、国内外现状与不足、为什么要做、本项目切入点"等场景。
 author: ChineseResearchLaTeX Project
 metadata:
@@ -30,8 +30,9 @@ references: skills/nsfc-justification-writer/references/
 
 - **唯一写入落点**：`extraTex/1.1.立项依据.tex`
 - **禁止改动**：`main.tex`、`extraTex/@config.tex`、任何 `.cls/.sty`
-- **写作目标**：把“为什么要做”讲清楚，并为 `（二）研究内容` 铺垫“科学问题/假说与切入点”。
+- **写作目标**：把"为什么要做"讲清楚，并为 `（二）研究内容` 铺垫"科学问题/假说与切入点"。
 - **AI 依赖**：默认使用运行环境提供的 Claude Code / Codex 原生智能（无需配置任何外部 API Key，AI 不可用会自动回退到硬编码能力）
+- **理论创新导向（默认）**：优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（详见 [theoretical_innovation_guidelines.md](references/theoretical_innovation_guidelines.md)）
 
 ## 必需输入（最小信息表）
 
@@ -64,7 +65,8 @@ references: skills/nsfc-justification-writer/references/
 - 说明：本仓库脚本层不会“默认直连外部大模型”；AI 能力是否可用取决于运行环境是否注入 responder（不可用会自动回退到硬编码能力）
 - 相关设计说明：
   - 内容维度覆盖检查：`skills/nsfc-justification-writer/references/dimension_coverage_design.md`
-  - “可能引起评审不适的表述”判别与改写：`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
+  - "可能引起评审不适的表述"判别与改写：`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
+  - **理论创新导向写作指南**：`skills/nsfc-justification-writer/references/theoretical_innovation_guidelines.md`（新增）
 
 ## Prompt 模板可配置化（可选）
 
@@ -79,12 +81,12 @@ references: skills/nsfc-justification-writer/references/
 
 说明：模板与 `config.yaml` 默认推荐 4 个 `\\subsubsection` 标题（`structure.recommended_subsubsections`），而“4 段闭环”是内容叙事逻辑。为避免用户困惑，推荐按下表映射写作：
 
-| `\\subsubsection` 标题 | 对应叙事段落 | 核心写作要素 |
+| `\\subsubsection` 标题 | 对应叙事段落 | 核心写作要素（理论创新导向默认） |
 |---|---|---|
-| 研究背景 | 价值与必要性 | 痛点→影响范围/成本→为何现在必须做 |
-| 国内外研究现状 | 现状与不足 | 主流路线→代表性工作→2–4 条不足（可验证/可量化） |
-| 现有研究的局限性 | 科学问题/核心假说 | 可证伪假说→关键科学问题→验证维度（数据/指标/对照） |
-| 研究切入点 | 本项目切入点与贡献 | 差异化切口→可交付/指标→承上启下到 2.1 研究内容 |
+| 研究背景 | 价值与必要性 | 理论空白/认知缺失→为何现在必须做（理论驱动） |
+| 国内外研究现状 | 现状与不足 | 主流路线→**理论局限性**（假设过强/框架不统一/因果缺失/界不紧） |
+| 现有研究的局限性 | 科学问题/核心假说 | 可证伪假说→关键科学问题→验证维度（理论证明/定理/数值验证） |
+| 研究切入点 | 本项目切入点与贡献 | **理论差异化切口**（新表征/方法学/统一框架）→承上启下到 2.1 研究内容 |
 
 如用户确需改小标题：建议仍保持 4 段结构，并先统一标题骨架（见 `templates/structure_template.tex`）；结构检查不再机械匹配标题，但仍要求至少 4 个小节。
 
