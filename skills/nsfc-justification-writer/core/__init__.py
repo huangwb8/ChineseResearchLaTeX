@@ -15,14 +15,32 @@ from .diagnostic import DiagnosticReport
 from .editor import ApplyResult
 from .errors import SkillError
 from .hybrid_coordinator import HybridCoordinator
+from .review_integration import (
+    ReviewDirectoryInfo,
+    analyze_review_directory,
+    detect_slr_directory,
+    extract_citation_keys_from_bib,
+    extract_citations_from_tex,
+    format_review_directory_summary,
+    validate_citation_consistency,
+    validate_read_access,
+)
 
 __all__ = [
     "AIIntegration",
     "ApplyResult",
     "DiagnosticReport",
     "HybridCoordinator",
+    "ReviewDirectoryInfo",
     "SkillError",
+    "analyze_review_directory",
+    "detect_slr_directory",
+    "extract_citation_keys_from_bib",
+    "extract_citations_from_tex",
+    "format_review_directory_summary",
     "get_runs_dir",
     "load_config",
+    "validate_citation_consistency",
     "validate_config",
+    "validate_read_access",
 ]

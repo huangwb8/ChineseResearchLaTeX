@@ -123,6 +123,39 @@ references: skills/nsfc-justification-writer/references/
 
 脚本入口：`skills/nsfc-justification-writer/scripts/run.py`（用法见 `skills/nsfc-justification-writer/scripts/README.md`）。
 
+## systematic-literature-review 集成（可选）
+
+本技能支持只读访问 `systematic-literature-review` 生成的文献综述目录，便于引用已有的研究现状内容。
+
+### 识别标准
+
+目录满足以下任一条件时，自动识别为 systematic-literature-review 生成的目录：
+1. 存在隐藏文件夹 `.systematic-literature-review`，且包含 `{主题}_review.tex` 和 `{主题}_参考文献.bib`/`references.bib` 文件（运行中的 pipeline）
+2. 存在典型的文件组合：`{主题}_review.tex` + `{主题}_参考文献.bib`/`references.bib` + `{主题}_工作条件.md`（已完成的输出目录）
+3. 存在同名的 `{主题}_review.tex` 和 `{主题}_参考文献.bib` 文件（基于文件名前缀匹配）
+
+### 只读访问约束
+
+对 systematic-literature-review 生成的目录：
+- **只读模式**：仅读取 `.tex` 和 `.bib` 文件内容
+- **禁止写入**：不会修改目录中的任何文件
+- **引用验证**：自动验证 `.tex` 中的引用与 `.bib` 中的定义是否一致
+
+### 使用场景
+
+- 用户要求引用已有的文献综述内容
+- 需要从系统综述中提取研究现状信息
+- 想要确保引用的一致性
+
+### 核心功能
+
+- 目录检测：`detect_slr_directory(path)` 判断是否为 systematic-literature-review 目录
+- 目录分析：`analyze_review_directory(path)` 返回目录结构信息
+- 引用验证：`validate_citation_consistency(tex_path, bib_path)` 检查引用一致性
+- 内容提取：从 `.tex` 和 `.bib` 文件中提取关键信息
+
+实现见：`core/review_integration.py`
+
 ## 验收标准（Definition of Done）
 
 - 见：[references/dod_checklist.md](references/dod_checklist.md)

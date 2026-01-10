@@ -151,3 +151,26 @@ writing_coach:
   fallback_rules:
     draft_threshold_ratio: 0.4
     draft_min_chars: 600
+
+# systematic-literature-review 集成配置
+slr_integration:
+  # 启用 systematic-literature-review 目录检测
+  enabled: true
+
+  # 标记文件夹名称（用于识别 systematic-literature-review 生成的目录）
+  marker_folder: ".systematic-literature-review"
+
+  # 只读访问保护（禁止写入 systematic-literature-review 生成的目录）
+  read_only: true
+
+  # 自动验证引用一致性
+  validate_citations: true
+
+  # 允许的文件模式（用于过滤 .tex 和 .bib 文件）
+  tex_patterns:
+    - "*.tex"
+    - "*_review.tex"
+  bib_patterns:
+    - "*.bib"
+    - "*_参考文献.bib"
+    - "references.bib"

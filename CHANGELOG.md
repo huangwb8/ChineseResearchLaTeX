@@ -10,6 +10,16 @@
 
 ### Added（新增）
 
+- 新增 `skills/nsfc-justification-writer/core/review_integration.py`：systematic-literature-review 集成模块，支持只读访问 systematic-literature-review 生成的文献综述目录
+  - 目录检测：`detect_slr_directory(path)` 识别 systematic-literature-review 目录（支持运行中的 pipeline 和已完成的输出目录）
+  - 目录分析：`analyze_review_directory(path)` 返回目录结构信息（.tex/.bib 文件列表、只读状态）
+  - 引用验证：`validate_citation_consistency(tex_path, bib_path)` 检查 .tex 中的引用与 .bib 中的定义是否一致
+  - 内容提取：`extract_citation_keys_from_bib()` 和 `extract_citations_from_tex()` 从文件中提取引用信息
+- 新增 `skills/nsfc-justification-writer/tests/test_review_integration.py`：systematic-literature-review 集成模块的单元测试
+- 新增 `skills/nsfc-justification-writer/scripts/validate_review_integration.py`：systematic-literature-review 集成功能验证脚本
+- 更新 `skills/nsfc-justification-writer/config.yaml`：新增 `slr_integration` 配置节（启用/禁用集成、标记文件夹名称、只读保护、引用验证、文件模式）
+- 更新 `skills/nsfc-justification-writer/SKILL.md`：新增"systematic-literature-review 集成（可选）"章节，说明识别标准、只读访问约束、使用场景和核心功能
+
 - 更新 [README.md](README.md)：新增"技能生态系统"章节，按功能阶段分类展示多个 AI 技能（文献调研/标书准备/标书写作/模板开发）
 - 更新 [README.md](README.md)：新增"推荐工作流"章节，展示完整的文献调研与标书写作工作流（含 Mermaid 流程图）
 - 更新 [README.md](README.md)：技能表格新增"版本"列，显示各技能的版本号（v2.7.1、v0.7.3、v1.4.0 等）
