@@ -161,7 +161,9 @@ graph LR
 请使用 nsfc-research-content-writer：
 目标项目：projects/NSFC_Young
 信息表：请按 skills/nsfc-research-content-writer/references/info_form.md 提供
-输出：写入 extraTex/2.1.研究内容.tex、extraTex/2.2.特色与创新.tex、extraTex/2.3.年度研究计划.tex（不要改 main.tex）
+输出模式：preview（先预览）/ apply（确认后写入）
+输出：写入 extraTex/2.1.研究内容.tex、extraTex/2.2.特色与创新.tex、extraTex/2.3.年度研究计划.tex（不要改 main.tex、extraTex/@config.tex）
+额外要求：子目标编号 S1–S4；2.2/2.3 标注回溯到对应 Sx；每年都有里程碑与可交付物
 ```
 
 [详细文档 →](nsfc-research-content-writer/SKILL.md)

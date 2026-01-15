@@ -5,8 +5,9 @@
 skill_info:
   name: nsfc-research-foundation-writer
   version: 0.1.0
-  template_year: "2026"
+  template_year: "2026"  # 与项目模板年份保持一致，更新时同步修改所有技能
   category: writing
+  description: 为 NSFC 2026 新模板正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"
 
 parameters:
   project_root:
@@ -18,6 +19,8 @@ parameters:
     required: false
     default: apply
     allowed_values: [preview, apply]
+    # preview: 预览模式，只生成内容不写入文件
+    # apply: 应用模式，将生成的内容写入 extraTex 文件
 
 targets:
   foundation_tex: extraTex/3.1.研究基础.tex

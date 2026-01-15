@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-research-content-writer
-  version: 0.1.0
+  version: 0.2.1
   template_year: "2026"
   category: writing
 
@@ -49,4 +49,3 @@ quality_contract:
   yearly_plan_must_include:
     - 三年分年任务（不跨年）
     - 里程碑与可交付成果（每年都有）
-

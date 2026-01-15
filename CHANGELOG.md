@@ -10,6 +10,26 @@
 
 ### Added（新增）
 
+- **nsfc-research-content-writer v0.2.0**：补齐“研究内容→特色与创新→年度计划”的可验证闭环写作约束与参考材料
+  - 更新 `skills/nsfc-research-content-writer/SKILL.md`：补齐 `output_mode` 语义、写入安全约束、`S1–S4` 回溯口径与写作小抄索引
+  - 更新 `skills/nsfc-research-content-writer/README.md`、`skills/README.md`、`README.md`：补齐“先预览再写入”的推荐工作流与 Prompt 字段，版本同步为 v0.2.0
+  - 更新 `skills/nsfc-research-content-writer/references/info_form.md`：补齐任务分解/创新坐标系/年度硬约束/风险备选输入项
+  - 更新 `skills/nsfc-research-content-writer/references/dod_checklist.md`：DoD 可操作化（2.1↔2.2↔2.3 可回溯与覆盖检查）
+  - 新增参考资料：`skills/nsfc-research-content-writer/references/subgoal_triplet_examples.md`、`skills/nsfc-research-content-writer/references/relative_coordinate_examples.md`、`skills/nsfc-research-content-writer/references/yearly_plan_template.md`、`skills/nsfc-research-content-writer/references/anti_patterns.md`、`skills/nsfc-research-content-writer/references/validation_menu.md`、`skills/nsfc-research-content-writer/references/terminology_sheet.md`
+  - 新增开发者校验脚本：`skills/nsfc-research-content-writer/scripts/validate_skill.py`
+  - 新增可追溯的 A/B 轮计划与测试会话目录：`skills/nsfc-research-content-writer/plans/`、`skills/nsfc-research-content-writer/tests/`
+
+### Changed（变更）
+
+- **nsfc-research-content-writer v0.2.1**：补齐 auto-test 流水线脚手架与开发者自检闭环，强化 guardrails/targets/文档契约的一致性门禁
+  - 新增 `skills/nsfc-research-content-writer/templates/`：A轮计划/B轮检查/TEST_PLAN/TEST_REPORT 模板（支持 A/B 轮 `--kind` 正确复跑）
+  - 新增 `skills/nsfc-research-content-writer/scripts/create_test_session.py`：自建 A/B 轮会话骨架（不再依赖外部脚本）
+  - 新增 `skills/nsfc-research-content-writer/scripts/check_project_outputs.py`：对 `project_root` 的只读输出自检（存在性、最小内容启发式、风险词扫描、严格门禁开关）
+  - 新增 `skills/nsfc-research-content-writer/scripts/run_checks.py`：一键串联 `validate_skill.py` + 输出自检（支持 `--fail-on-risk-phrases`）
+  - 更新 `skills/nsfc-research-content-writer/scripts/validate_skill.py`：增加 templates/plans/tests/scripts 门禁、guardrails↔targets 一致性校验、README/SKILL 关键入口防回退
+  - 新增 `skills/nsfc-research-content-writer/references/output_skeletons.md`：三个输出文件最小结构骨架（含 `Sx/Ty/Vz` 回溯约定）
+  - 新增/更新可追溯会话：`skills/nsfc-research-content-writer/plans/v202601142307.md` ~ `skills/nsfc-research-content-writer/plans/v202601142314.md`、`skills/nsfc-research-content-writer/plans/B轮-v202601142315.md` 与对应 `tests/` 目录
+
 - **nsfc-justification-writer v0.7.7**：强化"科学问题与假说为核心"的设计理念，防止用方法学术语稀释立项依据主线
   - 更新 `references/dod_checklist.md`：新增"方法学术语使用规范（重要）"章节，明确禁止用方法术语撑段落主线，并提供检查方法
   - 更新 `references/theoretical_innovation_guidelines.md`：新增"方法学术语误用警示"章节，提供常见误用模式对比表格和检查清单
