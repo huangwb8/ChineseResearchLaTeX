@@ -5,9 +5,9 @@
 skill_info:
   name: nsfc-research-foundation-writer
   version: 0.1.0
-  template_year: "2026"  # 与项目模板年份保持一致，更新时同步修改所有技能
+  # template_year: 移除年份限制，使技能适用于不同年份的 NSFC 模板
   category: writing
-  description: 为 NSFC 2026 新模板正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"
+  description: 为 NSFC 正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"
 
 parameters:
   project_root:
