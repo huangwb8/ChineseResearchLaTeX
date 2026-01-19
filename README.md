@@ -53,6 +53,11 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ## 👥 社区支持
 
+博客文章：
+
+- [国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)
+- [国家自然科学基金的LaTeX模板 第2期](https://blognas.hwb0307.com/skill/6930)
+
 欢迎加入项目微信群聊，与其他用户交流经验、分享心得！无论您是对以下哪个话题感兴趣，都欢迎扫码进群：
 
 - 📚 **科研写作**：LaTeX 使用、论文写作、标书撰写
@@ -229,7 +234,6 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 > 💡 **提示**：深入了解 AI 辅助编程和 Vibe Coding 理念，推荐阅读上述博客文章（如果您是初次接触，建议按顺序阅读以循序渐进地了解 Vibe Coding 生态）
 
 - [LaTeX 写作指南](references/latex-writing-guide.md)：科研论文写作最佳实践
-- [博客文章](https://blognas.hwb0307.com/skill/5762) ：国家自然科学基金 LaTeX 模板详解
 - [Vibe Coding CLI 评测：Claude Code vs. OpenAI Codex vs.Gemini CLI](https://blognas.hwb0307.com/other/6923) - 全面对比三大 CLI AI 编程助手（2026-01-06）
 - [AI 模型评测：性价比超绝的 GLM-4.7](https://blognas.hwb0307.com/ai/6914) - 智谱 AI 开源模型的编码能力与推理性能分析（2026-01-05）
 - [Claude Code 和 Claude Skills 的工程设计](https://blognas.hwb0307.com/skill/6689) - 深入探讨 Skills 本质与系统化开发流程（2026-01-03）
