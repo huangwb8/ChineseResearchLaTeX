@@ -175,7 +175,7 @@
 
 % Custom format for section
 \titleformat{\section}
-  {\color{MsBlue} \sectionzihao \templatefont} % format
+  {\color{MsBlue} \sectionzihao \templatefont \bfseries} % format
   {\hspace*{2em}} % label（用于缩进，不影响标题文字内容）
   {0pt} % separation
   {}   % before-code
@@ -213,7 +213,7 @@
 \titlespacing*{\section}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt} % Space after the title（由 \parskip 控制段后）
+  {-4pt} % Space after the title（更紧凑：减少 \section 与后续 \subsection 的视觉间距）
 
 % Define line stretch for subsection
 \titlespacing*{\subsection}
