@@ -69,6 +69,11 @@ def comment_input_lines(content: str) -> Tuple[str, int]:
     for i, line in enumerate(lines):
         match = input_pattern.match(line)
         if match and not line.strip().startswith('%'):
+            # Keep the style config in place; otherwise the prepared document won't compile.
+            input_target = match.group(2).strip()
+            if input_target.endswith('@config.tex') or input_target.replace('\\', '/').endswith('/@config.tex'):
+                continue
+
             # 添加注释标记
             indent = match.group(1)
             lines[i] = f"{indent}% [PREPARE_MAIN_COMMENTED] {line.strip()}"

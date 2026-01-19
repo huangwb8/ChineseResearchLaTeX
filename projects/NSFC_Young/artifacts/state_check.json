@@ -1,0 +1,15 @@
+{
+  "project_path": "projects/NSFC_Young",
+  "check_time": "2026-01-19T12:40:55.647815",
+  "status": {
+    "initialized": true,
+    "has_baseline": true,
+    "baseline_source": "word_pdf",
+    "baseline_quality": "high",
+    "last_compilation": "2026-01-19T12:37:35.717923",
+    "compilation_status": "success",
+    "has_analysis": true,
+    "latest_analysis": "word_baseline_2026_v2_analysis.json"
+  },
+  "recommendations": []
+}

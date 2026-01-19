@@ -1,0 +1,37 @@
+{
+  "source_file": "projects/NSFC_General/artifacts/baseline/word.pdf",
+  "file_size_kb": 60.99,
+  "layout": {
+    "page_size_cm": [
+      20.99,
+      29.7
+    ],
+    "margins_cm": {
+      "left": 3.0,
+      "right": 2.75,
+      "top": 2.63,
+      "bottom": 2.96
+    }
+  },
+  "fonts": {
+    "KaiTi": {
+      "count": 52,
+      "sizes": [
+        13.78,
+        13.92,
+        15.92
+      ],
+      "colors": [],
+      "is_bold": false
+    },
+    "SimSun": {
+      "count": 12,
+      "sizes": [
+        12.0
+      ],
+      "colors": [],
+      "is_bold": false
+    }
+  },
+  "line_spacing_pt": 0
+}

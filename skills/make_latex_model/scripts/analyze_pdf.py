@@ -257,7 +257,8 @@ def main():
         workspace_info = f"(工作空间: {args.project})"
     # 默认: 使用 PDF 所在目录（向后兼容）
     else:
-        output_path = Path(pdf_path).stem + "_analysis.json"
+        # NOTE: keep backward-compatible default (next to the PDF), but ensure Path
+        output_path = Path(pdf_path).with_name(Path(pdf_path).stem + "_analysis.json")
         if WorkspaceManager and not args.no_workspace:
             workspace_info = "(当前目录，建议使用 --project 参数保存到工作空间)"
 

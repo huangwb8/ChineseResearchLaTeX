@@ -21,6 +21,9 @@
 
 ### Changed（变更）
 
+- **NSFC_General（2026）**：对齐 `projects/NSFC_General/template/2026年最新word模板-1.面上项目-正文-v2.pdf` 的页面边距（更新 `projects/NSFC_General/extraTex/@config.tex` 中 `geometry` 的右/上/下边距参数）
+- **NSFC_Young（2026）**：对齐 `projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文-v2.pdf` 的页面边距与正文行距体系（更新 `projects/NSFC_Young/extraTex/@config.tex` 的 `geometry`、固定行距 22pt/段后 7.8pt、标题缩进与 `\frenchspacing`；同步修正 `projects/NSFC_Young/main.tex` 的提纲标题文字与断行，并按 v2 模板将“其他需要说明的情况”收敛为 `5. 其他。`）
+
 - **nsfc-research-content-writer v0.2.1**：补齐 auto-test 流水线脚手架与开发者自检闭环，强化 guardrails/targets/文档契约的一致性门禁
   - 新增 `skills/nsfc-research-content-writer/templates/`：A轮计划/B轮检查/TEST_PLAN/TEST_REPORT 模板（支持 A/B 轮 `--kind` 正确复跑）
   - 新增 `skills/nsfc-research-content-writer/scripts/create_test_session.py`：自建 A/B 轮会话骨架（不再依赖外部脚本）
@@ -303,6 +306,9 @@
       - 其他文件：`\import{path}{file}`
 
 ### Fixed（修复）
+
+- **make_latex_model**：修复 `skills/make_latex_model/scripts/analyze_pdf.py` 在未指定 `--project/--output` 时输出路径类型错误导致无法保存 `*_analysis.json`
+- **make_latex_model**：修复 `skills/make_latex_model/scripts/prepare_main.py` 预处理时误注释 `\input{extraTex/@config.tex}` 导致“仅标题”编译失败
 
 - 修复 `skills/nsfc-justification-writer/core/writing_coach.py`、`skills/nsfc-justification-writer/core/review_advice.py` 的字符串未转义导致的 `SyntaxError`，恢复脚本入口可运行性
 - 更新 `skills/nsfc-justification-writer/core/config_loader.py`：新增 `style` 配置字段的轻量校验，避免无效取值静默生效

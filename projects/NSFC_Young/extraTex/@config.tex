@@ -21,9 +21,9 @@
 % \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
 % \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
 % 页边距和字距的某个组合应该可以完美复制Word。
-\geometry{left=3.1cm,right=3.1cm,top=2.67cm,bottom=3.16cm} % 页边距
-\CJKsetecglue{\hskip 0.5em plus 0.05em minus 0.1em} % 数字与CJK字符的间距（对齐 Word 2026 PDF）
-% left=3.1cm,right=3.1cm
+\geometry{left=3.20cm,right=3.20cm,top=2.54cm,bottom=2.54cm} % 页边距（对齐 2026 Word 模板 PDF v2）
+\CJKsetecglue{\hskip 0.15em plus 0.05em minus 0.05em} % 数字与 CJK 字符的间距（对齐 Word 2026）
+% left=3.20cm,right=3.20cm
 
 %%%————————————————————————————————颜色
 % 说明：在 XeLaTeX + xcolor 组合下，RGB(0,112,192) 在 PDF 中会被量化为 (0,111,192)；
@@ -52,7 +52,7 @@
 \newcommand{\yihao}{\fontsize{26pt}{\baselineskip}\selectfont}
 \newcommand{\erhao}{\fontsize{22pt}{\baselineskip}\selectfont}
 \newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont}
-\newcommand{\sanhao}{\fontsize{16pt}{\baselineskip}\selectfont}
+\newcommand{\sanhao}{\fontsize{16pt}{22pt}\selectfont}
 \newcommand{\sihao}{\fontsize{14pt}{22pt}\selectfont}
 \newcommand{\xiaosihao}{\fontsize{12pt}{22pt}\selectfont}
 \newcommand{\yemeizihao}{\fontsize{11pt}{\baselineskip}\selectfont}
@@ -96,11 +96,14 @@
 % Word 2026 模板：行距为“固定值 22 磅”
 % 说明：不使用 baselinestretch 乘法去逼近，直接把默认字号(12pt)的 baselineskip 固定为 22pt
 \renewcommand{\baselinestretch}{1.0}
-\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont}
+\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont\frenchspacing}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{2pt}
+\setlength{\parskip}{7.8pt} % Word 模板“段后 7.8pt”
 \hfuzz=20pt\relax % 避免示例图宽度导致的 Overfull \hbox 警告
 \XeTeXlinebreaklocale "zh" % 中文断行
+
+% Word 空白段落的“视觉高度”对齐：在已有 \parskip 的情况下补足到 1 行行距
+\newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
 
 
 %%%————————————————————————————————图片与表格
@@ -148,6 +151,12 @@
 	CJKbookmarks=True
 ]{hyperref}
 
+% 书签字符串中禁用不兼容命令（避免 hyperref 警告）
+\pdfstringdefDisableCommands{%
+  \def\linebreak{}%
+  \def\punctstyle#1{}%
+}
+
 
 %%%————————————————————————————————标题计数
 
@@ -164,21 +173,6 @@
 \newcommand{\subsectionzihao}{\fontsize{14pt}{22pt}\selectfont}
 \newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
 
-\ExplSyntaxOn
-\cs_new_protected:Npn \nsfc_subsection_before:n #1
-  {
-    % Word 2026 模板中：括号提示行（如“（为什么要…）”）缩进略小于编号行
-    \regex_match:nnTF { \A \s* （ } {#1}
-      { \hspace*{1.5em} #1 }
-      { \hspace*{2em} #1 }
-  }
-\ExplSyntaxOff
-
-\newcommand{\NSFCSubsectionBefore}[1]{%
-  \csname nsfc_subsection_before:n\endcsname{#1}%
-}
-
-
 % Custom format for section
 \titleformat{\section}
   {\color{MsBlue} \sectionzihao \templatefont} % format
@@ -191,7 +185,7 @@
   {\color{MsBlue} \subsectionzihao \templatefont} % format
   {} % label
   {0pt} % separation
-  {\NSFCSubsectionBefore}   % before-code（用于缩进，不影响标题文字内容）
+  {\hspace*{2em}}   % before-code（用于首行缩进，续行自然顶格）
 
 % Custom format for subsubsection
 \titleformat{\subsubsection}
@@ -219,25 +213,25 @@
 \titlespacing*{\section}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {3pt} % Space after the title
+  {0pt} % Space after the title（由 \parskip 控制段后）
 
 % Define line stretch for subsection
 \titlespacing*{\subsection}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {3pt} % Space after the title
+  {0pt} % Space after the title（由 \parskip 控制段后）
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsection}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {5pt} % Space after the title
+  {0pt plus 0pt minus 0pt} % Space after the title
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsubsection}
   {0pt} % Left indentation
   {0pt plus 0pt minus 0pt} % Space before the title
-  {7.8pt} % Space after the title
+  {0pt plus 0pt minus 0pt} % Space after the title
 
 
 %%%————————————————————————————————代码
