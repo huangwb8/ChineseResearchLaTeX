@@ -75,11 +75,11 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 > ⚠️ **建议使用正式的 [Release 版本](https://github.com/huangwb8/ChineseResearchLaTeX/releases) 以获得最佳稳定性**。借助 [make_latex_model](skills/make_latex_model/) 技能，现已支持像素级 `Word/PDF 模板 → LaTeX 模板` 的快速转换，如有定制需求欢迎[提交 Issue](https://github.com/huangwb8/ChineseResearchLaTeX/issues)。模板中的示例内容、章节结构、写作逻辑仅供参考，请务必根据您的研究主题和实际情况进行调整。
 
-| 模板 | 状态 | Overleaf 演示 |
-|------|------|---------------|
-| [青年C](projects/NSFC_Young/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/jchdzdmdkkpj#423009) |
-| [面上](projects/NSFC_General/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/trpmsszhsyvt#c3eb06) |
-| 地区 | ⏸️ 暂未更新，[有需要请提交 Issue](https://github.com/huangwb8/ChineseResearchLaTeX/issues) | ⏳ 待更新 |
+| 模板 | 状态 | Overleaf 演示 | 上次修改时间 |
+|------|------|---------------|----------------|
+| [青年C](projects/NSFC_Young/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/cjhmcmjpsrpy#875405) | 2026-01-19 |
+| [面上](projects/NSFC_General/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/cjhmcmjpsrpy#875405) | 2026-01-19 |
+| 地区 | ⏸️ 暂未更新，[有需要请提交 Issue](https://github.com/huangwb8/ChineseResearchLaTeX/issues) | ⏳ 待更新 | - |
 
 ---
 
