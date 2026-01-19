@@ -24,7 +24,7 @@
 - **NSFC_General（2026）**：对齐 `projects/NSFC_General/template/2026年最新word模板-1.面上项目-正文-v2.pdf` 的页面边距（更新 `projects/NSFC_General/extraTex/@config.tex` 中 `geometry` 的右/上/下边距参数）
 - **NSFC_General（2026）**：微调标题与正文提示语的版式间距（加粗 `\section` 标题、调整 `\section` 缩进到 2em，增大“提纲提示语”与首个 `\section` 之间的垂直间距，对部分 `\subsection` 标题内关键词加粗，并减小“（四）其他需要说明的情况”与首个 `\subsection` 之间的局部空白）
 - **NSFC_Young（2026）**：对齐 `projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文-v2.pdf` 的页面边距与正文行距体系（更新 `projects/NSFC_Young/extraTex/@config.tex` 的 `geometry`、固定行距 22pt/段后 7.8pt、标题缩进与 `\frenchspacing`；同步修正 `projects/NSFC_Young/main.tex` 的提纲标题文字与断行，并按 v2 模板将“其他需要说明的情况”收敛为 `5. 其他。`）
-- **NSFC_Young（2026）**：加粗 `\section` 标题，收紧“提纲提示语”与首个 `\section` 的间距，减小 `\section` 与 `\subsection` 的间隙，进一步收紧段落间距（含 `\subsubsection` 后首段；避免 `\indent` 形成空段落造成额外空白），并在“（提纲不做限制，……”的子标题中微调首字水平位置（更贴近 Word 模板观感）
+- **NSFC_Young（2026）**：加粗 `\section` 标题，微调“提纲提示语”与首个 `\section` 的间距，减小 `\section` 与 `\subsection` 的间隙，进一步收紧段落间距（含 `\subsubsection` 后首段；避免 `\indent` 形成空段落造成额外空白），并对部分长标题用 `\linebreak{}` 精确控制断行（更贴近 Word 模板观感）
 
 - **nsfc-research-content-writer v0.2.1**：补齐 auto-test 流水线脚手架与开发者自检闭环，强化 guardrails/targets/文档契约的一致性门禁
   - 新增 `skills/nsfc-research-content-writer/templates/`：A轮计划/B轮检查/TEST_PLAN/TEST_REPORT 模板（支持 A/B 轮 `--kind` 正确复跑）
