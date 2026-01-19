@@ -10,6 +10,8 @@
 
 ### Added（新增）
 
+- **NSFC_Young/NSFC_General README**：新增"样式微调指南"章节，包含行距/段落间距、标题间距、字体大小、标题颜色、列表格式、页面边距等常见微调方法的详细说明，并附带快速微调清单和代码示例
+
 - **nsfc-research-content-writer v0.2.0**：补齐“研究内容→特色与创新→年度计划”的可验证闭环写作约束与参考材料
   - 更新 `skills/nsfc-research-content-writer/SKILL.md`：补齐 `output_mode` 语义、写入安全约束、`S1–S4` 回溯口径与写作小抄索引
   - 更新 `skills/nsfc-research-content-writer/README.md`、`skills/README.md`、`README.md`：补齐“先预览再写入”的推荐工作流与 Prompt 字段，版本同步为 v0.2.0

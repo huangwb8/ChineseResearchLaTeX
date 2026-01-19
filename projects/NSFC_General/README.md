@@ -124,6 +124,213 @@ NSFC_General/
 \subsubsubsection{标题}
 ```
 
+## 样式微调指南
+
+本节介绍如何根据个人需求微调模板样式。所有样式配置集中在 [`extraTex/@config.tex`](extraTex/@config.tex) 文件中。
+
+### 行距与段落间距
+
+**当前设置**：
+- 固定行距：22pt
+- 段后间距：3pt（`\parskip`）
+
+**微调方法**：
+
+```latex
+% 在 @config.tex 中修改（第 100-102 行）
+\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont\frenchspacing}  % 行距：第二参数
+\setlength{\parskip}{3pt}  % 段后间距
+```
+
+**常见调整**：
+
+| 需求 | 修改方式 | 效果 |
+|------|----------|------|
+| 更紧凑 | `\setlength{\parskip}{0pt}` 或 `{1pt}` | 段落间隙更小 |
+| 更宽松 | `\setlength{\parskip}{5pt}` 或 `{8pt}` | 段落间隙更大 |
+| 行距增大 | `\fontsize{12pt}{24pt}` | 固定行距 24pt |
+
+### 标题间距
+
+**当前设置**（第 213-234 行）：
+
+```latex
+% section 标题前后间距
+\titlespacing*{\section}{0pt}{0pt}{-4pt}
+
+% subsection 标题前后间距
+\titlespacing*{\subsection}{0pt}{0pt}{0pt}
+
+% subsubsection 标题前后间距
+\titlespacing*{\subsubsection}{0pt}{0pt}{0pt}
+```
+
+**微调说明**：
+- 第一个 `{0pt}`：左缩进
+- 第二个 `{0pt}`：标题前间距
+- 第三个 `{Xpt}`：标题后间距（设为负值可收紧）
+
+**示例**：
+
+```latex
+% 让 section 标题前后更宽松
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+
+% 让 subsection 标题后更紧凑
+\titlespacing*{\subsection}{0pt}{0pt}{-2pt}
+```
+
+### 标题字体与大小
+
+**当前设置**（第 172-174 行）：
+
+```latex
+\newcommand{\sectionzihao}{\fontsize{14pt}{22pt}\selectfont}      % 四号
+\newcommand{\subsectionzihao}{\fontsize{14pt}{22pt}\selectfont}   % 四号
+\newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}  % 近小四
+```
+
+**微调示例**：
+
+```latex
+% 改大 section 字号
+\newcommand{\sectionzihao}{\fontsize{16pt}{24pt}\selectfont}  % 二号
+
+% 改小 subsection 字号
+\newcommand{\subsectionzihao}{\fontsize{12pt}{22pt}\selectfont}  % 小四
+```
+
+### 正文字体
+
+**当前设置**（第 73-96 行）：
+
+| 系统 | 中文字体 | 英文字体 |
+|------|----------|----------|
+| macOS | Kaiti（楷体） | Times New Roman |
+| Windows | KaiTi（楷体） | Times New Roman |
+
+**更换字体示例**：
+
+```latex
+% macOS 下改用宋体
+\setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{SimSun}
+
+% Windows 下改用黑体
+\setCJKmainfont{SimHei}[AutoFakeBold=3]
+```
+
+**字号对照表**（第 53-70 行）：
+
+| 命令 | 字号 | 用途 |
+|------|------|------|
+| `\erhao` | 22pt | 二号 |
+| `\sanhao` | 16pt | 三号 |
+| `\sihao` | 14pt | 四号 |
+| `\xiaosihao` | 12pt | 小四（正文默认） |
+| `\wuhao` | 10.5pt | 五号 |
+
+### 标题颜色
+
+**当前设置**：蓝色 `MsBlue`（RGB: 0,113,192）
+
+**修改颜色**（第 35 行）：
+
+```latex
+% 改为黑色
+\definecolor{MsBlue}{RGB}{0,0,0}
+
+% 改为深灰
+\definecolor{MsBlue}{RGB}{64,64,64}
+
+% 改为自定义颜色
+\definecolor{MsBlue}{RGB}{128,0,128}  % 紫色
+```
+
+### 标题格式
+
+**取消加粗**（第 178、192 行）：
+
+```latex
+% section 不加粗
+\titleformat{\section}
+  {\color{MsBlue} \sectionzihao \templatefont}  % 去掉 \bfseries
+  {\hspace*{2em}}
+  {0pt}
+  {}
+```
+
+**修改缩进**（第 179、188 行）：
+
+```latex
+% 调整 section 缩进
+\titleformat{\section}
+  {...}
+  {\hspace*{0em}}  % 改为 0（不缩进）
+  ...
+```
+
+### 列表格式
+
+**当前设置**（第 120-129 行）：
+
+```latex
+\setlist[enumerate]{
+  leftmargin=0em,      % 左边界
+  itemindent=4em,      % 首行缩进
+  itemsep=0em,         % 列表项间距
+  ...
+}
+```
+
+**微调示例**：
+
+```latex
+% 减小缩进
+\setlist[enumerate]{
+  leftmargin=0em,
+  itemindent=2em,  % 改为 2em
+  ...
+}
+
+% 增大列表项间距
+\setlist[enumerate]{
+  ...
+  itemsep=5pt,  % 改为 5pt
+  ...
+}
+```
+
+### 页面边距
+
+**当前设置**（第 26 行）：
+
+```latex
+\geometry{left=3.00cm,right=2.75cm,top=2.63cm,bottom=2.96cm}
+```
+
+**微调示例**：
+
+```latex
+% 更窄的左右边距（节省空间）
+\geometry{left=2.5cm,right=2.5cm,top=2.63cm,bottom=2.96cm}
+
+% 更大的上下边距
+\geometry{left=3.00cm,right=2.75cm,top=3cm,bottom=3cm}
+```
+
+### 快速微调清单
+
+| 想要... | 修改位置 | 参数 |
+|---------|----------|------|
+| 行距更大 | 第 100 行 | `\fontsize{12pt}{24pt}` |
+| 段落更紧凑 | 第 102 行 | `\setlength{\parskip}{0pt}` |
+| 标题更大 | 第 172-174 行 | 调整 `\fontsize{Xpt}{Ypt}` |
+| 标题间距更小 | 第 213-234 行 | 减小第三个参数 |
+| 改字体颜色 | 第 35 行 | 修改 `MsBlue` 定义 |
+| 标题不加粗 | 第 178、192 行 | 去掉 `\bfseries` |
+
+> **提示**：修改后建议先编译查看效果，如需大幅调整请先备份原文件。
+
 ## 格式要求
 
 ### 字体与字号
