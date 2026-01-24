@@ -149,7 +149,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 打开 Claude Code 或 Codex 后，输入以下 Prompt：
 
 ```
-使用 https://github.com/huangwb8/skills/tree/main/install-bensz-skills 的 --remote --auto 模式安装skill。
+使用 https://github.com/huangwb8/skills/tree/main/install-bensz-skills 的 --remote --auto 模式安装或更新skill。
 ```
 
 ### 🧩 技能生态系统
