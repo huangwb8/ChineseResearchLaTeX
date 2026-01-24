@@ -13,7 +13,7 @@
 ### 最推荐用法
 
 ```
-请用 check-review-alignment 核查/优化我工作目录中的综述引用：只修复 P0（致命性错误），P1 仅警告不改写，并输出完整报告与渲染结果。
+请用 check-review-alignment 核查/优化 xxx 目录中的综述引用。p0-p1问题均须修复。
 ```
 
 ### 兼容旧版systematic-literature-review的结果
