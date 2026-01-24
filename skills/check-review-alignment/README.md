@@ -31,7 +31,7 @@
 #### 场景 1：指定 tex 文件名
 
 ```
-请用 check-review-alignment 核查/优化 HER2_review.tex 的引用。
+请用 check-review-alignment 核查/优化 xxx.tex 的引用。
 ```
 
 #### 场景 2：结合 systematic-literature-review 流程
@@ -49,7 +49,7 @@
 #### 场景 4：希望非常激进地修改tex
 
 ```
-（不推荐）我希望你“顺便润色/大幅改写”综述正文。
+请用 check-review-alignment 优化 xxx 项目里的综述。请暂时忽略最小化改动原则，我允许你对综述进行大幅修改（只要你觉得有必要）。
 ```
 说明：本 skill 的设计边界是“只修复致命性引用错误（P0）并最小化改动”，不适合用来做整段润色或结构性重写。
 
