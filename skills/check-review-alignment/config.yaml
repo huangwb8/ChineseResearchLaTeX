@@ -1,0 +1,83 @@
+# check-review-alignment 配置（纯 AI 模式）
+#
+# 设计原则：
+# - 删除静态规则/阈值判断：吻合度与改写由宿主 AI 完成
+# - 脚本只做确定性工作：解析/抽取/渲染/文件写回
+
+# 技能基本信息（版本号唯一真相来源）
+skill_info:
+  name: check-review-alignment
+  version: 1.0.2
+  description: "综述引用语义核查：只修复致命性引用错误（虚假/错误/矛盾引用），并可选渲染 PDF/Word"
+  category: "文档质量"
+
+# === 引用命令配置 ===
+citation_commands:
+  - "cite"
+  - "citep"
+  - "citet"
+  - "citealp"
+  - "citeauthor"
+  - "Cite"
+  - "Citet"
+
+# === PDF 抽取配置（用于提供额外上下文）===
+pdf:
+  enabled: true
+  max_pages: 2
+
+# === 渲染配置（复用依赖 skill 的渲染策略）===
+render:
+  use_skill: systematic-literature-review
+  overwrite: true
+
+# === AI 修改策略（宿主 AI 执行，脚本不调用 LLM API）===
+ai:
+  input_limits:
+    max_abstract_chars: 2000
+    max_pdf_excerpt_chars: 3000
+
+  modification:
+    auto_apply: false
+    preserve_citations: true
+    max_edits_per_sentence: 3
+
+    # 错误优先级分级（宿主 AI 使用；脚本只负责打包，不做语义判断）
+    #
+    # - P0（must_fix）：致命性错误，必须修复
+    # - P1（warn_only）：仅警告，不改写
+    # - P2（skip）：跳过，不触碰
+    error_priority:
+      # P0：致命性错误（必须修复）
+      - type: "fake_citation"
+        action: "must_fix"
+        description: "引用的文献根本不存在（.bib 中缺失或 bibkey 错误）"
+      - type: "wrong_citation"
+        action: "must_fix"
+        description: "引用命令中的 bibkey 与文意不符（张冠李戴）"
+      - type: "contradictory_citation"
+        action: "must_fix"
+        description: "正文描述与论文内容矛盾（如论文说男性，文写女性）"
+
+      # P1：仅警告，不改写
+      - type: "weak_support"
+        action: "warn_only"
+        description: "论文只是提及该概念，未深入论证或给出结论"
+      - type: "overclaim"
+        action: "warn_only"
+        description: "论文确实做了此事，但文中的“首创/首次/核心”等定位过度"
+
+      # P2：禁止修改
+      - type: "style_issue"
+        action: "skip"
+        description: "文体/表达优化（语序、措辞、行文润色）"
+
+    # 非致命错误（P1/P2）的处理策略
+    # - skip: 仅在报告中按需记录（默认）
+    # - warn: 一律记录为 Warnings
+    # - report: 输出更完整的“仅报告”条目
+    non_fatal_handling: "skip"
+
+  paragraph_optimization:
+    enabled: false
+    after_all_citations: false
