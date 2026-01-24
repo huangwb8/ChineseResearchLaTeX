@@ -290,6 +290,17 @@ cost_tracking:
   禁止出现'本综述基于 X 条文献'、'最终保留 Z 篇'等 AI 流程泄露描述。
   详见 references/expert-review-writing.md 的'摘要格式说明'章节。"
 
+- **表格样式约束**（写作前必须遵守）：
+  "使用 `longtable` 或 `tabular` 环境时，列宽必须基于 `\\textwidth` 按比例分配（所有比例之和 ≤ 1.0）。
+  禁止使用固定 `p{}` 列宽（如 `p{8.9cm}`），避免在不同边距/版芯下溢出。
+  示例：
+  ```tex
+  \\begin{longtable}{p{0.14\\textwidth} p{0.48\\textwidth} p{0.22\\textwidth} p{0.16\\textwidth}}
+  ...
+  \\end{longtable}
+  ```
+  详见 `references/review-tex-section-templates.md` 的'表格样式最佳实践'章节。"
+
 - **AI 评分与子主题分组**（阶段3）：
   使用 `references/ai_scoring_prompt.md` 中的标准评分流程，逐篇阅读文献并打 1-10 分，同时分配子主题标签。完成后运行质量自检，确保分数分布合理（高分20-40%、中分40-60%、低分10-30%）。
 

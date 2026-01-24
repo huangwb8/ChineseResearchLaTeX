@@ -65,20 +65,13 @@ def _find_tex_bin() -> str | None:
     return None
 
 
-def _setup_tex_inputs(work_dir: Path, template_dir: Path) -> dict[str, str]:
-    """Setup TEXINPUTS environment variable for LaTeX compilation.
+def _setup_tex_inputs(template_dirs: list[Path]) -> dict[str, str]:
+    """Setup TEXINPUTS/BSTINPUTS for LaTeX compilation.
 
     Strategy:
-    - Append template_dir to the beginning of TEXINPUTS (preserve system paths)
-    - Same for BSTINPUTS
-    - No file copying required.
-
-    Args:
-        work_dir: Working directory (for clarity, not directly used)
-        template_dir: Directory containing template files (.tex, .bst)
-
-    Returns:
-        dict with TEXINPUTS and BSTINPUTS environment variables
+    - Prepend one or more template/search directories to TEXINPUTS/BSTINPUTS
+    - Preserve system default search paths (kpathsea) via trailing separator
+    - No file copying required
     """
     # 跨平台路径分隔符
     separator = ";" if sys.platform == "win32" else ":"
@@ -95,14 +88,15 @@ def _setup_tex_inputs(work_dir: Path, template_dir: Path) -> dict[str, str]:
             path = path + separator
         return path
 
-    # 在现有的 TEXINPUTS 前面追加 template_dir
-    # 格式：template_dir:系统默认
+    # 在现有的 TEXINPUTS 前面追加 template_dirs
+    # 格格式：dir1:dir2:...:系统默认
     current_texinputs = _kpathsea_preserve_default(os.environ.get("TEXINPUTS", ""))
-    texinputs = f"{template_dir}{separator}{current_texinputs}"
+    prefix = separator.join(str(p) for p in template_dirs if str(p).strip())
+    texinputs = f"{prefix}{separator}{current_texinputs}" if prefix else current_texinputs
 
     # 在现有的 BSTINPUTS 前面追加 template_dir
     current_bstinputs = _kpathsea_preserve_default(os.environ.get("BSTINPUTS", ""))
-    bstinputs = f"{template_dir}{separator}{current_bstinputs}"
+    bstinputs = f"{prefix}{separator}{current_bstinputs}" if prefix else current_bstinputs
 
     return {"TEXINPUTS": texinputs, "BSTINPUTS": bstinputs}
 
@@ -164,11 +158,11 @@ def _ensure_bibliographystyle(tex_file: Path, default_style: str | None) -> None
     tex_file.write_text(text, encoding="utf-8")
 
 
-def _verify_bst_in_template(tex_file: Path) -> list[str]:
-    """Verify that required .bst files exist in the skill's latex-template directory.
+def _verify_bst_in_template(tex_file: Path, template_dirs: list[Path]) -> list[str]:
+    """Verify that required .bst files exist in the provided template directories.
 
     Strategy: parse \\bibliographystyle{...}, and verify the .bst file exists
-    in the template dir (to be resolved via BSTINPUTS). Does NOT copy files.
+    in one of the template dirs (to be resolved via BSTINPUTS). Does NOT copy files.
 
     Returns:
         List of verified .bst file paths (for logging/debugging)
@@ -176,7 +170,6 @@ def _verify_bst_in_template(tex_file: Path) -> list[str]:
     Raises:
         FileNotFoundError: if required .bst file not found in template directory
     """
-    template_dir = SKILL_ROOT / "latex-template"
     text = tex_file.read_text(encoding="utf-8", errors="replace")
     styles = re.findall(r"\\bibliographystyle\{([^}]+)\}", text)
     verified: list[str] = []
@@ -185,16 +178,44 @@ def _verify_bst_in_template(tex_file: Path) -> list[str]:
         if "/" in style or "\\" in style:
             continue  # Skip if style includes a path
         bst_name = f"{style}.bst"
-        source = template_dir / bst_name
-        if source.exists():
-            verified.append(str(source))
+        found = None
+        for d in template_dirs:
+            cand = d / bst_name
+            if cand.exists():
+                found = cand
+                break
+        if found is not None:
+            verified.append(str(found))
         else:
             raise FileNotFoundError(
                 f"❌ .bst 文件未找到：{bst_name}\n"
-                f"   模板目录：{template_dir}\n"
-                f"   请确认 systematic-literature-review/latex-template/ 目录包含该文件。"
+                f"   搜索目录：{', '.join(str(d) for d in template_dirs)}\n"
+                f"   请确认模板目录中包含该文件，或在 tex 中改用可解析到的 bst。"
             )
     return verified
+
+
+def _resolve_template_dir(work_dir: Path, template_path: Path | None) -> Path | None:
+    """Resolve a template path (file/dir; absolute/relative) to a directory for TEXINPUTS/BSTINPUTS."""
+    if not template_path:
+        return None
+
+    candidates: list[Path] = []
+    if template_path.is_absolute():
+        candidates.append(template_path)
+    else:
+        # 兼容：相对路径优先按 work_dir，其次按 SKILL_ROOT 解析
+        candidates.append(work_dir / template_path)
+        candidates.append(SKILL_ROOT / template_path)
+
+    resolved: Path | None = None
+    for cand in candidates:
+        if cand.exists():
+            resolved = cand
+            break
+    if resolved is None:
+        return None
+    return resolved.parent if resolved.is_file() else resolved
 
 
 def _ensure_template(tex_file: Path, configured_template: Path | None) -> Path | None:
@@ -261,18 +282,25 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
 
     _ensure_bibliographystyle(tex_file, default_style)
 
-    # 验证 .bst 文件存在于模板目录（v3.6 优化：不再复制到工作目录）
-    verified_bsts = _verify_bst_in_template(tex_file)
-    if verified_bsts:
-        print(f"  ✓ 已验证 .bst 文件：{', '.join([Path(p).name for p in verified_bsts])}", file=sys.stderr)
-
     # 设置环境变量引用模板目录（v3.5 优化：不再复制模板文件）
+    # 说明：template_path 用于“追加搜索目录”（例如用户自定义模板/自定义 bst 的同级目录），
+    #      以 TEXINPUTS/BSTINPUTS 的形式参与编译过程；不会改变 review.tex 的内容。
     template_dir = SKILL_ROOT / "latex-template"
     if not template_dir.exists():
         raise FileNotFoundError(f"Template directory not found: {template_dir}")
+    override_dir = _resolve_template_dir(work_dir, template_path)
+    template_dirs: list[Path] = []
+    if override_dir and override_dir != template_dir:
+        template_dirs.append(override_dir)
+    template_dirs.append(template_dir)
 
-    env = _setup_tex_inputs(work_dir, template_dir)
-    print(f"  模板目录: {template_dir}", file=sys.stderr)
+    # 验证 .bst 文件存在于模板目录（v3.6 优化：不再复制到工作目录）
+    verified_bsts = _verify_bst_in_template(tex_file, template_dirs)
+    if verified_bsts:
+        print(f"  ✓ 已验证 .bst 文件：{', '.join([Path(p).name for p in verified_bsts])}", file=sys.stderr)
+
+    env = _setup_tex_inputs(template_dirs)
+    print(f"  模板搜索目录: {', '.join(str(d) for d in template_dirs)}", file=sys.stderr)
     print(f"  TEXINPUTS: {env['TEXINPUTS']}", file=sys.stderr)
     print(f"  BSTINPUTS: {env['BSTINPUTS']}", file=sys.stderr)
 
@@ -297,7 +325,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
             output_pdf = output_pdf.resolve()
             if output_pdf != produced_pdf:
                 output_pdf.parent.mkdir(parents=True, exist_ok=True)
-                produced_pdf.replace(output_pdf)
+                shutil.move(str(produced_pdf), str(output_pdf))
                 final_pdf = output_pdf
     finally:
         # 无论编译成功与否，都执行清理（除非 keep_aux=True）
@@ -317,7 +345,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
                 # 其他常见中间文件
                 ".fls", ".fdb_latexmk", ".auxlock",
                 # 某些包的特殊输出（如 .og 可能是某种变体）
-                ".og", ".gz",
+                ".og",
             ]
 
             cleaned = []

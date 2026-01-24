@@ -9,7 +9,9 @@ ai不要看这个文件，除非用户要求。
 
 ## 综述skill
 
-我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
+- 根据 skills/systematic-literature-review/plans/样式-v202601242025.md 优化skill。然后，使用 Auto Test Skill 优化1轮。 注意，不要大改 systematic-literature-review ，它目前的业务逻辑很好； 把关键的优化点落实就行。不要改 skills/systematic-literature-review/README.md，我已经写好的了。
+
+- 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
 
 ## nsfc-justification-writer
 

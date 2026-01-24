@@ -203,24 +203,32 @@ class PipelineRunner:
     def _run_script(self, script_name: str, args: List[str]) -> bool:
         script_path = Path(__file__).parent / script_name
         cmd = [sys.executable, str(script_path)] + args
-        try:
-            subprocess.run(cmd, check=True)
+        # 固定 cwd 到 work_dir：避免相对路径输出散落到启动目录，影响 resume 与产物隔离
+        proc = subprocess.run(cmd, cwd=self.work_dir)
+        if proc.returncode == 0:
             return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ 运行脚本失败: {' '.join(cmd)} -> {e}", file=sys.stderr)
-            return False
+        print(
+            f"✗ 运行脚本失败（exit={proc.returncode}）: {' '.join(cmd)} (cwd={self.work_dir})",
+            file=sys.stderr,
+        )
+        return False
 
     def _run_script_capture_output(self, script_name: str, args: List[str]) -> tuple[bool, str]:
         """运行脚本并捕获 stdout 输出，返回 (成功状态, 输出文本)"""
         script_path = Path(__file__).parent / script_name
         cmd = [sys.executable, str(script_path)] + args
         try:
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=self.work_dir)
             return True, result.stdout
         except subprocess.CalledProcessError as e:
-            output = e.stdout if e.stdout else ""
-            print(f"✗ 运行脚本失败: {' '.join(cmd)} -> {e}", file=sys.stderr)
-            return False, output
+            stdout = e.stdout or ""
+            stderr = e.stderr or ""
+            combined = stdout + ("\n" if stdout and stderr else "") + stderr
+            print(
+                f"✗ 运行脚本失败（exit={e.returncode}）: {' '.join(cmd)} (cwd={self.work_dir})",
+                file=sys.stderr,
+            )
+            return False, combined
 
     def _output_path(self, key: str) -> Path:
         tpl = self.output_templates.get(key, f"{self.file_stem}_{key}.txt")
@@ -620,6 +628,7 @@ class PipelineRunner:
 
         # 生成验证报告
         validation_report_path = self._output_path("validation_report")
+        counts_json_path: Optional[str] = None
         try:
             # 将 validate_counts 的输出保存到临时文件
             import tempfile
@@ -643,15 +652,16 @@ class PipelineRunner:
                 ],
             )
 
-            # 清理临时文件
-            Path(counts_json_path).unlink(missing_ok=True)
-
             # 记录报告路径到 output_files
             self.state.output_files["validation_report"] = str(validation_report_path)
             print(f"  ✓ 验证报告: {validation_report_path}")
 
         except Exception as e:
             print(f"  ⚠️ 生成验证报告失败: {e}", file=sys.stderr)
+        finally:
+            # 确保不遗留临时文件（无论成功/失败）
+            if counts_json_path:
+                Path(counts_json_path).unlink(missing_ok=True)
 
         if counts_ok and tex_ok:
             self.state.completed_stages.append("6_validate")

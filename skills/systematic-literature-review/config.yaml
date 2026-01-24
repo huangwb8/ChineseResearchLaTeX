@@ -144,13 +144,13 @@ validation:
 # ============================================================================
 latex:
   template_path: "latex-template/nature-reviews-template.tex"
-  template_path_override: ""        # 可选：显式指定任务目录中的模板路径，留空则使用默认模板并自动回退
+  template_path_override: ""        # 可选：显式指定任务目录中的模板路径；其同级目录会加入 TEXINPUTS/BSTINPUTS 搜索路径
   bibliographystyle: "gbt7714-nsfc"
   pandoc_options:
     - "--standalone"
     - "--pdf-engine=xelatex"
-  chinese_font_support: true
-  chinese_font: "SimSun"
+  chinese_font_support: true        # 仅在自定义模板显式设置字体时生效；默认模板使用 ctex 自动选择可用字体
+  chinese_font: "SimSun"            # 示例值：Windows 常见字体；跨平台建议通过 template_path_override 自定义模板处理字体
 
 word:
   extract_review_draft_only: true
@@ -280,7 +280,7 @@ multilingual:
       ctex_options: null
 
   # 编译重试配置
-  max_compile_retries: 99        # 实际无上限
+  max_compile_retries: 99        # 近似“无限次重试”（足够大即可）；如需更严格可调小
   compile_timeout: 300           # 单次编译 5 分钟
   total_timeout: 1800            # 总计 30 分钟
 

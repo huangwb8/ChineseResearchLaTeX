@@ -60,6 +60,9 @@
 
 ### Changed（变更）
 
+- **systematic-literature-review**：补充 LaTeX 表格样式最佳实践（列宽基于 `\textwidth` 按比例分配，避免固定 `p{}` 宽度溢出），并在写作前提示中加入强约束
+- **systematic-literature-review**：加固导出链路与运行隔离（移除危险 `.gz` 清理项；template override 同级目录加入 TEXINPUTS/BSTINPUTS；PDF 输出跨卷移动更稳健；pipeline 子脚本统一 `cwd=work_dir` 且失败信息更可定位）
+
 - **NSFC_General（2026）**：对齐 `projects/NSFC_General/template/2026年最新word模板-1.面上项目-正文-v2.pdf` 的页面边距（更新 `projects/NSFC_General/extraTex/@config.tex` 中 `geometry` 的右/上/下边距参数）
 - **NSFC_General（2026）**：微调标题与正文提示语的版式间距（加粗 `\section` 标题、调整 `\section` 缩进到 2em，增大“提纲提示语”与首个 `\section` 之间的垂直间距，对部分 `\subsection` 标题内关键词加粗，并减小“（四）其他需要说明的情况”与首个 `\subsection` 之间的局部空白）
 - **NSFC_Young（2026）**：对齐 `projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文-v2.pdf` 的页面边距与正文行距体系（更新 `projects/NSFC_Young/extraTex/@config.tex` 的 `geometry`、固定行距 22pt/段后 7.8pt、标题缩进与 `\frenchspacing`；同步修正 `projects/NSFC_Young/main.tex` 的提纲标题文字与断行，并按 v2 模板将“其他需要说明的情况”收敛为 `5. 其他。`）
