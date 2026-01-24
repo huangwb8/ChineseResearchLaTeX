@@ -5,35 +5,10 @@
 
 ## 快速开始
 
-### 使用前必读（重要）
-
 **在运行本技能之前，强烈建议为您的综述文件做好版本控制**：
-
-**为什么需要版本控制**：
 - 本技能会**直接修改** `{主题}_review.tex` 文件
 - AI 的改写基于语义判断，可能存在误判或风格偏差
 - 一旦修改不满意，需要有恢复原始版本的能力
-
-**推荐的版本控制方式**：
-
-```bash
-# 方式 1：使用 Git（推荐）
-git add {主题}_review.tex
-git commit -m "backup: 运行 check-review-alignment 前的原始版本"
-
-# 方式 2：手动备份
-cp {主题}_review.tex {主题}_review.tex.backup
-```
-
-**检查是否已有备份**：
-
-```bash
-# Git 用户
-git log --oneline -1 {主题}_review.tex
-
-# 手动备份用户
-ls -lh {主题}_review.tex.backup
-```
 
 ### 最推荐用法
 
