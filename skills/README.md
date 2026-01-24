@@ -195,7 +195,7 @@ graph LR
 
 ### 7. systematic-literature-review - 系统综述生成
 
-**状态**：✅ 稳定（v1.0.1）
+**状态**：✅ 稳定（v1.0.2）
 
 **类型**：📝 日常
 
@@ -220,6 +220,8 @@ graph LR
 - **字数预算生成**：自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段）
 - **三档位支持**：Premium（旗舰级）、Standard（标准级）、Basic（基础级）
 - **多语言支持**：支持 en/zh/ja/de/fr/es 翻译与智能编译
+- **表格样式更稳健**：长表格列宽基于 `\textwidth` 按比例分配，避免固定 `p{}` 宽度溢出
+- **导出链路加固**：template override 同级目录可参与 TEXINPUTS/BSTINPUTS；清理规则更安全
 - **强制导出**：PDF 与 Word 双格式
 
 **档位对照表**：
