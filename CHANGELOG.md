@@ -323,6 +323,12 @@
 
 ### Fixed（修复）
 
+- **systematic-literature-review**：修复参考文献 DOI 链接显示逻辑——当 BibTeX 同时包含 `doi` 与 `url`（如 OpenAlex）时，PDF 参考文献优先显示 `https://doi.org/{doi}`，并将 DOI resolver 升级为 HTTPS；BibTeX 保留原始 `url` 用于追溯
+  - 更新 `skills/systematic-literature-review/latex-template/gbt7714-nsfc.bst`：`output.url.or.doi` 改为 DOI 优先，`cap.doi.url` 改为 `https://doi.org/`
+  - 更新 `skills/systematic-literature-review/scripts/select_references.py`：生成 BibTeX 时同步转义 `%/_/#/$` 等常见 LaTeX 特殊字符，降低 BibTeX/LaTeX 编译阻断风险
+  - 更新 `skills/systematic-literature-review/scripts/compile_latex_with_bibtex.py`：修复 `TEXINPUTS/BSTINPUTS` 未保留 TeX 默认搜索路径导致 `article.cls not found`；并在 env 注入时改用 `shlex.quote()`，避免路径包含空格/单引号导致 shell 命令拼接失败
+  - 更新 `skills/systematic-literature-review/SKILL.md`：补充“DOI 链接显示”说明
+
 - **make_latex_model**：修复 `skills/make_latex_model/scripts/analyze_pdf.py` 在未指定 `--project/--output` 时输出路径类型错误导致无法保存 `*_analysis.json`
 - **make_latex_model**：修复 `skills/make_latex_model/scripts/prepare_main.py` 预处理时误注释 `\input{extraTex/@config.tex}` 导致“仅标题”编译失败
 

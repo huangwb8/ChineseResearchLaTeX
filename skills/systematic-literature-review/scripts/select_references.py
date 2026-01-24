@@ -67,10 +67,31 @@ def _make_unique_key(base: str, used_lower: set[str]) -> str:
     return final
 
 
-def _escape_bib_value(value: str) -> tuple[str, bool]:
-    """Escape ampersands; return escaped value and whether a replacement happened."""
-    escaped, n = re.subn(r"(?<!\\)&", r"\\&", value)
-    return escaped, n > 0
+_LATEX_SPECIALS: dict[str, str] = {
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+}
+
+
+def _escape_bib_value(value: str) -> tuple[str, dict[str, int]]:
+    """Escape common LaTeX specials in BibTeX values (best-effort).
+
+    We keep this conservative to avoid breaking intentional LaTeX macros.
+    """
+    escaped = value
+    counts: dict[str, int] = {}
+    for ch, repl in _LATEX_SPECIALS.items():
+        escaped, n = re.subn(rf"(?<!\\\\){re.escape(ch)}", lambda m, r=repl: r, escaped)
+        if n:
+            counts[ch] = n
+    return escaped, counts
+
+
+def _format_escape_counts(counts: dict[str, int]) -> str:
+    return ", ".join(f"{k}×{v}" for k, v in sorted(counts.items()))
 
 
 def _normalize_authors(authors: Any) -> str:
@@ -98,9 +119,9 @@ def _render_bib_entry(key: str, paper: Dict[str, Any]) -> tuple[str, list[str]]:
     authors_raw = paper.get("authors") or paper.get("author") or ""
     abstract_raw = paper.get("abstract") or ""
 
-    title, title_fixed = _escape_bib_value(str(title_raw))
-    venue, venue_fixed = _escape_bib_value(str(venue_raw))
-    author_str, author_fixed = _escape_bib_value(_normalize_authors(authors_raw))
+    title, title_counts = _escape_bib_value(str(title_raw))
+    venue, venue_counts = _escape_bib_value(str(venue_raw))
+    author_str, author_counts = _escape_bib_value(_normalize_authors(authors_raw))
     doi = str(doi_raw).replace("https://doi.org/", "").replace("http://doi.org/", "").strip()
     year = year_raw if year_raw else "n.d."
 
@@ -114,9 +135,9 @@ def _render_bib_entry(key: str, paper: Dict[str, Any]) -> tuple[str, list[str]]:
     if missing_fields:
         warnings.append(f"{key} 缺失字段: {', '.join(missing_fields)}（已填默认值，建议补全）")
 
-    for fixed, label in [(title_fixed, "title"), (venue_fixed, "journal"), (author_fixed, "author")]:
-        if fixed:
-            warnings.append(f"{key} 自动转义 {label} 中的 & 为 \\&")
+    for counts, label in [(title_counts, "title"), (venue_counts, "journal"), (author_counts, "author")]:
+        if counts:
+            warnings.append(f"{key} 自动转义 {label} 中的 LaTeX 特殊字符（{_format_escape_counts(counts)}）")
 
     fields = [
         f"title = {{{title}}}",
@@ -127,13 +148,15 @@ def _render_bib_entry(key: str, paper: Dict[str, Any]) -> tuple[str, list[str]]:
     if doi:
         fields.append(f"doi = {{{doi}}}")
     if url_raw:
-        url, _ = _escape_bib_value(str(url_raw))
+        url, url_counts = _escape_bib_value(str(url_raw))
         fields.append(f"url = {{{url}}}")
+        if url_counts:
+            warnings.append(f"{key} 自动转义 url 中的 LaTeX 特殊字符（{_format_escape_counts(url_counts)}）")
     if abstract_raw:
-        abstract, abstract_fixed = _escape_bib_value(str(abstract_raw))
+        abstract, abstract_counts = _escape_bib_value(str(abstract_raw))
         fields.append(f"abstract = {{{abstract}}}")
-        if abstract_fixed:
-            warnings.append(f"{key} 自动转义 abstract 中的 & 为 \\&")
+        if abstract_counts:
+            warnings.append(f"{key} 自动转义 abstract 中的 LaTeX 特殊字符（{_format_escape_counts(abstract_counts)}）")
     return "@article{{{key},\n  {fields}\n}}\n".format(key=key, fields=",\n  ".join(fields)), warnings
 
 

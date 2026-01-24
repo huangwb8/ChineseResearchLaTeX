@@ -151,8 +151,9 @@ metadata:
 
 ## 健壮性与日志
 - 模板与 `.bst`：使用 `TEXINPUTS`/`BSTINPUTS` 环境变量引用 `latex-template/` 目录，不再复制模板文件到工作目录（v3.5 优化）；可用 `config.yaml.latex.template_path_override` 或 CLI `--template` 覆盖。若 `.bst` 文件缺失，编译将直接报错（v3.6 优化）。
+- DOI 链接显示：若 BibTeX 同时包含 `doi` 与 `url`（例如 `url` 为 OpenAlex），PDF 参考文献默认优先显示 `https://doi.org/{doi}`；BibTeX 仍保留原始 `url` 便于追溯。
 - 中间文件清理：默认自动清理 `.aux`、`.bbl`、`.blg`、`.log`、`.out`、`.toc` 等 LaTeX 中间文件（v3.6 优化）；如需保留用于调试，可使用 `--keep-aux` 参数。
-- Bib 清洗：生成 Bib 时自动转义 `&`，大小写无关去重 key，并为缺失 author/year/journal/doi 填充默认值且输出警告。
+- Bib 清洗：生成 Bib 时自动转义 `&/%/_/#/$` 等常见 LaTeX 特殊字符，大小写无关去重 key，并为缺失 author/year/journal/doi 填充默认值且输出警告。
 - 恢复路径校验：resume 状态下发现无效 `papers` 路径会清理并重新检索，避免把目录当文件。
 - 导出日志：Pipeline 会输出 tex/bib/template/bst、pdf/word 路径，便于排查。
 - 字数预算：`plan_word_budget.py` 自动生成 3 份 run CSV、均值版 `word_budget_final.csv`，并输出无引用汇总；`validate_word_budget.py` 可选检查列/覆盖率/总字数误差。

@@ -167,7 +167,8 @@ FUNCTION {cap.et.al.en} 		{", et~al"}
 FUNCTION {cap.et.al.zh} 		{", 等"}
 FUNCTION {cap.translate.en} 	{"~trans"}
 FUNCTION {cap.translate.zh} 	{"译"}
-FUNCTION {cap.doi.url} 			{"http://dx.doi.org/"}
+% Prefer the canonical DOI resolver and HTTPS for modern browsers/PDF readers.
+FUNCTION {cap.doi.url} 			{"https://doi.org/"}
 FUNCTION {cap.st.en} 			{"st"}
 FUNCTION {cap.nd.en} 			{"nd"}
 FUNCTION {cap.rd.en} 			{"rd"}
@@ -1396,13 +1397,15 @@ FUNCTION {output.end.number} {                    % void Entry::output_end_numbe
                                                   %
 FUNCTION {output.url.or.doi} {                    % void Entry::output_url_or_doi(int required) {
   'required :=                                    %   this.required = required;
-  url empty$ not {                                %   if (! empty(this.url)) {
+  % If both DOI and URL are present, prefer DOI for PDF display while allowing
+  % the BibTeX to retain the original URL (e.g., OpenAlex) for traceability.
+  doi empty$ not {                                %   if (! empty(this.doi)) {
     cap.period write$                             %     write(cap_period);
-    url format.url write$                         %     write(format_url(this.url));
+    cap.doi.url doi * format.url write$           %     write(format_url(cap_doi_url + this.doi));
   } {                                             %   } else {
-    doi empty$ not {                              %     if (! empty(this.doi)) {
+    url empty$ not {                              %     if (! empty(this.url)) {
       cap.period write$                           %       write(cap_period);
-      cap.doi.url doi * format.url write$         %       write(format_url(cap_doi_url + this.doi));
+      url format.url write$                       %       write(format_url(this.url));
     } {                                           %     } else {
       required {                                  %       if (required == 1) {
         "Require URL or DOI: " cite$ * warning$   %         warning("Require URL or DOI: " + this.cite);

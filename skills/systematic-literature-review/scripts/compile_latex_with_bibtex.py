@@ -83,13 +83,25 @@ def _setup_tex_inputs(work_dir: Path, template_dir: Path) -> dict[str, str]:
     # 跨平台路径分隔符
     separator = ";" if sys.platform == "win32" else ":"
 
+    def _kpathsea_preserve_default(path: str) -> str:
+        """Ensure kpathsea preserves the default search path.
+
+        In TeX Live (kpathsea), a trailing path separator means "append the
+        system default paths". Without it, setting TEXINPUTS/BSTINPUTS can
+        accidentally hide the standard tree (e.g., article.cls).
+        """
+        path = path or ""
+        if not path.endswith(separator):
+            path = path + separator
+        return path
+
     # 在现有的 TEXINPUTS 前面追加 template_dir
     # 格式：template_dir:系统默认
-    current_texinputs = os.environ.get("TEXINPUTS", f".{separator}//")
+    current_texinputs = _kpathsea_preserve_default(os.environ.get("TEXINPUTS", ""))
     texinputs = f"{template_dir}{separator}{current_texinputs}"
 
     # 在现有的 BSTINPUTS 前面追加 template_dir
-    current_bstinputs = os.environ.get("BSTINPUTS", f".{separator}//")
+    current_bstinputs = _kpathsea_preserve_default(os.environ.get("BSTINPUTS", ""))
     bstinputs = f"{template_dir}{separator}{current_bstinputs}"
 
     return {"TEXINPUTS": texinputs, "BSTINPUTS": bstinputs}
@@ -113,7 +125,8 @@ def _run(cmd: list[str], cwd: Path, env: dict[str, str] | None = None) -> None:
     # 对于 TeX 命令，使用 shell=True 来确保环境变量正确传递
     if is_tex_cmd and env:
         # 构建带环境变量的 shell 命令
-        env_strs = [f"{k}='{v}'" for k, v in env.items()]
+        # Use shlex.quote to avoid breaking when paths contain spaces/single quotes.
+        env_strs = [f"{k}={shlex.quote(v)}" for k, v in env.items()]
         cmd_str = " ".join(env_strs) + " " + " ".join(shlex.quote(c) for c in cmd)
         proc = subprocess.run(cmd_str, cwd=cwd, text=True, capture_output=True, shell=True)
     else:
