@@ -6,14 +6,39 @@
 
 ---
 
-## [Unreleased]
+## [v3.2.3] - 2026-01-24
 
 ### Added（新增）
 
-- **systematic-literature-review**：BibTeX 输出新增 `abstract` 字段
-  - 更新 `skills/systematic-literature-review/scripts/select_references.py`：在 `_render_bib_entry` 函数中添加摘要字段提取与转义逻辑
-  - 当论文包含摘要时，自动写入 `abstract = {...}` 到 BibTeX 条目
-  - 摘要中的 `&` 字符会自动转义为 `\&`，并输出警告提示
+- **check-review-alignment v1.0.2**：新增综述引用语义一致性检查技能
+  - 通过宿主 AI 的语义理解逐条核查引用是否与文献内容吻合
+  - 只在发现致命性引用错误时对"包含引用的句子"做最小化改写
+  - 支持 LaTeX、Markdown、Word 多格式文档
+  - 完美复用 systematic-literature-review 的 PDF/Word 渲染流程
+  - 错误优先级分级：P0（must_fix）、P1（warn_only）、P2（skip）
+
+### Changed（变更）
+
+- **systematic-literature-review v1.0.0 → v1.0.1**：Bug 修复与功能增强
+  - 新增 BibTeX 导出的 `abstract` 字段支持
+  - 修复 argparse help 文本中 `%` 未转义导致的崩溃问题
+  - 修复 DOI 链接显示与 LaTeX 编译环境问题
+
+### Fixed（修复）
+
+- 修复 systematic-literature-review 中 argparse help 文本 `%` 未转义导致程序崩溃
+- 修复 systematic-literature-review 中 DOI 链接显示问题，确保 LaTeX 编译环境兼容性
+
+### Updated（文档更新）
+
+- 更新 [README.md](README.md)：技能表格新增 check-review-alignment（v1.0.2），更新 systematic-literature-review 版本号至 v1.0.1
+- 更新 [skills/README.md](skills/README.md)：新增 check-review-alignment 完整技能说明（功能、使用场景、Prompt 模板、技能特点、核心原则），调整后续技能编号（8→9，9→10，10→11）
+
+---
+
+## [Unreleased]
+
+### Added（新增）
 
 - **AGENTS.md / CLAUDE.md**：重构文档结构为"硬链接"模式
   - AGENTS.md 作为通用规范的唯一真相来源
