@@ -96,6 +96,7 @@ def _render_bib_entry(key: str, paper: Dict[str, Any]) -> tuple[str, list[str]]:
     url_raw = paper.get("url") or ""
     doi_raw = paper.get("doi") or ""
     authors_raw = paper.get("authors") or paper.get("author") or ""
+    abstract_raw = paper.get("abstract") or ""
 
     title, title_fixed = _escape_bib_value(str(title_raw))
     venue, venue_fixed = _escape_bib_value(str(venue_raw))
@@ -128,6 +129,11 @@ def _render_bib_entry(key: str, paper: Dict[str, Any]) -> tuple[str, list[str]]:
     if url_raw:
         url, _ = _escape_bib_value(str(url_raw))
         fields.append(f"url = {{{url}}}")
+    if abstract_raw:
+        abstract, abstract_fixed = _escape_bib_value(str(abstract_raw))
+        fields.append(f"abstract = {{{abstract}}}")
+        if abstract_fixed:
+            warnings.append(f"{key} 自动转义 abstract 中的 & 为 \\&")
     return "@article{{{key},\n  {fields}\n}}\n".format(key=key, fields=",\n  ".join(fields)), warnings
 
 

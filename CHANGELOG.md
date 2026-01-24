@@ -10,6 +10,11 @@
 
 ### Added（新增）
 
+- **systematic-literature-review**：BibTeX 输出新增 `abstract` 字段
+  - 更新 `skills/systematic-literature-review/scripts/select_references.py`：在 `_render_bib_entry` 函数中添加摘要字段提取与转义逻辑
+  - 当论文包含摘要时，自动写入 `abstract = {...}` 到 BibTeX 条目
+  - 摘要中的 `&` 字符会自动转义为 `\&`，并输出警告提示
+
 - **AGENTS.md / CLAUDE.md**：重构文档结构为"硬链接"模式
   - AGENTS.md 作为通用规范的唯一真相来源
   - CLAUDE.md 采用硬链接模式：包含 AGENTS.md 完整内容 + Claude Code 特定说明
