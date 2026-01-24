@@ -329,6 +329,10 @@
   - 更新 `skills/systematic-literature-review/scripts/compile_latex_with_bibtex.py`：修复 `TEXINPUTS/BSTINPUTS` 未保留 TeX 默认搜索路径导致 `article.cls not found`；并在 env 注入时改用 `shlex.quote()`，避免路径包含空格/单引号导致 shell 命令拼接失败
   - 更新 `skills/systematic-literature-review/SKILL.md`：补充“DOI 链接显示”说明
 
+- **systematic-literature-review**：修复 `validate_review_tex.py` 与 `validate_citation_distribution.py` 在 `--help` 下因未转义 `%` 导致 `argparse` 崩溃的问题
+  - 更新 `skills/systematic-literature-review/scripts/validate_review_tex.py`：对 help 文本中的 `70%/25%/<5%` 做 `%%` 转义
+  - 更新 `skills/systematic-literature-review/scripts/validate_citation_distribution.py`：对 epilog 文本中的目标百分比做 `%%` 转义（保留 `%(prog)s` 占位符）
+
 - **make_latex_model**：修复 `skills/make_latex_model/scripts/analyze_pdf.py` 在未指定 `--project/--output` 时输出路径类型错误导致无法保存 `*_analysis.json`
 - **make_latex_model**：修复 `skills/make_latex_model/scripts/prepare_main.py` 预处理时误注释 `\input{extraTex/@config.tex}` 导致“仅标题”编译失败
 

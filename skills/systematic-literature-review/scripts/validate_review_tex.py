@@ -138,7 +138,8 @@ def main() -> int:
     parser.add_argument("--min-refs", type=int, default=0, help="Minimum unique citation keys")
     parser.add_argument("--max-refs", type=int, default=0, help="Maximum unique citation keys (0 = no limit)")
     parser.add_argument("--check-citation-dist", action="store_true",
-                        help="检查引用分布是否符合目标（70% 单篇，25% 2-4篇，<5% >4篇）")
+                        # argparse 会对 help 文本做 %-formatting；这里需要对字面量 % 进行转义
+                        help="检查引用分布是否符合目标（70%% 单篇，25%% 2-4篇，<5%% >4篇）")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="显示详细的引用分布报告")
     args = parser.parse_args()
