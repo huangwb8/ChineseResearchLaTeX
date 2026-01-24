@@ -46,8 +46,8 @@ ls -lh {主题}_review.tex.backup
 如果之前用了较旧版本的systematic-literature-review（bib文献里没有abstract字段），可以这么用：
 ```
 对于 xxx 项目， 请：
-- 先为 bib 文件里的参考文献条目补齐 abstract 字段（手动或用 bib 管理工具）
-- 再跑 check-review-alignment：只修复 P0，P1 仅警告不改写
+- 基于systematic-literature-review的原则，先为 bib 文件里的参考文献条目补齐 abstract 字段
+- 再跑 check-review-alignment：只修复 P0，P1 问题。
 ```
 它会使用 systematic-literature-review 的本地历史记录进行提取，一般也不需要连网。
 
