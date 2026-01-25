@@ -29,6 +29,7 @@ FINAL_SUFFIXES = (
     "_参考文献.bib",
     "_review.pdf",
     "_review.docx",
+    "_验证报告.md",
 )
 
 
@@ -59,6 +60,10 @@ def iter_candidates(work_dir: Path) -> list[Path]:
         "ccs_append*.bib",
         "data_extraction_table.md",
         "degraded_outline*.md",
+        # AI 临时脚本（应移动到 .systematic-literature-review/scripts/）
+        "temp_*.py",
+        "debug_*.py",
+        "analysis_*.py",
     ]
     out: list[Path] = []
     for g in globs:
@@ -88,6 +93,7 @@ def main() -> int:
     artifacts = hidden / "artifacts"
     checkpoints = hidden / "checkpoints"
     cache = hidden / "cache"
+    scripts = hidden / "scripts"
 
     moves: list[tuple[Path, Path]] = []
     for p in iter_candidates(work_dir):
@@ -99,6 +105,9 @@ def main() -> int:
             target_dir = checkpoints
         elif p.name == "pipeline_state.json":
             target_dir = hidden
+        elif p.suffix == ".py":
+            # AI 临时脚本移动到 scripts 目录
+            target_dir = scripts
         else:
             target_dir = artifacts
         dst = target_dir / p.name
@@ -128,6 +137,7 @@ def main() -> int:
     artifacts.mkdir(parents=True, exist_ok=True)
     checkpoints.mkdir(parents=True, exist_ok=True)
     cache.mkdir(parents=True, exist_ok=True)
+    scripts.mkdir(parents=True, exist_ok=True)
 
     moved = 0
     for src, dst in moves:

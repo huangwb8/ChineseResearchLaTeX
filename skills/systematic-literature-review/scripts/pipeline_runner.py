@@ -162,12 +162,18 @@ class PipelineRunner:
         if self.cache_enabled:
             self.cache_dir = self.hidden_dir / layout.get("cache_dir_name", "cache") / "api"
 
-        for d in [self.hidden_dir, self.artifacts_dir, self.reference_dir]:
+        # AI 临时脚本目录（供 AI 在工作流中创建临时脚本使用）
+        self.scripts_dir = self.hidden_dir / "scripts"
+
+        for d in [self.hidden_dir, self.artifacts_dir, self.reference_dir, self.scripts_dir]:
             d.mkdir(parents=True, exist_ok=True)
         if self.cache_dir is not None:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             # 设置缓存目录环境变量（供 api_cache.py 使用）
             os.environ["SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR"] = str(self.cache_dir)
+
+        # 设置 AI 临时脚本目录环境变量（供 AI 创建的临时脚本使用）
+        os.environ["SYSTEMATIC_LITERATURE_REVIEW_SCRIPTS_DIR"] = str(self.scripts_dir)
 
         word_budget_cfg = (self.config.get("word_budget") or {}) if isinstance(self.config, dict) else {}
         outputs_cfg = word_budget_cfg.get("outputs", {}) if isinstance(word_budget_cfg, dict) else {}
@@ -874,6 +880,28 @@ class PipelineRunner:
                 print(f"✗ 阶段 {name} 未完成")
                 self.save_state()
                 return False
+
+        # Pipeline 完成后自动整理工作目录
+        print("\n[整理] 移动中间文件到隐藏目录")
+        try:
+            organize_script = Path(__file__).parent / "organize_run_dir.py"
+            result = subprocess.run(
+                [sys.executable, str(organize_script), "--work-dir", str(self.work_dir), "--apply"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                if "no moves needed" in result.stdout:
+                    print("  ✓ 无需整理（目录已整洁）")
+                else:
+                    print("  ✓ 整理完成")
+            else:
+                # 非零退出码是真正的错误
+                error_msg = result.stderr.strip() or result.stdout.strip() or "未知错误"
+                print(f"  ⚠️ 整理失败（非致命）: {error_msg}")
+        except Exception as e:
+            print(f"  ⚠️ 整理失败（非致命）: {e}")
+
         return True
 
 

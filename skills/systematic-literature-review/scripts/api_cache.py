@@ -44,12 +44,21 @@ logger = logging.getLogger(__name__)
 # 缓存配置
 # ============================================================================
 
-DEFAULT_CACHE_DIR = Path(
-    os.environ.get(
-        "SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR",
-        ".systematic-literature-review/cache/api",
-    )
-)
+def _get_default_cache_dir() -> Optional[Path]:
+    """
+    获取默认缓存目录。
+
+    优先使用环境变量 SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR。
+    如果未设置，返回 None 并在运行时禁用缓存（避免使用相对路径导致跨 run 污染）。
+    """
+    env_cache_dir = os.environ.get("SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR")
+    if env_cache_dir:
+        return Path(env_cache_dir)
+    # 如果环境变量未设置，返回 None（禁用缓存）
+    return None
+
+
+DEFAULT_CACHE_DIR = _get_default_cache_dir()
 DEFAULT_TTL = 86400  # 24小时（秒）
 CACHE_VERSION = 'v1'  # 缓存格式版本
 
@@ -120,21 +129,29 @@ class CacheStats:
 class CacheStorage:
     """缓存存储管理器"""
 
-    def __init__(self, cache_dir: Path = DEFAULT_CACHE_DIR, ttl: int = DEFAULT_TTL):
+    def __init__(self, cache_dir: Optional[Path] = None, ttl: int = DEFAULT_TTL):
         """
         初始化缓存存储
 
         Args:
-            cache_dir: 缓存目录路径
+            cache_dir: 缓存目录路径，None 时尝试使用环境变量或禁用缓存
             ttl: 缓存过期时间（秒）
         """
-        env_dir = os.environ.get("SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR")
-        if env_dir is None and Path(cache_dir) == DEFAULT_CACHE_DIR:
-            logger.info(
-                f"SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR 未设置，"
-                f"使用默认缓存目录: {cache_dir}"
+        # 优先使用传入的 cache_dir，其次使用环境变量，最后禁用缓存
+        if cache_dir is None:
+            cache_dir = DEFAULT_CACHE_DIR
+        if cache_dir is None:
+            logger.warning(
+                "SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR 未设置，缓存已禁用。"
+                "设置该环境变量以启用 API 缓存（避免使用相对路径导致跨 run 污染）。"
             )
-        self.cache_dir = cache_dir
+            self.enabled = False
+            self.cache_dir = None
+            self.ttl = ttl
+            return
+
+        self.enabled = True
+        self.cache_dir = Path(cache_dir)
         self.ttl = ttl
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -177,6 +194,10 @@ class CacheStorage:
         Returns:
             缓存的数据，如果不存在或已过期则返回 None
         """
+        if not self.enabled:
+            CacheStats.record_miss()
+            return None
+
         cache_key = self._get_cache_key(url, params)
         cache_file = self._get_cache_file(cache_key)
 
@@ -215,6 +236,9 @@ class CacheStorage:
             params: 请求参数
             data: 要缓存的数据
         """
+        if not self.enabled:
+            return
+
         cache_key = self._get_cache_key(url, params)
         cache_file = self._get_cache_file(cache_key)
 

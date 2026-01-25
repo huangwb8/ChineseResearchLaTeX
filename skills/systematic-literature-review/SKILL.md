@@ -273,6 +273,48 @@ cost_tracking:
 - 评分完成后，使用 `--resume-from 4` 继续后续阶段
 
 
+## 文件操作规范（工作目录隔离）
+
+### 强制规则
+
+1. **所有中间文件必须存放在 `{work_dir}/.systematic-literature-review/` 目录内**
+2. 最终交付物存放在工作目录根部（以 `{topic}_` 为前缀）
+3. **AI 临时脚本必须存放在 `{work_dir}/.systematic-literature-review/scripts/`**
+
+### 获取工作目录
+
+```python
+import os
+from pathlib import Path
+
+work_dir = Path(os.environ["SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT"])
+scripts_dir_env = os.environ.get("SYSTEMATIC_LITERATURE_REVIEW_SCRIPTS_DIR")
+scripts_dir = Path(scripts_dir_env) if scripts_dir_env else (work_dir / ".systematic-literature-review" / "scripts")
+artifacts_dir = work_dir / ".systematic-literature-review" / "artifacts"
+```
+
+### 创建新文件时
+
+```python
+# ✅ 正确：使用相对路径拼接
+output_path = artifacts_dir / "results.json"
+temp_script = scripts_dir / "temp_analysis.py"
+
+# ❌ 错误：直接使用相对路径（可能污染其他目录）
+output_path = Path("results.json")
+
+# ❌ 错误：使用绝对路径（破坏隔离）
+output_path = Path("/tmp/results.json")
+```
+
+### 禁止行为
+
+- ❌ 不要在工作目录根部创建临时脚本或中间文件
+- ❌ 不要使用绝对路径（如 `/tmp/temp.txt`）写入临时文件
+- ❌ 不要读取/写入其他 run 目录的文件
+- ✅ 使用环境变量 `SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT` 获取工作目录
+- ✅ 使用环境变量 `SYSTEMATIC_LITERATURE_REVIEW_SCRIPTS_DIR` 获取临时脚本目录
+
 ## 环境与工具
 - Python 3.9+，依赖安装：`pip install -r requirements.txt`
 - LaTeX（含 xelatex/bibtex）、pandoc

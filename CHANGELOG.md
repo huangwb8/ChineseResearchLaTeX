@@ -57,14 +57,23 @@
   - `skills/systematic-literature-review/scripts/validate_citation_distribution.py`：新增 `--min-ref-util`（默认不启用硬门槛），避免“为达利用率而强行堆砌引用”
 
 - **systematic-literature-review v1.0.7 → v1.0.8**：质量可观测性 + 更稳健的回滚与路径解析
-  - `skills/systematic-literature-review/scripts/generate_validation_report.py`：新增“摘要覆盖率（selected_papers）”统计，避免无感引用缺摘要文献
+  - `skills/systematic-literature-review/scripts/generate_validation_report.py`：新增"摘要覆盖率（selected_papers）"统计，避免无感引用缺摘要文献
   - `skills/systematic-literature-review/scripts/pipeline_runner.py`：验证报告阶段透传 selected_papers 与摘要阈值，确保摘要覆盖率可见
   - `skills/systematic-literature-review/scripts/select_references.py`：`min_abstract_chars` 默认值与 `config.yaml` 对齐（兜底 80）；BibTeX 转义增强（补充 `^`/`~`）
   - `skills/systematic-literature-review/scripts/path_scope.py`：异常不再静默吞掉；候选路径为空时显式报错；支持 `SYSTEMATIC_LITERATURE_REVIEW_PATH_SCOPE_DEBUG=1` 输出解析结果
   - `skills/systematic-literature-review/scripts/multi_language.py`：新增 `--auto-restore`，编译失败/需要 AI 修复时自动回滚到编译前备份并保留 `.broken` 副本
   - `skills/systematic-literature-review/scripts/openalex_search.py`：ASCII fallback 触发条件更保守并增加日志，避免搜索语义被无声降级
   - `skills/systematic-literature-review/scripts/validate_counts.py`：明确数字计数口径，新增 `words_digits` 与 `words_total_including_digits`
-  - 文档同步：`skills/systematic-literature-review/SKILL.md`、`skills/systematic-literature-review/references/ai_scoring_prompt.md` 明确“低分不分配子主题”，并同步多语言回滚提示
+  - 文档同步：`skills/systematic-literature-review/SKILL.md`、`skills/systematic-literature-review/references/ai_scoring_prompt.md` 明确"低分不分配子主题"，并同步多语言回滚提示
+
+- **systematic-literature-review v1.0.8 → v1.0.9**：工作目录隔离机制增强（AI 临时脚本托管 + Pipeline 自动整理 + A 轮批判性测试修复）
+  - `skills/systematic-literature-review/scripts/pipeline_runner.py`：新增 `scripts_dir` 目录创建及 `SYSTEMATIC_LITERATURE_REVIEW_SCRIPTS_DIR` 环境变量，供 AI 临时脚本存放；Pipeline 完成后自动调用 `organize_run_dir.py --apply` 整理工作目录；改进自动整理日志，区分"无需整理"与"整理失败"
+  - `skills/systematic-literature-review/scripts/path_scope.py`：新增 `require_scope` 装饰器，可强制校验函数的 Path 参数都在 scope_root 内；新增 URL 排除逻辑（`http://`/`https://` 开头的参数不校验）；新增短别名支持（`SLR_SCOPE_ROOT`、`SLR_PATH_SCOPE_DEBUG`）
+  - `skills/systematic-literature-review/scripts/validate_workdir_cleanliness.py`（新增）：校验工作目录根部整洁性，检测中间文件泄漏；非隐藏子目录视为 unexpected（严格隔离）
+  - `skills/systematic-literature-review/scripts/organize_run_dir.py`：`FINAL_SUFFIXES` 补充 `_验证报告.md`；新增 AI 临时脚本（`temp_*.py`/`debug_*.py`/`analysis_*.py`）识别与移动到 `scripts/` 目录
+  - `skills/systematic-literature-review/scripts/api_cache.py`：`DEFAULT_CACHE_DIR` 改为函数动态获取，环境变量未设置时禁用缓存（避免相对路径导致跨 run 污染）；`CacheStorage` 新增 `enabled` 标志
+  - `skills/systematic-literature-review/config.yaml`：`layout` 新增 `scripts_dir_name: "scripts"`
+  - `skills/systematic-literature-review/SKILL.md`：新增"文件操作规范（工作目录隔离）"章节，明确 AI 临时脚本与中间文件的存放约定；修正示例代码中 `os.environ.get()` 的类型错误
 
 ### Updated（文档更新）
 

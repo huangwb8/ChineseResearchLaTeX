@@ -14,12 +14,15 @@ from pathlib import Path
 from typing import Optional, Union
 
 
+# 环境变量名（支持长名称和短别名）
 ENV_SCOPE_ROOT = "SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT"
+ENV_SCOPE_ROOT_SHORT = "SLR_SCOPE_ROOT"  # 短别名
 ENV_PATH_SCOPE_DEBUG = "SYSTEMATIC_LITERATURE_REVIEW_PATH_SCOPE_DEBUG"
+ENV_PATH_SCOPE_DEBUG_SHORT = "SLR_PATH_SCOPE_DEBUG"  # 短别名
 
 
 def _debug(msg: str) -> None:
-    if os.environ.get(ENV_PATH_SCOPE_DEBUG):
+    if os.environ.get(ENV_PATH_SCOPE_DEBUG) or os.environ.get(ENV_PATH_SCOPE_DEBUG_SHORT):
         print(f"[path_scope] {msg}", file=sys.stderr)
 
 
@@ -104,8 +107,8 @@ def resolve_and_check(path: Union[str, Path], scope_root: Path, must_exist: bool
 
 
 def get_scope_root_from_env() -> Optional[Path]:
-    """从环境变量读取 scope_root（SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT）。"""
-    env_var = os.environ.get(ENV_SCOPE_ROOT)
+    """从环境变量读取 scope_root（支持长名称和短别名）。"""
+    env_var = os.environ.get(ENV_SCOPE_ROOT) or os.environ.get(ENV_SCOPE_ROOT_SHORT)
     return Path(env_var).expanduser().resolve() if env_var else None
 
 
@@ -114,3 +117,55 @@ def get_effective_scope_root(scope_root: Optional[Union[str, Path]]) -> Optional
     if scope_root is None:
         return get_scope_root_from_env()
     return Path(scope_root).expanduser().resolve()
+
+
+def require_scope(func):
+    """
+    装饰器：确保函数的 Path 参数都在 scope_root 内。
+
+    使用示例：
+        @require_scope
+        def process_papers(input_file: Path, output_file: Path):
+            ...
+
+    注意：
+        - 需要设置 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 环境变量
+        - 会检查所有 Path 或 str 类型的参数
+        - 如果路径不在 scope_root 内，会抛出 ValueError
+    """
+    import functools
+    import inspect
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        scope_root = get_scope_root_from_env()
+        if scope_root is None:
+            raise RuntimeError(
+                f"SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 环境变量未设置，无法校验路径隔离。"
+                f"调用函数: {func.__name__}"
+            )
+
+        # 检查所有 Path 类型的参数
+        sig = inspect.signature(func)
+        bound = sig.bind(*args, **kwargs)
+        bound.apply_defaults()
+
+        for name, value in bound.arguments.items():
+            if isinstance(value, (Path, str)) and value:
+                try:
+                    # 排除 URL（http/https 开头）
+                    if isinstance(value, str) and value.startswith(("http://", "https://")):
+                        continue
+                    # 只校验看起来像路径的字符串（包含分隔符或以 . 开头）
+                    if isinstance(value, str):
+                        if "/" not in value and "\\" not in value and not value.startswith("."):
+                            continue
+                    resolve_and_check(value, scope_root)
+                except ValueError as e:
+                    raise ValueError(
+                        f"函数 {func.__name__} 参数 '{name}' 路径校验失败：{e}"
+                    ) from e
+
+        return func(*args, **kwargs)
+
+    return wrapper
