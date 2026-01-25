@@ -38,9 +38,25 @@
 
 ## [Unreleased]
 
-### Added（新增）
+### Changed（变更）
 
-- **AGENTS.md / CLAUDE.md**：重构文档结构为"硬链接"模式
+- **systematic-literature-review v1.0.5**：检索与摘要补齐的可控性/可复现性加固
+  - 多源检索自动降级机制：MCP → OpenAlex → Semantic Scholar → Crossref → DuckDuckGo
+  - 摘要补齐默认启用，多源补齐缺失摘要（OpenAlex/Crossref/Semantic Scholar）
+  - API 缓存支持可复现性，减少重复请求与限流风险
+  - 检索质量评估与可视化，自动生成优化建议
+
+### Updated（文档更新）
+
+- 更新 [skills/README.md](skills/README.md)：优化 systematic-literature-review 技能描述
+  - 新增"多源检索与自动降级"、"摘要补齐默认启用"、"检索与摘要缓存"、"检索质量评估"特点说明
+  - 更新工作流第二步描述，补充多源降级、摘要补齐、检索质量评估说明
+- 更新 [README.md](README.md)：优化 systematic-literature-review 文献调研阶段描述
+  - 补充"多源降级、摘要补齐、检索质量评估与可视化"特性说明
+
+---
+
+## [v3.2.3] - 2026-01-24
   - AGENTS.md 作为通用规范的唯一真相来源
   - CLAUDE.md 采用硬链接模式：包含 AGENTS.md 完整内容 + Claude Code 特定说明
   - 添加 `<!-- HARD_LINK_START -->` / `<!-- HARD_LINK_END -->` 标记同步区域

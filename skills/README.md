@@ -23,7 +23,10 @@ graph LR
 
 **第二步：规范化文献综述**
 - 使用 `systematic-literature-review` 进行全面、深入的文献调研
+- 支持多源检索与自动降级（MCP → OpenAlex → Semantic Scholar → Crossref）
 - 生成专家级综述文档（支持 Premium/Standard/Basic 三档）
+- 摘要补齐默认启用，提升文献评估准确性
+- 检索质量评估与可视化，自动生成优化建议
 - 导出 PDF 与 Word 双格式
 
 **第三步：优化项目指南** ⭐ 重要
@@ -215,8 +218,12 @@ graph LR
 
 **技能特点**：
 - **AI 自定检索词**：根据主题特性自主规划查询变体（通常 5-15 组）
+- **多源检索与自动降级**：MCP → OpenAlex → Semantic Scholar → Crossref → DuckDuckGo
 - **AI 语义评分**：逐篇阅读标题摘要，1–10 分相关性评分 + 子主题自动分组
 - **高分优先选文**：按高分优先比例（60–80%）和目标数量选文
+- **摘要补齐默认启用**：多源补齐缺失摘要（OpenAlex/Crossref/Semantic Scholar），提升文献评估准确性
+- **检索与摘要缓存**：API 缓存支持可复现性，减少重复请求与限流风险
+- **检索质量评估**：查询效果可视化，自动生成优化建议
 - **字数预算生成**：自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段）
 - **三档位支持**：Premium（旗舰级）、Standard（标准级）、Basic（基础级）
 - **多语言支持**：支持 en/zh/ja/de/fr/es 翻译与智能编译
