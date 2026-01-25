@@ -95,12 +95,8 @@ def _work_to_paper(work: Dict[str, Any], abstract_fetcher: Optional["AbstractFet
                 if name:
                     authors.append(str(name).strip())
 
-    # 获取摘要：优先从 OpenAlex，若缺失则从备用 API 补充
+    # 获取摘要：优先从 OpenAlex
     abstract = _reconstruct_abstract(work.get("abstract_inverted_index"))
-
-    # 如果 OpenAlex 没有摘要且启用了备用获取器，尝试从其他 API 获取
-    if not abstract and abstract_fetcher is not None and doi:
-        abstract = abstract_fetcher.fetch_by_doi(doi, topic=topic)
 
     paper = {
         "title": work.get("title") or "",
@@ -113,6 +109,78 @@ def _work_to_paper(work: Dict[str, Any], abstract_fetcher: Optional["AbstractFet
         "authorships": authorships,  # 保留原始 authorships 数据，供后续处理使用
     }
     return paper
+
+
+def _enrich_missing_abstracts(
+    papers: list[Dict[str, Any]],
+    *,
+    topic: str,
+    cache_dir: Optional[Path],
+    retry_rounds: int,
+    backoff_base_seconds: float,
+    min_abstract_chars: int,
+    max_papers_total: int,
+    abstract_timeout: int,
+) -> None:
+    """
+    对缺失摘要的条目做“有限补齐”：
+      - 仅处理 abstract 缺失/过短的条目
+      - 每篇文献最多 retry_rounds 轮（每轮内部会按来源优先级尝试多个 API）
+      - 仍失败则标记质量提示，供后续阶段“尽量不引用”
+    """
+    if AbstractFetcher is None:
+        return
+    if not papers:
+        return
+
+    max_papers_total = int(max_papers_total)
+    retry_rounds = max(0, int(retry_rounds))
+    min_abstract_chars = max(0, int(min_abstract_chars))
+    backoff_base_seconds = float(backoff_base_seconds)
+
+    # 初始化 fetcher（内部无缓存；缓存由 api_cache.py 负责）
+    fetcher = AbstractFetcher(timeout=int(abstract_timeout))
+
+    # 优先补齐：有 DOI 的缺摘要文献
+    def _needs(p: Dict[str, Any]) -> bool:
+        a = p.get("abstract") or ""
+        return not isinstance(a, str) or len(a.strip()) < min_abstract_chars
+
+    candidates = [p for p in papers if _needs(p)]
+    candidates.sort(key=lambda p: (0 if (p.get("doi") or "") else 1, -int(p.get("year") or 0)))
+    if max_papers_total > 0:
+        candidates = candidates[:max_papers_total]
+
+    for p in candidates:
+        doi = str(p.get("doi") or "").strip()
+        title = str(p.get("title") or "").strip()
+
+        filled = False
+        attempts = 0
+        for r in range(max(1, retry_rounds)):
+            attempts += 1
+            abstract = None
+            if doi:
+                abstract = fetcher.fetch_by_doi(doi, topic=topic)
+            if not abstract and title:
+                abstract = fetcher.fetch_by_title(title, topic=topic)
+            if abstract and isinstance(abstract, str) and len(abstract.strip()) >= min_abstract_chars:
+                p["abstract"] = abstract.strip()
+                p["abstract_status"] = "present"
+                p["abstract_enrichment"] = {"attempts": attempts, "filled": True}
+                filled = True
+                break
+            # 退避：避免重试风暴
+            if r < max(0, retry_rounds - 1):
+                time.sleep(max(0.0, backoff_base_seconds) * (2**r))
+
+        if not filled:
+            # 保持原有 abstract（可能为空/过短），并标记提示
+            p["abstract_status"] = "missing"
+            p["quality_warnings"] = list(p.get("quality_warnings") or [])
+            if "missing_abstract" not in p["quality_warnings"]:
+                p["quality_warnings"].append("missing_abstract")
+            p["abstract_enrichment"] = {"attempts": attempts, "filled": False}
 
 
 def get_work_by_doi(
@@ -181,7 +249,7 @@ def search_openalex(
     mailto: Optional[str],
     min_year: Optional[int],
     max_year: Optional[int],
-    enrich_abstracts: bool = False,  # 默认禁用，因时间开销大且收益有限
+    enrich_abstracts: bool = True,  # 默认启用：尽量保证用于写作/对齐检查的文献有摘要
     abstract_timeout: int = 2,  # 减少超时时间
     cache_dir: Optional[Path] = None,  # API 缓存目录
 ) -> list[Dict[str, Any]]:
@@ -192,11 +260,6 @@ def search_openalex(
             "Missing dependency: requests. Install it to use OpenAlex auto-search.\n"
             "  pip install requests"
         ) from e
-
-    # 初始化多源摘要获取器（如果启用且模块可用）
-    abstract_fetcher = None
-    if enrich_abstracts and AbstractFetcher is not None:
-        abstract_fetcher = AbstractFetcher(timeout=abstract_timeout)
 
     # 初始化缓存存储（如果提供了 cache_dir）
     cache_storage = None
@@ -269,7 +332,7 @@ def search_openalex(
                 break
 
             for work in results:
-                out.append(_work_to_paper(work, abstract_fetcher=abstract_fetcher, topic=query))
+                out.append(_work_to_paper(work, abstract_fetcher=None, topic=query))
                 if len(out) >= max_results:
                     break
 
@@ -300,12 +363,28 @@ def search_openalex(
             break
 
     # 输出摘要补充统计信息
-    if abstract_fetcher is not None:
-        stats = abstract_fetcher.get_statistics()
-        if stats.total_papers > 0:
-            import sys
-            print(f"Abstract enrichment statistics:", file=sys.stderr)
-            print(f"  {stats}", file=sys.stderr)
+    # 默认补齐缺摘要（有上限 + 有限重试）
+    if enrich_abstracts:
+        # 优先从 config.yaml 取参数（找不到则用保守默认值）
+        cfg = {}
+        if load_config is not None:
+            try:
+                cfg = load_config()
+            except Exception:
+                cfg = {}
+        search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
+        ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+
+        _enrich_missing_abstracts(
+            deduped,
+            topic=query,
+            cache_dir=cache_dir,
+            retry_rounds=int(ae.get("retry_rounds", 3)),
+            backoff_base_seconds=float(ae.get("backoff_base_seconds", 0.5)),
+            min_abstract_chars=int(ae.get("min_abstract_chars", 80)),
+            max_papers_total=int(ae.get("max_papers_total", 200)),
+            abstract_timeout=int(abstract_timeout or 2),
+        )
 
     return deduped
 
@@ -318,9 +397,9 @@ def main() -> int:
     parser.add_argument("--mailto", default=None, help="Optional contact email for OpenAlex polite pool")
     parser.add_argument("--min-year", type=int, default=None, help="Filter: min publication year")
     parser.add_argument("--max-year", type=int, default=None, help="Filter: max publication year")
-    # 默认禁用摘要补充（时间开销大且可能触发第三方限流）；显式 --enrich-abstracts 才启用
-    parser.add_argument("--enrich-abstracts", dest="enrich_abstracts", action="store_true", default=False, help="Enable multi-source abstract enrichment (default: disabled)")
-    parser.add_argument("--no-enrich-abstracts", dest="enrich_abstracts", action="store_false", help="Disable multi-source abstract enrichment (kept for backward compatibility)")
+    # 默认启用“补摘要”（有限重试 + 上限控制）；可用 --no-enrich-abstracts 关闭
+    parser.add_argument("--enrich-abstracts", dest="enrich_abstracts", action="store_true", default=True, help="Enable multi-source abstract enrichment (default: enabled)")
+    parser.add_argument("--no-enrich-abstracts", dest="enrich_abstracts", action="store_false", help="Disable multi-source abstract enrichment")
     parser.add_argument("--abstract-timeout", type=int, default=5, help="Timeout for abstract enrichment APIs (default: 5)")
     parser.add_argument("--cache-dir", type=Path, default=None, help="API cache directory path (default: no caching)")
     args = parser.parse_args()

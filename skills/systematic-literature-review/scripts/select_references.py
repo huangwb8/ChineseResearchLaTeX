@@ -174,7 +174,18 @@ def _select_papers(
             continue
         unique[k] = p
     items = list(unique.values())
-    items.sort(key=lambda x: (float(x.get("score") or 0), x.get("subtopic", "")), reverse=True)
+    # 优先保证摘要覆盖率：摘要缺失会显著影响后续写作与对齐检查
+    # - 先按“有摘要”过滤/排序
+    # - 若不足以满足最小参考数，再用“无摘要”条目补齐（并在 rationale 中给出提示）
+    def _has_abstract(p: Dict[str, Any]) -> bool:
+        a = p.get("abstract") or ""
+        return isinstance(a, str) and len(a.strip()) >= 30
+
+    items_with_abs = [p for p in items if _has_abstract(p)]
+    items_without_abs = [p for p in items if not _has_abstract(p)]
+
+    items_with_abs.sort(key=lambda x: (float(x.get("score") or 0), x.get("subtopic", "")), reverse=True)
+    items_without_abs.sort(key=lambda x: (float(x.get("score") or 0), x.get("subtopic", "")), reverse=True)
 
     total = len(items)
     if total == 0:
@@ -182,17 +193,31 @@ def _select_papers(
 
     frac = (high_score_min + high_score_max) / 2.0
     high_count = max(0, min(total, math.ceil(total * frac)))
-    selected = items[:high_count]
+    selected = items_with_abs[: min(high_count, len(items_with_abs))]
 
     # 若未满足最小参考数，继续从剩余中补齐
-    idx = high_count
-    while len(selected) < min_refs and idx < total:
-        selected.append(items[idx])
+    idx = len(selected)
+    while len(selected) < min_refs and idx < len(items_with_abs):
+        selected.append(items_with_abs[idx])
         idx += 1
+
+    # 仍不足：允许使用“无摘要”条目补齐（但会在 rationale 中显式提示）
+    j = 0
+    while len(selected) < min_refs and j < len(items_without_abs):
+        selected.append(items_without_abs[j])
+        j += 1
 
     # 控制最大数量
     if len(selected) > max_refs:
         selected = selected[:max_refs]
+
+    # 标记：若摘要缺失，建议写作时不引用（但保留在候选/选文中以便替换或手动核验）
+    for p in selected:
+        if not _has_abstract(p):
+            p["do_not_cite"] = True
+            p["quality_warnings"] = list(p.get("quality_warnings") or [])
+            if "missing_abstract" not in p["quality_warnings"]:
+                p["quality_warnings"].append("missing_abstract")
 
     # 统计选中文献的实际分数分布
     selected_scores = [float(p.get("score") or 0) for p in selected]
@@ -213,6 +238,8 @@ def _select_papers(
         "min_refs": min_refs,
         "max_refs": max_refs,
         "score_distribution": score_distribution,
+        "missing_abstract_candidates": len(items_without_abs),
+        "missing_abstract_selected": sum(1 for p in selected if not _has_abstract(p)),
     }
     return selected, rationale
 
@@ -259,6 +286,14 @@ def main() -> int:
         entry, entry_warnings = _render_bib_entry(key, p)
         bib_entries.append(entry)
         warnings.extend(entry_warnings)
+
+    # 提示：若仍包含“摘要缺失”条目，建议写作时不要引用它们（或优先替换为有摘要的同等相关文献）
+    missing_abs_selected = int((rationale or {}).get("missing_abstract_selected", 0) or 0)
+    if missing_abs_selected > 0:
+        print(
+            f"⚠️ 选中文献中仍有 {missing_abs_selected} 篇摘要缺失/过短：建议写作时不引用或尽量替换为有摘要的文献",
+            file=sys.stderr,
+        )
     args.bib.write_text("\n".join(bib_entries), encoding="utf-8")
     if warnings:
         print("⚠️ BibTeX 清洗提示:", file=sys.stderr)

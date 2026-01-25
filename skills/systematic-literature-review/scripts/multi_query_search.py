@@ -51,6 +51,11 @@ except ImportError:
     search_crossref = None  # type: ignore[assignment]
 
 try:
+    from multi_source_abstract import AbstractFetcher
+except ImportError:
+    AbstractFetcher = None  # type: ignore[assignment]
+
+try:
     from config_loader import load_config
 except ImportError:
     load_config = None  # type: ignore[assignment]
@@ -265,6 +270,83 @@ def _load_search_config() -> Dict[str, Any]:
         return {}
 
 
+def _enrich_missing_abstracts_global(
+    papers: list[dict],
+    *,
+    topic: str,
+    search_cfg: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    全局补齐摘要（有限上限 + 有限重试）。
+
+    返回简要统计，写入 search_log 便于调试与后续写作规避“摘要缺失”文献。
+    """
+    ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+    if not bool(ae.get("enabled", False)):
+        return {"enabled": False}
+
+    if AbstractFetcher is None or not papers:
+        return {"enabled": True, "skipped": True, "reason": "AbstractFetcher not available or empty papers"}
+
+    max_total = int(ae.get("max_papers_total", 200))
+    retry_rounds = int(ae.get("retry_rounds", 3))
+    backoff_base = float(ae.get("backoff_base_seconds", 0.5))
+    min_chars = int(ae.get("min_abstract_chars", 80))
+
+    def needs(p: dict) -> bool:
+        a = p.get("abstract") or ""
+        return (not isinstance(a, str)) or len(a.strip()) < min_chars
+
+    candidates = [p for p in papers if needs(p)]
+    candidates.sort(key=lambda p: (0 if (p.get("doi") or "") else 1, -int(p.get("year") or 0)))
+    if max_total > 0:
+        candidates = candidates[:max_total]
+
+    fetcher = AbstractFetcher(timeout=3)
+
+    filled = 0
+    attempted = 0
+    for p in candidates:
+        doi = str(p.get("doi") or "").strip()
+        title = str(p.get("title") or "").strip()
+
+        attempted += 1
+        ok = False
+        for r in range(max(1, retry_rounds)):
+            abstract = None
+            if doi:
+                abstract = fetcher.fetch_by_doi(doi, topic=topic)
+            if not abstract and title:
+                abstract = fetcher.fetch_by_title(title, topic=topic)
+            if abstract and isinstance(abstract, str) and len(abstract.strip()) >= min_chars:
+                p["abstract"] = abstract.strip()
+                p["abstract_status"] = "present"
+                p["abstract_enrichment"] = {"attempts": r + 1, "filled": True}
+                ok = True
+                filled += 1
+                break
+            if r < max(0, retry_rounds - 1):
+                time.sleep(max(0.0, backoff_base) * (2**r))
+
+        if not ok:
+            p["abstract_status"] = "missing"
+            p["quality_warnings"] = list(p.get("quality_warnings") or [])
+            if "missing_abstract" not in p["quality_warnings"]:
+                p["quality_warnings"].append("missing_abstract")
+            p["abstract_enrichment"] = {"attempts": retry_rounds, "filled": False}
+
+    missing_after = sum(1 for p in papers if needs(p))
+    return {
+        "enabled": True,
+        "attempted": attempted,
+        "filled": filled,
+        "missing_after": missing_after,
+        "min_abstract_chars": min_chars,
+        "retry_rounds": retry_rounds,
+        "max_papers_total": max_total,
+    }
+
+
 def _search_one_query_with_fallback(
     query: str,
     *,
@@ -323,6 +405,7 @@ def _search_one_query_with_fallback(
                 min_year=min_year,
                 max_year=max_year,
                 cache_dir=cache_dir,
+                enrich_abstracts=False,  # multi_query 场景统一在全局去重后补摘要，避免 per-query 扩散请求
             )
         if provider == "semantic_scholar":
             if search_semantic_scholar is None:
@@ -475,7 +558,7 @@ def multi_search(
     max_year: Optional[int],
     polite_delay: tuple[float, float] = (0.5, 2.0),
     cache_dir: Optional[Path] = None,  # API 缓存目录
-) -> tuple[List[Dict[str, Any]], List[SearchLog], Dict[str, Any]]:
+) -> tuple[List[Dict[str, Any]], List[SearchLog], Dict[str, Any], Dict[str, Any]]:
     """
     多查询并行检索
 
@@ -598,6 +681,14 @@ def multi_search(
     # 全局去重
     deduped = _dedupe_papers(all_papers)
 
+    # 全局补摘要（默认启用：上限 + 有限重试）
+    topic_for_enrich = (queries[0].get("query") or "") if queries else ""
+    abstract_enrichment_summary = _enrich_missing_abstracts_global(
+        deduped,
+        topic=topic_for_enrich,
+        search_cfg=search_cfg,
+    )
+
     rate_limit_summary: Dict[str, Any] = {}
     if rate_limiter is not None:
         try:
@@ -605,7 +696,7 @@ def multi_search(
         except Exception:
             rate_limit_summary = {}
 
-    return deduped, logs, rate_limit_summary
+    return deduped, logs, rate_limit_summary, abstract_enrichment_summary
 
 
 def main() -> int:
@@ -679,7 +770,7 @@ def main() -> int:
     print(f"加载了 {len(queries)} 个查询")
 
     # 执行多查询检索
-    papers, logs, rate_limit_summary = multi_search(
+    papers, logs, rate_limit_summary, abstract_enrichment_summary = multi_search(
         queries=queries,
         max_results_per_query=args.max_results_per_query,
         mailto=args.mailto,
@@ -712,6 +803,8 @@ def main() -> int:
     }
     if rate_limit_summary:
         log_data["rate_limit_summary"] = rate_limit_summary
+    if abstract_enrichment_summary:
+        log_data["abstract_enrichment_summary"] = abstract_enrichment_summary
     with open(args.search_log, "w", encoding="utf-8") as f:
         json.dump(log_data, f, ensure_ascii=False, indent=2)
 

@@ -2,7 +2,7 @@
 
 skill_info:
   name: systematic-literature-review
-  version: 1.0.3
+  version: 1.0.4
   description: 令人印象深刻的精准、全面的专家级综述
   category: writing
 
@@ -102,6 +102,19 @@ search:
     openalex:
       polite_delay: 0.25
       polite_pool_email: null
+
+  # 摘要补充（默认启用：优先保证用于写作/对齐检查的文献尽量有摘要）
+  #
+  # 说明：
+  # - OpenAlex 并非所有条目都有 abstract_inverted_index，因此 abstract 可能为空。
+  # - 开启后会对缺失摘要的条目进行“多源补齐”（Crossref/Semantic Scholar/PubMed/OpenAlex-by-doi），
+  #   并对每篇文献设置有限重试轮次；仍失败则标记为“摘要缺失”，建议写作时不要引用。
+  abstract_enrichment:
+    enabled: true
+    max_papers_total: 200          # 单次检索最多补齐多少篇（避免对候选库全量补齐导致限流/耗时爆炸）
+    retry_rounds: 3               # 单篇文献的补齐轮次上限（每轮会按优先级尝试多个来源）
+    backoff_base_seconds: 0.5     # 重试退避基础时间（秒），每轮指数退避
+    min_abstract_chars: 80        # 认为“有效摘要”的最小字符数；更短的会继续尝试补齐
 
   # MCP 配置（可选；脚本内仅做降级判断，实际检索由宿主工具提供）
   mcp:

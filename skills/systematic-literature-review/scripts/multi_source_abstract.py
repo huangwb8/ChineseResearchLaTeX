@@ -361,15 +361,14 @@ class AbstractFetcher:
         enable_crossref: 是否启用 Crossref
 
     Note:
-        基于 2026-01-02 测试结果：
-        - Crossref 是唯一可靠的备用 API
-        - Semantic Scholar 的摘要经常被发布者限制
-        - 覆盖率提升有限（+4%），但时间开销大（+1000%）
-        - 建议默认禁用（enrich_abstracts=False），仅在需要时启用
+        OpenAlex 的条目并非都包含摘要，因此在“需要高摘要覆盖率”的场景（写作、对齐检查）
+        可以启用该模块对缺失摘要的条目做多源补齐。
     """
 
-    timeout: int = 2  # 减少超时时间（原 5 秒）
-    max_retries: int = 1  # 减少重试次数（原 2 次）
+    timeout: int = 3
+    # 这里的 max_retries 表示“最多尝试的来源数量（不含 OpenAlex fallback）”，历史命名保留以避免破坏兼容性。
+    # 实际顺序由 _get_api_priority 决定，且始终会在末尾追加 OpenAlex-by-DOI 作为兜底。
+    max_retries: int = 3
     enable_semantic_scholar: bool = True
     enable_pubmed: bool = True
     enable_crossref: bool = True
@@ -395,24 +394,23 @@ class AbstractFetcher:
         """
         is_biomed = _is_biomedical_topic(topic)
 
-        apis = []
-        # Crossref 优先（测试中表现最稳定）
+        # 主来源（最多取 N 个），OpenAlex fallback 始终追加在末尾
+        primary: list[Callable[[str, int], Optional[str]]] = []
         if self.enable_crossref:
-            apis.append(_fetch_from_crossref)
-        # Semantic Scholar（数据质量高，但部分受限）
+            primary.append(_fetch_from_crossref)
         if self.enable_semantic_scholar:
-            apis.append(_fetch_from_semantic_scholar)
-        # PubMed（仅生物医学主题）
-        if self.enable_pubmed and is_biomed:
-            apis.append(_fetch_from_pubmed)
-        # OpenAlex fallback（最后尝试）
-        apis.append(_fetch_from_openalex_by_doi)
-        # 非生物医学主题也可以尝试 PubMed（优先级低）
-        if self.enable_pubmed and not is_biomed:
-            if _fetch_from_openalex_by_doi not in apis:
-                apis.append(_fetch_from_pubmed)
+            primary.append(_fetch_from_semantic_scholar)
+        if self.enable_pubmed:
+            # 生物医学主题优先，其余主题放在更靠后的位置
+            if is_biomed:
+                primary.append(_fetch_from_pubmed)
+            else:
+                primary.append(_fetch_from_pubmed)
 
-        return apis[: self.max_retries]
+        max_sources = max(0, int(self.max_retries))
+        primary = primary[:max_sources] if max_sources else primary
+
+        return primary + [_fetch_from_openalex_by_doi]
 
     def fetch_by_doi(self, doi: str, topic: str = "") -> Optional[str]:
         """
