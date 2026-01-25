@@ -40,20 +40,21 @@
 
 ### Changed（变更）
 
-- **systematic-literature-review v1.0.5**：检索与摘要补齐的可控性/可复现性加固
-  - 多源检索自动降级机制：MCP → OpenAlex → Semantic Scholar → Crossref → DuckDuckGo
-  - 摘要补齐默认启用，多源补齐缺失摘要（OpenAlex/Crossref/Semantic Scholar）
-  - API 缓存支持可复现性，减少重复请求与限流风险
-  - 检索质量评估与可视化，自动生成优化建议
+- **systematic-literature-review v1.0.5 → v1.0.6**：运行提速与上下文/目录膨胀治理（按最小改动落地）
+  - 默认关闭磁盘 API 缓存（新增 `config.yaml:cache.api.enabled=false`），避免 `.systematic-literature-review/cache/api` 文件爆炸
+  - 摘要补齐默认后移到选文后（新增 `config.yaml:search.abstract_enrichment.stage=post_selection`），降低检索阶段耗时与 cache 膨胀
+  - 选文策略引入 `selection.target_refs`（默认 midpoint），避免候选库大时“天然打满 max_refs”
+  - 写作阶段新增证据卡（`evidence_cards_{topic}.jsonl`）与生成脚本 `build_evidence_cards.py`，压缩证据包字段与摘要长度
+  - 新增 `run_pipeline.py`（幂等 work_dir 生成，避免 `{topic}/{topic}` 嵌套目录）与 `reconcile_state_from_outputs.py`（产物反推 state 修复工具）
 
 ### Updated（文档更新）
 
 - 更新 [skills/README.md](skills/README.md)：优化 systematic-literature-review 技能描述
-  - 新增"多源检索与自动降级"、"摘要补齐默认启用"、"检索与摘要缓存"、"检索质量评估"特点说明
-  - 更新工作流第二步描述，补充多源降级、摘要补齐、检索质量评估说明
+  - 更新版本号到 v1.0.6，并同步“摘要补齐后移/缓存默认关闭/target_refs”口径
 - 更新 [README.md](README.md)：优化 systematic-literature-review 文献调研阶段描述
-  - 补充"多源降级、摘要补齐、检索质量评估与可视化"特性说明
-- 新增 systematic-literature-review 优化建议计划：`skills/systematic-literature-review/plans/文献-优化-v202601251132.md`
+  - 更新技能表格版本号到 v1.0.6
+- 更新 `skills/systematic-literature-review/SKILL.md` 与 `skills/systematic-literature-review/README.md`：补齐新配置与工具脚本说明
+- 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251218.md`、`skills/systematic-literature-review/plans/B轮-v202601251218.md` 及对应 `tests/` 目录
 
 ---
 

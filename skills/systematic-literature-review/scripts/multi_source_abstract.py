@@ -637,6 +637,8 @@ Examples:
     parser.add_argument("--output", type=Path, help="Output JSONL file path")
     parser.add_argument("--timeout", type=int, default=5, help="API timeout in seconds (default: 5)")
     parser.add_argument("--max-workers", type=int, default=5, help="Max concurrent workers for batch mode (default: 5)")
+    parser.add_argument("--cache-dir", type=Path, default=None, help="API cache directory path (optional)")
+    parser.add_argument("--cache-ttl-seconds", type=int, default=86400, help="Cache TTL seconds (default: 86400)")
     parser.add_argument("--no-semantic-scholar", action="store_true", help="Disable Semantic Scholar API")
     parser.add_argument("--no-pubmed", action="store_true", help="Disable PubMed API")
     parser.add_argument("--no-crossref", action="store_true", help="Disable Crossref API")
@@ -649,6 +651,8 @@ Examples:
         enable_semantic_scholar=not args.no_semantic_scholar,
         enable_pubmed=not args.no_pubmed,
         enable_crossref=not args.no_crossref,
+        cache_dir=args.cache_dir,
+        cache_ttl_seconds=int(args.cache_ttl_seconds),
     )
 
     # 单 DOI 模式

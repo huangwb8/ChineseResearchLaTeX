@@ -314,8 +314,12 @@ def _enrich_missing_abstracts_global(
     返回简要统计，写入 search_log 便于调试与后续写作规避“摘要缺失”文献。
     """
     ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+    stage = str(ae.get("stage", "search")).strip().lower()
     if not bool(ae.get("enabled", False)):
         return {"enabled": False}
+    if stage != "search":
+        # 默认策略：把摘要补齐后移到选文后（selected_papers），避免对“未选中”候选库做全局补齐导致慢与 cache/api 膨胀。
+        return {"enabled": True, "skipped": True, "stage": stage, "reason": "abstract enrichment stage is not search"}
 
     if AbstractFetcher is None or not papers:
         return {"enabled": True, "skipped": True, "reason": "AbstractFetcher not available or empty papers"}
@@ -371,6 +375,7 @@ def _enrich_missing_abstracts_global(
     missing_after = sum(1 for p in papers if needs(p))
     return {
         "enabled": True,
+        "stage": stage,
         "attempted": attempted,
         "filled": filled,
         "missing_after": missing_after,

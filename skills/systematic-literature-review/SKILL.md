@@ -158,7 +158,9 @@ metadata:
 - 导出日志：Pipeline 会输出 tex/bib/template/bst、pdf/word 路径，便于排查。
 - 字数预算：`plan_word_budget.py` 自动生成 3 份 run CSV、均值版 `word_budget_final.csv`，并输出无引用汇总；`validate_word_budget.py` 可选检查列/覆盖率/总字数误差。
 - **验证报告**（v3.3 新增）：阶段6 自动生成 `{主题}_验证报告.md`，汇总字数/引用/章节/引用一致性验证结果，便于事后审查和追溯。
-- **多源摘要补充**：默认启用（由 `config.yaml:search.abstract_enrichment.enabled` 控制），对缺失/过短摘要做有限补齐（`max_papers_total` + `retry_rounds` + `timeout_seconds` 上限），并对仍缺摘要的条目标记为低参考价值，选文时尽量避免纳入最终参考文献；如需关闭：`openalex_search.py --no-enrich-abstracts` 或在 `config.yaml` 中禁用。详见 `scripts/multi_source_abstract.py`。
+- **多源摘要补充**：默认启用（由 `config.yaml:search.abstract_enrichment.enabled` 控制），默认执行时机为 `config.yaml:search.abstract_enrichment.stage=post_selection`（只对 `selected_papers` 补齐，生成 `selected_papers_enriched_{主题}.jsonl`），避免检索阶段对候选库做全局补齐导致慢与 `cache/api` 膨胀；如需切回检索阶段补齐：将 stage 设为 `search` 或对 `openalex_search.py` 显式 `--enrich-abstracts`。详见 `scripts/multi_source_abstract.py`。
+- **证据卡（evidence cards）**：阶段5 可生成 `evidence_cards_{主题}.jsonl`（字段压缩 + 摘要截断），用于写作时“先压缩再写作”，降低上下文占用（配置：`config.yaml:writing.evidence_cards.*`）。
+- **API 缓存**：默认关闭（配置：`config.yaml:cache.api.enabled=false`），需要可复现调试/减少重复请求时再开启。
 
 ## 工作条件骨架（要点）
 - Meta：主题、档位、目标字数/参考范围、最高原则承诺
@@ -258,6 +260,7 @@ cost_tracking:
 
 ## 自动化执行（pipeline_runner）
 - 阶段：`0_setup → 1_search → 2_dedupe → 3_score → 4_select → 4.5_word_budget → 5_write → 6_validate → 7_export`
+- 推荐（幂等 work_dir，避免出现 `{topic}/{topic}` 异常嵌套目录）：`python scripts/run_pipeline.py --topic "{主题}" --runs-root runs`
 - 运行示例：`python scripts/pipeline_runner.py --topic "{主题}" --domain general --work-dir runs/{safe_topic}`
 - resume：`python scripts/pipeline_runner.py --resume runs/{safe_topic}`
 

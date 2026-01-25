@@ -2,7 +2,7 @@
 
 skill_info:
   name: systematic-literature-review
-  version: 1.0.5
+  version: 1.0.6
   description: 令人印象深刻的精准、全面的专家级综述
   category: writing
 
@@ -111,6 +111,11 @@ search:
   #   并对每篇文献设置有限重试轮次；仍失败则标记为“摘要缺失”，建议写作时不要引用。
   abstract_enrichment:
     enabled: true
+    # 执行时机：
+    # - post_selection（默认）：检索阶段不做“全局候选库补齐”，只在选文后对 selected_papers 补齐；
+    #   优先降低检索阶段耗时与 cache/api 膨胀，避免把“未选中”文献也补齐一遍。
+    # - search：在检索阶段对去重后的候选库做有限补齐（旧行为）
+    stage: "post_selection"
     max_papers_total: 200          # 单次检索最多补齐多少篇（避免对候选库全量补齐导致限流/耗时爆炸）
     retry_rounds: 3               # 单篇文献的补齐轮次上限（每轮会按优先级尝试多个来源）
     backoff_base_seconds: 0.5     # 重试退避基础时间（秒），每轮指数退避
@@ -125,6 +130,14 @@ search:
       - "searxng"
       - "paper_search"
       - "duckduckgo"
+
+# ============================================================================
+# 缓存策略（默认关闭：避免 run 目录 cache/api 文件爆炸）
+# ============================================================================
+cache:
+  api:
+    enabled: false        # 默认关闭；如需可复现调试或减少重复请求，可显式开启
+    ttl_seconds: 86400
 
 # ============================================================================
 # 评分与写作目标
@@ -169,6 +182,20 @@ scoring:
 selection:
   ensure_subtopic_diversity: false   # 默认不强制子主题配额
   allow_lower_scores_to_fill: true   # 高分段不足时允许低分补足
+  # 目标参考文献数（用于避免候选库很大时“天然打满 max_refs”导致写作上下文膨胀）
+  # - value: 显式指定目标数（优先级最高）
+  # - strategy: 未指定 value 时的默认策略
+  target_refs:
+    value: null
+    strategy: "midpoint"   # midpoint=round((min_refs+max_refs)/2)
+
+# ============================================================================
+# 写作阶段上下文控制（证据包）
+# ============================================================================
+writing:
+  evidence_cards:
+    enabled: true
+    abstract_max_chars: 800   # 每篇摘要截断上限（用于降低写作阶段上下文占用）
 
 # ============================================================================
 # 字数预算（70/30 + 综/述拆分）

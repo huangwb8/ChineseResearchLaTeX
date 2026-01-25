@@ -49,6 +49,7 @@ def iter_candidates(work_dir: Path) -> list[Path]:
         "expanded_keywords.json",
         "quality_report*.json",
         "evidence_sufficiency*.json",
+        "evidence_cards*.jsonl",
         "dedupe_map*.json",
         "supplement_search_history*.json",
         "sentinel_*",
@@ -140,4 +141,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

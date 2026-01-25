@@ -388,7 +388,11 @@ def search_openalex(
     search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
     ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
 
+    stage = str(ae.get("stage", "search")).strip().lower()
     do_enrich = bool(ae.get("enabled", False)) if enrich_abstracts is None else bool(enrich_abstracts)
+    if enrich_abstracts is None and stage != "search":
+        # 默认策略：把摘要补齐后移到选文后（selected_papers），避免检索阶段对候选库补齐导致慢与 cache/api 膨胀。
+        do_enrich = False
     if do_enrich:
         timeout_seconds = int(ae.get("timeout_seconds", abstract_timeout or 3))
         _enrich_missing_abstracts(

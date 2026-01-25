@@ -169,6 +169,7 @@ def _select_papers(
     papers: List[Dict[str, Any]],
     min_refs: int,
     max_refs: int,
+    target_refs: int,
     high_score_min: float,
     high_score_max: float,
     *,
@@ -198,9 +199,18 @@ def _select_papers(
     if total == 0:
         return [], {"total_candidates": 0}
 
+    # 目标参考数：避免候选库很大时“天然打满 max_refs”，导致写作阶段上下文与运行成本膨胀。
+    desired = int(target_refs)
+    if desired <= 0:
+        desired = int(round((min_refs + max_refs) / 2.0))
+    desired = max(int(min_refs), min(int(max_refs), desired))
+
     frac = (high_score_min + high_score_max) / 2.0
     high_count = max(0, min(total, math.ceil(total * frac)))
-    selected = items_with_abs[: min(high_count, len(items_with_abs))]
+    high_bucket = items_with_abs[: min(high_count, len(items_with_abs))]
+
+    # 先从“高分段 + 有摘要”中选到 desired
+    selected = high_bucket[: min(desired, len(high_bucket))]
 
     # 若未满足最小参考数，继续从剩余中补齐
     idx = len(selected)
@@ -208,15 +218,20 @@ def _select_papers(
         selected.append(items_with_abs[idx])
         idx += 1
 
+    # 若未达 desired（但已满足 min_refs），允许从“有摘要剩余”继续补齐到 desired
+    while len(selected) < desired and idx < len(items_with_abs):
+        selected.append(items_with_abs[idx])
+        idx += 1
+
     # 仍不足：允许使用“无摘要”条目补齐（但会在 rationale 中显式提示）
     j = 0
-    while len(selected) < min_refs and j < len(items_without_abs):
+    while len(selected) < desired and j < len(items_without_abs):
         selected.append(items_without_abs[j])
         j += 1
 
-    # 控制最大数量
-    if len(selected) > max_refs:
-        selected = selected[:max_refs]
+    # 理论上不应超过 max_refs（desired 已 clamp），这里再兜底一次
+    if len(selected) > int(max_refs):
+        selected = selected[: int(max_refs)]
 
     # 标记：若摘要缺失，建议写作时不引用（但保留在候选/选文中以便替换或手动核验）
     for p in selected:
@@ -244,6 +259,7 @@ def _select_papers(
         "high_score_bucket": high_count,  # 保留向后兼容
         "min_refs": min_refs,
         "max_refs": max_refs,
+        "target_refs": desired,
         "min_abstract_chars": int(min_abstract_chars),
         "score_distribution": score_distribution,
         "missing_abstract_candidates": len(items_without_abs),
@@ -260,6 +276,12 @@ def main() -> int:
     parser.add_argument("--selection", required=True, type=Path, help="Selection rationale yaml")
     parser.add_argument("--min-refs", type=int, required=True, help="Minimum references to keep")
     parser.add_argument("--max-refs", type=int, required=True, help="Maximum references to keep")
+    parser.add_argument(
+        "--target-refs",
+        type=int,
+        default=None,
+        help="Target references to keep (default: from config.yaml selection.target_refs or midpoint(min,max))",
+    )
     parser.add_argument("--high-score-min", type=float, default=0.6, help="Lower bound of high-score fraction")
     parser.add_argument("--high-score-max", type=float, default=0.8, help="Upper bound of high-score fraction")
     parser.add_argument(
@@ -274,6 +296,8 @@ def main() -> int:
 
     # 默认跟随 config.yaml 的“有效摘要最小长度”，保持写作/对齐检查的一致性
     min_abs_chars = 30
+    # 默认目标参考数：优先从 config.yaml 读取；否则采用 midpoint(min,max)
+    target_refs = 0
     if args.min_abstract_chars is not None:
         min_abs_chars = int(args.min_abstract_chars)
     elif load_config is not None:
@@ -285,10 +309,33 @@ def main() -> int:
         except Exception:
             min_abs_chars = 30
 
+    if args.target_refs is not None:
+        target_refs = int(args.target_refs)
+    elif load_config is not None:
+        try:
+            cfg = load_config()
+            sel_cfg = cfg.get("selection", {}) if isinstance(cfg, dict) else {}
+            tr = sel_cfg.get("target_refs", {}) if isinstance(sel_cfg.get("target_refs"), dict) else {}
+            v = tr.get("value", None)
+            if v is not None:
+                target_refs = int(v)
+            else:
+                strategy = str(tr.get("strategy", "midpoint")).strip().lower()
+                if strategy == "midpoint":
+                    target_refs = int(round((args.min_refs + args.max_refs) / 2.0))
+                else:
+                    # 未识别策略时回退 midpoint（保持简单与可预期）
+                    target_refs = int(round((args.min_refs + args.max_refs) / 2.0))
+        except Exception:
+            target_refs = int(round((args.min_refs + args.max_refs) / 2.0))
+    else:
+        target_refs = int(round((args.min_refs + args.max_refs) / 2.0))
+
     selected, rationale = _select_papers(
         papers,
         min_refs=args.min_refs,
         max_refs=args.max_refs,
+        target_refs=target_refs,
         high_score_min=args.high_score_min,
         high_score_max=args.high_score_max,
         min_abstract_chars=min_abs_chars,

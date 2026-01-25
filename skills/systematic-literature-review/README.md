@@ -83,11 +83,18 @@
 在 `config.yaml` 中通过以下参数控制：
 
 ```yaml
-stages:
-  fetch_missing_abstracts:
-    enabled: true  # 默认开启，建议保持
-    max_concurrent: 5  # 并发请求数
-    timeout: 30  # 单个请求超时时间（秒）
+search:
+  abstract_enrichment:
+    enabled: true          # 是否启用摘要补齐（建议保持开启）
+    stage: post_selection  # 默认：仅对 selected_papers 补齐，避免检索阶段全局补齐导致慢与 cache 膨胀
+    max_papers_total: 200
+    retry_rounds: 3
+    min_abstract_chars: 80
+    timeout_seconds: 3
+
+cache:
+  api:
+    enabled: false         # 默认关闭：避免 run 目录 cache/api 文件爆炸；需要可复现调试时再开启
 ```
 
 **建议**：除非时间极端受限且可接受质量损失，否则请保持 `enabled: true`。

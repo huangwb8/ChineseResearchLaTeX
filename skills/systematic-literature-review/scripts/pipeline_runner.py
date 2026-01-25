@@ -147,14 +147,24 @@ class PipelineRunner:
         layout = self.config.get("layout", {}) if isinstance(self.config, dict) else {}
         self.hidden_dir = self.work_dir / layout.get("hidden_dir_name", ".systematic-literature-review")
         self.artifacts_dir = self.hidden_dir / layout.get("artifacts_dir_name", "artifacts")
-        self.cache_dir = self.hidden_dir / layout.get("cache_dir_name", "cache") / "api"
         self.reference_dir = self.hidden_dir / layout.get("reference_dir_name", "reference")
         self.data_extraction_table = self.reference_dir / layout.get("reference_data_extraction_name", "data_extraction_table.md")
-        for d in [self.hidden_dir, self.artifacts_dir, self.cache_dir, self.reference_dir]:
-            d.mkdir(parents=True, exist_ok=True)
 
-        # 设置缓存目录环境变量（供 api_cache.py 使用）
-        os.environ["SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR"] = str(self.cache_dir)
+        # 缓存策略（默认关闭，避免 run 目录 cache/api 文件爆炸）
+        cache_cfg = self.config.get("cache", {}) if isinstance(self.config, dict) else {}
+        api_cache_cfg = cache_cfg.get("api", {}) if isinstance(cache_cfg.get("api", {}), dict) else {}
+        self.cache_enabled = bool(api_cache_cfg.get("enabled", False))
+        self.cache_ttl_seconds = int(api_cache_cfg.get("ttl_seconds", 86400) or 86400)
+        self.cache_dir: Optional[Path] = None
+        if self.cache_enabled:
+            self.cache_dir = self.hidden_dir / layout.get("cache_dir_name", "cache") / "api"
+
+        for d in [self.hidden_dir, self.artifacts_dir, self.reference_dir]:
+            d.mkdir(parents=True, exist_ok=True)
+        if self.cache_dir is not None:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            # 设置缓存目录环境变量（供 api_cache.py 使用）
+            os.environ["SYSTEMATIC_LITERATURE_REVIEW_CACHE_DIR"] = str(self.cache_dir)
 
         word_budget_cfg = (self.config.get("word_budget") or {}) if isinstance(self.config, dict) else {}
         outputs_cfg = word_budget_cfg.get("outputs", {}) if isinstance(word_budget_cfg, dict) else {}
@@ -175,6 +185,8 @@ class PipelineRunner:
         self.state.metrics["review_level"] = self.review_level
         self.state.metrics["target_words"] = self.target_words
         self.state.metrics["target_refs"] = self.target_refs
+        self.state.metrics["work_dir"] = str(self.work_dir)
+        self.state.metrics["cache_enabled"] = bool(self.cache_enabled)
 
     # ---------------- internal helpers ---------------- #
     @staticmethod
@@ -319,6 +331,9 @@ class PipelineRunner:
         if queries_file.exists():
             # 使用 AI 生成的多查询检索
             print(f"  使用 AI 生成的查询: {queries_file}")
+            cache_args: list[str] = []
+            if self.cache_dir is not None:
+                cache_args = ["--cache-dir", str(self.cache_dir)]
             ok = self._run_script(
                 "multi_query_search.py",
                 [
@@ -327,20 +342,23 @@ class PipelineRunner:
                     "--search-log", str(search_log),
                     "--max-results-per-query", str(max_results_per_query),
                     "--max-total", str(max_total),
-                    "--cache-dir", str(self.cache_dir),
+                    *cache_args,
                 ],
             )
         else:
             # 降级方案：单一查询检索
             print(f"  ⚠️ 未找到查询文件，使用单一查询检索（降级方案）")
             print(f"  提示：可以让 AI 生成多查询以提升检索覆盖面")
+            cache_args: list[str] = []
+            if self.cache_dir is not None:
+                cache_args = ["--cache-dir", str(self.cache_dir)]
             ok = self._run_script(
                 "openalex_search.py",
                 [
                     "--query", self.topic,
                     "--output", str(output_file),
                     "--max-results", str(max_total),
-                    "--cache-dir", str(self.cache_dir),
+                    *cache_args,
                 ],
             )
 
@@ -522,6 +540,63 @@ class PipelineRunner:
         # 数据抽取表（写入隐藏目录，含 score/subtopic）
         selected = Path(self.state.input_files.get("selected_papers", ""))
         if selected.exists():
+            # 选文后摘要补齐（默认 post_selection）：只对 selected_papers 做补齐，避免检索阶段对候选库全局补齐导致慢与 cache/api 膨胀
+            search_cfg = self.config.get("search", {}) if isinstance(self.config, dict) else {}
+            ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+            ae_enabled = bool(ae.get("enabled", False))
+            ae_stage = str(ae.get("stage", "search")).strip().lower()
+            if ae_enabled and ae_stage == "post_selection":
+                enriched = self.artifacts_dir / f"selected_papers_enriched_{self.file_stem}.jsonl"
+                if enriched.exists():
+                    selected = enriched
+                    self.state.input_files["selected_papers"] = str(enriched)
+                else:
+                    timeout_seconds = int(ae.get("timeout_seconds", 5) or 5)
+                    enrich_args = [
+                        "--input", str(selected),
+                        "--output", str(enriched),
+                        "--topic", self.topic,
+                        "--timeout", str(timeout_seconds),
+                    ]
+                    if self.cache_dir is not None:
+                        enrich_args.extend(
+                            ["--cache-dir", str(self.cache_dir), "--cache-ttl-seconds", str(self.cache_ttl_seconds)]
+                        )
+                    ok = self._run_script("multi_source_abstract.py", enrich_args)
+                    if ok and enriched.exists():
+                        selected = enriched
+                        self.state.input_files["selected_papers"] = str(enriched)
+                        self.state.output_files.setdefault("notes", {})
+                        if isinstance(self.state.output_files["notes"], dict):
+                            self.state.output_files["notes"]["selected_papers_enriched"] = str(enriched)
+                        print(f"  ✓ selected_papers 摘要补齐完成: {enriched}")
+                    else:
+                        print("  ⚠️ selected_papers 摘要补齐失败（不阻断写作阶段）", file=sys.stderr)
+
+            # Evidence cards：对写作阶段“证据包”做字段与长度压缩，降低上下文占用
+            writing_cfg = self.config.get("writing", {}) if isinstance(self.config, dict) else {}
+            ev_cfg = (writing_cfg.get("evidence_cards") or {}) if isinstance(writing_cfg.get("evidence_cards"), dict) else {}
+            ev_enabled = bool(ev_cfg.get("enabled", True))
+            if ev_enabled:
+                cards_path = self.artifacts_dir / f"evidence_cards_{self.file_stem}.jsonl"
+                if not cards_path.exists():
+                    max_chars = int(ev_cfg.get("abstract_max_chars", 800) or 800)
+                    ok = self._run_script(
+                        "build_evidence_cards.py",
+                        [
+                            "--input", str(selected),
+                            "--output", str(cards_path),
+                            "--abstract-max-chars", str(max_chars),
+                        ],
+                    )
+                    if ok and cards_path.exists():
+                        self.state.output_files.setdefault("notes", {})
+                        if isinstance(self.state.output_files["notes"], dict):
+                            self.state.output_files["notes"]["evidence_cards"] = str(cards_path)
+                        print(f"  ✓ evidence_cards: {cards_path}")
+                    else:
+                        print("  ⚠️ evidence_cards 生成失败（不阻断写作阶段）", file=sys.stderr)
+
             self._run_script(
                 "update_working_conditions_data_extraction.py",
                 [
@@ -802,6 +877,14 @@ def main() -> int:
         topic = Path(work_dir).name
     if not topic:
         raise ValueError("缺少 --topic")
+
+    # 防御性提示：避免出现 {topic}/{topic} 的异常嵌套目录（通常来自外部编排器重复拼接）
+    try:
+        wd = Path(work_dir)
+        if wd.name and wd.parent.name and wd.name == wd.parent.name:
+            print(f"⚠️ 检测到疑似重复嵌套目录: {wd}（建议改为父目录: {wd.parent}）", file=sys.stderr)
+    except Exception:
+        pass
 
     runner = PipelineRunner(
         topic=topic,
