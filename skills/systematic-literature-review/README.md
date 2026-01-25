@@ -94,7 +94,8 @@ search:
 
 cache:
   api:
-    enabled: false         # 默认关闭：避免 run 目录 cache/api 文件爆炸；需要可复现调试时再开启
+    enabled: true          # 默认开启：提升稳定性、降低重复运行成本
+    mode: minimal          # 默认：不缓存 OpenAlex 原始分页响应；需要更强可复现性可切 full
 ```
 
 **建议**：除非时间极端受限且可接受质量损失，否则请保持 `enabled: true`。

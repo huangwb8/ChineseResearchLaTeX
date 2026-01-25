@@ -41,7 +41,7 @@
 ### Changed（变更）
 
 - **systematic-literature-review v1.0.5 → v1.0.6**：运行提速与上下文/目录膨胀治理（按最小改动落地）
-  - 默认关闭磁盘 API 缓存（新增 `config.yaml:cache.api.enabled=false`），避免 `.systematic-literature-review/cache/api` 文件爆炸
+  - API 缓存默认开启但使用 `mode=minimal`（新增 `config.yaml:cache.api.{enabled,mode}`），避免 `.systematic-literature-review/cache/api` 文件爆炸
   - 摘要补齐默认后移到选文后（新增 `config.yaml:search.abstract_enrichment.stage=post_selection`），降低检索阶段耗时与 cache 膨胀
   - 选文策略引入 `selection.target_refs`（默认 midpoint），避免候选库大时“天然打满 max_refs”
   - 写作阶段新增证据卡（`evidence_cards_{topic}.jsonl`）与生成脚本 `build_evidence_cards.py`，压缩证据包字段与摘要长度

@@ -160,7 +160,7 @@ metadata:
 - **验证报告**（v3.3 新增）：阶段6 自动生成 `{主题}_验证报告.md`，汇总字数/引用/章节/引用一致性验证结果，便于事后审查和追溯。
 - **多源摘要补充**：默认启用（由 `config.yaml:search.abstract_enrichment.enabled` 控制），默认执行时机为 `config.yaml:search.abstract_enrichment.stage=post_selection`（只对 `selected_papers` 补齐，生成 `selected_papers_enriched_{主题}.jsonl`），避免检索阶段对候选库做全局补齐导致慢与 `cache/api` 膨胀；如需切回检索阶段补齐：将 stage 设为 `search` 或对 `openalex_search.py` 显式 `--enrich-abstracts`。详见 `scripts/multi_source_abstract.py`。
 - **证据卡（evidence cards）**：阶段5 可生成 `evidence_cards_{主题}.jsonl`（字段压缩 + 摘要截断），用于写作时“先压缩再写作”，降低上下文占用（配置：`config.yaml:writing.evidence_cards.*`）。
-- **API 缓存**：默认关闭（配置：`config.yaml:cache.api.enabled=false`），需要可复现调试/减少重复请求时再开启。
+- **API 缓存**：默认开启（配置：`config.yaml:cache.api.enabled=true`），默认 `mode=minimal`（不缓存 OpenAlex 原始分页响应，避免 cache/api 文件爆炸）；需要更强可复现性时可设为 `mode=full`。
 
 ## 工作条件骨架（要点）
 - Meta：主题、档位、目标字数/参考范围、最高原则承诺

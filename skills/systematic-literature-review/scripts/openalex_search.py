@@ -275,15 +275,31 @@ def search_openalex(
             "  pip install requests"
         ) from e
 
+    # 读取配置（用于 cache mode / 摘要补齐 stage 等）；config_loader 基于 __file__，不受 cwd 影响
+    cfg: dict[str, Any] = {}
+    if load_config is not None:
+        try:
+            cfg = load_config()
+        except Exception:
+            cfg = {}
+
     # 初始化缓存存储（如果提供了 cache_dir）
+    # 默认策略：cache.api.mode=minimal 时不缓存 OpenAlex 原始分页响应（体积大、文件多）
+    cache_cfg = cfg.get("cache", {}) if isinstance(cfg, dict) else {}
+    api_cache_cfg = cache_cfg.get("api", {}) if isinstance(cache_cfg.get("api", {}), dict) else {}
+    cache_mode = str(api_cache_cfg.get("mode", "full") or "full").strip().lower()
+    ttl_seconds = int(api_cache_cfg.get("ttl_seconds", 86400) or 86400)
+
     cache_storage = None
-    if cache_dir is not None:
+    if cache_dir is not None and cache_mode == "full":
         try:
             from api_cache import CacheStorage
-            cache_storage = CacheStorage(cache_dir=cache_dir, ttl=86400)
-            logger.info(f"API 缓存已启用: {cache_dir}")
+            cache_storage = CacheStorage(cache_dir=cache_dir, ttl=ttl_seconds)
+            logger.info(f"API 缓存已启用（mode=full）: {cache_dir}")
         except Exception as e:
             logger.warning(f"无法初始化 API 缓存: {e}")
+    elif cache_dir is not None and cache_mode != "full":
+        logger.info(f"API 缓存启用（mode={cache_mode}）：跳过缓存 OpenAlex 原始分页响应")
 
     session = requests.Session()
     session.headers.update(
@@ -379,12 +395,6 @@ def search_openalex(
     # 摘要补齐（有限上限 + 有限重试）
     # - enrich_abstracts=None：按 config.yaml 的 search.abstract_enrichment.enabled 决定
     # - enrich_abstracts=True/False：显式覆盖
-    cfg: dict[str, Any] = {}
-    if load_config is not None:
-        try:
-            cfg = load_config()
-        except Exception:
-            cfg = {}
     search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
     ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
 
