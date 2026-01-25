@@ -108,6 +108,20 @@ def _work_to_paper(work: Dict[str, Any], abstract_fetcher: Optional["AbstractFet
         "authors": authors,          # 简化的作者名称列表，供 BibTeX 生成使用
         "authorships": authorships,  # 保留原始 authorships 数据，供后续处理使用
     }
+
+    # 仅在“单篇查找”等场景使用：不对批量检索启用，避免逐条触发多源 API。
+    if abstract_fetcher is not None and (not abstract or len(str(abstract).strip()) < 80):
+        filled = None
+        try:
+            if doi:
+                filled = abstract_fetcher.fetch_by_doi(doi, topic=topic)
+            if (not filled) and paper.get("title"):
+                filled = abstract_fetcher.fetch_by_title(str(paper.get("title") or ""), topic=topic)
+        except Exception:
+            filled = None
+        if filled and isinstance(filled, str):
+            paper["abstract"] = filled.strip()
+
     return paper
 
 
@@ -138,8 +152,8 @@ def _enrich_missing_abstracts(
     min_abstract_chars = max(0, int(min_abstract_chars))
     backoff_base_seconds = float(backoff_base_seconds)
 
-    # 初始化 fetcher（内部无缓存；缓存由 api_cache.py 负责）
-    fetcher = AbstractFetcher(timeout=int(abstract_timeout))
+    # 初始化 fetcher（优先复用 cache_dir，减少重复请求/限流风险）
+    fetcher = AbstractFetcher(timeout=int(abstract_timeout), cache_dir=cache_dir)
 
     # 优先补齐：有 DOI 的缺摘要文献
     def _needs(p: Dict[str, Any]) -> bool:
@@ -249,8 +263,8 @@ def search_openalex(
     mailto: Optional[str],
     min_year: Optional[int],
     max_year: Optional[int],
-    enrich_abstracts: bool = True,  # 默认启用：尽量保证用于写作/对齐检查的文献有摘要
-    abstract_timeout: int = 2,  # 减少超时时间
+    enrich_abstracts: Optional[bool] = None,  # None=follow config.yaml; True/False=explicit override
+    abstract_timeout: Optional[int] = None,
     cache_dir: Optional[Path] = None,  # API 缓存目录
 ) -> list[Dict[str, Any]]:
     try:
@@ -362,19 +376,21 @@ def search_openalex(
         if len(deduped) >= max_results:
             break
 
-    # 输出摘要补充统计信息
-    # 默认补齐缺摘要（有上限 + 有限重试）
-    if enrich_abstracts:
-        # 优先从 config.yaml 取参数（找不到则用保守默认值）
-        cfg = {}
-        if load_config is not None:
-            try:
-                cfg = load_config()
-            except Exception:
-                cfg = {}
-        search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
-        ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+    # 摘要补齐（有限上限 + 有限重试）
+    # - enrich_abstracts=None：按 config.yaml 的 search.abstract_enrichment.enabled 决定
+    # - enrich_abstracts=True/False：显式覆盖
+    cfg: dict[str, Any] = {}
+    if load_config is not None:
+        try:
+            cfg = load_config()
+        except Exception:
+            cfg = {}
+    search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
+    ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
 
+    do_enrich = bool(ae.get("enabled", False)) if enrich_abstracts is None else bool(enrich_abstracts)
+    if do_enrich:
+        timeout_seconds = int(ae.get("timeout_seconds", abstract_timeout or 3))
         _enrich_missing_abstracts(
             deduped,
             topic=query,
@@ -383,7 +399,7 @@ def search_openalex(
             backoff_base_seconds=float(ae.get("backoff_base_seconds", 0.5)),
             min_abstract_chars=int(ae.get("min_abstract_chars", 80)),
             max_papers_total=int(ae.get("max_papers_total", 200)),
-            abstract_timeout=int(abstract_timeout or 2),
+            abstract_timeout=timeout_seconds,
         )
 
     return deduped
@@ -397,10 +413,28 @@ def main() -> int:
     parser.add_argument("--mailto", default=None, help="Optional contact email for OpenAlex polite pool")
     parser.add_argument("--min-year", type=int, default=None, help="Filter: min publication year")
     parser.add_argument("--max-year", type=int, default=None, help="Filter: max publication year")
-    # 默认启用“补摘要”（有限重试 + 上限控制）；可用 --no-enrich-abstracts 关闭
-    parser.add_argument("--enrich-abstracts", dest="enrich_abstracts", action="store_true", default=True, help="Enable multi-source abstract enrichment (default: enabled)")
-    parser.add_argument("--no-enrich-abstracts", dest="enrich_abstracts", action="store_false", help="Disable multi-source abstract enrichment")
-    parser.add_argument("--abstract-timeout", type=int, default=5, help="Timeout for abstract enrichment APIs (default: 5)")
+    # 摘要补齐开关：默认跟随 config.yaml；可用 CLI 显式覆盖
+    parser.add_argument(
+        "--enrich-abstracts",
+        dest="enrich_abstracts",
+        action="store_const",
+        const=True,
+        default=None,
+        help="Force enable multi-source abstract enrichment (default: follow config.yaml)",
+    )
+    parser.add_argument(
+        "--no-enrich-abstracts",
+        dest="enrich_abstracts",
+        action="store_const",
+        const=False,
+        help="Force disable multi-source abstract enrichment",
+    )
+    parser.add_argument(
+        "--abstract-timeout",
+        type=int,
+        default=None,
+        help="Optional: override abstract enrichment API timeout seconds (default: config.yaml or 3)",
+    )
     parser.add_argument("--cache-dir", type=Path, default=None, help="API cache directory path (default: no caching)")
     args = parser.parse_args()
 
@@ -411,7 +445,7 @@ def main() -> int:
         min_year=args.min_year,
         max_year=args.max_year,
         cache_dir=args.cache_dir,
-        enrich_abstracts=bool(args.enrich_abstracts),
+        enrich_abstracts=args.enrich_abstracts,
         abstract_timeout=args.abstract_timeout,
     )
 

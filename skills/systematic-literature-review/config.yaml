@@ -2,7 +2,7 @@
 
 skill_info:
   name: systematic-literature-review
-  version: 1.0.4
+  version: 1.0.5
   description: 令人印象深刻的精准、全面的专家级综述
   category: writing
 
@@ -115,6 +115,7 @@ search:
     retry_rounds: 3               # 单篇文献的补齐轮次上限（每轮会按优先级尝试多个来源）
     backoff_base_seconds: 0.5     # 重试退避基础时间（秒），每轮指数退避
     min_abstract_chars: 80        # 认为“有效摘要”的最小字符数；更短的会继续尝试补齐
+    timeout_seconds: 3            # 单个 API 请求的超时（秒）；过大易导致整体检索卡死，过小会降低补齐成功率
 
   # MCP 配置（可选；脚本内仅做降级判断，实际检索由宿主工具提供）
   mcp:

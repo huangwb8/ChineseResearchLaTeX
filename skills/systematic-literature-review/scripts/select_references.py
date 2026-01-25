@@ -21,6 +21,11 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import yaml
 
+try:
+    from config_loader import load_config
+except ImportError:
+    load_config = None  # type: ignore[assignment]
+
 
 def _read_jsonl(path: Path) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
@@ -166,6 +171,8 @@ def _select_papers(
     max_refs: int,
     high_score_min: float,
     high_score_max: float,
+    *,
+    min_abstract_chars: int,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     unique: Dict[str, Dict[str, Any]] = {}
     for p in papers:
@@ -179,7 +186,7 @@ def _select_papers(
     # - 若不足以满足最小参考数，再用“无摘要”条目补齐（并在 rationale 中给出提示）
     def _has_abstract(p: Dict[str, Any]) -> bool:
         a = p.get("abstract") or ""
-        return isinstance(a, str) and len(a.strip()) >= 30
+        return isinstance(a, str) and len(a.strip()) >= int(min_abstract_chars)
 
     items_with_abs = [p for p in items if _has_abstract(p)]
     items_without_abs = [p for p in items if not _has_abstract(p)]
@@ -237,6 +244,7 @@ def _select_papers(
         "high_score_bucket": high_count,  # 保留向后兼容
         "min_refs": min_refs,
         "max_refs": max_refs,
+        "min_abstract_chars": int(min_abstract_chars),
         "score_distribution": score_distribution,
         "missing_abstract_candidates": len(items_without_abs),
         "missing_abstract_selected": sum(1 for p in selected if not _has_abstract(p)),
@@ -254,15 +262,36 @@ def main() -> int:
     parser.add_argument("--max-refs", type=int, required=True, help="Maximum references to keep")
     parser.add_argument("--high-score-min", type=float, default=0.6, help="Lower bound of high-score fraction")
     parser.add_argument("--high-score-max", type=float, default=0.8, help="Upper bound of high-score fraction")
+    parser.add_argument(
+        "--min-abstract-chars",
+        type=int,
+        default=None,
+        help="Treat abstract shorter than N chars as missing (default: from config.yaml search.abstract_enrichment.min_abstract_chars, fallback: 30)",
+    )
     args = parser.parse_args()
 
     papers = _read_jsonl(args.input)
+
+    # 默认跟随 config.yaml 的“有效摘要最小长度”，保持写作/对齐检查的一致性
+    min_abs_chars = 30
+    if args.min_abstract_chars is not None:
+        min_abs_chars = int(args.min_abstract_chars)
+    elif load_config is not None:
+        try:
+            cfg = load_config()
+            search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
+            ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+            min_abs_chars = int(ae.get("min_abstract_chars", min_abs_chars))
+        except Exception:
+            min_abs_chars = 30
+
     selected, rationale = _select_papers(
         papers,
         min_refs=args.min_refs,
         max_refs=args.max_refs,
         high_score_min=args.high_score_min,
         high_score_max=args.high_score_max,
+        min_abstract_chars=min_abs_chars,
     )
 
     if not selected:

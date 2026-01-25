@@ -13,7 +13,7 @@ Usage:
     abstract = fetcher.fetch_by_doi("10.1126/science.1231143", topic="CRISPR gene editing")
 
 Author: systematic-literature-review skill
-Version: 1.0.0
+Version: 1.0.5
 """
 
 from __future__ import annotations
@@ -26,8 +26,15 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+
+# 可选：复用本 skill 的 API 缓存（减少重复请求、降低限流风险）
+try:
+    from api_cache import CacheStorage
+except ImportError:  # pragma: no cover
+    CacheStorage = None  # type: ignore[assignment]
 
 
 # ============================================================================
@@ -103,7 +110,13 @@ def _clean_abstract(text: str) -> str:
     return text.strip()
 
 
-def _make_request(url: str, timeout: int, headers: Optional[Dict[str, str]] = None) -> Optional[Any]:
+def _make_request(
+    url: str,
+    timeout: int,
+    headers: Optional[Dict[str, str]] = None,
+    *,
+    cache: Optional[Any] = None,
+) -> Optional[Any]:
     """
     发起 HTTP GET 请求并解析 JSON 响应
 
@@ -122,11 +135,25 @@ def _make_request(url: str, timeout: int, headers: Optional[Dict[str, str]] = No
     if headers:
         default_headers.update(headers)
 
+    if cache is not None:
+        try:
+            cached = cache.get(url, None)
+            if cached is not None:
+                return cached
+        except Exception:
+            pass
+
     try:
         req = urllib.request.Request(url, headers=default_headers)
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310
             data = resp.read()
-            return json.loads(data.decode("utf-8", errors="replace"))
+            parsed = json.loads(data.decode("utf-8", errors="replace"))
+            if cache is not None:
+                try:
+                    cache.set(url, None, parsed)
+                except Exception:
+                    pass
+            return parsed
     except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, TimeoutError):
         return None
 
@@ -135,7 +162,7 @@ def _make_request(url: str, timeout: int, headers: Optional[Dict[str, str]] = No
 # 单个 API 获取函数
 # ============================================================================
 
-def _fetch_from_semantic_scholar(doi: str, timeout: int) -> Optional[str]:
+def _fetch_from_semantic_scholar(doi: str, timeout: int, *, cache: Optional[Any] = None) -> Optional[str]:
     """
     从 Semantic Scholar API 获取摘要
 
@@ -155,7 +182,7 @@ def _fetch_from_semantic_scholar(doi: str, timeout: int) -> Optional[str]:
     params = {"fields": "abstract"}
 
     full_url = f"{url}?{urllib.parse.urlencode(params)}"
-    data = _make_request(full_url, timeout)
+    data = _make_request(full_url, timeout, cache=cache)
 
     if data and "abstract" in data:
         abstract = data["abstract"]
@@ -165,7 +192,7 @@ def _fetch_from_semantic_scholar(doi: str, timeout: int) -> Optional[str]:
     return None
 
 
-def _fetch_from_pubmed(doi: str, timeout: int) -> Optional[str]:
+def _fetch_from_pubmed(doi: str, timeout: int, *, cache: Optional[Any] = None) -> Optional[str]:
     """
     从 PubMed API 获取摘要
 
@@ -190,7 +217,9 @@ def _fetch_from_pubmed(doi: str, timeout: int) -> Optional[str]:
     }
 
     search_response = _make_request(
-        f"{search_url}?{urllib.parse.urlencode(search_params)}", timeout
+        f"{search_url}?{urllib.parse.urlencode(search_params)}",
+        timeout,
+        cache=cache,
     )
 
     if not search_response:
@@ -231,7 +260,7 @@ def _fetch_from_pubmed(doi: str, timeout: int) -> Optional[str]:
     return None
 
 
-def _fetch_from_crossref(doi: str, timeout: int) -> Optional[str]:
+def _fetch_from_crossref(doi: str, timeout: int, *, cache: Optional[Any] = None) -> Optional[str]:
     """
     从 Crossref API 获取摘要
 
@@ -248,7 +277,7 @@ def _fetch_from_crossref(doi: str, timeout: int) -> Optional[str]:
     normalized_doi = _normalize_doi(doi)
     url = f"{CROSSREF_API}/{urllib.parse.quote(normalized_doi)}"
 
-    data = _make_request(url, timeout)
+    data = _make_request(url, timeout, cache=cache)
 
     if data and "message" in data:
         message = data["message"]
@@ -264,7 +293,7 @@ def _fetch_from_crossref(doi: str, timeout: int) -> Optional[str]:
     return None
 
 
-def _fetch_from_openalex_by_doi(doi: str, timeout: int) -> Optional[str]:
+def _fetch_from_openalex_by_doi(doi: str, timeout: int, *, cache: Optional[Any] = None) -> Optional[str]:
     """
     从 OpenAlex API 直接获取摘要（作为备用）
 
@@ -284,15 +313,18 @@ def _fetch_from_openalex_by_doi(doi: str, timeout: int) -> Optional[str]:
     normalized_doi = _normalize_doi(doi)
     url = f"{OPENALEX_API}/https://doi.org/{urllib.parse.quote(normalized_doi)}"
 
-    data = _make_request(url, timeout)
+    data = _make_request(url, timeout, cache=cache)
 
-    if data and "abstract_inverted_index" in data:
-        # 重建摘要
+    aii = data.get("abstract_inverted_index") if isinstance(data, dict) else None
+    if isinstance(aii, dict):
+        # 重建摘要（OpenAlex 的 abstract_inverted_index 可能为 null）
         positions: Dict[int, str] = {}
-        for token, idxs in data["abstract_inverted_index"].items():
+        for token, idxs in aii.items():
+            if not isinstance(idxs, list):
+                continue
             for idx in idxs:
-                if idx not in positions:
-                    positions[idx] = token
+                if isinstance(idx, int) and idx not in positions:
+                    positions[idx] = str(token)
         if positions:
             return _clean_abstract(" ".join(positions[i] for i in sorted(positions)))
 
@@ -372,9 +404,21 @@ class AbstractFetcher:
     enable_semantic_scholar: bool = True
     enable_pubmed: bool = True
     enable_crossref: bool = True
+    cache_dir: Optional[Path] = None
+    cache_ttl_seconds: int = 86400
 
     # 统计信息（内部使用）
     _stats: FetchStatistics = field(default_factory=FetchStatistics, init=False, repr=False)
+    _cache: Optional[Any] = field(default=None, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if CacheStorage is None or self.cache_dir is None:
+            self._cache = None
+            return
+        try:
+            self._cache = CacheStorage(cache_dir=self.cache_dir, ttl=int(self.cache_ttl_seconds))
+        except Exception:
+            self._cache = None
 
     def _get_api_priority(self, topic: str) -> List[Callable[[str, int], Optional[str]]]:
         """
@@ -397,20 +441,20 @@ class AbstractFetcher:
         # 主来源（最多取 N 个），OpenAlex fallback 始终追加在末尾
         primary: list[Callable[[str, int], Optional[str]]] = []
         if self.enable_crossref:
-            primary.append(_fetch_from_crossref)
+            primary.append(partial(_fetch_from_crossref, cache=self._cache))
         if self.enable_semantic_scholar:
-            primary.append(_fetch_from_semantic_scholar)
+            primary.append(partial(_fetch_from_semantic_scholar, cache=self._cache))
         if self.enable_pubmed:
             # 生物医学主题优先，其余主题放在更靠后的位置
             if is_biomed:
-                primary.append(_fetch_from_pubmed)
+                primary.append(partial(_fetch_from_pubmed, cache=self._cache))
             else:
-                primary.append(_fetch_from_pubmed)
+                primary.append(partial(_fetch_from_pubmed, cache=self._cache))
 
         max_sources = max(0, int(self.max_retries))
         primary = primary[:max_sources] if max_sources else primary
 
-        return primary + [_fetch_from_openalex_by_doi]
+        return primary + [partial(_fetch_from_openalex_by_doi, cache=self._cache)]
 
     def fetch_by_doi(self, doi: str, topic: str = "") -> Optional[str]:
         """
@@ -433,7 +477,8 @@ class AbstractFetcher:
             abstract = fetch_func(doi, self.timeout)
             if abstract:
                 # 记录成功的 API
-                func_name = fetch_func.__name__
+                raw = getattr(fetch_func, "func", fetch_func)
+                func_name = getattr(raw, "__name__", str(raw))
                 if "semantic_scholar" in func_name:
                     self._stats.semantic_scholar_success += 1
                 elif "pubmed" in func_name:
@@ -476,7 +521,7 @@ class AbstractFetcher:
         }
 
         full_url = f"{url}?{urllib.parse.urlencode(params)}"
-        data = _make_request(full_url, self.timeout)
+        data = _make_request(full_url, self.timeout, cache=self._cache)
 
         if data and "data" in data and data["data"]:
             paper = data["data"][0]

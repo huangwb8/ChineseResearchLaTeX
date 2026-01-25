@@ -111,21 +111,52 @@ class QualitySummary:
 
 
 def _load_queries(queries_path: Optional[Path], query_list: Optional[str]) -> List[Dict[str, str]]:
-    """加载查询列表"""
+    """
+    加载查询列表（强校验，不允许静默回退到硬编码查询）。
+
+    支持的格式：
+    - {"queries": [{"query": "...", "rationale": "..."}, ...]}
+    - [{"query": "...", "rationale": "..."}, ...]
+    - ["raw query 1", "raw query 2", ...]（会被规范化为 dict）
+    """
+
+    def _normalize_item(item: Any) -> Optional[Dict[str, str]]:
+        if isinstance(item, str):
+            q = item.strip()
+            return {"query": q, "rationale": ""} if q else None
+        if isinstance(item, dict):
+            q = str(item.get("query") or "").strip()
+            if not q:
+                return None
+            r = str(item.get("rationale") or "").strip()
+            return {"query": q, "rationale": r}
+        return None
+
+    data: Any = None
     if queries_path and queries_path.exists():
-        raw = queries_path.read_text(encoding="utf-8")
-        data = json.loads(raw)
-        return data.get("queries", [])
+        try:
+            data = json.loads(queries_path.read_text(encoding="utf-8"))
+        except Exception:
+            data = None
+    elif query_list:
+        try:
+            data = json.loads(query_list)
+        except Exception:
+            data = None
 
-    if query_list:
-        data = json.loads(query_list)
-        if isinstance(data, list):
-            return data
-        if isinstance(data, dict):
-            return data.get("queries", data.get("queries", []))
+    if data is None:
+        return []
 
-    # 降级方案：单一查询
-    return [{"query": "deep learning", "rationale": "降级方案：硬编码查询"}]
+    items: Any = data.get("queries", []) if isinstance(data, dict) else data
+    if not isinstance(items, list):
+        return []
+
+    out: list[dict] = []
+    for it in items:
+        norm = _normalize_item(it)
+        if norm:
+            out.append(norm)
+    return out
 
 
 def _dedupe_papers(papers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -275,6 +306,7 @@ def _enrich_missing_abstracts_global(
     *,
     topic: str,
     search_cfg: Dict[str, Any],
+    cache_dir: Optional[Path],
 ) -> Dict[str, Any]:
     """
     全局补齐摘要（有限上限 + 有限重试）。
@@ -302,7 +334,8 @@ def _enrich_missing_abstracts_global(
     if max_total > 0:
         candidates = candidates[:max_total]
 
-    fetcher = AbstractFetcher(timeout=3)
+    timeout_seconds = int(ae.get("timeout_seconds", 3))
+    fetcher = AbstractFetcher(timeout=timeout_seconds, cache_dir=cache_dir)
 
     filled = 0
     attempted = 0
@@ -344,6 +377,7 @@ def _enrich_missing_abstracts_global(
         "min_abstract_chars": min_chars,
         "retry_rounds": retry_rounds,
         "max_papers_total": max_total,
+        "timeout_seconds": timeout_seconds,
     }
 
 
@@ -687,6 +721,7 @@ def multi_search(
         deduped,
         topic=topic_for_enrich,
         search_cfg=search_cfg,
+        cache_dir=cache_dir,
     )
 
     rate_limit_summary: Dict[str, Any] = {}

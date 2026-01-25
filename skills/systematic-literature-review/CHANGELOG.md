@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed（检索与摘要补齐的可控性/可复现性 - 2026-01-25）
+
+- `multi_query_search.py`：未提供查询时不再静默回退到硬编码查询，改为直接报错（避免误跑无关主题）
+- `openalex_search.py`：摘要补齐默认跟随 `config.yaml`，并支持 CLI 显式覆盖；补齐请求复用 `--cache-dir`
+- `multi_source_abstract.py`：补齐请求接入 `api_cache.py` 缓存，减少重复请求与限流风险；修复 OpenAlex `abstract_inverted_index=null` 导致的崩溃
+- `select_references.py`：摘要长度阈值默认跟随 `config.yaml:search.abstract_enrichment.min_abstract_chars`，保证“补齐判定/选文规避”口径一致
+
 ### Fixed（BibTeX Unicode 控制字符清洗 - 2026-01-03）🧹
 
 **问题修复**：解决 LaTeX 编译时产生的 "Missing character" 警告

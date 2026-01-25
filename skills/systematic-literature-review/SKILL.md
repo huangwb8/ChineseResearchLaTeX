@@ -158,7 +158,7 @@ metadata:
 - 导出日志：Pipeline 会输出 tex/bib/template/bst、pdf/word 路径，便于排查。
 - 字数预算：`plan_word_budget.py` 自动生成 3 份 run CSV、均值版 `word_budget_final.csv`，并输出无引用汇总；`validate_word_budget.py` 可选检查列/覆盖率/总字数误差。
 - **验证报告**（v3.3 新增）：阶段6 自动生成 `{主题}_验证报告.md`，汇总字数/引用/章节/引用一致性验证结果，便于事后审查和追溯。
-- **多源摘要补充**（v3.4 新增）：OpenAlex 检索时，可选启用从 Crossref/Semantic Scholar/PubMed 补充缺失摘要。因覆盖率提升有限（~+4%）但时间开销大（~+1000%），默认禁用。如需启用：`openalex_search.py --enrich-abstracts` 或在 `multi_query_search.py` 中配置。详见 `scripts/multi_source_abstract.py`。
+- **多源摘要补充**：默认启用（由 `config.yaml:search.abstract_enrichment.enabled` 控制），对缺失/过短摘要做有限补齐（`max_papers_total` + `retry_rounds` + `timeout_seconds` 上限），并对仍缺摘要的条目标记为低参考价值，选文时尽量避免纳入最终参考文献；如需关闭：`openalex_search.py --no-enrich-abstracts` 或在 `config.yaml` 中禁用。详见 `scripts/multi_source_abstract.py`。
 
 ## 工作条件骨架（要点）
 - Meta：主题、档位、目标字数/参考范围、最高原则承诺

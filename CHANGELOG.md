@@ -63,6 +63,12 @@
 - **systematic-literature-review v1.0.1 → v1.0.2**：表格样式规范化与导出链路加固（避免固定列宽溢出；template override 搜索目录生效；运行目录隔离更稳健）
 - **systematic-literature-review v1.0.2 → v1.0.3**：检索源优化与自动降级（OpenAlex 主力 + Semantic Scholar 语义增强 + Crossref 兜底），新增速率限制/退避/健康监控保护与降级日志，单一查询检索在结果不足时自动补齐
 - **systematic-literature-review v1.0.3 → v1.0.4**：摘要补充默认启用并加有限重试；对“摘要仍缺失”的条目标记低参考价值并在选文时尽量避免纳入最终参考文献
+- **systematic-literature-review v1.0.4 → v1.0.5**：检索与摘要补齐的可控性/可复现性加固
+  - `multi_query_search.py`：未提供查询时不再静默回退到硬编码查询，改为直接报错（避免误跑无关主题）
+  - `openalex_search.py`：摘要补齐默认跟随 `config.yaml`，并支持 CLI 显式覆盖；补齐请求复用 `--cache-dir`
+  - `multi_source_abstract.py`：补齐请求接入 `api_cache.py` 缓存，减少重复请求与限流风险；修复 OpenAlex `abstract_inverted_index=null` 导致的崩溃
+  - `select_references.py`：摘要长度阈值默认跟随 `config.yaml:search.abstract_enrichment.min_abstract_chars`，保证“补齐判定/选文规避”口径一致
+  - 文档同步：更新 `README.md`、`skills/README.md` 中的 skill 版本号展示
 - **systematic-literature-review**：补充 LaTeX 表格样式最佳实践（列宽基于 `\textwidth` 按比例分配，避免固定 `p{}` 宽度溢出），并在写作前提示中加入强约束
 - **systematic-literature-review**：加固导出链路与运行隔离（移除危险 `.gz` 清理项；template override 同级目录加入 TEXINPUTS/BSTINPUTS；PDF 输出跨卷移动更稳健；pipeline 子脚本统一 `cwd=work_dir` 且失败信息更可定位）
 
