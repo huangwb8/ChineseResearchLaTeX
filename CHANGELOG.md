@@ -61,6 +61,7 @@
 ### Changed（变更）
 
 - **systematic-literature-review v1.0.1 → v1.0.2**：表格样式规范化与导出链路加固（避免固定列宽溢出；template override 搜索目录生效；运行目录隔离更稳健）
+- **systematic-literature-review v1.0.2 → v1.0.3**：检索源优化与自动降级（OpenAlex 主力 + Semantic Scholar 语义增强 + Crossref 兜底），新增速率限制/退避/健康监控保护与降级日志，单一查询检索在结果不足时自动补齐
 - **systematic-literature-review**：补充 LaTeX 表格样式最佳实践（列宽基于 `\textwidth` 按比例分配，避免固定 `p{}` 宽度溢出），并在写作前提示中加入强约束
 - **systematic-literature-review**：加固导出链路与运行隔离（移除危险 `.gz` 清理项；template override 同级目录加入 TEXINPUTS/BSTINPUTS；PDF 输出跨卷移动更稳健；pipeline 子脚本统一 `cwd=work_dir` 且失败信息更可定位）
 

@@ -24,6 +24,29 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# 配置与多源检索（用于“单一查询”场景的自动降级）
+try:
+    from config_loader import load_config
+except ImportError:
+    load_config = None  # type: ignore[assignment]
+
+try:
+    from semantic_scholar_search import search_semantic_scholar
+except ImportError:
+    search_semantic_scholar = None  # type: ignore[assignment]
+
+try:
+    from crossref_search import search_crossref
+except ImportError:
+    search_crossref = None  # type: ignore[assignment]
+
+try:
+    from rate_limiter import RateLimiter
+    from exponential_backoff_retry import ExponentialBackoffRetry
+except ImportError:
+    RateLimiter = None  # type: ignore[assignment]
+    ExponentialBackoffRetry = None  # type: ignore[assignment]
+
 # 导入多源摘要获取模块
 try:
     from multi_source_abstract import AbstractFetcher
@@ -295,7 +318,9 @@ def main() -> int:
     parser.add_argument("--mailto", default=None, help="Optional contact email for OpenAlex polite pool")
     parser.add_argument("--min-year", type=int, default=None, help="Filter: min publication year")
     parser.add_argument("--max-year", type=int, default=None, help="Filter: max publication year")
-    parser.add_argument("--no-enrich-abstracts", action="store_true", help="Disable multi-source abstract enrichment")
+    # 默认禁用摘要补充（时间开销大且可能触发第三方限流）；显式 --enrich-abstracts 才启用
+    parser.add_argument("--enrich-abstracts", dest="enrich_abstracts", action="store_true", default=False, help="Enable multi-source abstract enrichment (default: disabled)")
+    parser.add_argument("--no-enrich-abstracts", dest="enrich_abstracts", action="store_false", help="Disable multi-source abstract enrichment (kept for backward compatibility)")
     parser.add_argument("--abstract-timeout", type=int, default=5, help="Timeout for abstract enrichment APIs (default: 5)")
     parser.add_argument("--cache-dir", type=Path, default=None, help="API cache directory path (default: no caching)")
     args = parser.parse_args()
@@ -307,9 +332,68 @@ def main() -> int:
         min_year=args.min_year,
         max_year=args.max_year,
         cache_dir=args.cache_dir,
-        enrich_abstracts=not args.no_enrich_abstracts,
+        enrich_abstracts=bool(args.enrich_abstracts),
         abstract_timeout=args.abstract_timeout,
     )
+
+    # 单一查询降级：OpenAlex 结果过少时，按 provider_priority 补齐（默认仅补到 max_results）
+    if load_config is not None:
+        try:
+            cfg = load_config()
+            search_cfg = cfg.get("search", {}) if isinstance(cfg, dict) else {}
+            fallback_cfg = search_cfg.get("fallback", {}) if isinstance(search_cfg.get("fallback", {}), dict) else {}
+            provider_priority = list(search_cfg.get("provider_priority") or [])
+            if bool(fallback_cfg.get("enabled", False)) and len(papers) < min(10, int(args.max_results)):
+                protection_cfg = search_cfg.get("rate_limit_protection", {}) if isinstance(search_cfg.get("rate_limit_protection", {}), dict) else {}
+                rate_limiter = RateLimiter(protection_cfg) if RateLimiter is not None else None
+                retry = ExponentialBackoffRetry((protection_cfg.get("retry") or {})) if ExponentialBackoffRetry is not None else None
+
+                def _extend(more: list[dict]) -> None:
+                    if not more:
+                        return
+                    papers.extend(more)
+
+                # 尝试按优先级补齐（跳过 openalex 自身）
+                for p in provider_priority:
+                    if len(papers) >= int(args.max_results):
+                        break
+                    if p == "semantic_scholar" and search_semantic_scholar is not None:
+                        need = int(args.max_results) - len(papers)
+                        _extend(
+                            search_semantic_scholar(
+                                query=args.query,
+                                max_results=min(need, 50),
+                                cache_dir=args.cache_dir,
+                                rate_limiter=rate_limiter,
+                                retry=retry,
+                            )
+                        )
+                    if p == "crossref" and search_crossref is not None:
+                        need = int(args.max_results) - len(papers)
+                        _extend(
+                            search_crossref(
+                                query=args.query,
+                                max_results=min(need, 50),
+                                cache_dir=args.cache_dir,
+                                retry=retry,
+                                mailto=args.mailto,
+                            )
+                        )
+
+                # 去重：优先 DOI，其次 title+year
+                seen: set[str] = set()
+                deduped: list[Dict[str, Any]] = []
+                for p in papers:
+                    key = p.get("doi") or f'{str(p.get("title","")).strip().lower()}::{p.get("year")}'
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    deduped.append(p)
+                    if len(deduped) >= int(args.max_results):
+                        break
+                papers = deduped
+        except Exception:
+            pass
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:

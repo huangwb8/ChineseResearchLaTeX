@@ -2,7 +2,7 @@
 
 skill_info:
   name: systematic-literature-review
-  version: 1.0.2
+  version: 1.0.3
   description: 令人印象深刻的精准、全面的专家级综述
   category: writing
 
@@ -50,10 +50,67 @@ review_levels:
 search:
   max_results_per_query: 50         # 单查询抓取的最大结果数（多查询模式）
   max_total_results: 500            # 合并后的最大结果数上限
-  provider_priority:                # 可按需调整搜索源优先级
-    - "mcp"
-    - "openalex"
-    - "duckduckgo"
+  # 检索源优先级（按顺序尝试，失败则自动降级）
+  provider_priority:
+    - "mcp"                # 用户配置了且可用 → 最佳体验（由宿主能力提供）
+    - "openalex"           # 主力（零配置、无官方速率限制）
+    - "semantic_scholar"   # 语义增强（零配置但有速率限制）
+    - "crossref"           # DOI 权威验证/兜底（零配置）
+    - "duckduckgo"         # 兜底（通常依赖 MCP）
+
+  # 自动降级配置
+  fallback:
+    enabled: true
+    max_retries_per_provider: 2
+    timeout_per_request: 30
+    cache_detections: true
+    detection_ttl: 300
+
+  # 增强保护机制（防封禁/防重试风暴）
+  rate_limit_protection:
+    enabled: true
+
+    # 全局速率限制（跨所有 provider）
+    global:
+      enabled: true
+      max_calls_per_minute: 120
+      cooldown_on_limit: 30
+
+    # 指数退避重试
+    retry:
+      enabled: true
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 60.0
+      backoff_factor: 2.0
+
+    # API 健康监控（连续失败自动短暂拉黑）
+    health_monitor:
+      enabled: true
+      failure_threshold: 5
+      failure_window: 60
+      recovery_check_interval: 300
+
+    # Semantic Scholar 配额管理（默认 100/min；这里取保守值）
+    semantic_scholar:
+      max_calls_per_minute: 80
+      max_calls_per_session: 500
+      cooldown_on_limit: 60
+      fallback_to_openalex: true
+
+    # OpenAlex 礼貌延迟
+    openalex:
+      polite_delay: 0.25
+      polite_pool_email: null
+
+  # MCP 配置（可选；脚本内仅做降级判断，实际检索由宿主工具提供）
+  mcp:
+    auto_detect: true
+    engines:
+      - "tavily"
+      - "searxng"
+      - "paper_search"
+      - "duckduckgo"
 
 # ============================================================================
 # 评分与写作目标
@@ -170,6 +227,9 @@ api:
     base_url: "https://api.openalex.org"
     timeout: 10
     polite_sleep: 0.25
+  crossref:
+    base_url: "https://api.crossref.org"
+    timeout: 10
 
 # ============================================================================
 # 目录与输出

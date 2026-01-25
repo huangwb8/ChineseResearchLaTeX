@@ -4,7 +4,7 @@ multi_query_search.py - 多查询并行检索并合并结果
 
 用途：
   - 为 systematic-literature-review 的 Pipeline（阶段 1）提供"多查询检索"能力
-  - 接收 AI 生成的查询列表，并行检索 OpenAlex
+  - 接收 AI 生成的查询列表，多源检索并自动降级（优先 OpenAlex，Semantic Scholar 语义增强，Crossref 兜底）
   - 去重合并结果，生成 papers.jsonl
 
 输入：
@@ -16,6 +16,7 @@ multi_query_search.py - 多查询并行检索并合并结果
   - search_log.json：检索日志（每个查询的结果量）
 
 v1.1 - 2026-01-02 (新增查询质量评估)
+v1.2 - 2026-01-25 (新增：多源检索 + 自动降级 + Semantic Scholar 限流保护)
 """
 
 from __future__ import annotations
@@ -38,6 +39,44 @@ except ImportError:
     def search_openalex(query: str, max_results: int, **kwargs) -> List[Dict[str, Any]]:
         raise RuntimeError("无法导入 openalex_search 模块")
 
+# 多源检索（零配置）
+try:
+    from semantic_scholar_search import search_semantic_scholar
+except ImportError:
+    search_semantic_scholar = None  # type: ignore[assignment]
+
+try:
+    from crossref_search import search_crossref
+except ImportError:
+    search_crossref = None  # type: ignore[assignment]
+
+try:
+    from config_loader import load_config
+except ImportError:
+    load_config = None  # type: ignore[assignment]
+
+try:
+    from provider_detector import ProviderDetector
+    from rate_limiter import RateLimiter
+    from global_rate_limiter import GlobalRateLimiter
+    from exponential_backoff_retry import ExponentialBackoffRetry
+    from api_health_monitor import APIHealthMonitor
+except ImportError:
+    ProviderDetector = None  # type: ignore[assignment]
+    RateLimiter = None  # type: ignore[assignment]
+    GlobalRateLimiter = None  # type: ignore[assignment]
+    ExponentialBackoffRetry = None  # type: ignore[assignment]
+    APIHealthMonitor = None  # type: ignore[assignment]
+
+
+@dataclass
+class ProviderAttempt:
+    provider: str
+    status: str  # success|error|skipped
+    results: int = 0
+    reason: str = ""
+    error: str = ""
+
 
 @dataclass
 class SearchLog:
@@ -51,6 +90,9 @@ class SearchLog:
     dedupe_rate: float = field(default=None)
     quality_score: float = field(default=None)
     quality_label: str = field(default=None)
+    # 多源/降级信息（v1.2 新增）
+    provider_used: str = field(default="")
+    attempts: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -206,6 +248,225 @@ def _generate_quality_summary(logs: List[SearchLog]) -> QualitySummary:
     return summary
 
 
+def _load_search_config() -> Dict[str, Any]:
+    """
+    加载技能配置中的 search 段（若缺失则返回空 dict）。
+
+    说明：
+    - pipeline_runner 固定 cwd=work_dir，不能依赖相对路径读取 config.yaml；
+      因此这里优先使用 config_loader.load_config（它基于 __file__ 定位）。
+    """
+    if load_config is None:
+        return {}
+    try:
+        cfg = load_config()
+        return cfg.get("search", {}) if isinstance(cfg, dict) else {}
+    except Exception:
+        return {}
+
+
+def _search_one_query_with_fallback(
+    query: str,
+    *,
+    max_results: int,
+    mailto: Optional[str],
+    min_year: Optional[int],
+    max_year: Optional[int],
+    cache_dir: Optional[Path],
+    search_cfg: Dict[str, Any],
+    detector: Optional[Any],
+    rate_limiter: Optional[Any],
+    global_limiter: Optional[Any],
+    retry: Optional[Any],
+    health: Optional[Any],
+) -> tuple[list[dict], str, list[ProviderAttempt]]:
+    provider_priority = list(search_cfg.get("provider_priority") or [])
+    if not provider_priority:
+        provider_priority = ["openalex"]
+
+    # 按查询类型选择“优先尝试的 provider”，再按 provider_priority 降级
+    preferred = None
+    if rate_limiter is not None:
+        try:
+            preferred = rate_limiter.recommended_provider(provider_priority, query=query)
+        except Exception:
+            preferred = None
+    providers_to_try = []
+    if preferred:
+        providers_to_try.append(preferred)
+    providers_to_try.extend([p for p in provider_priority if p != preferred])
+
+    fallback_cfg = search_cfg.get("fallback", {}) if isinstance(search_cfg.get("fallback", {}), dict) else {}
+    fallback_enabled = bool(fallback_cfg.get("enabled", False))
+
+    attempts: list[ProviderAttempt] = []
+    chosen_provider = ""
+    supported_providers = {"openalex", "semantic_scholar", "crossref"}
+
+    def _check_provider_available(p: str) -> tuple[bool, str]:
+        if detector is None:
+            return True, ""
+        try:
+            st = detector.detect(p)
+            if not getattr(st, "available", False):
+                return False, str(getattr(st, "reason", "not available"))
+            return True, ""
+        except Exception as e:
+            return False, f"detect failed: {e}"
+
+    def _do_search(provider: str) -> list[dict]:
+        if provider == "openalex":
+            return search_openalex(
+                query=query,
+                max_results=max_results,
+                mailto=mailto,
+                min_year=min_year,
+                max_year=max_year,
+                cache_dir=cache_dir,
+            )
+        if provider == "semantic_scholar":
+            if search_semantic_scholar is None:
+                raise RuntimeError("semantic_scholar_search 未就绪（缺少模块）")
+            return search_semantic_scholar(
+                query=query,
+                max_results=max_results,
+                cache_dir=cache_dir,
+                rate_limiter=rate_limiter,
+                retry=retry,
+            )
+        if provider == "crossref":
+            if search_crossref is None:
+                raise RuntimeError("crossref_search 未就绪（缺少模块）")
+            return search_crossref(
+                query=query,
+                max_results=max_results,
+                cache_dir=cache_dir,
+                retry=retry,
+                mailto=mailto,
+            )
+        raise RuntimeError(f"不支持的 provider: {provider}")
+
+    for provider in providers_to_try:
+        # 注意：mcp/duckduckgo 等通常由宿主工具提供，不在脚本内实现；这里明确跳过，避免误记为“失败”。
+        if provider not in supported_providers:
+            attempts.append(
+                ProviderAttempt(
+                    provider=provider,
+                    status="skipped",
+                    reason="provider not supported in python script (host tool required)",
+                )
+            )
+            continue
+
+        ok, reason = _check_provider_available(provider)
+        if not ok:
+            attempts.append(ProviderAttempt(provider=provider, status="skipped", reason=reason))
+            continue
+
+        if health is not None:
+            try:
+                if not health.is_available(provider):
+                    attempts.append(
+                        ProviderAttempt(
+                            provider=provider,
+                            status="skipped",
+                            reason=f"health blacklisted ({health.blacklist_remaining(provider)}s)",
+                        )
+                    )
+                    continue
+            except Exception:
+                # 健康监控失败不阻断
+                pass
+
+        if global_limiter is not None:
+            try:
+                st = global_limiter.can_request()
+                if not getattr(st, "can_request", False):
+                    # 顺序执行场景：直接 sleep 冷却，避免直接失败
+                    cooldown = int(getattr(st, "cooldown_seconds", 0) or 0)
+                    attempts.append(
+                        ProviderAttempt(provider=provider, status="skipped", reason=getattr(st, "reason", "global limited"))
+                    )
+                    if cooldown > 0:
+                        time.sleep(cooldown)
+            except Exception:
+                pass
+
+        if rate_limiter is not None and provider == "semantic_scholar":
+            try:
+                st = rate_limiter.can_call("semantic_scholar")
+                if not getattr(st, "can_call", False):
+                    attempts.append(ProviderAttempt(provider=provider, status="skipped", reason=getattr(st, "reason", "rate limited")))
+                    # 语义源被限流时，按降级策略回到 OpenAlex
+                    continue
+            except Exception:
+                pass
+
+        try:
+            if global_limiter is not None:
+                try:
+                    global_limiter.record_request()
+                except Exception:
+                    pass
+
+            papers = _do_search(provider)
+            attempts.append(ProviderAttempt(provider=provider, status="success", results=len(papers)))
+            chosen_provider = provider
+            if health is not None:
+                try:
+                    health.record_success(provider)
+                except Exception:
+                    pass
+
+            # OpenAlex 主力 + Semantic Scholar 补齐：仅在 OpenAlex 召回不足时触发语义增强，减少限流风险
+            if (
+                provider == "openalex"
+                and fallback_enabled
+                and ("semantic_scholar" in provider_priority)
+                and search_semantic_scholar is not None
+                and len(papers) < max(5, int(max_results * 0.7))
+            ):
+                need = max(0, int(max_results) - len(papers))
+                if need > 0 and rate_limiter is not None:
+                    try:
+                        st2 = rate_limiter.can_call("semantic_scholar")
+                        if getattr(st2, "can_call", False):
+                            if global_limiter is not None:
+                                try:
+                                    global_limiter.record_request()
+                                except Exception:
+                                    pass
+                            more = search_semantic_scholar(
+                                query=query,
+                                max_results=need,
+                                cache_dir=cache_dir,
+                                rate_limiter=rate_limiter,
+                                retry=retry,
+                            )
+                            attempts.append(ProviderAttempt(provider="semantic_scholar", status="success", results=len(more), reason="top-up for low recall"))
+                            # merge + dedupe
+                            merged = papers + more
+                            papers = _dedupe_papers(merged)[:max_results]
+                        else:
+                            attempts.append(ProviderAttempt(provider="semantic_scholar", status="skipped", reason=getattr(st2, "reason", "rate limited")))
+                    except Exception as e:
+                        attempts.append(ProviderAttempt(provider="semantic_scholar", status="error", error=str(e)))
+
+            # 若降级关闭：成功即返回；若开启：允许在 0 结果时继续尝试下一个源
+            if papers or not fallback_enabled:
+                return papers, chosen_provider, attempts
+        except Exception as e:
+            attempts.append(ProviderAttempt(provider=provider, status="error", error=str(e)))
+            if health is not None:
+                try:
+                    health.record_failure(provider)
+                except Exception:
+                    pass
+            continue
+
+    return [], chosen_provider, attempts
+
+
 def multi_search(
     queries: List[Dict[str, str]],
     max_results_per_query: int,
@@ -214,7 +475,7 @@ def multi_search(
     max_year: Optional[int],
     polite_delay: tuple[float, float] = (0.5, 2.0),
     cache_dir: Optional[Path] = None,  # API 缓存目录
-) -> tuple[List[Dict[str, Any]], List[SearchLog]]:
+) -> tuple[List[Dict[str, Any]], List[SearchLog], Dict[str, Any]]:
     """
     多查询并行检索
 
@@ -233,6 +494,27 @@ def multi_search(
     all_papers: list[dict] = []
     logs: list[SearchLog] = []
 
+    search_cfg = _load_search_config()
+    fallback_cfg = search_cfg.get("fallback", {}) if isinstance(search_cfg.get("fallback", {}), dict) else {}
+    protection_cfg = search_cfg.get("rate_limit_protection", {}) if isinstance(search_cfg.get("rate_limit_protection", {}), dict) else {}
+    protection_enabled = bool(protection_cfg.get("enabled", True))
+
+    detector = ProviderDetector(
+        cache_ttl=int(fallback_cfg.get("detection_ttl", 300)),
+        cache_enabled=bool(fallback_cfg.get("cache_detections", True)),
+    ) if ProviderDetector is not None else None
+    rate_limiter = RateLimiter(protection_cfg) if (RateLimiter is not None and protection_enabled) else None
+    global_limiter = None
+    if protection_enabled and GlobalRateLimiter is not None and isinstance(protection_cfg.get("global", {}), dict):
+        gcfg = protection_cfg.get("global", {}) or {}
+        if bool(gcfg.get("enabled", False)):
+            global_limiter = GlobalRateLimiter(
+                max_per_minute=int(gcfg.get("max_calls_per_minute", 120)),
+                cooldown_on_limit=int(gcfg.get("cooldown_on_limit", 30)),
+            )
+    retry = ExponentialBackoffRetry((protection_cfg.get("retry") or {})) if (ExponentialBackoffRetry is not None and protection_enabled) else None
+    health = APIHealthMonitor((protection_cfg.get("health_monitor") or {})) if (APIHealthMonitor is not None and protection_enabled) else None
+
     for i, q in enumerate(queries, 1):
         query_str = q.get("query", "")
         rationale = q.get("rationale", "")
@@ -246,13 +528,19 @@ def multi_search(
         print(f"  理由: {rationale}")
 
         try:
-            papers = search_openalex(
-                query=query_str,
+            papers, provider_used, attempts = _search_one_query_with_fallback(
+                query_str,
                 max_results=max_results_per_query,
                 mailto=mailto,
                 min_year=min_year,
                 max_year=max_year,
-                cache_dir=cache_dir,  # 传递缓存目录参数
+                cache_dir=cache_dir,
+                search_cfg=search_cfg,
+                detector=detector,
+                rate_limiter=rate_limiter,
+                global_limiter=global_limiter,
+                retry=retry,
+                health=health,
             )
             print(f"  返回: {len(papers)} 篇")
         except Exception as e:
@@ -288,19 +576,36 @@ def multi_search(
             notes="",
             dedupe_rate=round(dedupe_rate, 3),
             quality_score=round(quality_score, 3),
-            quality_label=quality_label
+            quality_label=quality_label,
+            provider_used=provider_used or "",
+            attempts=[asdict(a) for a in (attempts or [])],
         ))
 
         # 礼貌延迟
         if i < len(queries):
+            # 兼容旧参数：仍保留随机区间，但允许由配置给出更小的“礼貌延迟”
             delay = random.uniform(*polite_delay)
+            if rate_limiter is not None and (provider_used or "") == "openalex":
+                try:
+                    oa_delay = float(getattr(rate_limiter, "openalex_polite_delay", 0.0) or 0.0)
+                    if oa_delay > 0:
+                        delay = max(oa_delay, min(delay, oa_delay + 0.25))
+                except Exception:
+                    pass
             print(f"  等待 {delay:.1f} 秒...")
             time.sleep(delay)
 
     # 全局去重
     deduped = _dedupe_papers(all_papers)
 
-    return deduped, logs
+    rate_limit_summary: Dict[str, Any] = {}
+    if rate_limiter is not None:
+        try:
+            rate_limit_summary = rate_limiter.summary()
+        except Exception:
+            rate_limit_summary = {}
+
+    return deduped, logs, rate_limit_summary
 
 
 def main() -> int:
@@ -374,7 +679,7 @@ def main() -> int:
     print(f"加载了 {len(queries)} 个查询")
 
     # 执行多查询检索
-    papers, logs = multi_search(
+    papers, logs, rate_limit_summary = multi_search(
         queries=queries,
         max_results_per_query=args.max_results_per_query,
         mailto=args.mailto,
@@ -405,6 +710,8 @@ def main() -> int:
         "queries": [asdict(log) for log in logs],
         "quality_summary": asdict(quality_summary),  # v1.1 新增
     }
+    if rate_limit_summary:
+        log_data["rate_limit_summary"] = rate_limit_summary
     with open(args.search_log, "w", encoding="utf-8") as f:
         json.dump(log_data, f, ensure_ascii=False, indent=2)
 
