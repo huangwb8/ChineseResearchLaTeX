@@ -85,6 +85,10 @@
 - 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251218.md`、`skills/systematic-literature-review/plans/B轮-v202601251218.md` 及对应 `tests/` 目录
 - 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251439.md`、`skills/systematic-literature-review/plans/B轮-v202601251439.md` 及对应 `tests/` 目录
 - 新增审计与优化计划：`skills/systematic-literature-review/plans/文献-优化-v202601251308.md`（针对异种器官移植-02，补全可审计中间产物与 work_dir 隔离建议）
+- 更新 [README.md](README.md)：优化 Skills 快速安装说明
+  - 新增 `@install` 快捷方式（推荐）：无需手动执行 git 命令，AI 自动克隆并安装
+  - 保留手动安装方法作为标准流程备选方案
+  - 更新安装命令为 `install-bensz-skills this skill install skills in this project to Codex and Claude Code`
 
 ---
 

@@ -146,12 +146,29 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 ### ⚡ 快速安装
 
-打开 Claude Code 或 Codex 后，输入以下 Prompt：
+#### 方法一：一键快速安装
 
+| 平台 | 命令 |
+|------|------|
+| **macOS / Linux / WSL** | `curl -fsSL https://raw.githubusercontent.com/huangwb8/skills/main/@install/install.sh \| bash` |
+| **Windows PowerShell** | `irm https://raw.githubusercontent.com/huangwb8/skills/main/@install/install.ps1 \| iex` 
+
+#### 方法二：本地硬编码安装
+
+```bash
+git clone https://github.com/huangwb8/skills.git && 
+  git clone https://github.com/huangwb8/ChineseResearchLaTeX.git && 
+  cd skills &&
+  python3 install-bensz-skills/scripts/install.py --source ../ChineseResearchLaTeX/skills
 ```
-使用 https://github.com/huangwb8/skills/tree/main/install-bensz-skills 的 --remote --auto 模式安装或更新skill。
+
+#### 方法三：远程对话式安装
+
+```bash
+git clone https://github.com/huangwb8/skills.git && 
+  cd skills &&
+  python3 install-bensz-skills/scripts/install.py --remote --check
 ```
-即可利用ai自动安装开发的通用skill和本项目专用的科研类skill。
 
 ### 🧩 技能生态系统
 
