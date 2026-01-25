@@ -53,6 +53,7 @@
   - 更新工作流第二步描述，补充多源降级、摘要补齐、检索质量评估说明
 - 更新 [README.md](README.md)：优化 systematic-literature-review 文献调研阶段描述
   - 补充"多源降级、摘要补齐、检索质量评估与可视化"特性说明
+- 新增 systematic-literature-review 优化建议计划：`skills/systematic-literature-review/plans/文献-优化-v202601251132.md`
 
 ---
 
