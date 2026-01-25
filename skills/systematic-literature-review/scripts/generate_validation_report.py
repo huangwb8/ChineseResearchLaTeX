@@ -24,6 +24,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 
 def load_json_result(path: Path) -> Dict[str, Any]:
     """加载验证脚本的 JSON 输出"""
@@ -300,6 +302,12 @@ def main() -> int:
         help="Path to output validation report (Markdown format)"
     )
     parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
+    parser.add_argument(
         "--review-level",
         type=str,
         default="premium",
@@ -339,6 +347,12 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        if args.counts_json is not None:
+            args.counts_json = resolve_and_check(args.counts_json, scope_root, must_exist=True)
+        args.output = resolve_and_check(args.output, scope_root, must_exist=False)
 
     # 加载验证结果
     counts_result = {}

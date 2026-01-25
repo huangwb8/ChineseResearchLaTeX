@@ -22,6 +22,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 logger = logging.getLogger(__name__)
 
 # 配置与多源检索（用于“单一查询”场景的自动降级）
@@ -450,7 +452,19 @@ def main() -> int:
         help="Optional: override abstract enrichment API timeout seconds (default: config.yaml or 3)",
     )
     parser.add_argument("--cache-dir", type=Path, default=None, help="API cache directory path (default: no caching)")
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.output = resolve_and_check(args.output, scope_root, must_exist=False)
+        if args.cache_dir is not None:
+            args.cache_dir = resolve_and_check(args.cache_dir, scope_root, must_exist=False)
 
     papers = search_openalex(
         query=args.query,

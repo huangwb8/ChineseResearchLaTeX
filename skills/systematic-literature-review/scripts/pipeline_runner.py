@@ -114,8 +114,11 @@ class PipelineRunner:
     ):
         self.topic = topic
         self.domain = domain
-        self.work_dir = work_dir
+        # 统一使用绝对路径：避免在子进程 cwd=self.work_dir 时把路径“拼两遍”，同时减少跨 run 污染风险。
+        self.work_dir = work_dir.expanduser().resolve()
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        # 设置工作目录隔离范围：子进程默认只允许在该目录内读写（由各脚本从 env 读取并校验）。
+        os.environ["SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT"] = str(self.work_dir)
 
         self.config_path = config_path
         self.config = self._load_config(config_path)
@@ -430,6 +433,23 @@ class PipelineRunner:
         print(f"  ℹ️  请使用 Skill 的阶段3，AI 会根据 ai_scoring_prompt.md 自动评分")
         print(f"  ℹ️  评分完成后，请将结果保存为 scored_papers_{self.file_stem}.jsonl")
         print(f"  ℹ️  然后使用 --resume-from 4 继续后续阶段")
+        print(
+            f"""
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║ ⚠️  工作目录隔离警告（防止跨 run 污染）                                      ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║ 本阶段评分只应读取以下文件：                                                  ║
+║   - {self.artifacts_dir / f'papers_deduped_{self.file_stem}.jsonl'}           ║
+║                                                                              ║
+║ ⛔ 禁止读取：                                                                  ║
+║   - 其他 run 目录的文件                                                       ║
+║   - 本 work_dir 外的任意路径                                                  ║
+║                                                                              ║
+║ 评分结果必须保存到：                                                          ║
+║   - {self.artifacts_dir / f'scored_papers_{self.file_stem}.jsonl'}            ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+"""
+        )
 
         # 检查是否已存在评分文件
         scored = self.artifacts_dir / f"scored_papers_{self.file_stem}.jsonl"
@@ -703,19 +723,17 @@ class PipelineRunner:
 
         # 生成验证报告
         validation_report_path = self._output_path("validation_report")
-        counts_json_path: Optional[str] = None
+        counts_json_path: Optional[Path] = None
         try:
-            # 将 validate_counts 的输出保存到临时文件
-            import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
-                f.write(counts_output)
-                counts_json_path = f.name
+            # 将 validate_counts 的输出保存到 work_dir 内（避免 /tmp 导致的跨 run 污染与隔离冲突）
+            counts_json_path = self.artifacts_dir / f"validate_counts_{self.file_stem}.json"
+            counts_json_path.write_text(counts_output, encoding="utf-8")
 
             self._run_script(
                 "generate_validation_report.py",
                 [
                     "--counts-json",
-                    counts_json_path,
+                    str(counts_json_path),
                     "--review-tex-output",
                     tex_output.strip(),
                     "--output",
@@ -734,9 +752,8 @@ class PipelineRunner:
         except Exception as e:
             print(f"  ⚠️ 生成验证报告失败: {e}", file=sys.stderr)
         finally:
-            # 确保不遗留临时文件（无论成功/失败）
-            if counts_json_path:
-                Path(counts_json_path).unlink(missing_ok=True)
+            # counts_json_path 保留在 artifacts_dir 便于复盘与追溯
+            pass
 
         if counts_ok and tex_ok:
             self.state.completed_stages.append("6_validate")
@@ -871,6 +888,7 @@ def main() -> int:
         work_dir = args.resume if args.resume.is_dir() else args.resume.parent
     if work_dir is None:
         raise ValueError("请显式传入 --work-dir <任务子目录> 或使用 --resume")
+    work_dir = Path(work_dir).expanduser().resolve()
 
     topic = args.topic
     if args.resume and not topic:

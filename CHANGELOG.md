@@ -47,14 +47,25 @@
   - 写作阶段新增证据卡（`evidence_cards_{topic}.jsonl`）与生成脚本 `build_evidence_cards.py`，压缩证据包字段与摘要长度
   - 新增 `run_pipeline.py`（幂等 work_dir 生成，避免 `{topic}/{topic}` 嵌套目录）与 `reconcile_state_from_outputs.py`（产物反推 state 修复工具）
 
+- **systematic-literature-review v1.0.6 → v1.0.7**：写作负面约束 + work_dir 路径隔离（防止“参见类堆砌引用”与跨 run 污染）
+  - `skills/systematic-literature-review/SKILL.md`：新增“写作负面约束（禁止模式）”，显式禁止“本节补充阅读可参见：\cite{...}”等业余写法
+  - `skills/systematic-literature-review/references/expert-review-writing.md`：补齐“写作负面约束”章节；将“文献利用率”从硬门槛调整为提示项（不再驱动“必须用完所有文献”）
+  - `skills/systematic-literature-review/scripts/validate_no_process_leakage.py`：新增“参见类堆砌引用”模式检测（高危）
+  - `skills/systematic-literature-review/scripts/path_scope.py`：新增统一的路径隔离校验模块（scope_root）
+  - `skills/systematic-literature-review/scripts/pipeline_runner.py`：统一 work_dir 绝对路径；设置 `SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT`；阶段3提示增强（隔离警告）
+  - 核心脚本新增 `--scope-root`（可选，默认读 env）并对 I/O 路径做准入校验：`dedupe_papers.py`、`select_references.py`、`multi_query_search.py`、`openalex_search.py`、`plan_word_budget.py`、`update_working_conditions_data_extraction.py`、`generate_validation_report.py`、`compile_latex_with_bibtex.py`、`convert_latex_to_word.py`
+  - `skills/systematic-literature-review/scripts/validate_citation_distribution.py`：新增 `--min-ref-util`（默认不启用硬门槛），避免“为达利用率而强行堆砌引用”
+
 ### Updated（文档更新）
 
 - 更新 [skills/README.md](skills/README.md)：优化 systematic-literature-review 技能描述
-  - 更新版本号到 v1.0.6，并同步“摘要补齐后移/缓存默认关闭/target_refs”口径
+  - 更新版本号到 v1.0.7，并同步“写作负面约束/工作目录隔离”等口径
 - 更新 [README.md](README.md)：优化 systematic-literature-review 文献调研阶段描述
-  - 更新技能表格版本号到 v1.0.6
+  - 更新技能表格版本号到 v1.0.7
 - 更新 `skills/systematic-literature-review/SKILL.md` 与 `skills/systematic-literature-review/README.md`：补齐新配置与工具脚本说明
 - 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251218.md`、`skills/systematic-literature-review/plans/B轮-v202601251218.md` 及对应 `tests/` 目录
+- 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251439.md`、`skills/systematic-literature-review/plans/B轮-v202601251439.md` 及对应 `tests/` 目录
+- 新增审计与优化计划：`skills/systematic-literature-review/plans/文献-优化-v202601251308.md`（针对异种器官移植-02，补全可审计中间产物与 work_dir 隔离建议）
 
 ---
 

@@ -17,6 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 try:
     from config_loader import load_config  # type: ignore
 except Exception:
@@ -375,7 +377,17 @@ def main() -> int:
         default=None,
         help="Optional LaTeX template path (default: from config.yaml latex.template_path)",
     )
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.tex_file = resolve_and_check(args.tex_file, scope_root, must_exist=True)
 
     # 从 config.yaml 读取模板配置（支持 override）
     latex_template = args.template
@@ -390,7 +402,17 @@ def main() -> int:
         except Exception:
             latex_template = None
 
+    # 在隔离模式下：只允许把产物写回 work_dir 内（防止跨 run 污染）。
     output_pdf = Path(args.output_pdf) if args.output_pdf else None
+    if scope_root is not None and output_pdf is not None:
+        output_pdf = resolve_and_check(output_pdf, scope_root, must_exist=False)
+
+    # template_path 允许使用 skill 内置资源；若显式传入绝对路径，则必须在 scope_root 内。
+    if scope_root is not None and latex_template is not None and latex_template.is_absolute():
+        resolved = latex_template.expanduser().resolve()
+        if not (resolved.is_relative_to(scope_root) or resolved.is_relative_to(SKILL_ROOT)):
+            raise ValueError(f"template_path 不在工作目录或 skill 目录内：{resolved}")
+
     pdf = compile_pdf(args.tex_file, output_pdf, keep_aux=args.keep_aux, template_path=latex_template)
     print(f"✓ PDF generated: {pdf}")
     return 0

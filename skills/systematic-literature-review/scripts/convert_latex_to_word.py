@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 try:
     from config_loader import load_config  # type: ignore
 except Exception:
@@ -92,7 +94,19 @@ def main() -> int:
     parser.add_argument("tex_file", type=Path, help="Input .tex file")
     parser.add_argument("bib_file", type=Path, help="Input .bib file (BibTeX)")
     parser.add_argument("output_docx", type=Path, help="Output .docx file")
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.tex_file = resolve_and_check(args.tex_file, scope_root, must_exist=True)
+        args.bib_file = resolve_and_check(args.bib_file, scope_root, must_exist=True)
+        args.output_docx = resolve_and_check(args.output_docx, scope_root, must_exist=False)
 
     convert(args.tex_file, args.bib_file, args.output_docx)
     print(f"✓ Word generated: {args.output_docx}")

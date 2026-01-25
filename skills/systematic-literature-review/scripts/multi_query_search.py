@@ -30,6 +30,8 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 
 # 导入 openalex_search.py 中的检索函数
 try:
@@ -761,7 +763,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--search-log",
-        default="search_log_multi_query.json",
+        type=Path,
+        default=Path("search_log_multi_query.json"),
         help="检索日志输出路径（默认: search_log_multi_query.json）",
     )
     parser.add_argument(
@@ -799,7 +802,22 @@ def main() -> int:
         default=None,
         help="API 缓存目录路径",
     )
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        if args.queries is not None:
+            args.queries = resolve_and_check(args.queries, scope_root, must_exist=True)
+        args.output = resolve_and_check(args.output, scope_root, must_exist=False)
+        args.search_log = resolve_and_check(args.search_log, scope_root, must_exist=False)
+        if args.cache_dir is not None:
+            args.cache_dir = resolve_and_check(args.cache_dir, scope_root, must_exist=False)
 
     # 加载查询
     queries = _load_queries(args.queries, args.query_list)

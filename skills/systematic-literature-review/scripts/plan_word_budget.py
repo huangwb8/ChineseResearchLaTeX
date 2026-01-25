@@ -33,6 +33,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 
 # ---------------------------------------------------------------------------
 # 数据模型
@@ -290,6 +292,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--outline", type=Path, help="outline_plan.yaml (optional)")
     p.add_argument("--config", type=Path, required=True, help="config.yaml")
     p.add_argument("--output-dir", type=Path, required=True, help="artifacts dir for CSVs")
+    p.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     p.add_argument("--target-words", type=float, help="override target words")
     p.add_argument("--review-level", default="premium", choices=["premium", "standard", "basic"], help="review level for inferring target words")
     return p.parse_args()
@@ -314,6 +322,14 @@ def infer_target_words(config_path: Path, review_level: str = "premium") -> floa
 
 def main() -> int:
     args = parse_args()
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.selected = resolve_and_check(args.selected, scope_root, must_exist=True)
+        if args.outline is not None:
+            args.outline = resolve_and_check(args.outline, scope_root, must_exist=True)
+        args.config = resolve_and_check(args.config, scope_root, must_exist=True)
+        args.output_dir = resolve_and_check(args.output_dir, scope_root, must_exist=False)
+
     cfg = load_cfg(args.config)
     papers = load_papers(args.selected)
     if not papers:
@@ -360,4 +376,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

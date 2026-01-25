@@ -27,6 +27,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 
 def _normalize_doi(raw: str) -> str:
     if not raw:
@@ -342,10 +344,22 @@ def main() -> int:
     parser.add_argument("--input", "-i", required=True, type=Path, help="Input papers (.jsonl or .json)")
     parser.add_argument("--output", "-o", required=True, type=Path, help="Output deduped papers (.jsonl)")
     parser.add_argument("--map", required=True, type=Path, help="Output merge map (.json)")
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     parser.add_argument("--title-sim", type=float, default=0.92, help="Title similarity threshold (default: 0.92)")
     parser.add_argument("--token-jaccard", type=float, default=0.80, help="Token Jaccard threshold (default: 0.80)")
     parser.add_argument("--year-window", type=int, default=1, help="Year window for matching (default: 1)")
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.input = resolve_and_check(args.input, scope_root, must_exist=True)
+        args.output = resolve_and_check(args.output, scope_root, must_exist=False)
+        args.map = resolve_and_check(args.map, scope_root, must_exist=False)
 
     papers = load_papers(args.input)
     deduped, edges = dedupe(

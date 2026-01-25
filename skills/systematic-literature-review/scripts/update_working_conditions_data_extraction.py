@@ -26,6 +26,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 BEGIN = "<!-- AUTO:DATA_EXTRACTION_TABLE:BEGIN -->"
 END = "<!-- AUTO:DATA_EXTRACTION_TABLE:END -->"
 
@@ -154,7 +156,18 @@ def main() -> int:
     parser.add_argument("--md", required=True, type=Path, help="Path to markdown table output")
     parser.add_argument("--papers", required=True, type=Path, help="Path to papers jsonl (selected/scored)")
     parser.add_argument("--max-rows", type=int, default=200, help="Max rows to render (default: 200)")
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.md = resolve_and_check(args.md, scope_root, must_exist=False)
+        args.papers = resolve_and_check(args.papers, scope_root, must_exist=True)
 
     md = args.md.resolve()
     papers = args.papers.resolve()

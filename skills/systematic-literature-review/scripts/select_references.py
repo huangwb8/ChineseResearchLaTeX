@@ -21,6 +21,8 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import yaml
 
+from path_scope import get_effective_scope_root, resolve_and_check
+
 try:
     from config_loader import load_config
 except ImportError:
@@ -274,6 +276,12 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path, help="Selected papers jsonl output")
     parser.add_argument("--bib", required=True, type=Path, help="BibTeX output path")
     parser.add_argument("--selection", required=True, type=Path, help="Selection rationale yaml")
+    parser.add_argument(
+        "--scope-root",
+        type=Path,
+        default=None,
+        help="工作目录隔离根目录（可选；默认从环境变量 SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT 读取）",
+    )
     parser.add_argument("--min-refs", type=int, required=True, help="Minimum references to keep")
     parser.add_argument("--max-refs", type=int, required=True, help="Maximum references to keep")
     parser.add_argument(
@@ -291,6 +299,13 @@ def main() -> int:
         help="Treat abstract shorter than N chars as missing (default: from config.yaml search.abstract_enrichment.min_abstract_chars, fallback: 30)",
     )
     args = parser.parse_args()
+
+    scope_root = get_effective_scope_root(args.scope_root)
+    if scope_root is not None:
+        args.input = resolve_and_check(args.input, scope_root, must_exist=True)
+        args.output = resolve_and_check(args.output, scope_root, must_exist=False)
+        args.bib = resolve_and_check(args.bib, scope_root, must_exist=False)
+        args.selection = resolve_and_check(args.selection, scope_root, must_exist=False)
 
     papers = _read_jsonl(args.input)
 

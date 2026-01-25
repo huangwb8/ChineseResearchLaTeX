@@ -255,7 +255,9 @@ def extract_bib_keys(bib_content: str) -> set:
 def check_citation_diversity(
     tex_content: str,
     citations: List[Tuple[str, int, int, List[str]]],
-    bib_keys: Optional[set] = None
+    bib_keys: Optional[set] = None,
+    *,
+    min_ref_util: Optional[float] = None,
 ) -> Dict:
     """
     检查引用多样性，包含 4 个维度：
@@ -324,23 +326,28 @@ def check_citation_diversity(
     }
 
     # 目标阈值
+    # 注意：文献利用率默认仅提示，不作为硬性门槛；需要时可用 --min-ref-util 启用硬门槛。
     target = {
         "zero_cite_max": 10.0,  # 零引用段落率 <10%
         "cite_variance_max": 3.0,  # 方差 <3
-        "ref_util_min": 85.0,  # 利用率 >85%
+        "ref_util_min": float(min_ref_util) if min_ref_util is not None else None,
         "high_freq_max": 15.0,  # 高频占比 <15%
     }
 
     # 检查通过状态
+    ref_util_ok = True
+    if target["ref_util_min"] is not None and reference_utilization is not None:
+        ref_util_ok = reference_utilization >= float(target["ref_util_min"])
+
     status = {
         "zero_cite_ok": zero_cite_rate < target["zero_cite_max"],
         "cite_variance_ok": cite_variance < target["cite_variance_max"],
-        "ref_util_ok": reference_utilization is None or reference_utilization >= target["ref_util_min"],
+        "ref_util_ok": ref_util_ok,
         "high_freq_ok": high_freq_rate < target["high_freq_max"],
         "overall_pass": (
             zero_cite_rate < target["zero_cite_max"] and
             cite_variance < target["cite_variance_max"] and
-            (reference_utilization is None or reference_utilization >= target["ref_util_min"]) and
+            ref_util_ok and
             high_freq_rate < target["high_freq_max"]
         )
     }
@@ -401,12 +408,12 @@ def generate_diversity_recommendations(diversity_result: Dict) -> List[str]:
         )
 
     # 检查文献利用率
-    if not status.get("ref_util_ok", True):
+    if target.get("ref_util_min") is not None and not status.get("ref_util_ok", True):
         util = metrics.get("reference_utilization", 0)
         total_refs = metrics.get("total_unique_references", 0)
         recommendations.append(
             f"文献利用率偏低（当前 {util}%，仅 {total_refs} 篇被引用）。"
-            f"建议：检查未被引用的文献是否相关，相关文献应纳入正文，无关文献应从 BibTeX 中删除。"
+            f"建议：不要为“用完文献”而强行加引用；优先回到选文阶段减少噪声，或把重要文献对应的观点写出来再自然引用。"
         )
 
     # 检查高频文献
@@ -436,7 +443,7 @@ def main():
 引用多样性指标：
   - 零引用段落率：<10%%
   - 段落引用密度方差：<3
-  - 文献利用率：>85%%
+  - 文献利用率：默认仅提示展示（可用 --min-ref-util 启用硬门槛）
   - 高频文献占比：<15%%
 
 示例：
@@ -456,6 +463,8 @@ def main():
     parser.add_argument('--check-diversity', '-d', action='store_true',
                         help='启用引用多样性检测（需要 --bib 参数）')
     parser.add_argument('--bib', '-b', help='BibTeX 文件路径（用于文献利用率检测）')
+    parser.add_argument('--min-ref-util', type=float, default=None,
+                        help='可选：启用文献利用率硬门槛（例如 60/70/85）；默认仅展示指标，不做硬性门槛')
 
     args = parser.parse_args()
 
@@ -505,7 +514,12 @@ def main():
         else:
             print("ℹ️  提示：未提供 --bib 参数，文献利用率检测将被跳过")
 
-        diversity_result = check_citation_diversity(tex_content, citations, bib_keys)
+        diversity_result = check_citation_diversity(
+            tex_content,
+            citations,
+            bib_keys,
+            min_ref_util=args.min_ref_util,
+        )
         diversity_recommendations = generate_diversity_recommendations(diversity_result)
 
     # 输出报告
@@ -551,13 +565,17 @@ def main():
         else:
             metrics = diversity_result['diversity_metrics']
             status = diversity_result['status']
+            target = diversity_result.get('target', {})
 
             print(f"  零引用段落率:     {metrics['zero_cite_rate']:5.1f}% ({metrics['zero_cite_count']}/{metrics['total_paragraphs']})  [目标: <10%]  {'✓' if status['zero_cite_ok'] else '✗'}")
             print(f"  段落引用密度方差: {metrics['cite_variance']:5.2f}  [目标: <3]  {'✓' if status['cite_variance_ok'] else '✗'}")
             print(f"  平均每段引用数:   {metrics['avg_cites_per_paragraph']:5.1f}")
 
             if metrics['reference_utilization'] is not None:
-                print(f"  文献利用率:       {metrics['reference_utilization']:5.1f}% ({metrics['total_unique_references']} 篇被引用)  [目标: >85%]  {'✓' if status['ref_util_ok'] else '✗'}")
+                if target.get("ref_util_min") is None:
+                    print(f"  文献利用率:       {metrics['reference_utilization']:5.1f}% ({metrics['total_unique_references']} 篇被引用)  [提示项：不做硬性门槛]")
+                else:
+                    print(f"  文献利用率:       {metrics['reference_utilization']:5.1f}% ({metrics['total_unique_references']} 篇被引用)  [目标: >{target['ref_util_min']:.0f}%]  {'✓' if status['ref_util_ok'] else '✗'}")
             else:
                 print(f"  文献利用率:       (未提供 BibTeX 文件)")
 
