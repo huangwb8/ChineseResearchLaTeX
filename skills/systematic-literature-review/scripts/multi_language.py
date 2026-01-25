@@ -203,6 +203,19 @@ def restore_backup(tex_file: Path) -> Path | None:
     return None
 
 
+def rollback_to_backup(tex_file: Path, backup_file: Path) -> Path:
+    """将当前 tex 另存为 .broken，并从指定备份恢复（用于自动回滚）。"""
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    broken_file = tex_file.with_suffix(f'.tex.broken.{timestamp}')
+    try:
+        shutil.copy2(tex_file, broken_file)
+        shutil.copy2(backup_file, tex_file)
+    except Exception as exc:
+        raise RuntimeError(f"自动回滚失败: {exc}") from exc
+    print(f"⚠️ 自动回滚：已保存损坏版本 {broken_file}，并恢复备份 {backup_file}", file=sys.stderr)
+    return broken_file
+
+
 # ============================================================================
 # AI 翻译
 # ============================================================================
@@ -754,6 +767,11 @@ def main() -> int:
     parser.add_argument("--bib-file", type=Path, help="输入 .bib 文件（编译时需要）")
     parser.add_argument("--language", type=str, help="目标语言代码（en/zh/ja/de/fr/es）")
     parser.add_argument("--restore", action="store_true", help="从 .bak 恢复原文")
+    parser.add_argument(
+        "--auto-restore",
+        action="store_true",
+        help="编译失败/需要 AI 修复时自动回滚到本次运行前的备份（并保留 .broken 副本）",
+    )
     parser.add_argument("--compile-only", action="store_true", help="仅编译，不翻译")
     parser.add_argument("--export-word", action="store_true", help="编译成功后导出 Word")
 
@@ -776,6 +794,11 @@ def main() -> int:
                 print("✗ 编译模式需要 --bib-file 参数", file=sys.stderr)
                 return 1
 
+            session_backup: Path | None = None
+            if args.auto_restore:
+                # 在任何自动修复/写回之前做备份，保证回滚是原子可控的。
+                session_backup = backup_original_tex(args.tex_file)
+
             success, pdf_path, error_report = compile_with_smart_fix(args.tex_file, args.bib_file, "en")
             if success:
                 print(f"✓ 编译成功: {pdf_path}")
@@ -783,6 +806,15 @@ def main() -> int:
                     export_word(args.tex_file, args.bib_file)
                 return 0
             else:
+                if args.auto_restore and session_backup is not None:
+                    try:
+                        rollback_to_backup(args.tex_file, session_backup)
+                        error_report = (
+                            "⚠️ 已自动回滚到编译前备份（当前 tex 已恢复，损坏版本已另存为 .broken）。\n\n"
+                            + error_report
+                        )
+                    except Exception as exc:
+                        error_report = f"⚠️ 自动回滚失败: {exc}\n\n" + error_report
                 print(f"✗ 编译失败:\n{error_report}", file=sys.stderr)
                 return 1
 
@@ -794,6 +826,9 @@ def main() -> int:
                 print("支持的语言: en, zh, ja, de, fr, es", file=sys.stderr)
                 return 1
 
+            # 在用户覆盖 tex 之前先备份，避免“翻译成功但编译失败”后无从回退。
+            backup_original_tex(args.tex_file)
+
             # 生成翻译提示词（由 AI 执行实际翻译）
             tex_content = args.tex_file.read_text(encoding="utf-8", errors="replace")
             prompt = translate_tex_content(tex_content, args.language)
@@ -803,9 +838,13 @@ def main() -> int:
             print(prompt)
             print("\n" + "="*60, file=sys.stderr)
             print("翻译完成后，将内容写入 tex 文件，然后运行:", file=sys.stderr)
-            print(f"python {sys.argv[0]} --tex-file {args.tex_file} --compile-only", file=sys.stderr)
+            print(f"python {sys.argv[0]} --tex-file {args.tex_file} --compile-only --auto-restore", file=sys.stderr)
             if args.bib_file:
-                print(f"python {sys.argv[0]} --tex-file {args.tex_file} --bib-file {args.bib_file} --compile-only --export-word", file=sys.stderr)
+                print(
+                    f"python {sys.argv[0]} --tex-file {args.tex_file} --bib-file {args.bib_file} "
+                    f"--compile-only --auto-restore --export-word",
+                    file=sys.stderr,
+                )
             print("="*60 + "\n", file=sys.stderr)
 
             return 0

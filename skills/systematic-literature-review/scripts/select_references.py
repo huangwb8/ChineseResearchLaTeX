@@ -28,6 +28,9 @@ try:
 except ImportError:
     load_config = None  # type: ignore[assignment]
 
+# 与 config.yaml: search.abstract_enrichment.min_abstract_chars 保持一致；作为兜底值
+DEFAULT_MIN_ABSTRACT_CHARS = 80
+
 
 def _read_jsonl(path: Path) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
@@ -80,6 +83,9 @@ _LATEX_SPECIALS: dict[str, str] = {
     "$": r"\$",
     "#": r"\#",
     "_": r"\_",
+    # ^ / ~ 在正文中可能触发 LaTeX 语法错误或语义偏差（尤其是 URL）；用 \string 保守输出字面字符
+    "^": r"\string^",
+    "~": r"\string~",
 }
 
 
@@ -296,7 +302,7 @@ def main() -> int:
         "--min-abstract-chars",
         type=int,
         default=None,
-        help="Treat abstract shorter than N chars as missing (default: from config.yaml search.abstract_enrichment.min_abstract_chars, fallback: 30)",
+        help="Treat abstract shorter than N chars as missing (default: from config.yaml search.abstract_enrichment.min_abstract_chars, fallback: 80)",
     )
     args = parser.parse_args()
 
@@ -310,7 +316,7 @@ def main() -> int:
     papers = _read_jsonl(args.input)
 
     # 默认跟随 config.yaml 的“有效摘要最小长度”，保持写作/对齐检查的一致性
-    min_abs_chars = 30
+    min_abs_chars = DEFAULT_MIN_ABSTRACT_CHARS
     # 默认目标参考数：优先从 config.yaml 读取；否则采用 midpoint(min,max)
     target_refs = 0
     if args.min_abstract_chars is not None:
@@ -322,7 +328,7 @@ def main() -> int:
             ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
             min_abs_chars = int(ae.get("min_abstract_chars", min_abs_chars))
         except Exception:
-            min_abs_chars = 30
+            min_abs_chars = DEFAULT_MIN_ABSTRACT_CHARS
 
     if args.target_refs is not None:
         target_refs = int(args.target_refs)

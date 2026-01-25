@@ -375,11 +375,27 @@ def search_openalex(
 
     papers = fetch_with_cursor(query)
 
-    # 如果 query 含大量非 ASCII（如中文）且回收过少，尝试一个“ASCII token fallback”
-    if len(papers) < min(10, max_results) and any(ord(ch) > 127 for ch in query):
-        fallback_query = " ".join(re.findall(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)?", query))
-        fallback_query = fallback_query.replace("-", " ").strip()
-        if fallback_query and fallback_query.lower() != query.lower():
+    # 如果 query 含非 ASCII（如中文）且回收显著不足，尝试一个 “ASCII token fallback”
+    # 目的：避免中文/混合查询在 OpenAlex 的 recall 过低，但避免过度激进导致搜索语义被无声降级。
+    fallback_threshold = int(max_results * 0.5)
+    if any(ord(ch) > 127 for ch in query) and len(papers) < fallback_threshold:
+        tokens = re.findall(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)?", query)
+        fallback_query = " ".join(tokens).replace("-", " ").strip()
+        if not fallback_query:
+            logger.info(
+                "ASCII fallback considered but no ASCII tokens extracted (returned=%s/%s, query=%r)",
+                len(papers),
+                max_results,
+                query,
+            )
+        elif fallback_query.lower() != query.lower():
+            logger.info(
+                "ASCII fallback triggered (returned=%s/%s, query=%r -> %r)",
+                len(papers),
+                max_results,
+                query,
+                fallback_query,
+            )
             papers.extend(fetch_with_cursor(fallback_query))
 
     # 去重：优先 DOI，其次 title+year

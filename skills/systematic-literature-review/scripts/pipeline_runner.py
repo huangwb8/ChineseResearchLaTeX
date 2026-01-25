@@ -729,21 +729,32 @@ class PipelineRunner:
             counts_json_path = self.artifacts_dir / f"validate_counts_{self.file_stem}.json"
             counts_json_path.write_text(counts_output, encoding="utf-8")
 
-            self._run_script(
-                "generate_validation_report.py",
-                [
-                    "--counts-json",
-                    str(counts_json_path),
-                    "--review-tex-output",
-                    tex_output.strip(),
-                    "--output",
-                    str(validation_report_path),
-                    "--review-level",
-                    self.review_level,
-                    "--timestamp",
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                ],
-            )
+            report_args = [
+                "--counts-json",
+                str(counts_json_path),
+                "--review-tex-output",
+                tex_output.strip(),
+                "--output",
+                str(validation_report_path),
+                "--review-level",
+                self.review_level,
+                "--timestamp",
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            ]
+
+            # 选文后摘要补齐属于默认关键质量门槛之一：在报告中显式给出摘要覆盖率，避免“无感引用缺摘要文献”
+            selected_jsonl = str(self.state.input_files.get("selected_papers", "") or "").strip()
+            if selected_jsonl:
+                search_cfg = self.config.get("search", {}) if isinstance(self.config, dict) else {}
+                ae = (search_cfg.get("abstract_enrichment") or {}) if isinstance(search_cfg.get("abstract_enrichment"), dict) else {}
+                report_args.extend([
+                    "--selected-jsonl",
+                    selected_jsonl,
+                    "--min-abstract-chars",
+                    str(int(ae.get("min_abstract_chars", 80) or 80)),
+                ])
+
+            self._run_script("generate_validation_report.py", report_args)
 
             # 记录报告路径到 output_files
             self.state.output_files["validation_report"] = str(validation_report_path)

@@ -181,7 +181,7 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 | [make_latex_model](skills/make_latex_model/) | v2.7.1 | 🔧 开发 | 基于 Word 模板高保真优化 LaTeX 样式 | ✅ 稳定 |
 | [complete_example](skills/complete_example/) | v1.0.0 | 🔧 开发 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | v1.4.0 | 📝 日常 | 将旧标书内容迁移到新模板 | ✅ 稳定 |
-| [systematic-literature-review](skills/systematic-literature-review/) | v1.0.7 | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
+| [systematic-literature-review](skills/systematic-literature-review/) | v1.0.8 | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
 | [check-review-alignment](skills/check-review-alignment/) | v1.0.2 | 📝 日常 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [nsfc-bib-manager](skills/nsfc-bib-manager/) | v1.0.0 | 📝 日常 | NSFC 标书引用与 Bib 管理 | 🚧 开发中 |
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |

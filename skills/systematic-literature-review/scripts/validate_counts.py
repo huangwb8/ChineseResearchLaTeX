@@ -67,13 +67,23 @@ def extract_body(tex: str) -> Tuple[str, list[str]]:
     return body.strip(), debug_notes
 
 
-def count_words(text: str) -> Tuple[int, int, int]:
-    """返回 (总计, 中文, 英文)。中文=单字；英文=单词边界。"""
+def count_words(text: str) -> Tuple[int, int, int, int]:
+    """返回 (总计, 中文, 英文, 数字token)。
+
+    计数口径：
+    - 中文：按单字计数（含中文数字“一二三”等）
+    - 英文：按单词边界计数
+    - 数字：按连续数字串 token 计数（如 "2023年" 计为 1 个数字 token）
+    - 总计：默认不把数字计入 words_total（保持历史口径），另输出 words_total_including_digits 供参考
+    """
     cn_matches = re.findall(r"[\u4e00-\u9fff]", text)
     en_matches = re.findall(r"\b[A-Za-z][A-Za-z0-9'-]*\b", text)
+    digit_matches = re.findall(r"\b\d+(?:\.\d+)?\b", text)
     cn_count = len(cn_matches)
     en_count = len(en_matches)
-    return cn_count + en_count, cn_count, en_count
+    digit_count = len(digit_matches)
+    total = cn_count + en_count
+    return total, cn_count, en_count, digit_count
 
 
 def extract_cite_keys(tex: str) -> set[str]:
@@ -145,7 +155,7 @@ def main() -> int:
         print(f"✗ 读取/解析 tex 失败: {exc}", file=sys.stderr)
         return 2
 
-    words_total, words_cn, words_en = count_words(body_text)
+    words_total, words_cn, words_en, words_digits = count_words(body_text)
     cite_keys = extract_cite_keys(tex_raw)
 
     passed = True
@@ -164,6 +174,8 @@ def main() -> int:
         "words_total": words_total,
         "words_chinese": words_cn,
         "words_english": words_en,
+        "words_digits": words_digits,
+        "words_total_including_digits": words_total + int(words_digits),
         "cite_keys_count": len(cite_keys),
         "thresholds": {
           "min_words": min_words,

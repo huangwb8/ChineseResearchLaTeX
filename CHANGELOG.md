@@ -56,12 +56,22 @@
   - 核心脚本新增 `--scope-root`（可选，默认读 env）并对 I/O 路径做准入校验：`dedupe_papers.py`、`select_references.py`、`multi_query_search.py`、`openalex_search.py`、`plan_word_budget.py`、`update_working_conditions_data_extraction.py`、`generate_validation_report.py`、`compile_latex_with_bibtex.py`、`convert_latex_to_word.py`
   - `skills/systematic-literature-review/scripts/validate_citation_distribution.py`：新增 `--min-ref-util`（默认不启用硬门槛），避免“为达利用率而强行堆砌引用”
 
+- **systematic-literature-review v1.0.7 → v1.0.8**：质量可观测性 + 更稳健的回滚与路径解析
+  - `skills/systematic-literature-review/scripts/generate_validation_report.py`：新增“摘要覆盖率（selected_papers）”统计，避免无感引用缺摘要文献
+  - `skills/systematic-literature-review/scripts/pipeline_runner.py`：验证报告阶段透传 selected_papers 与摘要阈值，确保摘要覆盖率可见
+  - `skills/systematic-literature-review/scripts/select_references.py`：`min_abstract_chars` 默认值与 `config.yaml` 对齐（兜底 80）；BibTeX 转义增强（补充 `^`/`~`）
+  - `skills/systematic-literature-review/scripts/path_scope.py`：异常不再静默吞掉；候选路径为空时显式报错；支持 `SYSTEMATIC_LITERATURE_REVIEW_PATH_SCOPE_DEBUG=1` 输出解析结果
+  - `skills/systematic-literature-review/scripts/multi_language.py`：新增 `--auto-restore`，编译失败/需要 AI 修复时自动回滚到编译前备份并保留 `.broken` 副本
+  - `skills/systematic-literature-review/scripts/openalex_search.py`：ASCII fallback 触发条件更保守并增加日志，避免搜索语义被无声降级
+  - `skills/systematic-literature-review/scripts/validate_counts.py`：明确数字计数口径，新增 `words_digits` 与 `words_total_including_digits`
+  - 文档同步：`skills/systematic-literature-review/SKILL.md`、`skills/systematic-literature-review/references/ai_scoring_prompt.md` 明确“低分不分配子主题”，并同步多语言回滚提示
+
 ### Updated（文档更新）
 
 - 更新 [skills/README.md](skills/README.md)：优化 systematic-literature-review 技能描述
-  - 更新版本号到 v1.0.7，并同步“写作负面约束/工作目录隔离”等口径
+  - 更新版本号到 v1.0.8，并同步“摘要覆盖率/多语言自动回滚/低分不分配子主题”等口径
 - 更新 [README.md](README.md)：优化 systematic-literature-review 文献调研阶段描述
-  - 更新技能表格版本号到 v1.0.7
+  - 更新技能表格版本号到 v1.0.8
 - 更新 `skills/systematic-literature-review/SKILL.md` 与 `skills/systematic-literature-review/README.md`：补齐新配置与工具脚本说明
 - 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251218.md`、`skills/systematic-literature-review/plans/B轮-v202601251218.md` 及对应 `tests/` 目录
 - 新增 systematic-literature-review auto-test 会话：`skills/systematic-literature-review/plans/v202601251439.md`、`skills/systematic-literature-review/plans/B轮-v202601251439.md` 及对应 `tests/` 目录

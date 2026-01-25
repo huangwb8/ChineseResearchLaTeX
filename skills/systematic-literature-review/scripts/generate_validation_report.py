@@ -65,6 +65,47 @@ def parse_review_tex_result(output: str) -> Dict[str, Any]:
     return result
 
 
+def compute_abstract_stats(selected_jsonl: Path, min_abstract_chars: int) -> Dict[str, Any]:
+    """统计 selected_papers 的摘要覆盖率（用于选文后摘要补齐的可观测性）。"""
+    total = 0
+    ok = 0
+    examples: list[str] = []
+    if not selected_jsonl.exists():
+        return {"enabled": False, "reason": f"missing file: {selected_jsonl}"}
+
+    with selected_jsonl.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(obj, dict):
+                continue
+            total += 1
+            abstract = obj.get("abstract") or ""
+            if isinstance(abstract, str) and len(abstract.strip()) >= int(min_abstract_chars):
+                ok += 1
+            elif len(examples) < 10:
+                title = str(obj.get("title") or obj.get("id") or "").strip()
+                if title:
+                    examples.append(title[:120])
+
+    missing = max(0, total - ok)
+    coverage = (ok / total) if total else 0.0
+    return {
+        "enabled": True,
+        "min_abstract_chars": int(min_abstract_chars),
+        "total_selected": int(total),
+        "abstract_ok": int(ok),
+        "abstract_missing": int(missing),
+        "abstract_coverage": round(coverage, 4),
+        "missing_examples": examples,
+    }
+
+
 def format_status(passed: bool, label: str = "") -> str:
     """格式化状态标签"""
     icon = "✅ PASS" if passed else "❌ FAIL"
@@ -74,6 +115,7 @@ def format_status(passed: bool, label: str = "") -> str:
 def generate_markdown_report(
     counts_result: Dict[str, Any],
     review_tex_result: Dict[str, Any],
+    abstract_stats: Dict[str, Any] | None,
     review_level: str,
     timestamp: str,
 ) -> str:
@@ -113,6 +155,8 @@ def generate_markdown_report(
         words_total = counts_result.get("words_total", 0)
         words_cn = counts_result.get("words_chinese", 0)
         words_en = counts_result.get("words_english", 0)
+        words_digits = counts_result.get("words_digits", 0)
+        words_total_incl_digits = counts_result.get("words_total_including_digits", None)
         thresholds = counts_result.get("thresholds", {})
         min_words = thresholds.get("min_words", 0)
         max_words = thresholds.get("max_words", 0)
@@ -121,6 +165,11 @@ def generate_markdown_report(
             f"- **正文字数**: {words_total:,}",
             f"  - 中文: {words_cn:,} 字",
             f"  - 英文: {words_en:,} 词",
+            f"  - 数字token: {words_digits:,}",
+        ])
+        if isinstance(words_total_incl_digits, int):
+            lines.append(f"  - 参考：含数字token总计 {words_total_incl_digits:,}")
+        lines.extend([
             f"- **目标范围**: {min_words:,} - {max_words:,}",
             f"- **状态**: {format_status(counts_passed)}",
             "",
@@ -175,6 +224,29 @@ def generate_markdown_report(
             "- 无引用一致性验证数据",
             "",
         ])
+
+    # 摘要覆盖率（selected_papers）
+    if abstract_stats and abstract_stats.get("enabled"):
+        total_selected = int(abstract_stats.get("total_selected", 0) or 0)
+        abs_ok = int(abstract_stats.get("abstract_ok", 0) or 0)
+        abs_missing = int(abstract_stats.get("abstract_missing", 0) or 0)
+        min_chars = int(abstract_stats.get("min_abstract_chars", 0) or 0)
+        coverage = float(abstract_stats.get("abstract_coverage", 0.0) or 0.0)
+        lines.extend([
+            "## 摘要覆盖率（selected_papers）",
+            "",
+            f"- **有效摘要判定阈值**: ≥ {min_chars} chars",
+            f"- **选中文献数**: {total_selected}",
+            f"- **摘要充足**: {abs_ok}（覆盖率 {coverage:.1%}）",
+            f"- **摘要缺失/过短**: {abs_missing}",
+            "",
+        ])
+        examples = abstract_stats.get("missing_examples") or []
+        if abs_missing > 0 and examples:
+            lines.append("- **缺摘要示例（最多10条）**:")
+            for t in examples:
+                lines.append(f"  - {t}")
+            lines.append("")
 
     # 必需章节验证（从 review_tex_result 获取详细信息）
     lines.extend([
@@ -302,6 +374,18 @@ def main() -> int:
         help="Path to output validation report (Markdown format)"
     )
     parser.add_argument(
+        "--selected-jsonl",
+        type=Path,
+        default=None,
+        help="Path to selected_papers.jsonl (optional; used to compute abstract coverage)",
+    )
+    parser.add_argument(
+        "--min-abstract-chars",
+        type=int,
+        default=80,
+        help="Treat abstract shorter than N chars as missing when computing abstract coverage (default: 80)",
+    )
+    parser.add_argument(
         "--scope-root",
         type=Path,
         default=None,
@@ -352,6 +436,8 @@ def main() -> int:
     if scope_root is not None:
         if args.counts_json is not None:
             args.counts_json = resolve_and_check(args.counts_json, scope_root, must_exist=True)
+        if args.selected_jsonl is not None:
+            args.selected_jsonl = resolve_and_check(args.selected_jsonl, scope_root, must_exist=True)
         args.output = resolve_and_check(args.output, scope_root, must_exist=False)
 
     # 加载验证结果
@@ -378,6 +464,10 @@ def main() -> int:
     if args.force_pass:
         review_tex_result["passed"] = True
 
+    abstract_stats = None
+    if args.selected_jsonl is not None:
+        abstract_stats = compute_abstract_stats(args.selected_jsonl, args.min_abstract_chars)
+
     # 生成时间戳
     timestamp = args.timestamp or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -385,6 +475,7 @@ def main() -> int:
     report = generate_markdown_report(
         counts_result=counts_result,
         review_tex_result=review_tex_result,
+        abstract_stats=abstract_stats,
         review_level=args.review_level,
         timestamp=timestamp,
     )
