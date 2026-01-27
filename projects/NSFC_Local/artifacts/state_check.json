@@ -1,0 +1,15 @@
+{
+  "project_path": "projects/NSFC_Local",
+  "check_time": "2026-01-27T10:53:26.020572",
+  "status": {
+    "initialized": true,
+    "has_baseline": true,
+    "baseline_source": "word_pdf",
+    "baseline_quality": "high",
+    "last_compilation": "2026-01-27T10:53:11.744663",
+    "compilation_status": "success",
+    "has_analysis": true,
+    "latest_analysis": "latex_analysis.json"
+  },
+  "recommendations": []
+}
