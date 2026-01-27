@@ -48,17 +48,50 @@ def extract_from_latex(tex_file: Path, check_format: bool = False) -> Dict[str, 
         content_no_comments_lines.append(cleaned)
     content_no_comments = "\n".join(content_no_comments_lines)
 
-    # 以“文档顺序”为准同时提取 \section{} 与（NSFC 模板常用的）\NSFCSubsection{} / \subsection{}
-    token_patterns = {
-        "section": r"\\section\{([^}]+)\}",
-        "nsfc_subsection": r"\\NSFCSubsection\{([^}]+)\}",
-        "subsection": r"\\subsection\{([^}]+)\}",
-    }
+    def _extract_braced_arg(src: str, brace_start_idx: int) -> Tuple[str, int]:
+        """从 src[brace_start_idx] == '{' 开始提取配对花括号内容（支持嵌套）。"""
+        if brace_start_idx < 0 or brace_start_idx >= len(src) or src[brace_start_idx] != "{":
+            return "", brace_start_idx
 
+        depth = 1
+        i = brace_start_idx + 1
+        arg_start = i
+
+        while i < len(src) and depth > 0:
+            ch = src[i]
+            # 跳过转义字符（避免把 \{ \} 误判为结构花括号）
+            if ch == "\\" and i + 1 < len(src):
+                i += 2
+                continue
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+            i += 1
+
+        if depth != 0:
+            # 括号不平衡，回退为空
+            return "", brace_start_idx
+
+        return src[arg_start : i - 1], i
+
+    def _iter_command_args(src: str, command: str):
+        # 允许命令与 { 之间有空白
+        for m in re.finditer(rf"\\{re.escape(command)}\s*\{{", src):
+            brace_idx = m.end() - 1  # 指向 '{'
+            arg, end_idx = _extract_braced_arg(src, brace_idx)
+            if arg:
+                yield (m.start(), arg)
+
+    # 以“文档顺序”为准同时提取 \section{} 与（NSFC 模板常用的）\NSFCSubsection{} / \subsection{}
     tokens = []
-    for kind, pattern in token_patterns.items():
-        for m in re.finditer(pattern, content_no_comments):
-            tokens.append((m.start(), kind, m.group(1)))
+    for pos, arg in _iter_command_args(content_no_comments, "section"):
+        tokens.append((pos, "section", arg))
+    for pos, arg in _iter_command_args(content_no_comments, "NSFCSubsection"):
+        tokens.append((pos, "nsfc_subsection", arg))
+    for pos, arg in _iter_command_args(content_no_comments, "subsection"):
+        tokens.append((pos, "subsection", arg))
+
     tokens.sort(key=lambda x: x[0])
 
     section_num = 0
@@ -103,7 +136,10 @@ def clean_latex_commands(text: str) -> str:
     # 删除除 \textbf、\bfseries 外的所有命令
     text = re.sub(r'\\(?!textbf|bfseries)[a-zA-Z]+', '', text)
     text = re.sub(r'\{|\}', '', text)
-    text = text.strip()
+    # 渲染层面的空白归一：~ 在 TeX 中等价于不换行空格
+    text = text.replace('~', ' ')
+    # 格式对比需要保留片段边界处的空格（例如 "1. "），因此不做 strip()。
+    text = re.sub(r'\s+', ' ', text)
     return text
 
 
@@ -181,7 +217,7 @@ def extract_formatted_text_from_latex(latex_text: str) -> List[Dict[str, any]]:
                 fragments.append({"text": normal_text, "bold": False})
 
         # 添加加粗文本
-        fragments.append({"text": seg["text"], "bold": True})
+        fragments.append({"text": seg["text"].replace('~', ' '), "bold": True})
         last_end = seg["end"]
 
     # 添加剩余的普通文本

@@ -42,7 +42,7 @@
 
 - **NSFC_Local**：对齐 2026 地区基金 Word 正文模板（提纲页/边距/标题缩进/段后距）
   - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻“首行缩进、续行回到左边距”
-  - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；微调提纲区块前后间距以贴近分页观感
+  - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；补齐提纲标题/提示语的加粗位置（与 Word 模板一致）；微调提纲区块前后间距以贴近分页观感
   - `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由同名 `.doc` 转换生成，供标题一致性验证与基准管理使用
 
 - **complete_example**：修复默认离线运行与 LaTeX 模板渲染问题
@@ -71,7 +71,7 @@
   - auto-test-skill：新增 A/B 轮会话 `v202601271524`，并强制闭环 P0-P2
 
 - **make_latex_model**：增强 NSFC 系模板的基准选择与验证稳定性
-  - `skills/make_latex_model/scripts/compare_headings.py`：忽略被注释的标题；同时识别 `\\NSFCSubsection{}`；Word 标题样式缺失时回退到“文本模式”提取；支持生成 HTML 报告
+  - `skills/make_latex_model/scripts/compare_headings.py`：忽略被注释的标题；同时识别 `\\NSFCSubsection{}`；支持嵌套花括号标题（用于 `\\textbf{...}` 等局部加粗）；Word 标题样式缺失时回退到“文本模式”提取；支持生成 HTML 报告；格式对比时保留空格边界（避免 `1.~` 等空白差异误报）
   - `skills/make_latex_model/scripts/{generate_baseline.py,core/validators/heading_validator.py}`：模板目录存在多份 Word 文件时，优先选择“年份最大”的模板（同年优先 `.docx`）
   - `skills/make_latex_model/scripts/validate.sh`：基于 `projects/<project>/.make_latex_model/baselines/word_analysis.json` 自动校验边距；Word 模板选择与年份排序对齐
   - `skills/make_latex_model/scripts/prepare_main.py`：新增 `--add-placeholders`（可选）用于像素对齐调试，默认保持“只注释 input 行”的语义
