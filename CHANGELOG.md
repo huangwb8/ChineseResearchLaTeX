@@ -40,6 +40,23 @@
 
 ### Changed（变更）
 
+- **NSFC_Local**：微调提纲标题缩进
+  - `\\section` 标题右移 2 个中文字符宽度（`2\\ccwd`）
+  - “请勿删除或改动…”提示语左移 2 个中文字符宽度（`-2\\ccwd`）
+
+- **complete_example**：修复默认离线运行与 LaTeX 模板渲染问题
+  - 新增本地启发式 LLM 回退：无 API Key 也可生成可解析 JSON 与可落盘示例内容
+  - 补齐离线模式对“方案及可行性”类小节（研究方法/技术路线/关键技术/可行性分析）的示例内容生成，便于一键填充模板
+  - 修复 LaTeX 模板使用 `str.format()` 导致 `\\begin{figure}` 等 `{...}` 被误解析的 KeyError
+  - 安全检查兼容模板正文中的首行缩进设置（允许 `\\setlength{\\parindent}{...}`），并修复自动清理二次命中问题
+  - 运行路径解析更稳健：可从任意工作目录正确定位 `projects/<name>`
+
+- **NSFC_Local**：补充“深度学习在医疗影像分析中的应用”示例内容（CNN 架构 + 数据增强策略）
+  - 更新 `projects/NSFC_Local/extraTex/1.2.内容目标问题.tex`：研究内容/目标/关键问题
+  - 更新 `projects/NSFC_Local/extraTex/1.3.方案及可行性.tex`：研究方法/技术路线/关键技术/可行性分析
+  - 更新 `projects/NSFC_Local/extraTex/1.4.特色与创新.tex`：特色与创新点
+  - 更新 `projects/NSFC_Local/extraTex/1.5.研究计划.tex`：三年计划与预期结果
+
 - **NSFC_Local**：对齐 2026 年“地区科学基金项目-正文”Word 模板版式与提纲
   - 更新 `projects/NSFC_Local/main.tex`：同步“报告正文（2026 版）”与三大部分提纲标题文字
   - 更新 `projects/NSFC_Local/extraTex/@config.tex`：行距、标题样式与提纲渲染逻辑微调（新增 `\NSFCSubsection`）
