@@ -235,7 +235,7 @@ def generate_html_report(baseline_pdf: Path, output_pdf: Path, page_results: Lis
 
     for i, result in enumerate(page_results, 1):
         diff_percent = result["changed_ratio"] * 100
-        color = "#10b981" if diff_percent < 10 else "#f59e0b" if diff_percent < 20 else "#ef4444"
+        color = "#10b981" if diff_percent < 1 else "#f59e0b" if diff_percent < 5 else "#ef4444"
 
         html += f"""
     <div class="page-result">
@@ -340,9 +340,9 @@ def main():
     print(f"总页数: {num_pages}")
     print(f"平均差异: {avg_diff:.2%}")
 
-    if avg_diff < 0.10:
+    if avg_diff < 0.01:
         print("✅ 差异很小，样式对齐良好")
-    elif avg_diff < 0.20:
+    elif avg_diff < 0.05:
         print("⚠️  差异中等，可能需要微调")
     else:
         print("❌ 差异较大，需要仔细检查样式参数")

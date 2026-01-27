@@ -38,6 +38,12 @@ except ImportError:
     print("警告: 无法导入 WorkspaceManager")
     WorkspaceManager = None
 
+try:
+    from scripts.intelligent_adjust import IntelligentAdjuster
+except ImportError:
+    print("警告: 无法导入 IntelligentAdjuster")
+    IntelligentAdjuster = None
+
 
 class EnhancedOptimizer:
     """增强版 LaTeX 模板优化器"""
@@ -64,6 +70,11 @@ class EnhancedOptimizer:
             self.ws_manager = None
             self.workspace = self.skill_root / "workspace" / project_name
             self.workspace.mkdir(parents=True, exist_ok=True)
+
+        # 智能调整器
+        self.intelligent_adjuster = None
+        if IntelligentAdjuster:
+            self.intelligent_adjuster = IntelligentAdjuster(project_name)
 
         # 默认配置
         self.config = {
@@ -634,8 +645,22 @@ class EnhancedOptimizer:
                 self.log(f"停止迭代: {reason}", "success")
                 break
 
-            # TODO: 这里可以调用 intelligent_adjust.py 生成调整建议
-            # 目前需要 AI 介入进行参数调整
+            # 自动调整参数（如果启用了智能调整器）
+            if self.intelligent_adjuster:
+                config_path = self.project_path / "extraTex" / "@config.tex"
+                if config_path.exists():
+                    self.log("  正在自动调整参数...", "info")
+                    adjusted = self.intelligent_adjuster.auto_adjust_from_pixel_diff(
+                        diff_ratio=ratio,
+                        config_path=config_path,
+                        iteration=iteration
+                    )
+                    if not adjusted:
+                        self.log("  未应用调整（差异已足够小或无法生成建议）", "info")
+                else:
+                    self.log("  配置文件不存在，跳过自动调整", "warning")
+            else:
+                self.log("  智能调整器未启用，需要手动调整参数", "warning")
 
             self.log(f"  {reason}", "info")
 

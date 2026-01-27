@@ -440,6 +440,138 @@ class IntelligentAdjuster:
             "adjustments": [asdict(a) for a in adjustments],
         }
 
+    def apply_adjustment(self, adjustment: Adjustment, config_path: Path) -> bool:
+        """
+        应用单个调整建议到配置文件
+
+        Args:
+            adjustment: 调整建议
+            config_path: 配置文件路径
+
+        Returns:
+            是否成功
+        """
+        try:
+            config_content = config_path.read_text(encoding="utf-8")
+
+            # 根据参数类型应用不同的修改
+            if adjustment.parameter == "font_size_xiaosi":
+                # 修改字号
+                pattern = r'(\\newcommand\{\\xiaosi\}\{\\fontsize\{)[\d.]+(pt\})'
+                new_code = adjustment.latex_code
+                match = re.search(pattern, config_content)
+                if match:
+                    config_content = re.sub(pattern, new_code, config_content)
+                else:
+                    return False
+
+            elif adjustment.parameter == "baselinestretch":
+                # 修改行距
+                pattern = r'(\\renewcommand\{\\baselinestretch\}\{)[\d.]+(\})'
+                replacement = f"\\1{adjustment.suggested_value}\\2"
+                config_content = re.sub(pattern, replacement, config_content)
+
+            elif adjustment.parameter.startswith("margin_"):
+                # 修改边距
+                pattern = rf'(\\geometry\{{.*?{adjustment.latex_code.split("=")[0].strip()}\s*=\s*)[\d.]+(\s*cm.*?\}})'
+                replacement = rf"\1{adjustment.suggested_value}\2"
+                config_content = re.sub(pattern, replacement, config_content, flags=re.DOTALL)
+
+            elif adjustment.parameter == "parskip":
+                # 修改段间距
+                pattern = r'(\\setlength\{\\parskip\}\{)[\d.]+(em|pt)\})'
+                replacement = rf"\1{adjustment.suggested_value}\2"
+                config_content = re.sub(pattern, replacement, config_content)
+
+            else:
+                return False
+
+            # 写回文件
+            config_path.write_text(config_content, encoding="utf-8")
+            return True
+
+        except Exception as e:
+            print(f"应用调整失败: {e}")
+            return False
+
+    def auto_adjust_from_pixel_diff(self, diff_ratio: float,
+                                    config_path: Path,
+                                    iteration: int) -> bool:
+        """
+        根据像素差异比例自动调整参数
+
+        Args:
+            diff_ratio: 当前差异比例
+            config_path: 配置文件路径
+            iteration: 当前迭代次数
+
+        Returns:
+            是否成功应用调整
+        """
+        if diff_ratio < 0.01:
+            # 差异已足够小，无需调整
+            return False
+
+        config_content = config_path.read_text(encoding="utf-8")
+        granularity = self.config["adjustment_granularity"]
+
+        # 根据差异比例和迭代次数选择调整策略
+        if diff_ratio > 0.05:
+            # 大差异：使用较大调整粒度
+            font_step = granularity["font_size_pt"] * 2
+            spacing_step = granularity["line_spacing"] * 2
+        else:
+            # 小差异：使用精细调整粒度
+            font_step = granularity["font_size_pt"]
+            spacing_step = granularity["line_spacing"]
+
+        adjustments = []
+
+        # 策略1: 优先调整字号（影响换行）
+        font_pattern = r'\\newcommand\{\\xiaosi\}\{\\fontsize\{([\d.]+)pt\}'
+        font_match = re.search(font_pattern, config_content)
+        if font_match:
+            current_size = float(font_match.group(1))
+            # 根据差异趋势决定调整方向
+            # 这里使用历史趋势判断（如果有）
+            new_size = current_size - font_step * 0.5  # 保守调整
+
+            if new_size > 8:  # 最小字号限制
+                adjustments.append(Adjustment(
+                    parameter="font_size_xiaosi",
+                    current_value=f"{current_size}pt",
+                    suggested_value=f"{new_size:.1f}pt",
+                    confidence=0.7,
+                    reason=f"自动优化：差异比例 {diff_ratio:.2%}",
+                    latex_code=f"\\newcommand{{\\xiaosi}}{{\\fontsize{{{new_size:.1f}pt}}"
+                ))
+
+        # 策略2: 调整行距
+        spacing_pattern = r'\\renewcommand\{\\baselinestretch\}\{([\d.]+)\}'
+        spacing_match = re.search(spacing_pattern, config_content)
+        if spacing_match and len(adjustments) == 0:
+            current_spacing = float(spacing_match.group(1))
+            new_spacing = max(1.0, current_spacing - spacing_step * 0.3)
+
+            adjustments.append(Adjustment(
+                parameter="baselinestretch",
+                current_value=str(current_spacing),
+                suggested_value=f"{new_spacing:.2f}",
+                confidence=0.6,
+                reason=f"自动优化：差异比例 {diff_ratio:.2%}",
+                latex_code=f"\\renewcommand{{\\baselinestretch}}{{{new_spacing:.2f}}}"
+            ))
+
+        # 应用调整（每次只应用一个调整，避免过度调整）
+        if adjustments:
+            best_adj = max(adjustments, key=lambda a: a.confidence)
+            success = self.apply_adjustment(best_adj, config_path)
+            if success:
+                print(f"  ✅ 自动调整: {best_adj.parameter} {best_adj.current_value} → {best_adj.suggested_value}")
+                return True
+
+        return False
+
 
 def main():
     parser = argparse.ArgumentParser(

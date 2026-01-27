@@ -144,7 +144,7 @@ validation:
     line_position_diff: 2    # 换行位置误差容忍度（pt）
 
     # 像素对比容忍度（第四优先级）
-    pixel_changed_ratio: 0.20  # 像素差异比例容忍度
+    pixel_changed_ratio: 0.01  # 像素差异比例容忍度（1%）
 
   # 验收优先级说明
   acceptance_priority:
@@ -198,8 +198,8 @@ workspace:
 # 迭代优化配置（v2.3.0 新增）
 # ================================
 iteration:
-  max_iterations: 10              # 最大迭代次数
-  convergence_threshold: 0.03     # 收敛阈值（像素差异比例）
+  max_iterations: 15              # 最大迭代次数
+  convergence_threshold: 0.01     # 收敛阈值（像素差异比例 1%）
   no_improvement_limit: 3         # 连续无改善轮数阈值
 
   # 参数调整粒度
