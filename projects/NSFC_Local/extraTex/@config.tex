@@ -24,7 +24,7 @@
 % left=3.20cm,right=3.13-3.14cm
 
 %%%————————————————————————————————颜色
-\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。通过屏幕取色得到。
+\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。
 \definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
 \definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
 
@@ -87,8 +87,8 @@
 \fi
 
 %%%————————————————————————————————行距
-%设置行距 1.5倍
-\renewcommand{\baselinestretch}{1.5}
+% Word 模板行距约为 22pt（四号字），对应约 1.57 倍行距
+\renewcommand{\baselinestretch}{1.57}
 \XeTeXlinebreaklocale "zh" % 中文断行
 
 
@@ -136,6 +136,9 @@
 	citecolor=black,
 	CJKbookmarks=True
 ]{hyperref}
+\pdfstringdefDisableCommands{%
+  \def\linebreak{}%
+}
 
 
 %%%————————————————————————————————标题计数
@@ -153,17 +156,26 @@
 \newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
 \newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
 
+% 提纲用的“二级标题”实际上是 Word 中的普通段落（蓝色提示语），不宜用 \subsection
+% （避免标题进入书签/目录，也避免分页时对“段后空行”的强制需求）。
+% 同时需要推进 subsection 计数器，以便正文里使用 \subsubsection 时编号正确。
+\newcommand{\NSFCSubsection}[1]{%
+  \par\refstepcounter{subsection}%
+  {\color{MsBlue}\subsectionzihao\templatefont #1\par}%
+  \vspace{22pt plus 0pt minus 14pt}%
+}
+
 
 % Custom format for section
-\titleformat{\section}
+\titleformat{\section}[hang]
   {\color{MsBlue} \sectionzihao \templatefont} % format
-  {\hspace{1.45em}  } % label
+  {} % label
   {0pt} % separation
   {}   % before-code
 
 % Custom format for subsection
-\titleformat{\subsection}
-  {\color{MsBlue} \subsectionzihao \templatefont \linespread{1}} % format
+\titleformat{\subsection}[hang]
+  {\color{MsBlue} \subsectionzihao \templatefont} % format
   {} % label
   {0pt} % separation
   {}   % before-code
@@ -193,26 +205,27 @@
 % Define line stretch for section
 \titlespacing*{\section}
   {0pt} % Left indentation
-  {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt plus 0pt minus 0pt} % Space after the title
+  {0pt} % Space before the title
+  {0pt} % Space after the title
 
 % Define line stretch for subsection
 \titlespacing*{\subsection}
   {0pt} % Left indentation
-  {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt plus 0pt minus 0pt} % Space after the title
+  {0pt} % Space before the title
+  {22pt plus 0pt minus 14pt} % Space after the title（允许页尾收缩，便于与 Word 分页一致）
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsection}
   {0pt} % Left indentation
-  {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt plus 0pt minus 0pt} % Space after the title
+  {0pt} % Space before the title
+  {0pt} % Space after the title
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsubsection}
   {0pt} % Left indentation
-  {0pt plus 0pt minus 0pt} % Space before the title
-  {0pt plus 0pt minus 0pt} % Space after the title
+  {0pt} % Space before the title
+  {0pt} % Space after the title
+
 
 
 %%%————————————————————————————————代码

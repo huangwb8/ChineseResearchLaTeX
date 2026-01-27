@@ -40,6 +40,10 @@
 
 ### Changed（变更）
 
+- **NSFC_Local**：对齐 2026 年“地区科学基金项目-正文”Word 模板版式与提纲
+  - 更新 `projects/NSFC_Local/main.tex`：同步“报告正文（2026 版）”与三大部分提纲标题文字
+  - 更新 `projects/NSFC_Local/extraTex/@config.tex`：行距、标题样式与提纲渲染逻辑微调（新增 `\NSFCSubsection`）
+
 - **systematic-literature-review v1.0.5 → v1.0.6**：运行提速与上下文/目录膨胀治理（按最小改动落地）
   - API 缓存默认开启但使用 `mode=minimal`（新增 `config.yaml:cache.api.{enabled,mode}`），避免 `.systematic-literature-review/cache/api` 文件爆炸
   - 摘要补齐默认后移到选文后（新增 `config.yaml:search.abstract_enrichment.stage=post_selection`），降低检索阶段耗时与 cache 膨胀
