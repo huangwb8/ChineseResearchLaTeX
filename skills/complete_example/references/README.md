@@ -30,7 +30,7 @@ pip install anthropic openai pillow pyyaml jinja2
 ### 1. 基本使用（AI 自动推断）
 
 ```python
-from core.skill_controller import CompleteExampleSkill
+from scripts.skill_controller import CompleteExampleSkill
 import yaml
 
 # 加载配置
@@ -157,15 +157,12 @@ runs/<run_id>/
 ## 测试
 
 ```bash
-# 运行测试
-cd skills/complete_example
-python -m pytest tests/
-
 # 运行基本示例
-python examples/basic_usage.py
+cd skills/complete_example
+python scripts/basic_usage.py
 
 # 运行高级示例
-python examples/advanced_usage.py
+python scripts/advanced_usage.py
 ```
 
 ## 最佳实践

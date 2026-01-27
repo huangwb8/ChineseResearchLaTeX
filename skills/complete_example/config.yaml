@@ -118,6 +118,28 @@ generation:
   max_code_per_section: 1
   max_references_per_section: 3
 
+  # ========== 章节层级规范 ==========
+  # 核心规则：main.tex 使用 section/subsection，input 类 tex 使用 subsubsection/subsubsubsection
+  section_hierarchy:
+    # main.tex 专用层级（禁止在 input 类 tex 中使用）
+    main_tex_only:
+      - "\\section"
+      - "\\subsection"
+    # input 类 tex 允许的层级
+    input_tex_allowed:
+      - "\\subsubsection"
+      - "\\subsubsubsection"
+    # 生成要求：每个 input tex 必须同时使用两个层级
+    generation_requirement:
+      require_both_levels: true  # 必须同时使用 subsubsection 和 subsubsubsection
+      min_subsubsection: 1       # 每个文件至少 1 个 subsubsection
+      min_subsubsubsection: 1    # 每个 subsubsection 下至少 1 个 subsubsubsection
+    # 层级检查策略
+    enforcement:
+      enabled: true
+      mode: "strict"  # strict: 拒绝违规 / warn: 警告但允许 / off: 关闭检查
+      auto_fix: false  # 是否自动修正层级（危险，建议关闭）
+
   # 内容模板
   templates:
     figure_insertion: |
@@ -209,6 +231,7 @@ security:
   # 安全检查项开关
   enabled_checks:
     system_file: true       # 系统文件黑名单检查
+    section_hierarchy: true # 章节层级规范检查
     integrity: true         # 完整性校验
     format_injection: true  # 格式注入检查
 
@@ -277,6 +300,32 @@ prompts:
     4. **重要**：根据【用户叙事提示】调整内容方向和风格
     5. **允许编造**：这是示例场景，可以根据提示编造合理的研究内容、数据和结论
     6. 在应该插入 LaTeX 代码的地方用 {{PLACEHOLDER:资源路径}} 标记
+
+    ## ⚠️ 章节层级约束（必须遵守）
+    当前文件类型：{file_type}
+    - 如果是 input 类 tex 文件（extraTex/*.tex）：
+      - ✅ 必须使用：\subsubsection 和 \subsubsubsection 两个层级
+      - ❌ 禁止使用：\section、\subsection（这些仅在 main.tex 中使用）
+
+    ## ⚠️ 双层级结构要求（必须遵守）
+    每个 input 类 tex 文件必须同时包含两个层级的标题：
+    - **\subsubsection{{主标题}}**：作为该文件的主要章节划分
+    - **\subsubsubsection{{子标题}}**：在每个 subsubsection 下进一步细分
+
+    示例结构：
+    ```latex
+    \subsubsection{{研究背景}}
+    \subsubsubsection{{国内研究现状}}
+    ...内容...
+    \subsubsubsection{{国外研究现状}}
+    ...内容...
+
+    \subsubsection{{研究意义}}
+    \subsubsubsection{{理论意义}}
+    ...内容...
+    \subsubsubsection{{实践意义}}
+    ...内容...
+    ```
 
     只返回生成的文本，不要其他解释。
 
