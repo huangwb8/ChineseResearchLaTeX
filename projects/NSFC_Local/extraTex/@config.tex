@@ -151,6 +151,10 @@
 \setcounter{secnumdepth}{4} %显示3级目录，然后再具体定制不同的目录
 % \setcounter{tocdepth}{4}
 
+% 标题左缩进：向右移 2 个中文字符（约等于 2em）
+\newlength{\NSFCTitleIndent}
+\setlength{\NSFCTitleIndent}{2em}
+
 % Define section font
 \newcommand{\sectionzihao}{\fontsize{14pt}{\baselineskip}\selectfont}
 \newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
@@ -161,7 +165,7 @@
 % 同时需要推进 subsection 计数器，以便正文里使用 \subsubsection 时编号正确。
 \newcommand{\NSFCSubsection}[1]{%
   \par\refstepcounter{subsection}%
-  {\color{MsBlue}\subsectionzihao\templatefont #1\par}%
+  {\color{MsBlue}\subsectionzihao\templatefont \hspace*{\NSFCTitleIndent}#1\par}%
   \vspace{22pt plus 0pt minus 14pt}%
 }
 
@@ -204,7 +208,7 @@
 
 % Define line stretch for section
 \titlespacing*{\section}
-  {0pt} % Left indentation
+  {\NSFCTitleIndent} % Left indentation
   {0pt} % Space before the title
   {0pt} % Space after the title
 

@@ -41,8 +41,7 @@
 ### Changed（变更）
 
 - **NSFC_Local**：微调提纲标题缩进
-  - `\\section` 标题右移 2 个中文字符宽度（`2\\ccwd`）
-  - “请勿删除或改动…”提示语左移 2 个中文字符宽度（`-2\\ccwd`）
+  - `\\section` 与 `\\NSFCSubsection` 标题左缩进调整为右移 2 个中文字符宽度（通过 `\\NSFCTitleIndent=2em` 统一控制）
 
 - **complete_example**：修复默认离线运行与 LaTeX 模板渲染问题
   - 新增本地启发式 LLM 回退：无 API Key 也可生成可解析 JSON 与可落盘示例内容
