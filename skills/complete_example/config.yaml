@@ -1,7 +1,7 @@
 skill_info:
   name: complete_example
-  version: 1.3.0
-  description: AI 增强版 LaTeX 示例智能生成器（智能资源分配与篇幅控制）
+  version: 1.4.0
+  description: AI 增强版 LaTeX 示例智能生成器（项目级隐藏目录存储）
   author: "ChineseResearchLaTeX Project"
   category: writing
 
@@ -63,8 +63,8 @@ parameters:
 
 # ========== 运行管理配置 ==========
 run_management:
-  # 运行输出根目录（所有输出都放在这里，不污染项目）
-  runs_root: "skills/complete_example/runs"
+  # 运行输出根目录（所有中间文件都存储在目标项目的隐藏目录中）
+  runs_root: "{project_path}/.complete_example"
 
   # 运行 ID 生成策略
   run_id_strategy: "timestamp_uuid"  # timestamp_uuid / sequential / custom
@@ -77,16 +77,16 @@ run_management:
 
   # 备份策略
   backup:
-    location: "runs/{run_id}/backups"  # 备份位置（不在项目目录）
-    compress: false                    # 是否压缩备份文件
-    format: "tar.gz"                   # 压缩格式（如果启用压缩）
+    location: ".complete_example/{run_id}/backups"  # 备份位置（项目隐藏目录）
+    compress: false                                    # 是否压缩备份文件
+    format: "tar.gz"                                   # 压缩格式（如果启用压缩）
 
   # 日志策略
   logging:
-    location: "runs/{run_id}/logs"     # 日志位置（不在项目目录）
-    level: "INFO"                      # 日志级别
-    rotation: true                     # 日志轮转
-    max_size_mb: 10                    # 单个日志文件最大大小
+    location: ".complete_example/{run_id}/logs"     # 日志位置（项目隐藏目录）
+    level: "INFO"                                   # 日志级别
+    rotation: true                                  # 日志轮转
+    max_size_mb: 10                                 # 单个日志文件最大大小
 
 # ========== 资源扫描配置 ==========
 scan:

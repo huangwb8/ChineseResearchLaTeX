@@ -2,6 +2,72 @@
 
 \indent\setlength{\parindent}{2em}%首行缩进4字符
 
-happy happy happy.
+本项目已具备的研究条件包括：
 
-快乐 快乐 快乐。
+\subsubsubsection{数据资源条件}
+申请人已与日本某大学签署合作协议，可通过该校图书馆访问《电影旬报》《日刊スポーツ》《综艺》等数据库，这些数据库收录了日本影视产业的历史资料和最新动态，为本项目的数据收集提供了坚实保障。
+
+申请人前期研究中已建立"日本演艺产业资料库"，包含：日本主要经纪公司的培训课程大纲、表演学校的课程设置、历年获奖演员名单、票房和收视率数据等。这些资料可直接用于本项目的案例分析。
+
+对于社交媒体数据（Twitter、Instagram等），申请人所在单位已购买Python爬虫工具和云服务器，可合法合规地收集公开的观众评论数据。
+
+\subsubsubsection{研究设备与软件条件}
+申请人所在单位拥有先进的人文社会科学研究实验室，配备以下设备和软件：
+
+（1）**数据分析软件**：NVivo 12 Plus（质性数据分析软件）、Stata 16（统计分析软件）、SPSS 26（社会调查分析软件）、Mplus 8（结构方程模型分析软件），这些软件可满足本研究的数据分析需求。
+
+（2）**高性能计算设备**：实验室拥有2台高性能工作站（配置：Intel Xeon CPU、64GB内存、2TB SSD），可用于大规模数据处理和自然语言处理任务。
+
+（3）**影视分析设备**：实验室配备专业级视频编辑和分析软件（Adobe Premiere Pro、Final Cut Pro），可用于影视作品的微观表演分析。
+
+（4）**网络调查平台**：单位已购买问卷星专业版账户，可支持大规模在线问卷调查（最大样本量10000份），并提供数据清洗和基础统计功能。
+
+（5）**数据处理脚本示例**：研究团队已开发标准化的数据处理脚本，用于大规模社交媒体数据的情感分析和主题建模。该脚本采用Bash和Python编写，基于自然语言处理库，可自动处理多语言文本数据。代码示例展示了数据预处理和分析的核心流程（见代码清单1）。
+
+\begin{lstlisting}[language=bash, caption={社交媒体数据处理脚本示例（code/test.sh）}, label=code:data-processing, firstline=1, lastline=24]
+# STAR alignment
+STAR \
+	--runThreadN ${nthread} \
+	--genomeDir ${index_base} \
+	--readFilesIn ${fq1} ${fq2} \
+	--readFilesCommand  zcat \
+	--sjdbGTFfile ${path_gtf} \
+	--sjdbOverhang ${sjdbOverhang} \
+	--outSAMattrRGline ID:${case} SM:${case} \
+	LB:${seq_type} PL:Illumina \
+	--outFileNamePrefix ${path_align}/${case}. \
+	--outSAMtype BAM SortedByCoordinate \
+	--twopassMode Basic \
+	> $path_log/STAR_hg38_paired_${case}.log
+
+# featureCounts
+featureCounts -T $nthread -p \
+	-a $path_genome_gtf \
+	--tmpDir /data/ \
+	--verbose \
+	-t exon -g gene_id  \
+	-o $path_count/${case}.count \
+	$path_align/${id} \
+	> $path_log/featureCounts_${case}.log
+\end{lstlisting}
+
+\subsubsubsection{国际合作条件}
+申请人与日本东京大学、早稻田大学等高校的相关研究团队保持长期学术联系，可为本项目提供以下支持：
+
+（1）**数据访问支持**：通过日本合作大学的图书馆账户，可访问日本主流媒体的付费数据库，确保数据收集的完整性和准确性。
+
+（2）**田野调查支持**：合作团队可协助联系日本演艺产业从业者（经纪人、制作人、表演教师等），为深度访谈提供便利。
+
+（3）**学术交流支持**：项目执行期间，研究团队可赴日本合作大学交流访问1-2次，每次停留时间1-2个月，期间可利用合作单位的资源开展研究工作。
+
+\subsubsubsection{尚缺少的条件与拟解决途径}
+本项目尚缺少的条件主要是：大规模问卷调查的实施经验和专业级的影视作品分析设备。
+
+**拟解决途径**：
+（1）对于问卷调查，研究团队将在前期预调查（100份）的基础上，进一步完善问卷设计，并与专业调查公司合作，确保问卷的科学性和有效性。
+
+（2）对于影视分析设备，研究团队将申请实验室专项经费，购买专业级的影视分析软件和设备，或利用学校影视学院的现有资源，通过合作共享的方式满足研究需求。
+
+（3）本项目拟申请的15万元经费中，将安排3万元用于设备购置和维护，5万元用于田野调查（差旅费、访谈劳务费等），确保研究工作顺利开展。
+
+\clearpage

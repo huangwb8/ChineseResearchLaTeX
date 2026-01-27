@@ -219,7 +219,7 @@ class FormatGuard:
             )
 
         # ========== 阶段 1：硬编码 - 备份 ==========
-        # 🆕 备份到 runs/<run_id>/backups/ 而非项目目录
+        # 🆕 备份到 .complete_example/<run_id>/backups/ 而非项目目录
         backup_dir = self.run_dir / "backups"
         backup_filename = f"{relative_path.replace('/', '_')}.backup"
         backup_path = backup_dir / backup_filename
@@ -337,14 +337,14 @@ class FormatGuard:
         backup_path: Path,
         ai_explanation: str
     ):
-        """🆕 记录修改日志到 runs/<run_id>/logs/"""
+        """🆕 记录修改日志到 .complete_example/<run_id>/logs/"""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "file": str(file_path),
             "backup": str(backup_path),
             "ai_explanation": ai_explanation or "未提供"
         }
-        # 🆕 写入 runs/<run_id>/logs/execution.log 而非项目目录
+        # 🆕 写入 .complete_example/<run_id>/logs/execution.log 而非项目目录
         log_file = self.run_dir / "logs" / "execution.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)
         with open(log_file, "a", encoding="utf-8") as f:

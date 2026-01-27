@@ -40,6 +40,25 @@
 
 ### Changed（变更）
 
+- **complete_example v1.3.0 → v1.4.0**：中间文件存储机制重构（项目级隐藏目录）
+  - **项目隔离**：所有中间文件存储在目标项目的 `.complete_example` 隐藏目录中
+  - **硬编码保证**：通过硬编码方式确保所有运行时文件（备份、日志、分析结果等）都存放在项目级目录
+  - **路径变更**：
+    - 旧路径：`skills/complete_example/runs/<run_id>/`
+    - 新路径：`{project_path}/.complete_example/<run_id>/`
+  - **配置更新**：`config.yaml` 中 `run_management.runs_root` 改为 `{project_path}/.complete_example`
+  - **代码更新**：
+    - `skill_controller.py`：`_create_run_directory()` 改为接收 `project_path` 参数
+    - `format_guard.py`：更新注释中的路径说明
+    - `advanced_usage.py`：更新提示信息中的路径说明
+  - **文档更新**：`SKILL.md` 中所有 `runs/` 路径引用改为 `.complete_example/`
+  - **Git 忽略**：`.gitignore` 新增 `projects/**/.complete_example/` 规则
+  - **优势**：
+    - ✅ 项目间完全隔离，每个项目有独立的中间文件存储
+    - ✅ 便于项目迁移和备份（中间文件随项目一起移动）
+    - ✅ 删除项目时自动清理所有相关中间文件
+    - ✅ 隐藏目录设计，不污染项目结构
+
 - **complete_example v1.2.0 → v1.3.0**：智能资源分配与篇幅控制优化
   - **新增 `ResourceAllocator`**：智能资源分配器，确保项目中所有 figures 和 code 素材被充分利用
   - **轮询分配策略**：将所有图片和代码随机分配到各个章节（示例无需理解语义）
@@ -47,7 +66,7 @@
   - **配置参数**：新增 `page_control` 配置节，包含目标页数、每页字数、各种元素占用的页数等
   - **资源利用率目标**：figures 和 code 的 100% 利用率（所有素材都分配到章节）
   - **新增方法**：`AIContentGenerator.generate_section_content_with_allocation()` 支持预分配资源和目标字数
-  - **分配方案可视化**：资源分配结果保存至 `runs/<run_id>/analysis/resource_allocation.json`
+  - **分配方案可视化**：资源分配结果保存至 `.complete_example/<run_id>/analysis/resource_allocation.json`
 
 - **NSFC_Local**：对齐 2026 地区基金 Word 正文模板（提纲页/边距/标题缩进/段后距）
   - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻"首行缩进、续行回到左边距"；新增 `\\NSFCSubsectionAfterSkip` 并调小默认段后距以让提纲与正文衔接更紧凑

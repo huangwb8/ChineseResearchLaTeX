@@ -104,16 +104,23 @@ config: skills/complete_example/config.yaml
 
 ### 运行目录结构
 
-所有运行输出都保存在 `skills/complete_example/runs/<run_id>/` 中，不污染项目目录：
+所有运行输出都保存在 **目标项目的隐藏目录** `{project_path}/.complete_example/<run_id>/` 中，不污染项目目录：
 
 ```
-runs/<run_id>/
+{project_path}/.complete_example/<run_id>/
 ├── backups/           # 备份文件
 ├── logs/              # 日志文件
 ├── analysis/          # AI 分析结果
 ├── output/            # 生成内容
 └── metadata.json      # 运行元数据
 ```
+
+**设计原理**：
+- ✅ **项目隔离**：每个项目都有独立的 `.complete_example` 目录
+- ✅ **隐藏保护**：使用点号前缀（`.`）使目录在常规文件列表中隐藏
+- ✅ **硬编码保证**：所有中间文件路径都通过硬编码方式确保存放在此目录中
+- ✅ **可追溯性**：每次运行都有唯一的 `run_id`（格式：`v{timestamp}_{hash}`）
+- ✅ **便于清理**：可直接删除 `.complete_example` 目录清理所有中间文件
 
 ### 质量报告
 
@@ -319,7 +326,7 @@ format_keywords_blacklist:
 - **受保护的文件**：`extraTex/@config.tex`、`main.tex` 等
 - **受保护的命令**：`\setlength`、`\geometry`、`\definecolor` 等
 - **哈希验证**：计算关键格式文件的 SHA256 哈希值，防止篡改
-- **自动备份**：修改前自动备份到 `runs/<run_id>/backups/`
+- **自动备份**：修改前自动备份到 `.complete_example/<run_id>/backups/`
 - **自动回滚**：格式保护失败或编译失败时自动回滚
 - **访问控制**：黑名单 + 白名单双重保护
 - **格式注入扫描**：自动检测并清理危险的格式指令
@@ -328,7 +335,7 @@ format_keywords_blacklist:
 
 - 修改文件后自动执行 `xelatex` 编译
 - 编译失败则自动回滚
-- 编译日志保存在 `runs/<run_id>/logs/compile.log`
+- 编译日志保存在 `.complete_example/<run_id>/logs/compile.log`
 
 ## 依赖要求
 
@@ -395,8 +402,8 @@ run_management:
 **原因**：AI 生成内容时破坏了格式定义
 
 **解决方案**：
-1. 检查 `runs/<run_id>/logs/format_check.log`
-2. 查看备份文件 `runs/<run_id>/backups/`
+1. 检查 `.complete_example/<run_id>/logs/format_check.log`
+2. 查看备份文件 `.complete_example/<run_id>/backups/`
 3. 手动恢复或调整提示后重试
 
 ### 问题 2：编译失败
@@ -404,7 +411,7 @@ run_management:
 **原因**：生成的 LaTeX 代码有语法错误
 
 **解决方案**：
-1. 检查 `runs/<run_id>/logs/compile.log`
+1. 检查 `.complete_example/<run_id>/logs/compile.log`
 2. 查看具体错误信息
 3. 调整 AI 温度参数或修改提示
 

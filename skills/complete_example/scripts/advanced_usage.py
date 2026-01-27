@@ -127,7 +127,7 @@ def example_apply_mode():
     )
 
     print_result(result)
-    print("\n注意：文件已被修改，备份保存在 runs/<run_id>/backups/")
+    print("\n注意：文件已被修改，备份保存在 .complete_example/<run_id>/backups/")
 
 
 def create_skill():

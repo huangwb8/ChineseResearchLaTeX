@@ -41,6 +41,9 @@ skills/complete_example/runs/
 skills/nsfc-justification-writer/.cache/
 skills/nsfc-justification-writer/**/__pycache__/
 
+# complete_example 项目级工作空间（每个项目的隐藏目录）
+projects/**/.complete_example/
+
 # complete_example / format guard runtime artifacts
 .format_hashes.json
 projects/**/.format_hashes.json

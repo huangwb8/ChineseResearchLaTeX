@@ -14,11 +14,13 @@ import dataclasses
 class CompleteExampleSkill:
     """AI 增强版示例生成器主控制器"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], project_path: Path = None):
         self.config = config
         self.skill_root = Path(config.get("skill_root", "skills/complete_example"))
-        self.runs_dir = self.skill_root / "runs"
-        self.runs_dir.mkdir(parents=True, exist_ok=True)
+
+        # 🆕 支持项目级隐藏目录（在 execute 时动态设置）
+        self.project_path = project_path
+        self.runs_dir = None  # 将在 execute 中根据 project_path 设置
 
         # 初始化 LLM 客户端
         self.llm_client = self._init_llm_client()
@@ -67,11 +69,15 @@ class CompleteExampleSkill:
             "reference_citation": r"\cite{{{citekey}}}",
         }
 
-    def _create_run_directory(self) -> Path:
-        """🆕 创建新的运行目录"""
+    def _create_run_directory(self, project_path: Path) -> Path:
+        """🆕 创建新的运行目录（在目标项目的隐藏目录中）"""
+        # 🆕 使用项目级隐藏目录
+        runs_root = project_path / ".complete_example"
+        runs_root.mkdir(parents=True, exist_ok=True)
+
         # 生成唯一运行 ID
-        run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-        run_dir = self.runs_dir / run_id
+        run_id = f"v{datetime.now().strftime('%Y%m%d%H%M')}_{uuid.uuid4().hex[:8]}"
+        run_dir = runs_root / run_id
 
         # 创建子目录
         (run_dir / "backups").mkdir(parents=True, exist_ok=True)
@@ -82,8 +88,8 @@ class CompleteExampleSkill:
         (run_dir / "output" / "report").mkdir(parents=True, exist_ok=True)
 
         # 更新 latest 软链接
-        latest_link = self.runs_dir / "latest"
-        if latest_link.exists():
+        latest_link = runs_root / "latest"
+        if latest_link.exists() or latest_link.is_symlink():
             latest_link.unlink()
         try:
             latest_link.symlink_to(run_id)
@@ -95,6 +101,7 @@ class CompleteExampleSkill:
         metadata = {
             "run_id": run_id,
             "timestamp": datetime.now().isoformat(),
+            "project_path": str(project_path),
             "config": self.config
         }
         (run_dir / "metadata.json").write_text(
@@ -122,16 +129,17 @@ class CompleteExampleSkill:
         """
 
         # ========== 阶段 0：初始化 ==========
-        # 🆕 创建运行目录（所有输出都放在这里，不污染项目）
-        run_dir = self._create_run_directory()
-
         # 假设项目在 projects/ 目录下
         project_path = Path("projects") / project_name
+
+        # 🆕 创建运行目录（所有输出都放在项目的 .complete_example 隐藏目录中）
+        run_dir = self._create_run_directory(project_path)
 
         report = {
             "project": project_name,
             "run_id": run_dir.name,  # 🆕 记录运行 ID
             "run_dir": str(run_dir),  # 🆕 记录运行目录
+            "project_path": str(project_path),  # 🆕 记录项目路径
             "stages": {},
             "final_result": None
         }
@@ -233,7 +241,7 @@ class CompleteExampleSkill:
             theme = analyzer.analyze_section_theme(content)
             themes[file_path] = theme
 
-        # 🆕 保存分析结果到 runs/<run_id>/analysis/
+        # 🆕 保存分析结果到 .complete_example/<run_id>/analysis/
         if run_dir:
             analysis_file = run_dir / "analysis" / "section_themes.json"
             analysis_file.parent.mkdir(parents=True, exist_ok=True)
@@ -287,7 +295,7 @@ class CompleteExampleSkill:
             section_themes=themes
         )
 
-        # 保存分配方案到 runs/<run_id>/analysis/
+        # 保存分配方案到 .complete_example/<run_id>/analysis/
         if run_dir:
             allocation_file = run_dir / "analysis" / "resource_allocation.json"
             allocation_file.parent.mkdir(parents=True, exist_ok=True)
