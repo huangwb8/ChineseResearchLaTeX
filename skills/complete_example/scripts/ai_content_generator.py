@@ -101,6 +101,117 @@ class AIContentGenerator:
 
         return refined_content
 
+    def generate_section_content_with_allocation(
+        self,
+        allocated_resources: List['ResourceInfo'],
+        target_word_count: int,
+        section_theme: 'SectionTheme',
+        existing_content: str,
+        narrative_hint: str = None,
+        file_path: str = ""
+    ) -> str:
+        """
+        🆕 使用预分配的资源生成内容（优化版）
+
+        与 generate_section_content 的区别：
+        - 不再使用 Top-K 选择，直接使用预分配的资源
+        - 支持自定义目标字数（用于篇幅控制）
+
+        Args:
+            allocated_resources: 已分配给该章节的资源列表
+            target_word_count: 目标字数
+            section_theme: 章节主题
+            existing_content: 现有内容
+            narrative_hint: 用户叙事提示
+            file_path: 文件路径
+
+        Returns:
+            str: 生成的内容
+        """
+        # ========== 阶段 1：硬编码 - 提取保护区域 ==========
+        protected_zones = self.guard.extract_protected_zones(existing_content)
+
+        # ========== 阶段 2：AI - 生成叙述性内容（使用预分配资源） ==========
+        narrative = self._generate_narrative_with_target(
+            resources=allocated_resources,
+            theme=section_theme,
+            context=existing_content,
+            narrative_hint=narrative_hint,
+            target_word_count=target_word_count,
+            file_path=file_path,
+        )
+
+        # ========== 阶段 3：协作 - 包装 LaTeX 代码 ==========
+        formatted_content = self._wrap_with_latex_code(
+            narrative, allocated_resources, protected_zones, context=existing_content
+        )
+
+        # ========== 阶段 4：AI - 自我优化 ==========
+        refined_content = self._refine_content(
+            formatted_content, section_theme
+        )
+
+        # ========== 阶段 5：硬编码 - 最终验证 ==========
+        self._validate_format_preservation(protected_zones, refined_content)
+
+        return refined_content
+
+    def _generate_narrative_with_target(
+        self,
+        resources: List['ResourceInfo'],
+        theme: 'SectionTheme',
+        context: str,
+        narrative_hint: str = None,
+        target_word_count: int = 300,
+        file_path: str = ""
+    ) -> str:
+        """🆕 AI：生成指定字数的连贯叙述性文本"""
+
+        prompts = (self.config.get("prompts") or {})
+        tmpl = prompts.get("generate_narrative")
+
+        # 推断文件类型
+        file_type = "main" if (file_path and file_path.endswith("main.tex")) else "input"
+
+        if tmpl:
+            prompt = tmpl.format(
+                theme=theme.theme,
+                key_concepts=", ".join(theme.key_concepts),
+                writing_style=theme.writing_style,
+                target_audience=theme.target_audience,
+                narrative_hint=narrative_hint or "（未提供，AI 根据章节主题自动推断）",
+                context=context[:800],
+                resources=self._format_resources_for_prompt(resources),
+                target_length=str(target_word_count),  # 🆕 使用目标字数
+                file_type=file_type,
+            )
+        else:
+            # 兼容旧逻辑
+            prompt = (
+                "你是一位经验丰富的科研写作助手，专精于国家自然科学基金申请书的撰写。\n"
+                "根据以下信息，生成一段连贯的示例内容。\n\n"
+                f"主题：{theme.theme}\n"
+                f"关键概念：{', '.join(theme.key_concepts)}\n"
+                f"写作风格：{theme.writing_style}\n"
+                f"目标读者：{theme.target_audience}\n"
+                f"目标字数：约 {target_word_count} 字\n"  # 🆕 明确字数要求
+                f"用户叙事提示：{narrative_hint or '（未提供）'}\n\n"
+                f"可用资源：\n{self._format_resources_for_prompt(resources)}\n\n"
+                "请在应插入 LaTeX 代码处使用双大括号占位符，例如：\n"
+                "- 图片：{{{{PLACEHOLDER:figures/xxx.jpg}}}}\n"
+                "- 文献：{{{{PLACEHOLDER:references:zhang2023deep}}}}\n"
+                "- 表格：{{{{TABLE:临床特征对比表|complex}}}}\n"
+                "- 公式：{{{{EQUATION:E=mc^2|eq:energy}}}}\n\n"
+                "只返回生成的文本，不要解释。\n"
+            )
+
+        temp = 0.8
+        llm_temp_cfg = (self.config.get("llm") or {}).get("temperature")
+        if isinstance(llm_temp_cfg, dict):
+            temp = float(llm_temp_cfg.get("generation", temp))
+
+        return self.llm.complete(prompt, temperature=temp)
+
     def _generate_narrative(
         self,
         resources: List['ResourceInfo'],

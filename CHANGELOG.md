@@ -40,14 +40,23 @@
 
 ### Changed（变更）
 
+- **complete_example v1.2.0 → v1.3.0**：智能资源分配与篇幅控制优化
+  - **新增 `ResourceAllocator`**：智能资源分配器，确保项目中所有 figures 和 code 素材被充分利用
+  - **轮询分配策略**：将所有图片和代码随机分配到各个章节（示例无需理解语义）
+  - **篇幅自动控制**：估算最终 PDF 页数，自动调整章节字数以达到 12-14 页目标
+  - **配置参数**：新增 `page_control` 配置节，包含目标页数、每页字数、各种元素占用的页数等
+  - **资源利用率目标**：figures 和 code 的 100% 利用率（所有素材都分配到章节）
+  - **新增方法**：`AIContentGenerator.generate_section_content_with_allocation()` 支持预分配资源和目标字数
+  - **分配方案可视化**：资源分配结果保存至 `runs/<run_id>/analysis/resource_allocation.json`
+
 - **NSFC_Local**：对齐 2026 地区基金 Word 正文模板（提纲页/边距/标题缩进/段后距）
-  - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻“首行缩进、续行回到左边距”；新增 `\\NSFCSubsectionAfterSkip` 并调小默认段后距以让提纲与正文衔接更紧凑
+  - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻"首行缩进、续行回到左边距"；新增 `\\NSFCSubsectionAfterSkip` 并调小默认段后距以让提纲与正文衔接更紧凑
   - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；补齐提纲标题/提示语的加粗位置（与 Word 模板一致）；使用 `\\linebreak{}` 精确对齐标题换行，使 PDF 中每行标题文字与 Word 模板一致；微调提纲区块前后间距以贴近分页观感
   - `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由同名 `.doc` 转换生成，供标题一致性验证与基准管理使用
 
 - **complete_example v1.0.0 → v1.2.0**：多元示例占位符（表格/公式）+ 模板渲染与安全加固
   - 新增本地启发式 LLM 回退：无 API Key 也可生成可解析 JSON 与可落盘示例内容
-  - 补齐离线模式对“方案及可行性”类小节（研究方法/技术路线/关键技术/可行性分析）的示例内容生成，便于一键填充模板
+  - 补齐离线模式对"方案及可行性"类小节（研究方法/技术路线/关键技术/可行性分析）的示例内容生成，便于一键填充模板
   - 新增占位符支持：`{{TABLE:...}}` / `{{INLINE_MATH:...}}` / `{{DISPLAY_MATH:...}}` / `{{EQUATION:...|label}}` / `{{ALIGN:...}}`
   - 新增安全模板渲染器：避免 LaTeX 模板中 `{...}` 被误解析为 Python format 占位符导致 KeyError
   - 修复文献占位符冲突：reference 占位符统一为 `references:<citekey>`，避免同一 `.bib` 多条目覆盖

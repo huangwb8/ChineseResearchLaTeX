@@ -264,42 +264,90 @@ class CompleteExampleSkill:
         narrative_hint: str = None,
         run_dir: Path = None
     ) -> Dict:
-        """阶段 3：生成内容"""
+        """阶段 3：生成内容（使用智能资源分配器）"""
         from .ai_content_generator import AIContentGenerator
         from .format_guard import FormatGuard
+        from .resource_allocator import ResourceAllocator, ResourcePool
 
+        # ========== 🆕 阶段 3.1：智能资源分配 ==========
+        # 创建资源池
+        resource_pool = ResourcePool(
+            figures=resources.figures,
+            code=resources.code,
+            references=resources.references
+        )
+
+        # 创建资源分配器（使用配置中的篇幅控制参数）
+        allocator_config = self.config.get("page_control", {})
+        allocator = ResourceAllocator(allocator_config)
+
+        # 为每个章节分配资源
+        allocation_plans, allocation_summary = allocator.allocate_resources_for_project(
+            resource_pool=resource_pool,
+            section_themes=themes
+        )
+
+        # 保存分配方案到 runs/<run_id>/analysis/
+        if run_dir:
+            allocation_file = run_dir / "analysis" / "resource_allocation.json"
+            allocation_file.parent.mkdir(parents=True, exist_ok=True)
+            allocation_data = {
+                "summary": allocation_summary,
+                "plans": [
+                    {
+                        "file_path": p.file_path,
+                        "allocated_resources": [
+                            {
+                                "path": r.path,
+                                "type": r.type,
+                                "filename": r.filename
+                            }
+                            for r in p.allocated_resources
+                        ],
+                        "target_word_count": p.target_word_count,
+                        "estimated_pages": p.estimated_pages
+                    }
+                    for p in allocation_plans
+                ]
+            }
+            allocation_file.write_text(
+                json.dumps(allocation_data, ensure_ascii=False, indent=2),
+                encoding="utf-8"
+            )
+
+        # ========== 阶段 3.2：根据分配方案生成内容 ==========
         generator = AIContentGenerator(
             self.llm_client,
             self.templates,
-            FormatGuard(project_path, run_dir),  # 🆕 传递 run_dir
+            FormatGuard(project_path, run_dir),
             config=self.config,
         )
 
         contents = {}
-        all_resources = (
-            resources.figures +
-            resources.code +
-            resources.references
-        )
 
-        for file_path, theme in themes.items():
+        # 根据 allocation_plans 逐个生成内容
+        for plan in allocation_plans:
+            file_path = plan.file_path
+            theme = themes[file_path]
+
             full_path = project_path / file_path
             existing_content = full_path.read_text(encoding="utf-8")
 
-            # 生成内容（传递用户提示）
-            new_content = generator.generate_section_content(
-                resources=all_resources,
+            # 🆕 使用分配的资源而非全局 Top-K
+            new_content = generator.generate_section_content_with_allocation(
+                allocated_resources=plan.allocated_resources,
+                target_word_count=plan.target_word_count,
                 section_theme=theme,
                 existing_content=existing_content,
-                content_density=density,
-                narrative_hint=narrative_hint,  # 传递用户提示
+                narrative_hint=narrative_hint,
                 file_path=file_path,
             )
 
             contents[file_path] = {
                 "old_content": existing_content,
                 "new_content": new_content,
-                "theme": theme
+                "theme": theme,
+                "allocation_plan": plan  # 🆕 记录分配方案
             }
 
         return {

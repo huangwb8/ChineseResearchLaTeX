@@ -1,7 +1,7 @@
 skill_info:
   name: complete_example
-  version: 1.2.0
-  description: AI 增强版 LaTeX 示例智能生成器
+  version: 1.3.0
+  description: AI 增强版 LaTeX 示例智能生成器（智能资源分配与篇幅控制）
   author: "ChineseResearchLaTeX Project"
   category: writing
 
@@ -109,9 +109,10 @@ scan:
 # ========== 内容生成配置 ==========
 generation:
   # 资源选择策略
-  selection_strategy: "ai_score"  # ai_score / random / manual
+  selection_strategy: "smart_allocation"  # smart_allocation / ai_score / random / manual
+  # smart_allocation: 使用新的智能资源分配器，确保充分利用所有素材
 
-  # 相关性阈值
+  # 相关性阈值（仅在使用 ai_score 时有效）
   relevance_threshold: 0.5
 
   # 内容类型权重（AI 根据章节主题动态调整，作为提示而非强约束）
@@ -242,6 +243,25 @@ generation:
       \begin{align}
         {{formulas}}
       \end{align}
+
+# ========== 🆕 篇幅控制配置 ==========
+page_control:
+  # 目标 PDF 页数范围
+  target_pdf_pages: [12, 14]  # [最小页数, 最大页数]
+
+  # 每页平均字数（用于估算）
+  avg_words_per_page: 350
+
+  # 各种元素占用的页数（估算值）
+  figures_per_page_estimate: 0.3     # 每张图片占用 0.3 页
+  code_per_page_estimate: 0.2        # 每段代码占用 0.2 页
+  table_per_page_estimate: 0.25      # 每个表格占用 0.25 页
+  references_per_page_estimate: 0.05 # 每个文献引用占用 0.05 页
+
+  # 资源利用率目标
+  resource_utilization:
+    figures: 1.0  # 100% 利用率（所有图片都分配到章节）
+    code: 1.0     # 100% 利用率（所有代码都分配到章节）
 
 # ========== 格式保护配置 ==========
 format_protection:
