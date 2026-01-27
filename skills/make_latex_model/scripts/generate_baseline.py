@@ -106,23 +106,21 @@ class BaselineGenerator:
         if not template_dir.exists():
             return None
 
-        # 优先查找 .docx，其次 .doc
-        patterns = ["*.docx", "*.doc"]
+        # 同时考虑 .docx 与 .doc：按“年份→格式偏好→修改时间”选择最新模板
+        files = list(template_dir.glob("*.docx")) + list(template_dir.glob("*.doc"))
+        if not files:
+            return None
 
-        for pattern in patterns:
-            files = list(template_dir.glob(pattern))
-            if files:
-                # 优先选择“看起来最新”的年份文件（避免硬编码具体年份）
-                import re
+        import re
 
-                def _extract_year(path: Path) -> int:
-                    m = re.findall(r"(20\\d{2})", path.name)
-                    return int(m[-1]) if m else -1
+        def _sort_key(path: Path) -> tuple[int, int, float]:
+            m = re.findall(r"(20\d{2})", path.name)
+            year = int(m[-1]) if m else -1
+            # 同年时优先 docx（python-docx/标题提取更稳定）
+            fmt_rank = 1 if path.suffix.lower() == ".docx" else 0
+            return (year, fmt_rank, path.stat().st_mtime)
 
-                files_sorted = sorted(files, key=_extract_year, reverse=True)
-                return files_sorted[0]
-
-        return None
+        return sorted(files, key=_sort_key, reverse=True)[0]
 
     def convert_with_word(self, input_path: Path, output_path: Path) -> bool:
         """

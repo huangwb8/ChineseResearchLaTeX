@@ -41,41 +41,48 @@ def extract_from_latex(tex_file: Path, check_format: bool = False) -> Dict[str, 
     with open(tex_file, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # 提取 \section{} 标题（包含原始 LaTeX 代码）
-    section_pattern = r'\\section\{([^}]+)\}'
-    sections = re.findall(section_pattern, content)
+    # 预处理：去掉注释（避免把被注释掉的 \subsection{...} 误识别为标题）
+    content_no_comments_lines = []
+    for line in content.splitlines():
+        cleaned = re.sub(r"(?<!\\)%.*$", "", line)
+        content_no_comments_lines.append(cleaned)
+    content_no_comments = "\n".join(content_no_comments_lines)
 
-    for i, section in enumerate(sections, start=1):
-        key = f'section_{i}'
-        if check_format:
-            headings[key] = {
-                "text": clean_latex_text(section),
-                "fragments": extract_formatted_text_from_latex(section)
-            }
-        else:
-            headings[key] = clean_latex_text(section)
+    # 以“文档顺序”为准同时提取 \section{} 与（NSFC 模板常用的）\NSFCSubsection{} / \subsection{}
+    token_patterns = {
+        "section": r"\\section\{([^}]+)\}",
+        "nsfc_subsection": r"\\NSFCSubsection\{([^}]+)\}",
+        "subsection": r"\\subsection\{([^}]+)\}",
+    }
 
-    # 提取 \subsection{} 标题
-    subsection_pattern = r'\\subsection\{([^}]+)\}'
-    subsections = re.findall(subsection_pattern, content)
+    tokens = []
+    for kind, pattern in token_patterns.items():
+        for m in re.finditer(pattern, content_no_comments):
+            tokens.append((m.start(), kind, m.group(1)))
+    tokens.sort(key=lambda x: x[0])
 
-    section_num = 1
-    subsection_num = 1
+    section_num = 0
+    subsection_num = 0
 
-    for subsection in subsections:
-        if subsection_num > 5:
+    for _, kind, raw in tokens:
+        if kind == "section":
             section_num += 1
-            subsection_num = 1
+            subsection_num = 0
+            key = f"section_{section_num}"
+        else:
+            if section_num <= 0:
+                # 忽略“没有 section 上下文”的二级标题（通常不应出现）
+                continue
+            subsection_num += 1
+            key = f"subsection_{section_num}_{subsection_num}"
 
-        key = f'subsection_{section_num}_{subsection_num}'
         if check_format:
             headings[key] = {
-                "text": clean_latex_text(subsection),
-                "fragments": extract_formatted_text_from_latex(subsection)
+                "text": clean_latex_text(raw),
+                "fragments": extract_formatted_text_from_latex(raw),
             }
         else:
-            headings[key] = clean_latex_text(subsection)
-        subsection_num += 1
+            headings[key] = clean_latex_text(raw)
 
     return headings
 
@@ -84,6 +91,8 @@ def clean_latex_text(text: str) -> str:
     """清理 LaTeX 文本中的格式标记"""
     text = re.sub(r'\\[a-zA-Z]+', '', text)
     text = re.sub(r'\{|\}', '', text)
+    # 渲染层面的空白归一：~ 在 TeX 中等价于不换行空格
+    text = text.replace('~', ' ')
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
     return text
@@ -300,39 +309,63 @@ def extract_from_word(doc_file: Path, check_format: bool = False) -> Dict[str, a
         sys.exit(1)
 
     doc = Document(doc_file)
-    headings = {}
 
-    section_num = 1
-    subsection_num = 1
-    section_count = 1
+    def _add_heading(out: Dict[str, any], key: str, paragraph):
+        if check_format:
+            out[key] = {
+                "text": paragraph.text.strip(),
+                "fragments": extract_formatted_text_from_word(paragraph),
+            }
+        else:
+            out[key] = paragraph.text.strip()
+
+    headings: Dict[str, any] = {}
+
+    # 1) 优先走“标准标题样式”路径（适配常规 Word 文档）
+    section_count = 0
+    subsection_count = 0
+    for paragraph in doc.paragraphs:
+        text = paragraph.text.strip()
+        if not text:
+            continue
+
+        style_name = paragraph.style.name if paragraph.style else ""
+        if "Heading 1" in style_name or "标题 1" in style_name:
+            section_count += 1
+            subsection_count = 0
+            _add_heading(headings, f"section_{section_count}", paragraph)
+        elif "Heading 2" in style_name or "标题 2" in style_name:
+            if section_count <= 0:
+                continue
+            subsection_count += 1
+            _add_heading(headings, f"subsection_{section_count}_{subsection_count}", paragraph)
+
+    if headings:
+        return headings
+
+    # 2) 回退：NSFC 等模板常把提纲标题设为 Normal 样式（用文本模式识别）
+    section_re = re.compile(r"^（[一二三四五六七八九十]+）")
+    subsection_re = re.compile(r"^\s*\d+\s*[\.．、]")
+
+    section_count = 0
+    subsection_count = 0
 
     for paragraph in doc.paragraphs:
-        style_name = paragraph.style.name
+        text = paragraph.text.strip()
+        if not text:
+            continue
 
-        if 'Heading 1' in style_name or '标题 1' in style_name:
+        if section_re.match(text):
             section_count += 1
-            subsection_num = 1
-            if section_count <= 3:
-                key = f'section_{section_count}'
-                if check_format:
-                    headings[key] = {
-                        "text": paragraph.text.strip(),
-                        "fragments": extract_formatted_text_from_word(paragraph)
-                    }
-                else:
-                    headings[key] = paragraph.text.strip()
+            subsection_count = 0
+            _add_heading(headings, f"section_{section_count}", paragraph)
+            continue
 
-        elif 'Heading 2' in style_name or '标题 2' in style_name:
-            if subsection_num <= 5:
-                key = f'subsection_{section_count}_{subsection_num}'
-                if check_format:
-                    headings[key] = {
-                        "text": paragraph.text.strip(),
-                        "fragments": extract_formatted_text_from_word(paragraph)
-                    }
-                else:
-                    headings[key] = paragraph.text.strip()
-                subsection_num += 1
+        if subsection_re.match(text):
+            if section_count <= 0:
+                continue
+            subsection_count += 1
+            _add_heading(headings, f"subsection_{section_count}_{subsection_count}", paragraph)
 
     return headings
 
@@ -551,6 +584,167 @@ def generate_text_report(matched: List, differences: List, only_in_one: List) ->
             lines.append('')
 
     return '\n'.join(lines)
+
+
+def generate_html_report(matched: List, differences: List, only_in_one: List,
+                         word_file: Path, latex_file: Path) -> str:
+    """生成 HTML 格式报告（仅文本对比）"""
+    match_count = len(matched)
+    diff_count = len(differences)
+    only_count = len(only_in_one)
+
+    def _esc(s: str) -> str:
+        return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>标题文字对比报告</title>
+  <style>
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }}
+    .header {{
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }}
+    .meta {{
+      opacity: 0.9;
+      font-size: 14px;
+      margin-top: 8px;
+    }}
+    .stats {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }}
+    .stat-card {{
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }}
+    .stat-card h3 {{
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #666;
+      font-weight: 600;
+    }}
+    .stat-card .value {{
+      font-size: 28px;
+      font-weight: bold;
+    }}
+    .matched .value {{ color: #10b981; }}
+    .differences .value {{ color: #f59e0b; }}
+    .only .value {{ color: #ef4444; }}
+    .section {{
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }}
+    .section h2 {{
+      margin: 0 0 14px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e5e7eb;
+      font-size: 18px;
+    }}
+    .item {{
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #ddd;
+      background: #f9fafb;
+      border-radius: 4px;
+    }}
+    .item.matched {{
+      border-left-color: #10b981;
+      background: #f0fdf4;
+    }}
+    .item.difference {{
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }}
+    .item.only {{
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }}
+    .key {{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+      color: #374151;
+      margin-bottom: 6px;
+    }}
+    .value-block {{
+      font-size: 14px;
+      margin: 2px 0;
+      white-space: pre-wrap;
+    }}
+    .label {{
+      display: inline-block;
+      min-width: 52px;
+      font-weight: 600;
+      color: #111827;
+    }}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin:0; font-size: 24px;">标题文字对比报告（仅文本）</h1>
+    <div class="meta">Word: {_esc(str(word_file))}<br>LaTeX: {_esc(str(latex_file))}</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card matched"><h3>完全匹配</h3><div class="value">{match_count}</div></div>
+    <div class="stat-card differences"><h3>有差异</h3><div class="value">{diff_count}</div></div>
+    <div class="stat-card only"><h3>仅在一方</h3><div class="value">{only_count}</div></div>
+  </div>
+"""
+
+    if matched:
+        html += '<div class="section"><h2>完全匹配</h2>'
+        for key, value in matched:
+            html += f'<div class="item matched"><div class="key">{_esc(key)}</div><div class="value-block">{_esc(value)}</div></div>'
+        html += "</div>"
+
+    if differences:
+        html += '<div class="section"><h2>有差异</h2>'
+        for key, word_value, latex_value in differences:
+            html += (
+                f'<div class="item difference"><div class="key">{_esc(key)}</div>'
+                f'<div class="value-block"><span class="label">Word</span>{_esc(word_value)}</div>'
+                f'<div class="value-block"><span class="label">LaTeX</span>{_esc(latex_value)}</div>'
+                f"</div>"
+            )
+        html += "</div>"
+
+    if only_in_one:
+        html += '<div class="section"><h2>仅在一方</h2>'
+        for source, key, value in only_in_one:
+            source_label = "Word" if source == "word" else "LaTeX"
+            html += (
+                f'<div class="item only"><div class="key">{_esc(key)}</div>'
+                f'<div class="value-block"><span class="label">来源</span>{_esc(source_label)}</div>'
+                f'<div class="value-block">{_esc(value)}</div>'
+                f"</div>"
+            )
+        html += "</div>"
+
+    html += "</body></html>"
+    return html
 
 
 def render_formatted_text_html(fragments: List[Dict]) -> str:

@@ -106,7 +106,18 @@ class HeadingValidator(ValidatorBase):
         except ImportError:
             return {}
 
-        doc_file = docx_files[0]
+        # 多份 docx 时，优先选择文件名中年份最大的那份（否则选择字典序最后一份），保证稳定可预期。
+        def _pick_docx(paths):
+            import re
+
+            def score(p: Path):
+                years = [int(y) for y in re.findall(r"(19\\d{2}|20\\d{2})", p.name)]
+                # (year, name) 组合，year 缺失时为 0
+                return (max(years) if years else 0, p.name)
+
+            return sorted(paths, key=score)[-1]
+
+        doc_file = _pick_docx(docx_files)
         doc = Document(doc_file)
         headings = {}
 

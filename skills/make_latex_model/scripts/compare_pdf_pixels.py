@@ -359,22 +359,22 @@ def main():
 
         page_results.append({
             "page_num": i + 1,
-            "changed_ratio": changed_ratio,
-            "diff_pixels": diff_pixels,
-            "total_pixels": total_pixels
+            "changed_ratio": float(changed_ratio),
+            "diff_pixels": int(diff_pixels),
+            "total_pixels": int(total_pixels),
         })
 
         feats = extract_diff_features(diff_mask)
         page_features.append(
             {
                 "page_num": i + 1,
-                "changed_ratio": changed_ratio,
-                "row_variance": feats["row_variance"],
-                "col_variance": feats["col_variance"],
+                "changed_ratio": float(changed_ratio),
+                "row_variance": float(feats["row_variance"]),
+                "col_variance": float(feats["col_variance"]),
                 "region_ratios": {
-                    "top": feats["region_top_ratio"],
-                    "middle": feats["region_middle_ratio"],
-                    "bottom": feats["region_bottom_ratio"],
+                    "top": float(feats["region_top_ratio"]),
+                    "middle": float(feats["region_middle_ratio"]),
+                    "bottom": float(feats["region_bottom_ratio"]),
                 },
             }
         )

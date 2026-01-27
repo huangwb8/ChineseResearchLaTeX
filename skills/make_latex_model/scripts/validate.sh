@@ -240,22 +240,105 @@ else
 fi
 
 # 检查页面设置
-if grep -q "geometry.*left=3.20cm.*right=3.14cm" "$CONFIG"; then
-  pass "页面边距: 左 3.20cm, 右 3.14cm (符合 2026 模板)"
-elif grep -q "geometry.*left=.*right=" "$CONFIG"; then
-  warn "页面边距: 可能与 2026 模板不完全一致"
-  info "当前设置: $(grep "geometry" "$CONFIG" | head -n 1)"
+WORD_ANALYSIS_JSON="$PROJECT_PATH/.make_latex_model/baselines/word_analysis.json"
+if [ -f "$WORD_ANALYSIS_JSON" ] && command -v python3 &> /dev/null; then
+  set +e
+  MARGIN_OUTPUT="$(CONFIG_PATH="$CONFIG" ANALYSIS_PATH="$WORD_ANALYSIS_JSON" python3 - <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+import os
+
+config_path = Path(os.environ["CONFIG_PATH"])
+analysis_path = Path(os.environ["ANALYSIS_PATH"])
+
+analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
+expected = analysis.get("layout", {}).get("margins_cm", {}) or {}
+need = ["left", "right", "top", "bottom"]
+if any(k not in expected for k in need):
+    print("无法从 word_analysis.json 提取边距信息")
+    sys.exit(2)
+
+text = config_path.read_text(encoding="utf-8", errors="ignore")
+
+def parse_geometry(src: str) -> dict:
+    # 匹配 \geometry{...} 或 \usepackage[...]{geometry}（注意：源文件里只有 1 个反斜杠）
+    m = re.search(r"\\geometry\{([^}]*)\}", src)
+    if not m:
+        m = re.search(r"\\usepackage\[(.*?)\]\{geometry\}", src, re.S)
+    if not m:
+        return {}
+    opts = m.group(1)
+    out = {}
+    for part in opts.split(","):
+        if "=" not in part:
+            continue
+        k, v = part.split("=", 1)
+        k = k.strip()
+        v = v.strip()
+        if k not in need:
+            continue
+        def to_cm(s: str) -> float:
+            s = s.strip()
+            if s.endswith("cm"):
+                return float(s[:-2])
+            if s.endswith("mm"):
+                return float(s[:-2]) / 10.0
+            if s.endswith("in"):
+                return float(s[:-2]) * 2.54
+            return float(s)
+        try:
+            out[k] = to_cm(v)
+        except Exception:
+            pass
+    return out
+
+actual = parse_geometry(text)
+if any(k not in actual for k in need):
+    print("未能从 @config.tex 解析到完整的 geometry 边距参数")
+    sys.exit(2)
+
+tolerance = 0.05  # cm
+diffs = {k: abs(actual[k] - float(expected[k])) for k in need}
+max_diff = max(diffs.values()) if diffs else 999
+
+print(
+    f"expected L{expected['left']:.2f} R{expected['right']:.2f} T{expected['top']:.2f} B{expected['bottom']:.2f} cm | "
+    f"actual L{actual['left']:.2f} R{actual['right']:.2f} T{actual['top']:.2f} B{actual['bottom']:.2f} cm | "
+    f"max_diff {max_diff:.2f} cm"
+)
+
+sys.exit(0 if max_diff <= tolerance else 1)
+PY
+  2>&1)"
+  MARGIN_RC=$?
+  set -e
+
+  if [ "$MARGIN_RC" -eq 0 ]; then
+    pass "页面边距: 与 Word 基准一致（tolerance=0.05cm）"
+    info "$MARGIN_OUTPUT"
+  else
+    warn "页面边距: 与 Word 基准可能不一致（建议复核 geometry 设置）"
+    info "$MARGIN_OUTPUT"
+  fi
+elif grep -q "\\\\geometry{" "$CONFIG" || grep -q "\\\\usepackage\\[.*\\]{geometry}" "$CONFIG"; then
+  info "页面边距: 已检测到 geometry 设置（未发现 word_analysis.json，跳过自动对齐校验）"
 else
   warn "页面边距: 未找到明确的 geometry 设置"
 fi
 
 # 检查标题格式
-if grep -q "titleformat.*section.*hspace.*1.45em" "$CONFIG"; then
+if grep -q "\\\\setlength{\\\\NSFCTitleIndent}{28pt}" "$CONFIG"; then
+  pass "Section 标题缩进: NSFCTitleIndent=28pt (对齐 Word 基准)"
+elif grep -q "\\\\setlength{\\\\NSFCTitleIndent}" "$CONFIG"; then
+  info "Section 标题缩进: 已检测到 NSFCTitleIndent（需人工核对具体值）"
+elif grep -q "titleformat.*section.*hspace.*1.45em" "$CONFIG"; then
   pass "Section 标题缩进: 1.45em (符合 2026 模板)"
 elif grep -q "titleformat.*section" "$CONFIG"; then
   info "Section 标题缩进: 需人工检查"
 else
-  warn "Section 标题格式: 未找到 titleformat 定义"
+  warn "Section 标题格式: 未找到 titleformat/NSFCTitleIndent 定义"
 fi
 
 # ⚠️ 检查标题文字一致性
@@ -267,7 +350,30 @@ echo "----------------------------------------"
 # 检查 Python 和 compare_headings.py 是否可用
 if command -v python3 &> /dev/null && [ -f "$SCRIPT_DIR/compare_headings.py" ]; then
   # 查找 Word 模板文件
-  WORD_TEMPLATE=$(find "$PROJECT_PATH/template" -name "*.docx" 2>/dev/null | head -n 1)
+  set +e
+  WORD_TEMPLATE="$(TPL_DIR="$PROJECT_PATH/template" python3 - <<'PY'
+from pathlib import Path
+import re
+import sys
+import os
+
+tpl = Path(os.environ.get("TPL_DIR", ""))
+if not str(tpl):
+    sys.exit(0)
+files = list(tpl.glob("*.docx"))
+if not files:
+    sys.exit(0)
+
+def key(p: Path):
+    years = re.findall(r"(20\\d{2})", p.name)
+    year = int(years[-1]) if years else -1
+    return (year, p.stat().st_mtime)
+
+files.sort(key=key, reverse=True)
+print(str(files[0]))
+PY
+  )"
+  set -e
 
   if [ -n "$WORD_TEMPLATE" ]; then
     info "正在对比标题文字..."
@@ -342,7 +448,7 @@ echo ""
 echo "快速生成基准:"
 echo "  使用 LibreOffice: soffice --headless --convert-to pdf --outdir baseline template.doc"
 echo ""
-warn "如使用 QuickLook 基准,像素对比指标会失真,不建议进行"
+info "提示: 如使用 QuickLook 基准,像素对比指标会失真；建议使用 Word/LibreOffice 打印/导出 PDF 基准"
 
 # ========================================
 # 总结

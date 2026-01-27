@@ -18,6 +18,9 @@ main.tex 预处理工具
 
     # 预览模式（不修改文件）
     python scripts/prepare_main.py projects/NSFC_Young/main.tex --dry-run
+
+    # 调试：为像素级对齐插入“空白占位”（仅对被注释的 extraTex 输入）
+    python scripts/prepare_main.py projects/NSFC_Young/main.tex --add-placeholders
 """
 
 import argparse
@@ -50,12 +53,13 @@ def find_input_lines(content: str) -> List[Tuple[int, str]]:
     return results
 
 
-def comment_input_lines(content: str) -> Tuple[str, int]:
+def comment_input_lines(content: str, add_placeholders: bool = False) -> Tuple[str, int]:
     """
     注释掉所有 \\input{} 行
 
     Args:
         content: 原始文件内容
+        add_placeholders: 是否在被注释的 extraTex 输入处插入“空白占位”（用于像素对齐调试）
 
     Returns:
         (修改后的内容, 修改的行数)
@@ -66,20 +70,30 @@ def comment_input_lines(content: str) -> Tuple[str, int]:
     # 匹配 \input{} 行（未被注释的）
     input_pattern = re.compile(r'^(\s*)\\input\{([^}]+)\}')
 
-    for i, line in enumerate(lines):
+    out_lines: List[str] = []
+    for line in lines:
         match = input_pattern.match(line)
-        if match and not line.strip().startswith('%'):
-            # Keep the style config in place; otherwise the prepared document won't compile.
-            input_target = match.group(2).strip()
-            if input_target.endswith('@config.tex') or input_target.replace('\\', '/').endswith('/@config.tex'):
-                continue
+        if not match or line.strip().startswith('%'):
+            out_lines.append(line)
+            continue
 
-            # 添加注释标记
-            indent = match.group(1)
-            lines[i] = f"{indent}% [PREPARE_MAIN_COMMENTED] {line.strip()}"
-            modified_count += 1
+        # Keep the style config in place; otherwise the prepared document won't compile.
+        input_target = match.group(2).strip()
+        input_target_norm = input_target.replace('\\', '/')
+        if input_target_norm.endswith('/@config.tex') or input_target_norm.endswith('@config.tex'):
+            out_lines.append(line)
+            continue
 
-    return '\n'.join(lines), modified_count
+        indent = match.group(1)
+        out_lines.append(f"{indent}% [PREPARE_MAIN_COMMENTED] {line.strip()}")
+        modified_count += 1
+
+        # 为像素级对比保留“空白占位”：只对 extraTex 正文段落插入 1 行空白
+        # （Word 模板通常在各提纲标题后留一个空段落用于填写）
+        if add_placeholders and input_target_norm.startswith("extraTex/"):
+            out_lines.append(f"{indent}\\vspace*{{\\baselineskip}} % [PREPARE_MAIN_PLACEHOLDER]")
+
+    return '\n'.join(out_lines), modified_count
 
 
 def restore_input_lines(content: str) -> Tuple[str, int]:
@@ -98,15 +112,20 @@ def restore_input_lines(content: str) -> Tuple[str, int]:
     # 匹配带有标记的注释行
     comment_pattern = re.compile(r'^(\s*)% \[PREPARE_MAIN_COMMENTED\] (.+)$')
 
-    for i, line in enumerate(lines):
+    out_lines: List[str] = []
+    for line in lines:
+        if "[PREPARE_MAIN_PLACEHOLDER]" in line:
+            continue
         match = comment_pattern.match(line)
         if match:
             indent = match.group(1)
             original_content = match.group(2)
-            lines[i] = f"{indent}{original_content}"
+            out_lines.append(f"{indent}{original_content}")
             restored_count += 1
+        else:
+            out_lines.append(line)
 
-    return '\n'.join(lines), restored_count
+    return '\n'.join(out_lines), restored_count
 
 
 def is_prepared(content: str) -> bool:
@@ -202,6 +221,8 @@ def main():
                        help="预览模式，不实际修改文件")
     parser.add_argument("--force", "-f", action="store_true",
                        help="强制执行，不检查当前状态")
+    parser.add_argument("--add-placeholders", action="store_true",
+                       help="为像素对齐调试插入空白占位（仅在预处理模式生效）")
 
     args = parser.parse_args()
 
@@ -219,6 +240,8 @@ def main():
     print(f"文件: {args.main_tex}")
     print(f"模式: {'恢复' if args.restore else '预处理'}")
     print(f"预览: {'是' if args.dry_run else '否'}")
+    if not args.restore:
+        print(f"占位: {'是' if args.add_placeholders else '否'}")
 
     # 检查当前状态
     prepared = is_prepared(content)
@@ -248,7 +271,7 @@ def main():
         if len(input_lines) > 5:
             print(f"  ... 还有 {len(input_lines) - 5} 行")
 
-        new_content, count = comment_input_lines(content)
+        new_content, count = comment_input_lines(content, add_placeholders=args.add_placeholders)
         action = "注释"
 
     # 显示章节结构

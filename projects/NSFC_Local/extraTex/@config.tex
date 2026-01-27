@@ -14,12 +14,14 @@
 % \usepackage{ctex}
 \usepackage{pifont} % 带圈数字
 \usepackage{ifplatform} % 检测操作系统
+% Word 排版不会做“页高拉伸”，为稳定对齐（尤其是像素对比），禁用 LaTeX 的 flushbottom
+\raggedbottom
 
 %%%————————————————————————————————边距
 % \CJKsetecglue命令定义了CJK字符与其他字符之间的空白，不只限于数字字符，也适用于字母等其他非CJK字符。如果你想要更精细的控制，可能需要借助其它工具或者宏包。
 % \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
 % 页边距和字距的某个组合应该可以完美复制Word。
-\geometry{left=3.20cm,right=2.94cm,top=2.67cm,bottom=2.91cm} % 页边距
+\geometry{left=3.20cm,right=2.94cm,top=2.67cm,bottom=2.91cm} % 页边距（对齐 2026 Word 基准 PDF）
 \CJKsetecglue{\hskip 0.3em plus 0.05em minus 0.1em} % 数字与CJK字符的间距
 % left=3.20cm,right=3.13-3.14cm
 
@@ -151,9 +153,13 @@
 \setcounter{secnumdepth}{4} %显示3级目录，然后再具体定制不同的目录
 % \setcounter{tocdepth}{4}
 
-% 标题左缩进：向右移 2 个中文字符（约等于 2em）
+% 标题左缩进：对齐 2026 Word 基准 PDF（约 28pt）
 \newlength{\NSFCTitleIndent}
-\setlength{\NSFCTitleIndent}{2em}
+\setlength{\NSFCTitleIndent}{28pt}
+
+% 二级提纲（蓝色提示语）的首行缩进宽度（对齐 Word：首行起始点较左边距右移约 28pt）
+\newlength{\NSFCSubsectionIndent}
+\setlength{\NSFCSubsectionIndent}{28pt}
 
 % Define section font
 \newcommand{\sectionzihao}{\fontsize{14pt}{\baselineskip}\selectfont}
@@ -165,8 +171,17 @@
 % 同时需要推进 subsection 计数器，以便正文里使用 \subsubsection 时编号正确。
 \newcommand{\NSFCSubsection}[1]{%
   \par\refstepcounter{subsection}%
-  {\color{MsBlue}\subsectionzihao\templatefont \hspace*{\NSFCTitleIndent}#1\par}%
-  \vspace{22pt plus 0pt minus 14pt}%
+  {%
+    \color{MsBlue}\subsectionzihao\templatefont
+    \noindent%
+    % 使用 parshape 明确控制首行/后续行缩进：首行右移 28pt，后续行回到左边距
+    \parshape 2 %
+      \NSFCSubsectionIndent \dimexpr\linewidth-\NSFCSubsectionIndent\relax %
+      0pt \linewidth %
+    #1\par%
+  }%
+  % 对齐 Word 模板：提纲段落后紧跟一个空段落（约等于 22pt）
+  \vspace{22pt}%
 }
 
 

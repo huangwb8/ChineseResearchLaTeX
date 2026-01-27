@@ -40,8 +40,10 @@
 
 ### Changed（变更）
 
-- **NSFC_Local**：微调提纲标题缩进
-  - `\\section` 与 `\\NSFCSubsection` 标题左缩进调整为右移 2 个中文字符宽度（通过 `\\NSFCTitleIndent=2em` 统一控制）
+- **NSFC_Local**：对齐 2026 地区基金 Word 正文模板（提纲页/边距/标题缩进/段后距）
+  - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻“首行缩进、续行回到左边距”
+  - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；微调提纲区块前后间距以贴近分页观感
+  - `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由同名 `.doc` 转换生成，供标题一致性验证与基准管理使用
 
 - **complete_example**：修复默认离线运行与 LaTeX 模板渲染问题
   - 新增本地启发式 LLM 回退：无 API Key 也可生成可解析 JSON 与可落盘示例内容
@@ -68,6 +70,13 @@
   - 文档同步：更新 `skills/make_latex_model/{SKILL.md,README.md,docs/WORKFLOW.md,scripts/README.md}` 的路径与迭代说明
   - auto-test-skill：新增 A/B 轮会话 `v202601271524`，并强制闭环 P0-P2
 
+- **make_latex_model**：增强 NSFC 系模板的基准选择与验证稳定性
+  - `skills/make_latex_model/scripts/compare_headings.py`：忽略被注释的标题；同时识别 `\\NSFCSubsection{}`；Word 标题样式缺失时回退到“文本模式”提取；支持生成 HTML 报告
+  - `skills/make_latex_model/scripts/{generate_baseline.py,core/validators/heading_validator.py}`：模板目录存在多份 Word 文件时，优先选择“年份最大”的模板（同年优先 `.docx`）
+  - `skills/make_latex_model/scripts/validate.sh`：基于 `projects/<project>/.make_latex_model/baselines/word_analysis.json` 自动校验边距；Word 模板选择与年份排序对齐
+  - `skills/make_latex_model/scripts/prepare_main.py`：新增 `--add-placeholders`（可选）用于像素对齐调试，默认保持“只注释 input 行”的语义
+  - `skills/make_latex_model/scripts/compare_pdf_pixels.py`：JSON 输出字段强制转换为基础类型（提升跨平台可读性/可序列化稳定性）
+
 - **NSFC_Local**：补充“深度学习在医疗影像分析中的应用”示例内容（CNN 架构 + 数据增强策略）
   - 更新 `projects/NSFC_Local/extraTex/1.2.内容目标问题.tex`：研究内容/目标/关键问题
   - 更新 `projects/NSFC_Local/extraTex/1.3.方案及可行性.tex`：研究方法/技术路线/关键技术/可行性分析
@@ -75,8 +84,12 @@
   - 更新 `projects/NSFC_Local/extraTex/1.5.研究计划.tex`：三年计划与预期结果
 
 - **NSFC_Local**：对齐 2026 年“地区科学基金项目-正文”Word 模板版式与提纲
-  - 更新 `projects/NSFC_Local/main.tex`：同步“报告正文（2026 版）”与三大部分提纲标题文字
-  - 更新 `projects/NSFC_Local/extraTex/@config.tex`：行距、标题样式与提纲渲染逻辑微调（新增 `\NSFCSubsection`）
+  - 更新 `projects/NSFC_Local/main.tex`：同步“报告正文（2026 版）”与三大部分提纲标题文字；微调标题区与三大部分之间的垂直间距以贴近 2026 PDF 观感
+  - 更新 `projects/NSFC_Local/extraTex/@config.tex`：对齐页面边距；新增 `\raggedbottom` 避免页高拉伸；统一标题缩进；`\\NSFCSubsection` 使用 `parshape` 复刻首行缩进/续行回到左边距，并对齐段后距
+  - 新增 `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由 2026 `.doc` 转换，便于标题一致性自动校验
+
+- **make_latex_model**：标题一致性校验更稳健
+  - 更新 `skills/make_latex_model/scripts/core/validators/heading_validator.py`：模板目录存在多份 `.docx` 时，优先选择文件名中年份最大的那份（否则取字典序最后），避免误用旧年份模板
 
 - **systematic-literature-review v1.0.5 → v1.0.6**：运行提速与上下文/目录膨胀治理（按最小改动落地）
   - API 缓存默认开启但使用 `mode=minimal`（新增 `config.yaml:cache.api.{enabled,mode}`），避免 `.systematic-literature-review/cache/api` 文件爆炸
