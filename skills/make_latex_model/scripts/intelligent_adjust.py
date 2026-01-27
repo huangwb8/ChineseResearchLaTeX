@@ -31,7 +31,7 @@ from enum import Enum
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from core.workspace_manager import WorkspaceManager
+    from scripts.core.workspace_manager import WorkspaceManager
 except ImportError:
     WorkspaceManager = None
 
@@ -411,7 +411,7 @@ class IntelligentAdjuster:
         ws = self.ws_manager.get_project_workspace(self.project_name)
 
         # 加载基准分析
-        baseline_dir = ws / "baseline"
+        baseline_dir = ws / "baselines"
         baseline_analysis_files = list(baseline_dir.glob("*_analysis.json"))
 
         if not baseline_analysis_files:

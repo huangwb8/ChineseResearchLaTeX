@@ -14,7 +14,7 @@
 
 skill_info:
   name: make_latex_model
-  version: 2.7.2
+  version: 2.8.0
   description: LaTeX 模板高保真优化器（支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程，迭代优化闭环，标题格式对比，HTML 可视化报告，自动修复建议）
   category: normal
 
@@ -188,19 +188,22 @@ compatibility:
 # 工作空间配置（v2.3.0 新增）
 # ================================
 workspace:
-  root: "workspace"               # 工作空间根目录（相对于 skill 根目录）
+  root: ".make_latex_model"       # 工作空间根目录（相对于项目根目录）
+  location: project_level         # 工作空间位置标识
   auto_cleanup: true              # 自动清理过期缓存
   cache_max_age_hours: 24         # 缓存最大保留时间（小时）
   keep_iterations: true           # 是否保留所有迭代历史
-  max_iterations_kept: 10         # 最多保留的迭代历史数量
+  max_iterations_kept: 30         # 最多保留的迭代历史数量（与 max_iterations 对齐）
+  auto_migrate_legacy: true       # 自动复制旧工作空间/旧产物到新位置（不删除旧目录）
+  verbose_migration: true         # 迁移时是否输出提示信息
 
 # ================================
 # 迭代优化配置（v2.3.0 新增）
 # ================================
 iteration:
-  max_iterations: 15              # 最大迭代次数
+  max_iterations: 30              # 最大迭代次数
   convergence_threshold: 0.01     # 收敛阈值（像素差异比例 1%）
-  no_improvement_limit: 3         # 连续无改善轮数阈值
+  no_improvement_limit: 5         # 连续无改善轮数阈值
 
   # 参数调整粒度
   adjustment_granularity:

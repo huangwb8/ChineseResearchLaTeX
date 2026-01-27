@@ -8,14 +8,16 @@ import argparse
 import sys
 from pathlib import Path
 
-# 添加 skill 根目录到路径（以便 core 作为包导入）
+# 添加 skill 根目录到路径（以便 scripts.core 作为包导入）
 SCRIPT_DIR = Path(__file__).parent
 SKILL_DIR = SCRIPT_DIR.parent
+REPO_ROOT = SKILL_DIR.parent.parent
+PROJECTS_ROOT = (REPO_ROOT / "projects").resolve()
 sys.path.insert(0, str(SKILL_DIR))
 
-from core.config_loader import ConfigLoader
-from core.validator_base import ValidatorRegistry, ValidationContext
-from core.validators import CompilationValidator, StyleValidator, HeadingValidator, VisualValidator
+from scripts.core.config_loader import ConfigLoader
+from scripts.core.validator_base import ValidatorRegistry, ValidationContext
+from scripts.core.validators import CompilationValidator, StyleValidator, HeadingValidator, VisualValidator
 
 # 注册验证器
 ValidatorRegistry.register(CompilationValidator)
@@ -106,13 +108,35 @@ def run_validators(project_path: Path, template: str = None, verbose: bool = Fal
 
 def main():
     parser = argparse.ArgumentParser(description="make_latex_model 验证器运行器")
-    parser.add_argument("--project", type=Path, required=True, help="项目路径或名称")
+    parser.add_argument("--project", type=Path, required=True, help="项目名称或路径（必须位于 projects/ 下）")
     parser.add_argument("--template", type=str, default=None, help="模板名称")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
 
     args = parser.parse_args()
 
-    success = run_validators(args.project, args.template, args.verbose)
+    raw = str(args.project).strip()
+    p = args.project
+    if p.exists():
+        project_path = p
+    else:
+        if p.is_absolute() or any(sep in raw for sep in ("/", "\\")):
+            candidate = p if p.is_absolute() else (REPO_ROOT / p)
+        else:
+            candidate = REPO_ROOT / "projects" / raw
+        project_path = candidate
+
+    project_path = project_path.resolve()
+    if not project_path.exists():
+        print(f"❌ 错误: 项目路径不存在: {project_path}")
+        sys.exit(2)
+
+    try:
+        project_path.relative_to(PROJECTS_ROOT)
+    except Exception:
+        print(f"❌ 错误: 项目必须位于 {PROJECTS_ROOT} 下: {project_path}")
+        sys.exit(2)
+
+    success = run_validators(project_path, args.template, args.verbose)
     sys.exit(0 if success else 1)
 
 

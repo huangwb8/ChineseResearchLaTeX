@@ -21,6 +21,7 @@ from .diff_analyzer import DiffAnalyzer
 from .decision_reasoner import DecisionReasoner, ReasonerConfig
 from .parameter_executor import ParameterExecutor, ExecutionResult
 from .history_memory import HistoryMemory
+from .workspace_manager import WorkspaceManager
 
 
 class AIOptimizer:
@@ -43,7 +44,9 @@ class AIOptimizer:
         self.analyzer = DiffAnalyzer()
 
         prompt_path = self.skill_root / "prompts" / "analysis_template.txt"
-        ws_dir = self.skill_root / "workspace" / project_name
+        ws_manager = WorkspaceManager(self.skill_root)
+        ws_dir = ws_manager.get_project_workspace(project_name)
+        self.workspace_dir = ws_dir
 
         self.reasoner = DecisionReasoner(
             prompt_template_path=prompt_path if prompt_path.exists() else None,
@@ -62,7 +65,7 @@ class AIOptimizer:
         compile_func: Callable[[], bool],
         compare_func: Callable[[], Optional[float]],
     ) -> ExecutionResult:
-        features_path = self.skill_root / "workspace" / self.project_name / "iterations" / f"iteration_{iteration:03d}" / "diff_features.json"
+        features_path = self.workspace_dir / "iterations" / f"iteration_{iteration:03d}" / "diff_features.json"
         diff_context = self.analyzer.analyze(
             diff_ratio=current_ratio,
             iteration=iteration,

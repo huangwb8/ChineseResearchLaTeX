@@ -211,7 +211,8 @@ if __name__ == "__main__":
     # 测试代码
     import sys
 
-    skill_dir = Path(__file__).parent.parent
+    # scripts/core/config_loader.py -> parents[2] == skills/make_latex_model
+    skill_dir = Path(__file__).resolve().parents[2]
 
     # 测试1: 仅加载默认配置
     print("=== Test 1: Default Config Only ===")

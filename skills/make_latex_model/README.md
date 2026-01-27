@@ -27,7 +27,7 @@ python3 skills/make_latex_model/scripts/check_state.py projects/NSFC_Young
 2) 分析 Word PDF 基准（提取样式参数）
 
 ```bash
-python3 skills/make_latex_model/scripts/analyze_pdf.py projects/NSFC_Young/template/word_baseline.pdf
+python3 skills/make_latex_model/scripts/analyze_pdf.py projects/NSFC_Young/.make_latex_model/baselines/word.pdf
 ```
 
 3) 运行验证（检查编译与关键一致性）
@@ -42,7 +42,7 @@ cd skills/make_latex_model
 ## 一键迭代优化（需要精细对齐时）
 
 ```bash
-python3 skills/make_latex_model/scripts/enhanced_optimize.py --project NSFC_Young --max-iterations 10 --report
+python3 skills/make_latex_model/scripts/enhanced_optimize.py --project NSFC_Young --max-iterations 30 --report
 ```
 
 ## 修改边界（底线）

@@ -29,7 +29,7 @@ from enum import Enum
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from core.workspace_manager import WorkspaceManager
+    from scripts.core.workspace_manager import WorkspaceManager
 except ImportError:
     WorkspaceManager = None
 
@@ -65,9 +65,9 @@ class ConvergenceDetector:
 
         # 默认配置
         self.config = {
-            "max_iterations": 10,
-            "convergence_threshold": 0.03,
-            "no_improvement_limit": 3,
+            "max_iterations": 30,
+            "convergence_threshold": 0.01,
+            "no_improvement_limit": 5,
             "compilation_required": True,
         }
 

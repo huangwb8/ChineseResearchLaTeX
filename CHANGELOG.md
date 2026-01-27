@@ -59,6 +59,15 @@
   - **SKILL.md 瘦身**：将“可执行细节流程/FAQ”迁移到 `skills/make_latex_model/docs/{WORKFLOW,FAQ}.md`，`SKILL.md` 仅保留边界/入口/验收标准
   - 新增可追溯的 auto-test-skill A/B 轮会话文档：`skills/make_latex_model/plans/` 与 `skills/make_latex_model/tests/`
 
+- **make_latex_model v2.7.2 → v2.8.0**：脚本托管与项目级工作空间隔离重构
+  - 核心模块迁移：`skills/make_latex_model/core/` → `skills/make_latex_model/scripts/core/`，并统一导入路径为 `scripts.core.*`
+  - 工作空间迁移：产物统一落在 `projects/<project>/.make_latex_model/`（`baselines/iterations/reports/cache/backup`），并生成 `workspace_manager.json` 元数据
+  - 向后兼容：检测旧的技能级 workspace 与 `artifacts/` 产物，自动复制到新工作空间（可通过 `workspace.auto_migrate_legacy` / `workspace.verbose_migration` 控制）
+  - 迭代上限提升：`iteration.max_iterations` 15 → 30，`no_improvement_limit` 3 → 5
+  - 安全加固：关键入口脚本补齐 projects/ 边界校验（防路径遍历），并更新 `analyze_pdf.py`/`run_validators.py`/`generate_baseline.py`/`optimize.py` 等入口的一致性
+  - 文档同步：更新 `skills/make_latex_model/{SKILL.md,README.md,docs/WORKFLOW.md,scripts/README.md}` 的路径与迭代说明
+  - auto-test-skill：新增 A/B 轮会话 `v202601271524`，并强制闭环 P0-P2
+
 - **NSFC_Local**：补充“深度学习在医疗影像分析中的应用”示例内容（CNN 架构 + 数据增强策略）
   - 更新 `projects/NSFC_Local/extraTex/1.2.内容目标问题.tex`：研究内容/目标/关键问题
   - 更新 `projects/NSFC_Local/extraTex/1.3.方案及可行性.tex`：研究方法/技术路线/关键技术/可行性分析

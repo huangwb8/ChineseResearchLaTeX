@@ -5,7 +5,7 @@
 跨平台字体路径检测工具
 
 使用方法:
-    from core.font_detector import FontDetector
+    from scripts.core.font_detector import FontDetector
 
     detector = FontDetector()
     font_paths = detector.detect_font("KaiTi")

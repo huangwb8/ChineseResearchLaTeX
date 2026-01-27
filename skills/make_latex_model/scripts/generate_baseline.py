@@ -11,7 +11,7 @@ Word PDF 基准生成工具
     python scripts/generate_baseline.py --project NSFC_Young
 
     # 指定输入文件
-    python scripts/generate_baseline.py --input template/word.docx --output workspace/NSFC_Young/baseline/word.pdf
+    python scripts/generate_baseline.py --input template/word.docx --output projects/NSFC_Young/.make_latex_model/baselines/word.pdf
 
     # 使用特定转换器
     python scripts/generate_baseline.py --project NSFC_Young --converter libreoffice
@@ -27,11 +27,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
-# 添加父目录到路径以导入 core 模块
+# 添加父目录到路径以导入 scripts.core 模块
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from core.workspace_manager import WorkspaceManager
+    from scripts.core.workspace_manager import WorkspaceManager
 except ImportError:
     WorkspaceManager = None
 
@@ -112,11 +112,15 @@ class BaselineGenerator:
         for pattern in patterns:
             files = list(template_dir.glob(pattern))
             if files:
-                # 优先选择包含年份的文件
-                for f in files:
-                    if "2026" in f.name or "2025" in f.name:
-                        return f
-                return files[0]
+                # 优先选择“看起来最新”的年份文件（避免硬编码具体年份）
+                import re
+
+                def _extract_year(path: Path) -> int:
+                    m = re.findall(r"(20\\d{2})", path.name)
+                    return int(m[-1]) if m else -1
+
+                files_sorted = sorted(files, key=_extract_year, reverse=True)
+                return files_sorted[0]
 
         return None
 
@@ -502,12 +506,17 @@ def main():
     elif args.project:
         # 项目模式
         skill_root = Path(__file__).parent.parent
-        repo_root = skill_root.parent.parent
-        project_path = repo_root / "projects" / args.project
-
-        if not project_path.exists():
-            print(f"❌ 错误: 项目不存在: {project_path}")
+        if not WorkspaceManager:
+            print("❌ 错误: WorkspaceManager 不可用，无法安全解析项目路径")
             sys.exit(1)
+
+        try:
+            ws_root = WorkspaceManager(skill_root).get_project_workspace(args.project)
+        except Exception as e:
+            print(f"❌ 错误: 项目路径解析失败: {e}")
+            sys.exit(1)
+
+        project_path = ws_root.parent
 
         print(f"项目: {args.project}")
         print(f"路径: {project_path}")

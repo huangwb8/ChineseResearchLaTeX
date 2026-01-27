@@ -28,13 +28,13 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# 添加 core 模块到路径
+# 添加 skill 根目录到路径（以导入 scripts.core）
 SCRIPT_DIR = Path(__file__).parent
-CORE_DIR = SCRIPT_DIR.parent / "core"
-sys.path.insert(0, str(CORE_DIR))
+SKILL_DIR = SCRIPT_DIR.parent
+sys.path.insert(0, str(SKILL_DIR))
 
 try:
-    from config_loader import ConfigLoader
+    from scripts.core.config_loader import ConfigLoader
 except ImportError:
     ConfigLoader = None
 

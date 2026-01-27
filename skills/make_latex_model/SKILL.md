@@ -1,6 +1,6 @@
 ---
 name: make_latex_model
-version: 2.7.2
+version: 2.8.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
@@ -95,7 +95,7 @@ changelog: ../../CHANGELOG.md
 - 脚本负责确定性工作（提取/对比/验证/落盘产物）
 - AI 负责启发式决策（调哪个参数、调多少、是否回滚/继续迭代）
 
-工作空间（产物默认落在 `skills/make_latex_model/workspace/{project}/`）与更多脚本细节见：
+工作空间（产物默认落在 `projects/{project}/.make_latex_model/`）与更多脚本细节见：
 - `skills/make_latex_model/docs/WORKFLOW.md`
 - `skills/make_latex_model/scripts/README.md`
 
@@ -130,7 +130,7 @@ cd skills/make_latex_model
 ```
 
 3) 需要精细对齐时，跑迭代闭环：
-- `python3 skills/make_latex_model/scripts/enhanced_optimize.py --project projects/{project} --max-iterations 10 --report`
+- `python3 skills/make_latex_model/scripts/enhanced_optimize.py --project projects/{project} --max-iterations 30 --report`
 
 ---
 
@@ -144,7 +144,7 @@ cd skills/make_latex_model
 # 全自动迭代优化
 python3 skills/make_latex_model/scripts/enhanced_optimize.py \
   --project projects/NSFC_Young \
-  --max-iterations 10 \
+  --max-iterations 30 \
   --report
 ```
 
@@ -153,11 +153,11 @@ python3 skills/make_latex_model/scripts/enhanced_optimize.py \
 ```bash
 python3 skills/make_latex_model/scripts/enhanced_optimize.py \
   --project projects/NSFC_Young \
-  --max-iterations 10 \
+  --max-iterations 30 \
   --ai --ai-mode heuristic
 ```
 
-> 说明：当前脚本内部默认使用启发式决策；如需“宿主 AI 全程参与”，使用 `--ai-mode manual_file`（会生成 `workspace/<project>/iterations/iteration_XXX/ai_request.json`，等待写入 `ai_response.json` 后再继续）。
+> 说明：当前脚本内部默认使用启发式决策；如需“宿主 AI 全程参与”，使用 `--ai-mode manual_file`（会生成 `projects/<project>/.make_latex_model/iterations/iteration_XXX/ai_request.json`，等待写入 `ai_response.json` 后再继续）。
 
 ### 收敛条件（优先级从高到低）
 
@@ -165,8 +165,8 @@ python3 skills/make_latex_model/scripts/enhanced_optimize.py \
 |------|------|------|
 | **编译失败** | - | 立即停止，需人工修复 |
 | **像素差异收敛** | `changed_ratio < 0.01` | 达到像素级对齐 |
-| **连续无改善** | 3 轮 | 指标不再优化，收敛 |
-| **最大迭代** | 10 轮 | 强制停止 |
+| **连续无改善** | 5 轮 | 指标不再优化，收敛 |
+| **最大迭代** | 30 轮 | 强制停止 |
 
 ### 相关脚本
 

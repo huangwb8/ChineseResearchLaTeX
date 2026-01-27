@@ -18,7 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.ai_optimizer import AIOptimizer
+from scripts.core.ai_optimizer import AIOptimizer
+from scripts.core.workspace_manager import WorkspaceManager
 
 
 def compile_project(project_path: Path) -> bool:
@@ -79,11 +80,13 @@ def main():
         return 1
 
     project_key = project_path.name
+    ws_manager = WorkspaceManager(skill_root)
+    ws_root = ws_manager.get_project_workspace(project_path)
 
     # 读取当前 ratio（优先使用入参）
     current_ratio = args.current_ratio
     if current_ratio is None:
-        features_path = skill_root / "workspace" / project_key / "iterations" / f"iteration_{args.iteration:03d}" / "diff_features.json"
+        features_path = ws_root / "iterations" / f"iteration_{args.iteration:03d}" / "diff_features.json"
         if features_path.exists():
             import json
 
@@ -103,16 +106,16 @@ def main():
         return compile_project(project_path)
 
     def _compare() -> float:
-        # 复用 compare_pdf_pixels 脚本输出（enhanced_optimize 会把 baseline 放入 workspace/baseline/word.pdf）
+        # 复用 compare_pdf_pixels 脚本输出（enhanced_optimize 会把 baseline 放入 projects/<project>/.make_latex_model/baselines/word.pdf）
         import subprocess
         import json
 
-        baseline_pdf = skill_root / "workspace" / project_key / "baseline" / "word.pdf"
+        baseline_pdf = ws_root / "baselines" / "word.pdf"
         output_pdf = project_path / "main.pdf"
         if not baseline_pdf.exists() or not output_pdf.exists():
             return None
 
-        iter_dir = skill_root / "workspace" / project_key / "iterations" / f"iteration_{args.iteration:03d}"
+        iter_dir = ws_root / "iterations" / f"iteration_{args.iteration:03d}"
         iter_dir.mkdir(parents=True, exist_ok=True)
         json_out = iter_dir / "pixel_compare.json"
         features_out = iter_dir / "diff_features.json"

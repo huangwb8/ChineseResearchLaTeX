@@ -433,23 +433,23 @@ python3 scripts/setup_wizard.py --template nsfc/young
 
 ---
 
-### 11. core/font_detector.py - 字体路径自动检测
+### 11. scripts/core/font_detector.py - 字体路径自动检测
 
 **功能**: 跨平台字体路径检测
 
 **使用方法**:
 ```bash
 # 显示系统信息
-python3 -m core.font_detector --info
+python3 -m scripts.core.font_detector --info
 
 # 检测特定字体
-python3 -m core.font_detector --font "KaiTi"
+python3 -m scripts.core.font_detector --font "KaiTi"
 
 # 检测常见中文字体
-python3 -m core.font_detector --chinese
+python3 -m scripts.core.font_detector --chinese
 
 # 检测常见英文字体
-python3 -m core.font_detector --english
+python3 -m scripts.core.font_detector --english
 ```
 
 ---
@@ -459,7 +459,7 @@ python3 -m core.font_detector --english
 ### 更新验证脚本
 
 当添加新的检查项时:
-1. 编辑 `core/validators/` 中的验证器
+1. 编辑 `scripts/core/validators/` 中的验证器
 2. 或编辑 `scripts/validate.sh`
 3. 更新本文档的"检查项"列表
 
@@ -485,7 +485,7 @@ python3 -m core.font_detector --english
   - **一键式优化流程**: optimize.py + optimize.sh + optimize.bat
   - **交互式配置向导**: setup_wizard.py
   - **Windows 兼容性**: validate.bat, benchmark.bat, optimize.bat
-  - **字体路径自动检测**: core/font_detector.py
+  - **字体路径自动检测**: scripts/core/font_detector.py
 
 - v1.4.0 (2026-01-05): 新增标题文字工具
   - 新增 `extract_headings.py`：从 Word/LaTeX 提取标题文字

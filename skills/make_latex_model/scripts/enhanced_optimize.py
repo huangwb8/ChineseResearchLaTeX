@@ -33,13 +33,13 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from core.workspace_manager import WorkspaceManager
+    from scripts.core.workspace_manager import WorkspaceManager
 except ImportError:
     print("警告: 无法导入 WorkspaceManager")
     WorkspaceManager = None
 
 try:
-    from core.ai_optimizer import AIOptimizer
+    from scripts.core.ai_optimizer import AIOptimizer
 except ImportError:
     print("警告: 无法导入 AIOptimizer")
     AIOptimizer = None
@@ -71,10 +71,10 @@ class EnhancedOptimizer:
         # 工作空间管理器
         if WorkspaceManager:
             self.ws_manager = WorkspaceManager(self.skill_root)
-            self.workspace = self.ws_manager.get_project_workspace(project_name)
+            self.workspace = self.ws_manager.get_project_workspace(self.project_path)
         else:
             self.ws_manager = None
-            self.workspace = self.skill_root / "workspace" / project_name
+            self.workspace = self.project_path / ".make_latex_model"
             self.workspace.mkdir(parents=True, exist_ok=True)
 
         # 智能调整器
@@ -94,9 +94,9 @@ class EnhancedOptimizer:
 
         # 默认配置
         self.config = {
-            "max_iterations": 10,
-            "convergence_threshold": 0.03,
-            "no_improvement_limit": 3,
+            "max_iterations": 30,
+            "convergence_threshold": 0.01,
+            "no_improvement_limit": 5,
             "compile_timeout": 120,
             "pixel_dpi": 150,
             "pixel_tolerance": 2,
@@ -211,7 +211,7 @@ class EnhancedOptimizer:
         }
 
         # 检查是否有基准
-        baseline_dir = self.workspace / "baseline"
+        baseline_dir = self.workspace / "baselines"
         if baseline_dir.exists():
             result["has_baseline"] = (baseline_dir / "word.pdf").exists()
 
@@ -266,7 +266,7 @@ class EnhancedOptimizer:
             ])
 
             if result.returncode == 0:
-                baseline_pdf = self.workspace / "baseline" / "word.pdf"
+                baseline_pdf = self.workspace / "baselines" / "word.pdf"
                 if baseline_pdf.exists():
                     self.log(f"基准已生成: {baseline_pdf}", "success")
                     return True
@@ -287,7 +287,7 @@ class EnhancedOptimizer:
         """
         self.log("步骤 3: 分析基准 PDF", "step")
 
-        baseline_pdf = self.workspace / "baseline" / "word.pdf"
+        baseline_pdf = self.workspace / "baselines" / "word.pdf"
 
         if not baseline_pdf.exists():
             self.log("基准 PDF 不存在", "error")
@@ -301,7 +301,7 @@ class EnhancedOptimizer:
             )
 
             # 直接从工作空间读取分析结果
-            analysis_file = self.workspace / "baseline" / f"{baseline_pdf.stem}_analysis.json"
+            analysis_file = self.workspace / "baselines" / f"{baseline_pdf.stem}_analysis.json"
             if analysis_file.exists():
                 self.log(f"分析结果已保存: {analysis_file}", "success")
                 with open(analysis_file, "r", encoding="utf-8") as f:
@@ -378,7 +378,7 @@ class EnhancedOptimizer:
         """
         self.log("执行像素对比...", "info")
 
-        baseline_pdf = self.workspace / "baseline" / "word.pdf"
+        baseline_pdf = self.workspace / "baselines" / "word.pdf"
         output_pdf = self.project_path / "main.pdf"
 
         if not baseline_pdf.exists() or not output_pdf.exists():
@@ -402,7 +402,7 @@ class EnhancedOptimizer:
         Returns:
             差异比例（0-1）
         """
-        baseline_pdf = self.workspace / "baseline" / "word.pdf"
+        baseline_pdf = self.workspace / "baselines" / "word.pdf"
         output_pdf = self.project_path / "main.pdf"
 
         if not baseline_pdf.exists() or not output_pdf.exists():

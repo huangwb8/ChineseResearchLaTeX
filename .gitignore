@@ -143,6 +143,9 @@ ENV/
 # make_latex_model 技能特定
 # =============================================================================
 
+# 项目级工作空间（中间文件）
+.make_latex_model/
+
 # 技能输出目录（保留 README）
 skills/make_latex_model/output/*.json
 skills/make_latex_model/output/*.log
@@ -154,6 +157,9 @@ skills/make_latex_model/tests/*/.test_summary.txt
 
 # PDF 分析临时文件
 skills/make_latex_model/scripts/*_analysis.json
+
+# 旧的技能级工作空间（逐步弃用；已跟踪的文件不受影响）
+skills/make_latex_model/workspace/
 
 # =============================================================================
 # 环境变量和密钥（安全）

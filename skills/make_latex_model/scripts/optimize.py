@@ -23,15 +23,26 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
+SCRIPT_DIR = Path(__file__).parent
+SKILL_DIR = SCRIPT_DIR.parent
+REPO_ROOT = SKILL_DIR.parent.parent
+PROJECTS_ROOT = (REPO_ROOT / "projects").resolve()
+
+sys.path.insert(0, str(SKILL_DIR))
+
+from scripts.core.workspace_manager import WorkspaceManager
+
 
 class Optimizer:
     """LaTeX 模板优化器"""
 
     def __init__(self, project_path: Path, interactive: bool = False):
-        self.project_path = project_path
+        self.project_path = project_path.resolve()
         self.interactive = interactive
         self.steps = []
         self.results = {}
+        self.ws_manager = WorkspaceManager(SKILL_DIR)
+        self.workspace = self.ws_manager.get_project_workspace(self.project_path)
 
     def confirm(self, message: str) -> bool:
         """交互式确认"""
@@ -69,17 +80,17 @@ class Optimizer:
         print("正在分析 Word PDF 基准...")
 
         # 查找 Word PDF 基准
-        baseline_dir = self.project_path / "artifacts" / "baseline"
+        baseline_dir = self.workspace / "baselines"
         word_pdf = None
 
         if baseline_dir.exists():
-            pdf_files = list(baseline_dir.glob("word*.pdf"))
+            pdf_files = list(baseline_dir.glob("word*.pdf")) or list(baseline_dir.glob("*.pdf"))
             if pdf_files:
-                word_pdf = pdf_files[0]
+                word_pdf = next((p for p in pdf_files if p.name.lower() == "word.pdf"), pdf_files[0])
 
         if not word_pdf:
             print("⚠️  未找到 Word PDF 基准")
-            print("💡 请将 Word 导出的 PDF 放入 artifacts/baseline/word.pdf")
+            print("💡 请将 Word 导出的 PDF 放入 projects/{project}/.make_latex_model/baselines/word.pdf")
             return None
 
         # 运行 analyze_pdf.py
@@ -98,7 +109,7 @@ class Optimizer:
         print(result.stdout)
 
         # 查找生成的 JSON 文件
-        json_file = word_pdf.with_suffix(".json")
+        json_file = word_pdf.with_name(word_pdf.stem + "_analysis.json")
         if json_file.exists():
             with open(json_file, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -149,7 +160,7 @@ class Optimizer:
         config_file = self.project_path / "extraTex" / "@config.tex"
 
         # 查找分析 JSON
-        baseline_dir = self.project_path / "artifacts" / "baseline"
+        baseline_dir = self.workspace / "baselines"
         json_file = None
 
         if baseline_dir.exists():
@@ -309,13 +320,35 @@ def main():
 
     args = parser.parse_args()
 
+    raw = str(args.project).strip()
+    p = args.project
+    if p.exists():
+        project_path = p
+    else:
+        if p.is_absolute() or any(sep in raw for sep in ("/", "\\")):
+            candidate = p if p.is_absolute() else (REPO_ROOT / p)
+        else:
+            candidate = REPO_ROOT / "projects" / raw
+        project_path = candidate
+
+    project_path = project_path.resolve()
+    if not project_path.exists():
+        print(f"❌ 错误: 项目路径不存在: {project_path}")
+        raise SystemExit(1)
+
+    try:
+        project_path.relative_to(PROJECTS_ROOT)
+    except Exception:
+        print(f"❌ 错误: 项目必须位于 {PROJECTS_ROOT} 下: {project_path}")
+        raise SystemExit(1)
+
     # 创建优化器
-    optimizer = Optimizer(args.project, args.interactive)
+    optimizer = Optimizer(project_path, args.interactive)
 
     print(f"\n{'='*60}")
     print("  LaTeX 模板一键优化")
     print(f"{'='*60}")
-    print(f"\n项目: {args.project}")
+    print(f"\n项目: {project_path}")
     print(f"模式: {'交互式' if args.interactive else '自动'}")
 
     # 执行优化流程

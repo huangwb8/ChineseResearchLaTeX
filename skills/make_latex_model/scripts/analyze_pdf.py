@@ -13,11 +13,9 @@ import argparse
 from pathlib import Path
 from collections import defaultdict
 
-# 添加 core 目录到路径，用于导入 WorkspaceManager
-script_dir = Path(__file__).parent
-core_dir = script_dir.parent / "core"
-if str(core_dir) not in sys.path:
-    sys.path.insert(0, str(core_dir))
+SCRIPT_DIR = Path(__file__).parent
+SKILL_DIR = SCRIPT_DIR.parent
+sys.path.insert(0, str(SKILL_DIR))
 
 # 检查依赖
 try:
@@ -29,7 +27,7 @@ except ImportError:
 
 # 导入 WorkspaceManager
 try:
-    from workspace_manager import WorkspaceManager
+    from scripts.core.workspace_manager import WorkspaceManager
 except ImportError:
     print("⚠️  警告: 无法导入 WorkspaceManager，将使用当前目录保存结果")
     WorkspaceManager = None
@@ -178,11 +176,12 @@ def main():
 示例:
   python analyze_pdf.py word_baseline.pdf
   python analyze_pdf.py projects/NSFC_General/template/word.pdf --project NSFC_General
+  # 输出将保存到：projects/NSFC_General/.make_latex_model/baselines/<stem>_analysis.json
   python analyze_pdf.py word.pdf --output custom_analysis.json
         """
     )
     parser.add_argument("pdf_path", help="PDF 文件路径")
-    parser.add_argument("--project", help="项目名称（如 NSFC_General），用于保存到工作空间")
+    parser.add_argument("--project", help="项目名称（如 NSFC_General），用于保存到 projects/<project>/.make_latex_model/baselines/")
     parser.add_argument("--output", "-o", help="自定义输出 JSON 文件路径")
     parser.add_argument("--no-workspace", action="store_true", help="不使用工作空间，直接保存到当前目录")
 
@@ -251,16 +250,16 @@ def main():
         workspace_info = "(自定义路径)"
     # 优先级 2: 用户指定了项目名称且 WorkspaceManager 可用
     elif args.project and WorkspaceManager and not args.no_workspace:
-        ws_manager = WorkspaceManager()
+        ws_manager = WorkspaceManager(SKILL_DIR)
         baseline_dir = ws_manager.get_baseline_path(args.project)
         output_path = baseline_dir / f"{pdf_file.stem}_analysis.json"
-        workspace_info = f"(工作空间: {args.project})"
+        workspace_info = f"(工作空间: {baseline_dir})"
     # 默认: 使用 PDF 所在目录（向后兼容）
     else:
         # NOTE: keep backward-compatible default (next to the PDF), but ensure Path
         output_path = Path(pdf_path).with_name(Path(pdf_path).stem + "_analysis.json")
         if WorkspaceManager and not args.no_workspace:
-            workspace_info = "(当前目录，建议使用 --project 参数保存到工作空间)"
+            workspace_info = "(当前目录，建议使用 --project 参数保存到 projects/<project>/.make_latex_model/baselines/)"
 
     output_data = {
         "source_file": str(pdf_file),

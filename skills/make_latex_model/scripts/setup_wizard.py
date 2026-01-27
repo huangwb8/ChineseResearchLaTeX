@@ -237,7 +237,7 @@ class SetupWizard:
         # 创建目录结构
         (project_path / "extraTex").mkdir(parents=True, exist_ok=True)
         (project_path / "template").mkdir(parents=True, exist_ok=True)
-        (project_path / "artifacts" / "baseline").mkdir(parents=True, exist_ok=True)
+        (project_path / ".make_latex_model" / "baselines").mkdir(parents=True, exist_ok=True)
 
         # 复制模板文件
         template = config["project"]["template"]

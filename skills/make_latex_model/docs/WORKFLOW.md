@@ -20,13 +20,13 @@ python3 skills/make_latex_model/scripts/check_state.py projects/{project}
 - 自动生成（如项目模板目录中包含 Word 模板）：`python3 skills/make_latex_model/scripts/generate_baseline.py --project {project}`
 
 基准默认放在：
-- `skills/make_latex_model/workspace/{project}/baseline/word.pdf`
+- `projects/{project}/.make_latex_model/baselines/word.pdf`
 
 ## 2) 提取 Word PDF 的样式参数（推荐）
 
 ```bash
 python3 skills/make_latex_model/scripts/analyze_pdf.py \
-  skills/make_latex_model/workspace/{project}/baseline/word.pdf \
+  projects/{project}/.make_latex_model/baselines/word.pdf \
   --project {project}
 ```
 
@@ -83,7 +83,7 @@ cd skills/make_latex_model
 ```bash
 python3 skills/make_latex_model/scripts/enhanced_optimize.py \
   --project projects/{project} \
-  --max-iterations 10 \
+  --max-iterations 30 \
   --report
 ```
 
@@ -92,14 +92,13 @@ python3 skills/make_latex_model/scripts/enhanced_optimize.py \
 ```bash
 python3 skills/make_latex_model/scripts/enhanced_optimize.py \
   --project projects/{project} \
-  --max-iterations 10 \
+  --max-iterations 30 \
   --ai --ai-mode heuristic
 ```
 
 说明：
 - `heuristic`：纯启发式（离线可用）
-- `manual_file`：生成 `workspace/{project}/iterations/iteration_XXX/ai_request.json`，写入 `ai_response.json` 后继续
+- `manual_file`：生成 `projects/{project}/.make_latex_model/iterations/iteration_XXX/ai_request.json`，写入 `ai_response.json` 后继续
 
 更多脚本参数与说明见：
 - `skills/make_latex_model/scripts/README.md`
-

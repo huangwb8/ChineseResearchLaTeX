@@ -14,7 +14,7 @@ main.tex 预处理工具
     python scripts/prepare_main.py projects/NSFC_Young/main.tex --restore
 
     # 指定备份目录
-    python scripts/prepare_main.py projects/NSFC_Young/main.tex --backup-dir workspace/NSFC_Young/backup
+    python scripts/prepare_main.py projects/NSFC_Young/main.tex --backup-dir projects/NSFC_Young/.make_latex_model/backup
 
     # 预览模式（不修改文件）
     python scripts/prepare_main.py projects/NSFC_Young/main.tex --dry-run
