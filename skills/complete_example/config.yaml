@@ -1,8 +1,9 @@
 skill_info:
   name: complete_example
-  version: 1.0.0
+  version: 1.2.0
   description: AI 增强版 LaTeX 示例智能生成器
   author: "ChineseResearchLaTeX Project"
+  category: writing
 
 # ========== LLM 配置 ==========
 llm:
@@ -113,10 +114,45 @@ generation:
   # 相关性阈值
   relevance_threshold: 0.5
 
+  # 内容类型权重（AI 根据章节主题动态调整，作为提示而非强约束）
+  content_type_weights:
+    text: 0.5
+    table: 0.2
+    formula: 0.15
+    figure: 0.1
+    code: 0.05
+
   # 每种资源类型的数量限制
   max_figures_per_section: 2
   max_code_per_section: 1
   max_references_per_section: 3
+
+  # 表格生成配置
+  table_generation:
+    enabled: true
+    max_tables_per_section: 2
+    complexity_levels:
+      simple:
+        max_columns: 5
+        max_rows: 10
+      moderate:
+        max_columns: 8
+        max_rows: 20
+      complex:
+        max_columns: 10
+        max_rows: 50
+        allow_multirow: true
+        allow_multicolumn: true
+
+  # 数学公式生成配置
+  formula_generation:
+    enabled: true
+    max_formulas_per_section: 3
+    types:
+      - inline
+      - display
+      - equation
+      - align
 
   # ========== 章节层级规范 ==========
   # 核心规则：main.tex 使用 section/subsection，input 类 tex 使用 subsubsection/subsubsubsection
@@ -156,6 +192,56 @@ generation:
       \end{lstlisting}
 
     reference_citation: "\\cite{{{citekey}}}"
+
+    # 简单表格模板（booktabs）
+    simple_table: |
+      \begin{table}[htbp]
+        \centering
+        \fontsize{11}{11}\selectfont
+        \caption{\textbf{{{caption}}}}
+        \begin{tabular}{{{column_spec}}}
+        \toprule
+        {{header_row}}
+        \midrule
+        {{data_rows}}
+        \bottomrule
+        \end{tabular}
+        \captionsetup{font={footnotesize,stretch=1.25},justification=raggedright}
+        \label{{{label}}}
+      \end{table}
+
+    # 复杂表格模板（多行表头）
+    complex_table: |
+      \begin{table}[htbp]
+        \centering
+        \fontsize{11}{11}\selectfont
+        \caption{\textbf{{{caption}}}}
+        \begin{tabular}{{{column_spec}}}
+        \toprule
+        {{header_rows}}
+        \toprule
+        {{data_rows}}
+        \bottomrule
+        \end{tabular}
+        \captionsetup{font={footnotesize,stretch=1.25},justification=raggedright}
+        \label{{{label}}}
+      \end{table}
+
+    # 数学公式模板
+    inline_math: "${formula}$"
+    display_math: |
+      \[
+      {formula}
+      \]
+    equation: |
+      \begin{equation}
+        {formula}
+        \label{{{label}}}
+      \end{equation}
+    align: |
+      \begin{align}
+        {formulas}
+      \end{align}
 
 # ========== 格式保护配置 ==========
 format_protection:
@@ -212,8 +298,27 @@ security:
     - "\\\\titleformat{"
     - "\\\\titlespacing"
     - "\\\\setlist"
+    - "\\\\newcommand"
+    - "\\\\renewcommand"
+    - "\\\\newcolumntype"
+    - "\\\\DeclareMathOperator"
     - "\\\\usepackage{"
     - "\\\\documentclass"
+
+  # 表格安全检查（生成后启发式过滤）
+  table_security:
+    max_size_kb: 50
+    forbidden_commands:
+      - "\\newcolumntype"
+      - "\\setlength{\\tabcolsep}"
+      - "\\renewcommand{\\arraystretch}"
+
+  # 公式安全检查（生成后启发式过滤）
+  formula_security:
+    max_length: 1000
+    forbidden_commands:
+      - "\\DeclareMathOperator"
+      - "\\newcommand"
 
   # 文件完整性校验
   integrity_check:
@@ -299,7 +404,24 @@ prompts:
     3. 使用正式的学术写作风格
     4. **重要**：根据【用户叙事提示】调整内容方向和风格
     5. **允许编造**：这是示例场景，可以根据提示编造合理的研究内容、数据和结论
-    6. 在应该插入 LaTeX 代码的地方用 {{PLACEHOLDER:资源路径}} 标记
+    6. 在应该插入 LaTeX 代码的地方用 {{{{PLACEHOLDER:资源路径}}}} 标记
+
+    ## 🆕 多元内容格式支持
+    根据章节主题，你可以生成以下类型的内容：
+
+    ### 表格
+    - 用于展示对比数据、实验结果、参数设置等
+    - 使用占位符：{{{{TABLE:表格描述|复杂度}}}}
+    - 复杂度选项：simple / moderate / complex
+    - 示例：{{{{TABLE:临床特征对比表|complex}}}}
+
+    ### 数学公式
+    - 用于理论推导、模型描述、统计分析等
+    - 行内公式：{{{{INLINE_MATH:公式内容}}}}
+    - 独立公式：{{{{DISPLAY_MATH:公式内容}}}}
+    - 带编号公式：{{{{EQUATION:公式内容|标签}}}}
+    - 多行公式：{{{{ALIGN:公式1\\\\公式2\\\\公式3}}}}
+    - 示例：{{{{EQUATION:E = mc^2|eq:energy}}}}
 
     ## ⚠️ 章节层级约束（必须遵守）
     当前文件类型：{file_type}
@@ -329,8 +451,76 @@ prompts:
 
     只返回生成的文本，不要其他解释。
 
+  generate_table: |
+    你是一位专业的科研数据可视化专家。请根据以下信息生成一个 LaTeX 表格。
+
+    ## 表格需求
+    - 主题：{table_theme}
+    - 复杂度：{complexity}
+    - 列数：{num_columns}
+    - 行数：{num_rows}
+    - 用途：{purpose}
+
+    ## 上下文
+    {context}
+
+    ## 生成要求
+    1. 表格数据应该合理且符合科研规范
+    2. 使用适当的统计符号和单位
+    3. 包含必要的表头和分组
+    4. 数据精度合理（通常保留2-3位小数）
+    5. 如果是对比表，应包含统计检验结果（如 P 值）
+
+    请返回 JSON 格式：
+    {{
+      "caption": "表格标题",
+      "column_spec": "列格式（如 lcccc）",
+      "header_row": "表头行（用 & 分隔，末尾带 \\\\）",
+      "data_rows": ["数据行1（末尾带 \\\\）", "数据行2（末尾带 \\\\）"],
+      "label": "表格标签（如 tab:results）"
+    }}
+
+  generate_formula: |
+    你是一位专业的数学建模专家。请根据以下信息生成一个 LaTeX 数学公式。
+
+    ## 公式需求
+    - 主题：{formula_theme}
+    - 类型：{formula_type}  # inline / display / equation / align
+    - 用途：{purpose}
+
+    ## 上下文
+    {context}
+
+    ## 生成要求
+    1. 公式应该数学上合理且符合领域规范
+    2. 使用标准的 LaTeX 数学符号
+    3. 变量命名清晰（使用希腊字母或英文字母）
+    4. 如果是多行公式，应该对齐等号或关系符
+    5. 包含必要的下标、上标和修饰符
+
+    请返回 JSON 格式：
+    {{
+      "formula": "公式内容（LaTeX 格式）",
+      "label": "公式标签（如果需要）",
+      "description": "公式含义的简短描述"
+    }}
+
 # ========== 质量评估标准 ==========
 quality_thresholds:
   coherence_min: 0.8        # 连贯性最低要求
   academic_tone_min: 0.75   # 学术风格最低要求
   overall_score_min: 0.8    # 总体评分最低要求
+
+  # 表格质量评估（启发式）
+  table_quality:
+    min_columns: 3
+    max_columns: 10
+    min_rows: 3
+    data_consistency: 0.9
+    header_clarity: 0.85
+
+  # 公式质量评估（启发式）
+  formula_quality:
+    syntax_correctness: 1.0
+    semantic_relevance: 0.8
+    notation_standard: 0.85

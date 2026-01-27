@@ -13,8 +13,10 @@
 \usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
 % \usepackage{ctex}
 \usepackage{pifont} % 带圈数字
-\usepackage{ifplatform} % 检测操作系统
-% Word 排版不会做“页高拉伸”，为稳定对齐（尤其是像素对比），禁用 LaTeX 的 flushbottom
+% 操作系统检测（避免 ifplatform 在未开启 shell escape 时产生警告）
+\newif\ifwindows
+\IfFileExists{/dev/null}{\windowsfalse}{\windowstrue}
+% Word 排版不会做"页高拉伸"，为稳定对齐（尤其是像素对比），禁用 LaTeX 的 flushbottom
 \raggedbottom
 
 %%%————————————————————————————————边距
@@ -22,11 +24,13 @@
 % \hskip0.15em plus0.05em minus 0.05em表示基础间距为0.15em，可增加至0.2em，也可减少至0.1em以便满足排版需求。
 % 页边距和字距的某个组合应该可以完美复制Word。
 \geometry{left=3.20cm,right=2.94cm,top=2.67cm,bottom=2.91cm} % 页边距（对齐 2026 Word 基准 PDF）
-\CJKsetecglue{\hskip 0.3em plus 0.05em minus 0.1em} % 数字与CJK字符的间距
+\CJKsetecglue{\hskip 0.15em plus 0.05em minus 0.05em} % 数字与 CJK 字符的间距
 % left=3.20cm,right=3.13-3.14cm
 
 %%%————————————————————————————————颜色
-\definecolor{MsBlue}{RGB}{0,112,192} %Ms Word 的蓝色和latex xcolor包预定义的蓝色不一样。
+% 说明：在 XeLaTeX + xcolor 组合下，RGB(0,112,192) 在 PDF 中会被量化为 (0,111,192)；
+% 为了让最终 PDF 提取/显示为 Word 的 MsBlue：RGB(0,112,192)，这里将 G 分量 +1。
+\definecolor{MsBlue}{RGB}{0,113,192} % 目标：PDF 输出等效 RGB(0,112,192)
 \definecolor{headercolor}{RGB}{0,0,0} % 页眉颜色
 \definecolor{footercolor}{RGB}{0,0,0} % 页脚颜色
 
@@ -36,7 +40,7 @@
     \renewcommand{\listfigurename}{插图目录}
     \renewcommand{\listtablename}{表格}
     %\renewcommand{\refname}{\sihao 参考文献}
-    \renewcommand{\refname}{\sihao \kaishu \bfseries \leftline{参考文献} \vspace*{5mm}} %这几个字默认字号稍大，改成四号字，楷书，居左(默认居中) 根据喜好自行修改，官方模板未作要求
+    \renewcommand{\refname}{\sihao \templatefont \bfseries \leftline{参考文献}} %四号字，楷体，居左
     \renewcommand{\abstractname}{摘要}
     \renewcommand{\indexname}{索引}
     \renewcommand{\tablename}{表}
@@ -50,9 +54,9 @@
 \newcommand{\yihao}{\fontsize{26pt}{\baselineskip}\selectfont}
 \newcommand{\erhao}{\fontsize{22pt}{\baselineskip}\selectfont}
 \newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont}
-\newcommand{\sanhao}{\fontsize{16pt}{\baselineskip}\selectfont}
-\newcommand{\sihao}{\fontsize{14pt}{\baselineskip}\selectfont}
-\newcommand{\xiaosihao}{\fontsize{12pt}{\baselineskip}\selectfont}
+\newcommand{\sanhao}{\fontsize{16pt}{22pt}\selectfont}
+\newcommand{\sihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\xiaosihao}{\fontsize{12pt}{22pt}\selectfont}
 \newcommand{\yemeizihao}{\fontsize{11pt}{\baselineskip}\selectfont}
 \newcommand{\wuhao}{\fontsize{10.5pt}{\baselineskip}\selectfont}
 \newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont}
@@ -72,8 +76,9 @@
   \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
   \newfontfamily\sectionenfont{KaiTi}[AutoFakeBold] % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
   \NewDocumentCommand \templatefont { } {\sectionzhfont \sectionenfont} % 模板中英文字体
-  \setmainfont{Times New Roman} % 定义主体内容的英文字体为Times New Roman
   \setCJKmainfont{KaiTi}[AutoFakeBold=3]  % 定义主体内容的字体为Kaiti
+  \setCJKmonofont{KaiTi}[AutoFakeBold=3]  % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
+  \setmainfont{Times New Roman} % 定义主体内容的英文字体为Times New Roman
   % \setCJKmainfont{SimSun}[AutoFakeBold=3]  % 定义主体内容的字体为SimSun
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \else
@@ -82,16 +87,25 @@
   \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
   \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
   % \setmainfont[Path=./fonts/, Extension=.ttf]{TimesNewRoman} % 定义主体内容的英文字体为Times New Roman。由于是外挂字体，无法自由使用英文斜体和粗体。
-  \setmainfont[BoldFont=Times New Roman, AutoFakeBold=5]{Times New Roman} %使用MacOS自带的Times New Roman，可以自由使用英文斜体和粗体。
   % \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{SimSun} % 定义主体内容的字体为SimSun
   \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义主体内容的字体为Kaiti
+  \setCJKmonofont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
+  \setmainfont[BoldFont=Times New Roman, AutoFakeBold=5]{Times New Roman} %使用MacOS自带的Times New Roman，可以自由使用英文斜体和粗体。
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \fi
 
 %%%————————————————————————————————行距
-% Word 模板行距约为 22pt（四号字），对应约 1.57 倍行距
-\renewcommand{\baselinestretch}{1.57}
+% Word 2026 模板：行距为"固定值 22 磅"
+% 说明：不使用 baselinestretch 乘法去逼近，直接把默认字号(12pt)的 baselineskip 固定为 22pt
+\renewcommand{\baselinestretch}{1.0}
+\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont\frenchspacing}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt} % 段间距：进一步收紧段落间隙
+\hfuzz=20pt\relax % 避免示例图宽度导致的 Overfull \hbox 警告
 \XeTeXlinebreaklocale "zh" % 中文断行
+
+% Word 空白段落的"视觉高度"对齐：在已有 \parskip 的情况下补足到 1 行行距
+\newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
 
 
 %%%————————————————————————————————图片与表格
@@ -138,8 +152,11 @@
 	citecolor=black,
 	CJKbookmarks=True
 ]{hyperref}
+
+% 书签字符串中禁用不兼容命令（避免 hyperref 警告）
 \pdfstringdefDisableCommands{%
   \def\linebreak{}%
+  \def\punctstyle#1{}%
 }
 
 
@@ -153,56 +170,24 @@
 \setcounter{secnumdepth}{4} %显示3级目录，然后再具体定制不同的目录
 % \setcounter{tocdepth}{4}
 
-% 标题左缩进：对齐 2026 Word 基准 PDF（约 28pt）
-\newlength{\NSFCTitleIndent}
-\setlength{\NSFCTitleIndent}{28pt}
-
-% 二级提纲（蓝色提示语）的首行缩进宽度（对齐 Word：首行起始点较左边距右移约 28pt）
-\newlength{\NSFCSubsectionIndent}
-\setlength{\NSFCSubsectionIndent}{28pt}
-
-% 二级提纲（蓝色提示语）段后距：用于控制 \NSFCSubsection 与下一段之间的间隙
-% 说明：原先为 22pt（更贴近 Word 的“空段落”观感），但在 LaTeX 排版下显得偏松，改为更紧凑的默认值。
-\newlength{\NSFCSubsectionAfterSkip}
-\setlength{\NSFCSubsectionAfterSkip}{10pt}
-
 % Define section font
-\newcommand{\sectionzihao}{\fontsize{14pt}{\baselineskip}\selectfont}
-\newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\sectionzihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\subsectionzihao}{\fontsize{14pt}{22pt}\selectfont}
 \newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
 
-% 提纲用的“二级标题”实际上是 Word 中的普通段落（蓝色提示语），不宜用 \subsection
-% （避免标题进入书签/目录，也避免分页时对“段后空行”的强制需求）。
-% 同时需要推进 subsection 计数器，以便正文里使用 \subsubsection 时编号正确。
-\newcommand{\NSFCSubsection}[1]{%
-  \par\refstepcounter{subsection}%
-  {%
-    \color{MsBlue}\subsectionzihao\templatefont
-    \noindent%
-    % 使用 parshape 明确控制首行/后续行缩进：首行右移 28pt，后续行回到左边距
-    \parshape 2 %
-      \NSFCSubsectionIndent \dimexpr\linewidth-\NSFCSubsectionIndent\relax %
-      0pt \linewidth %
-    #1\par%
-  }%
-  % 提纲段落后的间隙（可通过 \NSFCSubsectionAfterSkip 统一调整）
-  \vspace{\NSFCSubsectionAfterSkip}%
-}
-
-
 % Custom format for section
-\titleformat{\section}[hang]
-  {\color{MsBlue} \sectionzihao \templatefont} % format
-  {} % label
+\titleformat{\section}
+  {\color{MsBlue} \sectionzihao \templatefont \bfseries} % format
+  {\hspace*{2em}} % label（用于缩进，不影响标题文字内容）
   {0pt} % separation
   {}   % before-code
 
 % Custom format for subsection
-\titleformat{\subsection}[hang]
+\titleformat{\subsection}
   {\color{MsBlue} \subsectionzihao \templatefont} % format
   {} % label
   {0pt} % separation
-  {}   % before-code
+  {\hspace*{2em}}   % before-code（用于首行缩进，续行自然顶格）
 
 % Custom format for subsubsection
 \titleformat{\subsubsection}
@@ -228,27 +213,27 @@
 
 % Define line stretch for section
 \titlespacing*{\section}
-  {\NSFCTitleIndent} % Left indentation
-  {0pt} % Space before the title
-  {0pt} % Space after the title
+  {0pt} % Left indentation
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {-4pt} % Space after the title（更紧凑：减少 \section 与后续 \subsection 的视觉间距）
 
 % Define line stretch for subsection
 \titlespacing*{\subsection}
   {0pt} % Left indentation
-  {0pt} % Space before the title
-  {22pt plus 0pt minus 14pt} % Space after the title（允许页尾收缩，便于与 Word 分页一致）
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt} % Space after the title（由 \parskip 控制段后）
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsection}
   {0pt} % Left indentation
-  {0pt} % Space before the title
-  {0pt} % Space after the title
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsubsection}
   {0pt} % Left indentation
-  {0pt} % Space before the title
-  {0pt} % Space after the title
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {0pt plus 0pt minus 0pt} % Space after the title
 
 
 
@@ -317,11 +302,11 @@
 \punctstyle{hangmobanjiao} % 末半角式，仅行末挤压。
 
 % 参考文献中的链接字体用的是texttt
-\renewcommand{\ttdefault}{tnr} % 设置默认等宽字体为 Times New Roman
+\urlstyle{same} % URL 使用正文同款字体（对齐 Word）
 
 % 自定义第4级小标题
-% \newcommand{\ssssubtitle}[1]{\ding{\numexpr171+#1\relax}} % 类似①
-\newcommand{\ssssubtitle}[1]{\textcircled{\raisebox{-0.8pt}{\xiaosihao #1}}}
+% 说明：避免 \textcircled 触发 OMS/TimesNewRoman 等字体警告，使用 pifont 的圈号字符
+\newcommand{\ssssubtitle}[1]{\ding{\numexpr171+#1\relax}} % 类似①
 % \newcommand{\ssssubtitle}[1]{#1）} % 类似1）
 % \newcommand{\blackding}[1]{\ding{\numexpr181+#1\relax}}
 % \newcommand{\whitedingB}[1]{\ding{\numexpr191+#1\relax}}
