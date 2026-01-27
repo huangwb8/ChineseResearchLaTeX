@@ -39,7 +39,7 @@ def check_project_state(project_path: Path) -> dict:
     if not state["status"]["initialized"]:
         state["recommendations"].append("项目未初始化，请先创建 @config.tex")
 
-    # 2. 检查是否有 Word PDF 基准
+    # 2. 检查是否有 PDF 基准（推荐 baseline.pdf；兼容 word.pdf）
     baseline_dir = ws_root / "baselines"
     pdf_files = list(baseline_dir.glob("*.pdf")) if baseline_dir.exists() else []
     state["status"]["has_baseline"] = len(pdf_files) > 0
@@ -48,7 +48,10 @@ def check_project_state(project_path: Path) -> dict:
 
     if pdf_files:
         # 检测基准来源
-        baseline_pdf = next((p for p in pdf_files if p.name.lower() == "word.pdf"), pdf_files[0])
+        baseline_pdf = next(
+            (p for p in pdf_files if p.name.lower() == "baseline.pdf"),
+            next((p for p in pdf_files if p.name.lower() == "word.pdf"), pdf_files[0]),
+        )
         baseline_info = detect_baseline_source(baseline_pdf)
         state["status"]["baseline_source"] = baseline_info["source"]
         state["status"]["baseline_quality"] = baseline_info["quality"]
@@ -60,7 +63,7 @@ def check_project_state(project_path: Path) -> dict:
 
     if not state["status"]["has_baseline"]:
         state["recommendations"].append(
-            "缺少 Word PDF 基准，请先将 Word 模板导出为 PDF 并放到 projects/{project}/.make_latex_model/baselines/word.pdf"
+            "缺少 PDF 基准，请将基金委 PDF（或 Word 导出 PDF）放到 projects/{project}/template/baseline.pdf（推荐），或复制到 projects/{project}/.make_latex_model/baselines/baseline.pdf"
         )
 
     # 3. 检查编译状态
@@ -96,7 +99,9 @@ def detect_baseline_source(pdf_path: Path) -> dict:
 
     if "quicklook" in filename or "ql" in filename:
         return {"source": "quicklook", "quality": "low"}
-    elif "word" in filename or "baseline" in filename:
+    elif "baseline" in filename:
+        return {"source": "baseline_pdf", "quality": "high"}
+    elif "word" in filename:
         return {"source": "word_pdf", "quality": "high"}
     else:
         return {"source": "unknown", "quality": "medium"}

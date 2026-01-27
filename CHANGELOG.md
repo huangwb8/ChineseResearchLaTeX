@@ -41,7 +41,7 @@
 ### Changed（变更）
 
 - **NSFC_Local**：对齐 2026 地区基金 Word 正文模板（提纲页/边距/标题缩进/段后距）
-  - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻“首行缩进、续行回到左边距”
+  - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻“首行缩进、续行回到左边距”；新增 `\\NSFCSubsectionAfterSkip` 并调小默认段后距以让提纲与正文衔接更紧凑
   - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；补齐提纲标题/提示语的加粗位置（与 Word 模板一致）；使用 `\\linebreak{}` 精确对齐标题换行，使 PDF 中每行标题文字与 Word 模板一致；微调提纲区块前后间距以贴近分页观感
   - `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由同名 `.doc` 转换生成，供标题一致性验证与基准管理使用
 
@@ -69,6 +69,15 @@
   - 安全加固：关键入口脚本补齐 projects/ 边界校验（防路径遍历），并更新 `analyze_pdf.py`/`run_validators.py`/`generate_baseline.py`/`optimize.py` 等入口的一致性
   - 文档同步：更新 `skills/make_latex_model/{SKILL.md,README.md,docs/WORKFLOW.md,scripts/README.md}` 的路径与迭代说明
   - auto-test-skill：新增 A/B 轮会话 `v202601271524`，并强制闭环 P0-P2
+
+- **make_latex_model v2.8.0 → v2.9.0**：PDF 单源标题对齐 + 加粗解析统一 + 逐段像素对齐落地
+  - 新增 `skills/make_latex_model/scripts/extract_headings_from_pdf.py`：从 PDF 基准提取标题文字/加粗片段/跨行换行点
+  - `skills/make_latex_model/scripts/compare_headings.py`：支持 PDF 作为输入源（.docx 保留为 deprecated 兼容），并复用统一格式解析器修复加粗识别误报
+  - 新增 `skills/make_latex_model/scripts/optimize_heading_linebreaks.py`：根据 PDF 标题跨行位置自动插入 `\\linebreak{}`（严格匹配后才改写）
+  - 新增 `skills/make_latex_model/scripts/core/latex_format_parser.py`：统一解析 `\\textbf{}` / `{\\bfseries ...}` / 嵌套命令等常见格式，供对比与验证器复用
+  - 新增逐段对齐链路：`scripts/core/paragraph_alignment.py` + `scripts/{extract_paragraphs,match_paragraphs,compare_paragraph_images}.py`；`compare_pdf_pixels.py` 增加 `--mode paragraph` 与段落级特征输出；`diff_analyzer.py` 识别 paragraph mode 特征并给出更贴近段距/缩进/行距的根因推断
+  - `enhanced_optimize.py`/`run_ai_optimizer.py`：基准 PDF 选择更稳健（优先 `baseline.pdf`，兼容 `word.pdf`），并支持从配置传递像素对比 mode/dpi/tolerance/min_similarity
+  - 文档与配置同步：`skills/make_latex_model/{SKILL.md,config.yaml,docs/WORKFLOW.md,scripts/README.md}`
 
 - **make_latex_model**：增强 NSFC 系模板的基准选择与验证稳定性
   - `skills/make_latex_model/scripts/compare_headings.py`：忽略被注释的标题；同时识别 `\\NSFCSubsection{}`；支持嵌套花括号标题（用于 `\\textbf{...}` 等局部加粗）；Word 标题样式缺失时回退到“文本模式”提取；支持生成 HTML 报告；格式对比时保留空格边界（避免 `1.~` 等空白差异误报）

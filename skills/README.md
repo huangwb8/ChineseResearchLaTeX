@@ -60,9 +60,9 @@ graph LR
 
 **类型**：🔧 开发
 
-**功能**：基于最新 Word 模板，高保真优化 LaTeX 样式
+**功能**：基于最新 PDF/Word 模板，高保真优化 LaTeX 样式（推荐 PDF 单源）
 
-**使用场景**：NSFC 发布新 Word 模板，需要 LaTeX 模板与之像素级对齐
+**使用场景**：NSFC 发布新模板（PDF 或 Word），需要 LaTeX 模板与之像素级对齐
 
 **推荐 Prompt 模板**：
 

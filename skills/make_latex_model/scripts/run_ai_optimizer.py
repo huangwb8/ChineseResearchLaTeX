@@ -109,11 +109,31 @@ def main():
         # 复用 compare_pdf_pixels 脚本输出（enhanced_optimize 会把 baseline 放入 projects/<project>/.make_latex_model/baselines/word.pdf）
         import subprocess
         import json
+        import yaml
 
-        baseline_pdf = ws_root / "baselines" / "word.pdf"
+        baseline_pdf = ws_root / "baselines" / "baseline.pdf"
+        if not baseline_pdf.exists():
+            baseline_pdf = ws_root / "baselines" / "word.pdf"  # legacy
         output_pdf = project_path / "main.pdf"
         if not baseline_pdf.exists() or not output_pdf.exists():
             return None
+
+        # 尝试读取默认像素对比配置（mode/dpi/tolerance）
+        cfg_mode = "page"
+        cfg_dpi = 150
+        cfg_tol = 2
+        cfg_min_sim = 0.85
+        try:
+            if config_path.exists():
+                full_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+                pc = (full_cfg.get("iteration") or {}).get("pixel_comparison") or {}
+                if isinstance(pc, dict):
+                    cfg_mode = str(pc.get("mode", cfg_mode))
+                    cfg_dpi = int(pc.get("dpi", cfg_dpi))
+                    cfg_tol = int(pc.get("tolerance", cfg_tol))
+                    cfg_min_sim = float(pc.get("min_similarity", cfg_min_sim))
+        except Exception:
+            pass
 
         iter_dir = ws_root / "iterations" / f"iteration_{args.iteration:03d}"
         iter_dir.mkdir(parents=True, exist_ok=True)
@@ -125,6 +145,14 @@ def main():
             str(skill_root / "scripts" / "compare_pdf_pixels.py"),
             str(baseline_pdf),
             str(output_pdf),
+            "--mode",
+            str(cfg_mode),
+            "--dpi",
+            str(cfg_dpi),
+            "--tolerance",
+            str(cfg_tol),
+            "--min-similarity",
+            str(cfg_min_sim),
             "--json-out",
             str(json_out),
             "--features-out",

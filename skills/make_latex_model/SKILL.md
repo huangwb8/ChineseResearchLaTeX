@@ -1,6 +1,6 @@
 ---
 name: make_latex_model
-version: 2.8.0
+version: 2.9.0
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
@@ -22,7 +22,7 @@ dependencies:
       purpose: PDF 样式参数提取
     - name: python-docx
       version: ">=0.8.11"
-      purpose: Word 标题提取
+      purpose: Word 标题提取（兼容旧流程，可选）
     - name: Pillow
       version: ">=9.0.0"
       purpose: 图像处理和像素对比

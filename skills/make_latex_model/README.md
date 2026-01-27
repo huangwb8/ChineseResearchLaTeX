@@ -1,6 +1,6 @@
 # make_latex_model - LaTeX 模板高保真优化器
 
-基于 Word 模板导出的 PDF 作为“基准”，对 LaTeX 模板进行样式参数对齐与标题文字对齐，并提供验证器、HTML 报告与像素级对比辅助验收。
+基于 PDF（推荐：基金委 PDF / Word 导出 PDF）作为“基准”，对 LaTeX 模板进行样式参数对齐与标题文字对齐，并提供验证器、HTML 报告与像素级对比辅助验收。
 
 ## 适用场景
 
@@ -24,10 +24,10 @@
 python3 skills/make_latex_model/scripts/check_state.py projects/NSFC_Young
 ```
 
-2) 分析 Word PDF 基准（提取样式参数）
+2) 分析 PDF 基准（提取样式参数）
 
 ```bash
-python3 skills/make_latex_model/scripts/analyze_pdf.py projects/NSFC_Young/.make_latex_model/baselines/word.pdf
+python3 skills/make_latex_model/scripts/analyze_pdf.py projects/NSFC_Young/.make_latex_model/baselines/baseline.pdf
 ```
 
 3) 运行验证（检查编译与关键一致性）
@@ -37,7 +37,7 @@ cd skills/make_latex_model
 ./scripts/validate.sh --project NSFC_Young
 ```
 
-> 基准 PDF 质量与来源非常关键：优先使用 Word “导出/打印”得到的 PDF，避免 QuickLook 等渲染链路带来的偏差。详见 `skills/make_latex_model/docs/BASELINE_GUIDE.md`。
+> 基准 PDF 质量与来源非常关键：优先使用基金委 PDF，或用 Word “导出/打印”得到的 PDF，避免 QuickLook 等渲染链路带来的偏差。详见 `skills/make_latex_model/docs/BASELINE_GUIDE.md`。
 
 ## 一键迭代优化（需要精细对齐时）
 

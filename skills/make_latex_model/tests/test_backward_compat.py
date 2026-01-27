@@ -10,8 +10,8 @@ import sys
 import re
 from pathlib import Path
 
-# 添加 core 模块到路径
-core_dir = Path(__file__).parent.parent / "core"
+# 添加 scripts/core 模块到路径（v2.8.0+ 迁移到 scripts/ 下）
+core_dir = Path(__file__).parent.parent / "scripts" / "core"
 sys.path.insert(0, str(core_dir))
 
 from config_loader import ConfigLoader, load_config

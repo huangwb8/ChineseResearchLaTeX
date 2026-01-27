@@ -9,24 +9,32 @@ python3 skills/make_latex_model/scripts/check_state.py projects/{project}
 ```
 
 根据输出决定下一步：
-- `has_baseline=false`：先准备/生成 Word PDF 基准（见 `skills/make_latex_model/docs/BASELINE_GUIDE.md`）
+- `has_baseline=false`：先准备 PDF 基准（推荐：基金委 PDF / Word 导出 PDF）
 - `compilation_status=failed`：先修复项目编译错误（不要进入样式优化）
 
-## 1) 准备 Word PDF 基准
+## 1) 准备 PDF 基准（推荐）
 
-优先使用 Word/LibreOffice **导出/打印** 的 PDF，避免 QuickLook 造成断行/行距偏差。
+推荐直接使用基金委提供的 PDF 模板；如果只有 Word 模板，也建议用 Word/LibreOffice **导出/打印** 得到 PDF，避免 QuickLook 造成断行/行距偏差。
 
+将基准 PDF 放到（推荐路径）：
+- `projects/{project}/template/baseline.pdf`
+
+技能会自动将该 PDF 复制到工作空间：
+- `projects/{project}/.make_latex_model/baselines/baseline.pdf`
+
+兼容旧流程（不推荐，但仍可用）：
 - 指南：`skills/make_latex_model/docs/BASELINE_GUIDE.md`
-- 自动生成（如项目模板目录中包含 Word 模板）：`python3 skills/make_latex_model/scripts/generate_baseline.py --project {project}`
+- 自动生成（如项目模板目录中包含 Word 模板）：`python3 skills/make_latex_model/scripts/generate_baseline.py --project {project}`（产物为 `word.pdf`）
 
 基准默认放在：
-- `projects/{project}/.make_latex_model/baselines/word.pdf`
+- `projects/{project}/.make_latex_model/baselines/baseline.pdf`（推荐）
+- `projects/{project}/.make_latex_model/baselines/word.pdf`（legacy）
 
-## 2) 提取 Word PDF 的样式参数（推荐）
+## 2) 提取 PDF 基准的样式参数（推荐）
 
 ```bash
 python3 skills/make_latex_model/scripts/analyze_pdf.py \
-  projects/{project}/.make_latex_model/baselines/word.pdf \
+  projects/{project}/.make_latex_model/baselines/baseline.pdf \
   --project {project}
 ```
 
@@ -40,7 +48,7 @@ python3 skills/make_latex_model/scripts/analyze_pdf.py \
 
 ```bash
 python3 skills/make_latex_model/scripts/compare_headings.py \
-  projects/{project}/template/{word_docx} \
+  projects/{project}/template/baseline.pdf \
   projects/{project}/main.tex \
   --report heading_report.html
 ```
@@ -49,10 +57,18 @@ python3 skills/make_latex_model/scripts/compare_headings.py \
 
 ```bash
 python3 skills/make_latex_model/scripts/compare_headings.py \
-  projects/{project}/template/{word_docx} \
+  projects/{project}/template/baseline.pdf \
   projects/{project}/main.tex \
   --check-format \
   --report heading_format_report.html
+```
+
+如需根据 PDF 的标题跨行情况自动插入 `\linebreak{}`（可选）：
+
+```bash
+python3 skills/make_latex_model/scripts/optimize_heading_linebreaks.py \
+  projects/{project}/main.tex \
+  --pdf-baseline projects/{project}/template/baseline.pdf
 ```
 
 ## 4) 只改样式层：`extraTex/@config.tex`
@@ -102,3 +118,13 @@ python3 skills/make_latex_model/scripts/enhanced_optimize.py \
 
 更多脚本参数与说明见：
 - `skills/make_latex_model/scripts/README.md`
+
+像素对比建议使用逐段模式（更稳健）：
+
+```bash
+python3 skills/make_latex_model/scripts/compare_pdf_pixels.py \
+  projects/{project}/.make_latex_model/baselines/baseline.pdf \
+  projects/{project}/main.pdf \
+  --mode paragraph \
+  --features-out diff_features.json
+```

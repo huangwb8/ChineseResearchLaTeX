@@ -143,11 +143,19 @@ class HeadingValidator(ValidatorBase):
 
     def _clean_latex_text(self, text: str) -> str:
         """清理 LaTeX 文本中的格式标记"""
-        text = re.sub(r"\\[a-zA-Z]+", "", text)
-        text = re.sub(r"\{|\}", "", text)
-        text = re.sub(r"\s+", " ", text)
-        text = text.strip()
-        return text
+        try:
+            from ..latex_format_parser import LatexFormatParser
+
+            cleaned = LatexFormatParser.clean_latex_text(text)
+            cleaned = cleaned.replace("~", " ")
+            cleaned = re.sub(r"\s+", " ", cleaned).strip()
+            return cleaned
+        except Exception:
+            text = re.sub(r"\\[a-zA-Z]+", "", text)
+            text = re.sub(r"\{|\}", "", text)
+            text = re.sub(r"\s+", " ", text)
+            text = text.strip()
+            return text
 
     def _compare_headings(self, latex_headings: Dict[str, str], word_headings: Dict[str, str],
                          result: ValidationResult):

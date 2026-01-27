@@ -85,6 +85,56 @@ class DiffAnalyzer:
                 parameter_candidates=candidates,
             )
 
+        # 新增：paragraph mode（逐段对齐特征）
+        if str(features.get("mode") or "").lower() == "paragraph":
+            p0 = pages[0]
+            pv = float(p0.get("paragraph_position_variance", 0.0))
+            sv = float(p0.get("paragraph_spacing_variance", 0.0))
+            iv = float(p0.get("avg_internal_line_variance", 0.0))
+            indent_v = float(p0.get("indent_variance", 0.0))
+            match_count = int(p0.get("match_count", 0) or 0)
+
+            evidence.update(
+                {
+                    "mode": "paragraph",
+                    "page_1": {
+                        "match_count": match_count,
+                        "paragraph_position_variance": pv,
+                        "paragraph_spacing_variance": sv,
+                        "avg_internal_line_variance": iv,
+                        "indent_variance": indent_v,
+                    },
+                }
+            )
+
+            # 启发式阈值：所有方差单位均为 pt^2，取偏保守阈值（避免误报）
+            root_cause = "unknown"
+            confidence = 0.45
+
+            # 缩进/边距不一致
+            if indent_v >= 1.0 and diff_ratio >= 0.01:
+                root_cause = "margin_mismatch"
+                confidence = 0.75
+            # 段间距/垂直漂移（段落之间的 gap 差异波动更强）
+            elif (sv >= 4.0 or pv >= 4.0) and diff_ratio >= 0.01:
+                root_cause = "vertical_offset"
+                confidence = 0.70
+            # 段内行距/换行不一致
+            elif iv >= 0.5 and diff_ratio >= 0.01:
+                root_cause = "line_break_mismatch"
+                confidence = 0.65
+
+            candidates = self._candidates_from_root_cause(root_cause, affected_regions=affected_regions)
+            return DiffContext(
+                diff_ratio=diff_ratio,
+                iteration=iteration,
+                root_cause=root_cause,
+                affected_regions=affected_regions,
+                confidence=confidence,
+                evidence=evidence,
+                parameter_candidates=candidates,
+            )
+
         # 以第一页为主（NSFC 正文模板通常第一页最敏感：标题/版心/首段）
         p0 = pages[0]
         region = p0.get("region_ratios", {})
@@ -195,4 +245,3 @@ class DiffAnalyzer:
                     item["relevance"] = min(1.0, float(item["relevance"]) + 0.1)
 
         return sorted(candidates, key=lambda x: float(x.get("relevance", 0)), reverse=True)
-

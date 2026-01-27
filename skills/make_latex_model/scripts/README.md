@@ -183,18 +183,24 @@ subsection_1_2: 2. 项目的研究内容、研究目标，以及拟解决的关�
 
 ### 5. compare_headings.py - 标题文字对比工具
 
-**功能**: 对比 Word 模板和 LaTeX 文件的标题文字差异
+**功能**: 对比“基准模板（推荐 PDF）”与 LaTeX 文件的标题文字差异（可选：加粗位置对齐）
 
 **使用方法**:
 ```bash
-# 对比两个文件（输出文本报告）
-python3 scripts/compare_headings.py word.docx main.tex
+# 推荐：用 PDF 作为唯一真相源（Single Source of Truth）
+python3 scripts/compare_headings.py baseline.pdf main.tex
 
 # 生成 HTML 可视化报告
-python3 scripts/compare_headings.py word.docx main.tex --report heading_report.html
+python3 scripts/compare_headings.py baseline.pdf main.tex --report heading_report.html
 
 # 生成 Markdown 报告
-python3 scripts/compare_headings.py word.docx main.tex --report heading_report.md
+python3 scripts/compare_headings.py baseline.pdf main.tex --report heading_report.md
+
+# 检查“加粗位置”是否一致（格式对比）
+python3 scripts/compare_headings.py baseline.pdf main.tex --check-format --report heading_format_report.html
+
+# 兼容旧流程（不推荐）：Word .docx
+python3 scripts/compare_headings.py word.docx main.tex --report heading_report.html
 ```
 
 **输出示例**:
@@ -342,12 +348,15 @@ python3 scripts/run_validators.py --project NSFC_Young
 
 ### 7. compare_pdf_pixels.py - PDF 像素对比工具
 
-**功能**: 像素级 PDF 对比，生成差异热图
+**功能**: 像素级 PDF 对比，支持整页对比与逐段对比
 
 **使用方法**:
 ```bash
 # 对比两个 PDF
 python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf
+
+# 推荐：逐段对比（更适配“空模板 vs 有正文”导致的整页噪声）
+python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf --mode paragraph --features-out diff_features.json
 
 # 生成 HTML 报告
 python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf --report diff_report.html

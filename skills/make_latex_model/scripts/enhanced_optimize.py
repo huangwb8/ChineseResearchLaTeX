@@ -152,6 +152,47 @@ class EnhancedOptimizer:
             except Exception:
                 pass
 
+    def _get_baseline_pdf(self) -> Optional[Path]:
+        """
+        选择基准 PDF（兼容旧版 word.pdf；推荐 baseline.pdf / projects/<project>/template/baseline.pdf）。
+        """
+        candidates = [
+            self.workspace / "baselines" / "baseline.pdf",
+            self.workspace / "baselines" / "word.pdf",  # legacy
+            self.project_path / "template" / "baseline.pdf",
+        ]
+
+        for p in candidates:
+            if p.exists():
+                return p
+
+        # 兜底：template/ 下只有一个 pdf 时使用它
+        template_dir = self.project_path / "template"
+        if template_dir.exists():
+            pdfs = sorted(template_dir.glob("*.pdf"))
+            if len(pdfs) == 1:
+                return pdfs[0]
+        return None
+
+    def _ensure_workspace_baseline(self, baseline_pdf: Path) -> Path:
+        """
+        将基准复制到工作空间 baselines/ 下，保证后续产物落盘稳定。
+        """
+        ws_dir = self.workspace / "baselines"
+        ws_dir.mkdir(parents=True, exist_ok=True)
+
+        # legacy: 如果本来就是 workspace 下的文件，直接返回
+        try:
+            baseline_pdf.relative_to(ws_dir)
+            return baseline_pdf
+        except Exception:
+            pass
+
+        dst = ws_dir / "baseline.pdf"
+        if not dst.exists():
+            shutil.copy2(str(baseline_pdf), str(dst))
+        return dst
+
     def log(self, message: str, level: str = "info"):
         """日志输出"""
         icons = {
@@ -210,10 +251,8 @@ class EnhancedOptimizer:
             "has_baseline": False,
         }
 
-        # 检查是否有基准
-        baseline_dir = self.workspace / "baselines"
-        if baseline_dir.exists():
-            result["has_baseline"] = (baseline_dir / "word.pdf").exists()
+        baseline_pdf = self._get_baseline_pdf()
+        result["has_baseline"] = bool(baseline_pdf and baseline_pdf.exists())
 
         # 输出结果
         for key, value in result.items():
@@ -258,7 +297,14 @@ class EnhancedOptimizer:
         Returns:
             是否成功
         """
-        self.log("步骤 2: 生成 Word PDF 基准", "step")
+        self.log("步骤 2: 生成/准备 PDF 基准", "step")
+
+        # 如果用户已经提供了 PDF 基准（workspace 或 template），直接使用
+        baseline_pdf = self._get_baseline_pdf()
+        if baseline_pdf and baseline_pdf.exists():
+            self._ensure_workspace_baseline(baseline_pdf)
+            self.log(f"发现已有基准: {baseline_pdf}", "success")
+            return True
 
         try:
             result = self.run_script("generate_baseline.py", [
@@ -266,9 +312,11 @@ class EnhancedOptimizer:
             ])
 
             if result.returncode == 0:
-                baseline_pdf = self.workspace / "baselines" / "word.pdf"
-                if baseline_pdf.exists():
-                    self.log(f"基准已生成: {baseline_pdf}", "success")
+                legacy = self.workspace / "baselines" / "word.pdf"
+                if legacy.exists():
+                    # 为新逻辑补一个稳定的 baseline.pdf
+                    self._ensure_workspace_baseline(legacy)
+                    self.log(f"基准已生成: {legacy}", "success")
                     return True
 
             self.log("基准生成失败", "error")
@@ -287,11 +335,11 @@ class EnhancedOptimizer:
         """
         self.log("步骤 3: 分析基准 PDF", "step")
 
-        baseline_pdf = self.workspace / "baselines" / "word.pdf"
-
-        if not baseline_pdf.exists():
-            self.log("基准 PDF 不存在", "error")
+        baseline_pdf = self._get_baseline_pdf()
+        if not baseline_pdf:
+            self.log("基准 PDF 不存在（请提供 template/baseline.pdf 或生成基准）", "error")
             return None
+        baseline_pdf = self._ensure_workspace_baseline(baseline_pdf)
 
         try:
             # 运行分析脚本，使用 --project 参数直接保存到工作空间
@@ -378,11 +426,12 @@ class EnhancedOptimizer:
         """
         self.log("执行像素对比...", "info")
 
-        baseline_pdf = self.workspace / "baselines" / "word.pdf"
+        baseline_pdf = self._get_baseline_pdf()
         output_pdf = self.project_path / "main.pdf"
 
-        if not baseline_pdf.exists() or not output_pdf.exists():
+        if not baseline_pdf or not output_pdf.exists():
             return None
+        baseline_pdf = self._ensure_workspace_baseline(baseline_pdf)
 
         try:
             return self.step_compare_pixels_with_artifacts(iteration=len(self.iteration_history) + 1, tag="")
@@ -402,11 +451,12 @@ class EnhancedOptimizer:
         Returns:
             差异比例（0-1）
         """
-        baseline_pdf = self.workspace / "baselines" / "word.pdf"
+        baseline_pdf = self._get_baseline_pdf()
         output_pdf = self.project_path / "main.pdf"
 
-        if not baseline_pdf.exists() or not output_pdf.exists():
+        if not baseline_pdf or not output_pdf.exists():
             return None
+        baseline_pdf = self._ensure_workspace_baseline(baseline_pdf)
 
         suffix = f"_{tag}" if tag else ""
         iter_dir = self.workspace / "iterations" / f"iteration_{iteration:03d}"
@@ -415,14 +465,24 @@ class EnhancedOptimizer:
         json_out = iter_dir / f"pixel_compare{suffix}.json"
         features_out = iter_dir / f"diff_features{suffix}.json"
 
-        result = self.run_script("compare_pdf_pixels.py", [
+        pc = self.config.get("pixel_comparison", {}) if isinstance(self.config.get("pixel_comparison", {}), dict) else {}
+        dpi = pc.get("dpi", self.config.get("pixel_dpi", 150))
+        tol = pc.get("tolerance", self.config.get("pixel_tolerance", 2))
+        mode = pc.get("mode", pc.get("comparison_mode", "page"))
+        min_sim = pc.get("min_similarity", 0.85)
+
+        cmd = [
             str(baseline_pdf),
             str(output_pdf),
-            "--dpi", str(self.config.get("pixel_dpi", 150)),
-            "--tolerance", str(self.config.get("pixel_tolerance", 2)),
+            "--dpi", str(dpi),
+            "--tolerance", str(tol),
+            "--mode", str(mode),
+            "--min-similarity", str(min_sim),
             "--json-out", str(json_out),
             "--features-out", str(features_out),
-        ])
+        ]
+
+        result = self.run_script("compare_pdf_pixels.py", cmd)
 
         if result.returncode != 0:
             self.log(f"像素对比失败: {result.stderr}", "warning")

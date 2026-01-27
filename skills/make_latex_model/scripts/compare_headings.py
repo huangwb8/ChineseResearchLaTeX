@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 标题文字对比工具
-对比 Word 模板和 LaTeX 文件的标题文字差异
+对比“基准模板（推荐：PDF）”与 LaTeX 文件的标题文字差异
 
 使用方法:
     # 对比两个文件
-    python scripts/compare_headings.py word.docx main.tex
+    python scripts/compare_headings.py baseline.pdf main.tex
 
     # 输出为 HTML 报告
-    python scripts/compare_headings.py word.docx main.tex --report output.html
+    python scripts/compare_headings.py baseline.pdf main.tex --report output.html
 
     # 输出为 Markdown 报告
-    python scripts/compare_headings.py word.docx main.tex --report output.md
+    python scripts/compare_headings.py baseline.pdf main.tex --report output.md
 """
 
 import argparse
@@ -22,6 +22,12 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 from datetime import datetime
+import warnings
+
+# 允许在任何 cwd 下运行时都能导入同目录脚本
+SCRIPT_DIR = Path(__file__).parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 
 def extract_from_latex(tex_file: Path, check_format: bool = False) -> Dict[str, any]:
@@ -122,13 +128,22 @@ def extract_from_latex(tex_file: Path, check_format: bool = False) -> Dict[str, 
 
 def clean_latex_text(text: str) -> str:
     """清理 LaTeX 文本中的格式标记"""
-    text = re.sub(r'\\[a-zA-Z]+', '', text)
-    text = re.sub(r'\{|\}', '', text)
-    # 渲染层面的空白归一：~ 在 TeX 中等价于不换行空格
-    text = text.replace('~', ' ')
-    text = re.sub(r'\s+', ' ', text)
-    text = text.strip()
-    return text
+    try:
+        from core.latex_format_parser import LatexFormatParser
+
+        cleaned = LatexFormatParser.clean_latex_text(text)
+        cleaned = cleaned.replace("~", " ")
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        return cleaned
+    except Exception:
+        # fallback: 旧版正则（不支持嵌套/声明式格式）
+        text = re.sub(r'\\[a-zA-Z]+', '', text)
+        text = re.sub(r'\{|\}', '', text)
+        # 渲染层面的空白归一：~ 在 TeX 中等价于不换行空格
+        text = text.replace('~', ' ')
+        text = re.sub(r'\s+', ' ', text)
+        text = text.strip()
+        return text
 
 
 def clean_latex_commands(text: str) -> str:
@@ -185,49 +200,55 @@ def extract_formatted_text_from_latex(latex_text: str) -> List[Dict[str, any]]:
             {"text": "与研究内容", "bold": False}
         ]
     """
-    fragments = []
+    try:
+        from core.latex_format_parser import LatexFormatParser
 
-    # 模式 1: \textbf{...}
-    textbf_pattern = r'\\textbf\{([^}]+)\}'
+        parsed = LatexFormatParser.extract_formatted_text(latex_text)
+        # compare_headings 的格式对比目前只关心 bold；但保留其它字段不影响结果
+        out: List[Dict[str, any]] = []
+        for frag in parsed:
+            t = str(frag.get("text", "") or "")
+            t = t.replace("\u00a0", " ").replace("~", " ")
+            if not t:
+                continue
+            out.append({"text": t, "bold": bool(frag.get("bold", False))})
 
-    # 先提取所有 \textbf{} 片段的位置
-    bold_segments = []
-    for match in re.finditer(textbf_pattern, latex_text):
-        start = match.start()
-        end = match.end()
-        inner_text = match.group(1)
-        bold_segments.append({
-            "start": start,
-            "end": end,
-            "text": inner_text,
-            "bold": True
-        })
-
-    # 按位置排序
-    bold_segments.sort(key=lambda x: x["start"])
-
-    # 构建完整片段列表
-    last_end = 0
-    for seg in bold_segments:
-        # 添加加粗前的普通文本
-        if seg["start"] > last_end:
-            normal_text = latex_text[last_end:seg["start"]]
+        # 合并相邻同样 bold 的片段，减少字符级对齐噪声
+        merged: List[Dict[str, any]] = []
+        for frag in out:
+            if not merged:
+                merged.append(frag)
+                continue
+            if bool(merged[-1].get("bold")) == bool(frag.get("bold")):
+                merged[-1]["text"] += frag["text"]
+            else:
+                merged.append(frag)
+        return merged
+    except Exception:
+        # fallback: 旧版只识别 \textbf{...}
+        fragments: List[Dict[str, any]] = []
+        textbf_pattern = r'\\textbf\{([^}]+)\}'
+        bold_segments = []
+        for match in re.finditer(textbf_pattern, latex_text):
+            bold_segments.append(
+                {"start": match.start(), "end": match.end(), "text": match.group(1), "bold": True}
+            )
+        bold_segments.sort(key=lambda x: x["start"])
+        last_end = 0
+        for seg in bold_segments:
+            if seg["start"] > last_end:
+                normal_text = latex_text[last_end:seg["start"]]
+                normal_text = clean_latex_commands(normal_text)
+                if normal_text:
+                    fragments.append({"text": normal_text, "bold": False})
+            fragments.append({"text": seg["text"].replace("~", " "), "bold": True})
+            last_end = seg["end"]
+        if last_end < len(latex_text):
+            normal_text = latex_text[last_end:]
             normal_text = clean_latex_commands(normal_text)
             if normal_text:
                 fragments.append({"text": normal_text, "bold": False})
-
-        # 添加加粗文本
-        fragments.append({"text": seg["text"].replace('~', ' '), "bold": True})
-        last_end = seg["end"]
-
-    # 添加剩余的普通文本
-    if last_end < len(latex_text):
-        normal_text = latex_text[last_end:]
-        normal_text = clean_latex_commands(normal_text)
-        if normal_text:
-            fragments.append({"text": normal_text, "bold": False})
-
-    return fragments
+        return fragments
 
 
 def compare_formatted_text(word_fragments: List[Dict],
@@ -263,7 +284,9 @@ def compare_formatted_text(word_fragments: List[Dict],
             "match": False,
             "reason": "text_mismatch",
             "word_text": word_text,
-            "latex_text": latex_text
+            "latex_text": latex_text,
+            "word_fragments": word_fragments,
+            "latex_fragments": latex_fragments,
         }
 
     # 对齐片段并对比格式
@@ -317,12 +340,16 @@ def compare_formatted_text(word_fragments: List[Dict],
         "match": len(differences) == 0,
         "word_text": word_text,
         "latex_text": latex_text,
-        "differences": differences
+        "differences": differences,
+        "word_fragments": word_fragments,
+        "latex_fragments": latex_fragments,
     }
 
 
 def extract_from_word(doc_file: Path, check_format: bool = False) -> Dict[str, any]:
     """
+    ⚠️ 兼容保留：建议改用 PDF 作为标题/格式基准。
+
     从 Word 文档中提取标题文字
 
     Args:
@@ -333,6 +360,11 @@ def extract_from_word(doc_file: Path, check_format: bool = False) -> Dict[str, a
         如果 check_format=False: Dict[str, str] - 标题文本
         如果 check_format=True: Dict[str, Dict] - 包含文本和格式信息
     """
+    warnings.warn(
+        "Word(.docx) 标题提取仅为向后兼容保留；推荐使用 PDF 基准（Single Source of Truth）。",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     try:
         from docx import Document
     except ImportError:
@@ -404,6 +436,31 @@ def extract_from_word(doc_file: Path, check_format: bool = False) -> Dict[str, a
             _add_heading(headings, f"subsection_{section_count}_{subsection_count}", paragraph)
 
     return headings
+
+
+def extract_from_pdf(pdf_file: Path, check_format: bool = False) -> Dict[str, any]:
+    """从 PDF 中提取标题文字（可选：加粗片段、换行点）。"""
+    try:
+        from extract_headings_from_pdf import extract_headings_from_pdf
+    except Exception as e:
+        raise RuntimeError(f"无法导入 extract_headings_from_pdf.py: {e}")
+    return extract_headings_from_pdf(pdf_file, check_format=check_format)
+
+
+def extract_from_source(source_file: Path, check_format: bool = False) -> Dict[str, any]:
+    """
+    从基准源提取标题（推荐：PDF；兼容：DOCX）。
+
+    优先级：
+    - .pdf  → extract_from_pdf
+    - .docx → extract_from_word（deprecated）
+    """
+    suf = source_file.suffix.lower()
+    if suf == ".pdf":
+        return extract_from_pdf(source_file, check_format=check_format)
+    if suf == ".docx":
+        return extract_from_word(source_file, check_format=check_format)
+    raise ValueError(f"不支持的基准文件格式: {source_file}")
 
 
 def compare_headings(word_headings: Dict[str, str], latex_headings: Dict[str, str]) -> Tuple[List, List, List]:
@@ -1328,9 +1385,9 @@ def generate_latex_fix_suggestions(format_diff: List) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='对比 Word 和 LaTeX 的标题文字')
-    parser.add_argument('word_file', type=Path, help='Word 文档路径')
-    parser.add_argument('latex_file', type=Path, help='LaTeX 文件路径')
+    parser = argparse.ArgumentParser(description='对比基准模板（推荐 PDF）与 LaTeX 的标题文字')
+    parser.add_argument('source_file', type=Path, help='基准文件路径（推荐: .pdf；兼容: .docx）')
+    parser.add_argument('latex_file', type=Path, help='LaTeX 文件路径（main.tex）')
     parser.add_argument('--report', type=Path, help='输出报告文件路径')
     parser.add_argument('--format', choices=['auto', 'text', 'html'], default='auto',
                        help='报告格式（auto 根据扩展名自动判断）')
@@ -1341,8 +1398,8 @@ def main():
     args = parser.parse_args()
 
     # 提取标题
-    print(f'📖 正在提取 Word 标题: {args.word_file}')
-    word_headings = extract_from_word(args.word_file, check_format=args.check_format)
+    print(f'📖 正在提取基准标题: {args.source_file}')
+    word_headings = extract_from_source(args.source_file, check_format=args.check_format)
 
     print(f'📖 正在提取 LaTeX 标题: {args.latex_file}')
     latex_headings = extract_from_latex(args.latex_file, check_format=args.check_format)
@@ -1378,14 +1435,14 @@ def main():
             # 格式对比模式
             if fmt == 'html':
                 report = generate_html_report_with_format(matched, text_diff, format_diff, only_in_one,
-                                                          args.word_file, args.latex_file)
+                                                          args.source_file, args.latex_file)
             else:
                 report = generate_text_report_with_format(matched, text_diff, format_diff, only_in_one)
         else:
             # 传统模式
             if fmt == 'html':
                 report = generate_html_report(matched, differences, only_in_one,
-                                            args.word_file, args.latex_file)
+                                            args.source_file, args.latex_file)
             else:
                 report = generate_text_report(matched, differences, only_in_one)
 

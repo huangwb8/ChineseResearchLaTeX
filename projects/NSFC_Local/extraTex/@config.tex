@@ -161,6 +161,11 @@
 \newlength{\NSFCSubsectionIndent}
 \setlength{\NSFCSubsectionIndent}{28pt}
 
+% 二级提纲（蓝色提示语）段后距：用于控制 \NSFCSubsection 与下一段之间的间隙
+% 说明：原先为 22pt（更贴近 Word 的“空段落”观感），但在 LaTeX 排版下显得偏松，改为更紧凑的默认值。
+\newlength{\NSFCSubsectionAfterSkip}
+\setlength{\NSFCSubsectionAfterSkip}{10pt}
+
 % Define section font
 \newcommand{\sectionzihao}{\fontsize{14pt}{\baselineskip}\selectfont}
 \newcommand{\subsectionzihao}{\fontsize{14pt}{14pt}\selectfont}
@@ -180,8 +185,8 @@
       0pt \linewidth %
     #1\par%
   }%
-  % 对齐 Word 模板：提纲段落后紧跟一个空段落（约等于 22pt）
-  \vspace{22pt}%
+  % 提纲段落后的间隙（可通过 \NSFCSubsectionAfterSkip 统一调整）
+  \vspace{\NSFCSubsectionAfterSkip}%
 }
 
 
