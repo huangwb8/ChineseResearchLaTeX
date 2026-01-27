@@ -42,7 +42,7 @@
 
 - **NSFC_Local**：对齐 2026 地区基金 Word 正文模板（提纲页/边距/标题缩进/段后距）
   - `projects/NSFC_Local/extraTex/@config.tex`：启用 `\\raggedbottom`；`geometry` 设为 `L3.20/R2.94/T2.67/B2.91 cm`；标题缩进统一为 `\\NSFCTitleIndent=28pt`；`\\NSFCSubsection` 使用 `parshape` 复刻“首行缩进、续行回到左边距”
-  - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；补齐提纲标题/提示语的加粗位置（与 Word 模板一致）；微调提纲区块前后间距以贴近分页观感
+  - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；补齐提纲标题/提示语的加粗位置（与 Word 模板一致）；使用 `\\linebreak{}` 精确对齐标题换行，使 PDF 中每行标题文字与 Word 模板一致；微调提纲区块前后间距以贴近分页观感
   - `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由同名 `.doc` 转换生成，供标题一致性验证与基准管理使用
 
 - **complete_example**：修复默认离线运行与 LaTeX 模板渲染问题
