@@ -56,6 +56,7 @@
   - `compare_pdf_pixels.py`：新增 `--json-out/--features-out`；0 页 PDF 显式失败；条纹特征归一化（提升根因推断稳定性）
   - 修复 LaTeX 替换的 `re.sub` 转义风险（避免 `\\newcommand`/`\\renewcommand` 被误解析），并修正 `sync_config.py` 的字号解析正则
   - 加固 `--project` 参数解析与路径边界校验（限制在仓库 `projects/` 下）
+  - **SKILL.md 瘦身**：将“可执行细节流程/FAQ”迁移到 `skills/make_latex_model/docs/{WORKFLOW,FAQ}.md`，`SKILL.md` 仅保留边界/入口/验收标准
   - 新增可追溯的 auto-test-skill A/B 轮会话文档：`skills/make_latex_model/plans/` 与 `skills/make_latex_model/tests/`
 
 - **NSFC_Local**：补充“深度学习在医疗影像分析中的应用”示例内容（CNN 架构 + 数据增强策略）
