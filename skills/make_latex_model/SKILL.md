@@ -1,6 +1,6 @@
 ---
 name: make_latex_model
-version: 2.7.1
+version: 2.7.2
 author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
@@ -43,7 +43,7 @@ compatibility:
     - NSFC_General
     - NSFC_Local
     - generic
-last_updated: 2026-01-06
+last_updated: 2026-01-27
 changelog: ../../CHANGELOG.md
 ---
 
@@ -686,6 +686,17 @@ python3 skills/make_latex_model/scripts/enhanced_optimize.py \
   --report
 ```
 
+如需启用“Analyzer → Reasoner → Executor → Memory”的 AI 优化闭环（最小可用版），可加：
+
+```bash
+python3 skills/make_latex_model/scripts/enhanced_optimize.py \
+  --project NSFC_Young \
+  --max-iterations 10 \
+  --ai --ai-mode heuristic
+```
+
+> 说明：当前脚本内部默认使用启发式决策；如需“宿主 AI 全程参与”，使用 `--ai-mode manual_file`（会生成 `workspace/<project>/ai_request.json`，等待写入 `ai_response.json` 后再继续）。
+
 脚本会自动完成：
 1. 预处理 main.tex（注释 `\input{}` 行）
 2. 生成可靠 Word PDF 基准
@@ -704,9 +715,9 @@ WHILE 未达到收敛条件:
   2. 执行像素级 PDF 对比（compare_pdf_pixels.py）
   3. 检测是否收敛（convergence_detector.py）
   4. IF 未收敛:
-       - 分析差异特征（intelligent_adjust.py）
-       - 生成参数调整方案
-       - 应用调整到 @config.tex（需 AI 介入）
+       - 分析差异特征（diff_features.json → DiffAnalyzer）
+       - 生成参数调整方案（DecisionReasoner：heuristic / manual_file）
+       - 安全应用与回滚（ParameterExecutor）
   5. 记录本轮指标
   6. 保存或回滚配置
 END WHILE
@@ -741,7 +752,8 @@ END WHILE
 | `prepare_main.py` | 预处理/恢复 main.tex |
 | `generate_baseline.py` | 生成 Word PDF 基准 |
 | `convergence_detector.py` | 收敛检测与报告 |
-| `intelligent_adjust.py` | 智能参数调整建议 |
+| `run_ai_optimizer.py` | AI 优化器（单轮调试入口） |
+| `intelligent_adjust.py` | 智能参数调整建议（旧版启发式，作为回退路径保留） |
 
 ---
 

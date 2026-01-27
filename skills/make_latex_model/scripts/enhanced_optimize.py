@@ -39,6 +39,12 @@ except ImportError:
     WorkspaceManager = None
 
 try:
+    from core.ai_optimizer import AIOptimizer
+except ImportError:
+    print("警告: 无法导入 AIOptimizer")
+    AIOptimizer = None
+
+try:
     from scripts.intelligent_adjust import IntelligentAdjuster
 except ImportError:
     print("警告: 无法导入 IntelligentAdjuster")
@@ -56,10 +62,10 @@ class EnhancedOptimizer:
             project_name: 项目名称
             config: 配置参数
         """
-        self.project_name = project_name
         self.skill_root = Path(__file__).parent.parent
         self.repo_root = self.skill_root.parent.parent
-        self.project_path = self.repo_root / "projects" / project_name
+        self.project_path = self._resolve_project_path(project_name)
+        self.project_name = self.project_path.name
         self.scripts_dir = self.skill_root / "scripts"
 
         # 工作空间管理器
@@ -74,7 +80,17 @@ class EnhancedOptimizer:
         # 智能调整器
         self.intelligent_adjuster = None
         if IntelligentAdjuster:
-            self.intelligent_adjuster = IntelligentAdjuster(project_name)
+            self.intelligent_adjuster = IntelligentAdjuster(self.project_name)
+
+        # AI 优化器（按需启用）
+        self.ai_optimizer = None
+        if AIOptimizer and config and config.get("use_ai_optimizer"):
+            self.ai_optimizer = AIOptimizer(
+                skill_root=self.skill_root,
+                project_name=self.project_name,
+                mode=config.get("ai_mode", "heuristic"),
+                evaluate_after_apply=not bool(config.get("ai_no_eval", False)),
+            )
 
         # 默认配置
         self.config = {
@@ -96,6 +112,31 @@ class EnhancedOptimizer:
         self.iteration_history = []
         self.best_config = None
         self.best_ratio = float('inf')
+
+    def _resolve_project_path(self, project_arg: str) -> Path:
+        """
+        解析 --project 参数：
+        - 支持传入项目名（如 NSFC_Young）
+        - 也支持传入相对路径（如 projects/NSFC_Young）
+        但必须最终落在仓库的 projects/ 目录下（防止路径遍历）。
+        """
+        projects_root = (self.repo_root / "projects").resolve()
+        raw = str(project_arg).strip()
+
+        # 允许用户传入 projects/<name>，或仅 <name>
+        p = Path(raw)
+        if p.is_absolute() or any(sep in raw for sep in ("/", "\\")):
+            candidate = p if p.is_absolute() else (self.repo_root / p)
+        else:
+            candidate = self.repo_root / "projects" / raw
+
+        candidate = candidate.resolve()
+        try:
+            candidate.relative_to(projects_root)
+        except Exception:
+            raise ValueError(f"--project 必须位于 {projects_root} 下: {project_arg}")
+
+        return candidate
 
     def _load_config(self):
         """从配置文件加载设置"""
@@ -344,28 +385,53 @@ class EnhancedOptimizer:
             return None
 
         try:
-            result = self.run_script("compare_pdf_pixels.py", [
-                str(baseline_pdf),
-                str(output_pdf),
-                "--dpi", str(self.config.get("pixel_dpi", 150)),
-                "--tolerance", str(self.config.get("pixel_tolerance", 2))
-            ])
-
-            # 解析输出
-            if result.returncode == 0:
-                # 从输出中提取差异比例
-                for line in result.stdout.split('\n'):
-                    if "平均差异" in line:
-                        # 格式: "平均差异: XX.XX%"
-                        import re
-                        match = re.search(r'(\d+\.?\d*)%', line)
-                        if match:
-                            return float(match.group(1)) / 100
-
-            return None
+            return self.step_compare_pixels_with_artifacts(iteration=len(self.iteration_history) + 1, tag="")
 
         except Exception as e:
             self.log(f"像素对比异常: {e}", "error")
+            return None
+
+    def step_compare_pixels_with_artifacts(self, iteration: int, tag: str = "") -> Optional[float]:
+        """
+        带产物落盘的像素对比（JSON + diff_features）
+
+        Args:
+            iteration: 迭代编号（从 1 开始）
+            tag: 文件后缀（如 'post'）
+
+        Returns:
+            差异比例（0-1）
+        """
+        baseline_pdf = self.workspace / "baseline" / "word.pdf"
+        output_pdf = self.project_path / "main.pdf"
+
+        if not baseline_pdf.exists() or not output_pdf.exists():
+            return None
+
+        suffix = f"_{tag}" if tag else ""
+        iter_dir = self.workspace / "iterations" / f"iteration_{iteration:03d}"
+        iter_dir.mkdir(parents=True, exist_ok=True)
+
+        json_out = iter_dir / f"pixel_compare{suffix}.json"
+        features_out = iter_dir / f"diff_features{suffix}.json"
+
+        result = self.run_script("compare_pdf_pixels.py", [
+            str(baseline_pdf),
+            str(output_pdf),
+            "--dpi", str(self.config.get("pixel_dpi", 150)),
+            "--tolerance", str(self.config.get("pixel_tolerance", 2)),
+            "--json-out", str(json_out),
+            "--features-out", str(features_out),
+        ])
+
+        if result.returncode != 0:
+            self.log(f"像素对比失败: {result.stderr}", "warning")
+            return None
+
+        try:
+            data = json.loads(json_out.read_text(encoding="utf-8"))
+            return float(data.get("avg_diff_ratio", None))
+        except Exception:
             return None
 
     def step_check_convergence(self, current_ratio: float) -> tuple:
@@ -622,7 +688,7 @@ class EnhancedOptimizer:
                 break
 
             # 像素对比
-            ratio = self.step_compare_pixels()
+            ratio = self.step_compare_pixels_with_artifacts(iteration=iteration, tag="")
 
             if ratio is None:
                 self.log("像素对比失败", "warning")
@@ -646,7 +712,30 @@ class EnhancedOptimizer:
                 break
 
             # 自动调整参数（如果启用了智能调整器）
-            if self.intelligent_adjuster:
+            if self.ai_optimizer:
+                config_path = self.project_path / "extraTex" / "@config.tex"
+                if config_path.exists():
+                    self.log("  正在使用 AI 优化器调整参数...", "info")
+
+                    def _compile():
+                        return self.step_compile_latex()
+
+                    def _compare():
+                        return self.step_compare_pixels_with_artifacts(iteration=iteration, tag="post")
+
+                    result = self.ai_optimizer.optimize_iteration(
+                        iteration=iteration,
+                        current_ratio=ratio,
+                        config_path=config_path,
+                        compile_func=_compile,
+                        compare_func=_compare,
+                    )
+
+                    self.log(f"  AI 优化器: {result.status}（{result.reason}）", "info")
+                else:
+                    self.log("  配置文件不存在，跳过 AI 优化器", "warning")
+
+            elif self.intelligent_adjuster:
                 config_path = self.project_path / "extraTex" / "@config.tex"
                 if config_path.exists():
                     self.log("  正在自动调整参数...", "info")
@@ -689,7 +778,7 @@ def main():
     )
 
     parser.add_argument("--project", "-p", type=str, required=True,
-                       help="项目名称（如 NSFC_Young）")
+                       help="项目名称或 projects/ 下相对路径（如 NSFC_Young 或 projects/NSFC_Young）")
     parser.add_argument("--max-iterations", type=int, default=10,
                        help="最大迭代次数（默认 10）")
     parser.add_argument("--report", "-r", action="store_true",
@@ -698,12 +787,21 @@ def main():
                        help="跳过基准生成")
     parser.add_argument("--skip-prepare", action="store_true",
                        help="跳过预处理")
+    parser.add_argument("--ai", action="store_true",
+                       help="启用 AI 优化器（Analyzer→Reasoner→Executor→Memory）")
+    parser.add_argument("--ai-mode", choices=["heuristic", "manual_file"], default="heuristic",
+                       help="AI 优化器决策模式（默认 heuristic，可离线）")
+    parser.add_argument("--ai-no-eval", action="store_true",
+                       help="AI 优化器只应用调整，不做即时编译/像素对比回滚（不推荐）")
 
     args = parser.parse_args()
 
     # 配置
     config = {
         "max_iterations": args.max_iterations,
+        "use_ai_optimizer": bool(args.ai),
+        "ai_mode": args.ai_mode,
+        "ai_no_eval": bool(args.ai_no_eval),
     }
 
     # 创建优化器

@@ -14,7 +14,7 @@
 
 skill_info:
   name: make_latex_model
-  version: 2.7.1
+  version: 2.7.2
   description: LaTeX 模板高保真优化器（支持任意 LaTeX 模板，完整验证器插件系统，一键优化流程，迭代优化闭环，标题格式对比，HTML 可视化报告，自动修复建议）
   category: normal
 

@@ -1,0 +1,46 @@
+你是一位 LaTeX 排版与模板对齐专家，正在将 LaTeX 渲染结果与 Word 打印/导出 PDF 做像素级对齐。
+
+## 当前状态
+- 差异比例: $diff_ratio
+- 迭代次数: $iteration
+- 目标阈值: $target_ratio
+
+## 差异分析（结构化特征）
+$diff_analysis
+
+## 历史调整记录（最近 N 条）
+$history
+
+## 当前配置（@config.tex 摘要/片段）
+```latex
+$current_config
+```
+
+## 任务
+请分析差异根因，给出下一步调整策略，并输出 **严格 JSON**（不要输出任何其他文字）。
+
+JSON 格式：
+```json
+{
+  "analysis": {
+    "root_cause": "line_break_mismatch|vertical_offset|margin_mismatch|heading_area_mismatch|unknown",
+    "key_evidence": ["..."]
+  },
+  "adjustments": [
+    {
+      "parameter": "xiaosi_font_size|baselinestretch|margin_right|margin_left|margin_top|margin_bottom|parskip|arraystretch|list_leftmargin|caption_skip|title_indent",
+      "delta": -0.05,
+      "new_value": 11.95,
+      "confidence": 0.0,
+      "reasoning": "..."
+    }
+  ],
+  "fallback": [
+    {
+      "parameter": "...",
+      "delta": -0.01,
+      "new_value": null
+    }
+  ]
+}
+```

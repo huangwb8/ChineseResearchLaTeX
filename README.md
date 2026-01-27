@@ -193,7 +193,7 @@ git clone https://github.com/huangwb8/skills.git &&
 
 | 技能 | 版本 | 类型 | 功能 | 状态 |
 |------|------|------|------|------|
-| [make_latex_model](skills/make_latex_model/) | v2.7.1 | 🔧 开发 | 基于 Word 模板高保真优化 LaTeX 样式 | ✅ 稳定 |
+| [make_latex_model](skills/make_latex_model/) | v2.7.2 | 🔧 开发 | 基于 Word 模板高保真优化 LaTeX 样式 | ✅ 稳定 |
 | [complete_example](skills/complete_example/) | v1.0.0 | 🔧 开发 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | v1.4.0 | 📝 日常 | 将旧标书内容迁移到新模板 | ✅ 稳定 |
 | [systematic-literature-review](skills/systematic-literature-review/) | v1.0.9 | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |

@@ -22,11 +22,13 @@ PDF 像素对比工具
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 from typing import List, Tuple, Dict
 import numpy as np
 from datetime import datetime
+import io
 
 
 def check_dependencies():
@@ -123,6 +125,37 @@ def compare_images(img1: np.ndarray, img2: np.ndarray, tolerance: int = 2) -> Tu
     changed_ratio = diff_pixels / total_pixels
 
     return changed_ratio, diff_mask
+
+
+def extract_diff_features(diff_mask: np.ndarray) -> Dict[str, float]:
+    """
+    从差异掩码提取结构化特征（用于后续的根因推断）
+    """
+    # 行/列方向差异强度（用于判断“水平条纹/垂直条纹”）
+    h, w = diff_mask.shape[:2]
+    row_sums = (np.sum(diff_mask, axis=1).astype(float) / max(1, w))
+    col_sums = (np.sum(diff_mask, axis=0).astype(float) / max(1, h))
+
+    row_variance = float(np.var(row_sums)) if row_sums.size else 0.0
+    col_variance = float(np.var(col_sums)) if col_sums.size else 0.0
+
+    # 上/中/下三区域差异比例
+    h = diff_mask.shape[0]
+    third = max(1, h // 3)
+    top = diff_mask[:third, :]
+    mid = diff_mask[third: 2 * third, :]
+    bot = diff_mask[2 * third:, :]
+
+    def _ratio(mask: np.ndarray) -> float:
+        return float(np.sum(mask)) / float(mask.size) if mask.size else 0.0
+
+    return {
+        "row_variance": row_variance,
+        "col_variance": col_variance,
+        "region_top_ratio": _ratio(top),
+        "region_middle_ratio": _ratio(mid),
+        "region_bottom_ratio": _ratio(bot),
+    }
 
 
 def generate_diff_heatmap(img1: np.ndarray, img2: np.ndarray, diff_mask: np.ndarray,
@@ -274,6 +307,8 @@ def main():
     parser.add_argument("--tolerance", type=int, default=2, help="像素容差（默认 2）")
     parser.add_argument("--dpi", type=int, default=150, help="渲染分辨率（默认 150）")
     parser.add_argument("--heatmap", type=Path, help="生成差异热图")
+    parser.add_argument("--json-out", type=Path, help="保存对比结果到 JSON（包含 avg_diff_ratio/pages）")
+    parser.add_argument("--features-out", type=Path, help="保存差异特征到 JSON（用于 AI/启发式分析）")
 
     args = parser.parse_args()
 
@@ -300,9 +335,13 @@ def main():
     # 确保页数相同
     num_pages = min(len(baseline_images), len(output_images))
     print(f"  对比页数: {num_pages}")
+    if num_pages == 0:
+        print("错误: 无可对比页面（PDF 可能为空或渲染失败）")
+        sys.exit(1)
 
     # 对比每一页
     page_results = []
+    page_features = []
 
     for i in range(num_pages):
         print(f"\n🔍 对比第 {i+1} 页...")
@@ -324,6 +363,21 @@ def main():
             "diff_pixels": diff_pixels,
             "total_pixels": total_pixels
         })
+
+        feats = extract_diff_features(diff_mask)
+        page_features.append(
+            {
+                "page_num": i + 1,
+                "changed_ratio": changed_ratio,
+                "row_variance": feats["row_variance"],
+                "col_variance": feats["col_variance"],
+                "region_ratios": {
+                    "top": feats["region_top_ratio"],
+                    "middle": feats["region_middle_ratio"],
+                    "bottom": feats["region_bottom_ratio"],
+                },
+            }
+        )
 
         # 生成热图
         if args.heatmap:
@@ -353,7 +407,36 @@ def main():
         generate_html_report(args.baseline_pdf, args.output_pdf, page_results, args.report)
         print(f"✅ 报告已保存: {args.report}")
 
+    # JSON 输出（供脚本解析）
+    if args.json_out:
+        payload = {
+            "baseline_pdf": str(args.baseline_pdf),
+            "output_pdf": str(args.output_pdf),
+            "dpi": args.dpi,
+            "tolerance": args.tolerance,
+            "generated_at": datetime.now().isoformat(),
+            "pages": page_results,
+            "avg_diff_ratio": avg_diff,
+        }
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    # 特征输出（供 DiffAnalyzer 使用）
+    if args.features_out:
+        payload = {
+            "generated_at": datetime.now().isoformat(),
+            "pages": page_features,
+            "avg_diff_ratio": avg_diff,
+        }
+        args.features_out.parent.mkdir(parents=True, exist_ok=True)
+        args.features_out.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
 
 if __name__ == "__main__":
-    import io
     main()

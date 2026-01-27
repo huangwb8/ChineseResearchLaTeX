@@ -50,6 +50,14 @@
   - 安全检查兼容模板正文中的首行缩进设置（允许 `\\setlength{\\parindent}{...}`），并修复自动清理二次命中问题
   - 运行路径解析更稳健：可从任意工作目录正确定位 `projects/<name>`
 
+- **make_latex_model v2.7.1 → v2.7.2**：AI 驱动迭代闭环（最小可用版）与像素对比结构化产物
+  - 新增 AI 优化器核心模块：`core/{ai_optimizer,diff_analyzer,decision_reasoner,parameter_executor,history_memory}.py` 与 `prompts/analysis_template.txt`
+  - `enhanced_optimize.py`：新增 `--ai/--ai-mode`；像素对比改为解析 `--json-out` 输出并落盘 `diff_features.json`
+  - `compare_pdf_pixels.py`：新增 `--json-out/--features-out`；0 页 PDF 显式失败；条纹特征归一化（提升根因推断稳定性）
+  - 修复 LaTeX 替换的 `re.sub` 转义风险（避免 `\\newcommand`/`\\renewcommand` 被误解析），并修正 `sync_config.py` 的字号解析正则
+  - 加固 `--project` 参数解析与路径边界校验（限制在仓库 `projects/` 下）
+  - 新增可追溯的 auto-test-skill A/B 轮会话文档：`skills/make_latex_model/plans/` 与 `skills/make_latex_model/tests/`
+
 - **NSFC_Local**：补充“深度学习在医疗影像分析中的应用”示例内容（CNN 架构 + 数据增强策略）
   - 更新 `projects/NSFC_Local/extraTex/1.2.内容目标问题.tex`：研究内容/目标/关键问题
   - 更新 `projects/NSFC_Local/extraTex/1.3.方案及可行性.tex`：研究方法/技术路线/关键技术/可行性分析

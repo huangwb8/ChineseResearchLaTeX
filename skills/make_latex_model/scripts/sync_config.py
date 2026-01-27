@@ -70,7 +70,7 @@ class LatexConfigParser:
         font_sizes = {}
 
         # 匹配 \newcommand{\name}{\fontsize{size}{leading}\selectfont}
-        pattern = r"\\newcommand\{\\(\w+)\}\s*\{\s*\\fontsize\{([0-9.]+)\)\{([0-9.]+)\)"
+        pattern = r"\\newcommand\{\\(\w+)\}\s*\{\s*\\fontsize\{([0-9.]+)\s*pt?\}\{([0-9.]+)\s*pt?\}"
         matches = re.findall(pattern, self.content)
 
         for name, size, leading in matches:
@@ -121,12 +121,15 @@ class LatexConfigParser:
         """解析标题格式"""
         formats = {}
 
-        # 匹配 \titleformat{\section}... 缩进
-        pattern = r"\\titleformat\{\\(\w+)\}\[^}]*\{[^}]*\}\[^}]*\{[^}]*\\hspace\*\{([0-9.]+)em\}"
-        matches = re.findall(pattern, self.content)
-
-        for name, indent in matches:
-            formats[name] = {"indent": float(indent)}
+        # 匹配 \titleformat{\section}... \hspace*{2em}（仅抽取缩进值）
+        pattern = r"\\titleformat\{\\(\w+)\}.*?\\hspace\*\{([0-9.]+)\s*em\}"
+        for m in re.finditer(pattern, self.content, flags=re.DOTALL):
+            name = m.group(1)
+            indent = m.group(2)
+            try:
+                formats[name] = {"indent": float(indent)}
+            except Exception:
+                continue
 
         return formats
 
@@ -263,15 +266,16 @@ def apply_modifications(config_file: Path, differences: List[Dict[str, Any]],
     for diff in differences:
         if diff["type"] == "color":
             # 修改颜色定义
-            pattern = rf"\\definecolor\{{{diff['name']}\}\}\s*\{{RGB\}}\s*\{{[^}}]+\}}"
-            replacement = f"\\definecolor{{{diff['name']}}}{{RGB}}{{{','.join(map(str, diff['expected_value']))}}}}"
-            content = re.sub(pattern, replacement, content)
+            color_name = re.escape(str(diff["name"]))
+            pattern = rf"\\definecolor\{{{color_name}\}}\s*\{{RGB\}}\s*\{{[^}}]+\}}"
+            replacement = f"\\definecolor{{{diff['name']}}}{{RGB}}{{{','.join(map(str, diff['expected_value']))}}}"
+            content = re.sub(pattern, lambda _: replacement, content)
 
         elif diff["type"] == "line_spacing":
             # 修改行距
             pattern = r"\\renewcommand\{\\baselinestretch\}\s*\{[0-9.]+\}"
             replacement = f"\\renewcommand{{\\baselinestretch}}{{{diff['expected_value']:.2f}}}"
-            content = re.sub(pattern, replacement, content)
+            content = re.sub(pattern, lambda _: replacement, content)
 
     if dry_run:
         print("🔍 预览模式 - 不会实际修改文件")

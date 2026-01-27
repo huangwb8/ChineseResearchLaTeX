@@ -354,6 +354,12 @@ python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf --report diff_repo
 
 # 生成差异热图
 python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf --heatmap diff.png
+
+# 保存结构化结果（供脚本解析）
+python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf --json-out pixel_compare.json
+
+# 保存差异特征（供 DiffAnalyzer/AIOptimizer 复用）
+python3 scripts/compare_pdf_pixels.py baseline.pdf output.pdf --features-out diff_features.json
 ```
 
 **依赖**: `PyMuPDF`, `Pillow`

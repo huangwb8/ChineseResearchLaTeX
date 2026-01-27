@@ -7,6 +7,7 @@
 """
 
 import sys
+import re
 from pathlib import Path
 
 # 添加 core 模块到路径
@@ -26,7 +27,8 @@ def test_default_config_loading():
     assert config is not None, "Config should not be None"
     assert "skill_info" in config, "Config should contain skill_info"
     assert config["skill_info"]["name"] == "make_latex_model"
-    assert config["skill_info"]["version"] == "2.0.0"
+    assert isinstance(config["skill_info"].get("version"), str)
+    assert re.match(r"^\d+\.\d+\.\d+$", config["skill_info"]["version"]), "Version should be SemVer-like (x.y.z)"
 
     print("✅ Default config loaded successfully")
     print(f"   Version: {config['skill_info']['version']}")
@@ -123,6 +125,7 @@ def test_config_merge_priority():
     local_config_path = project_path / ".template.yaml"
     if local_config_path.exists():
         # 检查本地配置是否正确覆盖
+        loader = ConfigLoader(skill_dir, project_path, template_name="nsfc/young")
         local_config = loader._load_yaml(local_config_path)
         if "template" in local_config:
             assert config["template"]["name"] == local_config["template"]["name"]
