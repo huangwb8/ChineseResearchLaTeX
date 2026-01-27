@@ -3,7 +3,7 @@ AIContentGenerator - AI 增强内容生成器
 🧠 AI + 🤝 协作：生成连贯的叙述性文本，智能整合资源
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import re
 
@@ -11,16 +11,18 @@ import re
 class AIContentGenerator:
     """AI 驱动的智能内容生成器"""
 
-    def __init__(self, llm_client, templates: dict, format_guard: 'FormatGuard'):
+    def __init__(self, llm_client, templates: dict, format_guard: 'FormatGuard', config: Optional[dict] = None):
         """
         Args:
             llm_client: LLM 客户端
             templates: Jinja2 模板字典
             format_guard: 格式保护器实例
+            config: 完整配置（用于 prompts / generation / security 等；可选）
         """
         self.llm = llm_client
         self.templates = templates
         self.guard = format_guard
+        self.config = config or {}
 
     def generate_section_content(
         self,
@@ -28,7 +30,8 @@ class AIContentGenerator:
         section_theme: 'SectionTheme',
         existing_content: str,
         content_density: str = "moderate",
-        narrative_hint: str = None
+        narrative_hint: str = None,
+        file_path: str = ""
     ) -> str:
         """
         为章节生成 AI 增强的示例内容
@@ -76,12 +79,16 @@ class AIContentGenerator:
 
         # ========== 阶段 3：AI - 生成叙述性内容 ==========
         narrative = self._generate_narrative(
-            selected_resources, section_theme, existing_content, narrative_hint
+            selected_resources,
+            section_theme,
+            existing_content,
+            narrative_hint,
+            file_path=file_path,
         )
 
         # ========== 阶段 4：协作 - 包装 LaTeX 代码 ==========
         formatted_content = self._wrap_with_latex_code(
-            narrative, selected_resources, protected_zones
+            narrative, selected_resources, protected_zones, context=existing_content
         )
 
         # ========== 阶段 5：AI - 自我优化 ==========
@@ -99,62 +106,61 @@ class AIContentGenerator:
         resources: List['ResourceInfo'],
         theme: 'SectionTheme',
         context: str,
-        narrative_hint: str = None
+        narrative_hint: str = None,
+        file_path: str = ""
     ) -> str:
         """AI：生成连贯的叙述性文本"""
 
-        # 构建 AI Prompt
-        prompt = f"""
-你是一位经验丰富的科研写作助手，专精于国家自然科学基金申请书的撰写。
-根据以下信息，生成一段连贯的示例内容。
+        prompts = (self.config.get("prompts") or {})
+        tmpl = prompts.get("generate_narrative")
 
-## 章节信息
-- 主题：{theme.theme}
-- 关键概念：{', '.join(theme.key_concepts)}
-- 写作风格：{theme.writing_style}
-- 目标读者：{theme.target_audience}
+        # 推断文件类型（用于提示约束）
+        file_type = "main" if (file_path and file_path.endswith("main.tex")) else "input"
 
-## 用户叙事提示
-{narrative_hint or "（未提供，AI 根据章节主题自动推断）"}
+        if tmpl:
+            prompt = tmpl.format(
+                theme=theme.theme,
+                key_concepts=", ".join(theme.key_concepts),
+                writing_style=theme.writing_style,
+                target_audience=theme.target_audience,
+                narrative_hint=narrative_hint or "（未提供，AI 根据章节主题自动推断）",
+                context=context[:800],
+                resources=self._format_resources_for_prompt(resources),
+                target_length="200-400",
+                file_type=file_type,
+            )
+        else:
+            # 兼容旧逻辑：最小提示（但注意要让 AI 输出双大括号占位符）
+            prompt = (
+                "你是一位经验丰富的科研写作助手，专精于国家自然科学基金申请书的撰写。\n"
+                "根据以下信息，生成一段连贯的示例内容。\n\n"
+                f"主题：{theme.theme}\n"
+                f"关键概念：{', '.join(theme.key_concepts)}\n"
+                f"写作风格：{theme.writing_style}\n"
+                f"目标读者：{theme.target_audience}\n\n"
+                f"用户叙事提示：{narrative_hint or '（未提供）'}\n\n"
+                "请在应插入 LaTeX 代码处使用双大括号占位符，例如：\n"
+                "- 图片：{{{{PLACEHOLDER:figures/xxx.jpg}}}}\n"
+                "- 文献：{{{{PLACEHOLDER:references:zhang2023deep}}}}\n"
+                "- 表格：{{{{TABLE:临床特征对比表|complex}}}}\n"
+                "- 公式：{{{{EQUATION:E=mc^2|eq:energy}}}}\n\n"
+                "只返回生成的文本，不要解释。\n"
+            )
 
-## 上下文片段（前 500 字）
-{context[:500]}
+        temp = 0.8
+        llm_temp_cfg = (self.config.get("llm") or {}).get("temperature")
+        if isinstance(llm_temp_cfg, dict):
+            temp = float(llm_temp_cfg.get("generation", temp))
 
-## 可用资源
-{self._format_resources_for_prompt(resources)}
-
-## 生成要求
-1. 生成 200-400 字的示例段落
-2. 自然地引用资源，不要生硬堆砌
-3. 使用正式的学术写作风格
-4. **重要**：根据【用户叙事提示】调整内容方向和风格
-5. **允许编造**：这是示例场景，可以根据提示编造合理的研究内容、数据和结论
-6. 包含以下结构：
-   - 【引入句】开篇点题，引出本段内容
-   - 【资源整合】有机整合图片、文献、代码等资源
-   - 【说明句】对资源进行简要说明
-   - 【总结句】收束本段，承上启下
-
-7. 在应该插入 LaTeX 代码的地方用 {{PLACEHOLDER:资源路径}} 标记
-   - 图片：{{PLACEHOLDER:figures/xxx.jpg}}
-   - 文献：{{PLACEHOLDER:references:citekey}}
-
-## 输出格式示例
-本研究采用实验与理论相结合的方法。如图 1 所示，
-{{PLACEHOLDER:figures/zzmx-115.jpg}} 展示了实验装置的整体结构。
-根据文献 {{PLACEHOLDER:references:zhang2023deep}} 的研究，
-我们在此基础上进行了改进，提出了新的实验方案。
-
-只返回生成的文本，不要其他解释。
-"""
-
-        return self.llm.complete(prompt, temperature=0.8)
+        return self.llm.complete(prompt, temperature=temp)
 
     def _format_resources_for_prompt(self, resources: List['ResourceInfo']) -> str:
         """格式化资源列表供 AI 使用"""
         lines = []
         for i, r in enumerate(resources, 1):
             lines.append(f"{i}. **{r.filename}** ({r.type})")
+            # 明确告诉 AI 应该输出什么占位符 ID，避免“写对了资源但占位符写错”导致替换失败。
+            lines.append(f"   - placeholder_id: {self._resource_placeholder_id(r)}")
             if r.metadata:
                 for key, value in r.metadata.items():
                     lines.append(f"   - {key}: {value}")
@@ -164,25 +170,67 @@ class AIContentGenerator:
         self,
         narrative: str,
         resources: List['ResourceInfo'],
-        protected_zones: List['ProtectedZone']
+        protected_zones: List['ProtectedZone'],
+        context: str = ""
     ) -> str:
         """🤝 协作点：AI 叙述 + 硬编码 LaTeX 包装"""
 
-        # 🔧 硬编码：构建 LaTeX 代码映射
-        latex_code_map = {}
-        for resource in resources:
-            if resource.type == "figure":
-                latex_code_map[resource.path] = self._generate_figure_latex(resource)
-            elif resource.type == "code":
-                latex_code_map[resource.path] = self._generate_code_latex(resource)
-            elif resource.type == "reference":
-                latex_code_map[resource.path] = self._generate_reference_latex(resource)
+        from .placeholder_parser import iter_placeholders, replace_spans
+        from .table_generator import TableGenerator
+        from .formula_generator import FormulaGenerator
 
-        # 🔧 硬编码：安全的占位符替换
+        # 🔧 硬编码：构建资源占位符 -> LaTeX 代码映射
+        latex_code_map: Dict[str, str] = {}
+        for resource in resources:
+            placeholder_id = self._resource_placeholder_id(resource)
+            if resource.type == "figure":
+                latex_code_map[placeholder_id] = self._generate_figure_latex(resource)
+            elif resource.type == "code":
+                latex_code_map[placeholder_id] = self._generate_code_latex(resource)
+            elif resource.type == "reference":
+                latex_code_map[placeholder_id] = self._generate_reference_latex(resource)
+
+        # 🔧 硬编码：先替换资源占位符（支持 references:citekey 这种“虚拟路径”）
         result = narrative
-        for resource_path, latex_code in latex_code_map.items():
-            placeholder = f"{{{{PLACEHOLDER:{resource_path}}}}}"
-            result = result.replace(placeholder, latex_code)
+        replacements: list[tuple[int, int, str]] = []
+        for ph in iter_placeholders(result):
+            if ph.kind != "resource" or not ph.resource_id:
+                continue
+            rep = latex_code_map.get(ph.resource_id)
+            if rep is not None:
+                replacements.append((ph.start, ph.end, rep))
+        result = replace_spans(result, replacements)
+
+        # 🔧 硬编码：再替换表格/公式占位符
+        table_gen = TableGenerator(self.llm, self.config, self.templates)
+        formula_gen = FormulaGenerator(self.templates)
+
+        forbidden_table = ((self.config.get("security") or {}).get("table_security") or {}).get("forbidden_commands") or []
+        forbidden_formula = ((self.config.get("security") or {}).get("formula_security") or {}).get("forbidden_commands") or []
+
+        replacements = []
+        for ph in iter_placeholders(result):
+            if ph.kind == "table" and ph.description and ph.complexity:
+                latex = table_gen.generate(ph.description, ph.complexity, context=context)
+                latex = self._sanitize_generated_block(latex, forbidden_table)
+                replacements.append((ph.start, ph.end, latex))
+            elif ph.kind == "inline_math" and ph.formula:
+                latex = formula_gen.inline(ph.formula)
+                latex = self._sanitize_generated_block(latex, forbidden_formula)
+                replacements.append((ph.start, ph.end, latex))
+            elif ph.kind == "display_math" and ph.formula:
+                latex = formula_gen.display(ph.formula)
+                latex = self._sanitize_generated_block(latex, forbidden_formula)
+                replacements.append((ph.start, ph.end, latex))
+            elif ph.kind == "equation" and ph.formula and ph.label is not None:
+                latex = formula_gen.equation(ph.formula, ph.label)
+                latex = self._sanitize_generated_block(latex, forbidden_formula)
+                replacements.append((ph.start, ph.end, latex))
+            elif ph.kind == "align" and ph.formula:
+                latex = formula_gen.align(ph.formula)
+                latex = self._sanitize_generated_block(latex, forbidden_formula)
+                replacements.append((ph.start, ph.end, latex))
+        result = replace_spans(result, replacements)
 
         # 🔧 硬编码：验证格式区域未被破坏
         for zone in protected_zones:
@@ -195,40 +243,68 @@ class AIContentGenerator:
 
         return result
 
+    def _sanitize_generated_block(self, latex: str, forbidden_commands: List[str]) -> str:
+        """对生成的 LaTeX 片段做最小化安全过滤（不做全局清理）。"""
+        if not forbidden_commands:
+            return latex
+        sanitized_lines = []
+        for line in latex.splitlines():
+            if any(cmd in line for cmd in forbidden_commands):
+                sanitized_lines.append(f"% 🚨 已自动移除不安全命令：{line}")
+            else:
+                sanitized_lines.append(line)
+        return "\n".join(sanitized_lines)
+
+    def _resource_placeholder_id(self, resource: 'ResourceInfo') -> str:
+        """
+        资源占位符的唯一 ID。
+        - figure/code: 使用相对路径（figures/... / code/...)
+        - reference: 使用 references:<citekey>（避免同一 .bib 下多个条目冲突）
+        """
+        if resource.type == "reference":
+            citekey = (resource.metadata or {}).get("citekey") or resource.filename
+            return f"references:{citekey}"
+        return resource.path
+
     def _generate_figure_latex(self, resource: 'ResourceInfo') -> str:
         """硬编码：生成图片 LaTeX 代码"""
+        from .template_renderer import render_template
         template = self.templates.get("figure_insertion",
-            r"""\begin{figure}[htbp]\centering\includegraphics[width=0.8\textwidth]{{{path}}}\caption{{{caption}}}\end{figure}}""")
+            r"""\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\textwidth]{{{path}}}
+  \caption{{{caption}}}
+  \label{{{label}}}
+\end{figure}""")
         caption = resource.metadata.get("caption", "示例图片")
         # 从路径提取文件名作为标签
         label = resource.filename.replace('.', '_')
-        return template.format(
-            path=resource.path,
-            caption=caption,
-            label=label
-        )
+        return render_template(template, {"path": resource.path, "caption": caption, "label": label})
 
     def _generate_code_latex(self, resource: 'ResourceInfo') -> str:
         """硬编码：生成代码清单 LaTeX 代码"""
         # 读取代码片段
         code_snippet = self._read_code_snippet(resource.path, max_lines=20)
+        lastline = max(1, len(code_snippet.splitlines()))
 
+        from .template_renderer import render_template
         template = self.templates.get("code_listing",
-            r"""\begin{lstlisting}[language={lang}, caption={caption}]
-{code}
-\end{lstlisting}}""")
-        return template.format(
-            lang=resource.metadata.get("language", "Python"),
-            code=code_snippet,
-            caption=f"示例代码：{resource.filename}"
-        )
+            r"""\begin{lstlisting}[language={{lang}}, caption={{{caption}}}, firstline=1, lastline={{lastline}}]
+{{code}}
+\end{lstlisting}""")
+        return render_template(template, {
+            "lang": resource.metadata.get("language", "Python"),
+            "code": code_snippet,
+            "caption": f"示例代码：{resource.filename}",
+            "lastline": lastline,
+        })
 
     def _read_code_snippet(self, file_path: str, max_lines: int = 20) -> str:
         """读取代码片段"""
         try:
-            # 这里需要确定项目根目录
-            # 暂时假设是相对于当前工作目录
-            full_path = Path(file_path)
+            # resource.path 是相对于 project_path 的路径
+            base = getattr(self.guard, "project_path", Path("."))
+            full_path = Path(base) / file_path
             if not full_path.exists():
                 return f"% 文件不存在：{file_path}"
 

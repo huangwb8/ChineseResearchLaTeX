@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
+import dataclasses
 
 
 class CompleteExampleSkill:
@@ -29,14 +30,19 @@ class CompleteExampleSkill:
         """初始化 LLM 客户端"""
         llm_config = self.config.get("llm", {})
 
-        # 这里需要根据实际的 LLM 库进行初始化
-        # 暂时返回一个模拟客户端
-        class MockLLMClient:
-            def complete(self, prompt: str, **kwargs) -> str:
-                # 模拟返回
-                return "AI 生成的内容（模拟）"
+        # 默认优先真实 LLM；在缺少依赖/密钥时自动降级到 Mock（便于本地验证与单元测试）。
+        try:
+            from .llm_client import LLMClient
+            return LLMClient(llm_config)
+        except Exception:
+            class MockLLMClient:
+                def complete(self, prompt: str, **kwargs) -> str:
+                    # 保守 mock：尽量返回可被后续流程处理的结构
+                    if kwargs.get("response_format") == "json":
+                        return "{}"
+                    return "（Mock LLM）\\n\\n\\subsubsection{示例标题}\\n\\subsubsubsection{示例子标题}\\n这里是示例正文。"
 
-        return MockLLMClient()
+            return MockLLMClient()
 
     def _load_templates(self) -> Dict[str, str]:
         """加载 LaTeX 模板"""
@@ -55,10 +61,10 @@ class CompleteExampleSkill:
   \caption{{{caption}}}
   \label{{{label}}}
 \end{figure}}""",
-            "code_listing": r"""\begin{lstlisting}[language={lang}, caption={caption}]
-{code}
-\end{lstlisting}}""",
-            "reference_citation": r"\cite{{{citekey}}}"
+            "code_listing": r"""\begin{lstlisting}[language={{lang}}, caption={{{caption}}}, firstline=1, lastline={{lastline}}]
+{{code}}
+\end{lstlisting}""",
+            "reference_citation": r"\cite{{{citekey}}}",
         }
 
     def _create_run_directory(self) -> Path:
@@ -207,7 +213,7 @@ class CompleteExampleSkill:
         """阶段 2：分析章节主题"""
         from .semantic_analyzer import SemanticAnalyzer
 
-        analyzer = SemanticAnalyzer(self.llm_client)
+        analyzer = SemanticAnalyzer(self.llm_client, prompts=self.config.get("prompts", {}))
         themes = {}
 
         # 默认目标文件
@@ -265,7 +271,8 @@ class CompleteExampleSkill:
         generator = AIContentGenerator(
             self.llm_client,
             self.templates,
-            FormatGuard(project_path, run_dir)  # 🆕 传递 run_dir
+            FormatGuard(project_path, run_dir),  # 🆕 传递 run_dir
+            config=self.config,
         )
 
         contents = {}
@@ -285,7 +292,8 @@ class CompleteExampleSkill:
                 section_theme=theme,
                 existing_content=existing_content,
                 content_density=density,
-                narrative_hint=narrative_hint  # 传递用户提示
+                narrative_hint=narrative_hint,  # 传递用户提示
+                file_path=file_path,
             )
 
             contents[file_path] = {
@@ -332,7 +340,7 @@ class CompleteExampleSkill:
         """阶段 5：质量评估"""
         from .semantic_analyzer import SemanticAnalyzer
 
-        analyzer = SemanticAnalyzer(self.llm_client)
+        analyzer = SemanticAnalyzer(self.llm_client, prompts=self.config.get("prompts", {}))
         evaluations = {}
 
         for file_path, content_data in contents.items():
@@ -354,11 +362,21 @@ class CompleteExampleSkill:
         output_mode: str
     ):
         """阶段 6：生成输出"""
+        def _json_default(obj):
+            if dataclasses.is_dataclass(obj):
+                return dataclasses.asdict(obj)
+            if isinstance(obj, Path):
+                return str(obj)
+            # Fallback for odd container types
+            if isinstance(obj, set):
+                return list(obj)
+            raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
         # 保存完整报告
         report_file = run_dir / "output" / "report" / "report.json"
         report_file.parent.mkdir(parents=True, exist_ok=True)
         report_file.write_text(
-            json.dumps(report, ensure_ascii=False, indent=2),
+            json.dumps(report, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8"
         )
 

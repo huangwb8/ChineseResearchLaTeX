@@ -45,11 +45,15 @@
   - `projects/NSFC_Local/main.tex`：标题文字与空格/标点按 2026 模板归一；补齐提纲标题/提示语的加粗位置（与 Word 模板一致）；使用 `\\linebreak{}` 精确对齐标题换行，使 PDF 中每行标题文字与 Word 模板一致；微调提纲区块前后间距以贴近分页观感
   - `projects/NSFC_Local/template/2026年最新word模板-5.地区科学基金项目-正文.docx`：由同名 `.doc` 转换生成，供标题一致性验证与基准管理使用
 
-- **complete_example**：修复默认离线运行与 LaTeX 模板渲染问题
+- **complete_example v1.0.0 → v1.2.0**：多元示例占位符（表格/公式）+ 模板渲染与安全加固
   - 新增本地启发式 LLM 回退：无 API Key 也可生成可解析 JSON 与可落盘示例内容
   - 补齐离线模式对“方案及可行性”类小节（研究方法/技术路线/关键技术/可行性分析）的示例内容生成，便于一键填充模板
-  - 修复 LaTeX 模板使用 `str.format()` 导致 `\\begin{figure}` 等 `{...}` 被误解析的 KeyError
-  - 安全检查兼容模板正文中的首行缩进设置（允许 `\\setlength{\\parindent}{...}`），并修复自动清理二次命中问题
+  - 新增占位符支持：`{{TABLE:...}}` / `{{INLINE_MATH:...}}` / `{{DISPLAY_MATH:...}}` / `{{EQUATION:...|label}}` / `{{ALIGN:...}}`
+  - 新增安全模板渲染器：避免 LaTeX 模板中 `{...}` 被误解析为 Python format 占位符导致 KeyError
+  - 修复文献占位符冲突：reference 占位符统一为 `references:<citekey>`，避免同一 `.bib` 多条目覆盖
+  - 安全加固：拒绝项目目录外文件写入；章节层级约束（input tex 禁止 `\\section/\\subsection`）落地；扩展格式注入黑名单（含 `\\newcommand` 等）
+  - 修复自动清理二次命中问题，并避免自动清理路径直接 `print` 污染输出
+  - LLMClient 支持 `temperature` dict 配置（analysis/generation/refinement），避免真实 LLM 路径温度参数类型错误
   - 运行路径解析更稳健：可从任意工作目录正确定位 `projects/<name>`
 
 - **make_latex_model v2.7.1 → v2.7.2**：AI 驱动迭代闭环（最小可用版）与像素对比结构化产物

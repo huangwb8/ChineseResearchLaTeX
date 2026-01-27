@@ -1,9 +1,6 @@
 """
 SecurityManager - 安全管理器
 🔒 增强的安全保护：系统文件完整性校验 + 内容安全扫描 + 访问控制
-
-Version: 1.1.0
-Author: ChineseResearchLaTeX Project
 """
 
 import hashlib
@@ -77,14 +74,20 @@ class SecurityManager:
     FORMAT_KEYWORDS = [
         r"\\geometry\{",
         r"\\setlength\{",
+        r"\\setlength\{\\tabcolsep\}",
         r"\\definecolor\{",
         r"\\setCJKfamilyfont",
         r"\\setmainfont",
         r"\\setCJKmainfont",
         r"\\renewcommand\{\\baselinestretch\}",
+        r"\\renewcommand\{\\arraystretch\}",
         r"\\titleformat\{",
         r"\\titlespacing",
         r"\\setlist",
+        r"\\newcommand",
+        r"\\renewcommand",
+        r"\\newcolumntype",
+        r"\\DeclareMathOperator",
         r"\\usepackage\{",
         r"\\documentclass",
     ]
@@ -110,6 +113,7 @@ class SecurityManager:
                     "system_file": True,      # 系统文件黑名单检查
                     "integrity": True,        # 完整性校验
                     "format_injection": True, # 格式注入检查
+                    "section_hierarchy": True # 章节层级规范检查（input tex）
                 }
         """
         self.project_path = Path(project_path)
@@ -118,6 +122,7 @@ class SecurityManager:
             "system_file": True,
             "integrity": True,
             "format_injection": True,
+            "section_hierarchy": True,
         }
 
         # 加载已知哈希
@@ -194,8 +199,14 @@ class SecurityManager:
         try:
             relative_path = str(file_path.relative_to(self.project_path))
         except ValueError:
-            # 文件不在项目目录中，视为系统文件
-            relative_path = str(file_path)
+            violation = SecurityViolation(
+                level=SecurityLevel.CRITICAL,
+                type="system_file",
+                file=str(file_path),
+                message=f"🚨 拒绝访问项目目录之外的文件：{file_path}"
+            )
+            self.violations.append(violation)
+            raise SecurityError(violation.message)
 
         # 检查黑名单
         if relative_path in self.SYSTEM_FILE_BLACKLIST:
@@ -246,12 +257,18 @@ class SecurityManager:
             self.initialize_hashes()
             return {}
 
-        results = {}
-        files_to_check = [file_path] if file_path else [
-            self.project_path / f for f in self.SYSTEM_FILE_BLACKLIST
-        ]
+        results: Dict[str, bool] = {}
 
-        for sys_file in self.SYSTEM_FILE_BLACKLIST:
+        if file_path is None:
+            sys_files = list(self.SYSTEM_FILE_BLACKLIST)
+        else:
+            try:
+                sys_files = [str(file_path.relative_to(self.project_path))]
+            except ValueError:
+                # 外部文件在 check_system_file_access 已拦截；这里作为不通过处理
+                raise IntegrityCheckError(f"🚨 完整性校验拒绝检查项目外文件：{file_path}")
+
+        for sys_file in sys_files:
             file_full_path = self.project_path / sys_file
 
             if not file_full_path.exists():
@@ -345,8 +362,10 @@ class SecurityManager:
             )
 
             if is_dangerous:
-                # 注释掉危险行
-                sanitized_lines.append(f"% 🚨 已自动移除格式注入：{line}")
+                # 注释行里不能保留原始危险命令，否则二次扫描仍会命中关键词。
+                # 这里仅保留去掉反斜杠后的“可读提示”，避免误伤 LaTeX 关键词匹配。
+                sanitized_preview = line.replace("\\", "")
+                sanitized_lines.append(f"% 🚨 已自动移除格式注入：{sanitized_preview}")
             else:
                 sanitized_lines.append(line)
 
@@ -398,14 +417,16 @@ class SecurityManager:
         # 再次检查系统文件
         self.check_system_file_access(file_path)
 
+        # 章节层级规范检查（extraTex/input 类 tex）
+        if self.enabled_checks.get("section_hierarchy", True):
+            self.check_section_hierarchy(file_path, new_content)
+
         # 检查格式注入
         is_safe, violations = self.check_format_injection(new_content, file_path)
 
         if not is_safe:
             if auto_sanitize:
-                # 自动清理
-                for v in violations:
-                    print(f"⚠️ {v.message}")
+                # 自动清理（避免直接 print 污染输出；违规信息可通过 get_violations_report 获取）
                 new_content = self.sanitize_content(new_content)
 
                 # 二次验证
@@ -421,6 +442,50 @@ class SecurityManager:
                 )
 
         return new_content
+
+    def check_section_hierarchy(self, file_path: Path, content: str) -> bool:
+        """
+        检查 input 类 tex 的章节层级是否符合约束：
+        - 禁止使用 \\section / \\subsection
+        - 必须同时包含 \\subsubsection 与 \\subsubsubsection（至少各 1 次）
+        """
+        try:
+            relative_path = str(file_path.relative_to(self.project_path))
+        except ValueError:
+            relative_path = str(file_path)
+
+        # 仅对 extraTex/*.tex（且非 @config.tex）启用
+        if not (relative_path.startswith("extraTex/") and relative_path.endswith(".tex")):
+            return True
+        if relative_path.endswith("extraTex/@config.tex") or relative_path.endswith("@config.tex"):
+            return True
+
+        forbidden = []
+        if re.search(r"\\section\{", content):
+            forbidden.append("\\section")
+        if re.search(r"\\subsection\{", content):
+            forbidden.append("\\subsection")
+        if forbidden:
+            msg = f"🚨 input 类 tex 禁止使用：{', '.join(forbidden)}（文件：{relative_path}）"
+            self.violations.append(SecurityViolation(
+                level=SecurityLevel.CRITICAL,
+                type="section_hierarchy",
+                file=relative_path,
+                message=msg,
+            ))
+            raise SecurityError(msg)
+
+        if not re.search(r"\\subsubsection\{", content) or not re.search(r"\\subsubsubsection\{", content):
+            msg = f"🚨 input 类 tex 必须同时包含 \\subsubsection 与 \\subsubsubsection（文件：{relative_path}）"
+            self.violations.append(SecurityViolation(
+                level=SecurityLevel.CRITICAL,
+                type="section_hierarchy",
+                file=relative_path,
+                message=msg,
+            ))
+            raise SecurityError(msg)
+
+        return True
 
     # ========== 违规报告 ==========
 

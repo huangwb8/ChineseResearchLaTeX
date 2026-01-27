@@ -2,8 +2,6 @@
 FormatGuard - 硬编码格式守护器
 🔧 硬编码：严格保护格式设置不被修改
 🔒 集成 SecurityManager 增强安全保护
-
-Version: 1.1.0
 """
 
 import hashlib
@@ -191,6 +189,12 @@ class FormatGuard:
             SecurityError: 安全检查失败（通过 SecurityManager）
         """
         file_path = Path(file_path)
+
+        # 仅允许修改 project_path 内的文件，避免路径穿越/误写到仓库外。
+        try:
+            file_path.resolve().relative_to(self.project_path.resolve())
+        except Exception:
+            raise FormatProtectionError(f"拒绝修改项目目录之外的文件：{file_path}")
 
         # ========== 🔒 安全管理器预检查 ==========
         if self.security_manager:

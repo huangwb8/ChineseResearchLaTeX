@@ -187,8 +187,8 @@ generation:
       \end{figure}
 
     code_listing: |
-      \begin{lstlisting}[language={lang}, caption={caption}, firstline=1, lastline={lastline}]
-      {code}
+      \begin{lstlisting}[language={{lang}}, caption={{{caption}}}, firstline=1, lastline={{lastline}}]
+      {{code}}
       \end{lstlisting}
 
     reference_citation: "\\cite{{{citekey}}}"
@@ -228,19 +228,19 @@ generation:
       \end{table}
 
     # 数学公式模板
-    inline_math: "${formula}$"
+    inline_math: "${{formula}}$"
     display_math: |
       \[
-      {formula}
+      {{formula}}
       \]
     equation: |
       \begin{equation}
-        {formula}
+        {{formula}}
         \label{{{label}}}
       \end{equation}
     align: |
       \begin{align}
-        {formulas}
+        {{formulas}}
       \end{align}
 
 # ========== 格式保护配置 ==========
@@ -273,7 +273,7 @@ format_protection:
     engine: "xelatex"
     timeout: 60  # 秒
 
-# ========== 🔒 安全管理配置（v1.1.0 新增）==========
+# ========== 🔒 安全管理配置 ==========
 security:
   # 系统文件保护
   system_files:

@@ -4,7 +4,7 @@ LaTeX Parser - LaTeX 解析工具
 """
 
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 
 def extract_format_lines(content: str) -> List[str]:
@@ -166,6 +166,7 @@ def extract_sections(content: str) -> List[Dict[str, str]]:
         (r'\\section\{([^}]+)\}', 'section'),
         (r'\\subsection\{([^}]+)\}', 'subsection'),
         (r'\\subsubsection\{([^}]+)\}', 'subsubsection'),
+        (r'\\subsubsubsection\{([^}]+)\}', 'subsubsubsection'),
     ]
 
     lines = content.split('\n')

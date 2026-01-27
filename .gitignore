@@ -37,8 +37,13 @@
 # Skill workspaces (runtime artifacts)
 skills/transfer_old_latex_to_new/runs/
 skills/nsfc-justification-writer/runs/
+skills/complete_example/runs/
 skills/nsfc-justification-writer/.cache/
 skills/nsfc-justification-writer/**/__pycache__/
+
+# complete_example / format guard runtime artifacts
+.format_hashes.json
+projects/**/.format_hashes.json
 .AppleDouble
 .LSOverride
 

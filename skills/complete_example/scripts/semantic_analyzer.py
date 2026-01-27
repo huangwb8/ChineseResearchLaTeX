@@ -3,9 +3,10 @@ SemanticAnalyzer - AI 驱动语义分析器
 🧠 AI：理解章节主题、推理资源相关性、评估内容质量
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
+import json
 
 
 @dataclass
@@ -31,12 +32,29 @@ class ResourceRelevance:
 class SemanticAnalyzer:
     """AI 驱动的语义分析器"""
 
-    def __init__(self, llm_client):
+    def __init__(self, llm_client, prompts: Optional[Dict[str, str]] = None):
         """
         Args:
             llm_client: LLM 客户端（Claude/OpenAI/本地模型）
+            prompts: 来自 config.yaml 的 prompts（可选，用于集中化管理）
         """
         self.llm = llm_client
+        self.prompts = prompts or {}
+
+    def _safe_json(self, text: str) -> Dict[str, Any]:
+        """尽量从 LLM 输出中解析 JSON；失败则返回空 dict。"""
+        try:
+            return json.loads(text)
+        except Exception:
+            # 兼容 LLM 返回包含说明文字的情况：截取第一个 JSON 对象
+            try:
+                start = text.find("{")
+                end = text.rfind("}")
+                if start != -1 and end != -1 and end > start:
+                    return json.loads(text[start:end + 1])
+            except Exception:
+                pass
+        return {}
 
     def analyze_section_theme(self, tex_content: str) -> SectionTheme:
         """
@@ -48,7 +66,11 @@ class SemanticAnalyzer:
         Returns:
             SectionTheme: 结构化的主题分析结果
         """
-        prompt = f"""
+        tmpl = self.prompts.get("analyze_theme")
+        if tmpl:
+            prompt = tmpl.format(max_chars=2000, content=tex_content[:2000])
+        else:
+            prompt = f"""
 你是一位专业的学术写作分析专家。请分析以下 LaTeX 章节的内容主题。
 
 章节内容（前 2000 字符）：
@@ -65,15 +87,18 @@ class SemanticAnalyzer:
 }}
 """
 
-        response = self.llm.complete(
-            prompt,
-            response_format="json",
-            temperature=0.3  # 低温度保证稳定性
-        )
+        response = self.llm.complete(prompt, response_format="json", temperature=0.3)
+        data = self._safe_json(response)
 
-        import json
-        data = json.loads(response)
-        return SectionTheme(**data)
+        # Robust defaults for mock/partial outputs.
+        return SectionTheme(
+            theme=str(data.get("theme") or "章节主题（未识别）"),
+            key_concepts=list(data.get("key_concepts") or ["关键概念A", "关键概念B", "关键概念C"]),
+            writing_style=str(data.get("writing_style") or "学术"),
+            suggested_resources=list(data.get("suggested_resources") or ["示意图", "相关文献"]),
+            tone=str(data.get("tone") or "正式"),
+            target_audience=str(data.get("target_audience") or "评审专家"),
+        )
 
     def reason_resource_relevance(
         self,
@@ -90,7 +115,18 @@ class SemanticAnalyzer:
         Returns:
             ResourceRelevance: 相关性评估结果
         """
-        prompt = f"""
+        tmpl = self.prompts.get("reason_relevance")
+        if tmpl:
+            prompt = tmpl.format(
+                section_theme=section_theme.theme,
+                key_concepts=", ".join(section_theme.key_concepts),
+                writing_style=section_theme.writing_style,
+                resource_path=resource_info.path,
+                resource_type=resource_info.type,
+                metadata=resource_info.metadata,
+            )
+        else:
+            prompt = f"""
 你是一位专业的学术写作顾问。请评估以下资源是否适合用于指定章节。
 
 章节信息：
@@ -106,25 +142,26 @@ class SemanticAnalyzer:
 
 请返回 JSON 格式的评估结果：
 {{
-  "relevance_score": 0.85,  // 0-1 之间的分数
-  "reason": "详细说明为什么适合或不适合，100-200字",
-  "suggested_usage": "建议如何使用这个资源（如：作为方法论示意图）"
+  "relevance_score": 0.85,
+  "reason": "详细说明理由（100-200字）",
+  "suggested_usage": "建议如何使用这个资源"
 }}
 """
 
-        response = self.llm.complete(
-            prompt,
-            response_format="json",
-            temperature=0.3
-        )
+        response = self.llm.complete(prompt, response_format="json", temperature=0.3)
+        data = self._safe_json(response)
 
-        import json
-        data = json.loads(response)
+        score = data.get("relevance_score")
+        try:
+            score = float(score)
+        except Exception:
+            score = 0.5
+
         return ResourceRelevance(
             resource_path=resource_info.path,
-            relevance_score=data['relevance_score'],
-            reason=data['reason'],
-            suggested_usage=data['suggested_usage']
+            relevance_score=max(0.0, min(1.0, score)),
+            reason=str(data.get("reason") or "（未提供理由）"),
+            suggested_usage=str(data.get("suggested_usage") or "（未提供建议用法）"),
         )
 
     def generate_contextual_description(
@@ -202,11 +239,15 @@ class SemanticAnalyzer:
 }}
 """
 
-        response = self.llm.complete(
-            prompt,
-            response_format="json",
-            temperature=0.3
-        )
-
-        import json
-        return json.loads(response)
+        response = self.llm.complete(prompt, response_format="json", temperature=0.3)
+        data = self._safe_json(response)
+        # Provide defaults so the pipeline can continue under MockLLMClient.
+        return {
+            "coherence": float(data.get("coherence") or 0.0),
+            "academic_tone": float(data.get("academic_tone") or 0.0),
+            "resource_integration": data.get("resource_integration") or "无",
+            "strengths": data.get("strengths") or [],
+            "weaknesses": data.get("weaknesses") or [],
+            "suggestions": data.get("suggestions") or [],
+            "overall_score": float(data.get("overall_score") or 0.0),
+        }

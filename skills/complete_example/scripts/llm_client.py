@@ -23,7 +23,15 @@ class LLMClient:
         self.provider = config.get("provider", "claude")
         self.model = config.get("model", "claude-sonnet-4-20250514")
         self.api_key_env = config.get("api_key_env", "ANTHROPIC_API_KEY")
-        self.temperature = config.get("temperature", 0.7)
+        # temperature 既支持单一数值，也支持按任务类型配置的 dict（analysis/generation/refinement）
+        temp_cfg = config.get("temperature", 0.7)
+        self.temperature_map: Optional[Dict[str, float]] = None
+        if isinstance(temp_cfg, dict):
+            self.temperature_map = {k: float(v) for k, v in temp_cfg.items()}
+            # 默认使用 generation（更符合“生成器”直觉）；缺失则回退 0.7
+            self.temperature = float(self.temperature_map.get("generation", 0.7))
+        else:
+            self.temperature = float(temp_cfg)
         self.max_tokens = config.get("max_tokens", 4000)
 
         # 获取 API 密钥
@@ -89,6 +97,7 @@ class LLMClient:
             str: LLM 响应内容
         """
         temp = temperature if temperature is not None else self.temperature
+        temp = float(temp)
         tokens = max_tokens if max_tokens is not None else self.max_tokens
 
         if self.provider == "claude":
@@ -169,9 +178,9 @@ class LLMClient:
                 - "refinement": 优化任务（中温度，0.5）
                 - "default": 使用默认温度
         """
-        temp_map = {
-            "analysis": 0.3,
-            "generation": 0.8,
-            "refinement": 0.5,
-        }
-        self.temperature = temp_map.get(task_type, self.temperature)
+        if self.temperature_map:
+            self.temperature = float(self.temperature_map.get(task_type, self.temperature))
+            return
+
+        temp_map = {"analysis": 0.3, "generation": 0.8, "refinement": 0.5}
+        self.temperature = float(temp_map.get(task_type, self.temperature))
