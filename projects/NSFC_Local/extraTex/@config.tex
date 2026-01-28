@@ -11,6 +11,7 @@
 \usepackage{xeCJK} % 调整字间距
 \usepackage{titlesec} 
 \usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
+\usepackage{indentfirst} % 中文写作通常要求标题后的首段也缩进
 % \usepackage{ctex}
 \usepackage{pifont} % 带圈数字
 % 操作系统检测（避免 ifplatform 在未开启 shell escape 时产生警告）
@@ -99,13 +100,18 @@
 % 说明：不使用 baselinestretch 乘法去逼近，直接把默认字号(12pt)的 baselineskip 固定为 22pt
 \renewcommand{\baselinestretch}{1.0}
 \AtBeginDocument{\fontsize{12pt}{22pt}\selectfont\frenchspacing}
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{3pt} % 段间距：进一步收紧段落间隙
+\setlength{\parindent}{0pt} % 保持模板：main.tex 中已有必要的手工缩进控制
+\setlength{\parskip}{3pt} % 段间距：对齐模板的默认视觉效果
 \hfuzz=20pt\relax % 避免示例图宽度导致的 Overfull \hbox 警告
 \XeTeXlinebreaklocale "zh" % 中文断行
 
 % Word 空白段落的"视觉高度"对齐：在已有 \parskip 的情况下补足到 1 行行距
 \newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
+
+% 正文段首缩进：仅在 extraTex 正文中启用，避免影响 main.tex 的提示语排版
+\newcommand{\NSFCBodyText}{%
+  \setlength{\parindent}{2em}%
+}
 
 
 %%%————————————————————————————————图片与表格
@@ -270,18 +276,25 @@
 	keywordstyle=\color{magenta},
 	stringstyle=\color{blue!50!red},
 	showstringspaces=false,
-	numbers=none,
+	numbers=left,
 	numberstyle=\footnotesize\color{gray},
 	numbersep=10pt,
-	stepnumber=2, %左边数字的步幅
+	stepnumber=1,
 	tabsize=4,
-	frame=TB, %顶部和底部有两条竖线。
-  breaklines=true % 添加此行以启用自动换行
+	frame=single,
+	framerule=0.3pt,
+	rulecolor=\color{black!20},
+	xleftmargin=2em,
+	xrightmargin=0.5em,
+	breaklines=true,
+	breakatwhitespace=true,
+	captionpos=b
 	% frame=tblr
 	% frame=L,
 	% framerule=1pt,
 	% rulecolor=\color{red}
 }
+\lstset{style=codestyle01}
 
 
 %%%————————————————————————————————其它设置

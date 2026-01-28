@@ -40,6 +40,13 @@
 
 ### Changed（变更）
 
+- 重构三个 NSFC 正文项目的 `extraTex/*.tex` 示例正文（保持原有主题与提纲结构不变），并统一段首缩进与代码展示风格：`projects/NSFC_Young/`, `projects/NSFC_General/`, `projects/NSFC_Local/`
+- 修复正文“提示语/标题”排版异常：保留模板的全局 `\\parindent=0pt`，改为在 `extraTex` 正文中通过 `\\NSFCBodyText` 启用段首缩进 2em，避免与 `main.tex` 的 `\\hspace*{2em}`/`\\linebreak{}` 叠加导致换行错位：`projects/NSFC_Young/extraTex/@config.tex`, `projects/NSFC_General/extraTex/@config.tex`, `projects/NSFC_Local/extraTex/@config.tex`
+- 示例内容整合仓库素材：正文中引用 `projects/*/figures/*` 与 `projects/*/code/test.sh`（`\\includegraphics` + `\\lstinputlisting`），并统一 `listings` 样式为 `codestyle01`
+- 篇幅控制：三套项目 PDF 均落在 12–14 页；对 Young/General/Local 将两张示例图合并为子图，代码清单做片段截取；并移除 General 示例中过多的 `\\NSFCBlankPara` 额外留白以避免无意义增页
+
+### Changed（变更）
+
 - **complete_example v1.4.0 → v1.4.1**：路径解析与编译验证加固（更少污染、更可复现）
   - `skill_controller.py`：`project_name` 支持“项目名/项目路径”两种输入；新增 projects/ 边界校验，拦截路径穿越；缺失 `main.tex` 时明确报错
   - `skill_controller.py`：默认 `target_files` 改为自动扫描 `extraTex/*.tex`（排除 `@config.tex`），避免模板文件名变更导致示例/默认流程失效

@@ -11,6 +11,7 @@
 \usepackage{xeCJK} % 调整字间距
 \usepackage{titlesec} 
 \usepackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
+\usepackage{indentfirst} % 中文写作通常要求标题后的首段也缩进
 % \usepackage{ctex}
 \usepackage{pifont} % 带圈数字
 \usepackage{etoolbox} % 轻量补丁工具（用于可选参考文献逻辑）
@@ -101,12 +102,17 @@
 % Word 2026 模板使用固定行距：22 pt（“固定值 22 磅”）
 \renewcommand{\baselinestretch}{1.0}
 \AtBeginDocument{\fontsize{12pt}{22pt}\selectfont}
-\setlength{\parindent}{0pt}
+\setlength{\parindent}{0pt} % 保持模板：main.tex 中已有必要的手工缩进控制
 \setlength{\parskip}{7.8pt} % Word 模板“段后 7.8pt”
 \XeTeXlinebreaklocale "zh" % 中文断行
 
 % Word 空白段落的“视觉高度”对齐：在已有 \parskip 的情况下补足到 1 行行距
 \newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
+
+% 正文段首缩进：仅在 extraTex 正文中启用，避免与 main.tex 的提示语缩进叠加
+\newcommand{\NSFCBodyText}{%
+  \setlength{\parindent}{2em}%
+}
 
 
 %%%————————————————————————————————图片与表格
@@ -295,18 +301,25 @@
 	keywordstyle=\color{magenta},
 	stringstyle=\color{blue!50!red},
 	showstringspaces=false,
-	numbers=none,
+	numbers=left,
 	numberstyle=\footnotesize\color{gray},
 	numbersep=10pt,
-	stepnumber=2, %左边数字的步幅
+	stepnumber=1,
 	tabsize=4,
-	frame=TB, %顶部和底部有两条竖线。
-  breaklines=true % 添加此行以启用自动换行
+	frame=single,
+	framerule=0.3pt,
+	rulecolor=\color{black!20},
+	xleftmargin=2em,
+	xrightmargin=0.5em,
+	breaklines=true,
+	breakatwhitespace=true,
+	captionpos=b
 	% frame=tblr
 	% frame=L,
 	% framerule=1pt,
 	% rulecolor=\color{red}
 }
+\lstset{style=codestyle01}
 
 
 %%%————————————————————————————————其它设置
