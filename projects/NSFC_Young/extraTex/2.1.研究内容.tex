@@ -88,12 +88,12 @@
   \label{tab:research_methods}
 \end{table}
 
-对于舆情情感分析，本研究采用基于BERT的情感分类模型，其情感得分计算公式为：
+\indent 对于舆情情感分析，本研究采用基于BERT的情感分类模型，其情感得分计算公式为：
 \begin{equation}
 S(t) = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot s_i(t)
 \label{eq:sentiment_score}
 \end{equation}
-其中，$S(t)$表示时刻$t$的整体情感得分，$N$为样本数量，$w_i$为第$i$条评论的权重（基于转发量和点赞数），$s_i(t)$为第$i$条评论的情感极性得分（范围：-1到+1）。
+\indent 其中，$S(t)$表示时刻$t$的整体情感得分，$N$为样本数量，$w_i$为第$i$条评论的权重（基于转发量和点赞数），$s_i(t)$为第$i$条评论的情感极性得分（范围：-1到+1）。
 
 \subsubsection{技术路线}
 
