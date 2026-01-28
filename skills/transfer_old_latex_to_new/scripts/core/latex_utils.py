@@ -9,9 +9,9 @@ from typing import Iterable, List, Set, Tuple
 
 
 INPUT_RE = re.compile(r"\\(input|include)\{([^}]+)\}")
-GRAPHICS_RE = re.compile(r"\\(includegraphics|epsfig)(?:\[[^\]]*\])?\{([^}]+)\}")
+GRAPHICS_RE = re.compile(r"\\(includegraphics|epsfig)\*?(?:\[[^\]]*\])?\{([^}]+)\}")
 LSTINPUTLISTING_RE = re.compile(r"\\lstinputlisting(?:\[[^\]]*\])?\{([^}]+)\}")
-IMPORT_RE = re.compile(r"\\(import|includefrom)\*?(?:\{[^}]+\})?\{([^}]+)\}")
+IMPORT_RE = re.compile(r"\\(import|includefrom)\*?\{([^}]+)\}\{([^}]+)\}")
 
 
 def strip_comments(tex: str) -> str:
@@ -46,7 +46,7 @@ def safe_read_text(path: Path) -> str:
 HEADING_RE = re.compile(r"\\(section|subsection|subsubsection)\*?\{([^}]*)\}")
 LABEL_RE = re.compile(r"\\label\{([^}]+)\}")
 REF_RE = re.compile(r"\\ref\{([^}]+)\}")
-CITE_RE = re.compile(r"\\cite\{([^}]+)\}")
+CITE_RE = re.compile(r"\\cite[a-zA-Z]*\*?\{([^}]+)\}")
 
 
 def extract_headings(tex: str) -> List[Tuple[str, str]]:
@@ -78,7 +78,18 @@ def extract_graphics(tex: str) -> Set[str]:
     支持: \includegraphics[options]{path}, \epsfig[options]{file=path}
     """
     tex = strip_comments(tex)
-    return set(m.group(2).strip() for m in GRAPHICS_RE.finditer(tex))
+    paths: Set[str] = set()
+    for match in GRAPHICS_RE.finditer(tex):
+        raw = match.group(2).strip()
+        if "file=" in raw:
+            for part in raw.split(","):
+                part = part.strip()
+                if part.startswith("file="):
+                    raw = part.split("=", 1)[1].strip()
+                    break
+        if raw:
+            paths.add(raw)
+    return paths
 
 
 def extract_lstinputlisting(tex: str) -> Set[str]:
@@ -96,7 +107,15 @@ def extract_imports(tex: str) -> Set[str]:
     支持: \import{path}{file}, \includefrom{path}{file}
     """
     tex = strip_comments(tex)
-    return set(m.group(2).strip() for m in IMPORT_RE.finditer(tex))
+    paths: Set[str] = set()
+    for match in IMPORT_RE.finditer(tex):
+        base = match.group(2).strip()
+        filename = match.group(3).strip()
+        if not filename:
+            continue
+        combined = Path(base) / filename if base else Path(filename)
+        paths.add(str(combined).replace("\\", "/"))
+    return paths
 
 
 def extract_all_resource_paths(tex: str) -> Set[str]:

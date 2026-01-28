@@ -394,6 +394,7 @@ async def apply_plan(
                 "missing": scan_result.missing_count,
                 "directories": sorted(scan_result.directories),
                 "outside_paths": list(scan_result.outside_paths),
+                "excluded_paths": list(scan_result.excluded_paths),
             }
 
             # 复制资源文件到新项目（只复制缺失的）
@@ -426,6 +427,10 @@ async def apply_plan(
             if scan_result.outside_paths:
                 warnings.append(
                     f"检测到 {len(scan_result.outside_paths)} 个资源路径超出项目根目录，已跳过复制。"
+                )
+            if scan_result.excluded_paths:
+                warnings.append(
+                    f"检测到 {len(scan_result.excluded_paths)} 个资源路径位于排除目录，已跳过复制。"
                 )
 
     # ========== 第五步：验证引用完整性 ==========

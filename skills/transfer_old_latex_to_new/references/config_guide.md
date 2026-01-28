@@ -11,6 +11,12 @@
 - `output`：`verbose` 控制进度/日志输出。
 - `workspace.runs_dir`：默认 runs 子目录名（相对 skill 根目录）。
 
+## 预留字段说明（当前不生效）
+
+- `cache.*`：缓存模块暂未接入主流程，仅保留配置入口。
+- `output.deliverables`：作为期望产物清单展示，不做硬校验。
+- `migration.backup_location`：当前仅支持 `runs`，`custom` 仍为预留选项。
+
 ## runs 输出隔离（推荐）
 
 配置层面可改 `workspace.runs_dir`，但更推荐运行时用 `--runs-root`：

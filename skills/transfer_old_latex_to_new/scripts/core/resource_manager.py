@@ -7,7 +7,7 @@ import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 
 from .latex_utils import extract_all_resource_paths, safe_read_text
 
@@ -28,6 +28,7 @@ class ResourceScanResult:
     missing_count: int
     directories: Set[str]  # 涉及的目录列表
     outside_paths: List[str]  # 项目根目录外的资源路径（按原始引用记录）
+    excluded_paths: List[str]  # 被 exclude_dirs 排除的资源路径（按解析后的相对路径）
 
 
 def scan_project_resources(
@@ -52,6 +53,16 @@ def scan_project_resources(
     resources: Dict[str, ResourceInfo] = {}
     referenced_by_map: Dict[str, List[str]] = {}
     outside_paths: List[str] = []
+    excluded_paths: List[str] = []
+
+    def _resolve_with_extensions(path: Path) -> Optional[Path]:
+        if path.suffix:
+            return path if path.exists() else None
+        for ext in (".pdf", ".png", ".jpg", ".jpeg", ".eps"):
+            candidate = path.with_suffix(ext)
+            if candidate.exists():
+                return candidate
+        return None
 
     for tex_rel in tex_files:
         tex_path = project_root / tex_rel
@@ -74,8 +85,9 @@ def scan_project_resources(
 
             actual_path: Path | None = None
             for p in possible_paths:
-                if p.exists():
-                    actual_path = p
+                candidate = _resolve_with_extensions(p)
+                if candidate:
+                    actual_path = candidate
                     break
 
             # 计算相对于项目根目录的路径（拒绝越界）
@@ -97,6 +109,12 @@ def scan_project_resources(
             if rel not in referenced_by_map:
                 referenced_by_map[rel] = []
             referenced_by_map[rel].append(tex_rel)
+
+            # 排除指定目录（例如 .git/node_modules）
+            rel_parts = Path(rel).parts
+            if rel_parts and rel_parts[0] in exclude_dirs:
+                excluded_paths.append(rel)
+                continue
 
             # 记录资源信息
             if rel not in resources:
@@ -138,6 +156,7 @@ def scan_project_resources(
         missing_count=missing_count,
         directories=directories,
         outside_paths=sorted(set(outside_paths)),
+        excluded_paths=sorted(set(excluded_paths)),
     )
 
 
@@ -206,7 +225,11 @@ def copy_resources(
             if not dry_run:
                 if copy_strategy == "link":
                     if new_path.exists():
-                        new_path.unlink()
+                        if new_path.is_symlink():
+                            new_path.unlink()
+                        else:
+                            skipped.append(rel)
+                            continue
                     new_path.symlink_to(old_path)
                 else:
                     shutil.copy2(old_path, new_path)
