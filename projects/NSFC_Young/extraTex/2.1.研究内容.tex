@@ -4,7 +4,26 @@
 \subsubsection{研究内容}
 
 \subsubsubsection{职业发展轨迹纵向研究}
-\indent 本研究以佐佐木希2002-2025年职业发展为案例，梳理职业路径，划分为五阶段（2002-2008时尚模特期、2008-2010转型期、2010-2017多领域拓展期、2017-2020成熟期、2020-2025重塑期），识别转型触发点。
+\indent 本研究以佐佐木希2002-2025年职业发展为案例，梳理职业路径，划分为五阶段（2002-2008时尚模特期、2008-2010转型期、2010-2017多领域拓展期、2017-2020成熟期、2020-2025重塑期），识别转型触发点。表\ref{tab:career_stages}展示了各阶段的核心特征与关键事件。
+
+\begin{table}[htbp]
+  \centering
+  \fontsize{11}{11}\selectfont
+  \caption{\textbf{佐佐木希职业发展五阶段特征对比}}
+  \begin{tabular}{lcccc}
+  \toprule
+  \textbf{阶段} & \textbf{时间跨度} & \textbf{核心领域} & \textbf{代表作品/事件} & \textbf{转型驱动力} \\
+  \midrule
+  时尚模特期 & 2002-2008 & 平面模特 & 《Pinky》《Non-no》 & 年龄增长 \\
+  转型期 & 2008-2010 & 影视试水 & 《热血街区》 & 职业拓展 \\
+  多领域拓展期 & 2010-2017 & 影视+综艺 & 多部电视剧 & 市场需求 \\
+  成熟期 & 2017-2020 & 全方位艺人 & 婚姻+事业 & 个人规划 \\
+  重塑期 & 2020-2025 & 新媒体转型 & YouTube频道 & 危机应对 \\
+  \bottomrule
+  \end{tabular}
+  \captionsetup{font={footnotesize,stretch=1.25},justification=raggedright}
+  \label{tab:career_stages}
+\end{table}
 
 \subsubsubsection{跨媒介形象构建机制}
 \indent 分析不同媒介平台形象呈现策略，探讨"娃娃形象"的建构演变。
@@ -49,7 +68,32 @@
 \indent 收集2020年出轨风波期间社交媒体舆情数据约10万条，运用情感分析和主题模型评估公众情绪变化。采用LDA模型进行主题分析，使用BERT预训练模型进行情感分类（准确率目标85\%以上）。
 
 \subsubsubsection{比较研究法}
-\indent 选取同时期其他日本女性艺人（滨崎步、新垣结衣、石原里美等）作为对照案例，对比中日韩三国艺人发展模式异同。
+\indent 选取同时期其他日本女性艺人（滨崎步、新垣结衣、石原里美等）作为对照案例，对比中日韩三国艺人发展模式异同。表\ref{tab:research_methods}总结了本研究采用的四种主要研究方法及其应用场景。
+
+\begin{table}[htbp]
+  \centering
+  \fontsize{11}{11}\selectfont
+  \caption{\textbf{研究方法体系与应用场景}}
+  \begin{tabular}{lccc}
+  \toprule
+  \textbf{研究方法} & \textbf{数据来源} & \textbf{分析工具} & \textbf{信度指标} \\
+  \midrule
+  纵向案例研究法 & 媒体报道5000篇 & 时序分析 & - \\
+  内容分析法 & 时尚杂志200期 & 编码分析 & Cohen's Kappa>0.8 \\
+  舆情分析法 & 社交媒体10万条 & BERT+LDA & 准确率>85\% \\
+  比较研究法 & 多案例对照 & 跨案例分析 & - \\
+  \bottomrule
+  \end{tabular}
+  \captionsetup{font={footnotesize,stretch=1.25},justification=raggedright}
+  \label{tab:research_methods}
+\end{table}
+
+对于舆情情感分析，本研究采用基于BERT的情感分类模型，其情感得分计算公式为：
+\begin{equation}
+S(t) = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot s_i(t)
+\label{eq:sentiment_score}
+\end{equation}
+其中，$S(t)$表示时刻$t$的整体情感得分，$N$为样本数量，$w_i$为第$i$条评论的权重（基于转发量和点赞数），$s_i(t)$为第$i$条评论的情感极性得分（范围：-1到+1）。
 
 \subsubsection{技术路线}
 

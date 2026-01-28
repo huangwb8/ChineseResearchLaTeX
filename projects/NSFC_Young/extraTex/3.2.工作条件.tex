@@ -4,7 +4,26 @@
 \subsubsection{已具备的实验条件}
 
 \subsubsubsection{硬件设施}
-\indent 依托单位文化产业研究中心配备完善科研设施：（1）高性能计算集群：NVIDIA A100 GPU 4张（每张40GB显存），总内存512GB；（2）大容量数据存储系统：总容量500TB，支持多用户并发访问和自动备份；（3）专业级影像处理工作站：高色域显示器（99\% Adobe RGB）和专业级图形卡；（4）专业录音与视频编辑设备。
+\indent 依托单位文化产业研究中心配备完善科研设施：（1）高性能计算集群：NVIDIA A100 GPU 4张（每张40GB显存），总内存512GB；（2）大容量数据存储系统：总容量500TB，支持多用户并发访问和自动备份；（3）专业级影像处理工作站：高色域显示器（99\% Adobe RGB）和专业级图形卡；（4）专业录音与视频编辑设备。表\ref{tab:hardware_config}详细列出了主要硬件设施配置。
+
+\begin{table}[htbp]
+  \centering
+  \fontsize{11}{11}\selectfont
+  \caption{\textbf{主要硬件设施配置}}
+  \begin{tabular}{lccc}
+  \toprule
+  \textbf{设备类型} & \textbf{配置规格} & \textbf{数量} & \textbf{主要用途} \\
+  \midrule
+  GPU计算卡 & NVIDIA A100 40GB & 4张 & 深度学习训练 \\
+  服务器内存 & DDR4 ECC & 512GB & 大规模数据处理 \\
+  存储系统 & 企业级NAS & 500TB & 多模态数据存储 \\
+  工作站 & 高色域显示器 & 5台 & 影像处理与分析 \\
+  录音设备 & 专业级麦克风 & 2套 & 访谈录制 \\
+  \bottomrule
+  \end{tabular}
+  \captionsetup{font={footnotesize,stretch=1.25},justification=raggedright}
+  \label{tab:hardware_config}
+\end{table}
 
 \subsubsubsection{软件资源}
 \indent 实验室部署完整数据分析工具链：（1）自然语言处理：NLTK、spaCy、jieba、HanLP等；（2）深度学习框架：TensorFlow、PyTorch、Keras，支持BERT、GPT等预训练模型；（3）计算机视觉：OpenCV、PIL、scikit-image、detectron2；（4）数据可视化：Tableau、D3.js、Matplotlib、Seaborn；（5）社会科学统计：SPSS、Stata、R；（6）项目管理：Git、GitHub、Slack、Trello。
