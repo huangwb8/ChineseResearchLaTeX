@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 import subprocess
 import os
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -69,14 +70,46 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
     engine = str(compilation.get("engine", "xelatex"))
     interaction = str(compilation.get("interaction_mode", "nonstopmode"))
     pass_sequence = compilation.get("pass_sequence") or ["xelatex", "bibtex", "xelatex", "xelatex"]
-    timeout = int(compilation.get("timeout_per_pass", 120))
+    halt_on_error = bool(compilation.get("halt_on_error", False))
+    timeout_per_pass = int(compilation.get("timeout_per_pass", 120))
+    total_timeout = int(compilation.get("total_timeout", 0) or 0)
+    passes = compilation.get("passes")
+    if passes is not None:
+        try:
+            pass_count = int(passes)
+            if pass_count > 0:
+                pass_sequence = list(pass_sequence)[:pass_count]
+        except Exception:
+            pass
 
     steps: List[CompileStep] = []
+    start_time = time.time()
 
     for idx, step in enumerate(pass_sequence, start=1):
-        if step == "bibtex":
-            # bibtex 需要在 latex_aux_dir 中运行(因为 .aux 文件在那里)
-            cmd = ["bibtex", "main"]
+        remaining_total = None
+        if total_timeout > 0:
+            elapsed = time.time() - start_time
+            remaining_total = total_timeout - int(elapsed)
+            if remaining_total <= 0:
+                stdout_path = logs_dir / f"compile_{idx}_{step}.out.txt"
+                stderr_path = logs_dir / f"compile_{idx}_{step}.err.txt"
+                stdout_path.write_text("", encoding="utf-8")
+                stderr_path.write_text("total_timeout\n", encoding="utf-8")
+                steps.append(
+                    CompileStep(
+                        command=[step],
+                        returncode=124,
+                        stdout_path=str(stdout_path),
+                        stderr_path=str(stderr_path),
+                    )
+                )
+                break
+
+        timeout = min(timeout_per_pass, remaining_total) if remaining_total else timeout_per_pass
+
+        if step in {"bibtex", "biber"}:
+            # bibtex/biber 需要在 latex_aux_dir 中运行(因为 .aux/.bcf 文件在那里)
+            cmd = [step, "main"]
             run_cwd = latex_aux_dir
         else:
             # xelatex 使用 -output-directory 参数将中间文件写到隔离目录
@@ -94,7 +127,7 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
         try:
             # bibtex 在 latex_aux_dir 运行时，.aux 内的 bst/bib 路径通常是相对 new_project 的；
             # 通过 BSTINPUTS/BIBINPUTS 将 new_project 加入搜索路径，避免 “I couldn't open style/database file”。
-            if step == "bibtex":
+            if step in {"bibtex", "biber"}:
                 env = os.environ.copy()
                 for key in ("BSTINPUTS", "BIBINPUTS"):
                     existing = env.get(key, "")
@@ -132,8 +165,8 @@ def compile_project(new_project: Path, logs_dir: Path, config: Dict[str, Any]) -
             )
         )
 
-        if rc != 0:
-            # 任一阶段失败通常不可恢复
+        if rc != 0 and halt_on_error:
+            # 用户选择遇到错误立即中止
             break
 
     # 简易汇总：读取 main.log（若存在）统计未定义引用等

@@ -3,7 +3,7 @@
 ## ✅ 已实现并测试通过
 
 ### 1. 字数自动适配（WordCountAdapter）
-- **文件**: `core/word_count_adapter.py` (7.2 KB)
+- **文件**: `scripts/core/word_count_adapter.py` (7.2 KB)
 - **测试**: `tests/test_word_count_adapter.py` (2.2 KB)
 - **功能**:
   - ✅ 中文字数统计（排除 LaTeX 命令）
@@ -13,7 +13,7 @@
   - ✅ 生成字数报告
 
 ### 2. 引用强制保护（ReferenceGuardian）
-- **文件**: `core/reference_guardian.py` (4.1 KB)
+- **文件**: `scripts/core/reference_guardian.py` (4.1 KB)
 - **测试**: `tests/test_reference_guardian.py` (2.9 KB)
 - **功能**:
   - ✅ 保护 8 种引用类型（\ref, \cite, \citep, \citet, \eqref, \label, \includegraphics, \lstinputlisting）
@@ -23,7 +23,7 @@
   - ✅ 被破坏引用自动修复
 
 ### 3. 内容智能优化（ContentOptimizer）
-- **文件**: `core/content_optimizer.py` (6.2 KB)
+- **文件**: `scripts/core/content_optimizer.py` (6.2 KB)
 - **测试**: `tests/test_content_optimizer.py` (1.6 KB)
 - **功能**:
   - ✅ 启发式问题检测（冗余、结构、证据）

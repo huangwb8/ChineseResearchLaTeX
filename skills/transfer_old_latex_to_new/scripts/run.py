@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 
 sys.dont_write_bytecode = True
 
-skill_root_for_import = Path(__file__).resolve().parent.parent
+skill_root_for_import = Path(__file__).resolve().parent
 sys.path.insert(0, str(skill_root_for_import))
 
 from core.compiler import compile_project

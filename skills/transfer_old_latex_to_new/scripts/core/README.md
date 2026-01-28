@@ -242,7 +242,7 @@ python run_tests.py
 
 ### AI 集成
 
-- 所有 AI 调用统一通过 `core/ai_integration.py` 的 `AIIntegration` 入口
+- 所有 AI 调用统一通过 `scripts/core/ai_integration.py` 的 `AIIntegration` 入口
 - 未接入真实 AI responder 时，自动回退到启发式/不改写策略（保证流程可用）
 
 ### Async API

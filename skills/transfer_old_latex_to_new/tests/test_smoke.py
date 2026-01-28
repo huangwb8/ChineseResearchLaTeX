@@ -17,8 +17,8 @@ from pathlib import Path
 import sys
 import asyncio
 
-skill_root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(skill_root))
+skill_scripts_root = Path(__file__).resolve().parent.parent / "scripts"
+sys.path.insert(0, str(skill_scripts_root))
 
 from core.config_loader import DEFAULT_CONFIG
 from core.mapping_engine import compute_structure_diff

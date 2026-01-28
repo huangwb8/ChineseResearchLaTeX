@@ -156,15 +156,15 @@ def _extract_ai_mapping_response(response_text: str) -> Optional[Dict[str, Any]]
     lines = response_text.split("\n")
     for line in lines:
         line_lower = line.lower()
-        if "should map" in line_lower or "应该映射" in response_text[:200]:
+        if "should map" in line_lower or "应该映射" in line:
             if "true" in line_lower or "yes" in line_lower or "是" in line:
                 result["should_map"] = True
-        if "confidence" in line_lower or "置信度" in response_text[:200]:
+        if "confidence" in line_lower or "置信度" in line:
             if "high" in line_lower or "高" in line:
                 result["confidence"] = "high"
             elif "medium" in line_lower or "中" in line:
                 result["confidence"] = "medium"
-        if "score" in line_lower or "评分" in response_text[:200]:
+        if "score" in line_lower or "评分" in line:
             # 尝试提取数字
             import re
             numbers = re.findall(r"[\d.]+", line)

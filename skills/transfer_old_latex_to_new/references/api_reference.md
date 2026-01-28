@@ -36,9 +36,9 @@ apply 执行结果（applied/skipped/warnings/resources/references/optimization/
 
 ## 核心模块
 
-- `core/project_analyzer.py`：解析 `main.tex` 与 `\\input{}` 链路，提取 headings/labels/refs/cites。
-- `core/mapping_engine.py`：生成结构差异；可选走 `core/ai_integration.py`，不可用时回退启发式。
-- `core/migration_plan.py`：由 diff 生成计划（任务类型、备注、置信度等）。
-- `core/migrator.py`：执行迁移 +（可选）内容优化 +（可选）字数适配 + 资源复制 + 引用完整性检查。
-- `core/compiler.py`：编译 4 步法；中间文件隔离到 `logs/latex_aux/`，成功后复制 `main.pdf` 回项目根目录。
-- `core/security_manager.py`：写入白名单校验（禁止触碰模板系统文件）。
+- `scripts/core/project_analyzer.py`：解析 `main.tex` 与 `\\input{}` 链路，提取 headings/labels/refs/cites。
+- `scripts/core/mapping_engine.py`：生成结构差异；可选走 `scripts/core/ai_integration.py`，不可用时回退启发式。
+- `scripts/core/migration_plan.py`：由 diff 生成计划（任务类型、备注、置信度等）。
+- `scripts/core/migrator.py`：执行迁移 +（可选）内容优化 +（可选）字数适配 + 资源复制 + 引用完整性检查。
+- `scripts/core/compiler.py`：编译 4 步法；中间文件隔离到 `logs/latex_aux/`，成功后复制 `main.pdf` 回项目根目录。
+- `scripts/core/security_manager.py`：写入白名单校验（禁止触碰模板系统文件）。

@@ -361,7 +361,7 @@ async def apply_plan(
     # ========== 第四步：扫描并迁移资源文件 ==========
     # 资源文件处理配置
     resource_config = (config.get("migration", {}) or {}).get("figure_handling", "copy")
-    copy_resources_enabled = resource_config == "copy"
+    copy_resources_enabled = resource_config in {"copy", "link"}
 
     resources_result: Dict[str, Any] = {
         "enabled": copy_resources_enabled,
@@ -373,7 +373,10 @@ async def apply_plan(
         "validation_summary": {},
     }
 
-    if copy_resources_enabled and applied:
+    if resource_config == "skip":
+        resources_result["enabled"] = False
+        resources_result["scan_summary"] = {"skipped": True}
+    elif copy_resources_enabled and applied:
         # 收集已迁移的 .tex 文件列表
         migrated_tex_files = [t["target"] for t in applied if t.get("status") in {"copied", "optimized", "adapted"}]
 
@@ -390,6 +393,7 @@ async def apply_plan(
                 "total": scan_result.total_count,
                 "missing": scan_result.missing_count,
                 "directories": sorted(scan_result.directories),
+                "outside_paths": list(scan_result.outside_paths),
             }
 
             # 复制资源文件到新项目（只复制缺失的）
@@ -397,7 +401,7 @@ async def apply_plan(
                 old_project,
                 new_project,
                 scan_result.resources,
-                copy_strategy="missing",  # 只复制新项目中不存在的
+                copy_strategy="link" if resource_config == "link" else "missing",  # link or missing-copy
                 dry_run=False,
             )
 
@@ -418,6 +422,10 @@ async def apply_plan(
                 warnings.append(
                     f"有 {validation_result['summary']['missing_count']} 个资源文件在新项目中缺失，"
                     "可能导致编译失败。请检查 resources 部分。"
+                )
+            if scan_result.outside_paths:
+                warnings.append(
+                    f"检测到 {len(scan_result.outside_paths)} 个资源路径超出项目根目录，已跳过复制。"
                 )
 
     # ========== 第五步：验证引用完整性 ==========

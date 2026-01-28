@@ -150,22 +150,22 @@ bibtex --version
 | **版本差异指南** | [references/version_differences_2025_2026.md](references/version_differences_2025_2026.md) | 2025→2026 结构变化详解 |
 | **映射指南** | [references/structure_mapping_guide.md](references/structure_mapping_guide.md) | 章节映射决策参考 |
 | **迁移模式库** | [references/migration_patterns.md](references/migration_patterns.md) | 常见迁移模式案例 |
-| **快速开始** | [docs/quickstart.md](docs/quickstart.md) | 命令速查与 runs 目录说明 |
-| **配置指南** | [docs/config_guide.md](docs/config_guide.md) | config.yaml 关键块说明 |
-| **接口参考** | [docs/api_reference.md](docs/api_reference.md) | CLI/模块/产物格式 |
-| **故障排除** | [docs/troubleshooting.md](docs/troubleshooting.md) | 常见问题与处理建议 |
-| **FAQ** | [docs/faq.md](docs/faq.md) | 高频问题速查 |
-| **迁移案例** | [docs/case_study_2025_to_2026.md](docs/case_study_2025_to_2026.md) | 2025→2026 迁移流程示例 |
+| **快速开始** | [references/quickstart.md](references/quickstart.md) | 命令速查与 runs 目录说明 |
+| **配置指南** | [references/config_guide.md](references/config_guide.md) | config.yaml 关键块说明 |
+| **接口参考** | [references/api_reference.md](references/api_reference.md) | CLI/模块/产物格式 |
+| **故障排除** | [references/troubleshooting.md](references/troubleshooting.md) | 常见问题与处理建议 |
+| **FAQ** | [references/faq.md](references/faq.md) | 高频问题速查 |
+| **迁移案例** | [references/case_study_2025_to_2026.md](references/case_study_2025_to_2026.md) | 2025→2026 迁移流程示例 |
 
 ---
 
 ## 📋 版本与变更
 
-**当前版本**: v1.4.0（与 [config.yaml](config.yaml) 同步）
+**当前版本**: v1.4.1（与 [config.yaml](config.yaml) 同步）
 
 **变更记录**: 见根级 [CHANGELOG.md](../../../CHANGELOG.md)
 
 ---
 
-**最后更新**: 2026-01-08
+**最后更新**: 2026-01-29
 **维护者**: AI Agent (Claude Code)

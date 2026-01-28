@@ -1,12 +1,12 @@
 # transfer_old_latex_to_new 智能迁移技能配置文件
-# version: 1.4.0
-# last_updated: 2026-01-08
+# version: 1.4.1
+# last_updated: 2026-01-29
 #
 # 优化完成: v1.3.0 所有优化项已实现
 
 skill_info:
   name: transfer_old_latex_to_new
-  version: 1.4.0
+  version: 1.4.1
   description: 将旧标书内容迁移到新模板
   category: writing
 
@@ -21,7 +21,7 @@ profiles:
       max_workers: 2
     cache:
       enabled: false
-    optimization:
+    content_optimization:
       max_rounds: 3
 
   balanced:
@@ -32,7 +32,7 @@ profiles:
       max_workers: 4
     cache:
       enabled: true
-    optimization:
+    content_optimization:
       max_rounds: 5
 
   thorough:
@@ -43,7 +43,7 @@ profiles:
       max_workers: 8
     cache:
       enabled: true
-    optimization:
+    content_optimization:
       max_rounds: 7
 
 # =============================================================================

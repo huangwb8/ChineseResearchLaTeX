@@ -268,7 +268,7 @@ references/
 | **config.yaml** | ✅ 存在 | 参数配置 |
 | **references/** | ✅ 存在 | 参考文档 |
 | **scripts/** | ✅ 存在 | 执行脚本 |
-| **core/** | ✅ 存在 | 核心模块 |
+| **scripts/core/** | ✅ 存在 | 核心模块 |
 | **tests/** | ✅ 存在 | 测试文件 |
 
 **检查结果**:
@@ -368,7 +368,7 @@ dependencies:
   - python: ">=3.8"
   - latex: texlive-full
   - scripts/run.py
-  - core/
+  - scripts/core/
 ```
 
 **检查结果**:
@@ -570,7 +570,7 @@ dependencies:
   - python: ">=3.8"
   - latex: texlive-full
   - scripts/run.py
-  - core/
+  - scripts/core/
 entry_point: python skills/transfer_old_latex_to_new/scripts/run.py
 config: skills/transfer_old_latex_to_new/config.yaml
 references: skills/transfer_old_latex_to_new/references/

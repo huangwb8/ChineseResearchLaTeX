@@ -1,6 +1,6 @@
 ---
 name: migrating-latex-templates
-version: 1.4.0
+version: 1.4.1
 description: 智能迁移NSFC LaTeX标书到新版模板，基于五阶段工作流（分析→映射→规划→执行→验证），自动处理结构变化、内容重组、引用更新；支持AI驱动语义匹配与启发式回退，并提供 runs 输出隔离（--runs-root）与一键迁移脚本（migrate.sh）。
 author: AI Agent (Claude Code)
 metadata:
@@ -23,7 +23,7 @@ dependencies:
   - python: ">=3.8"
   - latex: texlive-full
   - scripts/run.py
-  - core/
+  - scripts/core/
 entry_point: python skills/transfer_old_latex_to_new/scripts/run.py
 config: skills/transfer_old_latex_to_new/config.yaml
 references: skills/transfer_old_latex_to_new/references/
@@ -40,12 +40,12 @@ references: skills/transfer_old_latex_to_new/references/
 > **参考文档**：[references/](references/)
 >
 > **拆分文档**：
-> [docs/quickstart.md](docs/quickstart.md) /
-> [docs/config_guide.md](docs/config_guide.md) /
-> [docs/api_reference.md](docs/api_reference.md) /
-> [docs/troubleshooting.md](docs/troubleshooting.md) /
-> [docs/faq.md](docs/faq.md) /
-> [docs/case_study_2025_to_2026.md](docs/case_study_2025_to_2026.md)
+> [references/quickstart.md](references/quickstart.md) /
+> [references/config_guide.md](references/config_guide.md) /
+> [references/api_reference.md](references/api_reference.md) /
+> [references/troubleshooting.md](references/troubleshooting.md) /
+> [references/faq.md](references/faq.md) /
+> [references/case_study_2025_to_2026.md](references/case_study_2025_to_2026.md)
 
 ---
 
@@ -134,12 +134,12 @@ runs/<run_id>/
 - `.cls`、`.sty` 样式文件
 - 任何影响编译环境的系统文件
 
-更完整的流程说明、配置与排障文档已拆分到 `docs/`：
+更完整的流程说明、配置与排障文档已拆分到 `references/`：
 
-- [docs/quickstart.md](docs/quickstart.md)
-- [docs/config_guide.md](docs/config_guide.md)
-- [docs/api_reference.md](docs/api_reference.md)
-- [docs/troubleshooting.md](docs/troubleshooting.md)
+- [references/quickstart.md](references/quickstart.md)
+- [references/config_guide.md](references/config_guide.md)
+- [references/api_reference.md](references/api_reference.md)
+- [references/troubleshooting.md](references/troubleshooting.md)
 
 ## 📋 版本与变更
 

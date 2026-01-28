@@ -192,6 +192,8 @@ class AIIntegration:
             # 解析批量结果
             if output_format == "json":
                 results = self._parse_batch_json_response(raw)
+                if len(results) != len(prompts):
+                    raise ValueError("Batch JSON response length mismatch")
                 self.success_count += len(results)
                 return results
             elif output_format == "text":

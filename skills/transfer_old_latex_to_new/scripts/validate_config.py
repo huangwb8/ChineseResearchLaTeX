@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 sys.dont_write_bytecode = True
 
-skill_root_for_import = Path(__file__).resolve().parent.parent
+skill_root_for_import = Path(__file__).resolve().parent
 sys.path.insert(0, str(skill_root_for_import))
 
 from core.config_loader import DEFAULT_CONFIG, _deep_merge, apply_profile
@@ -78,11 +78,18 @@ def validate_config(config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
     _check_range("migration.convergence_threshold", migration.get("convergence_threshold", 0.05), 0.0, 1.0, errors)
     if migration.get("backup_mode") not in {None, "snapshot", "copy", "none"}:
         errors.append("migration.backup_mode 仅允许 snapshot/copy/none")
+    if migration.get("backup_location") not in {None, "runs", "custom"}:
+        errors.append("migration.backup_location 仅允许 runs/custom")
+    _check_int_ge("migration.keep_backup_days", migration.get("keep_backup_days", 0), 0, errors)
     if migration.get("default_strategy") not in {None, "smart", "conservative", "aggressive", "fallback"}:
         errors.append("migration.default_strategy 仅允许 smart/conservative/aggressive/fallback")
     content_generation = _as_dict(migration.get("content_generation"))
     if content_generation.get("method") not in {None, "smart", "placeholder", "skip"}:
         errors.append("migration.content_generation.method 仅允许 smart/placeholder/skip")
+    if migration.get("reference_handling") not in {None, "preserve", "update", "recreate"}:
+        errors.append("migration.reference_handling 仅允许 preserve/update/recreate")
+    if migration.get("figure_handling") not in {None, "copy", "link", "skip"}:
+        errors.append("migration.figure_handling 仅允许 copy/link/skip")
 
     # quality_thresholds
     _check_range("quality_thresholds.min_similarity", quality.get("min_similarity", 0.7), 0.0, 1.0, errors)
@@ -114,6 +121,13 @@ def validate_config(config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
             warnings.append("compilation.passes 不是整数")
     _check_int_ge("compilation.timeout_per_pass", compilation.get("timeout_per_pass", 1), 1, errors)
     _check_int_ge("compilation.total_timeout", compilation.get("total_timeout", 1), 1, errors)
+    try:
+        if int(compilation.get("total_timeout", 0) or 0) > 0 and int(compilation.get("total_timeout", 0) or 0) < int(
+            compilation.get("timeout_per_pass", 1)
+        ):
+            warnings.append("compilation.total_timeout 小于 timeout_per_pass，可能导致首轮就被总超时打断")
+    except Exception:
+        pass
 
     # ai/cache/workspace（只做基础类型与非负检查）
     if ai:

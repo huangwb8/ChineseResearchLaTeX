@@ -27,6 +27,7 @@ class ResourceScanResult:
     total_count: int
     missing_count: int
     directories: Set[str]  # 涉及的目录列表
+    outside_paths: List[str]  # 项目根目录外的资源路径（按原始引用记录）
 
 
 def scan_project_resources(
@@ -50,6 +51,7 @@ def scan_project_resources(
 
     resources: Dict[str, ResourceInfo] = {}
     referenced_by_map: Dict[str, List[str]] = {}
+    outside_paths: List[str] = []
 
     for tex_rel in tex_files:
         tex_path = project_root / tex_rel
@@ -76,13 +78,21 @@ def scan_project_resources(
                     actual_path = p
                     break
 
-            # 计算相对于项目根目录的路径
+            # 计算相对于项目根目录的路径（拒绝越界）
             if actual_path:
-                rel = str(actual_path.relative_to(project_root)).replace("\\", "/")
+                try:
+                    rel = str(actual_path.resolve().relative_to(project_root)).replace("\\", "/")
+                except ValueError:
+                    outside_paths.append(res_path)
+                    continue
             else:
-                # 即使文件不存在，也记录路径
-                # 假设相对于 .tex 文件
-                rel = str((tex_dir / res_path).relative_to(project_root)).replace("\\", "/")
+                # 即使文件不存在，也记录路径（先做安全边界检查）
+                candidate = (tex_dir / res_path).resolve()
+                try:
+                    rel = str(candidate.relative_to(project_root)).replace("\\", "/")
+                except ValueError:
+                    outside_paths.append(res_path)
+                    continue
 
             if rel not in referenced_by_map:
                 referenced_by_map[rel] = []
@@ -94,6 +104,12 @@ def scan_project_resources(
                     rel_path=rel,
                     referenced_by=[],
                     exists=actual_path is not None,
+                )
+            elif actual_path is not None and not resources[rel].exists:
+                resources[rel] = ResourceInfo(
+                    rel_path=rel,
+                    referenced_by=resources[rel].referenced_by,
+                    exists=True,
                 )
 
     # 更新 referenced_by
@@ -121,6 +137,7 @@ def scan_project_resources(
         total_count=total_count,
         missing_count=missing_count,
         directories=directories,
+        outside_paths=sorted(set(outside_paths)),
     )
 
 
@@ -128,7 +145,7 @@ def copy_resources(
     old_project: Path,
     new_project: Path,
     resources: Dict[str, ResourceInfo],
-    copy_strategy: str = "missing",  # missing(只复制缺失的) | all(全部复制) | dry_run(只报告不复制)
+    copy_strategy: str = "missing",  # missing(只复制缺失的) | all(全部复制) | link(软链接) | dry_run(只报告不复制)
     dry_run: bool = False,
 ) -> Dict[str, any]:
     """
@@ -146,6 +163,8 @@ def copy_resources(
     """
     old_project = old_project.resolve()
     new_project = new_project.resolve()
+    if copy_strategy == "dry_run":
+        dry_run = True
 
     copied: List[str] = []
     skipped: List[str] = []
@@ -157,8 +176,18 @@ def copy_resources(
             skipped.append(rel)
             continue
 
-        old_path = old_project / rel
-        new_path = new_project / rel
+        old_path = (old_project / rel).resolve()
+        new_path = (new_project / rel).resolve()
+
+        try:
+            old_path.relative_to(old_project)
+            new_path.relative_to(new_project)
+        except ValueError:
+            failed.append({
+                "path": rel,
+                "error": "resource_path_outside_project",
+            })
+            continue
 
         # 检查是否需要复制
         if copy_strategy == "missing" and new_path.exists():
@@ -172,10 +201,15 @@ def copy_resources(
                 new_path.parent.mkdir(parents=True, exist_ok=True)
             created_dirs.add(target_dir)
 
-        # 复制文件
+        # 复制/链接文件
         try:
             if not dry_run:
-                shutil.copy2(old_path, new_path)
+                if copy_strategy == "link":
+                    if new_path.exists():
+                        new_path.unlink()
+                    new_path.symlink_to(old_path)
+                else:
+                    shutil.copy2(old_path, new_path)
             copied.append(rel)
         except Exception as e:
             failed.append({

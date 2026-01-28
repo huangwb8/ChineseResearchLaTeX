@@ -144,7 +144,7 @@ class CacheManager:
                 (cache_key, result_json, current_time)
             )
             self.conn.commit()
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError, TypeError):
             # 结果无法序列化，只缓存到 L1（内存）
             pass
 
