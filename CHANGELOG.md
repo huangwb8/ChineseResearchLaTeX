@@ -42,6 +42,7 @@
 
 - **transfer_old_latex_to_new**：核心模块迁移到 `scripts/core/` 并统一导入路径；文档从 `docs/` 归档到 `references/`，同步修复引用链接；清理已跟踪的 `__pycache__` 缓存目录。
 - **transfer_old_latex_to_new**：资源处理支持 `figure_handling=link/skip`，并补齐超出项目根目录资源的扫描提示。
+- **transfer_old_latex_to_new v1.4.1**：配置预设统一为 `content_optimization`；编译流程支持 `biber`、尊重 `passes/total_timeout/halt_on_error`；AI 映射解析更稳健；资源复制支持 `dry_run`。
 - 重构三个 NSFC 正文项目的 `extraTex/*.tex` 示例正文（保持原有主题与提纲结构不变），并统一段首缩进与代码展示风格：`projects/NSFC_Young/`, `projects/NSFC_General/`, `projects/NSFC_Local/`
 
 ### Fixed（修复）
@@ -49,6 +50,7 @@
 - **transfer_old_latex_to_new**：CacheManager 对不可 JSON 序列化的结果不再抛异常，仅落 L1 缓存。
 - **transfer_old_latex_to_new**：资源扫描与复制增加路径越界保护，避免不受控写入与异常。
 - **transfer_old_latex_to_new**：批量 AI 响应解析不完整时自动回退，避免静默丢失结果。
+- **transfer_old_latex_to_new**：资源扫描在同一路径多次命中时会更新存在性标记；配置校验新增总超时与单步超时冲突提示。
 - 修复正文“提示语/标题”排版异常：保留模板的全局 `\\parindent=0pt`，改为在 `extraTex` 正文中通过 `\\NSFCBodyText` 启用段首缩进 2em，避免与 `main.tex` 的 `\\hspace*{2em}`/`\\linebreak{}` 叠加导致换行错位：`projects/NSFC_Young/extraTex/@config.tex`, `projects/NSFC_General/extraTex/@config.tex`, `projects/NSFC_Local/extraTex/@config.tex`
 - 示例内容整合仓库素材：正文中引用 `projects/*/figures/*` 与 `projects/*/code/test.sh`（`\\includegraphics` + `\\lstinputlisting`），并统一 `listings` 样式为 `codestyle01`
 - 篇幅控制：三套项目 PDF 均落在 12–14 页；对 Young/General/Local 将两张示例图合并为子图，代码清单做片段截取；并移除 General 示例中过多的 `\\NSFCBlankPara` 额外留白以避免无意义增页
