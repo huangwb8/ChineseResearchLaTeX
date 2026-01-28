@@ -8,7 +8,7 @@ import re
 import json
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from enum import Enum
 
 
@@ -61,17 +61,13 @@ class SecurityManager:
     4. 自动清理危险内容
     """
 
-    # ========== 配置常量 ==========
-
-    # 系统文件黑名单（绝对禁止修改）
-    SYSTEM_FILE_BLACKLIST = [
+    # ========== 默认配置（可被 config.yaml 覆盖） ==========
+    DEFAULT_SYSTEM_FILE_BLACKLIST = [
         "main.tex",
         "extraTex/@config.tex",
         "@config.tex",
     ]
-
-    # 格式关键词黑名单（禁止在用户文件中使用）
-    FORMAT_KEYWORDS = [
+    DEFAULT_FORMAT_KEYWORDS = [
         r"\\geometry\{",
         r"\\setlength\{",
         r"\\setlength\{\\tabcolsep\}",
@@ -91,18 +87,17 @@ class SecurityManager:
         r"\\usepackage\{",
         r"\\documentclass",
     ]
-
-    # 允许编辑的文件模式（白名单）
-    EDITABLE_PATTERNS = [
-        r"^extraTex/\d+\.\d+.*\.tex$",  # extraTex/1.1.xxx.tex
-        r"^references/reference\.tex$",  # 参考文献引用文件
+    DEFAULT_EDITABLE_PATTERNS = [
+        r"^extraTex/\d+\.\d+.*\.tex$",
+        r"^references/reference\.tex$",
     ]
 
     def __init__(
         self,
         project_path: Path,
         hash_file: Optional[Path] = None,
-        enabled_checks: Optional[Dict[str, bool]] = None
+        enabled_checks: Optional[Dict[str, bool]] = None,
+        config: Optional[Dict[str, Any]] = None,
     ):
         """
         Args:
@@ -118,12 +113,21 @@ class SecurityManager:
         """
         self.project_path = Path(project_path)
         self.hash_file = Path(hash_file) if hash_file else self.project_path / ".format_hashes.json"
-        self.enabled_checks = enabled_checks or {
+
+        cfg = config or {}
+        security_cfg = cfg.get("security", {}) if isinstance(cfg, dict) else {}
+        enabled_from_cfg = security_cfg.get("enabled_checks", {}) if isinstance(security_cfg, dict) else {}
+        self.enabled_checks = enabled_checks or enabled_from_cfg or {
             "system_file": True,
             "integrity": True,
             "format_injection": True,
             "section_hierarchy": True,
         }
+
+        sys_cfg = security_cfg.get("system_files", {}) if isinstance(security_cfg, dict) else {}
+        self.system_file_blacklist = list(sys_cfg.get("blacklist") or self.DEFAULT_SYSTEM_FILE_BLACKLIST)
+        self.editable_patterns = list(sys_cfg.get("editable_patterns") or self.DEFAULT_EDITABLE_PATTERNS)
+        self.format_keywords = list(security_cfg.get("format_keywords_blacklist") or self.DEFAULT_FORMAT_KEYWORDS)
 
         # 加载已知哈希
         self.known_hashes = self._load_hashes()
@@ -166,7 +170,7 @@ class SecurityManager:
         """
         computed_hashes = {}
 
-        for sys_file in self.SYSTEM_FILE_BLACKLIST:
+        for sys_file in self.system_file_blacklist:
             file_path = self.project_path / sys_file
             if file_path.exists():
                 computed_hashes[sys_file] = self._compute_hash(file_path)
@@ -197,7 +201,8 @@ class SecurityManager:
             return False
 
         try:
-            relative_path = str(file_path.relative_to(self.project_path))
+            # 统一使用 posix 风格路径，避免 Windows 分隔符导致白名单/黑名单失效
+            relative_path = file_path.resolve().relative_to(self.project_path.resolve()).as_posix()
         except ValueError:
             violation = SecurityViolation(
                 level=SecurityLevel.CRITICAL,
@@ -209,7 +214,7 @@ class SecurityManager:
             raise SecurityError(violation.message)
 
         # 检查黑名单
-        if relative_path in self.SYSTEM_FILE_BLACKLIST:
+        if relative_path in self.system_file_blacklist:
             violation = SecurityViolation(
                 level=SecurityLevel.CRITICAL,
                 type="system_file",
@@ -222,7 +227,7 @@ class SecurityManager:
         # 检查白名单模式
         is_editable = any(
             re.match(pattern, relative_path)
-            for pattern in self.EDITABLE_PATTERNS
+            for pattern in self.editable_patterns
         )
 
         if not is_editable:
@@ -260,10 +265,10 @@ class SecurityManager:
         results: Dict[str, bool] = {}
 
         if file_path is None:
-            sys_files = list(self.SYSTEM_FILE_BLACKLIST)
+            sys_files = list(self.system_file_blacklist)
         else:
             try:
-                sys_files = [str(file_path.relative_to(self.project_path))]
+                sys_files = [file_path.resolve().relative_to(self.project_path.resolve()).as_posix()]
             except ValueError:
                 # 外部文件在 check_system_file_access 已拦截；这里作为不通过处理
                 raise IntegrityCheckError(f"🚨 完整性校验拒绝检查项目外文件：{file_path}")
@@ -325,7 +330,10 @@ class SecurityManager:
         lines = content.split("\n")
 
         for line_no, line in enumerate(lines, 1):
-            for keyword in self.FORMAT_KEYWORDS:
+            # 注释行不参与格式注入判定，避免误报（例如注释中提到 \\geometry）
+            if line.lstrip().startswith("%"):
+                continue
+            for keyword in self.format_keywords:
                 if re.search(keyword, line):
                     violations.append(SecurityViolation(
                         level=SecurityLevel.WARNING,
@@ -356,9 +364,12 @@ class SecurityManager:
         sanitized_lines = []
 
         for line_no, line in enumerate(lines, 1):
+            if line.lstrip().startswith("%"):
+                sanitized_lines.append(line)
+                continue
             is_dangerous = any(
                 re.search(keyword, line)
-                for keyword in self.FORMAT_KEYWORDS
+                for keyword in self.format_keywords
             )
 
             if is_dangerous:
@@ -450,7 +461,7 @@ class SecurityManager:
         - 必须同时包含 \\subsubsection 与 \\subsubsubsection（至少各 1 次）
         """
         try:
-            relative_path = str(file_path.relative_to(self.project_path))
+            relative_path = file_path.resolve().relative_to(self.project_path.resolve()).as_posix()
         except ValueError:
             relative_path = str(file_path)
 

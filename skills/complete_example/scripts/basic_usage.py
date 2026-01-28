@@ -33,7 +33,7 @@ def main():
         options={
             "content_density": "moderate",
             "output_mode": "preview",
-            "target_files": ["extraTex/1.2.内容目标问题.tex"]
+            "target_files": ["extraTex/2.1.研究内容.tex"]
         }
     )
 

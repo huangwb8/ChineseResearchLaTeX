@@ -1,6 +1,6 @@
 skill_info:
   name: complete_example
-  version: 1.4.0
+  version: 1.4.1
   description: AI 增强版 LaTeX 示例智能生成器（项目级隐藏目录存储）
   author: "ChineseResearchLaTeX Project"
   category: writing

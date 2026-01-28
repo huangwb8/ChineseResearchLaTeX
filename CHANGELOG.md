@@ -40,6 +40,14 @@
 
 ### Changed（变更）
 
+- **complete_example v1.4.0 → v1.4.1**：路径解析与编译验证加固（更少污染、更可复现）
+  - `skill_controller.py`：`project_name` 支持“项目名/项目路径”两种输入；新增 projects/ 边界校验，拦截路径穿越；缺失 `main.tex` 时明确报错
+  - `skill_controller.py`：默认 `target_files` 改为自动扫描 `extraTex/*.tex`（排除 `@config.tex`），避免模板文件名变更导致示例/默认流程失效
+  - `format_guard.py`：编译产物写入 `run_dir/_latex_build/`（使用 `-output-directory`），降低对项目根目录的污染；批量 apply 后统一编译验证，失败自动回滚
+  - `format_guard.py`：bibtex 运行优先使用相对路径参数，规避 TeX 安全策略对绝对路径输出的限制
+  - `security_manager.py`：读取 `config.yaml:security.*` 覆盖默认黑白名单；统一使用 posix 路径匹配；忽略注释行的格式注入误报
+  - `basic_usage.py` / `advanced_usage.py` / `SKILL.md`：更新示例 `target_files` 默认示例路径
+
 - **complete_example v1.3.0 → v1.4.0**：中间文件存储机制重构（项目级隐藏目录）
   - **项目隔离**：所有中间文件存储在目标项目的 `.complete_example` 隐藏目录中
   - **硬编码保证**：通过硬编码方式确保所有运行时文件（备份、日志、分析结果等）都存放在项目级目录

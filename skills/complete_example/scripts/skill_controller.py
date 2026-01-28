@@ -5,9 +5,10 @@ AI 增强版示例生成器主控制器
 
 import uuid
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple
 import dataclasses
 
 
@@ -71,12 +72,29 @@ class CompleteExampleSkill:
 
     def _create_run_directory(self, project_path: Path) -> Path:
         """🆕 创建新的运行目录（在目标项目的隐藏目录中）"""
-        # 🆕 使用项目级隐藏目录
-        runs_root = project_path / ".complete_example"
+        run_mgmt = self.config.get("run_management", {}) or {}
+        runs_root_tmpl = str(run_mgmt.get("runs_root", "{project_path}/.complete_example"))
+        runs_root_str = (
+            runs_root_tmpl
+            .replace("{project_path}", str(project_path))
+        )
+        runs_root = Path(runs_root_str)
         runs_root.mkdir(parents=True, exist_ok=True)
 
         # 生成唯一运行 ID
-        run_id = f"v{datetime.now().strftime('%Y%m%d%H%M')}_{uuid.uuid4().hex[:8]}"
+        run_id_strategy = str(run_mgmt.get("run_id_strategy", "timestamp_uuid"))
+        timestamp = datetime.now().strftime("%Y%m%d%H%M")
+        if run_id_strategy == "sequential":
+            counter_file = runs_root / "_run_counter.txt"
+            try:
+                counter = int(counter_file.read_text(encoding="utf-8").strip() or "0") + 1
+            except Exception:
+                counter = 1
+            counter_file.write_text(str(counter), encoding="utf-8")
+            run_id = f"v{timestamp}_{counter:04d}"
+        else:
+            # 默认：timestamp + uuid(8)（与文档 v{timestamp}_{hash} 形式兼容）
+            run_id = f"v{timestamp}_{uuid.uuid4().hex[:8]}"
         run_dir = runs_root / run_id
 
         # 创建子目录
@@ -111,6 +129,55 @@ class CompleteExampleSkill:
 
         return run_dir
 
+    def _resolve_project_path(self, project_name: str) -> Tuple[Path, str]:
+        """
+        解析项目路径：
+        - 允许传入项目名（默认在 projects/ 下）
+        - 允许传入绝对/相对路径（指向项目根目录）
+        """
+        raw = str(project_name).strip()
+        if not raw:
+            raise ValueError("project_name 不能为空")
+
+        p = Path(raw).expanduser()
+        projects_root = Path("projects").resolve()
+
+        if p.exists():
+            project_path = p
+            project_label = raw
+        else:
+            project_path = Path("projects") / raw
+            project_label = raw
+
+        project_path = project_path.resolve()
+        if not project_path.exists():
+            raise FileNotFoundError(f"未找到项目目录：{project_path}")
+        if not project_path.is_dir():
+            raise ValueError(f"项目路径不是目录：{project_path}")
+
+        # 若使用 projects/<name> 模式，拒绝路径穿越到 projects/ 之外
+        if str(raw) == raw and not Path(raw).is_absolute() and not Path(raw).exists():
+            if projects_root not in project_path.parents and project_path != projects_root:
+                raise ValueError(f"非法项目名（路径穿越）：{raw}")
+
+        if not (project_path / "main.tex").exists():
+            raise FileNotFoundError(f"项目缺少 main.tex：{project_path}")
+
+        return project_path, project_label
+
+    def _auto_detect_target_files(self, project_path: Path) -> List[str]:
+        """自动检测需要生成内容的目标文件（默认：extraTex/*.tex，排除 @config.tex）。"""
+        extra_dir = project_path / "extraTex"
+        if not extra_dir.exists():
+            return []
+
+        files = []
+        for p in sorted(extra_dir.glob("*.tex")):
+            if p.name in {"@config.tex"}:
+                continue
+            files.append(f"extraTex/{p.name}")
+        return files
+
     def execute(self, project_name: str, options: Dict[str, Any]) -> Dict[str, Any]:
         """
         执行完整的示例生成流程
@@ -120,7 +187,7 @@ class CompleteExampleSkill:
             options: 选项 {
                 content_density: "minimal" | "moderate" | "comprehensive",
                 output_mode: "preview" | "apply" | "report",
-                target_files: ["1.2.内容目标问题.tex", ...],
+                target_files: ["extraTex/2.1.研究内容.tex", ...],
                 narrative_hint: "用户自定义的叙事提示（可选）"
             }
 
@@ -129,14 +196,14 @@ class CompleteExampleSkill:
         """
 
         # ========== 阶段 0：初始化 ==========
-        # 假设项目在 projects/ 目录下
-        project_path = Path("projects") / project_name
+        # 允许 project_name 为项目名或项目路径，并拦截路径穿越
+        project_path, project_label = self._resolve_project_path(project_name)
 
         # 🆕 创建运行目录（所有输出都放在项目的 .complete_example 隐藏目录中）
         run_dir = self._create_run_directory(project_path)
 
         report = {
-            "project": project_name,
+            "project": project_label,
             "run_id": run_dir.name,  # 🆕 记录运行 ID
             "run_dir": str(run_dir),  # 🆕 记录运行目录
             "project_path": str(project_path),  # 🆕 记录项目路径
@@ -224,13 +291,25 @@ class CompleteExampleSkill:
         analyzer = SemanticAnalyzer(self.llm_client, prompts=self.config.get("prompts", {}))
         themes = {}
 
-        # 默认目标文件
-        if target_files is None:
-            target_files = [
-                "extraTex/1.2.内容目标问题.tex",
-                "extraTex/1.4.特色与创新.tex",
-                "extraTex/1.5.研究计划.tex"
-            ]
+        # 默认目标文件：自动检测 extraTex/*.tex（排除 @config.tex）
+        if not target_files:
+            target_files = self._auto_detect_target_files(project_path)
+        if not target_files:
+            raise FileNotFoundError(f"未找到可生成内容的目标文件（{project_path}/extraTex/*.tex）")
+
+        # 允许传入绝对路径，但必须在 project_path 内
+        normalized_targets: List[str] = []
+        for fp in target_files:
+            p = Path(str(fp)).expanduser()
+            if p.is_absolute():
+                try:
+                    rel = p.resolve().relative_to(project_path.resolve()).as_posix()
+                except Exception:
+                    raise ValueError(f"target_files 包含项目外路径：{p}")
+                normalized_targets.append(rel)
+            else:
+                normalized_targets.append(p.as_posix())
+        target_files = normalized_targets
 
         for file_path in target_files:
             full_path = project_path / file_path
@@ -327,7 +406,7 @@ class CompleteExampleSkill:
         generator = AIContentGenerator(
             self.llm_client,
             self.templates,
-            FormatGuard(project_path, run_dir),
+            FormatGuard(project_path, run_dir, config=self.config),
             config=self.config,
         )
 
@@ -372,24 +451,39 @@ class CompleteExampleSkill:
         """阶段 4：应用变更"""
         from .format_guard import FormatGuard
 
-        guard = FormatGuard(project_path, run_dir)
-        results = {}
+        guard = FormatGuard(project_path, run_dir, config=self.config)
+        results: Dict[str, Any] = {}
+        backups: Dict[str, str] = {}
 
         for file_path, content_data in contents.items():
             try:
                 full_path = project_path / file_path
-                success = guard.safe_modify_file(
+                backup_path = guard.safe_modify_file(
                     file_path=full_path,
                     new_content=content_data["new_content"],
-                    ai_explanation=f"根据主题 '{content_data['theme'].theme}' 生成示例内容"
+                    ai_explanation=f"根据主题 '{content_data['theme'].theme}' 生成示例内容",
+                    compile_verify=False,  # 批量修改后统一编译验证，避免 N 次重复编译
                 )
-                results[file_path] = {"status": "applied" if success else "failed"}
+                backups[file_path] = str(backup_path) if backup_path else ""
+                results[file_path] = {"status": "applied"}
             except Exception as e:
                 results[file_path] = {"status": "failed", "error": str(e)}
 
+        # 批量编译验证：失败则回滚所有本轮已应用的文件
+        if any(r.get("status") == "applied" for r in results.values()):
+            if not guard.compile_verify_project():
+                for fp, bp in backups.items():
+                    try:
+                        if bp:
+                            shutil.copy(bp, project_path / fp)
+                            results[fp] = {"status": "rolled_back", "error": "编译失败，已回滚"}
+                    except Exception as e:
+                        results[fp] = {"status": "rollback_failed", "error": f"编译失败且回滚失败：{e}"}
+
         return {
             "status": "completed",
-            "results": results
+            "results": results,
+            "backups": backups,
         }
 
     def _stage_evaluate_quality(self, contents: Dict) -> Dict:

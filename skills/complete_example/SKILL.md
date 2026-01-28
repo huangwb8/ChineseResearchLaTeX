@@ -71,7 +71,7 @@ config: skills/complete_example/config.yaml
 |------|------|--------|------|
 | `--content-density` | string | `moderate` | 内容密度：`minimal`(2资源/200字) / `moderate`(4资源/300字) / `comprehensive`(6资源/500字) |
 | `--output-mode` | string | `preview` | 输出模式：`preview`(预览) / `apply`(应用) / `report`(报告) |
-| `--target-files` | array | `null` | 目标文件列表（如 `["extraTex/1.2.内容目标问题.tex"]`），null 表示自动检测 |
+| `--target-files` | array | `null` | 目标文件列表（如 `["extraTex/2.1.研究内容.tex"]`），null 表示自动检测 |
 | `--narrative-hint` | string | `null` | 用户自定义叙事提示，指导 AI 生成特定风格的示例内容 |
 
 ### 使用示例

@@ -11,7 +11,7 @@ import subprocess
 import json
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 
 
@@ -59,17 +59,12 @@ class FormatGuard:
         r'\\renewcommand\{[^}]+\}',                  # 重定义命令
     ]
 
-    # 受保护的文件（绝对不修改）
-    PROTECTED_FILES = [
-        "extraTex/@config.tex",
-        "main.tex",
-    ]
-
     def __init__(
         self,
         project_path: Path,
         run_dir: Path = None,
-        enable_security_manager: bool = True
+        enable_security_manager: bool = True,
+        config: Optional[Dict[str, Any]] = None,
     ):
         """
         Args:
@@ -79,6 +74,15 @@ class FormatGuard:
         """
         self.project_path = Path(project_path)
         self.run_dir = Path(run_dir) if run_dir else self.project_path
+        self.config = config or {}
+
+        fp_cfg = (self.config.get("format_protection") or {})
+        self.protected_files = list(fp_cfg.get("protected_files") or ["extraTex/@config.tex", "main.tex"])
+        self.compile_verify_cfg = (fp_cfg.get("compile_verify") or {})
+        self.compile_verify_enabled = bool(self.compile_verify_cfg.get("enabled", True))
+        self.compile_engine = str(self.compile_verify_cfg.get("engine", "xelatex"))
+        self.compile_timeout_sec = int(self.compile_verify_cfg.get("timeout", 60))
+
         self.format_hashes = self._compute_format_hashes()
 
         # 🔒 集成安全管理器
@@ -86,7 +90,8 @@ class FormatGuard:
         if enable_security_manager and SECURITY_MANAGER_AVAILABLE:
             self.security_manager = SecurityManager(
                 project_path=self.project_path,
-                hash_file=self.project_path / ".format_hashes.json"
+                hash_file=self.project_path / ".format_hashes.json",
+                config=self.config,
             )
             # 初始化哈希（如果不存在）
             if not self.security_manager.hash_file.exists():
@@ -95,7 +100,7 @@ class FormatGuard:
     def _compute_format_hashes(self) -> Dict[str, str]:
         """计算关键格式文件的哈希值"""
         hashes = {}
-        for file_path in self.PROTECTED_FILES:
+        for file_path in self.protected_files:
             full_path = self.project_path / file_path
             if full_path.exists():
                 content = full_path.read_text(encoding="utf-8")
@@ -168,8 +173,9 @@ class FormatGuard:
         file_path: Path,
         new_content: str,
         ai_explanation: str = None,
-        auto_sanitize: bool = True
-    ) -> bool:
+        auto_sanitize: bool = True,
+        compile_verify: Optional[bool] = None,
+    ) -> Optional[Path]:
         """
         🤝 协作点：AI 建议修改 + 硬编码安全检查
         🔒 集成安全管理器进行预检查
@@ -181,7 +187,7 @@ class FormatGuard:
             auto_sanitize: 是否自动清理格式注入
 
         Returns:
-            bool: 是否成功修改
+            Optional[Path]: 备份文件路径；失败时抛异常
 
         Raises:
             FormatProtectionError: 格式保护失败
@@ -206,13 +212,13 @@ class FormatGuard:
                 file_path, new_content, auto_sanitize
             )
 
-        # 检查是否为受保护文件（兼容旧逻辑）
+        # 检查是否为受保护文件（受 config.yaml 控制）
         try:
-            relative_path = str(file_path.relative_to(self.project_path))
+            relative_path = file_path.resolve().relative_to(self.project_path.resolve()).as_posix()
         except ValueError:
             relative_path = str(file_path)
 
-        if relative_path in self.PROTECTED_FILES:
+        if relative_path in self.protected_files:
             raise FormatProtectionError(
                 f"拒绝修改受保护文件：{relative_path}\n"
                 f"AI 解释：{ai_explanation or '未提供'}"
@@ -258,8 +264,9 @@ class FormatGuard:
         # ========== 阶段 3：硬编码 - 应用修改 ==========
         file_path.write_text(new_content, encoding="utf-8")
 
-        # ========== 阶段 4：硬编码 - 编译验证 ==========
-        if not self._compile_verify(file_path):
+        # ========== 阶段 4：硬编码 - 编译验证（可按批次外部统一执行） ==========
+        do_compile = self.compile_verify_enabled if compile_verify is None else bool(compile_verify)
+        if do_compile and not self.compile_verify_project():
             shutil.copy(backup_path, file_path)
             raise CompilationError(
                 "编译失败，已回滚\n"
@@ -272,7 +279,7 @@ class FormatGuard:
             file_path, backup_path, ai_explanation
         )
 
-        return True
+        return backup_path
 
     def _ai_diagnose_format_loss(
         self,
@@ -295,41 +302,98 @@ class FormatGuard:
         # 实际版本可以让 AI 分析上下文并智能插入
         return new_content  # 不做修改，让外部处理
 
-    def _compile_verify(self, modified_file: Path = None) -> bool:
-        """硬编码：编译验证"""
-        # 执行 xelatex 编译
+    def compile_verify_project(self) -> bool:
+        """
+        硬编码：项目级编译验证（尽量避免污染项目根目录）。
+
+        说明：
+        - 使用 `-output-directory` 将 aux/pdf 等产物写入本次 run_dir 的构建目录；
+          项目根目录仍作为 cwd，保证相对路径（extraTex/、figures/、references/）可解析。
+        - 按仓库约定执行 4 步：xelatex → bibtex → xelatex → xelatex（如检测到 bibtex 需求）。
+        """
+        if not self.compile_verify_enabled:
+            return True
+
         project_root = self.project_path
         main_tex = project_root / "main.tex"
+        if not main_tex.exists():
+            return False
 
-        # 保存编译日志
+        build_dir = self.run_dir / "_latex_build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+
         log_file = self.run_dir / "logs" / "compile.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)
 
-        try:
-            result = subprocess.run(
-                ["xelatex", "-interaction=nonstopmode", "main.tex"],
-                cwd=project_root,
-                capture_output=True,
-                timeout=60,
-                text=True
-            )
-
-            # 保存日志
-            with open(log_file, 'w', encoding='utf-8') as f:
-                f.write(result.stdout)
+        def _append_log(title: str, result: subprocess.CompletedProcess[str]):
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(f"\n\n===== {title} =====\n")
+                f.write(result.stdout or "")
                 f.write("\n\n=== STDERR ===\n")
-                f.write(result.stderr)
+                f.write(result.stderr or "")
 
-            return result.returncode == 0
+        def _run(cmd: List[str], title: str) -> bool:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    cwd=project_root,
+                    capture_output=True,
+                    timeout=self.compile_timeout_sec,
+                    text=True,
+                )
+                _append_log(title, result)
+                return result.returncode == 0
+            except subprocess.TimeoutExpired:
+                with open(log_file, "a", encoding="utf-8") as f:
+                    f.write(f"\n\n===== {title} =====\n编译超时（{self.compile_timeout_sec}秒）\n")
+                return False
+            except Exception as e:
+                with open(log_file, "a", encoding="utf-8") as f:
+                    f.write(f"\n\n===== {title} =====\n编译异常：{e}\n")
+                return False
 
-        except subprocess.TimeoutExpired:
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write("\n\n编译超时（60秒）")
+        # 清空旧日志，避免混淆
+        log_file.write_text("", encoding="utf-8")
+
+        engine = self.compile_engine
+        # 1) xelatex
+        if not _run([engine, "-interaction=nonstopmode", f"-output-directory={build_dir}", "main.tex"], f"{engine} #1"):
             return False
-        except Exception as e:
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write(f"\n\n编译异常：{e}")
+
+        # 2) bibtex（仅在 aux 声明了 bibdata 时运行）
+        aux_file = build_dir / "main.aux"
+        need_bibtex = False
+        if aux_file.exists():
+            try:
+                aux_text = aux_file.read_text(encoding="utf-8", errors="ignore")
+                need_bibtex = "\\bibdata" in aux_text
+            except Exception:
+                need_bibtex = False
+
+        if need_bibtex:
+            # bibtex 需要从项目根目录解析 references/*.bib 的相对路径：
+            # 优先使用“相对路径”参数，避免 TeX 安全策略（openout_any）阻止写入绝对路径 *.blg/*.bbl。
+            try:
+                bibtex_target = (build_dir / "main").resolve().relative_to(project_root.resolve()).as_posix()
+            except Exception:
+                bibtex_target = None
+
+            if bibtex_target:
+                if not _run(["bibtex", bibtex_target], "bibtex"):
+                    return False
+            else:
+                with open(log_file, "a", encoding="utf-8") as f:
+                    f.write("\n\n===== bibtex =====\n跳过：build_dir 不在项目目录内，无法安全运行 bibtex。\n")
+
+        # 3) xelatex
+        if not _run([engine, "-interaction=nonstopmode", f"-output-directory={build_dir}", "main.tex"], f"{engine} #2"):
             return False
+
+        # 4) xelatex
+        if not _run([engine, "-interaction=nonstopmode", f"-output-directory={build_dir}", "main.tex"], f"{engine} #3"):
+            return False
+
+        return True
 
     def _log_modification(
         self,

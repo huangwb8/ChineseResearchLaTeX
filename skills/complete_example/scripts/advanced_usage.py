@@ -121,7 +121,7 @@ def example_apply_mode():
         options={
             "content_density": "moderate",
             "output_mode": "apply",  # 注意：这会直接修改文件！
-            "target_files": ["extraTex/1.2.内容目标问题.tex"],
+            "target_files": ["extraTex/2.1.研究内容.tex"],
             "narrative_hint": "生成一个示例段落"
         }
     )
