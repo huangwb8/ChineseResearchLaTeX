@@ -112,6 +112,9 @@
 % 正文段首缩进：仅在 extraTex 正文中启用，避免与 main.tex 的提示语缩进叠加
 \newcommand{\NSFCBodyText}{%
   \setlength{\parindent}{2em}%
+  % 正文段间距：用户常希望“段间距和行间距一样紧凑”，因此在正文区块内关闭段后距
+  % （不影响 main.tex 提示语区域的 Word 风格段后距设置）。
+  \setlength{\parskip}{0pt}%
 }
 
 

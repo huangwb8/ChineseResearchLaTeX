@@ -40,6 +40,8 @@
 
 ### Changed（变更）
 
+- **NSFC_General / NSFC_Young / NSFC_Local**：正文 `extraTex` 段间距改为紧凑模式（在 `\\NSFCBodyText` 中将 `\\parskip` 设为 `0pt`），使段间距与行间距观感一致：`projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`
+- **NSFC_Young / NSFC_Local**：示例图片不再使用子图并排，改为两张图分开展示，便于审阅与排版微调：`projects/NSFC_Young/extraTex/2.1.研究内容.tex`、`projects/NSFC_Local/extraTex/1.3.方案及可行性.tex`
 - **transfer_old_latex_to_new**：核心模块迁移到 `scripts/core/` 并统一导入路径；文档从 `docs/` 归档到 `references/`，同步修复引用链接；清理已跟踪的 `__pycache__` 缓存目录。
 - **transfer_old_latex_to_new**：资源处理支持 `figure_handling=link/skip`，并补齐超出项目根目录资源的扫描提示。
 - **transfer_old_latex_to_new v1.4.1**：资源扫描支持 `exclude_dirs` 与无扩展名图片解析；`\\import/\\includefrom` 路径解析更完整；`\\cite*` 家族引用提取更全面；`link` 策略下避免覆盖已有非软链接文件。

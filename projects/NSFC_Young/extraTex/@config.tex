@@ -109,6 +109,8 @@
 % 正文段首缩进：仅在 extraTex 正文中启用，避免与 main.tex 的 \hspace*{2em}/\linebreak{} 叠加
 \newcommand{\NSFCBodyText}{%
   \setlength{\parindent}{2em}%
+  % 正文段间距：让段间距与行间距观感一致（紧凑），因此在正文区块内关闭段后距。
+  \setlength{\parskip}{0pt}%
 }
 
 
