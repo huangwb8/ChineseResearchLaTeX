@@ -341,7 +341,8 @@
 \makeatletter
 \renewenvironment{thebibliography}[1]{%
   \par\addvspace{\NSFCBibTitleAboveSkip}%
-  \noindent{\refname}\par%
+  % 参考文献标题外观保持与 release 一致（走 \section 的 MsBlue 配色），但不走 \section* 以避免 spacing 差异
+  \noindent{\color{MsBlue}\refname}\par%
   \vspace{\NSFCBibTitleBelowSkip}%
   \frenchspacing%
   \list{\@biblabel{\@arabic\c@enumiv}}{%

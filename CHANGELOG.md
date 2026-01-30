@@ -55,6 +55,7 @@
 
 ### Fixed（修复）
 
+- **NSFC_General / NSFC_Young / NSFC_Local**：修复“参考文献”标题配色与最新 Release 不一致的问题：在自定义 `thebibliography` 标题渲染中补回 `MsBlue`，保持现有参考文献间距/行宽/条目样式不变：`projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`
 - **transfer_old_latex_to_new**：CacheManager 对不可 JSON 序列化的结果不再抛异常，仅落 L1 缓存。
 - **transfer_old_latex_to_new**：资源扫描与复制增加路径越界保护，避免不受控写入与异常。
 - **transfer_old_latex_to_new**：批量 AI 响应解析不完整时自动回退，避免静默丢失结果。
