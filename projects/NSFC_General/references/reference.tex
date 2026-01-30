@@ -2,11 +2,16 @@
 % 对作者个数作了限制以适合申请书
 % 当作者个数小于等于5个时，予以全部保留，当作者个数大于5个时，只保留3个，加et al
 
-\vspace{15pt} % 标题与上文的间距（增大以更明显）
+% 间距调节（与 Local/Young 完全一致）：
+% - 标题与上文：\NSFCBibTitleAboveSkip（在 extraTex/@config.tex 中设置）
+% - 标题与条目：\NSFCBibTitleBelowSkip（在 extraTex/@config.tex 中设置）
+% - 条目间距：\NSFCBibItemSep（在 extraTex/@config.tex 中设置）
+% - 条目行宽：\NSFCBibTextWidth（在 extraTex/@config.tex 中设置；用于跨项目消除换行差异）
+% - 样式/数据库：\NSFCBibStyle / \NSFCBibDatabase（在 extraTex/@config.tex 中设置）
 \begingroup
-\setstretch{0.8} % 行距调整为0.8（避免太紧凑）
-\xiaowuhao
-\bibliographystyle{bibtex-style/gbt7714-nsfc}
-\bibliography{references/myexample.bib}
+\begin{spacing}{1}  % 行距（不等同于“条目间距”，条目间距请改 \NSFCBibItemSep）
+\wuhao
+\bibliographystyle{\NSFCBibStyle}
+\bibliography{\NSFCBibDatabase}
+\end{spacing}
 \endgroup
-\vspace{-5pt} % 减少标题后的额外间距
