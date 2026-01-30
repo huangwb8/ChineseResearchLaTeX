@@ -1,9 +1,15 @@
 % 参考文献
-% 间距调节（与 General/Young 完全一致）：
-% - 标题与上文：\NSFCBibTitleAboveSkip（在 extraTex/@config.tex 中设置）
-% - 标题与条目：\NSFCBibTitleBelowSkip（在 extraTex/@config.tex 中设置）
-% - 条目间距：\NSFCBibItemSep（在 extraTex/@config.tex 中设置）
-% - 条目行宽：\NSFCBibTextWidth（在 extraTex/@config.tex 中设置；用于跨项目消除换行差异）
+% 间距调节（本文件可选覆盖 extraTex/@config.tex 默认值）：
+% - 标题与上文：\NSFCBibTitleAboveSkip（默认 10pt）
+% - 标题与条目：\NSFCBibTitleBelowSkip（默认 0pt）
+% - 条目间距：\NSFCBibItemSep（默认 0pt）
+% - 条目行宽：\NSFCBibTextWidth（默认 397.16727pt）
+%
+% 用法示例（取消注释即可生效）：
+% \setlength{\NSFCBibTitleAboveSkip}{15pt}   % 增加标题上方间距
+% \setlength{\NSFCBibTitleBelowSkip}{5pt}    % 增加标题下方间距
+% \setlength{\NSFCBibItemSep}{3pt}           % 增加条目之间的间距
+% \setlength{\NSFCBibTextWidth}{380pt}       % 缩窄条目行宽
 \begin{spacing}{1}  % 行距（不等同于"条目间距"，条目间距请改 \NSFCBibItemSep）
 \wuhao
 \bibliographystyle{bibtex-style/gbt7714-nsfc}

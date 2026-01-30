@@ -174,13 +174,13 @@
 % - 条目间距：\NSFCBibItemSep（thebibliography 的 \itemsep）
 % - 条目行宽：\NSFCBibTextWidth（用于跨项目消除换行差异）
 %
-% 用法：直接改下面四个 length 的值即可（允许负值微调）。
+% 说明：本文件仅提供“基础默认值”；如需定制，推荐在 references/reference.tex 中用 \setlength 覆盖。
 \newlength{\NSFCBibTitleAboveSkip}
 \newlength{\NSFCBibTitleBelowSkip}
 \newlength{\NSFCBibItemSep}
 \newlength{\NSFCBibTextWidth}
-% 默认值：保持当前模板视觉效果（对应旧版 reference.tex 的 \vspace{1em}）
-\setlength{\NSFCBibTitleAboveSkip}{1em}
+% 基础默认值（可被 references/reference.tex 覆盖）
+\setlength{\NSFCBibTitleAboveSkip}{10pt}
 \setlength{\NSFCBibTitleBelowSkip}{0pt}
 \setlength{\NSFCBibItemSep}{0pt}
 \setlength{\NSFCBibTextWidth}{397.16727pt} % 推荐默认值：按 Young 的"参考文献条目有效行宽"对齐，用于降低跨项目换行差异；需要更宽/更窄可自行调整
