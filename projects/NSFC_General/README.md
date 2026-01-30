@@ -151,6 +151,30 @@ NSFC_General/
 | 行距增大 | `\fontsize{12pt}{24pt}` | 固定行距 24pt |
 
 > 提示：正文中如需“空白段落/留白占位”，优先使用 `\NSFCBlankPara`，不要依赖 `\parskip` + 空行来“碰运气”。
+>
+> 另：正文内容文件（`extraTex/*.tex`）建议在开头使用 `\justifying` + `\NSFCBodyText`，以启用“两端对齐 + 2em 段首缩进”，并避免正文段间距受其它区域影响。
+
+### 参考文献间距（标题/条目/行距）
+
+参考文献的间距分两层控制：
+
+1. **标题与上文/标题与条目/条目间距**：通过以下长度参数控制（默认值定义在 `extraTex/@config.tex`；推荐在 `references/reference.tex` 用 `\setlength` 覆盖）：
+   - `\NSFCBibTitleAboveSkip`：进入参考文献块前的额外垂直距离
+   - `\NSFCBibTitleBelowSkip`：标题后到第一条条目的额外距离
+   - `\NSFCBibItemSep`：条目之间的间距（`thebibliography` 的 `\itemsep`）
+   - （可选）`\NSFCBibTextWidth`：条目有效行宽（影响换行；用于跨项目对齐）
+
+   例：在 `references/reference.tex` 的 `\bibliographystyle/\bibliography` 之前加入：
+
+   ```latex
+   % references/reference.tex
+   \setlength{\NSFCBibTitleAboveSkip}{10pt}
+   \setlength{\NSFCBibTitleBelowSkip}{10pt}
+   \setlength{\NSFCBibItemSep}{2pt}
+   % \setlength{\NSFCBibTextWidth}{380pt} % 需要时再改（会影响换行）
+   ```
+
+2. **参考文献内部行距**：由 `references/reference.tex` 中的 `\begin{spacing}{...}` 控制；把 `1` 改为 `0.95/1.05` 等即可（这不是条目间距）。
 
 ### 标题间距
 
@@ -158,13 +182,16 @@ NSFC_General/
 
 ```latex
 % section 标题前后间距
-\titlespacing*{\section}{0pt}{0pt}{-7pt}
+\titlespacing*{\section}{0pt}{2pt plus 0pt minus 0pt}{2pt}
 
 % subsection 标题前后间距
-\titlespacing*{\subsection}{0pt}{0pt}{7.8pt}
+\titlespacing*{\subsection}{0pt}{0pt plus 0pt minus 0pt}{7.8pt}
 
 % subsubsection 标题前后间距
-\titlespacing*{\subsubsection}{0pt}{0pt}{0pt}
+\titlespacing*{\subsubsection}{0pt}{0pt plus 0pt minus 0pt}{0pt plus 0pt minus 0pt}
+
+% subsubsubsection 标题前后间距（第 4 层标题）
+\titlespacing*{\subsubsubsection}{0pt}{0pt plus 0pt minus 0pt}{0pt plus 0pt minus 0pt}
 ```
 
 **微调说明**：
@@ -175,12 +202,14 @@ NSFC_General/
 **示例**：
 
 ```latex
-% 让 section 标题前后更宽松
-\titlespacing*{\section}{0pt}{8pt}{4pt}
-
-% 让 subsection 标题后更紧凑
-\titlespacing*{\subsection}{0pt}{0pt}{-2pt}
+% 让 subsubsubsection 更“像小标题”，上下留白更多
+\titlespacing*{\subsubsubsection}{0pt}{4pt}{2pt}
 ```
+
+> 更低层级说明：
+> - 模板提供 `\subsubsubsection{...}` 作为第 4 层标题；
+> - 若你需要更低层级（“第 5 层”及以下），常见做法是使用 `\paragraph/\subparagraph` 并配合 `titlesec` 自定义 `\titleformat` + `\titlespacing*`；
+> - 模板也提供 `\ssssubtitle{1}` 这种“圈号小标题”作为行内标题，若要控制其上下间距，建议在使用处配合 `\vspace{...}` 或封装一个带 `\vspace` 的新命令来统一管理。
 
 ### 标题字体与大小
 

@@ -42,6 +42,7 @@
 
 - 调整 NSFC_General 模板的段后距与标题间距逻辑：移除全局 `\parskip=7.8pt`，改为 `\parskip=0pt` 并在 `\subsection` 的 `titlespacing` 中显式给出 7.8pt 的标题后间距，避免 `\NSFCBodyText` 改写 `\parskip` 导致 `\section`/`\subsection` 垂直间距前后不一致
 - 更新 NSFC_General 的样式微调文档：说明默认不使用 `\parskip`，并同步标题间距示例到最新配置
+- 更新三套 NSFC 正文项目的 README 间距调节指南：突出说明如何设置正文间距、参考文献间距，以及 `\subsubsubsection` 与更低层级标题的前后间距（并补齐 `projects/NSFC_Local/README.md`）
 - **NSFC_Local / NSFC_Young**：迁移 NSFC_General 的标题间距与参考文献兼容性优化：对齐 `titlesec` 的 `\titlespacing*{\section}`/`\titlespacing*{\subsection}`；引入 `etoolbox` 并新增 `\NSFCHasCite` 检测逻辑，为“无引用也可跑 bibtex / 可选隐藏空参考文献”提供基础：`projects/NSFC_Local/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`
 
 ### Changed（变更）
