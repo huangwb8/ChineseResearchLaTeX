@@ -132,14 +132,14 @@ NSFC_General/
 
 **当前设置**：
 - 固定行距：22pt
-- 段后间距：3pt（`\parskip`）
+- 段后间距：0pt（默认不使用 `\parskip`；避免与标题间距叠加导致不一致）
 
 **微调方法**：
 
 ```latex
-% 在 @config.tex 中修改（第 100-102 行）
-\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont\frenchspacing}  % 行距：第二参数
-\setlength{\parskip}{3pt}  % 段后间距
+% 在 @config.tex 中修改
+\AtBeginDocument{\fontsize{12pt}{22pt}\selectfont}  % 行距：第二参数
+\setlength{\parskip}{0pt}  % 段后间距（建议保持 0pt）
 ```
 
 **常见调整**：
@@ -150,16 +150,18 @@ NSFC_General/
 | 更宽松 | `\setlength{\parskip}{5pt}` 或 `{8pt}` | 段落间隙更大 |
 | 行距增大 | `\fontsize{12pt}{24pt}` | 固定行距 24pt |
 
+> 提示：正文中如需“空白段落/留白占位”，优先使用 `\NSFCBlankPara`，不要依赖 `\parskip` + 空行来“碰运气”。
+
 ### 标题间距
 
-**当前设置**（第 213-234 行）：
+**当前设置**（以 `extraTex/@config.tex` 为准）：
 
 ```latex
 % section 标题前后间距
-\titlespacing*{\section}{0pt}{0pt}{-4pt}
+\titlespacing*{\section}{0pt}{0pt}{-7pt}
 
 % subsection 标题前后间距
-\titlespacing*{\subsection}{0pt}{0pt}{0pt}
+\titlespacing*{\subsection}{0pt}{0pt}{7.8pt}
 
 % subsubsection 标题前后间距
 \titlespacing*{\subsubsection}{0pt}{0pt}{0pt}

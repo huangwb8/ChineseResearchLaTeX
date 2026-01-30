@@ -103,11 +103,11 @@
 \renewcommand{\baselinestretch}{1.0}
 \AtBeginDocument{\fontsize{12pt}{22pt}\selectfont}
 \setlength{\parindent}{0pt} % 保持模板：main.tex 中已有必要的手工缩进控制
-\setlength{\parskip}{7.8pt} % Word 模板“段后 7.8pt”
+\setlength{\parskip}{0pt} % LaTeX 默认：不使用段后距（避免与 titlesec 的标题间距叠加导致不一致）
 \XeTeXlinebreaklocale "zh" % 中文断行
 
-% Word 空白段落的“视觉高度”对齐：在已有 \parskip 的情况下补足到 1 行行距
-\newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
+% Word 空白段落的“视觉高度”对齐：显式补 1 行行距（避免依赖 \parskip）
+\newcommand{\NSFCBlankPara}{\vspace*{\baselineskip}}
 
 % 正文段首缩进：仅在 extraTex 正文中启用，避免与 main.tex 的提示语缩进叠加
 \newcommand{\NSFCBodyText}{%
@@ -166,53 +166,6 @@
   \def\linebreak{}%
 }
 
-%%%————————————————————————————————参考文献（兼容“xe->bib->xe->xe”）
-% 目标：
-% 1) 即使正文暂时没有任何 \cite，也能顺利执行 bibtex（不报“no \\bibdata/no \\bibstyle/no \\citation”）。
-% 2) 只有在正文实际使用了引用时，才在文末输出“参考文献”，避免空参考文献页影响版式对齐。
-\newif\ifNSFCHasCite
-\NSFCHasCitefalse
-\AtBeginDocument{%
-  \pretocmd{\cite}{\global\NSFCHasCitetrue}{}{}%
-  \pretocmd{\nocite}{\global\NSFCHasCitetrue}{}{}%
-}
-\makeatletter
-% 参考文献由 main.tex 中的 \input{references/reference.tex} 手动控制
-% \AtBeginDocument{%
-%   \immediate\write\@auxout{\string\bibdata{references/myexample}}%
-%   \immediate\write\@auxout{\string\bibstyle{bibtex-style/gbt7714-nsfc}}%
-% }
-% \AtEndDocument{%
-%   \ifNSFCHasCite
-%     \bibliographystyle{bibtex-style/gbt7714-nsfc}
-%     \bibliography{references/myexample}
-%   \else
-%     % 若当前文档未使用任何引用，为了让"xe->bib->xe->xe"流程不报错，
-%     % 这里写入一个"哑引用"到 aux（bibtex 能正常运行，但不会在 PDF 中输出参考文献）。
-%     \immediate\write\@auxout{\string\citation{Smith1900}}%
-%   \fi
-% }
-\makeatother
-
-%%%————————————————————————————————参考文献间距（可调，且不影响其它样式）
-% 间距调节（与 Local/Young 完全一致）：
-% - 标题与上文：\NSFCBibTitleAboveSkip（进入参考文献块前的额外垂直距离）
-% - 标题与条目：\NSFCBibTitleBelowSkip（在标题后额外增加/减少的垂直距离）
-% - 条目间距：\NSFCBibItemSep（thebibliography 的 \itemsep）
-% - 条目行宽：\NSFCBibTextWidth（用于跨项目消除换行差异）
-%
-% 说明：本文件仅提供“基础默认值”；如需定制，推荐在 references/reference.tex 中用 \setlength 覆盖。
-\newlength{\NSFCBibTitleAboveSkip}
-\newlength{\NSFCBibTitleBelowSkip}
-\newlength{\NSFCBibItemSep}
-\newlength{\NSFCBibTextWidth}
-% 基础默认值（可被 references/reference.tex 覆盖）
-\setlength{\NSFCBibTitleAboveSkip}{10pt}
-\setlength{\NSFCBibTitleBelowSkip}{0pt}
-\setlength{\NSFCBibItemSep}{0pt}
-\setlength{\NSFCBibTextWidth}{397.16727pt} % 按 Young 的"参考文献条目有效行宽"对齐，用于降低跨项目换行差异；需要更宽/更窄可自行调整
-% 说明：上述参数会在本文件末尾的 thebibliography 环境重定义中生效（仅影响参考文献块）。
-
 
 %%%————————————————————————————————标题计数
 
@@ -268,14 +221,14 @@
 % Define line stretch for section
 \titlespacing*{\section}
   {0pt} % Left indentation
-  {0pt plus 0pt minus 0pt} % Space before the title
-  {-7pt} % Space after the title（大幅减小与 subsection 的距离）
+  {2pt plus 0pt minus 0pt} % Space before the title
+  {2pt} % Space after the title（用于减小与 subsection 的距离；避免依赖 \parskip）
 
 % Define line stretch for subsection
 \titlespacing*{\subsection}
   {0pt} % Left indentation
-  {-8pt plus 0pt minus 0pt} % Space before the title（大幅减小与 section 的距离）
-  {0pt} % Space after the title（由 \parskip 控制段后）
+  {0pt plus 0pt minus 0pt} % Space before the title
+  {7.8pt} % Space after the title（模拟 Word“段后 7.8pt”，且不依赖全局 \parskip）
 
 % Define line stretch for subsubsection
 \titlespacing*{\subsubsection}
@@ -344,22 +297,37 @@
 \lstset{style=codestyle01}
 
 
-%%%————————————————————————————————其它设置
-
-
-\makeatletter	
-	\setlength{\@fptop}{0pt} % 图片置顶展示（而不是居中）
-  % \setlength{\textfloatsep}{1cm plus 1.0pt minus 2.0pt} % 浮动体（如figure）之间的垂直间距
-  \setlength{\intextsep}{0.5cm plus 1.0pt minus 2.0pt} % 浮动体（如figure）与文字的垂直间距
+%%%————————————————————————————————参考文献（兼容“xe->bib->xe->xe”）
+% 目标：
+% 1) 即使正文暂时没有任何 \cite，也能顺利执行 bibtex（不报“no \\bibdata/no \\bibstyle/no \\citation”）。
+% 2) 只有在正文实际使用了引用时，才在文末输出“参考文献”，避免空参考文献页影响版式对齐。
+\newif\ifNSFCHasCite
+\NSFCHasCitefalse
+\AtBeginDocument{%
+  \pretocmd{\cite}{\global\NSFCHasCitetrue}{}{}%
+  \pretocmd{\nocite}{\global\NSFCHasCitetrue}{}{}%
+}
+\makeatletter
+% 参考文献由 main.tex 中的 \input{references/reference.tex} 手动控制
 \makeatother
 
-% 去除页码
-\pagestyle{empty}
 
-% 汉字与标点的间距；
-% \punctstyle{banjiao} % 所有标点半角
-% \punctstyle{kaiming} % 部分的标点半角
-\punctstyle{hangmobanjiao} % 末半角式，仅行末挤压。
+
+% 说明：本文件仅提供“基础默认值”；如需定制，推荐在 references/reference.tex 中用 \setlength 覆盖。
+% - 标题与上文：\NSFCBibTitleAboveSkip（进入参考文献块前的额外垂直距离）
+% - 标题与条目：\NSFCBibTitleBelowSkip（在标题后额外增加/减少的垂直距离）
+% - 条目间距：\NSFCBibItemSep（thebibliography 的 \itemsep）
+% - 条目行宽：\NSFCBibTextWidth（用于跨项目消除换行差异）
+\newlength{\NSFCBibTitleAboveSkip}
+\newlength{\NSFCBibTitleBelowSkip}
+\newlength{\NSFCBibItemSep}
+\newlength{\NSFCBibTextWidth}
+% 基础默认值（可被 references/reference.tex 覆盖）
+\setlength{\NSFCBibTitleAboveSkip}{10pt}
+\setlength{\NSFCBibTitleBelowSkip}{10pt}
+\setlength{\NSFCBibItemSep}{0pt}
+\setlength{\NSFCBibTextWidth}{397.16727pt} % 按 Young 的"参考文献条目有效行宽"对齐，用于降低跨项目换行差异；需要更宽/更窄可自行调整
+% 说明：上述参数会在本文件末尾的 thebibliography 环境重定义中生效（仅影响参考文献块）。
 
 % 参考文献间距（可调）：标题与上文/标题与条目/条目间距（见上方 \NSFCBib* 三个参数）
 % 说明：不使用 \section*{\refname}（避免 titlesec 对 \section 的 spacing 差异影响参考文献），
@@ -397,6 +365,24 @@
 
 % 参考文献中的链接字体用的是texttt
 \renewcommand{\ttdefault}{tnr} % 设置默认等宽字体为 Times New Roman
+
+
+%%%————————————————————————————————其它设置
+
+
+\makeatletter	
+	\setlength{\@fptop}{0pt} % 图片置顶展示（而不是居中）
+  % \setlength{\textfloatsep}{1cm plus 1.0pt minus 2.0pt} % 浮动体（如figure）之间的垂直间距
+  \setlength{\intextsep}{0.5cm plus 1.0pt minus 2.0pt} % 浮动体（如figure）与文字的垂直间距
+\makeatother
+
+% 去除页码
+\pagestyle{empty}
+
+% 汉字与标点的间距；
+% \punctstyle{banjiao} % 所有标点半角
+% \punctstyle{kaiming} % 部分的标点半角
+\punctstyle{hangmobanjiao} % 末半角式，仅行末挤压。
 
 % 自定义第4级小标题
 % \newcommand{\ssssubtitle}[1]{\ding{\numexpr171+#1\relax}} % 类似①

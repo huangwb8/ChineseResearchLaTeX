@@ -40,6 +40,11 @@
 
 ### Changed（变更）
 
+- 调整 NSFC_General 模板的段后距与标题间距逻辑：移除全局 `\parskip=7.8pt`，改为 `\parskip=0pt` 并在 `\subsection` 的 `titlespacing` 中显式给出 7.8pt 的标题后间距，避免 `\NSFCBodyText` 改写 `\parskip` 导致 `\section`/`\subsection` 垂直间距前后不一致
+- 更新 NSFC_General 的样式微调文档：说明默认不使用 `\parskip`，并同步标题间距示例到最新配置
+
+### Changed（变更）
+
 - **NSFC_General / NSFC_Young / NSFC_Local**：优化参考文献配置的关注点分离，将 `\NSFCBibStyle` 与 `\NSFCBibDatabase` 定义从 `extraTex/@config.tex` 移至 `references/reference.tex`，使参考文献专用配置与通用样式配置解耦：`projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`、`projects/NSFC_General/references/reference.tex`、`projects/NSFC_Young/references/reference.tex`、`projects/NSFC_Local/references/reference.tex`
 - **NSFC_General / NSFC_Young / NSFC_Local**：正文 `extraTex` 段间距改为紧凑模式（在 `\\NSFCBodyText` 中将 `\\parskip` 设为 `0pt`），使段间距与行间距观感一致：`projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`
 - **NSFC_General / NSFC_Young / NSFC_Local**：参考文献样式新增可调参数并统一实现：标题与上文/标题与条目/条目间距（`\NSFCBibTitleAboveSkip/\NSFCBibTitleBelowSkip/\NSFCBibItemSep`）+ 参考文献条目行宽（`\NSFCBibTextWidth`，用于跨项目消除换行差异）；参考文献标题不再走 `\section*`（避免 titlesec 对 `\section` 的 spacing 差异影响参考文献），改为在 `thebibliography` 内部手工排版并显式设置 list 间距，确保"参考文献相关参数一致时"渲染效果一致：`projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`
