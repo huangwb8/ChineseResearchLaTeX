@@ -168,12 +168,13 @@
 }
 
 %%%————————————————————————————————参考文献间距（可调，且不影响其它样式）
-% 目标：用户可在不改动其它标题/列表样式的前提下，独立调节参考文献的三类间距：
-% 1) “参考文献”标题与上文的间隔（进入参考文献块前的额外垂直距离）
-% 2) “参考文献”标题与下面条目之间的间隔（在标题后额外增加/减少的垂直距离）
-% 3) 参考文献条目之间的间隔（thebibliography 的 \itemsep）
+% 间距调节（与 General/Young 完全一致）：
+% - 标题与上文：\NSFCBibTitleAboveSkip（进入参考文献块前的额外垂直距离）
+% - 标题与条目：\NSFCBibTitleBelowSkip（在标题后额外增加/减少的垂直距离）
+% - 条目间距：\NSFCBibItemSep（thebibliography 的 \itemsep）
+% - 条目行宽：\NSFCBibTextWidth（用于跨项目消除换行差异）
 %
-% 用法：直接改下面三个 length 的值即可（允许负值微调）。
+% 用法：直接改下面四个 length 的值即可（允许负值微调）。
 \newlength{\NSFCBibTitleAboveSkip}
 \newlength{\NSFCBibTitleBelowSkip}
 \newlength{\NSFCBibItemSep}
@@ -182,10 +183,8 @@
 \setlength{\NSFCBibTitleAboveSkip}{1em}
 \setlength{\NSFCBibTitleBelowSkip}{0pt}
 \setlength{\NSFCBibItemSep}{0pt}
-\setlength{\NSFCBibTextWidth}{\textwidth} % 默认不收缩（使用当前模板在参考文献处可用的最大行宽）；如需跨项目“像素级一致”，请手工设为同一固定值
-% 说明：上述三项参数会在本文件末尾的 thebibliography 环境重定义中生效（仅影响参考文献块）。
-\newcommand{\NSFCBibStyle}{bibtex-style/gbt7714-nsfc} % BibTeX 样式（参考文献专用）
-\newcommand{\NSFCBibDatabase}{references/myexample} % .bib 数据库路径（不写扩展名）
+\setlength{\NSFCBibTextWidth}{397.16727pt} % 推荐默认值：按 Young 的"参考文献条目有效行宽"对齐，用于降低跨项目换行差异；需要更宽/更窄可自行调整
+% 说明：上述参数会在本文件末尾的 thebibliography 环境重定义中生效（仅影响参考文献块）。
 
 
 %%%————————————————————————————————标题计数

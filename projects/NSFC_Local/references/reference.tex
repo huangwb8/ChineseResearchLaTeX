@@ -4,10 +4,9 @@
 % - 标题与条目：\NSFCBibTitleBelowSkip（在 extraTex/@config.tex 中设置）
 % - 条目间距：\NSFCBibItemSep（在 extraTex/@config.tex 中设置）
 % - 条目行宽：\NSFCBibTextWidth（在 extraTex/@config.tex 中设置；用于跨项目消除换行差异）
-% - 样式/数据库：\NSFCBibStyle / \NSFCBibDatabase（在 extraTex/@config.tex 中设置）
-\begin{spacing}{1}  % 行距（不等同于“条目间距”，条目间距请改 \NSFCBibItemSep）
+\begin{spacing}{1}  % 行距（不等同于"条目间距"，条目间距请改 \NSFCBibItemSep）
 \wuhao
-\bibliographystyle{\NSFCBibStyle}
-\bibliography{\NSFCBibDatabase}
+\bibliographystyle{bibtex-style/gbt7714-nsfc}
+\bibliography{references/myexample}
 \end{spacing}
 \newpage
