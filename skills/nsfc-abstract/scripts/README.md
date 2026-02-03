@@ -12,6 +12,9 @@
 python3 skills/nsfc-abstract/scripts/validate_abstract.py path/to/output.txt
 python3 skills/nsfc-abstract/scripts/validate_abstract.py path/to/output.txt --strict
 cat path/to/output.txt | python3 skills/nsfc-abstract/scripts/validate_abstract.py -
+
+# JSON（机器可读）+ diff（超出字符数）
+python3 skills/nsfc-abstract/scripts/validate_abstract.py path/to/output.txt --json --diff
 ```
 
 ### 退出码
@@ -30,6 +33,12 @@ cat path/to/output.txt | python3 skills/nsfc-abstract/scripts/validate_abstract.
 python3 skills/nsfc-abstract/scripts/write_abstracts_md.py your_output.txt
 python3 skills/nsfc-abstract/scripts/write_abstracts_md.py your_output.txt --strict
 cat your_output.txt | python3 skills/nsfc-abstract/scripts/write_abstracts_md.py -
+
+# auto-compress（占位：当前版本不自动压缩，超限则提示并返回 1）
+python3 skills/nsfc-abstract/scripts/write_abstracts_md.py your_output.txt --auto-compress
+
+# JSON 报告（stdout 仅打印 JSON；写入路径输出到 stderr）
+python3 skills/nsfc-abstract/scripts/write_abstracts_md.py your_output.txt --json
 ```
 
 ### 退出码

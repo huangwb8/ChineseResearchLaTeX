@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-abstract
-  version: 0.1.1
+  version: 0.2.0
   description: NSFC 标书中英文摘要生成（英文为中文的忠实翻译）与长度校验
   category: writing
 

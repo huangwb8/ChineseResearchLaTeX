@@ -10,6 +10,7 @@ Expected input contains:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -75,7 +76,17 @@ def _load_limits_from_config(skill_root: Path) -> tuple[int, int, str, str, str,
     """
     config_path = skill_root / "config.yaml"
     if not config_path.exists():
-        return 400, 4000, "[ZH]", "[/ZH]", "[EN]", "[/EN]"
+        return (
+            400,
+            4000,
+            "[ZH]",
+            "[/ZH]",
+            "[EN]",
+            "[/EN]",
+            "# 中文摘要",
+            "# English Abstract",
+            "NSFC-ABSTRACTS.md",
+        )
 
     raw = config_path.read_text(encoding="utf-8")
 
@@ -129,6 +140,30 @@ def _load_limits_from_config(skill_root: Path) -> tuple[int, int, str, str, str,
     return zh_max, en_max, zh_begin, zh_end, en_begin, en_end, zh_heading, en_heading, out_name
 
 
+def _build_report(zh_raw: str, en_raw: str, *, zh_max: int, en_max: int) -> dict:
+    """
+    Build a machine-readable report.
+
+    Note: length counting collapses consecutive whitespace into a single space.
+    """
+    zh = _normalize_for_count(zh_raw)
+    en = _normalize_for_count(en_raw)
+
+    zh_len = len(zh)
+    en_len = len(en)
+    zh_exceeded = max(0, zh_len - zh_max)
+    en_exceeded = max(0, en_len - en_max)
+
+    return {
+        "zh": {"len": zh_len, "max": zh_max, "exceeded": zh_exceeded, "ok": zh_exceeded == 0},
+        "en": {"len": en_len, "max": en_max, "exceeded": en_exceeded, "ok": en_exceeded == 0},
+    }
+
+
+# Public alias for reuse by other scripts (write_abstracts_md.py).
+build_report = _build_report
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
@@ -146,6 +181,8 @@ def main(argv: list[str]) -> int:
     )
     ap.add_argument("file", help="包含 [ZH]/[EN] 分段标记的文本文件路径（或 - 表示 stdin）")
     ap.add_argument("--strict", action="store_true", help="超限则返回非 0")
+    ap.add_argument("--json", action="store_true", help="以 JSON 输出结果（机器可读；仅打印 JSON）")
+    ap.add_argument("--diff", action="store_true", help="输出超出字符数（exceeded= max(0, len-max)）")
     args = ap.parse_args(argv)
 
     skill_root = Path(__file__).resolve().parents[1]
@@ -189,23 +226,33 @@ def main(argv: list[str]) -> int:
             print(f"提示：本 skill 约定输出文件为工作目录下的 `{out_name}`（可用 write_abstracts_md.py 生成）。", file=sys.stderr)
             return 2
 
-    zh = _normalize_for_count(zh_raw)
-    en = _normalize_for_count(en_raw)
-
-    zh_len = len(zh)
-    en_len = len(en)
     zh_raw_len = len(zh_raw)
     en_raw_len = len(en_raw)
 
-    zh_ok = zh_len <= zh_max
-    en_ok = en_len <= en_max
+    report = _build_report(zh_raw, en_raw, zh_max=zh_max, en_max=en_max)
+    zh_ok = bool(report["zh"]["ok"])
+    en_ok = bool(report["en"]["ok"])
+
+    if args.json:
+        # Keep stdout strictly machine-readable.
+        sys.stdout.write(json.dumps(report, ensure_ascii=False))
+        sys.stdout.write("\n")
+        if args.strict and (not zh_ok or not en_ok):
+            return 1
+        return 0
 
     print("Length Check (whitespace-collapsed)")
     print(f"- Limits: ZH<= {zh_max}, EN<= {en_max}")
     print(f"- Markers: ZH {zh_begin}..{zh_end}; EN {en_begin}..{en_end}")
     print(f"- Headings: ZH {zh_heading}; EN {en_heading}")
-    print(f"- ZH: {zh_len}/{zh_max} ({'OK' if zh_ok else 'EXCEEDED'}) [raw={zh_raw_len}]")
-    print(f"- EN: {en_len}/{en_max} ({'OK' if en_ok else 'EXCEEDED'}) [raw={en_raw_len}]")
+    print(
+        f"- ZH: {report['zh']['len']}/{zh_max} ({'OK' if zh_ok else 'EXCEEDED'}) [raw={zh_raw_len}]"
+        + (f" [exceeded={report['zh']['exceeded']}]" if args.diff else "")
+    )
+    print(
+        f"- EN: {report['en']['len']}/{en_max} ({'OK' if en_ok else 'EXCEEDED'}) [raw={en_raw_len}]"
+        + (f" [exceeded={report['en']['exceeded']}]" if args.diff else "")
+    )
 
     if args.strict and (not zh_ok or not en_ok):
         return 1

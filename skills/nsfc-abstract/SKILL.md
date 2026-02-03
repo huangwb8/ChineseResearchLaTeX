@@ -68,7 +68,7 @@ config: skills/nsfc-abstract/config.yaml
 # English Abstract
 (translation)
 
-长度自检：
+## 长度自检
 - 中文摘要字符数：N/400
 - 英文摘要字符数：M/4000
 ```
@@ -77,9 +77,29 @@ config: skills/nsfc-abstract/config.yaml
 - 写入的文件路径（默认 `./NSFC-ABSTRACTS.md`）
 - 中文/英文字符数与是否超限
 
+## 字数超限处理（闭环，最多 3 轮）
+
+当用户明确要求“中文≤400字符/英文≤4000字符”等硬约束时，必须走闭环：**先检测，再压缩，再检测，合格后再写入**。
+
+1) 先生成一个“可读但可能超限”的初稿（五句式要素齐全）。
+2) 用确定性脚本检测（必须用 `--json`，让硬编码负责精确计数）：
+   - `python3 skills/nsfc-abstract/scripts/validate_abstract.py - --json --diff --strict`
+   - 输入可通过 stdin（无需先写文件），或在写入 `NSFC-ABSTRACTS.md` 后对文件校验。
+3) 若超限：按“压缩优先级”执行压缩，再回到步骤 2，最多 3 轮。
+4) 连续 3 轮仍超限：停止自动压缩，向用户说明当前超限数（ZH/EN exceeded），并请用户选择：
+   - 允许删减某些信息（哪些可删）
+   - 放宽字数上限（修改 `config.yaml`）
+   - 人工给出更短的关键信息摘要（例如只保留最关键 1 条证据 + 3 点研究内容）
+
+### 压缩优先级（从上到下）
+
+- P0（必须保留）：研究对象/关键科学问题缺口/定量证据（若有）/核心方法名称/预期贡献闭环
+- P1（优先精简）：程度副词、形容词修饰、背景铺垫、“我们将/本研究”主语、过程性描述、“通过/采用”等介词短语、并列重复表达
+- P2（可删除）：空洞评价（无定量支撑的“显著/重要/领先”等）、重复句、与科学问题无关的背景
+
 如需确定性写入/校验，可使用脚本：
 - 写入：`python3 skills/nsfc-abstract/scripts/write_abstracts_md.py <input> --strict`
-- 校验：`python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --strict`
+- 校验：`python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --json --diff --strict`
 
 如用户要求写入 LaTeX，可在上述内容之外额外提供：
 - `\\begin{abstract}...\\end{abstract}`（仅包裹中文或按用户指定）

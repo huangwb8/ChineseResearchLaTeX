@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-03
+
+### Added
+
+- `validate_abstract.py`：新增 `--json`（机器可读输出）与 `--diff`（exceeded 差值）参数
+- `write_abstracts_md.py`：新增 `--json` 输出与 `--auto-compress` 占位参数（当前仅提示，不执行自动压缩）
+- `SKILL.md`：新增“字数超限处理（闭环，最多 3 轮）”章节，明确检测→压缩→再检测流程
+- 新增 repo 级回归脚本与 fixtures：`tests/字数压缩/test_workflow.sh`、`tests/字数压缩/fixtures/*`
+
+### Changed
+
+- `write_abstracts_md.py`：`--strict` 模式下若超限则**不写入**输出文件（与 README 约定一致）
+
+### Fixed
+
+- `validate_abstract.py`：当缺失 `config.yaml` 时，默认返回完整的 limits/markers/headings/output 配置（避免返回值数量不一致）
+
 ## [0.1.1] - 2026-02-03
 
 ### Added

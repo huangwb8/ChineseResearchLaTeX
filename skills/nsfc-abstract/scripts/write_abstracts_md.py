@@ -12,6 +12,7 @@ This script is intentionally stdlib-only (no PyYAML).
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -48,8 +49,14 @@ def _extract_block_by_headings(text: str, zh_heading: str, en_heading: str) -> O
         return None
 
     zh_lines = lines[zh_i + 1 : en_i]
-    en_lines = lines[en_i + 1 :]
     zh = "\n".join(zh_lines).strip()
+    # EN content ends at the next markdown heading (any level) if present,
+    # e.g. "## 长度自检" appended by this script itself.
+    en_lines = []
+    for line in lines[en_i + 1 :]:
+        if line.lstrip().startswith("#"):
+            break
+        en_lines.append(line)
     en = "\n".join(en_lines).strip()
     return zh, en
 
@@ -144,6 +151,12 @@ def main(argv: list[str]) -> int:
     ap.add_argument("input", help="包含摘要内容的输入文件路径（或 - 表示 stdin）")
     ap.add_argument("--out", default=None, help="输出 Markdown 文件名（默认取 config.yaml:output.filename）")
     ap.add_argument("--strict", action="store_true", help="超限则返回非 0")
+    ap.add_argument(
+        "--auto-compress",
+        action="store_true",
+        help="超限时自动压缩（占位：当前版本不执行压缩，仅提示并返回 1）",
+    )
+    ap.add_argument("--json", action="store_true", help="输出 JSON 报告（stdout 仅打印 JSON）")
     args = ap.parse_args(argv)
 
     skill_root = Path(__file__).resolve().parents[1]
@@ -167,25 +180,60 @@ def main(argv: list[str]) -> int:
     zh = zh_raw.strip()
     en = en_raw.strip()
 
-    zh_len = len(_normalize_for_count(zh))
-    en_len = len(_normalize_for_count(en))
+    # Reuse validator's counting semantics for consistency.
+    try:
+        import validate_abstract  # type: ignore
 
-    zh_ok = zh_len <= zh_max
-    en_ok = en_len <= en_max
+        report = validate_abstract.build_report(zh, en, zh_max=zh_max, en_max=en_max)
+    except Exception:
+        # Fallback: keep behavior even if import fails for any reason.
+        zh_len = len(_normalize_for_count(zh))
+        en_len = len(_normalize_for_count(en))
+        report = {
+            "zh": {"len": zh_len, "max": zh_max, "exceeded": max(0, zh_len - zh_max), "ok": zh_len <= zh_max},
+            "en": {"len": en_len, "max": en_max, "exceeded": max(0, en_len - en_max), "ok": en_len <= en_max},
+        }
+
+    zh_ok = bool(report["zh"]["ok"])
+    en_ok = bool(report["en"]["ok"])
 
     out_path = Path.cwd() / (args.out or default_out)
+    if (args.strict or args.auto_compress) and (not zh_ok or not en_ok):
+        # In strict mode, do not write an invalid output file.
+        mode = "strict" if args.strict else "auto-compress"
+        msg = (
+            f"[ERROR] 摘要超限（{mode} 模式不写入）：ZH {report['zh']['len']}/{zh_max}；EN {report['en']['len']}/{en_max}\n"
+            f"- exceeded: ZH {report['zh']['exceeded']}, EN {report['en']['exceeded']}\n"
+        )
+        sys.stderr.write(msg)
+        if args.auto_compress:
+            sys.stderr.write(
+                "\n[HINT] --auto-compress 当前为占位参数：不会自动压缩。\n"
+                "请按 SKILL.md 的“字数超限处理”策略手工压缩后重试。\n"
+            )
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 1
+
     out_text = (
         f"{zh_heading}\n\n{zh}\n\n"
         f"{en_heading}\n\n{en}\n\n"
         "## 长度自检\n"
-        f"- 中文摘要字符数：{zh_len}/{zh_max}\n"
-        f"- 英文摘要字符数：{en_len}/{en_max}\n"
+        f"- 中文摘要字符数：{report['zh']['len']}/{zh_max}\n"
+        f"- 英文摘要字符数：{report['en']['len']}/{en_max}\n"
     )
     out_path.write_text(out_text, encoding="utf-8")
 
-    print(f"[OK] Wrote: {out_path}")
-    print(f"- ZH: {zh_len}/{zh_max} ({'OK' if zh_ok else 'EXCEEDED'})")
-    print(f"- EN: {en_len}/{en_max} ({'OK' if en_ok else 'EXCEEDED'})")
+    if args.json:
+        # Keep stdout strictly machine-readable.
+        sys.stdout.write(json.dumps(report, ensure_ascii=False))
+        sys.stdout.write("\n")
+        print(f"[OK] Wrote: {out_path}", file=sys.stderr)
+    else:
+        print(f"[OK] Wrote: {out_path}")
+        print(f"- ZH: {report['zh']['len']}/{zh_max} ({'OK' if zh_ok else 'EXCEEDED'})")
+        print(f"- EN: {report['en']['len']}/{en_max} ({'OK' if en_ok else 'EXCEEDED'})")
 
     if args.strict and (not zh_ok or not en_ok):
         return 1

@@ -158,7 +158,7 @@
 # English Abstract
 (Translation, ≤4000 characters)
 
-长度自检：
+## 长度自检
 - 中文摘要字符数：N/400
 - 英文摘要字符数：M/4000
 ```
@@ -196,6 +196,9 @@ python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --st
 
 # 从管道读取
 cat NSFC-ABSTRACTS.md | python3 skills/nsfc-abstract/scripts/validate_abstract.py -
+
+# 机器可读 JSON 输出（包含 exceeded 差值）
+python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --json --diff
 ```
 
 ### 写入文件
@@ -209,6 +212,9 @@ python3 skills/nsfc-abstract/scripts/write_abstracts_md.py your_abstract.txt --s
 
 # 从管道读取
 cat your_abstract.txt | python3 skills/nsfc-abstract/scripts/write_abstracts_md.py -
+
+# 超限自动压缩（占位：当前版本不执行压缩，仅提示并返回 1）
+python3 skills/nsfc-abstract/scripts/write_abstracts_md.py your_abstract.txt --auto-compress
 ```
 
 **退出码**：
