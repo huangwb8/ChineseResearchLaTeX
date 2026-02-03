@@ -137,7 +137,10 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 - **Codex 平价拼车**：
   - 有ChatGPT帐号： 可考虑 [codexcn](https://codexcn.com)。目前来说每个月10元左右，应该是和其它小伙伴拼5人车，然后有官方Team帐户。这个额度一般人也够用了。 
   - 没有ChatGPT帐号：可考虑 [Packycode 的 Codex 站](https://codex.packycode.com/pricing)（日/周/月限额度），无脑上专业套餐。登录/服务相对原始，偏 Team 账号拼车；实测使用2个多月整体较稳，这个额度一般人也够用了。价格优势明显；发票需联系站长办理（相对麻烦），但支持对公报销是巨大优势。
-- **GLM-4.7 超值拼车**：直接使用[我的邀请链接购买智谱Coding Plan](https://www.bigmodel.cn/glm-coding?ic=BNIXXULS2J)，支持企业报销。**推荐约 10 人拼一个 Coding Plan Max 车位，基本够用**，折合每人每月约 **16 元**，量大管饱，完全没有 token 焦虑。
+
+- 国产模型拼车
+  - 我个人比较喜欢[火山引擎](https://volcengine.com/L/KQ5AObx3HE0) 邀请码：2BRHZVY2。 它有点像硅基流动这种模型商，支持 Doubao、GLM、DeepSeek、Kimi 等国产模型。如果能够拼车，我觉得价格也是不错的。
+  - **GLM-4.7 超值拼车**：直接使用[我的邀请链接购买智谱Coding Plan](https://www.bigmodel.cn/glm-coding?ic=BNIXXULS2J)，支持企业报销。**推荐约 10 人拼一个 Coding Plan Max 车位，基本够用**，折合每人每月约 **16 元**，量大管饱，完全没有 token 焦虑。不过最近似乎晚上高峰时期容易限速，体验一般。 
 
 ---
 
