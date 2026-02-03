@@ -7,6 +7,14 @@
 
 ## 快速开始
 
+### 开发者
+
+简单一句话足矣：
+
+```
+基于./projects/NSFC_Young/extraTex 的正文内容， 使用 nsfc-abstract 这个skill写摘要。
+```
+
 ### 最推荐：信息表驱动
 
 请先填写 [信息表模板](references/info_form.md)，然后用以下 Prompt 让 AI 生成摘要：
