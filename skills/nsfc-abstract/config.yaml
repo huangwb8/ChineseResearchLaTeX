@@ -1,0 +1,24 @@
+skill_info:
+  name: nsfc-abstract
+  version: 0.1.1
+  description: NSFC 标书中英文摘要生成（英文为中文的忠实翻译）与长度校验
+  category: writing
+
+limits:
+  zh_max_chars: 400
+  en_max_chars: 4000
+  content_points_min: 3
+  content_points_max: 4
+  zh_recommended_sentences: 5
+
+format:
+  # 用于脚本与示例的分段标记；不要求用户在最终标书里保留这些标记
+  zh_begin: "[ZH]"
+  zh_end: "[/ZH]"
+  en_begin: "[EN]"
+  en_end: "[/EN]"
+
+output:
+  filename: "NSFC-ABSTRACTS.md"
+  zh_heading: "# 中文摘要"
+  en_heading: "# English Abstract"

@@ -38,6 +38,15 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- **nsfc-abstract v0.1.1**：新增 NSFC 标书中英文摘要生成技能（英文为中文的忠实翻译；中文≤400字、英文≤4000字符），输出写入工作目录 `NSFC-ABSTRACTS.md`，并提供确定性长度校验与写入脚本：`skills/nsfc-abstract/`
+
+### Updated（文档更新）
+
+- 更新 [README.md](README.md)：技能生态系统与技能表格新增/更新 nsfc-abstract（v0.1.1）
+- 更新 [skills/README.md](skills/README.md)：新增 nsfc-abstract 小节说明与可选长度校验命令，并调整后续技能编号
+
 ### Changed（变更）
 
 - 调整 NSFC_General 模板的段后距与标题间距逻辑：移除全局 `\parskip=7.8pt`，改为 `\parskip=0pt` 并在 `\subsection` 的 `titlespacing` 中显式给出 7.8pt 的标题后间距，避免 `\NSFCBodyText` 改写 `\parskip` 导致 `\section`/`\subsection` 垂直间距前后不一致

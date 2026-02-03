@@ -1,0 +1,11 @@
+（示例：仅用于演示输出格式与长度校验，不代表真实数据/结论）
+
+中文摘要：
+[ZH]
+肿瘤免疫治疗显著改善部分患者预后，但对多数实体瘤仍存在应答率低与耐药等瓶颈。当前缺乏能够同时表征肿瘤微环境时空异质性与治疗反应的可解释指标体系，导致机制判断与个体化决策受限。我们前期在多中心队列中发现，基于多模态影像与循环分子标志物的联合特征可稳定区分应答/非应答人群，并提示关键免疫抑制通路的动态变化，据此提出“跨尺度可解释特征驱动的反应预测与机制溯源”假说。本项目拟：（1）构建跨中心的多模态数据规范与质控流程；（2）建立可解释表征模型，解析与免疫反应相关的关键特征；（3）在动物模型与前瞻性队列中验证关键通路与预测口径；（4）形成可复用的评估工具与干预靶点线索。预期阐明影响免疫治疗反应的关键机制并提供可落地的分层评估策略，为提升实体瘤治疗获益提供新思路。
+[/ZH]
+
+English Abstract:
+[EN]
+Immunotherapy has improved outcomes for some patients, yet most solid tumors still suffer from low response rates and drug resistance. A major limitation is the lack of interpretable metrics that jointly capture the spatiotemporal heterogeneity of the tumor microenvironment and treatment responses, which hampers mechanistic understanding and personalized decision-making. In our multicenter pilot cohorts, we found that combined features from multimodal imaging and circulating molecular biomarkers can robustly distinguish responders from non-responders and indicate dynamic changes in key immunosuppressive pathways; therefore, we hypothesize that cross-scale interpretable features can drive response prediction and mechanism tracing. This project will (1) build cross-center standards and quality control for multimodal data, (2) develop interpretable representation models to identify key features associated with immune responses, (3) validate critical pathways and prediction criteria in animal models and prospective cohorts, and (4) deliver reusable assessment tools and actionable clues for intervention targets. We expect to elucidate key mechanisms underlying immunotherapy responses and provide practical stratification strategies to improve clinical benefits for solid tumors.
+[/EN]
