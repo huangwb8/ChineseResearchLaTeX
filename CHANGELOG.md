@@ -49,6 +49,12 @@
 
 ### Changed（变更）
 
+- **nsfc-research-content-writer v0.2.1 → v0.2.2**：完善技能自检与可追溯测试基础设施
+  - 补齐 `templates/`、`plans/`、`tests/`，提供 A/B 轮计划与测试报告模板，支持确定性会话创建脚本
+  - 配置集中化：`config.yaml` 补齐 `skill_info.description`，新增 `checks`（risk_phrases/subgoal_markers_min）
+  - 脚本优化：抽出 `_yaml_utils.py` 复用 YAML 片段解析；`check_project_outputs.py` 读取配置并增强子目标 marker 识别；`create_test_session.py` 强化会话 ID 校验
+  - 文档一致性：移除本 skill 及 `skills/README.md` 中的年份限定表述
+
 - 调整 NSFC_General 模板的段后距与标题间距逻辑：移除全局 `\parskip=7.8pt`，改为 `\parskip=0pt` 并在 `\subsection` 的 `titlespacing` 中显式给出 7.8pt 的标题后间距，避免 `\NSFCBodyText` 改写 `\parskip` 导致 `\section`/`\subsection` 垂直间距前后不一致
 - 更新 NSFC_General 的样式微调文档：说明默认不使用 `\parskip`，并同步标题间距示例到最新配置
 - 更新三套 NSFC 正文项目的 README 间距调节指南：突出说明如何设置正文间距、参考文献间距，以及 `\subsubsubsection` 与更低层级标题的前后间距（并补齐 `projects/NSFC_Local/README.md`）

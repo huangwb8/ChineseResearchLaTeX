@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import re
 import shutil
 import sys
 import typing
@@ -104,8 +105,10 @@ def main() -> int:
     except ValueError as exc:
         _fail(parser, str(exc))
     test_id = args.id.strip() or _generate_test_id(dt.datetime.now())
+    if args.id.strip() and not re.fullmatch(r"v\d{12}", test_id):
+        _fail(parser, "explicit test id must match vYYYYMMDDHHMM, e.g. v202602042053")
     if not test_id.startswith("v"):
-        _fail(parser, "test id must start with 'v', e.g. vYYYYMMDDHHMM")
+        _fail(parser, "test id must start with 'v'")
 
     plans_dir = skill_root / "plans"
     tests_dir = skill_root / "tests"
@@ -155,6 +158,11 @@ def main() -> int:
     template_values["SESSION_NAME"] = session_name
     template_values["PLAN_DOC_PATH"] = str(plan_doc_path.relative_to(skill_root))
 
+    session_dir = tests_dir / session_name
+    template_values["SESSION_DIR_REL"] = str(session_dir.relative_to(skill_root))
+    template_values["TEST_PLAN_REL"] = str((session_dir / "TEST_PLAN.md").relative_to(skill_root))
+    template_values["TEST_REPORT_REL"] = str((session_dir / "TEST_REPORT.md").relative_to(skill_root))
+
     if args.create_plan and (not plan_doc_path.exists() or args.overwrite):
         if plan_template.exists():
             _safe_write(
@@ -169,7 +177,6 @@ def main() -> int:
                 overwrite=args.overwrite,
             )
 
-    session_dir = tests_dir / session_name
     _ensure_dir(session_dir)
     _ensure_dir(session_dir / "_artifacts")
     _ensure_dir(session_dir / "_scripts")

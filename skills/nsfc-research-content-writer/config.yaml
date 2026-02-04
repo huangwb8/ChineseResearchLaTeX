@@ -4,8 +4,9 @@
 
 skill_info:
   name: nsfc-research-content-writer
-  version: 0.2.1
+  version: 0.2.2
   # template_year: 移除年份限制，使技能适用于不同年份的 NSFC 模板
+  description: NSFC 标书正文“（二）研究内容”写作/重构，并同步编排“特色与创新”“三年年度研究计划”，输出 2.1/2.2/2.3 三份 extraTex 文件
   category: writing
 
 parameters:
@@ -49,3 +50,16 @@ quality_contract:
   yearly_plan_must_include:
     - 三年分年任务（不跨年）
     - 里程碑与可交付成果（每年都有）
+
+# scripts/check_project_outputs.py 的轻量自检参数（可选覆盖默认值）
+checks:
+  # 绝对化措辞：通常建议避免；脚本可扫描并给出 WARN/ERROR（见 --fail-on-risk-phrases）
+  risk_phrases:
+    - 首次
+    - 领先
+    - 填补空白
+    - 突破性
+    - 国际领先
+    - 世界领先
+  # 研究内容里至少出现多少个子目标标记（默认 3）：S1/S2/S3（可多于 3）
+  subgoal_markers_min: 3

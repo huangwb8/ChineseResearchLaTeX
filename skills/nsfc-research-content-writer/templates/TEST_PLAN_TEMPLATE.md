@@ -1,48 +1,37 @@
-# 轻量测试计划（TEST_PLAN）
+# 轻量测试计划（{{SESSION_NAME}}）
 
 **测试ID**: {{TEST_ID}}  
+**轮次类型**: {{ROUND_KIND}}  
 **目标技能**: {{TARGET_SKILL_NAME}}  
 **目标技能路径**: {{TARGET_SKILL_ROOT}}  
-**轮次类型**: {{ROUND_KIND}}  
 **关联规划文档**: {{PLAN_DOC_PATH}}  
 **计划时间**: {{PLAN_TIME}}
 
 ---
 
-## 目标
+## 本轮目标
 
-- 本轮要验证的核心行为是什么？
-- 本轮要解决/验证的 P0-P2 问题是什么？
-- 本轮的“通过”标准是什么？
+- 验证本轮修复点是否生效（P0/P1/P2 全闭环）
+- 确认自检脚本可运行：`scripts/validate_skill.py` / `scripts/run_checks.py`
 
 ---
 
 ## 变更范围（本轮）
 
 - 修改文件：
-  - ...
-- 重要行为变化：
-  - ...
+  - （填写本轮实际改动文件）
 
 ---
 
-## 验证点（轻量测试）
+## 验证点（按优先级）
 
 ### P0（必须通过）
-- [ ] `python3 skills/nsfc-research-content-writer/scripts/validate_skill.py`
-- [ ] 本轮会话可复跑：`python3 skills/nsfc-research-content-writer/scripts/create_test_session.py --kind {{KIND_ARG}} --id {{TEST_ID}} --create-plan`
-- [ ] （如本轮涉及输出文件）`python3 skills/nsfc-research-content-writer/scripts/check_project_outputs.py --project-root <your_project_root>`
+- [ ] `python3 scripts/validate_skill.py` 通过
+- [ ] `python3 scripts/create_test_session.py --kind a --id {{TEST_ID}} --create-plan` 可运行（不覆盖已有文件时应无异常）
 
-### P1（强烈建议通过）
-- [ ] 关键文档入口未回退（README/SKILL 链接、命令仍可用）
-- [ ] 风险词门禁（可选严格）：`python3 skills/nsfc-research-content-writer/scripts/check_project_outputs.py --project-root <your_project_root> --fail-on-risk-phrases`
+### P1（建议通过）
+- [ ] `python3 scripts/run_checks.py`（不带 --project-root）通过
 
 ### P2（可选）
-- [ ] 关键检查输出已保存到 `_artifacts/`（如 stdout/stderr）
+- [ ] 如提供样例项目：`python3 scripts/check_project_outputs.py --project-root <path>` 通过
 
----
-
-## 执行步骤
-
-1. 按验证点执行，并记录证据
-2. 发现新问题：记录到 `TEST_REPORT.md` 的“新问题”并标注优先级

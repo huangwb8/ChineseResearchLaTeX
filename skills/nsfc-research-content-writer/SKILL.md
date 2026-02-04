@@ -1,6 +1,6 @@
 ---
 name: nsfc-research-content-writer
-version: 0.2.1
+version: 0.2.2
 description: 为 NSFC 正文"（二）研究内容"写作/重构，并同步编排"特色与创新"和"三年年度研究计划"，输出可直接落到 LaTeX 模板的三个 extraTex 文件。适用于用户要写/改"研究内容、研究目标、关键科学问题、技术路线、创新点、三年计划/里程碑"等场景。
 author: ChineseResearchLaTeX Project
 metadata:

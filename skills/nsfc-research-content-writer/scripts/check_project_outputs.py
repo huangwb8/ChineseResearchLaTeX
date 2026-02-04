@@ -6,15 +6,10 @@ import re
 import sys
 from pathlib import Path
 
+from _yaml_utils import extract_yaml_list_under_block, extract_yaml_value_under_block
 
-RISK_PHRASES = [
-    "首次",
-    "领先",
-    "填补空白",
-    "突破性",
-    "国际领先",
-    "世界领先",
-]
+DEFAULT_RISK_PHRASES = ["首次", "领先", "填补空白", "突破性", "国际领先", "世界领先"]
+DEFAULT_SUBGOAL_MARKERS_MIN = 3
 
 
 def _err(message: str) -> int:
@@ -22,36 +17,11 @@ def _err(message: str) -> int:
     return 1
 
 
-def _extract_yaml_value_under_block(lines: list[str], block_key: str, key: str) -> str | None:
-    in_block = False
-    block_indent = None
-    key_re = re.compile(rf"^(\s*){re.escape(key)}:\s*(.*?)\s*$")
-
-    for line in lines:
-        if not in_block:
-            if re.match(rf"^{re.escape(block_key)}:\s*$", line):
-                in_block = True
-                block_indent = len(line) - len(line.lstrip(" "))
-            continue
-
-        if line.strip() == "":
-            continue
-
-        indent = len(line) - len(line.lstrip(" "))
-        if block_indent is not None and indent <= block_indent and not line.startswith(" " * (block_indent + 1)):
-            break
-
-        m = key_re.match(line)
-        if m and indent >= (block_indent or 0) + 2:
-            return m.group(2).strip().strip('"').strip("'")
-    return None
-
-
 def _read_targets_from_config(config_yaml: Path) -> dict[str, str]:
     lines = config_yaml.read_text(encoding="utf-8").splitlines()
-    research = _extract_yaml_value_under_block(lines, "targets", "research_content_tex")
-    innovation = _extract_yaml_value_under_block(lines, "targets", "innovation_tex")
-    yearly = _extract_yaml_value_under_block(lines, "targets", "yearly_plan_tex")
+    research = extract_yaml_value_under_block(lines, "targets", "research_content_tex")
+    innovation = extract_yaml_value_under_block(lines, "targets", "innovation_tex")
+    yearly = extract_yaml_value_under_block(lines, "targets", "yearly_plan_tex")
     if not research or not innovation or not yearly:
         raise ValueError("config.yaml missing targets.*_tex")
     return {
@@ -59,6 +29,20 @@ def _read_targets_from_config(config_yaml: Path) -> dict[str, str]:
         "innovation_tex": innovation,
         "yearly_plan_tex": yearly,
     }
+
+
+def _read_checks_from_config(config_yaml: Path) -> tuple[list[str], int]:
+    lines = config_yaml.read_text(encoding="utf-8").splitlines()
+
+    risk_phrases = extract_yaml_list_under_block(lines, "checks", "risk_phrases") or DEFAULT_RISK_PHRASES
+    raw_min = extract_yaml_value_under_block(lines, "checks", "subgoal_markers_min")
+    try:
+        subgoal_markers_min = int(raw_min) if raw_min is not None else DEFAULT_SUBGOAL_MARKERS_MIN
+    except ValueError:
+        subgoal_markers_min = DEFAULT_SUBGOAL_MARKERS_MIN
+
+    subgoal_markers_min = max(1, subgoal_markers_min)
+    return risk_phrases, subgoal_markers_min
 
 
 def _check_file_exists(project_root: Path, relpath: str) -> str | None:
@@ -70,16 +54,18 @@ def _check_file_exists(project_root: Path, relpath: str) -> str | None:
     return None
 
 
-def _check_minimal_content(path: Path, *, kind: str) -> list[str]:
+def _check_minimal_content(path: Path, *, kind: str, subgoal_markers_min: int) -> list[str]:
     text = path.read_text(encoding="utf-8", errors="replace")
     problems: list[str] = []
 
     if kind == "research":
-        for token in ["S1", "S2", "S3"]:
-            if token not in text:
-                problems.append(f"{path}: missing subgoal marker {token}")
+        markers = {int(m.group(1)) for m in re.finditer(r"\bS(\d+)\b", text)}
+        if len(markers) < subgoal_markers_min:
+            problems.append(
+                f"{path}: not enough subgoal markers like S1/S2/... (found={len(markers)} min={subgoal_markers_min})"
+            )
     elif kind == "innovation":
-        if not re.search(r"对应\s*S\d", text):
+        if not re.search(r"对应\s*S\d+", text):
             problems.append(f"{path}: missing backreference marker like '对应 S1'")
     elif kind == "yearly":
         year_patterns = {
@@ -90,7 +76,7 @@ def _check_minimal_content(path: Path, *, kind: str) -> list[str]:
         for label, patterns in year_patterns.items():
             if not any(re.search(p, text) for p in patterns):
                 problems.append(f"{path}: missing yearly header ({label})")
-        if not re.search(r"对应\s*S\d", text) and not re.search(r"\bS\d\b", text):
+        if not re.search(r"对应\s*S\d+", text) and not re.search(r"\bS\d+\b", text):
             problems.append(f"{path}: missing subgoal backreference like '对应 S1'")
     else:
         problems.append(f"{path}: unknown kind {kind}")
@@ -140,6 +126,8 @@ def main() -> int:
     except ValueError as exc:
         return _err(str(exc))
 
+    risk_phrases, subgoal_markers_min = _read_checks_from_config(config_yaml)
+
     errors: list[str] = []
     errors.extend(
         e
@@ -162,7 +150,9 @@ def main() -> int:
             (targets["yearly_plan_tex"], "yearly"),
         ]
         for relpath, kind in checks:
-            errors.extend(_check_minimal_content(project_root / relpath, kind=kind))
+            errors.extend(
+                _check_minimal_content(project_root / relpath, kind=kind, subgoal_markers_min=subgoal_markers_min)
+            )
 
     warnings: list[str] = []
     if not args.no_risk_scan:
@@ -173,7 +163,7 @@ def main() -> int:
         ]:
             path = project_root / relpath
             text = path.read_text(encoding="utf-8", errors="replace")
-            for phrase in RISK_PHRASES:
+            for phrase in risk_phrases:
                 if phrase in text:
                     msg = f"{path}: contains risk phrase '{phrase}'"
                     if args.fail_on_risk_phrases:

@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+from _yaml_utils import extract_yaml_list_under_block, extract_yaml_value_under_block
+
 
 def _err(message: str) -> int:
     print(f"ERROR: {message}", file=sys.stderr)
@@ -27,66 +29,6 @@ def _extract_frontmatter_field(frontmatter: str, key: str) -> str | None:
     return match.group(1).strip().strip('"').strip("'")
 
 
-def _extract_yaml_value_under_block(lines: list[str], block_key: str, key: str) -> str | None:
-    in_block = False
-    block_indent = None
-    key_re = re.compile(rf"^(\s*){re.escape(key)}:\s*(.*?)\s*$")
-
-    for line in lines:
-        if not in_block:
-            if re.match(rf"^{re.escape(block_key)}:\s*$", line):
-                in_block = True
-                block_indent = 0
-            continue
-
-        if line.strip() == "":
-            continue
-
-        indent = len(line) - len(line.lstrip(" "))
-        if block_indent is not None and indent <= block_indent and not line.startswith(" " * (block_indent + 1)):
-            break
-
-        m = key_re.match(line)
-        if m and indent >= 2:
-            return m.group(2).strip().strip('"').strip("'")
-    return None
-
-
-def _extract_yaml_list_under_block(lines: list[str], block_key: str, key: str) -> list[str] | None:
-    in_block = False
-    block_indent = None
-    key_indent = None
-    items: list[str] = []
-
-    for line in lines:
-        if not in_block:
-            if re.match(rf"^{re.escape(block_key)}:\s*$", line):
-                in_block = True
-                block_indent = len(line) - len(line.lstrip(" "))
-            continue
-
-        if line.strip() == "":
-            continue
-
-        indent = len(line) - len(line.lstrip(" "))
-        if block_indent is not None and indent <= block_indent and not line.startswith(" " * (block_indent + 1)):
-            break
-
-        if key_indent is None:
-            if re.match(rf"^\s*{re.escape(key)}:\s*$", line) and indent >= (block_indent or 0) + 2:
-                key_indent = indent
-            continue
-
-        if indent <= key_indent:
-            break
-
-        stripped = line.strip()
-        if stripped.startswith("- "):
-            items.append(stripped.removeprefix("- ").strip().strip('"').strip("'"))
-
-    return items if items else None
-
-
 def main() -> int:
     skill_root = Path(__file__).resolve().parents[1]
     repo_root = skill_root.parents[1]
@@ -103,6 +45,7 @@ def main() -> int:
         skill_root / "scripts" / "create_test_session.py",
         skill_root / "scripts" / "check_project_outputs.py",
         skill_root / "scripts" / "run_checks.py",
+        skill_root / "scripts" / "_yaml_utils.py",
         skill_root / "references" / "info_form.md",
         skill_root / "references" / "dod_checklist.md",
         templates_dir / "OPTIMIZATION_PLAN_TEMPLATE.md",
@@ -145,10 +88,14 @@ def main() -> int:
         return _err(f"references path invalid: {resolved_refs_path}")
 
     config_lines = config_yaml.read_text(encoding="utf-8").splitlines()
-    cfg_name = _extract_yaml_value_under_block(config_lines, "skill_info", "name")
-    cfg_version = _extract_yaml_value_under_block(config_lines, "skill_info", "version")
+    cfg_name = extract_yaml_value_under_block(config_lines, "skill_info", "name")
+    cfg_version = extract_yaml_value_under_block(config_lines, "skill_info", "version")
+    cfg_description = extract_yaml_value_under_block(config_lines, "skill_info", "description")
+    cfg_category = extract_yaml_value_under_block(config_lines, "skill_info", "category")
     if not cfg_name or not cfg_version:
         return _err("config.yaml missing skill_info.name or skill_info.version")
+    if not cfg_description or not cfg_category:
+        return _err("config.yaml missing skill_info.description or skill_info.category")
 
     if fm_name != cfg_name:
         return _err(f"name mismatch: SKILL.md={fm_name} config.yaml={cfg_name}")
@@ -156,26 +103,26 @@ def main() -> int:
         return _err(f"version mismatch: SKILL.md={fm_version} config.yaml={cfg_version}")
 
     targets = [
-        _extract_yaml_value_under_block(config_lines, "targets", "research_content_tex"),
-        _extract_yaml_value_under_block(config_lines, "targets", "innovation_tex"),
-        _extract_yaml_value_under_block(config_lines, "targets", "yearly_plan_tex"),
+        extract_yaml_value_under_block(config_lines, "targets", "research_content_tex"),
+        extract_yaml_value_under_block(config_lines, "targets", "innovation_tex"),
+        extract_yaml_value_under_block(config_lines, "targets", "yearly_plan_tex"),
     ]
     if any(t is None for t in targets):
         return _err("config.yaml missing one of targets.*_tex")
 
-    allowed = _extract_yaml_list_under_block(config_lines, "guardrails", "allowed_write_files")
+    allowed = extract_yaml_list_under_block(config_lines, "guardrails", "allowed_write_files")
     if not allowed:
         return _err("config.yaml missing guardrails.allowed_write_files")
 
     if set(allowed) != set(t for t in targets if t is not None):
         return _err("config.yaml mismatch: guardrails.allowed_write_files must equal targets.*_tex values")
 
-    forbidden = _extract_yaml_list_under_block(config_lines, "guardrails", "forbidden_write_files") or []
+    forbidden = extract_yaml_list_under_block(config_lines, "guardrails", "forbidden_write_files") or []
     for must_forbid in ["main.tex", "extraTex/@config.tex"]:
         if must_forbid not in forbidden:
             return _err(f"config.yaml missing guardrails.forbidden_write_files entry: {must_forbid}")
 
-    forbidden_globs = _extract_yaml_list_under_block(config_lines, "guardrails", "forbidden_write_globs") or []
+    forbidden_globs = extract_yaml_list_under_block(config_lines, "guardrails", "forbidden_write_globs") or []
     for must_forbid_glob in ["**/*.cls", "**/*.sty"]:
         if must_forbid_glob not in forbidden_globs:
             return _err(f"config.yaml missing guardrails.forbidden_write_globs entry: {must_forbid_glob}")
