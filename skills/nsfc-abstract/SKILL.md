@@ -6,7 +6,9 @@ description: |
   输出中文、英文两个版本：英文必须是中文的忠实翻译版（不新增信息、不删减关键限定）。
   中文摘要默认 ≤400 字符（含标点），英文摘要默认 ≤4000 字符（含标点）；最终以 `skills/nsfc-abstract/config.yaml:limits` 为准。
 
-  输出方式：将结果写入**工作目录**下的 `NSFC-ABSTRACTS.md`（文件名以 `config.yaml:output.filename` 为准），中文一个 `#` 标题、英文一个 `#` 标题。
+  同时输出 **标题建议**：默认提供 1 个推荐标题 + 5 个候选标题及理由（数量以 `config.yaml:title.title_candidates_default` 为准）。
+
+  输出方式：将结果写入**工作目录**下的 `NSFC-ABSTRACTS.md`（文件名以 `config.yaml:output.filename` 为准），依次包含 `# 标题建议`、中文摘要、英文摘要与长度自检。
 
   ⚠️ 以下情况不适用：
   - 用户只想翻译一段与标书无关的通用文本（应直接翻译）
@@ -34,6 +36,7 @@ config: skills/nsfc-abstract/config.yaml
 ## 输入（先要信息，缺啥就问啥）
 
 优先让用户按信息表提供（见 `skills/nsfc-abstract/references/info_form.md`）。若用户只给了零散信息，先用 3-6 个问题补齐最关键缺口：
+- 你希望题目更偏“机制向 / 方法向 / 转化向 / 场景向”哪一类？（不确定可不选，默认给混合候选）
 - 研究对象/场景是什么？（疾病/材料/系统/任务）
 - 领域痛点与未解决的科学问题是什么？（一句话）
 - 你们的关键前期发现/预实验/数据点是什么？（1-2 条，可定量）
@@ -44,6 +47,9 @@ config: skills/nsfc-abstract/config.yaml
 ## 输出要求（硬约束）
 
 - **必须同时给出中文与英文**；英文是中文的**忠实翻译**（不扩写、不新增假设、不引入新结果）。
+- **必须给出标题建议**：遵循 `skills/nsfc-abstract/references/title-rules.md` 的“中标题目”结构偏好；至少包含：
+  - `推荐标题：...`
+  - `1) ... —— 理由：...`（至少 5 条；数量以 `config.yaml:title.title_candidates_default` 为准）
 - **中文摘要**：默认 ≤ 400 字符（含标点）；推荐 5 句（以 `config.yaml:limits.zh_recommended_sentences` 为准），每句 1 个功能。
 - **英文摘要**：≤ 4000 字符（含标点）；语法正确、术语一致。
 - 不使用夸大/营销式表达（如“国际领先/填补空白/首创”），除非用户提供可核验依据且明确要求保留。
@@ -62,6 +68,14 @@ config: skills/nsfc-abstract/config.yaml
 按如下格式写入 `NSFC-ABSTRACTS.md`（标题文本以 `config.yaml:output.zh_heading/en_heading` 为准）。在末尾给出长度自检（字符数计数口径：把连续空白折叠为单个空格后计数，含标点）：
 
 ```text
+# 标题建议
+推荐标题：...
+1) ... —— 理由：...
+2) ... —— 理由：...
+3) ... —— 理由：...
+4) ... —— 理由：...
+5) ... —— 理由：...
+
 # 中文摘要
 （正文）
 
@@ -75,6 +89,7 @@ config: skills/nsfc-abstract/config.yaml
 
 写入文件后，在对话中**不要重复粘贴全文**（除非用户明确要求），只需回报：
 - 写入的文件路径（默认 `./NSFC-ABSTRACTS.md`）
+- 标题候选数量是否满足默认要求
 - 中文/英文字符数与是否超限
 
 ## 字数超限处理（闭环，最多 3 轮）

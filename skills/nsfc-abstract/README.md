@@ -61,13 +61,14 @@
 
 ## 功能概述
 
-**核心价值**：写出"评审一眼读懂"的五句式摘要，做到**重要性**、**科学问题**、**可行性证据**、**研究内容**、**科学意义**五个要素齐全；并输出与之一致的英文翻译。
+**核心价值**：给出“更像中标题目”的标题候选（默认 1 个推荐标题 + 5 个备选标题及理由），并写出"评审一眼读懂"的五句式摘要，做到**重要性**、**科学问题**、**可行性证据**、**研究内容**、**科学意义**五个要素齐全；输出与之一致的英文忠实翻译。
 
 **工作原理**：
 1. AI 收集关键信息（通过信息表或问答）
-2. 按"五句式"结构组织中文摘要
-3. 生成英文忠实翻译（不扩写、不新增假设）
-4. 输出到 `NSFC-ABSTRACTS.md` 并自动校验长度
+2. 基于历年立项题目共性生成标题候选（规则见 `references/title-rules.md`）
+3. 按"五句式"结构组织中文摘要
+4. 生成英文忠实翻译（不扩写、不新增假设）
+5. 输出到 `NSFC-ABSTRACTS.md` 并自动校验长度（含标题建议检查）
 
 **与其他技能的配合**：
 - [nsfc-justification-writer](../nsfc-justification-writer/)：撰写立项依据
@@ -147,11 +148,19 @@
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
-| **中英文摘要** | `NSFC-ABSTRACTS.md` | 工作目录下的输出文件，包含中英文摘要与长度自检 |
+| **标题+摘要** | `NSFC-ABSTRACTS.md` | 工作目录下的输出文件，包含标题建议、中英文摘要与长度自检 |
 
 ### 输出格式
 
 ```text
+# 标题建议
+推荐标题：...
+1) ... —— 理由：...
+2) ... —— 理由：...
+3) ... —— 理由：...
+4) ... —— 理由：...
+5) ... —— 理由：...
+
 # 中文摘要
 （正文内容，≤400字符）
 
@@ -178,6 +187,9 @@
 | `output.filename` | `NSFC-ABSTRACTS.md` | 输出文件名 |
 | `output.zh_heading` | `# 中文摘要` | 中文标题 |
 | `output.en_heading` | `# English Abstract` | 英文标题 |
+| `title.title_required` | `true` | 是否要求输出标题建议分段 |
+| `title.title_candidates_default` | `5` | 默认标题候选数量 |
+| `title.title_heading` | `# 标题建议` | 标题分段的 Markdown 标题 |
 
 ---
 
@@ -199,6 +211,9 @@ cat NSFC-ABSTRACTS.md | python3 skills/nsfc-abstract/scripts/validate_abstract.p
 
 # 机器可读 JSON 输出（包含 exceeded 差值）
 python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --json --diff
+
+# 如需向后兼容旧输出（不要求标题分段）
+python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --no-title
 ```
 
 ### 写入文件

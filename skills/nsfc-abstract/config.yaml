@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-abstract
-  version: 0.2.0
+  version: 0.3.0
   description: NSFC 标书中英文摘要生成（英文为中文的忠实翻译）与长度校验
   category: writing
 
@@ -22,3 +22,14 @@ output:
   filename: "NSFC-ABSTRACTS.md"
   zh_heading: "# 中文摘要"
   en_heading: "# English Abstract"
+
+title:
+  # Whether title suggestions are required in the final output.
+  title_required: true
+  # Default number of title candidates to provide (in addition to the recommended title line).
+  title_candidates_default: 5
+  # Optional marker-format for machine parsing.
+  title_begin: "[TITLE]"
+  title_end: "[/TITLE]"
+  # Markdown heading for the title section in NSFC-ABSTRACTS.md
+  title_heading: "# 标题建议"

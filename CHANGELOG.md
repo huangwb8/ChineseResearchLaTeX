@@ -41,10 +41,12 @@
 ### Added（新增）
 
 - **nsfc-abstract v0.2.0**：NSFC 标书中英文摘要生成技能（英文为中文的忠实翻译；中文≤400字、英文≤4000字符），输出写入工作目录 `NSFC-ABSTRACTS.md`；新增“字数超限闭环处理”说明，并增强确定性长度校验/写入脚本（JSON/diff 输出、严格模式不写入）
+- **nsfc-abstract v0.3.0**：新增“标题建议”输出（默认 1 个推荐标题 + 5 个候选标题及理由），并在校验/写入脚本中加入标题分段的确定性检查；新增标题写作规则参考文档 `skills/nsfc-abstract/references/title-rules.md`
 
 ### Updated（文档更新）
 
 - 更新 [README.md](README.md)：技能生态系统与技能表格更新 nsfc-abstract（v0.2.0）
+- 更新 [README.md](README.md)：nsfc-abstract 版本号与描述更新至 v0.3.0（加入“标题建议”输出）
 - 更新 [skills/README.md](skills/README.md)：新增 nsfc-abstract 小节说明与可选长度校验命令，并调整后续技能编号
 
 ### Changed（变更）

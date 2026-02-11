@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-11
+
+### Added
+
+- 标题建议输出：默认 1 个推荐标题 + 5 个候选标题及理由（以 `config.yaml:title.*` 为准）
+- 标题写作规则沉淀：新增 `references/title-rules.md`（基于 2016–2023 立项题目统计总结）
+- `validate_abstract.py`：新增标题建议分段校验（可用 `--no-title` 向后兼容旧输出）
+- `write_abstracts_md.py`：支持写入 `# 标题建议` 分段，并在标题不合格时拒绝写入
+
+### Changed
+
+- `config.yaml`：版本号升至 `0.3.0`，新增 `title.*` 配置项并默认要求标题建议分段
+- `SKILL.md` / `README.md` / `scripts/README.md`：输出格式与脚本用法同步更新（加入标题建议）
+- 回归测试：更新 stdlib unittest 用例以覆盖“标题建议必需 + 候选数量检查”
+
 ## [0.2.0] - 2026-02-03
 
 ### Added

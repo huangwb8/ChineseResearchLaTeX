@@ -15,6 +15,7 @@ import argparse
 import json
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -68,8 +69,36 @@ def _normalize_for_count(text: str) -> str:
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
+def _parse_bool(v: Optional[str], default: bool) -> bool:
+    if v is None:
+        return default
+    s = v.strip().lower()
+    if s in {"1", "true", "yes", "y", "on"}:
+        return True
+    if s in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
 
-def _load_config(skill_root: Path) -> Tuple[int, int, str, str, str, str, str, str, str]:
+
+@dataclass(frozen=True)
+class SkillConfig:
+    zh_max: int
+    en_max: int
+    zh_begin: str
+    zh_end: str
+    en_begin: str
+    en_end: str
+    out_name: str
+    zh_heading: str
+    en_heading: str
+    title_required: bool
+    title_candidates_default: int
+    title_begin: str
+    title_end: str
+    title_heading: str
+
+
+def _load_config(skill_root: Path) -> SkillConfig:
     """
     Minimal config reader (no YAML deps). It searches for scalar keys by regex.
     """
@@ -126,18 +155,87 @@ def _load_config(skill_root: Path) -> Tuple[int, int, str, str, str, str, str, s
     zh_heading = _str("zh_heading", "# 中文摘要")
     en_heading = _str("en_heading", "# English Abstract")
 
-    return zh_max, en_max, zh_begin, zh_end, en_begin, en_end, out_name, zh_heading, en_heading
+    title_required = _parse_bool(_get_scalar("title_required"), False)
+    title_candidates_default = _int("title_candidates_default", 5)
+    title_begin = _str("title_begin", "[TITLE]")
+    title_end = _str("title_end", "[/TITLE]")
+    title_heading = _str("title_heading", "# 标题建议")
+
+    return SkillConfig(
+        zh_max=zh_max,
+        en_max=en_max,
+        zh_begin=zh_begin,
+        zh_end=zh_end,
+        en_begin=en_begin,
+        en_end=en_end,
+        out_name=out_name,
+        zh_heading=zh_heading,
+        en_heading=en_heading,
+        title_required=title_required,
+        title_candidates_default=title_candidates_default,
+        title_begin=title_begin,
+        title_end=title_end,
+        title_heading=title_heading,
+    )
 
 
-def _parse_input(text: str, *, zh_begin: str, zh_end: str, en_begin: str, en_end: str, zh_heading: str, en_heading: str) -> Tuple[str, str]:
+def _extract_title_by_headings(text: str, title_heading: str, zh_heading: str) -> Optional[str]:
+    lines = text.splitlines()
+
+    def _is_heading(line: str, heading: str) -> bool:
+        return line.strip() == heading.strip()
+
+    t_i = None
+    zh_i = None
+    for i, line in enumerate(lines):
+        if t_i is None and _is_heading(line, title_heading):
+            t_i = i
+            continue
+        if zh_i is None and _is_heading(line, zh_heading):
+            zh_i = i
+            continue
+
+    if t_i is None:
+        return None
+    end_i = zh_i if (zh_i is not None and zh_i > t_i) else len(lines)
+    body = "\n".join(lines[t_i + 1 : end_i]).strip()
+    return body or None
+
+
+def _parse_input(
+    text: str,
+    *,
+    title_begin: str,
+    title_end: str,
+    title_heading: str,
+    title_required: bool,
+    title_candidates_default: int,
+    zh_begin: str,
+    zh_end: str,
+    en_begin: str,
+    en_end: str,
+    zh_heading: str,
+    en_heading: str,
+) -> Tuple[Optional[str], str, str]:
+    title = _extract_block_by_markers(text, title_begin, title_end)
     zh = _extract_block_by_markers(text, zh_begin, zh_end)
     en = _extract_block_by_markers(text, en_begin, en_end)
     if zh is not None and en is not None:
-        return zh, en
+        return title, zh, en
 
     by_h = _extract_block_by_headings(text, zh_heading, en_heading)
     if by_h is not None:
-        return by_h
+        zh_h, en_h = by_h
+        title_h = _extract_title_by_headings(text, title_heading, zh_heading)
+        return title_h, zh_h, en_h
+
+    if title_required:
+        raise ValueError(
+            "无法解析输入（标题+中英文摘要是必需的）。请使用以下任一格式：\n"
+            f"1) 标记格式：{title_begin}...{title_end} 与 {zh_begin}...{zh_end} 与 {en_begin}...{en_end}\n"
+            f"2) 标题格式：{title_heading} 与 {zh_heading} 与 {en_heading}\n"
+            f"并确保标题候选不少于 {title_candidates_default} 个，且包含“推荐标题：...”一行。"
+        )
 
     raise ValueError(
         "无法解析输入。请使用以下任一格式：\n"
@@ -160,49 +258,88 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
 
     skill_root = Path(__file__).resolve().parents[1]
-    zh_max, en_max, zh_begin, zh_end, en_begin, en_end, default_out, zh_heading, en_heading = _load_config(skill_root)
+    cfg = _load_config(skill_root)
 
     if args.input == "-":
         raw = sys.stdin.read()
     else:
         raw = _read_text(Path(args.input))
 
-    zh_raw, en_raw = _parse_input(
+    title_raw, zh_raw, en_raw = _parse_input(
         raw,
-        zh_begin=zh_begin,
-        zh_end=zh_end,
-        en_begin=en_begin,
-        en_end=en_end,
-        zh_heading=zh_heading,
-        en_heading=en_heading,
+        title_begin=cfg.title_begin,
+        title_end=cfg.title_end,
+        title_heading=cfg.title_heading,
+        title_required=cfg.title_required,
+        title_candidates_default=cfg.title_candidates_default,
+        zh_begin=cfg.zh_begin,
+        zh_end=cfg.zh_end,
+        en_begin=cfg.en_begin,
+        en_end=cfg.en_end,
+        zh_heading=cfg.zh_heading,
+        en_heading=cfg.en_heading,
     )
 
     zh = zh_raw.strip()
     en = en_raw.strip()
+    title = (title_raw or "").strip()
 
     # Reuse validator's counting semantics for consistency.
     try:
         import validate_abstract  # type: ignore
 
-        report = validate_abstract.build_report(zh, en, zh_max=zh_max, en_max=en_max)
+        report = validate_abstract.build_report(zh, en, zh_max=cfg.zh_max, en_max=cfg.en_max)
+        title_report = validate_abstract.build_title_report(
+            title_raw,
+            required=cfg.title_required,
+            min_candidates=cfg.title_candidates_default,
+        )
     except Exception:
         # Fallback: keep behavior even if import fails for any reason.
         zh_len = len(_normalize_for_count(zh))
         en_len = len(_normalize_for_count(en))
         report = {
-            "zh": {"len": zh_len, "max": zh_max, "exceeded": max(0, zh_len - zh_max), "ok": zh_len <= zh_max},
-            "en": {"len": en_len, "max": en_max, "exceeded": max(0, en_len - en_max), "ok": en_len <= en_max},
+            "zh": {"len": zh_len, "max": cfg.zh_max, "exceeded": max(0, zh_len - cfg.zh_max), "ok": zh_len <= cfg.zh_max},
+            "en": {"len": en_len, "max": cfg.en_max, "exceeded": max(0, en_len - cfg.en_max), "ok": en_len <= cfg.en_max},
+        }
+        title_report = {
+            "present": bool(title),
+            "required": bool(cfg.title_required),
+            "has_recommended": bool(re.search(r"(?m)^\s*推荐标题\s*[:：]\s*\S+", title)),
+            "candidates": len(re.findall(r"(?m)^\s*(?:[-*]\s*)?\d+[\)\.、]\s+\S+", title)),
+            "min_candidates": int(cfg.title_candidates_default),
+            "ok": (not cfg.title_required)
+            or (
+                bool(title)
+                and bool(re.search(r"(?m)^\s*推荐标题\s*[:：]\s*\S+", title))
+                and len(re.findall(r"(?m)^\s*(?:[-*]\s*)?\d+[\)\.、]\s+\S+", title)) >= int(cfg.title_candidates_default)
+            ),
         }
 
     zh_ok = bool(report["zh"]["ok"])
     en_ok = bool(report["en"]["ok"])
+    title_ok = bool(title_report.get("ok"))
+    report["title"] = title_report
 
-    out_path = Path.cwd() / (args.out or default_out)
+    out_path = Path.cwd() / (args.out or cfg.out_name)
+
+    if cfg.title_required and not title_ok:
+        sys.stderr.write(
+            "[ERROR] 缺少或不合格的标题建议分段（不写入）。\n"
+            f"- required: {cfg.title_required}\n"
+            f"- min candidates: {cfg.title_candidates_default}\n"
+            "修复提示：在输入中加入 [TITLE]...[/TITLE] 或 \"# 标题建议\" 分段，并包含“推荐标题：...”与不少于 5 个候选条目。\n"
+        )
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 2
+
     if (args.strict or args.auto_compress) and (not zh_ok or not en_ok):
         # In strict mode, do not write an invalid output file.
         mode = "strict" if args.strict else "auto-compress"
         msg = (
-            f"[ERROR] 摘要超限（{mode} 模式不写入）：ZH {report['zh']['len']}/{zh_max}；EN {report['en']['len']}/{en_max}\n"
+            f"[ERROR] 摘要超限（{mode} 模式不写入）：ZH {report['zh']['len']}/{cfg.zh_max}；EN {report['en']['len']}/{cfg.en_max}\n"
             f"- exceeded: ZH {report['zh']['exceeded']}, EN {report['en']['exceeded']}\n"
         )
         sys.stderr.write(msg)
@@ -216,12 +353,16 @@ def main(argv: list[str]) -> int:
             sys.stdout.write("\n")
         return 1
 
+    title_text = ""
+    if title:
+        title_text = f"{cfg.title_heading}\n\n{title}\n\n"
     out_text = (
-        f"{zh_heading}\n\n{zh}\n\n"
-        f"{en_heading}\n\n{en}\n\n"
-        "## 长度自检\n"
-        f"- 中文摘要字符数：{report['zh']['len']}/{zh_max}\n"
-        f"- 英文摘要字符数：{report['en']['len']}/{en_max}\n"
+        title_text
+        + f"{cfg.zh_heading}\n\n{zh}\n\n"
+        + f"{cfg.en_heading}\n\n{en}\n\n"
+        + "## 长度自检\n"
+        + f"- 中文摘要字符数：{report['zh']['len']}/{cfg.zh_max}\n"
+        + f"- 英文摘要字符数：{report['en']['len']}/{cfg.en_max}\n"
     )
     out_path.write_text(out_text, encoding="utf-8")
 
@@ -232,8 +373,9 @@ def main(argv: list[str]) -> int:
         print(f"[OK] Wrote: {out_path}", file=sys.stderr)
     else:
         print(f"[OK] Wrote: {out_path}")
-        print(f"- ZH: {report['zh']['len']}/{zh_max} ({'OK' if zh_ok else 'EXCEEDED'})")
-        print(f"- EN: {report['en']['len']}/{en_max} ({'OK' if en_ok else 'EXCEEDED'})")
+        print(f"- TITLE: {'OK' if title_ok else 'INVALID'}")
+        print(f"- ZH: {report['zh']['len']}/{cfg.zh_max} ({'OK' if zh_ok else 'EXCEEDED'})")
+        print(f"- EN: {report['en']['len']}/{cfg.en_max} ({'OK' if en_ok else 'EXCEEDED'})")
 
     if args.strict and (not zh_ok or not en_ok):
         return 1
