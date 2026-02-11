@@ -29,7 +29,7 @@ metadata:
 config: skills/nsfc-abstract/config.yaml
 ---
 
-# NSFC 中英文摘要（400字/4000字符）生成器
+# NSFC 中英文摘要生成器
 
 目标：写出“评审一眼读懂”的五句式摘要，做到**重要性**、**科学问题**、**可行性证据**、**研究内容**、**科学意义**五个要素齐全；并输出与之一致的英文翻译。
 
@@ -115,6 +115,3 @@ config: skills/nsfc-abstract/config.yaml
 如需确定性写入/校验，可使用脚本：
 - 写入：`python3 skills/nsfc-abstract/scripts/write_abstracts_md.py <input> --strict`
 - 校验：`python3 skills/nsfc-abstract/scripts/validate_abstract.py NSFC-ABSTRACTS.md --json --diff --strict`
-
-如用户要求写入 LaTeX，可在上述内容之外额外提供：
-- `\\begin{abstract}...\\end{abstract}`（仅包裹中文或按用户指定）

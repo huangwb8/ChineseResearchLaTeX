@@ -21,6 +21,8 @@
 
 ## 快速开始（推荐 Prompt）
 
+> 仅建议使用 Claude Code + Claude Opus 4.6 thinking 或者 OpenAI Codex CLI + GPT-5.2 High 这两种模式来使用
+
 ### 1) 开发者推荐
 
 先填好 `skills/nsfc-abstract/references/info_form.md`，然后用：
