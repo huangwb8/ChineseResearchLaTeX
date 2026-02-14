@@ -5,7 +5,7 @@ author: ChineseResearchLaTeX Project
 maintainer: project-maintainers
 status: stable
 category: normal
-description: LaTeX 模板高保真优化器，支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、标题格式对比（加粗）、HTML 可视化报告、LaTeX 自动修复建议和像素级 PDF 对比验证
+description: 当用户明确要求"LaTeX 模板优化""样式参数对齐""make_latex_model"时使用。支持任意 LaTeX 模板的样式参数对齐、标题文字对齐、标题格式对比（加粗）、HTML 可视化报告、LaTeX 自动修复建议和像素级 PDF 对比验证。
 tags:
   - latex
   - template

@@ -1,15 +1,6 @@
 ---
 name: check-review-alignment
-description: |
-  当用户明确要求“核查/优化综述 `{主题}_review.tex` 的正文引用”或“运行 check-review-alignment”时使用。
-
-  通过宿主 AI 的语义理解逐条核查引用是否与文献内容吻合，**只在发现致命性引用错误时**对“包含引用的句子”做最小化改写，并复用 `systematic-literature-review` 的渲染脚本输出 PDF/Word（脚本不在本地直接调用 LLM API）。
-
-  核心原则：**不为了改而改**。无法确定是否为致命性错误时，保留原样并在报告中警告。
-
-  ⚠️ 以下情况不适用：
-  - 用户只是想生成系统综述正文（应使用 systematic-literature-review）
-  - 用户只是想新增/核对 BibTeX 条目（应使用专门的 bib 管理流程）
+description: 当用户明确要求"核查/优化综述 `{主题}_review.tex` 的正文引用"或"运行 check-review-alignment"时使用。通过宿主 AI 的语义理解逐条核查引用是否与文献内容吻合，只在发现致命性引用错误时对"包含引用的句子"做最小化改写，并复用 `systematic-literature-review` 的渲染脚本输出 PDF/Word。核心原则：不为了改而改，无法确定是否为致命性错误时保留原样并在报告中警告。⚠️ 不适用：用户只是想生成系统综述正文（应使用 systematic-literature-review）；用户只是想新增/核对 BibTeX 条目（应使用专门的 bib 管理流程）。
 
 metadata:
   short-description: AI 驱动的综述引用语义核查与自动渲染

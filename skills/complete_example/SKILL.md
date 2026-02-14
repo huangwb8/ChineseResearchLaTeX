@@ -1,6 +1,6 @@
 ---
 name: complete-example
-description: AI 增强版 LaTeX 示例智能生成器，实现 AI 与硬编码的有机融合。AI 做"语义理解"（分析章节主题、推理资源相关性、生成连贯叙述），硬编码做"结构保护"（格式验证、哈希校验、访问控制）。用于用户要求"填充示例内容/生成示例/补充 LaTeX 示例"等场景。
+description: 当用户明确要求"填充示例内容""生成示例""补充 LaTeX 示例"时使用。AI 增强版 LaTeX 示例智能生成器，实现 AI 与硬编码的有机融合：AI 做"语义理解"（分析章节主题、推理资源相关性、生成连贯叙述），硬编码做"结构保护"（格式验证、哈希校验、访问控制）。
 metadata:
   short-description: AI 增强版 LaTeX 示例智能生成器
   keywords:

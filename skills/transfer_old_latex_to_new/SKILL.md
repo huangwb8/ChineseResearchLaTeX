@@ -1,7 +1,7 @@
 ---
 name: migrating-latex-templates
 version: 1.4.1
-description: 智能迁移NSFC LaTeX标书到新版模板，基于五阶段工作流（分析→映射→规划→执行→验证），自动处理结构变化、内容重组、引用更新；支持AI驱动语义匹配与启发式回退，并提供 runs 输出隔离（--runs-root）与一键迁移脚本（migrate.sh）。
+description: 当用户明确要求"迁移标书""升级模板""跨版本迁移""旧标书转新模板"时使用。智能迁移NSFC LaTeX标书到新版模板，基于五阶段工作流（分析→映射→规划→执行→验证），自动处理结构变化、内容重组、引用更新；支持AI驱动语义匹配与启发式回退，并提供 runs 输出隔离与一键迁移脚本。
 author: AI Agent (Claude Code)
 metadata:
   short-description: NSFC LaTeX标书跨版本智能迁移

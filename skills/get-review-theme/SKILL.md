@@ -1,6 +1,6 @@
 ---
 name: get-review-theme
-description: 从任意输入源提取结构化综述主题：支持文件（PDF/Word/Markdown/Tex）、文件夹、图片、自然语言描述、网页 URL 等；自动识别输入类型并提取内容；生成"主题+关键词+核心问题"结构化输出，可直接用于 systematic-literature-review 及其他文献综述技能。
+description: 当用户明确要求"从文件/图片/网页/描述中提取综述主题"或"生成主题+关键词+核心问题结构化输出"时使用。支持文件（PDF/Word/Markdown/Tex）、文件夹、图片、自然语言描述、网页 URL 等多种输入源，自动识别输入类型并提取内容，生成可直接用于 systematic-literature-review 及其他文献综述技能的结构化输出。
 
 metadata:
   short-description: 多源输入的结构化综述主题提取工具

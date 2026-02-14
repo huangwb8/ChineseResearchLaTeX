@@ -1,7 +1,7 @@
 ---
 name: nsfc-research-foundation-writer
 version: 0.1.0  # 与 config.yaml 中的 skill_info.version 保持一致
-description: 为 NSFC 正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"，用证据链证明项目可行、资源条件对位研究内容、风险预案可执行。适用于用户要写/改"研究基础、前期工作、可行性分析、工作条件、平台团队、风险应对"等场景。
+description: 当用户明确要求"写/改研究基础""研究基础+工作条件+风险应对编排"时使用。为 NSFC 正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"，用证据链证明项目可行、资源条件对位研究内容、风险预案可执行。
 author: ChineseResearchLaTeX Project
 metadata:
   short-description: NSFC（研究基础+工作条件+风险应对）编排写作
