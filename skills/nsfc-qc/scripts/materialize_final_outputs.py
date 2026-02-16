@@ -125,11 +125,17 @@ def main() -> int:
         "precheck": {
             "citation_stats": (precheck.get("citation_stats") or {}),
             "compile": (precheck.get("compile") or {}),
+            "typography": (precheck.get("typography") or {}),
         },
         "artifacts": {
             "precheck_json": str((artifacts_dir / "precheck.json").relative_to(project_root)) if (artifacts_dir / "precheck.json").exists() else "",
             "citations_index_csv": str((artifacts_dir / "citations_index.csv").relative_to(project_root)) if (artifacts_dir / "citations_index.csv").exists() else "",
             "tex_lengths_csv": str((artifacts_dir / "tex_lengths.csv").relative_to(project_root)) if (artifacts_dir / "tex_lengths.csv").exists() else "",
+            "quote_issues_csv": str((artifacts_dir / "quote_issues.csv").relative_to(project_root)) if (artifacts_dir / "quote_issues.csv").exists() else "",
+            "reference_evidence_jsonl": str((artifacts_dir / "reference_evidence.jsonl").relative_to(project_root)) if (artifacts_dir / "reference_evidence.jsonl").exists() else "",
+            "reference_evidence_summary_json": str((artifacts_dir / "reference_evidence_summary.json").relative_to(project_root)) if (artifacts_dir / "reference_evidence_summary.json").exists() else "",
+            "compile_json": str((artifacts_dir / "compile.json").relative_to(project_root)) if (artifacts_dir / "compile.json").exists() else "",
+            "compile_log": str((artifacts_dir / "compile.log").relative_to(project_root)) if (artifacts_dir / "compile.log").exists() else "",
             "parallel_vibe_summary": pv_main_summary,
             "thread_results": thread_results,
         },

@@ -6,6 +6,25 @@
 
 （暂无）
 
+## [0.1.2] - 2026-02-16
+
+### Added（新增）
+- `scripts/nsfc_qc_precheck.py`：新增直引号排版预检，检测 `"免疫景观"` 这类写法并输出 `quote_issues.csv` 与结构化统计（建议替换为 TeX 引号 ``免疫景观''）
+
+### Changed（变更）
+- `scripts/materialize_final_outputs.py`：metrics 聚合时纳入 `typography` 预检信息，并补齐 `quote_issues.csv` 产物索引
+- `SKILL.md`/`README.md`/`references/qc_checklist.md`：补齐“中文双引号/直引号”排版检查项说明
+
+## [0.1.3] - 2026-02-16
+
+### Added（新增）
+- `scripts/nsfc_qc_precheck.py`：新增“引用证据包”硬编码抓取（题目/摘要/可选 OA PDF 片段）+ 标书内引用上下文提取，输出 `reference_evidence.jsonl`/`reference_evidence_summary.json`，供 AI 做语义核查
+- `scripts/nsfc_qc_compile.py`：新增“4 步法隔离编译”脚本（xelatex→bibtex→xelatex→xelatex），作为 QC 的最后一步执行，并回填 metrics
+
+### Changed（变更）
+- `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc_input/`，thread 可只读使用；可选 `--compile-last` 作为最后一步更新编译信息
+- `SKILL.md`/`README.md`/`references/qc_checklist.md`：明确“引用真伪=硬编码证据 + AI 语义判断”“4 步法编译=QC 最后一步”
+
 ## [0.1.1] - 2026-02-16
 
 ### Changed（变更）

@@ -4,9 +4,12 @@ Run nsfc-qc multi-thread QC via parallel-vibe, while keeping all artifacts under
 
 This script:
 - Creates a run directory: <project_root>/.nsfc-qc/runs/<run_id>/
+- (Default) Runs deterministic precheck and reference evidence collection into artifacts/
 - Creates an isolated snapshot of the proposal (read-only) for thread workspaces
+- Copies key artifacts into snapshot/.nsfc-qc_input/ for threads to read
 - Generates a deterministic parallel-vibe plan.json with N identical QC threads
 - Executes parallel-vibe with --out-dir set to the run directory (so .parallel_vibe lives under .nsfc-qc/)
+- (Optional) Runs isolated 4-step compile as the LAST step and updates metrics
 
 Note: This script does NOT modify proposal source files. It only writes into .nsfc-qc/.
 """
@@ -99,13 +102,17 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "- 禁止修改任何已有文件（尤其是 .tex/.bib/.cls/.sty）。把建议写进 RESULT.md。\n"
         "- 禁止访问父目录（..）与任何绝对路径写入。\n"
         "- 不编造引用与论文内容；无法确定时标记为 uncertain，并给出可复核路径。\n\n"
+        "证据包（只读，可用于“引用真伪/错引风险”的语义核查）：\n"
+        "- `./.nsfc-qc_input/precheck.json`\n"
+        "- `./.nsfc-qc_input/citations_index.csv`\n"
+        "- `./.nsfc-qc_input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
         f"输入：\n- project_root: .\n- main_tex: {main_tex}\n\n"
         "请在 RESULT.md 中按以下结构输出（标题必须一致）：\n"
         "1) 执行摘要\n"
         "2) 硬性问题（P0）\n"
         "3) 重要建议（P1）\n"
         "4) 可选优化（P2）\n"
-        "5) 引用核查清单（含证据链）\n"
+        "5) 引用核查清单（硬编码证据 + 语义判断；含证据链）\n"
         "6) 篇幅与结构分布（给出你观察到的不合理点）\n"
         "7) 建议的最小修改路线图\n"
         "8) 附录：你运行的命令（如有）与复核提示\n"
@@ -166,6 +173,14 @@ def main() -> int:
     ap.add_argument("--runner-profile", choices=["fast", "default", "deep"], default="deep")
     ap.add_argument("--runs-root", default=".nsfc-qc/runs", help="relative to project-root")
     ap.add_argument("--plan-only", action="store_true", help="only write plan + snapshot; do not run threads")
+    ap.add_argument("--precheck", dest="precheck", action="store_true", default=True, help="run deterministic precheck before threads")
+    ap.add_argument("--no-precheck", dest="precheck", action="store_false", help="skip deterministic precheck")
+    ap.add_argument("--resolve-refs", dest="resolve_refs", action="store_true", default=True, help="fetch reference evidence (title/abstract/optional pdf) during precheck")
+    ap.add_argument("--no-resolve-refs", dest="resolve_refs", action="store_false", help="disable reference evidence fetching")
+    ap.add_argument("--fetch-pdf", action="store_true", help="when resolving refs, attempt to download OA PDFs and extract a short text excerpt")
+    ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""), help="optional; required by Unpaywall API (or set env UNPAYWALL_EMAIL)")
+    ap.add_argument("--timeout-s", type=int, default=20, help="network timeout seconds for reference resolution")
+    ap.add_argument("--compile-last", action="store_true", help="run isolated 4-step compile as the last step and update metrics")
     args = ap.parse_args()
 
     if args.threads < 1 or args.threads > 9:
@@ -209,8 +224,57 @@ def main() -> int:
     artifacts.mkdir(parents=True, exist_ok=True)
     final_dir.mkdir(parents=True, exist_ok=True)
 
+    # 0) Deterministic precheck (including reference evidence) BEFORE snapshot/threads.
+    skill_root = Path(__file__).resolve().parents[1]
+    if bool(args.precheck):
+        precheck_py = skill_root / "scripts" / "nsfc_qc_precheck.py"
+        cmd = [
+            sys.executable,
+            str(precheck_py),
+            "--project-root",
+            str(project_root),
+            "--main-tex",
+            str(Path(args.main_tex)),
+            "--out",
+            str(artifacts),
+            "--timeout-s",
+            str(int(args.timeout_s)),
+        ]
+        if bool(args.resolve_refs):
+            cmd.append("--resolve-refs")
+            if str(args.unpaywall_email or "").strip():
+                cmd += ["--unpaywall-email", str(args.unpaywall_email).strip()]
+            if bool(args.fetch_pdf):
+                cmd.append("--fetch-pdf")
+        log_path = artifacts / "precheck_runner.log"
+        with log_path.open("w", encoding="utf-8") as f:
+            f.write("$ " + " ".join(cmd) + "\n\n")
+            subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT)
+
     # Snapshot is the src_dir for parallel-vibe to keep workspaces clean.
     _copy_snapshot(project_root, snapshot_dir)
+
+    # Make deterministic artifacts readable inside thread workspaces (still read-only).
+    qc_in = snapshot_dir / ".nsfc-qc_input"
+    qc_in.mkdir(parents=True, exist_ok=True)
+    for name in (
+        "precheck.json",
+        "citations_index.csv",
+        "tex_lengths.csv",
+        "quote_issues.csv",
+        "reference_evidence.jsonl",
+        "reference_evidence_summary.json",
+    ):
+        src = artifacts / name
+        if src.exists():
+            dst = qc_in / name
+            try:
+                shutil.copy2(src, dst)
+                if dst.is_file():
+                    mode = dst.stat().st_mode
+                    os.chmod(dst, mode & ~0o222)  # drop write bits
+            except Exception:
+                continue
 
     base_prompt = _mk_thread_prompt(main_tex=str(Path(args.main_tex)))
     plan = _build_plan(
@@ -268,6 +332,43 @@ def main() -> int:
         p = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT)
 
     (artifacts / "parallel_vibe_exit_code.txt").write_text(str(int(p.returncode)) + "\n", encoding="utf-8")
+
+    # Materialize standard final outputs skeleton (safe, deterministic).
+    materialize_py = skill_root / "scripts" / "materialize_final_outputs.py"
+    subprocess.run(
+        [
+            sys.executable,
+            str(materialize_py),
+            "--project-root",
+            str(project_root),
+            "--run-id",
+            str(run_id),
+            "--runs-root",
+            str(args.runs_root),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+
+    # 4) 4-step compile must be the last step (optional).
+    if bool(args.compile_last):
+        compile_py = skill_root / "scripts" / "nsfc_qc_compile.py"
+        cmd2 = [
+            sys.executable,
+            str(compile_py),
+            "--project-root",
+            str(project_root),
+            "--main-tex",
+            str(Path(args.main_tex)),
+            "--out",
+            str(artifacts),
+        ]
+        log2 = artifacts / "compile_runner.log"
+        with log2.open("w", encoding="utf-8") as f:
+            f.write("$ " + " ".join(cmd2) + "\n\n")
+            subprocess.run(cmd2, stdout=f, stderr=subprocess.STDOUT, check=False)
+
     print(str(run_dir))
     return int(p.returncode)
 

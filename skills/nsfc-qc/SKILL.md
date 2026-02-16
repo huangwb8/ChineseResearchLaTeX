@@ -1,6 +1,6 @@
 ---
 name: nsfc-qc
-version: 0.1.1
+version: 0.1.3
 description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；所有中间文件归档到工作目录的 .nsfc-qc/。
 author: Bensz Conan
 metadata:
@@ -76,13 +76,18 @@ references: skills/nsfc-qc/references/
 最小预检清单：
 - 引用 key 是否都能在 `.bib` 中找到（缺失即 P0）
 - `.bib` 条目是否明显不完整（缺 title/author/year 等，或占位符，标 P1）
+- 引用真伪/错引的“证据包”（硬编码抓取）：对每个被引用的 bibkey，尽最大努力获取论文标题/摘要（可选获取 OA PDF 并抽取正文片段），并同时提取标书内的引用上下文；供后续 AI 做语义判断（不确定就标 uncertain）
 - 章节/文件级篇幅分布（字符数/粗略字数）
+- 中文排版易错项（确定性）：检测直引号 `"免疫景观"` 这类写法，并给出替换建议（推荐 TeX 引号 ``免疫景观''）
 -（可选）编译得到 PDF 页数（软约束：原则上不超过 30 页；过长标 P2，过短标 P1）
 
 产物落点（示例）：
 - `.../artifacts/precheck.json`
 - `.../artifacts/citations_index.csv`
 - `.../artifacts/tex_lengths.csv`
+- `.../artifacts/quote_issues.csv`
+- `.../artifacts/reference_evidence.jsonl`
+- `.../artifacts/reference_evidence_summary.json`
 
 ### 2) 多线程独立 QC（parallel-vibe；默认 5 threads；默认串联）
 
@@ -145,18 +150,25 @@ references: skills/nsfc-qc/references/
 - `templates/REPORT_TEMPLATE.md`
 - `templates/FINDINGS_SCHEMA.json`
 
+### 5) 4 步法自动编译（最后一步；可选但推荐）
+
+为尽可能模拟真实提交效果并得到页数信息，编译必须放在 QC 的最后一步执行：
+- 采用隔离编译（复制一份项目到 `.nsfc-qc/` 内），不触碰标书源文件
+- 严格按 4 步法：`xelatex → bibtex → xelatex → xelatex`
+- 产物写入 `.../artifacts/compile.json` 与 `.../artifacts/compile.log`，并回填到 `precheck.json`/`nsfc-qc_metrics.json`
+
 ## 快捷脚本（可选，但推荐）
 
 若希望可追溯与少出错，可运行（只写入 `.nsfc-qc/`）：
 
-1) 预检（引用/篇幅/章节分布；可选编译页数）
+1) 预检（引用/篇幅/章节分布 + 引用证据包；编译留到最后一步）
 
 ```bash
 python3 skills/nsfc-qc/scripts/nsfc_qc_precheck.py \
   --project-root projects/NSFC_Young \
   --main-tex main.tex \
   --out projects/NSFC_Young/.nsfc-qc/runs/vYYYYMMDDHHMMSS/artifacts \
-  --compile
+  --resolve-refs
 ```
 
 2) 生成 parallel-vibe plan 并运行（默认串联 5 threads）
@@ -166,7 +178,8 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --project-root projects/NSFC_Young \
   --run-id vYYYYMMDDHHMMSS \
   --threads 5 \
-  --execution serial
+  --execution serial \
+  --compile-last
 ```
 
 3) 生成标准化 final 输出骨架（即使 threads 尚未运行也可执行）
@@ -175,6 +188,15 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
 python3 skills/nsfc-qc/scripts/materialize_final_outputs.py \
   --project-root projects/NSFC_Young \
   --run-id vYYYYMMDDHHMMSS
+```
+
+4) 4 步法隔离编译（最后一步；只写入 `.nsfc-qc/`）
+
+```bash
+python3 skills/nsfc-qc/scripts/nsfc_qc_compile.py \
+  --project-root projects/NSFC_Young \
+  --main-tex main.tex \
+  --out projects/NSFC_Young/.nsfc-qc/runs/vYYYYMMDDHHMMSS/artifacts
 ```
 
 ## 降级策略（必须提供）

@@ -47,6 +47,15 @@
   - `README.md`：移除年份绑定表述，补充 `output_mode` 与自检命令
   - `skills/README.md`：同步移除年份绑定表述，补齐推荐 Prompt 模板的 `output_mode` 与禁改约束
 
+- **nsfc-qc v0.1.1 → v0.1.2**：新增中文直引号排版预检（只读）
+  - `scripts/nsfc_qc_precheck.py`：检测 `"免疫景观"` 这类直引号写法，输出 `quote_issues.csv` 并在 `precheck.json` 中给出结构化统计与替换建议（``免疫景观''）
+  - `scripts/materialize_final_outputs.py`：metrics 聚合时纳入 `typography` 预检信息并补齐产物索引
+
+- **nsfc-qc v0.1.2 → v0.1.3**：引用真伪核查升级为“硬编码证据包 + AI 语义判断”，并将 4 步法隔离编译固定为 QC 最后一步
+  - `scripts/nsfc_qc_precheck.py`：新增 `--resolve-refs`（抓取标题/摘要/可选 OA PDF 片段）与标书引用上下文提取，输出 `reference_evidence.jsonl`
+  - `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc_input/`，thread 可只读使用；新增 `--compile-last`
+  - `scripts/nsfc_qc_compile.py`：新增 4 步法隔离编译脚本（xelatex→bibtex→xelatex→xelatex），回填 metrics
+
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
   - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）

@@ -9,9 +9,11 @@
 
 - ✍️ **文风与可读性**：生硬/模板味/冗长句 → 给“最小改写建议”（只写建议，不改稿）
 - 📚 **引用核查**：假引/错引/缺失 bibkey/元信息异常 → 给证据链 + 复核路径
+- 🧪 **引用证据包（硬编码 + AI）**：先用脚本抓取“题目/摘要/（可选）OA PDF 片段”并提取标书引用上下文，再由 AI 做语义判断（不确定就标 uncertain）
 - 📏 **篇幅与结构**：总页数（软约束 30 页）与章节分布是否失衡（建议性优化）
 - 🧠 **逻辑与论证链**：是否闭环、是否跳步/歧义/概念偷换、关键对照与指标是否缺失
 - 🧹 **其它 QC**：术语一致性、缩略语首次定义、图表/交叉引用、夸大措辞等
+- 🧾 **中文排版易错项（确定性预检）**：检测直引号 `"免疫景观"` 这类写法，建议替换为 TeX 引号 ``免疫景观''
 
 ## 只读声明（重要）
 
@@ -62,13 +64,18 @@
 | 指标 | `.nsfc-qc/runs/{run_id}/final/nsfc-qc_metrics.json` | 页数/字符数/引用统计/编译信息等 |
 | 结构化问题清单 | `.nsfc-qc/runs/{run_id}/final/nsfc-qc_findings.json` | 便于后续人工审核或二次处理 |
 | parallel-vibe 产物（如启用） | `.nsfc-qc/runs/{run_id}/.parallel_vibe/...` | 每个 thread 的 workspace 与 RESULT.md |
+| 预检排版问题索引（可选） | `.nsfc-qc/runs/{run_id}/artifacts/quote_issues.csv` | 直引号等中文排版易错项（确定性扫描） |
+| 引用证据包（可选） | `.nsfc-qc/runs/{run_id}/artifacts/reference_evidence.jsonl` | 每个 bibkey：标书引用上下文 +（尽力）论文题目/摘要/（可选）PDF 片段 |
+| 编译日志（可选，最后一步） | `.nsfc-qc/runs/{run_id}/artifacts/compile.log` | 4 步法隔离编译日志（xelatex→bibtex→xelatex→xelatex） |
 
 ## 设计理念（为什么这样做）
 
 - **只读**：QC 报告通常要进一步审核；“先报告、后改稿”更可控。
 - **中间产物隔离**：所有过程文件集中到 `.nsfc-qc/`，不污染标书工程。
 - **多线程独立**：同一份清单多视角复核，减少漏检；最后再聚合去重。
-- **确定性优先**：能用脚本做的（引用 key 缺失、篇幅统计、编译页数）先脚本做，降低 AI 幻觉风险。
+- **确定性优先**：能用脚本做的（引用 key 缺失、篇幅统计、引用证据包抓取）先脚本做，降低 AI 幻觉风险。
+- **编译放最后**：4 步法隔离编译依赖环境且耗时，放在 QC 最后一步更稳健。
+- **中文排版先扫雷**：直引号等“看起来没错但不规范/不美观”的问题，先确定性列出再人工改。
 
 ## WHICHMODEL
 
@@ -108,7 +115,7 @@ OpenAI 将模型区分为 *reasoning* 与非 *reasoning*（GPT）两类，并强
 
 如果你想先做一次“确定性预检”，再让 AI 去做深度 QC：
 
-### 1) 预检（只写入 `.nsfc-qc/`）
+### 1) 预检（只写入 `.nsfc-qc/`；包含“引用证据包”）
 
 ```bash
 # 在 repo 根目录运行
@@ -116,10 +123,10 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_precheck.py \
   --project-root projects/NSFC_Young \
   --main-tex main.tex \
   --out projects/NSFC_Young/.nsfc-qc/runs/vYYYYMMDDHHMMSS/artifacts \
-  --compile
+  --resolve-refs
 ```
 
-### 2) 运行 parallel-vibe（只写入 `.nsfc-qc/`）
+### 2) 运行 parallel-vibe（只写入 `.nsfc-qc/`；可选最后一步隔离编译）
 
 ```bash
 # 生成 snapshot + plan，并把 parallel-vibe 产物落在 projects/NSFC_Young/.nsfc-qc/ 下
@@ -127,7 +134,8 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --project-root projects/NSFC_Young \
   --run-id vYYYYMMDDHHMMSS \
   --threads 5 \
-  --execution serial
+  --execution serial \
+  --compile-last
 ```
 
 ### 3) 生成标准化 final 输出骨架（只写入 `.nsfc-qc/`）

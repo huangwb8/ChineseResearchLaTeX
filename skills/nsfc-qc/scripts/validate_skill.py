@@ -76,6 +76,7 @@ def main() -> int:
     required_paths = [
         skill_root / "scripts" / "nsfc_qc_precheck.py",
         skill_root / "scripts" / "run_parallel_qc.py",
+        skill_root / "scripts" / "nsfc_qc_compile.py",
         skill_root / "scripts" / "materialize_final_outputs.py",
         skill_root / "templates" / "REPORT_TEMPLATE.md",
         skill_root / "templates" / "FINDINGS_SCHEMA.json",
@@ -95,4 +96,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
