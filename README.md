@@ -141,16 +141,16 @@ B站教学视频合集：
 
 项目内置多个符合 [我预定义规范](https://github.com/huangwb8/skills) 的强大 Skills，辅助 LaTeX 写作和模板优化。**兼容 Claude Code、OpenAI Codex、Cursor、GitHub Actions、VS Code！** 通过灵活运用 skills，加上多轮对话进行优化，才能保证最佳效果。**详细使用说明和 Prompt 模板**：[skills/README.md](skills/README.md)
 
-### ⚡ 快速安装
+### ⚡ 安装/更新
 
-#### 方法一：一键快速安装
+#### 方法一：一键快速安装/更新
 
 | 平台 | 命令 |
 |------|------|
 | **macOS / Linux / WSL** | `curl -fsSL https://raw.githubusercontent.com/huangwb8/skills/main/@install/install.sh \| bash` |
 | **Windows PowerShell** | `irm https://raw.githubusercontent.com/huangwb8/skills/main/@install/install.ps1 \| iex` 
 
-#### 方法二：本地硬编码安装
+#### 方法二：本地硬编码安装/更新
 
 ```bash
 git clone https://github.com/huangwb8/skills.git && 
@@ -159,7 +159,7 @@ git clone https://github.com/huangwb8/skills.git &&
   python3 install-bensz-skills/scripts/install.py --source ../ChineseResearchLaTeX/skills
 ```
 
-#### 方法三：远程对话式安装
+#### 方法三：远程对话式安装/更新
 
 ```bash
 git clone https://github.com/huangwb8/skills.git && 
