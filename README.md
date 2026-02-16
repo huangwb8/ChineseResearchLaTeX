@@ -55,9 +55,9 @@ AI 负责格式对齐、参考文献管理、章节重构等机械性工作，�
 
 | 模板 | 状态 | Overleaf 演示 | 上次修改时间 |
 |------|------|---------------|----------------|
-| [青年C](projects/NSFC_Young/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/kxrsqfvbdgww#7d26e8) | 2026-01-28 |
-| [面上](projects/NSFC_General/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/tfkgvgtmfnvj#367205) | 2026-01-28 |
-| [地区](projects/NSFC_Local/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/gkhdrjmrdgvg#07f4b4) | 2026-01-28 |
+| [青年C](projects/NSFC_Young/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/kxrsqfvbdgww#7d26e8) | 2026-02-16 |
+| [面上](projects/NSFC_General/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/tfkgvgtmfnvj#367205) | 2026-02-16 |
+| [地区](projects/NSFC_Local/) | ✅ 2026 就绪 | [演示](https://www.overleaf.com/read/gkhdrjmrdgvg#07f4b4) | 2026-02-16 |
 
 ---
 
