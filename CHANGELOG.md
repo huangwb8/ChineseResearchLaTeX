@@ -103,10 +103,11 @@
 
 - **nsfc-abstract v0.2.0**：NSFC 标书中英文摘要生成技能（英文为中文的忠实翻译；中文≤400字、英文≤4000字符），输出写入工作目录 `NSFC-ABSTRACTS.md`；新增"字数超限闭环处理"说明，并增强确定性长度校验/写入脚本（JSON/diff 输出、严格模式不写入）
 - **nsfc-abstract v0.3.0**：新增"标题建议"输出（默认 1 个推荐标题 + 5 个候选标题及理由），并在校验/写入脚本中加入标题分段的确定性检查；新增标题写作规则参考文档 `skills/nsfc-abstract/references/title-rules.md`
-- **nsfc-qc v0.1.0**：新增 NSFC 标书只读质量控制技能（多线程独立 QC + 标准化报告）
+- **nsfc-qc v0.1.1**：新增 NSFC 标书只读质量控制技能（多线程独立 QC + 标准化报告）
   - 中间文件统一归档到 `project_root/.nsfc-qc/`（包含 parallel-vibe 产物），不污染标书目录
   - 多线程（默认 5 threads，默认串联）独立检查：文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等
-  - 最终输出标准化 QC 报告（Markdown + metrics/findings JSON），供后续人工审核与二次处理
+  - 确定性脚本可生成标准化 final 输出骨架（report/metrics/findings），即使 threads 尚未运行也可落盘
+  - `--compile` 路径在缺少 TeX 工具链时自动降级（记录 `missing_tools`），不崩溃
 
 ### Updated（文档更新）
 

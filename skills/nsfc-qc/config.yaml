@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-qc
-  version: 0.1.0
+  version: 0.1.1
   description: "NSFC 标书质量控制（只读）：多线程检查文风生硬/引用真伪与一致性/篇幅与结构分布/逻辑清晰度等，并输出标准化 QC 报告（中间文件归档到 .nsfc-qc/）"
   category: writing
   author: "Bensz Conan"
@@ -68,4 +68,3 @@ output_contract:
   final_report: ".nsfc-qc/runs/{run_id}/final/nsfc-qc_report.md"
   final_metrics: ".nsfc-qc/runs/{run_id}/final/nsfc-qc_metrics.json"
   final_findings: ".nsfc-qc/runs/{run_id}/final/nsfc-qc_findings.json"
-

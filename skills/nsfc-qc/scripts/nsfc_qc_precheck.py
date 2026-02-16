@@ -27,6 +27,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 TEX_INPUT_RE = re.compile(r"\\(input|include)\s*\{([^}]+)\}")
 TEX_BIB_RE = re.compile(r"\\bibliography\s*\{([^}]+)\}")
+TEX_ADDBIB_RE = re.compile(r"\\addbibresource\s*(?:\[[^\]]*\]\s*)?\{([^}]+)\}")
 TEX_CITE_RE = re.compile(
     r"\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*\{([^}]+)\}"
 )
@@ -108,6 +109,10 @@ def _find_bib_files(tex_files: Iterable[Path], project_root: Path) -> List[Path]
             continue
         for m in TEX_BIB_RE.finditer(s):
             bib_names.extend([x.strip() for x in m.group(1).split(",") if x.strip()])
+        for m in TEX_ADDBIB_RE.finditer(s):
+            name = (m.group(1) or "").strip()
+            if name:
+                bib_names.append(name)
 
     bib_paths: List[Path] = []
     if bib_names:
@@ -219,8 +224,13 @@ def _run(cmd: List[str], cwd: Path, log_path: Path) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with log_path.open("a", encoding="utf-8") as f:
         f.write("\n$ " + " ".join(cmd) + "\n")
-        p = subprocess.run(cmd, cwd=str(cwd), stdout=f, stderr=subprocess.STDOUT)
-        return int(p.returncode)
+        try:
+            p = subprocess.run(cmd, cwd=str(cwd), stdout=f, stderr=subprocess.STDOUT)
+            return int(p.returncode)
+        except FileNotFoundError:
+            # Keep precheck robust across environments (TeX toolchain may not exist).
+            f.write(f"[nsfc-qc] command not found: {cmd[0]}\n")
+            return 127
 
 
 def _get_pdf_pages(pdf_path: Path) -> Optional[int]:
@@ -288,6 +298,26 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
 
     base = main_tex.stem
     log = out_dir / "compile.log"
+
+    missing_tools = [t for t in ("xelatex", "bibtex") if shutil.which(t) is None]
+    if missing_tools:
+        # Do not crash; record downgrade information.
+        try:
+            log.write_text(
+                "[nsfc-qc] TeX toolchain not available; skip compile step.\n"
+                f"missing_tools={missing_tools}\n",
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
+        return {
+            "enabled": True,
+            "ok": False,
+            "missing_tools": missing_tools,
+            "error": "TeX toolchain not available; skip compile step",
+            "log": str(log),
+        }
+
     r1 = _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={build}", str(main_tex)], cwd=src, log_path=log)
     # bibtex must run in build dir on the generated .aux
     r2 = _run(["bibtex", base], cwd=build, log_path=log) if r1 == 0 else 1

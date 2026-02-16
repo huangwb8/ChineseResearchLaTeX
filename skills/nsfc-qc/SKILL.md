@@ -1,6 +1,6 @@
 ---
 name: nsfc-qc
-version: 0.1.0
+version: 0.1.1
 description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；所有中间文件归档到工作目录的 .nsfc-qc/。
 author: Bensz Conan
 metadata:
@@ -82,7 +82,7 @@ references: skills/nsfc-qc/references/
 产物落点（示例）：
 - `.../artifacts/precheck.json`
 - `.../artifacts/citations_index.csv`
-- `.../artifacts/section_lengths.csv`
+- `.../artifacts/tex_lengths.csv`
 
 ### 2) 多线程独立 QC（parallel-vibe；默认 5 threads；默认串联）
 
@@ -167,6 +167,14 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --run-id vYYYYMMDDHHMMSS \
   --threads 5 \
   --execution serial
+```
+
+3) 生成标准化 final 输出骨架（即使 threads 尚未运行也可执行）
+
+```bash
+python3 skills/nsfc-qc/scripts/materialize_final_outputs.py \
+  --project-root projects/NSFC_Young \
+  --run-id vYYYYMMDDHHMMSS
 ```
 
 ## 降级策略（必须提供）

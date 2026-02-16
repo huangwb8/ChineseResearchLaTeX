@@ -14,7 +14,6 @@ Note: This script does NOT modify proposal source files. It only writes into .ns
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import shutil
@@ -22,7 +21,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import List, Optional, Set
 
 
 def _now_run_id() -> str:
@@ -35,12 +34,16 @@ def _write_json(path: Path, obj: dict) -> None:
 
 
 def _find_parallel_vibe_script() -> Optional[Path]:
+    env = os.environ.get("PARALLEL_VIBE_SCRIPT", "").strip()
+    if env:
+        p = Path(env).expanduser()
+        if p.exists() and p.is_file():
+            return p.resolve()
+
     # Prefer the canonical locations suggested by the parallel-vibe skill.
     candidates = [
         Path.home() / ".codex" / "skills" / "parallel-vibe" / "scripts" / "parallel_vibe.py",
         Path.home() / ".claude" / "skills" / "parallel-vibe" / "scripts" / "parallel_vibe.py",
-        # Fallback: the explicit path used in this repo's environment (best-effort).
-        Path("/Users/bensz/.codex/skills/parallel-vibe/scripts/parallel_vibe.py"),
     ]
     for c in candidates:
         try:
@@ -77,15 +80,26 @@ def _copy_snapshot(project_root: Path, snapshot_dir: Path) -> None:
 
     shutil.copytree(project_root, snapshot_dir, ignore=ignore, dirs_exist_ok=False)
 
+    # Enforce read-only at filesystem level (files only; keep directories writable so the run folder remains removable).
+    for p in snapshot_dir.rglob("*"):
+        try:
+            if p.is_file():
+                mode = p.stat().st_mode
+                os.chmod(p, mode & ~0o222)  # drop write bits, keep exec bits
+        except Exception:
+            continue
 
-def _mk_thread_prompt(*, project_root: str, main_tex: str) -> str:
+
+def _mk_thread_prompt(*, main_tex: str) -> str:
     # Keep this prompt stable and identical across threads.
     return (
         "你将对 NSFC 标书进行“只读质量控制（QC）”。\n"
         "硬约束：\n"
+        "- 你的当前工作目录（cwd）就是标书项目根目录（来自原项目的 snapshot 拷贝）。\n"
         "- 禁止修改任何已有文件（尤其是 .tex/.bib/.cls/.sty）。把建议写进 RESULT.md。\n"
+        "- 禁止访问父目录（..）与任何绝对路径写入。\n"
         "- 不编造引用与论文内容；无法确定时标记为 uncertain，并给出可复核路径。\n\n"
-        f"输入：\n- project_root: {project_root}\n- main_tex: {main_tex}\n\n"
+        f"输入：\n- project_root: .\n- main_tex: {main_tex}\n\n"
         "请在 RESULT.md 中按以下结构输出（标题必须一致）：\n"
         "1) 执行摘要\n"
         "2) 硬性问题（P0）\n"
@@ -169,7 +183,26 @@ def main() -> int:
         return 2
 
     run_id = args.run_id.strip() or _now_run_id()
-    run_dir = project_root / args.runs_root / run_id
+    # Prevent path injection: run_id must be a simple name.
+    if Path(run_id).name != run_id or ("/" in run_id) or ("\\" in run_id):
+        print("error: --run-id must be a simple name (no path separators)", file=sys.stderr)
+        return 2
+
+    runs_root = Path(args.runs_root)
+    # Enforce skill boundary: all artifacts must stay under project_root/.nsfc-qc/
+    if runs_root.is_absolute() or ".." in runs_root.parts:
+        print("error: --runs-root must be a relative path without '..'", file=sys.stderr)
+        return 2
+    if not runs_root.parts or runs_root.parts[0] != ".nsfc-qc":
+        print("error: --runs-root must start with .nsfc-qc/ to keep artifacts isolated", file=sys.stderr)
+        return 2
+
+    run_dir = (project_root / runs_root / run_id).resolve()
+    try:
+        run_dir.relative_to(project_root.resolve())
+    except Exception:
+        print("error: resolved run directory escapes project_root", file=sys.stderr)
+        return 2
     artifacts = run_dir / "artifacts"
     final_dir = run_dir / "final"
     snapshot_dir = run_dir / "snapshot"
@@ -179,7 +212,7 @@ def main() -> int:
     # Snapshot is the src_dir for parallel-vibe to keep workspaces clean.
     _copy_snapshot(project_root, snapshot_dir)
 
-    base_prompt = _mk_thread_prompt(project_root=str(project_root), main_tex=str(Path(args.main_tex)))
+    base_prompt = _mk_thread_prompt(main_tex=str(Path(args.main_tex)))
     plan = _build_plan(
         prompt=base_prompt,
         n_threads=int(args.threads),
@@ -241,4 +274,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
