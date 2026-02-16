@@ -209,10 +209,10 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.7 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.2.2 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
-| [nsfc-qc](skills/nsfc-qc/) | v0.1.3 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | 🚧 开发中 |
-| [nsfc-reviewers](skills/nsfc-reviewers/) | v0.5.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | 🚧 开发中 |
 | [nsfc-roadmap](skills/nsfc-roadmap/) | v0.8.0 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
 | [nsfc-schematic](skills/nsfc-schematic/) | v0.8.0 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png） | 🚧 开发中 |
+| [nsfc-qc](skills/nsfc-qc/) | v0.1.3 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | 🚧 开发中 |
+| [nsfc-reviewers](skills/nsfc-reviewers/) | v0.5.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | 🚧 开发中 |
 
 ---
 
