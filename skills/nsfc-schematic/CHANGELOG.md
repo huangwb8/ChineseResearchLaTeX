@@ -6,6 +6,23 @@
 
 （暂无）
 
+## [0.8.0] - 2026-02-16
+
+### Added（新增）
+
+- `scripts/ai_evaluate.py`：新增 AI 主评估离线协议（`ai_eval_request.md` + `ai_eval_response.json`），请求包直接包含 spec+关键 config+PNG 路径（不再依赖“先算度量再翻译”）。
+- `scripts/ai_extract_tex.py`：新增 AI TEX 提取离线协议（`ai_tex_request.md` + `ai_tex_response.json`），支持 AI 直接读 TEX 生成 `spec_draft`（无响应自动降级）。
+
+### Changed（变更）
+
+- `config.yaml`：`evaluation.evaluation_mode` 默认改为 `ai`（无响应时自动降级为启发式评估，保证脚本可跑通）。
+- `config.yaml`：新增 `planning.extraction.ai_tex_max_chars`（默认 20000），用于限制 `ai_tex_request.md` 体积，降低 context overflow 风险。
+- `scripts/evaluate_schematic.py`：AI 模式从“度量驱动”改为“请求包驱动”，不再强依赖 `measure_schematic.py` 才能出协议文件。
+- `scripts/generate_schematic.py`：移除 AI 模式下 `dimension_measurements.json`/`ai_dimension_*` 协议生成；当 AI 主评估生效时默认跳过多维度启发式扣分，避免口径重复。
+- `scripts/plan_schematic.py` / `scripts/generate_schematic.py`：当输入来自 TEX 且启用 AI 模式时，优先消费 `ai_tex_response.json` 中的 `spec_draft`；缺失时自动回退到正则术语抽取。
+- `scripts/utils.py`：`read_text()` 增加 UTF-8/UTF-8-SIG/GB18030 解码容错，提升跨平台标书兼容性（Windows/历史 GBK 编码）。
+- `SKILL.md`：同步更新 AI 模式产物与工作流说明。
+
 ## [0.7.0] - 2026-02-15
 
 ### Added（新增）

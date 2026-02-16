@@ -165,16 +165,18 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 - 当命中平台期时，会在当前 `round_*/` 自动生成 `ai_critic_request.md` 与 `ai_critic_response.json` 模板
 - 它不会在脚本内调用任何外部模型；用于把“宿主 AI 视觉复核”纳入可追溯闭环
 
-## AI 自主评估模式（可选）
+## AI 自主评估模式（离线协议）
 
-默认评估是启发式（`config.yaml:evaluation.evaluation_mode: heuristic`）。如需把“判断/分级/评分”迁移给宿主 AI，可启用离线协议模式：
+默认评估为 AI 离线协议模式（`config.yaml:evaluation.evaluation_mode: ai`）。如需强制恢复纯启发式评估，可设置为 `heuristic`。
 
 - 开关：`config.yaml:evaluation.evaluation_mode: ai`
 - 产物：在每个 `round_*/_candidates/cand_*/` 下生成
-  - `measurements.json` + `ai_evaluation_request.md` + `ai_evaluation_response.json`
-  - `dimension_measurements.json` + `ai_dimension_request.md` + `ai_dimension_response.json`
-- 用法：宿主 AI 读取 `*_request.md` 与 `*_measurements.json`，把结构化评审结果写回 `ai_*_response.json`
+  - `ai_eval_request.md` + `ai_eval_response.json`
+- 用法：宿主 AI 读取 `ai_eval_request.md`（必要时用 Read 工具查看 PNG），把结构化评审结果写回 `ai_eval_response.json`
 - 兜底：若 response 缺失或不合法，脚本会自动回退到启发式评估，保证生成流程可跑通
+
+TEX 场景（未提供 `--spec-file` 且启用 AI 模式）：
+- 脚本会在 `run_*/` 下生成 `ai_tex_request.md` + `ai_tex_response.json`，允许宿主 AI 直接读 TEX 并输出 `spec_draft`；无响应则自动降级为正则抽取术语。
 
 ## 评估标准
 

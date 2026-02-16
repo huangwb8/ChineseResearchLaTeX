@@ -661,6 +661,7 @@ def main() -> None:
 
     source_label = ""
     extracted_terms: List[str] = []
+    used_ai_spec = False
 
     if args.context:
         source_label = "context"
@@ -678,21 +679,42 @@ def main() -> None:
         if tex_path is None:
             fatal(f"未在 proposal 中找到可用的 .tex：{proposal}")
         source_label = str(tex_path)
-        extracted_terms = extract_research_terms(tex_path, max_terms=max_terms)
-        # Keep a bit more context-derived terms if possible.
-        section = extract_research_content_section(tex_path)
-        if section and len(extracted_terms) < 6:
-            extra = re.split(r"[。\n；;]+", section)
-            for c in extra:
-                c = re.sub(r"\\[a-zA-Z]+", " ", c)
-                c = re.sub(r"\$[^$]*\$", " ", c)
-                c = re.sub(r"\s+", " ", c).strip(" ：:;，,")
-                if 6 <= len(c) <= 36 and c not in extracted_terms:
-                    extracted_terms.append(c)
-                if len(extracted_terms) >= max_terms:
-                    break
+        eval_mode = str((config.get("evaluation", {}) or {}).get("evaluation_mode", "heuristic")).strip().lower()
+        if eval_mode == "ai":
+            try:
+                from ai_extract_tex import AI_TEX_RESPONSE_JSON, consume_tex_extraction, prepare_tex_extraction_request
 
-    spec = _build_spec_draft(config, extracted_terms)
+                args.output.mkdir(parents=True, exist_ok=True)
+                req, resp = prepare_tex_extraction_request(tex_path, config=config, output_dir=args.output)
+                payload = consume_tex_extraction(resp)
+                if payload and isinstance(payload.get("spec_draft"), dict) and payload.get("spec_draft"):
+                    spec = payload["spec_draft"]
+                    terms = payload.get("terms", [])
+                    extracted_terms = [str(t).strip() for t in terms if isinstance(t, (str, int, float)) and str(t).strip()][:max_terms]
+                    used_ai_spec = True
+                    info(f"已检测到 AI TEX 提取响应：{resp.name}，将直接使用 spec_draft")
+                else:
+                    info(f"AI TEX 提取协议已生成：{req.name} + {AI_TEX_RESPONSE_JSON}（未检测到有效响应，已降级为正则抽取）")
+            except Exception as exc:
+                warn(f"AI TEX 提取协议生成/消费失败，已降级为正则抽取（{exc}）")
+
+        if not used_ai_spec:
+            extracted_terms = extract_research_terms(tex_path, max_terms=max_terms)
+            # Keep a bit more context-derived terms if possible.
+            section = extract_research_content_section(tex_path)
+            if section and len(extracted_terms) < 6:
+                extra = re.split(r"[。\n；;]+", section)
+                for c in extra:
+                    c = re.sub(r"\\[a-zA-Z]+", " ", c)
+                    c = re.sub(r"\$[^$]*\$", " ", c)
+                    c = re.sub(r"\s+", " ", c).strip(" ：:;，,")
+                    if 6 <= len(c) <= 36 and c not in extracted_terms:
+                        extracted_terms.append(c)
+                    if len(extracted_terms) >= max_terms:
+                        break
+
+    if not used_ai_spec:
+        spec = _build_spec_draft(config, extracted_terms)
     checks = _run_checks(config, spec)
 
     args.output.mkdir(parents=True, exist_ok=True)

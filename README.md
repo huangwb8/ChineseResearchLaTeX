@@ -210,7 +210,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.0 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v0.5.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | 🚧 开发中 |
 | [nsfc-roadmap](skills/nsfc-roadmap/) | v0.8.0 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
-| [nsfc-schematic](skills/nsfc-schematic/) | v0.7.0 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png） | 🚧 开发中 |
+| [nsfc-schematic](skills/nsfc-schematic/) | v0.8.0 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png） | 🚧 开发中 |
 
 ---
 

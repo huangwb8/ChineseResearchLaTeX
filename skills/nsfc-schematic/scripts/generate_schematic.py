@@ -18,7 +18,6 @@ from evaluate_dimension import (
     evaluate_visual,
     load_palette_from_assets,
     penalty_from_critiques,
-    write_ai_dimension_protocol,
 )
 from evaluate_schematic import evaluate_schematic
 from extract_from_tex import apply_tex_hints, extract_research_terms, find_candidate_tex
@@ -209,7 +208,7 @@ def _validate_drawio_xml(drawio_path: Path) -> None:
         ) from exc
 
 
-def _load_input_spec(args: argparse.Namespace) -> Dict[str, Any]:
+def _load_input_spec(args: argparse.Namespace, config: Dict[str, Any], request_dir: Path) -> Dict[str, Any]:
     if args.spec_file:
         if not args.spec_file.exists() or not args.spec_file.is_file():
             fatal(f"spec_file 不存在或不是文件：{args.spec_file}")
@@ -229,6 +228,20 @@ def _load_input_spec(args: argparse.Namespace) -> Dict[str, Any]:
         tex_path = find_candidate_tex(args.proposal_path)
 
     if tex_path:
+        eval_mode = str((config.get("evaluation", {}) or {}).get("evaluation_mode", "heuristic")).strip().lower()
+        if eval_mode == "ai":
+            try:
+                from ai_extract_tex import AI_TEX_RESPONSE_JSON, consume_tex_extraction, prepare_tex_extraction_request
+
+                req, resp = prepare_tex_extraction_request(tex_path, config=config, output_dir=request_dir)
+                payload = consume_tex_extraction(resp)
+                if payload and isinstance(payload.get("spec_draft"), dict) and payload.get("spec_draft"):
+                    info(f"已检测到 AI TEX 提取响应：{resp.name}，将直接使用 spec_draft")
+                    return payload["spec_draft"]
+                info(f"AI TEX 提取协议已生成：{req.name} + {AI_TEX_RESPONSE_JSON}（未检测到有效响应，已降级为正则抽取）")
+            except Exception as exc:
+                warn(f"AI TEX 提取协议生成/消费失败，已降级为正则抽取（{exc}）")
+
         terms = extract_research_terms(tex_path, max_terms=8)
         spec = apply_tex_hints(spec, terms)
         root = spec.get("schematic", spec)
@@ -681,7 +694,7 @@ def main() -> None:
     run_base = (intermediate_dir / "runs") if hide_intermediate else intermediate_dir
     run_dir = _make_run_dir(run_base)
 
-    input_spec_data = _load_input_spec(args)
+    input_spec_data = _load_input_spec(args, config=config, request_dir=run_dir)
 
     spec_latest = intermediate_dir / _spec_latest_filename(config)
     write_text(spec_latest, dump_yaml(input_spec_data))
@@ -821,7 +834,7 @@ def main() -> None:
 
             # evaluation_mode:
             # - heuristic (default): deterministic evaluator
-            # - ai: emit measurements + offline protocol files; consume AI response if provided, else fallback
+            # - ai: emit offline protocol files (request/response); consume AI response if provided, else fallback
             evaluation_mode = str((cfg_used.get("evaluation", {}) or {}).get("evaluation_mode", "heuristic")).strip().lower()
             protocol_dir = cand_dir if evaluation_mode == "ai" else None
             evaluation = evaluate_schematic(
@@ -831,106 +844,31 @@ def main() -> None:
                 protocol_dir=protocol_dir,
             )
 
-            # AI dimension protocol emission: should NOT depend on multi_round_self_check.enabled.
-            ai_dim_resp: Optional[Path] = None
-            if evaluation_mode == "ai":
-                palette_for_ai = palette
-                if palette_for_ai is None and ("visual" in critique_dims):
-                    try:
-                        palette_for_ai = load_palette_from_assets(cfg_used, skill_root_dir=root)
-                    except Exception as exc:
-                        warn(f"配色方案加载失败，AI dimension_measurements.json 的 visual 度量将为空（{exc}）")
-                        palette_for_ai = None
-
-                _, _, ai_dim_resp = write_ai_dimension_protocol(
-                    cand_dir,
-                    spec=spec,
-                    config=cfg_used,
-                    palette=palette_for_ai,
-                    png_path=png_path if isinstance(png_path, Path) else None,
-                )
-
             # Multi-dimensional critiques (optional) -> penalty -> score_total.
             critiques: Dict[str, Dict[str, Any]] = {}
             critique_files: Dict[str, str] = {}
             if multi_enabled:
                 try:
-                    if evaluation_mode == "ai" and ai_dim_resp is not None:
-                        ai_payload = _load_json_if_exists(ai_dim_resp)
-
-                        def _norm_defects(ds: Any) -> List[Dict[str, Any]]:
-                            if not isinstance(ds, list):
-                                return []
-                            out: List[Dict[str, Any]] = []
-                            for d in ds:
-                                if not isinstance(d, dict):
-                                    continue
-                                sev = str(d.get("severity", "")).strip().upper() or "P2"
-                                if sev not in {"P0", "P1", "P2"}:
-                                    sev = "P2"
-                                where = str(d.get("where", "")).strip() or "global"
-                                msg = str(d.get("message", "")).strip()
-                                dim = str(d.get("dimension", "")).strip() or "unknown"
-                                if not msg:
-                                    continue
-                                out.append({"severity": sev, "where": where, "message": msg, "dimension": dim})
-                            return out
-
-                        used_ai = False
-                        if isinstance(ai_payload, dict):
-                            for dim in ("structure", "visual", "readability"):
-                                if dim not in critique_dims:
-                                    continue
-                                part = ai_payload.get(dim)
-                                if not isinstance(part, dict):
-                                    continue
-                                ds = _norm_defects(part.get("defects", []))
-                                score_v = part.get("score", 100)
-                                try:
-                                    score_i = int(score_v)
-                                except Exception:
-                                    score_i = 100
-                                metrics = part.get("metrics", {}) if isinstance(part.get("metrics", {}), dict) else {}
-
-                                # Treat "template-like" payload as absent:
-                                # - defects empty
-                                # - score is default 100
-                                # - metrics empty
-                                is_template = (not ds) and (max(0, min(100, score_i)) == 100) and (not metrics)
-                                if is_template:
-                                    continue
-
-                                payload = {
-                                    "dimension": dim,
-                                    "score": max(0, min(100, score_i)),
-                                    "metrics": metrics,
-                                    "defects": ds,
-                                }
-                                critiques[dim] = payload
-                                critique_files[dim] = f"critique_{dim}.json"
-                                (cand_dir / f"critique_{dim}.json").write_text(
-                                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-                                )
-                                used_ai = True
-
-                        if not used_ai:
-                            warn(f"Round {r} cand {ci + 1} AI critique 响应缺失/无效，已退化为 heuristic critiques")
-
-                    if ("structure" in critique_dims) and ("structure" not in critiques):
+                    ai_used = str(evaluation.get("evaluation_source", "")).strip().lower() == "ai"
+                    if ai_used:
+                        # AI 主评估已覆盖多维度判定；避免二次扣分导致口径混乱。
+                        critiques = {}
+                        critique_files = {}
+                    if ("structure" in critique_dims) and ("structure" not in critiques) and (not ai_used):
                         payload = evaluate_structure(spec, cfg_used)
                         critiques["structure"] = payload
                         critique_files["structure"] = "critique_structure.json"
                         (cand_dir / "critique_structure.json").write_text(
                             json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
                         )
-                    if ("visual" in critique_dims) and ("visual" not in critiques) and palette is not None:
+                    if ("visual" in critique_dims) and ("visual" not in critiques) and palette is not None and (not ai_used):
                         payload = evaluate_visual(spec, cfg_used, palette=palette)
                         critiques["visual"] = payload
                         critique_files["visual"] = "critique_visual.json"
                         (cand_dir / "critique_visual.json").write_text(
                             json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
                         )
-                    if ("readability" in critique_dims) and ("readability" not in critiques):
+                    if ("readability" in critique_dims) and ("readability" not in critiques) and (not ai_used):
                         payload = evaluate_readability(
                             spec, cfg_used, png_path=png_path if isinstance(png_path, Path) else None
                         )

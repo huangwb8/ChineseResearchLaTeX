@@ -642,7 +642,12 @@ def write_ai_dimension_protocol(
     png_path: Optional[Path],
 ) -> Tuple[Path, Path, Path]:
     """
-    AI 模式协议适配器：输出纯度量 + request/response 模板（不调用任何外部模型）。
+    Legacy AI 协议适配器：输出纯度量 + request/response 模板（不调用任何外部模型）。
+
+    Note:
+    - v0.8.0 起，`generate_schematic.py` 的 AI 主评估已改为 `ai_eval_request.md/ai_eval_response.json`，
+      默认不再生成本函数的 `dimension_measurements.json` 等文件（避免冗余协议与口径重复扣分）。
+    - 本函数保留用于兼容旧工作流/手动调试。
 
     Files:
     - dimension_measurements.json

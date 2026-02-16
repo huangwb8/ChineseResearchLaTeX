@@ -17,7 +17,15 @@ def skill_root() -> Path:
 
 
 def read_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+    # Be tolerant to common encodings seen in Chinese LaTeX workflows (UTF-8 / UTF-8-SIG / GB18030).
+    data = path.read_bytes()
+    for enc in ("utf-8", "utf-8-sig", "gb18030"):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    # Last resort: keep the program running and surface garbled chars rather than crashing.
+    return data.decode("utf-8", errors="replace")
 
 
 def write_text(path: Path, text: str) -> None:

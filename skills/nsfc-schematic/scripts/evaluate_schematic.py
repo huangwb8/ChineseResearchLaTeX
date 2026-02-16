@@ -211,7 +211,7 @@ def evaluate_schematic(
     - Default mode is heuristic and returns the legacy output schema.
     - When config.yaml enables evaluation.evaluation_mode=ai, this function will still
       return an evaluation (heuristic fallback if no valid AI response is provided),
-      while optionally emitting measurements / request templates via output_dir.
+      while emitting an offline request/response protocol via protocol_dir (NO external model calls).
     """
     mode = str((config.get("evaluation", {}) or {}).get("evaluation_mode", "heuristic")).strip().lower() or "heuristic"
     if mode != "ai":
@@ -220,8 +220,7 @@ def evaluate_schematic(
         out.setdefault("evaluation_source", "heuristic")
         return out
 
-    # AI mode (offline protocol): script emits pure measurements + request/response templates,
-    # and consumes ai_evaluation_response.json if user/host AI provides one.
+    # AI mode (offline protocol): emit request/response templates, and consume the response if provided.
     output_dir: Optional[Path] = protocol_dir
     if output_dir is None:
         # Backward-compatible internal hook (older callers may inject this key).
@@ -688,124 +687,88 @@ def evaluate_schematic_ai_adapter(
 ) -> Dict[str, Any]:
     """
     Offline AI evaluation protocol:
-    - Write measurements.json (pure measurements)
-    - Write ai_evaluation_request.md + ai_evaluation_response.json template
-    - If ai_evaluation_response.json is filled (valid), use it; else fallback to heuristic.
+    - Write ai_eval_request.md + ai_eval_response.json template
+    - If ai_eval_response.json is filled (valid), use it; else fallback to heuristic.
     """
     from utils import warn
 
-    measurements: Optional[Dict[str, Any]] = None
     if isinstance(output_dir, Path):
         output_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from measure_schematic import measure_schematic  # local import to keep legacy import graph simple
+            from ai_evaluate import consume_ai_evaluation, prepare_ai_evaluation
 
-            measurements = measure_schematic(spec, config, png_path=png_path)
+            _req_path, resp_path = prepare_ai_evaluation(spec, config, png_path=png_path, round_dir=output_dir)
+            normalized = consume_ai_evaluation(resp_path)
+            if normalized is None:
+                # Backward compatibility: older protocol file name.
+                legacy = output_dir / "ai_evaluation_response.json"
+                if legacy.exists() and legacy.is_file():
+                    payload = _load_json(legacy)
+                    if payload is not None:
+                        defects = _normalize_defects(payload.get("defects", []))
+                        score_rationale = str(payload.get("score_rationale", "")).strip()
+                        try:
+                            score_i = int(payload.get("score", 0))
+                        except Exception:
+                            score_i = 0
+                        score_i = max(0, min(100, score_i))
+                        if defects or score_rationale or score_i:
+                            normalized = {
+                                "score": score_i,
+                                "score_rationale": score_rationale,
+                                "defects": defects,
+                                "counts_defects": {
+                                    "p0": sum(1 for d in defects if d["severity"] == "P0"),
+                                    "p1": sum(1 for d in defects if d["severity"] == "P1"),
+                                    "p2": sum(1 for d in defects if d["severity"] == "P2"),
+                                },
+                            }
         except Exception as exc:
-            warn(f"AI 模式度量采集失败，已退化为 heuristic（{exc}）")
-            out = evaluate_schematic_heuristic(spec, config, png_path)
-            out["evaluation_mode_requested"] = "ai"
-            out["evaluation_source"] = "heuristic_fallback"
-            return out
+            warn(f"AI 协议生成/消费失败，已退化为 heuristic（{exc}）")
+            normalized = None
 
-        import json
-
-        (output_dir / "measurements.json").write_text(
-            json.dumps(measurements, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
-
-        req = output_dir / "ai_evaluation_request.md"
-        resp = output_dir / "ai_evaluation_response.json"
-        if not req.exists():
-            req_lines = [
-                "# AI Evaluation Request (nsfc-schematic)",
-                "",
-                "你是一个严格的图稿评审员。请基于 `measurements.json`（必要时结合 `schematic.png`）给出结构化缺陷清单与总分。",
-                "",
-                "## 输入证据",
-                "",
-                f"- measurements: `{(output_dir / 'measurements.json').name}`",
-                f"- png: `{png_path.name}`" if isinstance(png_path, Path) else "- png: N/A",
-                "",
-                "## 输出（写入 ai_evaluation_response.json）",
-                "",
-                "```json",
-                "{",
-                "  \"score\": 0,",
-                "  \"score_rationale\": \"\",",
-                "  \"defects\": [",
-                "    {",
-                "      \"severity\": \"P1\",",
-                "      \"where\": \"node:n1\",",
-                "      \"dimension\": \"text_overflow\",",
-                "      \"message\": \"\",",
-                "      \"suggestion\": {\"action\": \"increase_gap\", \"parameter\": \"node_gap_x\", \"delta\": 10}",
-                "    }",
-                "  ]",
-                "}",
-                "```",
-                "",
-                "说明：",
-                "- `defects[].severity` 仅允许 P0/P1/P2；`suggestion` 可省略。",
-                "- `suggestion.action` 建议仅使用：`increase_canvas`、`increase_gap`、`increase_font`。",
-                "- 建议的安全范围（超出会被脚本裁剪/忽略）：canvas delta ∈ [50, 500]；gap delta ∈ [2, 30]；font delta ∈ [1, 8]。",
-                "",
-            ]
-            req.write_text("\n".join(req_lines), encoding="utf-8")
-
-        if not resp.exists():
-            resp.write_text(
-                json.dumps({"score": 0, "score_rationale": "", "defects": []}, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-
-        payload = _load_json(resp)
-        if payload is not None:
-            defects = _normalize_defects(payload.get("defects", []))
-            score = payload.get("score")
-            try:
-                score_i = int(score)
-            except Exception:
-                score_i = 0
+        if normalized is not None:
+            defects = normalized.get("defects", [])
+            counts_def = normalized.get("counts_defects", {}) if isinstance(normalized.get("counts_defects", {}), dict) else {}
+            p0 = int(counts_def.get("p0", 0) or 0)
+            p1 = int(counts_def.get("p1", 0) or 0)
+            p2 = int(counts_def.get("p2", 0) or 0)
+            score_i = int(normalized.get("score", 0) or 0)
             score_i = max(0, min(100, score_i))
-            score_rationale = str(payload.get("score_rationale", "")).strip()
+            score_rationale = str(normalized.get("score_rationale", "")).strip()
+            return {
+                "score": score_i,
+                "heuristic_score": score_i,
+                "visual_score": score_i,
+                "metrics": {},
+                "counts": {
+                    "nodes": len([n for g in spec.groups for n in g.children]),
+                    "groups": len(spec.groups),
+                    "edges": len(spec.edges),
+                    "p0": p0,
+                    "p1": p1,
+                    "p2": p2,
+                },
+                "defects": defects,
+                "canvas": {"width": spec.canvas_width, "height": spec.canvas_height},
+                "font": {
+                    "node_label_size": int(config.get("layout", {}).get("font", {}).get("node_label_size", 0) or 0),
+                    "edge_label_size": int(
+                        config.get("layout", {}).get("font", {}).get("edge_label_size", 0)
+                        or config.get("layout", {}).get("font", {}).get("node_label_size", 0)
+                        or 0
+                    ),
+                },
+                "evaluation_mode_requested": "ai",
+                "evaluation_source": "ai",
+                "score_rationale": score_rationale,
+            }
 
-            if defects or score_rationale or score_i:
-                p0 = sum(1 for d in defects if d["severity"] == "P0")
-                p1 = sum(1 for d in defects if d["severity"] == "P1")
-                p2 = sum(1 for d in defects if d["severity"] == "P2")
-                return {
-                    "score": score_i,
-                    "heuristic_score": score_i,
-                    "visual_score": score_i,
-                    # Keep legacy field for backward compatibility; AI mode also exposes a dedicated
-                    # "measurements" field for consumers that want to avoid schema ambiguity.
-                    "metrics": (measurements.get("measurements", {}) if isinstance(measurements, dict) else {}),
-                    "measurements": (measurements.get("measurements", {}) if isinstance(measurements, dict) else {}),
-                    "counts": {
-                        "nodes": len([n for g in spec.groups for n in g.children]),
-                        "groups": len(spec.groups),
-                        "edges": len(spec.edges),
-                        "p0": p0,
-                        "p1": p1,
-                        "p2": p2,
-                    },
-                    "defects": defects,
-                    "canvas": {"width": spec.canvas_width, "height": spec.canvas_height},
-                    "font": {
-                        "node_label_size": int(config.get("layout", {}).get("font", {}).get("node_label_size", 0) or 0),
-                        "edge_label_size": int(
-                            config.get("layout", {}).get("font", {}).get("edge_label_size", 0)
-                            or config.get("layout", {}).get("font", {}).get("node_label_size", 0)
-                            or 0
-                        ),
-                    },
-                    "evaluation_mode_requested": "ai",
-                    "evaluation_source": "ai",
-                    "score_rationale": score_rationale,
-                }
-
-        warn("AI 模式未检测到有效 ai_evaluation_response.json，已退化为 heuristic")
+        # When evaluation_mode defaults to "ai", missing/template responses are expected.
+        # Only warn when the response file exists but is not a valid JSON dict.
+        resp = output_dir / "ai_eval_response.json"
+        if resp.exists() and _load_json(resp) is None:
+            warn("AI 模式响应文件不是合法 JSON（ai_eval_response.json），已退化为 heuristic")
 
     # No output_dir (or missing AI response): keep script usable by falling back.
     out = evaluate_schematic_heuristic(spec, config, png_path)

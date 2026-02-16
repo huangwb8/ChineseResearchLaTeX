@@ -62,12 +62,12 @@ metadata:
 
 每个 `round_*/` 默认会生成以下“可追溯证据”（可通过 `config.yaml:evaluation.*` 关闭）：
 - `evaluation.json`：主评估器结果（含 `score_base/score_penalty/score_total`）
-- `critique_structure.json / critique_visual.json / critique_readability.json`：多维度批判性自检证据（`evaluation.multi_round_self_check`）
+- `critique_structure.json / critique_visual.json / critique_readability.json`：多维度批判性自检证据（`evaluation.multi_round_self_check`；仅在启发式评估或 AI 回退路径下生成，避免与 AI 口径重复扣分）
 - `_candidates/`：每轮有限候选对比（`evaluation.exploration.candidates_per_round`）
 
-当 `config.yaml:evaluation.evaluation_mode=ai` 时，`round_*/_candidates/cand_*/` 额外生成离线协议文件（脚本不在本地调用外部模型）：
-- `measurements.json` + `ai_evaluation_request.md` + `ai_evaluation_response.json`
-- `dimension_measurements.json` + `ai_dimension_request.md` + `ai_dimension_response.json`
+当 `config.yaml:evaluation.evaluation_mode=ai` 时（默认），脚本会输出离线协议文件（脚本不在本地调用外部模型）：
+- `round_*/_candidates/cand_*/ai_eval_request.md` + `ai_eval_response.json`：AI 评估请求/响应（主评估）
+- `run_*/ai_tex_request.md` + `ai_tex_response.json`：当输入来自 TEX 且未提供 spec_file 时，用于“AI 直接读 TEX → 生成 spec 草案”的离线请求/响应（如未响应则自动降级为正则抽取）
 
 规划模式额外交付：
 - `schematic-plan.md`：规划草案（写在**当前工作目录**，便于用户快速审阅；可用 `plan_schematic.py --no-workspace-plan` 禁用）
@@ -87,7 +87,7 @@ metadata:
 - `layout.font.edge_label_size`：连线标签字号（edge label 不会自动跟随 `node_label_size`，需单独配置）
 - `color_scheme`：配色方案
 - `evaluation`：评分阈值、停止策略（stop_strategy）、权重与多轮探索参数
-- `evaluation.evaluation_mode`：评估模式（`heuristic` 默认启发式评估；`ai` 输出离线度量协议，供宿主 AI 语义判定）
+- `evaluation.evaluation_mode`：评估模式（`ai` 默认：输出离线 AI 协议文件并消费宿主 AI 响应；无响应则自动降级为启发式评估）
 - `evaluation.thresholds.min_edge_font_px/warn_edge_font_px`：连线标签字号门禁阈值（含缩印等效字号检查）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
@@ -148,10 +148,12 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 - `scripts/spec_parser.py`：解析/校验 spec，补全自动布局，校验边。
 - `scripts/schematic_writer.py`：将规范化 spec 转为 draw.io XML。
 - `scripts/render_schematic.py`：优先 draw.io CLI 渲染；缺失时内部兜底渲染。
-- `scripts/measure_schematic.py`：主评估的“纯度量采集层”（几何/路由/像素 proxy），不做 P0/P1/P2 判定。
-- `scripts/measure_dimension.py`：多维度自检的“纯度量采集层”（structure/visual/readability），不做 P0/P1/P2 判定。
-- `scripts/evaluate_schematic.py`：启发式评估（默认）；启用 `evaluation_mode=ai` 时输出离线度量协议并消费宿主 AI 的评审响应（缺失时自动回退启发式）。
-- `scripts/evaluate_dimension.py`：启发式多维度自检（默认）；提供 AI 模式下的离线度量协议文件生成（缺失响应时回退启发式）。
+- `scripts/ai_evaluate.py`：生成/消费 AI 评估离线协议（ai_eval_request.md / ai_eval_response.json），不在脚本内调用外部模型。
+- `scripts/ai_extract_tex.py`：生成/消费 AI TEX 提取离线协议（ai_tex_request.md / ai_tex_response.json），不在脚本内调用外部模型。
+- `scripts/measure_schematic.py`：主评估的“纯度量采集层”（几何/路由/像素 proxy），保留用于启发式评估与降级兜底。
+- `scripts/measure_dimension.py`：多维度自检的“纯度量采集层”（structure/visual/readability），保留用于启发式自检与降级兜底。
+- `scripts/evaluate_schematic.py`：启发式评估（兜底）；启用 `evaluation_mode=ai` 时输出离线 AI 协议并消费宿主 AI 的评审响应（缺失时自动回退启发式）。
+- `scripts/evaluate_dimension.py`：启发式多维度自检（用于 penalty 扣分；当 AI 主评估生效时默认跳过，避免口径重复）。
 - `scripts/routing.py`：确定性正交路由（waypoints），用于渲染兜底、drawio 写入与评估口径对齐。
 - `scripts/extract_from_tex.py`：从 TEX 抽取术语用于初版 spec 填充。
 - `scripts/generate_schematic.py`：一键编排多轮迭代。
@@ -178,10 +180,10 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 - 连线标签缩印可读性门禁（edge label 的字号与缩印后等效字号）
 - 节点文案拥挤度 proxy（提示缩短文案或增大节点）
 
-可选：AI 自主评估模式（离线协议）
+AI 自主评估模式（离线协议）
 
 - 触发：设置 `config.yaml:evaluation.evaluation_mode=ai`
-- 行为：脚本输出 `measurements.json` / `dimension_measurements.json` 等证据文件，并生成 `ai_*_request.md` + `ai_*_response.json` 模板；宿主 AI 可根据度量做语义判定并写回 response；若 response 缺失或不合法，脚本自动回退到启发式评估，保证流程可跑通。
+- 行为：脚本输出 `ai_eval_request.md` + `ai_eval_response.json`（以及 TEX 场景下的 `ai_tex_request.md` + `ai_tex_response.json`）模板；宿主 AI 可基于 spec+config+PNG/TEX 做语义判定并写回 response；若 response 缺失或不合法，脚本自动回退到启发式评估，保证流程可跑通。
 
 ## 失败处理
 
