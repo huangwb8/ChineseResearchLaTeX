@@ -123,3 +123,71 @@ NSFC_Local/
 - 若需要“第 5 层”及以下，建议使用 `\paragraph/\subparagraph` 并配合 `titlesec` 自定义 `\titleformat` + `\titlespacing*`。
 - 模板也提供 `\ssssubtitle{1}` 这种“圈号小标题”作为行内标题；若要统一控制其上下间距，建议封装一个带 `\vspace{...}` 的新命令来管理。
 
+## 列表格式与序号样式（enumerate）
+
+本模板的列表样式统一在 `extraTex/@config.tex` 中配置，核心入口是：
+
+```latex
+\setlist[enumerate]{
+  label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic*）},
+  leftmargin=0em,
+  itemindent=4em,
+  itemsep=0em,
+  ...
+}
+```
+
+### 如何调整/自定义序号样式
+
+把 `label=...` 改成你想要的“序号外观”即可（建议只改末尾的 `（\arabic*）` 部分，保留前面的字体/颜色设置）。
+
+常见样式示例：
+
+```latex
+label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\arabic*)}              % 1)
+label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\arabic*.}              % 1.
+label={\templatefont \bfseries \hspace{1em} \color{MsBlue}(\alph*)}               % (a)
+\setlist[enumerate,1]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\chinese{enumi}）}} % （一）
+\setlist[enumerate,2]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic{enumii}）}} % （1）(二级)
+```
+
+**三套常用“多级序号组合”（复制即用）**：适合有嵌套列表（`enumerate` 里再 `enumerate`）的情况。把其中一套粘贴到 `extraTex/@config.tex`（放在 `\setlist[enumerate]{...}` 之后即可）。
+
+```latex
+% 组合 A：中文标书常见（（一）→ 1. → （1）→ a)）
+\setlist[enumerate,1]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\chinese{enumi}）}}
+\setlist[enumerate,2]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\arabic{enumii}.}}
+\setlist[enumerate,3]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic{enumiii}）}}
+\setlist[enumerate,4]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\alph{enumiv})}}
+```
+
+```latex
+% 组合 B：英文论文常见（1. → (a) → (i) → 1)）
+\setlist[enumerate,1]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\arabic{enumi}.}}
+\setlist[enumerate,2]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}(\alph{enumii})}}
+\setlist[enumerate,3]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}(\roman{enumiii})}}
+\setlist[enumerate,4]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\arabic{enumiv})}}
+```
+
+```latex
+% 组合 C：简洁括号风（1) → (1) → a) → i)）
+\setlist[enumerate,1]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\arabic{enumi})}}
+\setlist[enumerate,2]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}(\arabic{enumii})}}
+\setlist[enumerate,3]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\alph{enumiii})}}
+\setlist[enumerate,4]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}\roman{enumiv})}}
+```
+
+### 局部覆盖（只影响某一个列表）
+
+正文里对单个 `enumerate` 加可选参数即可：
+
+```latex
+\begin{enumerate}[label=(\roman*), leftmargin=0em, itemindent=4em, itemsep=0em]
+  \item ...
+  \item ...
+\end{enumerate}
+```
+
+### 缩进对齐提示
+
+改了 `label` 后如果出现“编号挤压/正文不齐”，优先微调 `itemindent`（首行缩进）或 `labelsep`（编号与正文间距）。
