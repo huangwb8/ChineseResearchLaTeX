@@ -38,15 +38,29 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
+  - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
+  - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）
+  - 强调硬编码与 AI 功能划分、多轮自检、冗余残留检查、安全性审视、过度设计检查、通用性验证六大质量原则
+  - 重构文档结构：合并目录结构和项目概览、统一通用规范部分、整合 LaTeX 技术规范、明确化文档与版本管理、完善文档更新原则（有机更新哲学）
+  - 移除冗余内容（删除重复的"项目目标""默认语言""工程原则"等章节、自动生成的冗长目录树）
+  - 精简了 Codex CLI 特定说明，核心内容已融入通用规范
+
+- 更新 [CLAUDE.md](CLAUDE.md)：完善与 AGENTS.md 的关系说明
+  - 强调 AGENTS.md 为跨平台通用项目指令（Single Source of Truth）
+  - 明确 CLAUDE.md 通过 `@./AGENTS.md` 自动引用，修改 AGENTS.md 后无需任何同步操作
+
 ### Added（新增）
 
-- **nsfc-abstract v0.2.0**：NSFC 标书中英文摘要生成技能（英文为中文的忠实翻译；中文≤400字、英文≤4000字符），输出写入工作目录 `NSFC-ABSTRACTS.md`；新增“字数超限闭环处理”说明，并增强确定性长度校验/写入脚本（JSON/diff 输出、严格模式不写入）
-- **nsfc-abstract v0.3.0**：新增“标题建议”输出（默认 1 个推荐标题 + 5 个候选标题及理由），并在校验/写入脚本中加入标题分段的确定性检查；新增标题写作规则参考文档 `skills/nsfc-abstract/references/title-rules.md`
+- **nsfc-abstract v0.2.0**：NSFC 标书中英文摘要生成技能（英文为中文的忠实翻译；中文≤400字、英文≤4000字符），输出写入工作目录 `NSFC-ABSTRACTS.md`；新增"字数超限闭环处理"说明，并增强确定性长度校验/写入脚本（JSON/diff 输出、严格模式不写入）
+- **nsfc-abstract v0.3.0**：新增"标题建议"输出（默认 1 个推荐标题 + 5 个候选标题及理由），并在校验/写入脚本中加入标题分段的确定性检查；新增标题写作规则参考文档 `skills/nsfc-abstract/references/title-rules.md`
 
 ### Updated（文档更新）
 
 - 更新 [README.md](README.md)：技能生态系统与技能表格更新 nsfc-abstract（v0.2.0）
-- 更新 [README.md](README.md)：nsfc-abstract 版本号与描述更新至 v0.3.0（加入“标题建议”输出）
+- 更新 [README.md](README.md)：nsfc-abstract 版本号与描述更新至 v0.3.0（加入"标题建议"输出）
 - 更新 [skills/README.md](skills/README.md)：新增 nsfc-abstract 小节说明与可选长度校验命令，并调整后续技能编号
 
 ### Removed（移除）
