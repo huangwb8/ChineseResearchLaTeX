@@ -13,6 +13,8 @@ graph LR
     A[get-review-theme<br>提取综述主题] --> B[systematic-literature-review<br>规范化文献综述]
     B --> C[guide-updater<br>优化项目指南]
     C --> D[nsfc系列skills<br>标书各部分写作]
+    D --> E[nsfc-roadmap / nsfc-schematic<br>技术路线图与原理图]
+    D --> F[nsfc-reviewers<br>专家评审模拟]
 ```
 
 ### 工作流步骤
@@ -270,7 +272,102 @@ graph LR
 
 ---
 
-### 8. check-review-alignment - 综述引用语义一致性检查
+### 9. nsfc-reviewers - NSFC 标书专家评审模拟
+
+**状态**：🚧 开发中（v0.5.0）
+
+**类型**：📝 日常
+
+**功能**：模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题（P0/P1/P2）与可执行修改建议
+
+**使用场景**：
+- 标书写作完成后的自我评审
+- 提交前的质量检查
+- 识别标书中的致命缺陷（P0）、重要问题（P1）和建议改进（P2）
+
+**推荐 Prompt 模板**：
+
+```
+请使用 nsfc-reviewers 评审以下标书：
+目标项目：projects/NSFC_Young
+评审组数：2（默认，最多 5 组）
+```
+
+**技能特点**：
+- 5 位专家角色：创新性、可行性、基础与团队、严格综合、建设性
+- 并行多组评审（依赖 parallel-vibe），支持 1-5 组独立专家组
+- 跨组共识聚合（默认 60% 共识阈值），自动升级严重度
+- 6 维度评审：创新性 25%、假说 20%、方法 20%、基础 15%、团队 10%、成果 10%
+- 无 parallel-vibe 时自动降级到单组模式
+
+[详细文档 →](nsfc-reviewers/SKILL.md)
+
+---
+
+### 10. nsfc-roadmap - NSFC 技术路线图生成
+
+**状态**：🚧 开发中（v0.8.0）
+
+**类型**：📝 日常
+
+**功能**：从 NSFC 标书自动生成可打印、A4 可读的技术路线图
+
+**使用场景**：
+- 需要将研究内容转成技术路线图
+- 需要可编辑的 `.drawio` 源文件和可嵌入文档的渲染结果
+
+**推荐 Prompt 模板**：
+
+```
+请使用 nsfc-roadmap 生成技术路线图：
+目标项目：projects/NSFC_Young
+参考模板：model-02（可选，从 references/models/ 中选择）
+```
+
+**技能特点**：
+- 输出 `.drawio`（可编辑）与 `.svg`/`.png`/`.pdf`（交付）
+- 内置 6 个参考模板（model-01 ~ model-06）
+- 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
+- "平台期停止"策略：基于 PNG 哈希与分数提升阈值自动停止
+- 支持规划模式：先审阅 `roadmap-plan.md` 再生成
+
+[详细文档 →](nsfc-roadmap/SKILL.md)
+
+---
+
+### 11. nsfc-schematic - NSFC 原理图/机制图生成
+
+**状态**：🚧 开发中（v0.7.0）
+
+**类型**：📝 日常
+
+**功能**：将标书中的机制描述、算法结构、模块关系转成原理图/机制图
+
+**使用场景**：
+- 需要将研究机制、算法架构转成可视化图示
+- 需要可编辑的 `.drawio` 源文件和可嵌入文档的渲染结果
+
+**推荐 Prompt 模板**：
+
+```
+请使用 nsfc-schematic 生成原理图：
+目标项目：projects/NSFC_Young
+输入：extraTex/2.1.研究内容.tex（或自然语言描述）
+```
+
+**技能特点**：
+- 分组结构：输入层 → 处理层 → 输出层（柔性）+ 任意连线
+- 节点文案自动扩容，避免文字溢出/遮挡
+- 正交路由，避免连线穿字
+- 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
+- 元素层级保护：分组底层 → 连线中层 → 节点顶层
+- 支持规划模式：先审阅 `schematic-plan.md` 再生成
+
+[详细文档 →](nsfc-schematic/SKILL.md)
+
+---
+
+### 12. check-review-alignment - 综述引用语义一致性检查
 
 **状态**：✅ 稳定（v1.0.2）
 
@@ -309,7 +406,7 @@ graph LR
 
 ---
 
-### 9. get-review-theme - 综述主题提取
+### 13. get-review-theme - 综述主题提取
 
 **状态**：🚧 开发中
 
@@ -336,7 +433,7 @@ graph LR
 
 ---
 
-### 10. guide-updater - 项目指南优化
+### 14. guide-updater - 项目指南优化
 
 **状态**：✅ 稳定（v1.0.0）
 
@@ -372,7 +469,9 @@ graph LR
 - **get-review-theme**：前置步骤，提取主题关键词
 - **systematic-literature-review**：核心文献综述（可选依赖 get-review-theme 的输出）
 - **guide-updater**：中间优化，基于综述结果沉淀写作规范（依赖 systematic-literature-review 的输出）
-- **nsfc系列skills**：最终撰写标书各模块（可选依赖 guide-updater 优化的指南）
+- **nsfc系列写作skills**：最终撰写标书各模块（可选依赖 guide-updater 优化的指南）
+- **nsfc-roadmap / nsfc-schematic**：基于写作内容生成技术路线图与原理图
+- **nsfc-reviewers**：标书完成后模拟专家评审（依赖标书完整正文）
 
 ### 推荐使用顺序
 
@@ -384,6 +483,8 @@ graph LR
 4. **nsfc-justification-writer** → 撰写立项依据
 5. **nsfc-research-content-writer** → 撰写研究内容
 6. **nsfc-research-foundation-writer** → 撰写研究基础
+7. **nsfc-roadmap** / **nsfc-schematic** → 生成技术路线图与原理图
+8. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
 
 ---
 

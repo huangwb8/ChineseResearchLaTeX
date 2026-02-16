@@ -59,8 +59,6 @@ directory_structure:
     description: 项目辅助文档
     examples:
       - latex-writing-guide.md
-      - nsfc-submission-checklist.md
-      - bibliography-best-practices.md
 
   skills:
     description: 项目专用技能

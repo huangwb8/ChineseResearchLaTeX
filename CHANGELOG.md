@@ -54,12 +54,43 @@
 
 ### Added（新增）
 
+- **nsfc-reviewers v0.5.0**：新增 NSFC 标书专家评审模拟技能（🚧 开发中）
+  - 模拟 5 位领域专家角色（创新性/可行性/基础与团队/严格综合/建设性）对标书进行多维度评审
+  - 支持并行多组评审（最多 5 组，依赖 parallel-vibe），无 parallel-vibe 时自动降级到单组模式
+  - 6 维度加权评审：创新性 25%、假说 20%、方法 20%、基础 15%、团队 10%、成果 10%
+  - 问题分级输出：P0（致命）→ P1（重要）→ P2（建议），含证据锚点
+  - 跨组共识聚合（默认 60% 共识阈值），自动升级严重度
+  - 强制输出整理：中间过程自动归档到 `.nsfc-reviewers/`，最终交付清晰可见
+  - 包含 5 个脚本、7 个参考资料文件、完整的 plans 和 tests 目录
+
+- **nsfc-roadmap v0.8.0**：新增 NSFC 技术路线图生成技能（🚧 开发中）
+  - 从 NSFC 标书自动生成可打印、A4 可读的技术路线图
+  - 输出 `.drawio`（可编辑）与 `.svg`/`.png`/`.pdf`（交付）
+  - 内置 6 个参考模板（model-01 ~ model-06）
+  - 多轮评估-优化（默认 5 轮），三维度自检（Structure/Visual/Readability）
+  - "平台期停止"策略：基于 PNG 哈希与分数提升阈值自动停止
+  - 支持规划模式（先审阅 `roadmap-plan.md` 再生成）与 AI 自主闭环模式
+  - 包含 13 个脚本、模板库（templates.yaml + 6 张参考图）
+
+- **nsfc-schematic v0.7.0**：新增 NSFC 原理图/机制图生成技能（🚧 开发中）
+  - 将标书中的研究机制、算法架构、模块关系转成原理图
+  - 分组结构：输入层 → 处理层 → 输出层（柔性）+ 任意连线
+  - 节点文案自动扩容，避免导出后文字溢出/遮挡
+  - 正交路由，确定性几何计算避免连线穿字
+  - 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
+  - 元素层级保护：分组底层 → 连线中层 → 节点顶层
+  - 离线 AI 评估协议：脚本生成证据包，AI 自主评分
+  - 包含 14 个脚本、设计原则参考、spec 示例、配色库
+
 - **nsfc-abstract v0.2.0**：NSFC 标书中英文摘要生成技能（英文为中文的忠实翻译；中文≤400字、英文≤4000字符），输出写入工作目录 `NSFC-ABSTRACTS.md`；新增"字数超限闭环处理"说明，并增强确定性长度校验/写入脚本（JSON/diff 输出、严格模式不写入）
 - **nsfc-abstract v0.3.0**：新增"标题建议"输出（默认 1 个推荐标题 + 5 个候选标题及理由），并在校验/写入脚本中加入标题分段的确定性检查；新增标题写作规则参考文档 `skills/nsfc-abstract/references/title-rules.md`
 
 ### Updated（文档更新）
 
-- 更新 [README.md](README.md)：技能生态系统与技能表格更新 nsfc-abstract（v0.2.0）
+- 更新 [README.md](README.md)：技能生态系统新增"质量保障与图表生成"分类，技能表格新增 nsfc-reviewers（v0.5.0）、nsfc-roadmap（v0.8.0）、nsfc-schematic（v0.7.0），均标记为 🚧 开发中
+- 更新 [skills/README.md](skills/README.md)：新增 nsfc-reviewers/nsfc-roadmap/nsfc-schematic 三个完整技能说明（功能、使用场景、Prompt 模板、技能特点），调整后续技能编号（8→12，9→13，10→14），更新推荐工作流（新增图表生成与专家评审环节）和技能依赖关系
+
+- 更新 [README.md](README.md)：技能表格更新 nsfc-abstract（v0.2.0）
 - 更新 [README.md](README.md)：nsfc-abstract 版本号与描述更新至 v0.3.0（加入"标题建议"输出）
 - 更新 [skills/README.md](skills/README.md)：新增 nsfc-abstract 小节说明与可选长度校验命令，并调整后续技能编号
 
@@ -114,6 +145,7 @@
 - **transfer_old_latex_to_new**：资源扫描与复制增加路径越界保护，避免不受控写入与异常。
 - **transfer_old_latex_to_new**：批量 AI 响应解析不完整时自动回退，避免静默丢失结果。
 - **transfer_old_latex_to_new**：资源扫描补充排除目录统计并输出提醒，避免隐式漏拷资源。
+- 修复 [references/README.md](references/README.md) 与 [config.yaml](config.yaml) 的辅助文档列表不一致问题：移除对不存在文件的引用，并修正文档中 LaTeX 命令的反斜杠显示。
 - 修复正文“提示语/标题”排版异常：保留模板的全局 `\\parindent=0pt`，改为在 `extraTex` 正文中通过 `\\NSFCBodyText` 启用段首缩进 2em，避免与 `main.tex` 的 `\\hspace*{2em}`/`\\linebreak{}` 叠加导致换行错位：`projects/NSFC_Young/extraTex/@config.tex`, `projects/NSFC_General/extraTex/@config.tex`, `projects/NSFC_Local/extraTex/@config.tex`
 - 示例内容整合仓库素材：正文中引用 `projects/*/figures/*` 与 `projects/*/code/test.sh`（`\\includegraphics` + `\\lstinputlisting`），并统一 `listings` 样式为 `codestyle01`
 - 篇幅控制：三套项目 PDF 均落在 12–14 页；对 Young/General/Local 将两张示例图合并为子图，代码清单做片段截取；并移除 General 示例中过多的 `\\NSFCBlankPara` 额外留白以避免无意义增页
