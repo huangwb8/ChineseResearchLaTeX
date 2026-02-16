@@ -23,6 +23,23 @@ ai不要看这个文件，除非用户要求。
 
 - 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
 
+## nsfc-qc
+
+(～￣▽￣)～ 请开发一个skill，保存在 ./skills/nsfc-qc 文件夹里。 它的主要作用是： 对标书进行质量控制。它的步骤大致如下：
+
+- 分析产生的所有中间文件托管在工作目录的 .nsfc-qc 隐藏文件夹里；
+- 利用 parallel-vibe skill 开多个thread（默认5个；默认串联模式）独立地进行QC。
+- 每个QC做的事情是一样的，大致是：
+  - 检查标书里生硬的、不像人类专家写作风格的部分，予以优化
+  - 检查每个引用（一般是参考文献）是否存在假引（虚构的引用）、错引（引用的文献和实际的内容不对应）或者其它问题
+  - 标书总篇幅是否过长或过短。青年基金和面上基金明确规定：申请书正文原则上不超过30 页，鼓励简洁表达。当然，这是一个推荐性的优化，不是强制的；毕竟写长一点应该问题不大； 但如果太短则不好。
+  - 标书不同章节的内容的篇幅分布是否合理
+  - 标书不同章节的内容是否逻辑通畅、条理清晰、论证充分、较少歧义
+  - 其它你觉得可以做的QC
+- 综合所有thread的结果，给出最终优化建议。
+- 有标准的输出结果。
+- nsfc-qc 对标书内容是只读的，工作过程中不能修改标书的内容。因为它的qc report还需要被进一步审核。
+
 
 ## nsfc-justification-writer
 

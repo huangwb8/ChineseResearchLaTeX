@@ -7,14 +7,12 @@ metadata:
   author: Bensz Conan
   short-description: NSFC（研究内容+创新+年度计划）编排写作
   keywords:
-    - nsfc
+    - nsfc-research-content-writer
     - 研究内容
     - 研究目标
     - 技术路线
     - 特色与创新
     - 年度研究计划
-    - 里程碑
-    - latex
   triggers:
     - 研究内容
     - 研究目标
