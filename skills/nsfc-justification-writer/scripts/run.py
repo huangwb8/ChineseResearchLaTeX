@@ -7,16 +7,22 @@ import asyncio
 import argparse
 import json
 import logging
+import os
+import subprocess
 import sys
 import traceback
 import webbrowser
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 sys.dont_write_bytecode = True
 
-skill_root_for_import = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(skill_root_for_import))
+# core/ 实现统一托管在 scripts/core/ 下：
+# - 运行脚本时，scripts/ 目录天然在 sys.path[0]
+# - 这里显式插入 scripts/ 目录，避免外部环境把 skill_root 放到更前导致 import core 失效
+scripts_root_for_import = Path(__file__).resolve().parent
+sys.path.insert(0, str(scripts_root_for_import))
 
 from core.config_loader import load_config, get_runs_dir, validate_config
 from core.config_access import get_bool, get_mapping, get_seq_str, get_str
@@ -32,6 +38,125 @@ from core.quality_gate import check_new_body_quality
 from core.versioning import find_backup_for_run_v2, list_runs, rollback_from_backup, unified_diff
 
 logger = logging.getLogger(__name__)
+
+@dataclass(frozen=True)
+class _CmdResult:
+    cmd: list[str]
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+def _now_ts() -> str:
+    import datetime as _dt
+
+    return _dt.datetime.now().strftime("%Y%m%d%H%M%S")
+
+
+def _make_test_session_dir(skill_root: Path, *, round_label: str, session_id: Optional[str]) -> Path:
+    """
+    每次测试创建一个独立目录（可追溯、可归档）。默认按秒级时间戳，避免同分钟冲突。
+    """
+    tests_root = (Path(skill_root) / "tests").resolve()
+    tests_root.mkdir(parents=True, exist_ok=True)
+
+    sid = (session_id or f"v{_now_ts()}").strip()
+    if not sid:
+        sid = f"v{_now_ts()}"
+    name = sid if round_label == "A" else f"{round_label}-{sid}"
+
+    out = (tests_root / name).resolve()
+    if out.exists():
+        # 极小概率冲突：再加一次时间戳兜底
+        out = (tests_root / f"{name}-{_now_ts()}").resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _run_capture(cmd: list[str], *, cwd: Path, env: dict[str, str]) -> _CmdResult:
+    p = subprocess.run(cmd, cwd=str(cwd), env=env, capture_output=True, text=True)
+    return _CmdResult(cmd=list(cmd), returncode=int(p.returncode), stdout=p.stdout or "", stderr=p.stderr or "")
+
+def _pick_pytest_cmd(*, cwd: Path, env: dict[str, str]) -> list[str]:
+    """
+    优先用 `python -m pytest`（与当前解释器一致），若当前解释器未安装 pytest，
+    则回退到 PATH 里的 `pytest` 可执行文件（很多环境只装了命令而非系统 python 模块）。
+    """
+    probe = subprocess.run(
+        [sys.executable, "-c", "import pytest"],
+        cwd=str(cwd),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    if int(probe.returncode) == 0:
+        return [sys.executable, "-m", "pytest"]
+    return ["pytest"]
+
+
+def _write_cmd_artifacts(session_dir: Path, name: str, r: _CmdResult) -> None:
+    out_dir = (session_dir / "_artifacts" / "cmd").resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{name}.cmd.txt").write_text(" ".join(r.cmd) + "\n", encoding="utf-8")
+    (out_dir / f"{name}.stdout.txt").write_text(r.stdout, encoding="utf-8")
+    (out_dir / f"{name}.stderr.txt").write_text(r.stderr, encoding="utf-8")
+
+
+def _write_test_plan(session_dir: Path, *, skill_root: Path, round_label: str, session_id: str) -> None:
+    plan = (
+        "# 轻量测试计划（TEST_PLAN）\n\n"
+        f"**测试ID**: {session_id}\n"
+        f"**目标技能**: nsfc-justification-writer\n"
+        f"**目标技能路径**: {skill_root}\n"
+        f"**轮次类型**: {round_label}\n"
+        f"**计划时间**: {session_id[1:] if session_id.startswith('v') else session_id}\n\n"
+        "---\n\n"
+        "## 验证点（默认）\n\n"
+        "- [ ] `python3 scripts/run.py validate-config`\n"
+        "- [ ] `pytest -q tests/pytest`\n\n"
+        "说明：\n"
+        "- 本次会话的命令输出将写入 `tests/<session>/_artifacts/cmd/`（已被 gitignore）。\n"
+        "- 如需补充诊断类验证，可在本会话目录记录额外命令与结果。\n"
+    )
+    (session_dir / "TEST_PLAN.md").write_text(plan, encoding="utf-8")
+
+
+def _write_test_report(
+    session_dir: Path,
+    *,
+    skill_root: Path,
+    round_label: str,
+    session_id: str,
+    results: list[tuple[str, _CmdResult]],
+) -> None:
+    ok = all(r.returncode == 0 for _, r in results)
+    lines = [
+        f"# 测试报告（{session_dir.name}）",
+        "",
+        f"**测试ID**: {session_id}  ",
+        f"**目标技能**: nsfc-justification-writer  ",
+        f"**目标技能路径**: {skill_root}  ",
+        f"**轮次类型**: {round_label}  ",
+        "",
+        "---",
+        "",
+        "## 结论",
+        "",
+        f"- 状态：{'✅ 通过' if ok else '❌ 失败'}",
+        "",
+        "---",
+        "",
+        "## 执行命令与结果",
+        "",
+    ]
+    for name, r in results:
+        lines.append(f"### {name}")
+        lines.append("")
+        lines.append(f"- 命令：`{' '.join(r.cmd)}`")
+        lines.append(f"- returncode：{r.returncode}")
+        lines.append(f"- 输出：见 `tests/{session_dir.name}/_artifacts/cmd/{name}.stdout.txt` / `{name}.stderr.txt`")
+        lines.append("")
+    (session_dir / "TEST_REPORT.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def _write_json(path: Path, data: Dict[str, Any]) -> None:
@@ -209,6 +334,50 @@ def cmd_validate_config(args: argparse.Namespace) -> int:
         return 2
     print("✅ 配置有效")
     return 0
+
+
+def cmd_test_session(args: argparse.Namespace) -> int:
+    skill_root = Path(__file__).resolve().parent.parent
+    round_label = str(getattr(args, "round", "A")).strip() or "A"
+    if round_label not in {"A", "B轮"}:
+        round_label = "A"
+
+    sid = str(getattr(args, "session_id", "") or "").strip()
+    if not sid:
+        sid = f"v{_now_ts()}"
+    if not sid.startswith("v"):
+        sid = "v" + sid
+
+    session_dir = _make_test_session_dir(skill_root, round_label=round_label, session_id=sid)
+    _write_test_plan(session_dir, skill_root=skill_root, round_label=round_label, session_id=sid)
+
+    env = os.environ.copy()
+    # 测试环境避免受用户全局 override.yaml 影响；并把 runs/cache 隔离到本次会话目录
+    env.setdefault("NSFC_JUSTIFICATION_WRITER_DISABLE_USER_OVERRIDE", "1")
+    env["NSFC_JUSTIFICATION_WRITER_RUNS_DIR"] = str((session_dir / "_artifacts" / "runs").resolve())
+
+    results: list[tuple[str, _CmdResult]] = []
+
+    r1 = _run_capture([sys.executable, str(Path(__file__).resolve()), "validate-config"], cwd=skill_root, env=env)
+    _write_cmd_artifacts(session_dir, "validate-config", r1)
+    results.append(("validate-config", r1))
+
+    pytest_cmd = _pick_pytest_cmd(cwd=skill_root, env=env)
+    r2 = _run_capture(
+        pytest_cmd + ["-q", str((skill_root / "tests" / "pytest").resolve())],
+        cwd=skill_root,
+        env=env,
+    )
+    _write_cmd_artifacts(session_dir, "pytest", r2)
+    results.append(("pytest", r2))
+
+    _write_test_report(session_dir, skill_root=skill_root, round_label=round_label, session_id=sid, results=results)
+
+    if all(r.returncode == 0 for _, r in results):
+        print(f"✅ 测试通过：{session_dir}")
+        return 0
+    print(f"❌ 测试失败：{session_dir}")
+    return 2
 
 
 def cmd_check_ai(args: argparse.Namespace) -> int:
@@ -497,7 +666,7 @@ def cmd_rollback(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="nsfc-justification-writer", add_help=True)
     p.add_argument("--verbose", action="store_true", help="输出更详细的错误信息（包含堆栈）")
-    p.add_argument("--preset", help="加载 config/presets/<name>.yaml（可选）")
+    p.add_argument("--preset", help="加载学科预设 assets/presets/<name>.yaml（兼容旧路径 config/presets/，可选）")
     p.add_argument("--override", help="额外配置覆盖文件（yaml，可选，优先级最高）")
     p.add_argument("--no-user-override", action="store_true", help="不加载 ~/.config/nsfc-justification-writer/override.yaml")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -509,7 +678,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_diag.add_argument("--max-chunks", type=int, default=20, help="Tier2 最多处理的分块数（防止超长文件过慢）")
     p_diag.add_argument("--fresh", action="store_true", help="忽略 AI 缓存，强制重新计算 Tier2")
     p_diag.add_argument("--json-out", help="可选：输出 JSON 报告到文件")
-    p_diag.add_argument("--html-report", help="可选：输出 HTML 报告到文件；用 auto 输出到 runs/...")
+    p_diag.add_argument(
+        "--html-report",
+        help="可选：输出 HTML 报告到文件；用 auto 输出到 runs_dir（默认 tests/_artifacts/runs/）...",
+    )
     p_diag.add_argument("--open", action="store_true", help="若生成 HTML 报告则尝试自动打开浏览器")
     p_diag.add_argument("--no-terms", action="store_true", help="HTML 报告不附带术语一致性矩阵")
     p_diag.add_argument("--run-id", help="可选：diagnose 的 run_id（用于 html-report=auto）")
@@ -539,7 +711,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_init = sub.add_parser("init", help="生成（或交互式填写）信息表 info_form.md")
     p_init.add_argument("--interactive", action="store_true", help="问答式收集并生成已填写的信息表")
-    p_init.add_argument("--out", help="输出路径（默认写到 runs/<run_id>/inputs/info_form.md）")
+    p_init.add_argument("--out", help="输出路径（默认写到 runs_dir/<run_id>/inputs/info_form.md）")
     p_init.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
     p_init.set_defaults(func=cmd_init)
 
@@ -556,17 +728,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_coach.add_argument("--project-root", required=True)
     p_coach.add_argument("--stage", default="auto", choices=["auto", "skeleton", "draft", "revise", "polish", "final"])
     p_coach.add_argument("--info-form", help="可选：已填写的信息表文件（markdown）")
-    p_coach.add_argument("--topic", help="可选：一句话主题，用于推荐 examples/ 示例")
+    p_coach.add_argument("--topic", help="可选：一句话主题，用于推荐 assets/examples/ 示例")
     p_coach.add_argument("--top-k", default=3, type=int)
     p_coach.add_argument("--out", help="可选：输出到文件（markdown）")
     p_coach.set_defaults(func=cmd_coach)
 
-    p_ex = sub.add_parser("examples", help="根据主题推荐 examples/ 中的参考骨架")
+    p_ex = sub.add_parser("examples", help="根据主题推荐 assets/examples/ 中的参考骨架")
     p_ex.add_argument("--query", required=True, help="主题/方向/关键词")
     p_ex.add_argument("--top-k", default=3, type=int)
     p_ex.set_defaults(func=cmd_examples)
 
-    p_runs = sub.add_parser("list-runs", help="列出 runs/ 下的 run_id（用于 diff/rollback）")
+    p_runs = sub.add_parser("list-runs", help="列出 runs_dir 下的 run_id（用于 diff/rollback）")
     p_runs.add_argument("--limit", default=20, type=int)
     p_runs.set_defaults(func=cmd_list_runs)
 
@@ -580,7 +752,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rb.add_argument("--project-root", required=True)
     p_rb.add_argument("--run-id", required=True)
     p_rb.add_argument("--yes", action="store_true", help="确认回滚（必须显式指定）")
-    p_rb.add_argument("--no-backup", action="store_true", help="不备份当前版本（默认备份到新的 runs/）")
+    p_rb.add_argument("--no-backup", action="store_true", help="不备份当前版本（默认备份到新的 runs_dir/）")
     p_rb.add_argument("--new-run-id", help="可选：回滚备份的 run_id（默认按时间生成）")
     p_rb.set_defaults(func=cmd_rollback)
 
@@ -590,7 +762,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_apply.add_argument("--body-file", help="新正文来源文件；用 - 表示从 stdin 读")
     p_apply.add_argument("--no-backup", action="store_true", help="不做备份（默认备份）")
     p_apply.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
-    p_apply.add_argument("--log-json", action="store_true", help="写入 runs/.../logs/apply_result.json")
+    p_apply.add_argument("--log-json", action="store_true", help="写入 runs_dir/.../logs/apply_result.json")
     p_apply.add_argument("--allow-missing-citations", action="store_true", help="允许存在缺失 bibkey 的 \\cite{...}（不推荐）")
     p_apply.add_argument("--strict-quality", action="store_true", help="启用“新正文质量闸门”：命中绝对化表述/危险命令则拒绝写入")
     p_apply.add_argument("--suggest-alias", action="store_true", help="当标题未命中时，输出可用标题候选（便于改 title）")
@@ -598,6 +770,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + preset + override）")
     p_cfg.set_defaults(func=cmd_validate_config)
+
+    p_ts = sub.add_parser("test-session", help="创建一次可追溯测试会话目录，并运行最小自检（validate-config + pytest）")
+    p_ts.add_argument("--round", default="A", choices=["A", "B轮"], help="会话目录前缀（A 或 B轮）")
+    p_ts.add_argument("--session-id", help="可选：指定会话 ID（默认 vYYYYMMDDHHMMSS）")
+    p_ts.set_defaults(func=cmd_test_session)
 
     p_check_ai = sub.add_parser("check-ai", help="AI 可用性自检（responder 注入/降级模式）")
     p_check_ai.set_defaults(func=cmd_check_ai)

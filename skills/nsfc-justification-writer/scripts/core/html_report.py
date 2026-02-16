@@ -126,7 +126,14 @@ def render_diagnostic_html(
     term_matrix_md: str = "",
     next_steps: Optional[List[str]] = None,
 ) -> str:
-    tpl_path = (Path(skill_root).resolve() / "templates" / "html" / "report_template.html").resolve()
+    # 新规范：assets/templates/...
+    # 兼容旧路径：templates/...
+    skill_root = Path(skill_root).resolve()
+    tpl_candidates = [
+        (skill_root / "assets" / "templates" / "html" / "report_template.html").resolve(),
+        (skill_root / "templates" / "html" / "report_template.html").resolve(),
+    ]
+    tpl_path = next((p for p in tpl_candidates if p.exists()), tpl_candidates[0])
     template = _load_template(tpl_path)
 
     t1 = report.tier1

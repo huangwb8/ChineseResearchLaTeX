@@ -6,6 +6,10 @@
 
 ## 快速开始
 
+路径提示：
+- 在本仓库根目录运行：`python skills/nsfc-justification-writer/scripts/run.py ...`
+- 在本 skill 目录运行：`python scripts/run.py ...`
+
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root projects/NSFC_Young
 python skills/nsfc-justification-writer/scripts/run.py wordcount --project-root projects/NSFC_Young
@@ -14,6 +18,24 @@ python skills/nsfc-justification-writer/scripts/run.py terms --project-root proj
 python skills/nsfc-justification-writer/scripts/run.py coach --project-root projects/NSFC_Young --stage auto
 python skills/nsfc-justification-writer/scripts/run.py review --project-root projects/NSFC_Young
 python skills/nsfc-justification-writer/scripts/run.py check-ai
+```
+
+## 可追溯测试会话（推荐）
+
+每次跑自检/单测建议创建一个新的会话目录，便于归档与复现（会自动写入 `tests/<session>/TEST_PLAN.md` 与 `TEST_REPORT.md`）：
+
+```bash
+python skills/nsfc-justification-writer/scripts/run.py test-session
+python skills/nsfc-justification-writer/scripts/run.py test-session --round B轮
+```
+
+如果你已经进入本 skill 目录，也可以用更短的写法：
+
+```bash
+python scripts/run.py diagnose --project-root projects/NSFC_Young
+python scripts/run.py coach --project-root projects/NSFC_Young --stage auto
+python scripts/run.py apply-section --project-root projects/NSFC_Young --title "国内外研究现状" --body-file /path/to/new_body.txt
+python scripts/run.py test-session
 ```
 
 ## AI 可用性自检（可选）
@@ -38,7 +60,7 @@ python skills/nsfc-justification-writer/scripts/run.py --no-user-override diagno
 ```
 
 说明：
-- `--preset <name>` 会加载 `skills/nsfc-justification-writer/config/presets/<name>.yaml`
+- `--preset <name>` 会加载 `skills/nsfc-justification-writer/assets/presets/<name>.yaml`（兼容旧路径 `config/presets/`：如你有旧文件可自行创建该目录）
 - 默认会尝试加载 `~/.config/nsfc-justification-writer/override.yaml`（如存在）；用 `--no-user-override` 关闭
 
 ## 信息表生成（推荐）
@@ -77,7 +99,7 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \
 ```
 
 说明：
-- 备份默认写入 `skills/nsfc-justification-writer/runs/`（不污染标书项目目录）
+- 备份默认写入 `skills/nsfc-justification-writer/tests/_artifacts/runs/`（不污染标书项目目录）
 - 仅允许写入 `extraTex/1.1.立项依据.tex`（由 `config.yaml` 的 guardrails 控制）
 - 默认严格：若新正文中出现 `\cite{...}` 但 `.bib` 不存在对应 key，将拒绝写入（防止幻觉引用）
 - 标题未命中时：可加 `--suggest-alias` 输出当前文档所有 `\subsubsection` 标题，便于修正 `--title`
@@ -86,14 +108,14 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section \
 
 ## 运行产物（runs/cache）
 
-- `skills/nsfc-justification-writer/runs/`：每次写入/回滚的备份、diff、报告与日志（可随时删除某些旧 run）
-- `skills/nsfc-justification-writer/.cache/ai/`：Tier2/术语一致性等可选 AI 计算缓存（可用 `--fresh` 忽略缓存）
+- `skills/nsfc-justification-writer/tests/_artifacts/runs/`：每次写入/回滚的备份、diff、报告与日志（可随时删除某些旧 run）
+- `skills/nsfc-justification-writer/tests/_artifacts/cache/ai/`：Tier2/术语一致性等可选 AI 计算缓存（可用 `--fresh` 忽略缓存）
 
 清理示例：
 
 ```bash
-rm -rf skills/nsfc-justification-writer/runs/*
-rm -rf skills/nsfc-justification-writer/.cache/*
+rm -rf skills/nsfc-justification-writer/tests/_artifacts/runs/*
+rm -rf skills/nsfc-justification-writer/tests/_artifacts/cache/*
 ```
 
 ## HTML 可视化诊断报告

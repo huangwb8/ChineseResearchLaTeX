@@ -21,10 +21,10 @@
 | `references/theoretical_innovation_guidelines.md` | **新增**：理论创新导向写作指南 | 定义核心原则、四段叙事闭环（理论版）、常见学科模式参考、AI 写作检查清单 |
 | `references/dod_checklist.md` | 新增"理论创新导向（默认）"验收要求 | 在验收标准中明确理论创新导向 |
 | `references/info_form.md` | 引导用户提供理论层面的信息 | 如"假设过强/框架不统一/因果缺失/界不紧"等理论瓶颈 |
-| `templates/phrase_patterns.md` | 新增理论创新导向的常用句式 | 如"理论空白/认知缺失/假设过强/框架不统一/因果缺失"等 |
-| `prompts/writing_coach.txt` | 在写作教练提示中融入理论创新导向 | 引导用户关注理论层面的问题 |
-| `core/writing_coach.py` | 修改 `_suggest_questions()` 和 `_copyable_prompt()` | 引导用户关注理论层面的问题 |
-| `core/review_advice.py` | 修改 `_fallback_review_markdown()` | 评审问题聚焦理论层面的瓶颈和验证方式 |
+| `assets/templates/phrase_patterns.md` | 新增理论创新导向的常用句式 | 如"理论空白/认知缺失/假设过强/框架不统一/因果缺失"等 |
+| `assets/prompts/writing_coach.txt` | 在写作教练提示中融入理论创新导向 | 引导用户关注理论层面的问题 |
+| `scripts/core/writing_coach.py` | 修改 `_suggest_questions()` 和 `_copyable_prompt()` | 引导用户关注理论层面的问题 |
+| `scripts/core/review_advice.py` | 修改 `_fallback_review_markdown()` | 评审问题聚焦理论层面的瓶颈和验证方式 |
 | `SKILL.md` | 新增"理论创新导向（默认）"说明，更新推荐表格 | 在技能文档中明确理论创新导向 |
 | `config.yaml` | 版本号升级至 v0.7.5 | 版本号同步 |
 | `CHANGELOG.md` | 记录本次变更 | 统一变更历史 |

@@ -11,10 +11,10 @@ import sys
 import tempfile
 from pathlib import Path
 
-# 添加 core 目录到 Python 路径
-sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+# core/ 实现统一托管在 scripts/core/ 下；把 scripts/ 放到 sys.path，保证 `import core.*` 可用
+sys.path.insert(0, str(Path(__file__).parent))
 
-from review_integration import (
+from core.review_integration import (
     analyze_review_directory,
     detect_slr_directory,
     extract_citation_keys_from_bib,

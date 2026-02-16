@@ -21,7 +21,7 @@
 
 ## 输出 JSON（契约）
 
-`core/dimension_coverage.py` 输出结构：
+`scripts/core/dimension_coverage.py` 输出结构：
 
 ```json
 {
@@ -56,4 +56,3 @@
 
 字符截断与输入上限使用 `config.yaml`：
 - `limits.ai_max_input_chars`：AI 输入字符上限（同时影响术语一致性、吹牛式表述等语义任务）
-

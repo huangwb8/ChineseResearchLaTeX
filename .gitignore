@@ -36,7 +36,6 @@
 
 # Skill workspaces (runtime artifacts)
 skills/transfer_old_latex_to_new/runs/
-skills/nsfc-justification-writer/runs/
 skills/complete_example/runs/
 skills/nsfc-justification-writer/.cache/
 skills/nsfc-justification-writer/**/__pycache__/
@@ -184,7 +183,13 @@ projects/NSFC_General/template/~$26年最新word模板-1.面上项目-正文.doc
 test.md
 
 # =============================================================================
-# 计划与测试文档（运行时生成，不需要版本控制）
+# 计划与测试文档（可追溯记录，建议纳入版本控制）
 # =============================================================================
-plans/
+# 可选：忽略会话中的中间产物目录（不影响 TEST_PLAN/TEST_REPORT 等主文档）
+**/tests/**/_artifacts/
+**/tests/**/_scripts/
+# 默认忽略各 skill 的 auto-test-skill 会话 plans/tests（避免污染仓库）；需要纳入版本控制的 skill 再显式放行
+skills/*/plans/
+skills/*/tests/
+
 tests/

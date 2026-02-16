@@ -1,17 +1,15 @@
 ---
 name: nsfc-justification-writer
-version: 0.7.7
 description: 当用户明确要求"写/改 NSFC 立项依据""立项依据写作/重构"时使用。基于最小信息表输出价值与必要性、现状不足、科学问题/假说与项目切入点，并保持模板结构不被破坏。适用于 NSFC 及各类科研基金申请书的立项依据写作场景。
 author: ChineseResearchLaTeX Project
 metadata:
   short-description: 科研立项依据写作/重构
   keywords:
     - 立项依据
-    - 研究意义
-    - 国内外现状
     - 科学问题
     - 假说
-    - latex
+    - 国内外现状
+    - LaTeX
   triggers:
     - 立项依据
     - 研究意义
@@ -19,8 +17,8 @@ metadata:
     - 国内外现状
     - 现有不足
     - 切入点
-config: skills/nsfc-justification-writer/config.yaml
-references: skills/nsfc-justification-writer/references/
+references: references/
+config: config.yaml
 ---
 
 # 科研立项依据写作器
@@ -32,13 +30,13 @@ references: skills/nsfc-justification-writer/references/
 - **写作目标**：把"为什么要做"讲清楚，并为 `（二）研究内容` 铺垫"科学问题/假说与切入点"。
 - **AI 依赖**：默认使用运行环境提供的 Claude Code / Codex 原生智能（无需配置任何外部 API Key，AI 不可用会自动回退到硬编码能力）
 - **理论创新导向（默认）**：优先关注科学问题/假说的可证伪性、理论贡献的清晰性、验证维度的完备性（详见 [theoretical_innovation_guidelines.md](references/theoretical_innovation_guidelines.md)）
-- **写作导向可配置**：在 `skills/nsfc-justification-writer/config.yaml` 中用 `style.mode=theoretical|mixed|engineering` 切换（默认 `theoretical`）
+- **写作导向可配置**：在 `config.yaml` 中用 `style.mode=theoretical|mixed|engineering` 切换（默认 `theoretical`）
 
 ## 必需输入（最小信息表）
 
 - 若用户未提供，请先收集/补全：[references/info_form.md](references/info_form.md)
 
-> 推荐：用脚本快速生成信息表（并可交互填写），见 `skills/nsfc-justification-writer/scripts/run.py init`。
+> 推荐：用脚本快速生成信息表（并可交互填写），见 `scripts/run.py init`。
 
 ## 工作流（按顺序执行）
 
@@ -60,20 +58,20 @@ references: skills/nsfc-justification-writer/references/
 
 ## 配置校验与大文件支持（可选）
 
-- 配置校验：`python skills/nsfc-justification-writer/scripts/run.py validate-config`
-- 大文件 Tier2：`diagnose/review --tier2 --chunk-size 12000 --max-chunks 20`（支持 `.cache/ai` 缓存；超大文件会优先使用流式分块以降低峰值内存；用 `--fresh` 强制重算）
+- 配置校验：`python scripts/run.py validate-config`
+- 大文件 Tier2：`diagnose/review --tier2 --chunk-size 12000 --max-chunks 20`（支持 `tests/_artifacts/cache/ai` 缓存；超大文件会优先使用流式分块以降低峰值内存；用 `--fresh` 强制重算）
 - 说明：本仓库脚本层不会“默认直连外部大模型”；AI 能力是否可用取决于运行环境是否注入 responder（不可用会自动回退到硬编码能力）
 - 相关设计说明：
-  - 内容维度覆盖检查：`skills/nsfc-justification-writer/references/dimension_coverage_design.md`
-  - "可能引起评审不适的表述"判别与改写：`skills/nsfc-justification-writer/references/boastful_expression_guidelines.md`
-  - **理论创新导向写作指南**：`skills/nsfc-justification-writer/references/theoretical_innovation_guidelines.md`（含方法学术语误用警示）
-  - **方法学术语误用对比示例**：`skills/nsfc-justification-writer/references/methodology_term_examples.md`（新增）
+  - 内容维度覆盖检查：`references/dimension_coverage_design.md`
+  - "可能引起评审不适的表述"判别与改写：`references/boastful_expression_guidelines.md`
+  - **理论创新导向写作指南**：`references/theoretical_innovation_guidelines.md`（含方法学术语误用警示）
+  - **方法学术语误用对比示例**：`references/methodology_term_examples.md`
 
 ## Prompt 模板可配置化（可选）
 
 `config.yaml` / `preset.yaml` / `override.yaml` 的 `prompts.*` 支持两种形式：
 
-- **文件路径**：如 `prompts/tier2_diagnostic.txt`
+- **文件路径**：如 `assets/prompts/tier2_diagnostic.txt`（兼容旧路径 `prompts/`）
 - **直接写多行 Prompt**：在 YAML 中用 `|` 写入多行文本（适合不同领域改侧重点）
 
 也支持按 preset 变体覆盖：例如当 `--preset medical` 时，可提供 `prompts.tier2_diagnostic_medical`。
@@ -89,7 +87,7 @@ references: skills/nsfc-justification-writer/references/
 | 现有研究的局限性 | 科学问题/核心假说 | 可证伪假说→关键科学问题→验证维度（理论证明/定理/数值验证） |
 | 研究切入点 | 本项目切入点与贡献 | **理论差异化切口**（新表征/方法学/统一框架）→承上启下到 2.1 研究内容 |
 
-如用户确需改小标题：建议仍保持 4 段结构，并先统一标题骨架（见 `templates/structure_template.tex`）；结构检查不再机械匹配标题，但仍要求至少 4 个小节。
+如用户确需改小标题：建议仍保持 4 段结构，并先统一标题骨架（见 `assets/templates/structure_template.tex`）；结构检查不再机械匹配标题，但仍要求至少 4 个小节。
 
 ## 关键能力
 
@@ -107,24 +105,24 @@ references: skills/nsfc-justification-writer/references/
 | AI 阶段判断（coach --stage auto） | ✅ | 硬编码阈值规则 |
 | Tier2 深度诊断（diagnose --tier2） | ✅ | 跳过（仅输出 Tier1） |
 
-> AI 是否可用取决于运行环境是否注入 responder；可用 `skills/nsfc-justification-writer/scripts/run.py check-ai` 自检。
+> AI 是否可用取决于运行环境是否注入 responder；可用 `scripts/run.py check-ai` 自检。
 
 - **Tier1 硬编码诊断**：结构（≥4 个 `\subsubsection`）/引用键是否存在于 `.bib`/DOI 缺失与格式异常提示/字数统计/高风险表述提示与危险命令扫描
 - **内容维度覆盖检查（AI）**：不依赖标题用词，检查“价值与必要性/现状与不足/科学问题/切入点”是否被覆盖
 - **吹牛式表述识别（AI）**：识别绝对化/填补空白式/无依据夸大/自我定性，输出改写建议
 - **跨章节一致性矩阵**：基于 `config.yaml` 的 `terminology.dimensions`（研究对象/指标/术语）做跨章节一致性提示
 - **AI 术语一致性（可选）**：当 AI 可用且 `terminology.mode=auto/ai` 时，额外给出语义视角的“同义词/缩写混用”检查与修改建议（不可用则仅输出矩阵）
-- **安全写入工具**：按 `\subsubsection{...}` 精确定位并替换正文，写入白名单文件 + 备份（产物放在 `skills/nsfc-justification-writer/runs/`）
+- **安全写入工具**：按 `\subsubsection{...}` 精确定位并替换正文，写入白名单文件 + 备份（产物放在 `tests/_artifacts/runs/`，由 `config.yaml:workspace.runs_dir` 控制）
 - **写入前质量闸门（可选）**：`apply-section --strict-quality` 仅对“本次新增正文”做高风险词/危险命令扫描；若 AI 可用则叠加“吹牛式表述”语义阻断，避免被历史遗留内容卡死
 - **评审建议生成器**：基于 DoD + 诊断结果输出“评审人会问什么 + 怎么改”（`scripts/run.py review`）
 - **可视化 HTML 诊断报告**：快速定位问题（`scripts/run.py diagnose --html-report auto`）
 - **版本 diff/回滚**：基于 runs 备份做差异查看与一键回滚（`scripts/run.py diff/rollback`）
-- **示例推荐**：从 `examples/` 读取 `*.metadata.yaml` 关键词，辅助按主题匹配参考骨架（`scripts/run.py coach --topic ...` / `scripts/run.py examples`）
+- **示例推荐**：从 `assets/examples/` 读取 `*.metadata.yaml` 关键词，辅助按主题匹配参考骨架（`scripts/run.py coach --topic ...` / `scripts/run.py examples`）
 - **AI 示例推荐（可选）**：当 AI 可用时，优先进行语义匹配并给出“推荐理由”（不可用则回退到关键词/类别启发式）
 - **AI 阶段判断（可选）**：coach 在 `--stage auto` 时，可用 AI 综合字数/结构/质量状态推断“skeleton/draft/revise/polish/final”，AI 不可用时回退到硬编码阈值
 - **配置覆盖与预设**：支持 `--preset medical/engineering` 与 `~/.config/nsfc-justification-writer/override.yaml` 覆盖术语维度等参数（需要时可用 `--no-user-override` 关闭）
 
-脚本入口：`skills/nsfc-justification-writer/scripts/run.py`（用法见 `skills/nsfc-justification-writer/scripts/README.md`）。
+脚本入口：`scripts/run.py`（用法见 `scripts/README.md`）。
 
 ## systematic-literature-review 集成（可选）
 
@@ -157,7 +155,7 @@ references: skills/nsfc-justification-writer/references/
 - 引用验证：`validate_citation_consistency(tex_path, bib_path)` 检查引用一致性
 - 内容提取：从 `.tex` 和 `.bib` 文件中提取关键信息
 
-实现见：`core/review_integration.py`
+实现见：`scripts/core/review_integration.py`
 
 ## 验收标准（Definition of Done）
 
@@ -166,4 +164,4 @@ references: skills/nsfc-justification-writer/references/
 ## 变更记录
 
 - 本技能不在本文档内维护变更历史；统一记录在根级 `CHANGELOG.md`。
-- 版本号仅在 `skills/nsfc-justification-writer/config.yaml`（`skill_info.version`）与本文件 frontmatter 中维护，避免口径分散。
+- 版本号以 `config.yaml`（`skill_info.version`）为唯一真相来源，避免口径分散。

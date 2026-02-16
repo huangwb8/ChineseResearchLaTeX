@@ -10,7 +10,8 @@ from .config_access import get_mapping
 
 def _missing_prompt_message(name: str) -> str:
     return (
-        f"（Prompt 模板缺失：{name}；请检查 `skills/nsfc-justification-writer/prompts/{name}.txt` 或 `config.yaml` 的 `prompts.{name}` 配置）\n"
+        f"（Prompt 模板缺失：{name}；请检查 `assets/prompts/{name}.txt`（或旧路径 prompts/）"
+        f" 或 `config.yaml` 的 `prompts.{name}` 配置）\n"
     )
 
 
@@ -35,7 +36,7 @@ def _looks_like_path(s: str) -> bool:
         return False
     if t.endswith((".txt", ".md")):
         return True
-    # prompts/<name>.txt 或任意相对/绝对路径
+    # assets/prompts/<name>.txt、prompts/<name>.txt 或任意相对/绝对路径
     return ("/" in t) or ("\\" in t)
 
 
@@ -71,14 +72,18 @@ def get_prompt(
         # 允许在 override.yaml / preset.yaml 里直接写多行 prompt
         return override.strip() + "\n"
 
-    # default location: prompts/<name>.txt
-    txt = _read_text_if_exists((skill_root / "prompts" / f"{name}.txt").resolve())
-    if txt:
-        return txt
+    # default locations: assets/prompts/<name>.txt (preferred), prompts/<name>.txt (legacy)
+    for p in [
+        (skill_root / "assets" / "prompts" / f"{name}.txt").resolve(),
+        (skill_root / "prompts" / f"{name}.txt").resolve(),
+    ]:
+        txt = _read_text_if_exists(p)
+        if txt:
+            return txt
     return default.strip() + "\n"
 
 
-# Backward-compatible constants (loaded from prompts/ when present)
+# Backward-compatible constants (loaded from assets/prompts or prompts/ when present)
 TIER2_DIAGNOSTIC_PROMPT = get_prompt(name="tier2_diagnostic", default=_missing_prompt_message("tier2_diagnostic"))
 REVIEW_SUGGESTIONS_PROMPT = get_prompt(name="review_suggestions", default=_missing_prompt_message("review_suggestions"))
 WRITING_COACH_PROMPT = get_prompt(name="writing_coach", default=_missing_prompt_message("writing_coach"))

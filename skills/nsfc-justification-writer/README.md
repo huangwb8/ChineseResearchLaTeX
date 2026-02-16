@@ -2,12 +2,16 @@
 
 用于科研申请书"立项依据"章节的写作/重构：把"价值与必要性、现状不足、科学问题/假说、切入点与贡献"写成一段可直接落到 LaTeX 模板的正文，并保持模板结构不被破坏。适用于 NSFC 及各类科研基金申请书的立项依据写作场景。
 
-> **⚠️ AI 模型要求**：本 skill 涉及复杂的科学问题识别、假说可证伪性判断、理论创新导向写作等高阶任务，**建议使用 GPT-5.2 High 或同级别的高智能 AI** 以获得最佳效果。较低级别的模型可能在理论深度、逻辑严谨性、表达准确性等方面表现不足。
+> **⚠️ AI 能力建议**：本 skill 涉及复杂的科学问题识别、假说可证伪性判断、理论创新导向写作等高阶任务，建议使用你当前运行环境中“最高档位/最强能力”的模型或配置，以获得更稳定的逻辑与表达质量。
 
 > 主推"渐进式写作引导"（coach），配合"诊断→（分步写作）→安全写入→验收"形成闭环。
 > AI 能力默认来自运行环境的 Claude Code / Codex 原生智能，无需额外配置外部 API Key；不可用时自动回退到硬编码能力。
 
-能力亮点（本版新增/强化）：
+> **路径提示**：
+> - 在本仓库根目录运行：`python skills/nsfc-justification-writer/scripts/run.py ...`
+> - 在本 skill 目录运行：`python scripts/run.py ...`
+
+能力亮点：
 - 默认不强制标题精确匹配，改为检查“价值/现状/科学问题/切入点”内容维度覆盖（AI + 兜底启发式）
 - AI 语义识别“吹牛式表述”（绝对化/填补空白/无依据夸大/自我定性）并给出改写建议，高风险词仅提示不做机械阻断
 - 目标字数优先从用户意图/信息表的“字数/范围/±容差”解析，再用配置兜底
@@ -34,6 +38,12 @@
 
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py coach --project-root projects/NSFC_Young --stage auto --topic "你的课题一句话"
+```
+
+如果你已经进入本 skill 目录，也可以用更短的写法：
+
+```bash
+python scripts/run.py coach --project-root projects/NSFC_Young --stage auto --topic "你的课题一句话"
 ```
 
 按 coach 输出的“下一步可直接复制的写作提示词”去生成某个小标题正文后，用 `apply-section` 安全写入；再重复 coach→apply 的迭代，直到 `diagnose` 通过。
@@ -71,7 +81,7 @@ python skills/nsfc-justification-writer/scripts/run.py coach --project-root proj
 
 全局配置加载顺序（后者覆盖前者）：
 1. `skills/nsfc-justification-writer/config.yaml`
-2. `skills/nsfc-justification-writer/config/presets/<preset>.yaml`（可选）
+2. `skills/nsfc-justification-writer/assets/presets/<preset>.yaml`（可选；兼容旧路径 `config/presets/`：如你有旧文件可自行创建该目录）
 3. `~/.config/nsfc-justification-writer/override.yaml`（可选，可用 `--no-user-override` 关闭）
 4. `--override /path/to/override.yaml`（可选，优先级最高）
 
@@ -146,8 +156,8 @@ python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root p
 
 ## 更多文档
 
-- `skills/nsfc-justification-writer/docs/tutorial.md`
-- `skills/nsfc-justification-writer/docs/architecture.md`
+- `skills/nsfc-justification-writer/references/docs/tutorial.md`
+- `skills/nsfc-justification-writer/references/docs/architecture.md`
 
 版本回滚：
 

@@ -369,8 +369,15 @@ def load_config(
     _merge_yaml(config_path, label="repo config.yaml")
 
     if preset:
-        preset_path = (skill_root / "config" / "presets" / f"{preset}.yaml").resolve()
-        _merge_yaml(preset_path, label=f"preset={preset}")
+        # 新规范：assets/presets/<name>.yaml（优先）
+        # 兼容旧路径：config/presets/<name>.yaml
+        preset_name = str(preset).strip()
+        preset_candidates = [
+            (skill_root / "assets" / "presets" / f"{preset_name}.yaml").resolve(),
+            (skill_root / "config" / "presets" / f"{preset_name}.yaml").resolve(),
+        ]
+        preset_path = next((p for p in preset_candidates if p.exists()), preset_candidates[0])
+        _merge_yaml(preset_path, label=f"preset={preset_name}")
         config["active_preset"] = str(preset)
     else:
         config["active_preset"] = ""
@@ -425,5 +432,5 @@ def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
         return p.resolve()
     workspace = config.get("workspace", {})
     workspace = workspace if isinstance(workspace, dict) else {}
-    runs_dir = workspace.get("runs_dir", "runs")
+    runs_dir = workspace.get("runs_dir", "tests/_artifacts/runs")
     return (Path(skill_root) / str(runs_dir)).resolve()

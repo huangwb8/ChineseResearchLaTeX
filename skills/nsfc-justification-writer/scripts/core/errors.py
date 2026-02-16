@@ -34,8 +34,7 @@ class MissingCitationKeysError(SkillError):
             f"检测到 {len(self.missing_keys)} 个缺失引用 bibkey（为避免幻觉引用，已拒绝写入）",
             fix_suggestion=(
                 "建议：\n"
-                "- 优先：用 nsfc-bib-manager 核验 DOI 并写入 .bib\n"
-                "  `python skills/nsfc-bib-manager/scripts/run.py add --doi <DOI>`\n"
+                "- 优先：使用 nsfc-bib-manager 核验 DOI 并写入 .bib（避免幻觉引用）\n"
                 "- 或：手动补齐 references/*.bib 后重试\n"
                 "- 如确需忽略该检查：在命令中加入 `--allow-missing-citations`\n"
             ),
@@ -47,7 +46,10 @@ class BackupNotFoundError(SkillError):
         self.run_id = run_id
         super().__init__(
             f"未找到 run_id={run_id} 的备份文件",
-            fix_suggestion="建议：先运行 `list-runs` 查看可用 run_id；或确认 runs_dir 配置是否指向正确目录。",
+            fix_suggestion=(
+                "建议：先运行 `list-runs` 查看可用 run_id；\n"
+                "或确认 `config.yaml:workspace.runs_dir` 是否指向正确目录（默认 `tests/_artifacts/runs/`）。"
+            ),
         )
 
 

@@ -57,6 +57,16 @@
   - 脚本优化：抽出 `_yaml_utils.py` 复用 YAML 片段解析；`check_project_outputs.py` 读取配置并增强子目标 marker 识别；`create_test_session.py` 强化会话 ID 校验
   - 文档一致性：移除本 skill 及 `skills/README.md` 中的年份限定表述
 
+- **nsfc-justification-writer**：目录结构与可移植性收口（解决“目录管理太乱”）
+  - 资源统一归档到 `assets/`（prompts/templates/examples/presets），并在代码中加入新路径优先 + 旧路径兼容回退
+  - 移除仅用于说明的 `config/` 兼容占位目录（旧路径 `config/presets/` 仍可由用户按需自行创建）
+  - 文档统一归档到 `references/docs/`，补齐索引与“路径提示”（仓库根目录/skill 目录两种运行方式）
+  - 实现模块统一托管到 `scripts/core/`（不再保留根级 `core/` 目录），入口脚本统一从 `scripts/` 调用
+  - Python 单测统一放在 `tests/pytest/`，`tests/` 同时承载 pytest 测试与 auto-test-skill 会话；更新 `tests/README.md` 解释分工
+  - runs/cache 默认落点统一到 `tests/_artifacts/` 并被 gitignore，避免运行产物污染仓库
+  - 新增 `scripts/run.py test-session`：每次测试自动创建 `tests/<session>/` 子目录并记录 `TEST_PLAN.md`/`TEST_REPORT.md`
+  - 修复单测与实现行为不一致（SLR 目录检测与配置校验 guardrails）
+
 - 调整 NSFC_General 模板的段后距与标题间距逻辑：移除全局 `\parskip=7.8pt`，改为 `\parskip=0pt` 并在 `\subsection` 的 `titlespacing` 中显式给出 7.8pt 的标题后间距，避免 `\NSFCBodyText` 改写 `\parskip` 导致 `\section`/`\subsection` 垂直间距前后不一致
 - 更新 NSFC_General 的样式微调文档：说明默认不使用 `\parskip`，并同步标题间距示例到最新配置
 - 更新三套 NSFC 正文项目的 README 间距调节指南：突出说明如何设置正文间距、参考文献间距，以及 `\subsubsubsection` 与更低层级标题的前后间距（并补齐 `projects/NSFC_Local/README.md`）

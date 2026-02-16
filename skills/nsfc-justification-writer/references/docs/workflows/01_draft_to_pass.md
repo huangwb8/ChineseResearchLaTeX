@@ -2,6 +2,10 @@
 
 适用：你已经有 `extraTex/1.1.立项依据.tex` 的初稿，但结构/引用/字数/表述存在问题，希望快速“诊断→迭代→可回滚→验收”。
 
+路径提示：
+- 在本仓库根目录运行：`python skills/nsfc-justification-writer/scripts/run.py ...`
+- 在本 skill 目录运行：`python scripts/run.py ...`
+
 ## 0）先校验配置（可选）
 
 ```bash
@@ -14,7 +18,7 @@ python skills/nsfc-justification-writer/scripts/run.py validate-config
 python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root <你的项目>
 ```
 
-若结构缺失：先用 `templates/structure_template.tex` 补齐 4 个 `\subsubsection{...}` 骨架，再进入正文优化。
+若结构缺失：先用 `assets/templates/structure_template.tex` 补齐 4 个 `\subsubsection{...}` 骨架，再进入正文优化。
 
 ## 2）必要时补齐引用（防止“幻觉引用”）
 
@@ -57,4 +61,3 @@ python skills/nsfc-justification-writer/scripts/run.py review --project-root <�
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root <你的项目> --tier2 --chunk-size 12000 --max-chunks 20
 ```
-

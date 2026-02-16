@@ -46,7 +46,12 @@ def _read_example_metadata(tex_path: Path) -> Dict[str, Any]:
 
 
 def _iter_example_files(skill_root: Path) -> Iterable[Tuple[str, Path, Dict[str, Any]]]:
-    root = (Path(skill_root).resolve() / "examples").resolve()
+    skill_root = Path(skill_root).resolve()
+    roots = [
+        (skill_root / "assets" / "examples").resolve(),  # preferred
+        (skill_root / "examples").resolve(),  # legacy
+    ]
+    root = next((p for p in roots if p.is_dir()), roots[0])
     if not root.is_dir():
         return []
     out: List[Tuple[str, Path, Dict[str, Any]]] = []

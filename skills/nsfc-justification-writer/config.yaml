@@ -2,7 +2,7 @@
 # nsfc-justification-writer 配置文件
 # ═══════════════════════════════════════════════════════════════════════
 # 本文件是 nsfc-justification-writer 的配置单一真相来源（Single Source of Truth）
-# 修改配置时，请优先编辑本文件，而非 core/config_loader.py
+# 修改配置时，请优先编辑本文件，而非 scripts/core/config_loader.py
 # ═══════════════════════════════════════════════════════════════════════
 
 skill_info:
@@ -49,7 +49,8 @@ targets:
     - references/**/*.bib
 
 workspace:
-  runs_dir: runs
+  # runs/ 属于运行时产物：统一放在 tests/_artifacts/ 下（测试/运行产物集中收口）
+  runs_dir: tests/_artifacts/runs
 
 limits:
   # 文件大小限制（用于决定是否启用“流式分块”读取；避免一次性加载超大文件造成峰值内存）
@@ -70,12 +71,13 @@ ai:
   enabled: true
   tier2_chunk_size: 12000
   tier2_max_chunks: 20
-  cache_dir: .cache/ai
+  # 运行时缓存统一放在 tests/_artifacts/ 下（测试/运行产物集中收口）
+  cache_dir: tests/_artifacts/cache/ai
 
 prompts:
-  tier2_diagnostic: prompts/tier2_diagnostic.txt
-  review_suggestions: prompts/review_suggestions.txt
-  writing_coach: prompts/writing_coach.txt
+  tier2_diagnostic: assets/prompts/tier2_diagnostic.txt
+  review_suggestions: assets/prompts/review_suggestions.txt
+  writing_coach: assets/prompts/writing_coach.txt
 
 references:
   # 默认严格：发现缺失 bibkey 的 \\cite{...} 直接拒绝写入（防止幻觉引用）

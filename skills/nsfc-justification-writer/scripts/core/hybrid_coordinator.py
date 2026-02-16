@@ -141,7 +141,7 @@ class HybridCoordinator:
         self.obs.add("diagnose.tier1", **report.to_dict()["tier1"])
 
         ai_cfg = get_mapping(self.config, "ai")
-        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
+        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", "tests/_artifacts/cache/ai")).resolve()
 
         # 内容维度覆盖检查（AI 不可用时自动回退启发式）
         structure_cfg = get_mapping(self.config, "structure")
@@ -312,7 +312,7 @@ class HybridCoordinator:
             files[label] = resolve_target_path(project_root, str(relpath))
 
         ai_cfg = get_mapping(self.config, "ai")
-        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
+        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", "tests/_artifacts/cache/ai")).resolve()
         md = term_consistency_report(files=files, config=self.config, ai=self.ai, cache_dir=cache_dir)
         self.obs.add("terms.report", ai=self.ai.is_available())
         return md
@@ -349,7 +349,7 @@ class HybridCoordinator:
             cands = suggest_titles(src, query=title, limit=30)
             if self.ai.is_available() and cands:
                 ai_cfg = get_mapping(self.config, "ai")
-                cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
+                cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", "tests/_artifacts/cache/ai")).resolve()
                 matched = asyncio.run(match_title_via_ai(query=title, candidates=cands, ai=self.ai, cache_dir=cache_dir))
                 if matched:
                     chosen = matched
@@ -371,7 +371,7 @@ class HybridCoordinator:
         strict_on_apply = get_bool(quality_cfg, "strict_on_apply", False) or bool(strict_quality)
         if strict_on_apply:
             ai_cfg = get_mapping(self.config, "ai")
-            cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
+            cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", "tests/_artifacts/cache/ai")).resolve()
             qr = check_new_body_quality(new_body=new_body, config=self.config, ai=self.ai, cache_dir=cache_dir)
             if not qr.ok:
                 from .errors import QualityGateError
@@ -450,7 +450,7 @@ class HybridCoordinator:
 
     def recommend_examples(self, *, query: str, top_k: int = 3) -> str:
         ai_cfg = get_mapping(self.config, "ai")
-        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
+        cache_dir = (self.skill_root / get_str(ai_cfg, "cache_dir", "tests/_artifacts/cache/ai")).resolve()
         return recommend_examples_markdown(skill_root=self.skill_root, query=query, top_k=top_k, ai=self.ai, cache_dir=cache_dir)
 
     def coach(self, *, project_root: Path, stage: str = "auto", info_form_text: str = "") -> str:

@@ -2,11 +2,15 @@
 
 目标：在不破坏 NSFC 2026 模板结构的前提下，完成 `extraTex/1.1.立项依据.tex` 的“诊断→分步写作→安全写入→验收”闭环。
 
+路径提示：
+- 在本仓库根目录运行：`python skills/nsfc-justification-writer/scripts/run.py ...`
+- 在本 skill 目录运行：`python scripts/run.py ...`
+
 ## 0）准备
 
 - 确认你的标书项目目录（示例：`projects/NSFC_Young`）
 - 确认目标文件存在：`extraTex/1.1.立项依据.tex`
-- 推荐先跑一次结构模板：`skills/nsfc-justification-writer/templates/structure_template.tex`
+- 推荐先跑一次结构模板：`skills/nsfc-justification-writer/assets/templates/structure_template.tex`
 
 ## 1）生成信息表（最小输入）
 
@@ -95,4 +99,3 @@ python skills/nsfc-justification-writer/scripts/run.py rollback --project-root p
 ```text
 xelatex → bibtex → xelatex → xelatex
 ```
-

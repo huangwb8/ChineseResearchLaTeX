@@ -1,6 +1,6 @@
 # “可能引起评审不适的表述”识别：判别与改写指南
 
-本文件用于解释 `core/boastful_expression_checker.py` 的设计边界：什么需要标记、什么是可接受表述，以及如何改写为可核验/可对照的写法。
+本文件用于解释 `scripts/core/boastful_expression_checker.py` 的设计边界：什么需要标记、什么是可接受表述，以及如何改写为可核验/可对照的写法。
 
 ## 总原则
 
@@ -43,4 +43,3 @@
 
 字符截断与输入上限使用 `config.yaml`：
 - `limits.ai_max_input_chars`：AI 输入字符上限（避免超长文本导致成本/延迟显著上升）
-

@@ -310,7 +310,7 @@ async def coach_markdown(
         ai_obj = AIIntegration(enable_ai=get_bool(ai_cfg, "enabled", True), config=config)
 
     ai_cfg = get_mapping(config, "ai")
-    cache_dir = (skill_root / get_str(ai_cfg, "cache_dir", ".cache/ai")).resolve()
+    cache_dir = (skill_root / get_str(ai_cfg, "cache_dir", "tests/_artifacts/cache/ai")).resolve()
 
     auto_stage = await _infer_stage_auto(
         tex_text=tex_text,

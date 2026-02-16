@@ -2,6 +2,10 @@
 
 适用：你希望保证“立项依据”中所有外部工作都可核验（bibkey 存在、doi 字段齐全、避免杜撰）。
 
+路径提示：
+- 在本仓库根目录运行：`python skills/nsfc-justification-writer/scripts/run.py ...`
+- 在本 skill 目录运行：`python scripts/run.py ...`
+
 ## 1）生成引用核验摘要（包含缺失 bibkey / 缺 DOI 的条目）
 
 ```bash
@@ -23,4 +27,3 @@ python skills/nsfc-justification-writer/scripts/run.py apply-section --allow-mis
 ```
 
 不推荐长期使用：建议尽快补齐并回归严格模式。
-
