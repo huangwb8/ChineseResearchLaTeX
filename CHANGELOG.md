@@ -40,6 +40,13 @@
 
 ### Changed（变更）
 
+- **nsfc-research-foundation-writer v0.1.0 → v0.1.1**：写入安全约束与只读自检脚本增强
+  - `SKILL.md`：补充参数说明与“只替换正文、不改标题层级”的写入安全约束；补充可选脚本自检入口
+  - `references/`：信息表去年份化；DoD 清单补齐 `.cls/.sty` 禁改约束；示例输出增加“不得编造细节”的说明
+  - `scripts/`：新增 `validate_skill.py`（结构一致性校验）与 `check_project_outputs.py`（项目输出轻量自检）
+  - `README.md`：移除年份绑定表述，补充 `output_mode` 与自检命令
+  - `skills/README.md`：同步移除年份绑定表述，补齐推荐 Prompt 模板的 `output_mode` 与禁改约束
+
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
   - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）

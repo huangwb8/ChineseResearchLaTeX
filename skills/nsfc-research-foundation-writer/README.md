@@ -1,6 +1,6 @@
 # nsfc-research-foundation-writer
 
-用于 NSFC 2026 新模板正文 `（三）研究基础` 的写作/重构，并**同时编排**：
+用于 NSFC 标书正文 `（三）研究基础` 的写作/重构，并**同时编排**：
 
 - `3.2 工作条件`
 - `3.1 中的研究风险应对`
@@ -9,7 +9,7 @@
 
 ## 技能依赖关系
 
-本技能属于 NSFC 2026 申请书写作流程的一部分，建议按以下顺序使用：
+本技能属于 NSFC 申请书写作流程的一部分，建议按以下顺序使用：
 
 ```mermaid
 graph LR
@@ -52,6 +52,7 @@ graph LR
 信息表：<按 references/info_form.md 提供>
 输出：写入 extraTex/3.1.研究基础.tex、extraTex/3.2.工作条件.tex
 额外要求：风险应对至少 3 条，每条要有早期信号与备选方案
+output_mode：apply（默认）/ preview（只预览不写入）
 ```
 
 ## 输出文件
@@ -68,3 +69,8 @@ graph LR
 - 本技能只修改 `extraTex/3.*.tex` 文件，不会修改 `main.tex` 或模板文件
 - 风险应对至少需要 3 条（技术/进度/资源各至少 1 条）
 - 工作条件必须与 `2.1` 研究内容的关键任务对齐
+
+## 可选自检（只读）
+
+- 仅校验 skill 自身一致性：`python3 skills/nsfc-research-foundation-writer/scripts/validate_skill.py`
+- 同时检查某个项目的输出文件：`python3 skills/nsfc-research-foundation-writer/scripts/run_checks.py --project-root projects/NSFC_Young`

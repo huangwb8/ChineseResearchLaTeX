@@ -1,19 +1,18 @@
 ---
 name: nsfc-research-foundation-writer
-version: 0.1.0  # 与 config.yaml 中的 skill_info.version 保持一致
+version: 0.1.1
 description: 当用户明确要求"写/改研究基础""研究基础+工作条件+风险应对编排"时使用。为 NSFC 正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"，用证据链证明项目可行、资源条件对位研究内容、风险预案可执行。
 author: Bensz Conan
 metadata:
   author: Bensz Conan
   short-description: NSFC（研究基础+工作条件+风险应对）编排写作
   keywords:
-    - nsfc
+    - nsfc-research-foundation-writer
     - 研究基础
     - 可行性分析
     - 工作条件
     - 平台团队
     - 风险应对
-    - latex
   triggers:
     - 研究基础
     - 前期基础
@@ -36,15 +35,28 @@ references: skills/nsfc-research-foundation-writer/references/
 - **禁止改动**：`main.tex`、`extraTex/@config.tex`、任何 `.cls/.sty`
 - **核心目标**：用“证据链 + 条件对位 + 风险预案”回答评审的三个问题：你做过吗？你做得成吗？出问题你怎么兜底？
 
+## 参数与输出模式（建议显式提供）
+
+- `project_root`：标书项目根目录（如 `projects/NSFC_Young`）
+- `output_mode`（默认 `apply`）：
+  - `preview`：只输出两段可复制的 LaTeX 正文草稿（并标注应写入的目标文件路径），不写入文件
+  - `apply`：仅写入两份目标文件（见“目标输出”），不触碰其他文件
+
 ## 必需输入（最小信息表）
 
 - 若用户未提供，请先收集/补全：[references/info_form.md](references/info_form.md)
+
+## 写入安全约束（必须遵守）
+
+1. 仅编辑两份 `extraTex/3.*.tex` 文件；不得修改 `main.tex`、`extraTex/@config.tex`、任何 `.cls/.sty`
+2. 目标文件若已包含标题命令（如 `\\subsection{...}` / `\\subsubsection{...}`），**只替换正文内容**，不改标题与结构层级
+3. 信息不全时先提问补齐；不得捏造论文题目/期刊/专利号/样本量/指标等“看起来像真的”细节
 
 ## 工作流（按顺序执行）
 
 1. **定位项目与目标文件**：
    - 验证 `project_root` 是否存在，不存在时报错并提示用户指定正确路径
-   - 检查 `extraTex/` 目录是否存在，不存在时尝试创建或报错提示
+   - 检查 `extraTex/` 目录是否存在，不存在时提示用户先初始化/拷贝模板项目；必要时可在用户确认后创建
    - 确认 `project_root` 和 `output_mode`（默认为 `apply`）
      - `preview` 模式：只生成内容预览，不写入文件（适合调试）
      - `apply` 模式：将生成的内容写入 `extraTex/3.1.研究基础.tex` 和 `extraTex/3.2.工作条件.tex`
@@ -97,12 +109,17 @@ references: skills/nsfc-research-foundation-writer/references/
 ### 详细检查清单
 见：[references/dod_checklist.md](references/dod_checklist.md)
 
+### 可选脚本自检（只读）
+
+- 仅校验 skill 自身结构一致性：`python3 skills/nsfc-research-foundation-writer/scripts/validate_skill.py`
+- 同时检查某个项目的输出文件（存在性 + 轻量内容启发式）：`python3 skills/nsfc-research-foundation-writer/scripts/run_checks.py --project-root <你的project_root>`
+
 ## 常见问题与边缘情况
 
 ### Q1: 项目目录中没有 `extraTex/` 目录怎么办？
-**A**: 本技能会自动尝试创建 `extraTex/` 目录。如果失败，请手动创建：
+**A**: 建议先确认 `project_root` 指向正确的标书项目根目录；若确实缺少 `extraTex/`，请手动创建：
 ```bash
-mkdir -p projects/NSFC_Young/extraTex
+mkdir -p "<你的project_root>/extraTex"
 ```
 
 ### Q2: 我还没有写 `2.1 研究内容`，可以直接写 `3.1 研究基础` 吗？
@@ -111,14 +128,14 @@ mkdir -p projects/NSFC_Young/extraTex
 ### Q3: 信息表中的某些内容我不方便公开怎么办？
 **A**: 可以提供"可核验线索"而非完整内容。例如：
 - ❌ "我们在 Nature 上发表了论文 XXX"
-- ✅ "我们在 Nature 上发表过相关论文（可提供审稿人推荐信）"
+- ✅ "我们发表过相关论文（可提供 DOI/题录/接收函编号等可核验线索）"
 
 ### Q4: 风险应对必须写 3 条吗？
-**A**: 是的，至少 3 条（技术/进度/资源各至少 1 条）。如果风险较少，可以写"风险较低，暂无其他明显风险"。
+**A**: 是的，至少 3 条（技术/进度/资源各至少 1 条）。即便你认为风险较低，也建议按三类各写 1 条“低风险 + 监测信号 + 预案”，避免评审认为你没有兜底意识。
 
 ### Q5: 我的信息表内容很少，能生成完整的研究基础吗？
 **A**: 可以。AI 会根据你提供的信息生成内容，并在不确定的地方使用占位符（如 `[请补充：XXX]`），请你后续补全。
 
 ## 变更记录
 
-- 本技能不在本文档内维护变更历史；统一记录在根级 `CHANGELOG.md`。
+- 本技能的变更历史记录在本目录的 `CHANGELOG.md`，并同步到根级 `CHANGELOG.md`；`SKILL.md` 仅维护“AI 执行规范”。

@@ -4,10 +4,10 @@
 
 skill_info:
   name: nsfc-research-foundation-writer
-  version: 0.1.0
+  version: 0.1.1
   # template_year: 移除年份限制，使技能适用于不同年份的 NSFC 模板
   category: writing
-  description: 为 NSFC 正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"
+  description: "为 NSFC 正文“（三）研究基础”写作/重构，并同步编排“工作条件/研究风险应对”（不适用：非标书正文场景）"
   author: "Bensz Conan"
 
 parameters:

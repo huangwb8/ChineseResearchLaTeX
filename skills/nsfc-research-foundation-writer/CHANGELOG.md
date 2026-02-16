@@ -1,10 +1,20 @@
 # 变更记录
 
+## [0.1.1] - 2026-02-16
+
+### Added
+- 新增只读自检脚本：`scripts/validate_skill.py`、`scripts/check_project_outputs.py`、`scripts/run_checks.py`
+
+### Changed
+- 强化 SKILL.md 的写入安全约束与参数说明，降低误改 LaTeX 结构风险
+- 信息表与文档表述去年份化，提升通用性
+- README 增加 `output_mode` 用法与可选自检入口
+
 ## [0.1.0] - 2026-01-14
 
 ### Added
 - 初始版本发布
-- 支持为 NSFC 2026 新模板正文"（三）研究基础"写作/重构
+- 支持为 NSFC 标书正文"（三）研究基础"写作/重构
 - 支持同步编排"工作条件"和"研究风险应对"
 - 支持证据链验证、可行性四维分析、风险预案生成
 
