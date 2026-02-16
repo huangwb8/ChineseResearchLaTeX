@@ -52,6 +52,11 @@
   - 强调 AGENTS.md 为跨平台通用项目指令（Single Source of Truth）
   - 明确 CLAUDE.md 通过 `@./AGENTS.md` 自动引用，修改 AGENTS.md 后无需任何同步操作
 
+- 更新 3 个 NSFC 标书模板 README：补充并优化“如何调整/自定义序号样式（enumerate 编号）”教程（含 3 套常用多级序号组合）
+  - [projects/NSFC_General/README.md](projects/NSFC_General/README.md)
+  - [projects/NSFC_Local/README.md](projects/NSFC_Local/README.md)
+  - [projects/NSFC_Young/README.md](projects/NSFC_Young/README.md)
+
 - **nsfc-schematic v0.7.0 → v0.8.0**：AI 自主化评估与 TEX 提取协议升级
   - AI 主评估协议从“measurements.json 驱动”改为“spec+config+PNG 请求包驱动”（`ai_eval_request.md`/`ai_eval_response.json`）
   - 新增 TEX → spec 的 AI 离线提取协议（`ai_tex_request.md`/`ai_tex_response.json`），无响应自动降级
