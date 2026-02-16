@@ -134,7 +134,7 @@ python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root p
 - **Q：AI 能力为什么有时“不生效”？**  
   A：本仓库脚本默认不假设可直接调用宿主 AI；需要运行环境注入 responder 才会启用 AI（不可用会自动回退到硬编码能力）。可先运行 `python skills/nsfc-justification-writer/scripts/run.py check-ai` 查看当前是否处于降级模式。
 - **Q：为什么 `apply-section` 会拒绝写入？**  
-  A：默认严格：若新正文里出现 `\\cite{...}` 但项目 `references/*.bib` 找不到对应 key，会拒绝写入以避免“幻觉引用”。先用 `refs` 生成提示词交给 `nsfc-bib-manager` 补齐后再写入。
+  A：默认严格：若新正文里出现 `\\cite{...}` 但项目 `references/*.bib` 找不到对应 key，会拒绝写入以避免“幻觉引用”。先用 `refs` 生成核验清单/可复制提示词，按提示补齐 `references/*.bib` 后再写入。
   如你使用 `--allow-missing-citations` 放宽该检查，建议同时加 `--strict-quality` 启用“新正文质量闸门”（命中绝对化表述/危险命令则拒绝写入）。
 - **Q：我想按学科调整术语一致性检查怎么做？**  
   A：先试 `--preset medical/engineering`（已提供更丰富的三维矩阵示例），或写一个 `override.yaml` 覆盖 `terminology.dimensions`（推荐）：

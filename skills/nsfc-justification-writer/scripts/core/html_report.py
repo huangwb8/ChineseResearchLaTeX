@@ -155,7 +155,7 @@ def render_diagnostic_html(
     if not t1.structure_ok:
         default_next.append("先补齐 4 个 \\subsubsection 标题骨架，再进入段落写作。")
     if not t1.citation_ok:
-        default_next.append("修复缺失的 \\cite{...}：先补 bib 或用 nsfc-bib-manager 核验后再写入。")
+        default_next.append("修复缺失的 \\cite{...}：先补齐/核验 bibkey（提供 DOI/链接或可核验题录信息）再写入。")
     if t1.forbidden_phrases_hits:
         default_next.append("删除不可核验绝对表述（国际领先/国内首次等），改为可验证指标与对照维度。")
     if t1.avoid_commands_hits:

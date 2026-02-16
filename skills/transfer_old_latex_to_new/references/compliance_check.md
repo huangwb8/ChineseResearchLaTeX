@@ -549,7 +549,7 @@ description: 智能迁移NSFC LaTeX标书到新版模板，基于五阶段工作
   自动处理结构变化、内容重组、引用更新，支持AI驱动的语义匹配和启发式回退。
   适用场景：用户提到"迁移标书"、"升级模板"、"跨版本迁移"、"旧标书转新模板"、
   "NSFC模板结构变化"、"内容重新组织"等关键词时触发。
-author: AI Agent (Claude Code)
+author: Bensz Conan
 metadata:
   short-description: NSFC LaTeX标书跨版本智能迁移
   keywords:

@@ -697,7 +697,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_wc.set_defaults(func=cmd_wordcount)
 
-    p_refs = sub.add_parser("refs", help="引用核验摘要 + 生成 nsfc-bib-manager 可复制提示词")
+    p_refs = sub.add_parser("refs", help="引用核验摘要 + 生成 BibTeX 补齐/核验提示词")
     p_refs.add_argument("--project-root", required=True)
     p_refs.add_argument("--verify-doi", default="none", choices=["none", "crossref"], help="可选：联网用 Crossref 校验 DOI")
     p_refs.add_argument("--doi-timeout", default=5.0, type=float, help="Crossref 校验超时时间（秒）")

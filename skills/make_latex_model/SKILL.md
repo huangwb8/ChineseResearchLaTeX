@@ -1,7 +1,9 @@
 ---
 name: make_latex_model
 version: 2.9.0
-author: ChineseResearchLaTeX Project
+author: Bensz Conan
+metadata:
+  author: Bensz Conan
 maintainer: project-maintainers
 status: stable
 category: normal

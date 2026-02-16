@@ -9,6 +9,7 @@ skill_info:
   name: nsfc-justification-writer
   version: 0.7.7
   category: writing
+  author: "Bensz Conan"
 
 # 写作导向（可配置）
 # - theoretical：理论创新导向（默认）

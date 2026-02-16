@@ -9,6 +9,7 @@ skill_info:
   name: check-review-alignment
   version: 1.0.2
   description: "综述引用语义核查：只修复致命性引用错误（虚假/错误/矛盾引用），并可选渲染 PDF/Word"
+  author: "Bensz Conan"
   category: "文档质量"
 
 # === 引用命令配置 ===

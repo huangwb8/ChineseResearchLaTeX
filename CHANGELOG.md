@@ -49,6 +49,10 @@
 - 更新 [README.md](README.md)：nsfc-abstract 版本号与描述更新至 v0.3.0（加入“标题建议”输出）
 - 更新 [skills/README.md](skills/README.md)：新增 nsfc-abstract 小节说明与可选长度校验命令，并调整后续技能编号
 
+### Removed（移除）
+
+- 移除 `skills/nsfc-bib-manager/` 技能，并同步更新相关文档/脚本中对该技能的引用：`README.md`、`skills/README.md`、`skills/nsfc-justification-writer/*`、`skills/transfer_old_latex_to_new/config.yaml`（改为“提供 DOI/链接并手动补齐 references/*.bib”的流程表述）
+
 ### Changed（变更）
 
 - **nsfc-research-content-writer v0.2.1 → v0.2.2**：完善技能自检与可追溯测试基础设施
@@ -66,6 +70,8 @@
   - runs/cache 默认落点统一到 `tests/_artifacts/` 并被 gitignore，避免运行产物污染仓库
   - 新增 `scripts/run.py test-session`：每次测试自动创建 `tests/<session>/` 子目录并记录 `TEST_PLAN.md`/`TEST_REPORT.md`
   - 修复单测与实现行为不一致（SLR 目录检测与配置校验 guardrails）
+
+- 统一 skills 作者口径：将 `skills/*/SKILL.md` 的 `metadata.author` 与 `skills/*/config.yaml` 的 `skill_info.author` 固定为 `Bensz Conan`
 
 - 调整 NSFC_General 模板的段后距与标题间距逻辑：移除全局 `\parskip=7.8pt`，改为 `\parskip=0pt` 并在 `\subsection` 的 `titlespacing` 中显式给出 7.8pt 的标题后间距，避免 `\NSFCBodyText` 改写 `\parskip` 导致 `\section`/`\subsection` 垂直间距前后不一致
 - 更新 NSFC_General 的样式微调文档：说明默认不使用 `\parskip`，并同步标题间距示例到最新配置

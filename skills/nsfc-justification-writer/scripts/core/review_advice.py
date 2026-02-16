@@ -56,7 +56,7 @@ def _fallback_review_markdown(*, report: DiagnosticReport, dod_checklist: str, s
     if not t1.structure_ok:
         adv.append("先补齐 4 个小标题骨架（研究背景/现状/局限/切入点），再写正文。")
     if not t1.citation_ok:
-        adv.append("修复所有缺失 bibkey：提供 DOI/链接或用 nsfc-bib-manager 核验后写入 \\cite{...}。")
+        adv.append("修复所有缺失 bibkey：提供 DOI/链接（或可核验题录信息），补齐 references/*.bib 后再写入 \\cite{...}。")
     if t1.forbidden_phrases_hits:
         adv.append("删除“国际领先/国内首次/填补空白”等表述，改为“对照维度 + 指标 + 改善幅度/区间”。")
     if t1.avoid_commands_hits:

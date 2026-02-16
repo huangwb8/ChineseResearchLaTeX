@@ -11,7 +11,7 @@
 
 约束：
 - {style_preamble}
-- 不要杜撰引用与 DOI；如需要引用，用“需补充 DOI/链接或走 nsfc-bib-manager 核验”
+- 不要杜撰引用与 DOI；如需要引用，用“需用户提供 DOI/链接（或可核验题录信息），并先补齐 references/*.bib”
 - 避免绝对化表述（国际领先/国内首次等）
 
 dod_checklist:

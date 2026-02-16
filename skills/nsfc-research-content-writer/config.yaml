@@ -8,6 +8,7 @@ skill_info:
   # template_year: 移除年份限制，使技能适用于不同年份的 NSFC 模板
   description: NSFC 标书正文“（二）研究内容”写作/重构，并同步编排“特色与创新”“三年年度研究计划”，输出 2.1/2.2/2.3 三份 extraTex 文件
   category: writing
+  author: "Bensz Conan"
 
 parameters:
   project_root:

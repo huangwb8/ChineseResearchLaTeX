@@ -34,8 +34,8 @@ class MissingCitationKeysError(SkillError):
             f"检测到 {len(self.missing_keys)} 个缺失引用 bibkey（为避免幻觉引用，已拒绝写入）",
             fix_suggestion=(
                 "建议：\n"
-                "- 优先：使用 nsfc-bib-manager 核验 DOI 并写入 .bib（避免幻觉引用）\n"
-                "- 或：手动补齐 references/*.bib 后重试\n"
+                "- 优先：提供 DOI/链接（或可核验题录信息），补齐并核验 references/*.bib 后重试\n"
+                "- 或：删除未核验引用/改写为无引用的可核验描述\n"
                 "- 如确需忽略该检查：在命令中加入 `--allow-missing-citations`\n"
             ),
         )

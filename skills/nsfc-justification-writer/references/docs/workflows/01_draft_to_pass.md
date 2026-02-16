@@ -26,7 +26,7 @@ python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root <
 python skills/nsfc-justification-writer/scripts/run.py refs --project-root <你的项目>
 ```
 
-把输出里的“可复制提示词”交给 `nsfc-bib-manager` 去核验/补齐，再回来继续写作。
+按输出里的“核验清单/可复制提示词”，补齐并核验 `references/*.bib`（优先使用 DOI/链接或可核验题录信息），再回来继续写作。
 
 ## 3）用 coach 把任务拆小（每轮只改一个小标题）
 

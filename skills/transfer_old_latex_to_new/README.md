@@ -168,4 +168,4 @@ bibtex --version
 ---
 
 **最后更新**: 2026-01-29
-**维护者**: AI Agent (Claude Code)
+**维护者**: Bensz Conan

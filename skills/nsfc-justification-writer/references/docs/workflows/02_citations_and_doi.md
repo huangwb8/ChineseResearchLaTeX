@@ -12,9 +12,9 @@
 python skills/nsfc-justification-writer/scripts/run.py refs --project-root <你的项目>
 ```
 
-## 2）交给 nsfc-bib-manager 去核验与补齐
+## 2）手动核验与补齐 BibTeX
 
-把上一条命令输出里的“可直接复制提示词”复制给 `nsfc-bib-manager`，并按提示补充 DOI/链接/题录信息（如你手头有）。
+按上一条命令输出里的“可直接复制提示词”，逐条补充 DOI/链接/题录信息并更新 `references/*.bib`（无法核验的信息请明确标注“待核验”，不要杜撰）。
 
 ## 3）写作时的引用守护
 

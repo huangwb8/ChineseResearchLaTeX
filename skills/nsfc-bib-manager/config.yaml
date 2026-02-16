@@ -1,5 +1,0 @@
-skill_info:
-  name: nsfc-bib-manager
-  version: 1.0.0
-  description: NSFC 标书引用与 Bib 管理：新增/核验论文信息并写入 .bib 文件，保证不出现幻觉引用
-  category: writing

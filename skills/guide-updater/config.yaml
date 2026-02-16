@@ -4,7 +4,7 @@ skill_info:
   description: |
     将对话中新产生的可复用写作洞见实时沉淀到项目指南文件。
     调用时必须指定指南文件路径（用户可在 Prompt 中说明路径或使用 --guide-path 参数）。
-  author: "ChineseResearchLaTeX Project"
+  author: "Bensz Conan"
 
 parameters:
   guide_path:

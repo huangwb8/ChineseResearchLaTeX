@@ -132,7 +132,7 @@ def format_tier1(report: Tier1Report) -> str:
         lines.append(f"- ❌ 引用缺失：.bib 未找到 keys：{', '.join(report.missing_citation_keys)}")
 
     if report.missing_doi_keys:
-        lines.append(f"- ⚠️ DOI 缺失：建议补齐（或走 nsfc-bib-manager 核验）keys：{', '.join(report.missing_doi_keys[:10])}")
+        lines.append(f"- ⚠️ DOI 缺失：建议补齐（可用 DOI/链接线索补齐 .bib）keys：{', '.join(report.missing_doi_keys[:10])}")
     if report.invalid_doi_keys:
         lines.append(f"- ⚠️ DOI 格式疑似不合法：建议核验/修正 keys：{', '.join(report.invalid_doi_keys[:10])}")
 

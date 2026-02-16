@@ -8,6 +8,7 @@ skill_info:
   # template_year: 移除年份限制，使技能适用于不同年份的 NSFC 模板
   category: writing
   description: 为 NSFC 正文"（三）研究基础"写作/重构，并同步编排"工作条件"和"研究风险应对"
+  author: "Bensz Conan"
 
 parameters:
   project_root:
@@ -46,4 +47,3 @@ quality_contract:
   conditions_must_cover:
     - 已具备条件（平台/数据/样本/算力/团队/合规）
     - 尚缺条件与解决途径（时间/预算/合作/采购/替代方案）
-

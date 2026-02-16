@@ -2,8 +2,9 @@
 name: nsfc-research-content-writer
 version: 0.2.2
 description: 当用户明确要求"写/改研究内容""研究内容+创新+年度计划编排"时使用。为 NSFC 正文"（二）研究内容"写作/重构，并同步编排"特色与创新"和"三年年度研究计划"，输出可直接落到 LaTeX 模板的三个 extraTex 文件。
-author: ChineseResearchLaTeX Project
+author: Bensz Conan
 metadata:
+  author: Bensz Conan
   short-description: NSFC（研究内容+创新+年度计划）编排写作
   keywords:
     - nsfc

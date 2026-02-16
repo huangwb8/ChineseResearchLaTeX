@@ -90,7 +90,7 @@ def _suggest_questions(
     if stage in {"skeleton", "draft"}:
         base.append("四个小标题是否要沿用模板默认（研究背景/现状/局限/切入点）？如要改标题，请明确新标题列表。")
     if not bool(tier1.get("citation_ok", True)):
-        base.append("缺失引用的 bibkey 准备怎么补：提供 DOI/链接或走 nsfc-bib-manager 核验？")
+        base.append("缺失引用的 bibkey 准备怎么补：提供 DOI/链接（或可核验题录信息）并补齐 references/*.bib？")
     if tier1.get("missing_doi_keys"):
         base.append("已存在的引用 bibkey 是否补齐 DOI 字段（建议补齐以便可核验）？")
     if tier1.get("forbidden_phrases_hits"):
@@ -113,7 +113,7 @@ def _copyable_prompt(*, stage: WritingStage, style_preamble: str) -> str:
         "请用 nsfc-justification-writer 的写作规范帮我修改立项依据：\n"
         + "约束：\n"
         + "- 不修改任何标题层级（仅改正文段落）\n"
-        + '- 不新增引用；如必须引用，请先提示“需用户提供 DOI/链接或走 nsfc-bib-manager 核验”\n'
+        + '- 不新增引用；如必须引用，请先提示“需用户提供 DOI/链接（或可核验题录信息），并先补齐 references/*.bib”\n'
         + "- 避免不可核验绝对表述（国际领先/国内首次等），改为可验证指标/对照维度\n"
         + ((pre + "\n") if pre else "")
         + f"任务：{focus}\n"
