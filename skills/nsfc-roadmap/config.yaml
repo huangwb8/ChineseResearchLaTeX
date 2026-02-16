@@ -1,0 +1,168 @@
+# nsfc-roadmap 配置文件
+# 版本号管理：本文件是版本信息的唯一来源（Single Source of Truth）
+
+skill_info:
+  name: nsfc-roadmap
+  version: 0.8.0
+  description: "为 NSFC 标书生成可打印、A4 可读的技术路线图（drawio + SVG/PNG/PDF）"
+  author: "Bensz Conan"
+  category: 科研写作
+
+renderer:
+  canvas:
+    width_px: 2400
+    # 默认画布比例：A4 height/width=297/210；高度取 2/3 A4 => (297/210)*(2/3)≈0.942857
+    height_px: 2263
+    margin_px: 60
+  allow_internal_fallback: true
+  drawio:
+    auto_install_macos: false  # 若缺失 draw.io CLI，是否尝试自动安装（默认关闭，避免意外改动系统）
+    install_method_macos: brew # brew|manual（manual 仅输出指引）
+    border_px: 20              # draw.io CLI 导出时的额外边界（避免裁剪）
+  png:
+    scale: 1.0
+  svg:
+    enabled: true
+  pdf:
+    enabled: true
+    require_drawio_cli: false  # 无 draw.io CLI 时是否直接失败（false 则降级为 PNG→PDF 栅格输出）
+  fonts:
+    # 自动探测顺序：若存在即使用；否则退化到 Pillow 默认字体（可能不含中文）
+    candidates:
+      - /System/Library/Fonts/STHeiti Medium.ttc
+      - /System/Library/Fonts/STHeiti Light.ttc
+      - /System/Library/Fonts/Supplemental/Songti.ttc
+      - /System/Library/Fonts/Supplemental/Arial Unicode.ttf
+      # Linux 常见中文字体（存在即用，不存在则跳过）
+      - /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
+      - /usr/share/fonts/truetype/arphic/ukai.ttc
+      - /usr/share/fonts/truetype/arphic/uming.ttc
+      # Windows 常见中文字体（存在即用，不存在则跳过；使用正斜杠）
+      - C:/Windows/Fonts/msyh.ttc
+      - C:/Windows/Fonts/simsun.ttc
+    default_size: 28
+    title_size: 34
+    min_size: 20
+  stroke:
+    width_px: 4
+    color: "#2F5597"
+  background: "#FFFFFF"
+
+evaluation:
+  evaluation_mode: heuristic  # heuristic|ai（默认 heuristic；ai 模式会导出 measurements.json/dimension_measurements.json 供宿主 AI 解读）
+  max_rounds: 5
+  thresholds:
+    min_font_px: 20
+    warn_font_px: 24
+    near_overflow_ratio_p1: 0.92
+    too_many_lines_p2: 5
+    phase_balance_warn_ratio: 1.8
+    min_png_width_px: 1600
+    min_png_height_px: 1500
+    crowded_density_p1: 0.35
+    blank_check_min_boxes: 8
+    blank_density_p0: 0.010
+    blank_density_p1: 0.020
+  early_stop:
+    enabled: false  # legacy 规则（保留兼容）；默认关闭，改用 stop_strategy
+    min_rounds: 2
+    consecutive_pass: 2
+    allow_p1: 1
+    score_threshold: 85
+  stop_strategy: plateau  # none|plateau|ai_critic（ai_critic 目前仅占位，默认不会启用联网/模型调用）
+  plateau:
+    min_explore_rounds: 4
+    same_image_rounds: 2
+    no_improve_rounds: 3
+    min_delta: 1
+  weights:
+    heuristic: 0.7
+    visual: 0.3
+  exploration:
+    enabled: true
+    seed: 1337
+    jitter_px:
+      margin_px: 20
+      spacing_px: 8
+      width_px: 0
+      height_px: 120
+  multi_round_self_check:
+    enabled: true
+    # 多维度批判性评估：补足纯几何/密度指标难以覆盖的人类感知维度
+    critique_dimensions: [structure, visual, readability]
+    max_workers: 3
+
+layout:
+  # auto|classic|three-column|layered-pipeline
+  # - auto: 若 spec/config 未显式指定模板，则回退 classic；若提供 template_ref，则自动映射到对应 family
+  template: auto
+  # 可选：具体模板 id（优先级高于 layout.template；例如 model-02）
+  template_ref:
+  direction: top-to-bottom
+  title:
+    enabled: false
+  notes:
+    enabled: false
+  # Pillow 字号（像素级，约等于 pt 的直觉，但以渲染效果为准）
+  min_font_size: 20
+  phase_bar:
+    width_px: 80
+    fill: "#2F75B5"
+    text_color: "#FFFFFF"
+  spacing_px: 22
+  box:
+    radius_px: 18
+    padding_px: 16
+    min_height_px: 120
+
+color_scheme:
+  name: academic-blue
+  presets:
+    academic-blue:
+      primary: { fill: "#D9E8FF", stroke: "#2F5597" }
+      secondary: { fill: "#DAF2D0", stroke: "#2E7D32" }
+      decision: { fill: "#FFF2CC", stroke: "#B07D00" }
+      critical: { fill: "#E8DFF2", stroke: "#6A4C93" }
+      risk: { fill: "#F8D7DA", stroke: "#B23A48" }
+      auxiliary: { fill: "#F2F2F2", stroke: "#666666" }
+      text: "#1F1F1F"
+    outline-print:
+      primary: { fill: "#FFFFFF", stroke: "#2F5597" }
+      secondary: { fill: "#FFFFFF", stroke: "#2E7D32" }
+      decision: { fill: "#FFFFFF", stroke: "#B07D00" }
+      critical: { fill: "#FFFFFF", stroke: "#6A4C93" }
+      risk: { fill: "#FFFFFF", stroke: "#B23A48" }
+      auxiliary: { fill: "#FFFFFF", stroke: "#666666" }
+      text: "#1F1F1F"
+    tint-layered:
+      primary: { fill: "#EAF2FF", stroke: "#2F5597" }
+      secondary: { fill: "#E9F7E6", stroke: "#2E7D32" }
+      decision: { fill: "#FFF8DE", stroke: "#B07D00" }
+      critical: { fill: "#F0EAF7", stroke: "#6A4C93" }
+      risk: { fill: "#FBEAEC", stroke: "#B23A48" }
+      auxiliary: { fill: "#F7F7F7", stroke: "#666666" }
+      text: "#1F1F1F"
+
+output:
+  dirname: roadmap_output
+  hide_intermediate: true            # 是否将中间产物隐藏到 intermediate_dir（默认启用）
+  intermediate_dir: .nsfc-roadmap    # 中间产物目录名（相对 output_dir）
+  max_history_runs: 10               # 最多保留最近 N 次 run_*（仅在 hide_intermediate=true 时生效）
+  keep_intermediates: true           # legacy 字段：保留兼容（新逻辑优先使用 artifacts.*）
+  report_filename: optimization_report.md  # legacy 字段：保留兼容（新逻辑优先使用 artifacts.report）
+  artifacts:
+    drawio: roadmap.drawio
+    svg: roadmap.svg
+    png: roadmap.png
+    pdf: roadmap.pdf
+    spec: spec.yaml
+    spec_latest: spec_latest.yaml
+    report: optimization_report.md
+    config_best: config_used_best.yaml
+    evaluation_best: evaluation_best.json
+
+planning:
+  planning_mode: template  # template|ai（默认 template；ai 模式输出 plan_request.json 并等待宿主 AI 生成 roadmap-plan.md + spec_draft.yaml）
+  output:
+    plan_filename: roadmap-plan.md
+    spec_filename: spec_draft.yaml

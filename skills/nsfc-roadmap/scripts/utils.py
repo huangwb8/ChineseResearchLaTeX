@@ -1,0 +1,102 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, NoReturn, Optional, Tuple
+
+import hashlib
+import sys
+
+
+def skill_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def fatal(message: str, exit_code: int = 2) -> NoReturn:
+    print(f"[nsfc-roadmap] ERROR: {message}", file=sys.stderr)
+    raise SystemExit(exit_code)
+
+
+def warn(message: str) -> None:
+    print(f"[nsfc-roadmap] WARN: {message}", file=sys.stderr)
+
+
+def info(message: str) -> None:
+    print(f"[nsfc-roadmap] {message}")
+
+
+def load_yaml(path: Path) -> Dict[str, Any]:
+    try:
+        import yaml  # type: ignore
+    except Exception as exc:  # pragma: no cover
+        fatal(
+            "缺少依赖 PyYAML。请先安装：python3 -m pip install pyyaml\n"
+            f"原始错误：{exc}"
+        )
+    try:
+        raw = read_text(path)
+    except FileNotFoundError:
+        fatal(f"YAML 文件不存在：{path}")
+    except Exception as exc:
+        fatal(f"读取 YAML 文件失败：{path}\n{exc}")
+    try:
+        data = yaml.safe_load(raw)
+    except Exception as exc:
+        fatal(f"读取 YAML 失败：{path}\n{exc}")
+    if not isinstance(data, dict):
+        fatal(f"YAML 根必须是 mapping：{path}")
+    return data
+
+
+def dump_yaml(data: Dict[str, Any]) -> str:
+    try:
+        import yaml  # type: ignore
+    except Exception as exc:  # pragma: no cover
+        fatal(
+            "缺少依赖 PyYAML。请先安装：python3 -m pip install pyyaml\n"
+            f"原始错误：{exc}"
+        )
+    return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
+
+
+@dataclass(frozen=True)
+class FontChoice:
+    path: Optional[Path]
+    size: int
+
+
+def pick_font(candidates: list[str], size: int) -> FontChoice:
+    for p in candidates:
+        path = Path(p)
+        if path.exists():
+            return FontChoice(path=path, size=size)
+    return FontChoice(path=None, size=size)
+
+
+def clamp(n: int, low: int, high: int) -> int:
+    return max(low, min(high, n))
+
+
+def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+    s = hex_color.strip()
+    if s.startswith("#"):
+        s = s[1:]
+    if len(s) != 6:
+        raise ValueError(f"Invalid hex color: {hex_color}")
+    r = int(s[0:2], 16)
+    g = int(s[2:4], 16)
+    b = int(s[4:6], 16)
+    return (r, g, b)

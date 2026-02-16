@@ -1,0 +1,68 @@
+schematic:
+  title: "Transformer 风格机制图示例"
+  canvas:
+    width: 2600
+    height: 1500
+  direction: left-to-right
+  groups:
+    - id: encoder_stack
+      label: "Encoder (Nx)"
+      style: dashed-border
+      position: { x: 120, y: 260 }
+      size: { w: 980, h: 720 }
+      children:
+        - id: enc_input
+          label: "Input Embedding"
+          kind: primary
+          position: { x: 180, y: 360 }
+          size: { w: 260, h: 90 }
+        - id: enc_attn
+          label: "Multi-Head Attention"
+          kind: secondary
+          position: { x: 500, y: 360 }
+          size: { w: 320, h: 90 }
+        - id: enc_ffn
+          label: "Feed Forward"
+          kind: critical
+          position: { x: 500, y: 520 }
+          size: { w: 320, h: 90 }
+
+    - id: decoder_stack
+      label: "Decoder (Nx)"
+      style: solid-border
+      position: { x: 1260, y: 260 }
+      size: { w: 980, h: 720 }
+      children:
+        - id: dec_input
+          label: "Shifted Output"
+          kind: primary
+          position: { x: 1320, y: 360 }
+          size: { w: 260, h: 90 }
+        - id: dec_attn
+          label: "Masked Attention"
+          kind: secondary
+          position: { x: 1640, y: 360 }
+          size: { w: 320, h: 90 }
+        - id: dec_ffn
+          label: "Feed Forward"
+          kind: critical
+          position: { x: 1640, y: 520 }
+          size: { w: 320, h: 90 }
+
+  edges:
+    - from: enc_input
+      to: enc_attn
+      style: solid
+    - from: enc_attn
+      to: enc_ffn
+      style: solid
+    - from: enc_ffn
+      to: dec_attn
+      style: dashed
+      label: "Cross Attention"
+    - from: dec_input
+      to: dec_attn
+      style: solid
+    - from: dec_attn
+      to: dec_ffn
+      style: thick

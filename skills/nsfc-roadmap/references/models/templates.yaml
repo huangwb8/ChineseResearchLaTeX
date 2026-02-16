@@ -1,0 +1,90 @@
+version: 1
+
+# 本文件是“模板经验”的单一真相来源（machine-readable）。
+# 用途：
+# - 供 AI 规划阶段引用（选模板/抽约束/落到 spec）
+# - 供脚本读取（template_ref -> family -> 渲染策略）
+#
+# 重要：这里的 token 是“参考约束”，不是像素级复刻参数。
+
+families:
+  three-column:
+    description: 三列式：左右支撑列 + 中央主线；适合“研究框架/内容/方法”或“支撑-主线-支撑”的结构。
+    tokens:
+      layout_skeleton:
+        direction: top-to-bottom
+        columns: 3
+        center_is_mainline: true
+        column_headers: ["研究框架/支撑", "研究主线", "研究方法/支撑"]
+      grouping:
+        section_header: horizontal-bar
+        container_border: dashed-rounded
+      node_styles:
+        corner_radius: medium
+        min_font_px: 20
+        max_lines_per_box: 5
+      palette:
+        style: low-saturation
+        prefer_max_primary_colors: 3
+      connectors:
+        mainline: vertical
+        branch: lateral
+
+  layered-pipeline:
+    description: 纵向主流程 + 横向分层/模块；适合“起点→并行模块→汇总输出”的主链结构。
+    tokens:
+      layout_skeleton:
+        direction: top-to-bottom
+        mainline: center
+        layers: true
+      grouping:
+        section_header: none-or-minimal
+        container_border: solid-rounded
+      node_styles:
+        corner_radius: medium
+        min_font_px: 20
+        max_lines_per_box: 5
+      palette:
+        style: low-saturation
+        prefer_max_primary_colors: 3
+      connectors:
+        mainline: vertical
+        branch: lateral
+
+templates:
+  - id: model-01
+    file: roadmap-model-01.jpeg
+    family: three-column
+    use_when: 研究路线能自然分成三列（框架/内容/方法），且希望中央主线保持“分区分层”叙事。
+    avoid: 节点过多但无法做分区时；或希望严格按时间阶段条呈现时（用 classic）。
+
+  - id: model-02
+    file: roadmap-model-02.jpeg
+    family: three-column
+    use_when: 三列结构清晰，但左右支撑需要与中央主线强绑定（同层对齐）。
+    avoid: 文本特别长、需要大面积说明块时（优先 layered-pipeline 或 classic）。
+
+  - id: model-03
+    file: roadmap-model-03.jpeg
+    family: layered-pipeline
+    use_when: 有明显“起点→并行模块→汇总输出”主链，且想用横向模块体现并行研究任务。
+    avoid: 仅有线性阶段条但没有并行模块时（用 classic）。
+
+  - id: model-04
+    file: roadmap-model-04.jpeg
+    family: three-column
+    use_when: 需要三列支撑，但希望容器分组更明显、区块更强“成品感”。
+    avoid: 节点密度极高且需要多行网格堆叠时（用 classic）。
+
+  - id: model-05
+    file: roadmap-model-05.jpeg
+    family: three-column
+    use_when: 三列 + 中央主线更强调“阶段/分区标题条”，适合评审快速扫读。
+    avoid: 需要大量跨列连线表达复杂依赖时（本技能不追求复杂连线）。
+
+  - id: model-06
+    file: roadmap-model-06.jpeg
+    family: layered-pipeline
+    use_when: 纵向主链明显，且每一层都有“关键模块/输出”，适合树状或分层流水线。
+    avoid: 内容更像“阶段条 + 网格填充”的典型路线图时（用 classic）。
+

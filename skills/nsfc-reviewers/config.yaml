@@ -1,0 +1,230 @@
+# nsfc-reviewers 配置文件
+# 版本号管理：本文件是版本信息的唯一来源（Single Source of Truth）
+
+# 技能基本信息
+skill_info:
+  name: nsfc-reviewers
+  version: 0.5.0
+  description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议"
+  author: "Bensz Conan"
+  category: 科研写作
+
+# 评审维度配置
+review_dimensions:
+  - id: innovation
+    name: 创新性评价
+    weight: 25
+    key_points:
+      - 科学问题的原创性和前沿性
+      - 是否提出颠覆性假说或新视角
+      - 是否存在"新瓶装旧酒"问题
+      - 创新点是否明确可验证
+    common_issues:
+      - 创新性不足，仅是简单的方法移植
+      - 科学问题过于简单，缺乏深度
+      - 创新点表述模糊，难以评估
+
+  - id: hypothesis
+    name: 科学假说与科学问题
+    weight: 20
+    key_points:
+      - 科学假说是否明确可检验
+      - 科学问题是否清晰聚焦
+      - 研究目标与科学问题是否一致
+      - 假说的理论依据是否充分
+    common_issues:
+      - 科学假说太浅，没有资助价值
+      - 科学问题不清晰，让评审专家猜测
+      - 研究目标与假说脱节
+
+  - id: methodology
+    name: 研究方案与可行性
+    weight: 20
+    key_points:
+      - 技术路线是否合理清晰
+      - 研究方法是否先进可行
+      - 关键科学问题的解决方案
+      - 是否有备选方案应对风险
+    common_issues:
+      - 技术路线不清晰，逻辑混乱
+      - 研究方法过于简单或过于复杂
+      - 缺乏可行性分析
+      - 没有考虑潜在风险和应对措施
+
+  - id: foundation
+    name: 研究基础
+    weight: 15
+    key_points:
+      - 前期工作是否与本项目相关
+      - 是否有支撑性的实验结果
+      - 发表论文的质量和相关性
+      - 申请人在该领域的积累
+    common_issues:
+      - 研究基础薄弱，没有相关实验结果
+      - 前期工作与本项目关联性差
+      - 缺乏高质量的相关论文支撑
+
+  - id: team
+    name: 研究团队
+    weight: 10
+    key_points:
+      - 申请人的研究经历和能力
+      - 团队成员的专业背景和分工
+      - 团队协作能力
+      - 是否具备完成项目的条件
+    common_issues:
+      - 团队成员专业背景与项目不匹配
+      - 分工不明确
+      - 缺乏关键技术人员
+
+  - id: outcomes
+    name: 预期成果与科学意义
+    weight: 10
+    key_points:
+      - 预期成果是否明确可量化
+      - 科学意义是否重要
+      - 应用前景是否合理
+      - 成果与投入是否匹配
+    common_issues:
+      - 预期成果过于宏大或过于保守
+      - 科学意义阐述不清
+      - 应用前景脱离实际
+
+# 问题严重程度定义
+severity_levels:
+  P0:
+    name: 致命问题
+    description: 严重影响资助决策的问题，必须修改
+    color: red
+  P1:
+    name: 重要问题
+    description: 需要重点修改的问题
+    color: orange
+  P2:
+    name: 建议改进
+    description: 可以改进的细节问题
+    color: yellow
+
+# 评审等级定义
+review_grades:
+  excellent:
+    name: 优
+    description: 创新性强，科学意义重要，方案可行，基础扎实
+    funding_suggestion: 优先资助
+  good:
+    name: 良
+    description: 立意新颖，有一定科学意义，方案较好
+    funding_suggestion: 可资助
+  fair:
+    name: 中
+    description: 有一定研究价值，但存在明显不足
+    funding_suggestion: 可资助（需重点修改后再评估）
+  poor:
+    name: 差
+    description: 创新性不足或可行性差，不建议资助
+    funding_suggestion: 不予资助
+
+# 并行独立评审配置
+parallel_review:
+  # 是否启用并行评审模式
+  enabled: true
+  # 默认评审组数量（每组固定 5 位专家）
+  default_panel_count: 2
+  # 最大评审组数量
+  max_panel_count: 5
+  # parallel-vibe plan.threads[*].runner.type（评审任务推荐 claude）
+  runner: claude
+  # parallel-vibe plan.threads[*].runner.profile（default|fast|deep）
+  runner_profile: deep
+  # 超时时间（秒），0 表示不限时
+  timeout_seconds: 0
+  # 各组评审输出的文件名
+  panel_output_filename: panel_review.md
+  # 专家画像定义（仅参数；prompt 内容见 prompt_file 引用）
+  reviewer_personas:
+    - id: innovation_expert
+      name: 学术前沿与创新性专家
+      prompt_file: references/expert_01_innovation.md
+      primary_dimensions: [innovation, hypothesis]
+      secondary_dimensions: [outcomes]
+
+    - id: methodology_expert
+      name: 研究方法与可行性专家
+      prompt_file: references/expert_02_methodology.md
+      primary_dimensions: [methodology, outcomes]
+      secondary_dimensions: [hypothesis]
+
+    - id: foundation_expert
+      name: 研究基础与团队评估专家
+      prompt_file: references/expert_03_foundation.md
+      primary_dimensions: [foundation, team]
+      secondary_dimensions: [methodology]
+
+    - id: critical_reviewer
+      name: 严格综合评审专家
+      prompt_file: references/expert_04_critical.md
+      primary_dimensions: [innovation, methodology, hypothesis]
+      secondary_dimensions: [foundation, team, outcomes]
+
+    - id: constructive_reviewer
+      name: 建设性评审专家
+      prompt_file: references/expert_05_constructive.md
+      primary_dimensions: [methodology, foundation, outcomes]
+      secondary_dimensions: [innovation, hypothesis, team]
+
+  # 聚合策略
+  aggregation:
+    # 跨组共识阈值（0.0-1.0），默认 60% 以上组一致
+    consensus_threshold: 0.6
+    # 是否保留各专家原始评审意见作为附录
+    keep_individual_reviews: true
+
+# 输出设置
+output_settings:
+  default_filename: comments-from-nsfc-reviewers.md
+  panel_dir: panels
+  format: markdown
+  # 是否将中间过程文件隐藏到 intermediate_dir（推荐开启，减少根目录噪声）
+  hide_intermediate: true
+  # 中间过程统一托管目录（隐藏目录名，放置 parallel-vibe 环境、日志与快照）
+  intermediate_dir: .nsfc-reviewers
+  # 是否强制执行“输出整理”阶段（强烈建议开启，保证并行环境/计划文件可追溯）
+  enforce_output_finalization: true
+  # 若检测到多组评审但未生成 intermediate_dir（或缺少 parallel-vibe 环境），是否发出警告
+  warn_missing_intermediate: true
+  # 校验级别：warn（仅警告）或 error（中断执行）
+  validation_level: warn
+  include_sections:
+    - basic_info
+    - overall_evaluation
+    - dimension_reviews
+    - suggestions_summary
+    - expert_comments
+
+# 标书文件识别
+proposal_files:
+  # 常见的标书章节文件名模式
+  patterns:
+    - "*.tex"
+    - "摘要*.tex"
+    - "立项依据*.tex"
+    - "研究内容*.tex"
+    - "研究方案*.tex"
+    - "研究基础*.tex"
+    - "工作条件*.tex"
+    - "特色与创新*.tex"
+    - "研究计划*.tex"
+  # 排除的文件
+  exclude:
+    - "preamble.tex"
+    - "*.cls"
+    - "*.sty"
+
+# 维护与清理策略（供 scripts/cleanup_intermediate.py 使用）
+maintenance:
+  cleanup:
+    # 仅清理 logs/ 下非 plans 的旧文件；plans 默认保留以便复现
+    logs_max_age_days: 14
+    keep_plans: true
+    # snapshot 默认保留（通常较小且可追溯）
+    keep_snapshot: true

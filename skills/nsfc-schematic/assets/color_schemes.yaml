@@ -1,0 +1,33 @@
+color_schemes:
+  academic-blue:
+    primary:    { fill: "#D9E8FF", stroke: "#2F5597" }
+    secondary:  { fill: "#DAF2D0", stroke: "#2E7D32" }
+    decision:   { fill: "#FFF2CC", stroke: "#B07D00" }
+    critical:   { fill: "#E8DFF2", stroke: "#6A4C93" }
+    risk:       { fill: "#F8D7DA", stroke: "#B23A48" }
+    auxiliary:  { fill: "#F2F2F2", stroke: "#666666" }
+    group_bg:   { fill: "#FAFAFA", stroke: "#CCCCCC" }
+    text: "#1F1F1F"
+    arrow: "#2F5597"
+
+  transformer-style:
+    primary:    { fill: "#FFFFFF", stroke: "#333333" }
+    secondary:  { fill: "#FFF3E0", stroke: "#E65100" }
+    decision:   { fill: "#E3F2FD", stroke: "#1565C0" }
+    critical:   { fill: "#FCE4EC", stroke: "#C62828" }
+    risk:       { fill: "#F3E5F5", stroke: "#6A1B9A" }
+    auxiliary:  { fill: "#F5F5F5", stroke: "#9E9E9E" }
+    group_bg:   { fill: "#FAFAFA", stroke: "#E0E0E0" }
+    text: "#212121"
+    arrow: "#424242"
+
+  nature-biomedical:
+    primary:    { fill: "#E8F0FE", stroke: "#1A73E8" }
+    secondary:  { fill: "#E6F4EA", stroke: "#137333" }
+    decision:   { fill: "#FEF7E0", stroke: "#E37400" }
+    critical:   { fill: "#FCE8E6", stroke: "#D93025" }
+    risk:       { fill: "#F3E8FD", stroke: "#8430CE" }
+    auxiliary:  { fill: "#F1F3F4", stroke: "#5F6368" }
+    group_bg:   { fill: "#F8F9FA", stroke: "#DADCE0" }
+    text: "#202124"
+    arrow: "#1A73E8"

@@ -1,0 +1,63 @@
+schematic:
+  title: "Meta CCS Calling 原理框架"
+  canvas:
+    width: 2400
+    height: 1400
+  direction: top-to-bottom
+  groups:
+    - id: input_group
+      label: "输入层"
+      style: dashed-border
+      children:
+        - id: raw_expr
+          label: "Raw RNA Expression"
+          kind: primary
+        - id: phenotype
+          label: "Phenotype"
+          kind: decision
+
+    - id: processing_group
+      label: "处理层"
+      style: solid-border
+      children:
+        - id: tissue_dr
+          label: "Tissue-level DR (nD)"
+          kind: secondary
+        - id: cluster_dr
+          label: "Cluster-level DR (2D)"
+          kind: secondary
+        - id: meta_ccs
+          label: "Meta CCS Calling Predictor"
+          kind: critical
+
+    - id: output_group
+      label: "输出层"
+      style: background-fill
+      children:
+        - id: norm_ccs
+          label: "Normalized CCS"
+          kind: primary
+        - id: pred_ccs
+          label: "Predicted Meta CCS"
+          kind: critical
+
+  edges:
+    - from: raw_expr
+      to: tissue_dr
+      style: solid
+    - from: tissue_dr
+      to: cluster_dr
+      style: solid
+    - from: cluster_dr
+      to: meta_ccs
+      style: solid
+    - from: phenotype
+      to: meta_ccs
+      style: dashed
+      label: "辅助输入"
+    - from: meta_ccs
+      to: norm_ccs
+      style: solid
+    - from: meta_ccs
+      to: pred_ccs
+      style: thick

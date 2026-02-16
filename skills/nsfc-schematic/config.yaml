@@ -1,0 +1,193 @@
+# nsfc-schematic 配置文件
+# 版本号唯一来源：skill_info.version
+
+skill_info:
+  name: nsfc-schematic
+  version: 0.7.0
+  description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
+  author: "Bensz Conan"
+  category: 科研写作
+
+renderer:
+  canvas:
+    width_px: 2400
+    height_px: 1400
+  drawio_border_px: 20
+  background: "#FFFFFF"
+  allow_internal_fallback: true
+  internal_routing: orthogonal  # straight|orthogonal
+  drawio:
+    auto_install_macos: false  # 若缺失 draw.io CLI，是否尝试自动安装（默认关闭，避免意外改动系统）
+    install_method_macos: brew # brew|manual（manual 仅输出指引）
+  png:
+    enabled: true
+  svg:
+    enabled: true
+  pdf:
+    enabled: false
+  stroke:
+    width_px: 2
+  fonts:
+    candidates:
+      - /System/Library/Fonts/STHeiti Medium.ttc
+      - /System/Library/Fonts/STHeiti Light.ttc
+      - /System/Library/Fonts/Supplemental/Songti.ttc
+      - /System/Library/Fonts/Supplemental/Arial Unicode.ttf
+      - /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
+      - /usr/share/fonts/truetype/arphic/ukai.ttc
+      - /usr/share/fonts/truetype/arphic/uming.ttc
+      - C:/Windows/Fonts/msyh.ttc
+      - C:/Windows/Fonts/simsun.ttc
+
+layout:
+  direction: top-to-bottom
+  auto_expand_canvas: true
+  title:
+    enabled: true
+    padding_y: 18
+  node_default_size:
+    w: 280
+    h: 96
+  # 文字适配（尽量避免导出 SVG/PNG 后出现“文字溢出/被遮挡/贴边”）
+  # 说明：该逻辑是确定性的启发式 autosize，不依赖 draw.io CLI。
+  text_fit:
+    enabled: true
+    max_lines: 3
+    padding_x: 18
+    padding_y: 14
+    line_spacing_px: 4
+    max_node_w: 520
+    max_node_h_soft: 260
+    widen_step_px: 20
+  font:
+    title_size: 34
+    group_label_size: 24
+    node_label_size: 26
+    node_label_size_target: 28
+    edge_label_size: 24
+  auto:
+    margin_x: 120
+    margin_y: 120
+    group_gap_x: 140
+    group_gap_y: 80
+    group_padding_x: 36
+    group_padding_y: 28
+    group_header_h: 56
+    group_min_w: 680
+    group_min_h: 260
+    node_gap_x: 40
+    node_gap_y: 28
+    max_cols: 3
+
+color_scheme:
+  file: assets/color_schemes.yaml
+  name: academic-blue
+
+evaluation:
+  evaluation_mode: heuristic  # heuristic|ai（默认 heuristic 保持向后兼容；ai 模式会输出 measurements.json 等离线协议文件）
+  max_rounds: 5
+  multi_round_self_check:
+    enabled: true
+    critique_dimensions: [structure, visual, readability]
+    max_workers: 3  # 预留字段：当前实现为顺序执行（KISS）
+    penalty:
+      p0: 10
+      p1: 4
+      p2: 1
+      max_total: 40
+  thresholds:
+    min_font_px: 20
+    warn_font_px: 24
+    min_edge_font_px: 20
+    warn_edge_font_px: 24
+    node_margin_warn_px: 20
+    balance_warn_ratio: 0.40
+    edge_node_min_dist_px: 14
+    edge_long_diag_warn_ratio: 0.35   # 相对画布对角线比例
+    edge_diagness_warn: 0.35          # 0(轴向)~1(45度对角)
+    blank_check_min_nodes: 6          # spec 节点数达到该值才启用“近空白渲染”判定（避免小图误报）
+    blank_density_p0: 0.010           # spec 有内容但 PNG 近空白：提升为 P0（疑似渲染内容缺失）
+    blank_density_p1: 0.020           # spec 有内容但 PNG 偏空：提升为 P1（建议检查渲染链路）
+    # 多维度自检（evaluate_dimension.py）使用的“出版可读性”阈值（保守默认值）
+    wcag_contrast_p0: 3.0             # 文字对比度硬门槛（低于此值视为严重不可读风险）
+    wcag_contrast_p1: 4.5             # 文字对比度建议值（缩印/打印更稳健）
+    crowded_density_p1: 0.35          # PNG 拥挤度（灰度 proxy）提示阈值
+    crowded_density_p0: 0.45          # PNG 拥挤度（灰度 proxy）硬阈值
+    print_scale_check: true           # 是否检查缩印场景
+    print_scale_ratio: 0.5            # 假设缩印比例（A4 缩 50%）
+    print_scale_min_font: 10          # 缩印后最小字号（px）
+  early_stop:
+    enabled: false  # legacy 规则（保留兼容）；默认关闭，改用 stop_strategy
+    min_rounds: 2
+    consecutive_pass: 2
+    allow_p1: 1
+    score_threshold: 85
+  stop_strategy: plateau  # none|plateau|ai_critic（ai_critic 会生成离线评审请求文件，不在脚本内调用任何外部模型/联网）
+  plateau:
+    min_explore_rounds: 4
+    same_image_rounds: 2
+    no_improve_rounds: 3
+    min_delta: 1
+  weights:
+    heuristic: 0.7
+    visual: 0.3
+  exploration:
+    enabled: true
+    candidates_per_round: 2
+    seed: 1337
+    jitter_px:
+      margin_x: 18
+      margin_y: 18
+      node_gap_x: 10
+      node_gap_y: 8
+      group_gap_x: 14
+      group_gap_y: 10
+    max_cols_options: [2, 3]
+
+output:
+  dirname: schematic_output
+  hide_intermediate: true             # 是否将中间产物隐藏到 intermediate_dir（默认启用）
+  intermediate_dir: .nsfc-schematic   # 中间产物目录名（相对 output_dir）
+  max_history_runs: 10                # 最多保留最近 N 次 run_*（仅在 hide_intermediate=true 时生效）
+  report_filename: optimization_report.md  # legacy 字段：保留兼容（新逻辑优先使用 artifacts.report）
+  artifacts:
+    drawio: schematic.drawio
+    svg: schematic.svg
+    png: schematic.png
+    pdf: schematic.pdf
+    spec: spec.yaml
+    spec_latest: spec_latest.yaml
+    report: optimization_report.md
+    config_best: config_used_best.yaml
+    evaluation_best: evaluation_best.json
+
+planning:
+  # 规划阶段：从 TEX/自然语言生成“规划草案（PLAN.md）+ spec 草案（spec_draft.yaml）”
+  # 说明：脚本不在本地直接调用 LLM；AI 语义理解由宿主 AI 完成，脚本负责结构模板与确定性校验。
+  output:
+    plan_filename: PLAN.md
+    spec_filename: spec_draft.yaml
+  extraction:
+    max_terms: 12
+  defaults:
+    title: "NSFC 原理图（规划草案）"
+    direction: top-to-bottom
+    color_scheme: academic-blue
+    groups:
+      - id: input
+        label: "输入层"
+        style: dashed-border
+      - id: process
+        label: "处理层"
+        style: solid-border
+      - id: output
+        label: "输出层"
+        style: background-fill
+  checks:
+    groups_min: 2
+    groups_max: 5
+    nodes_per_group_min: 1
+    nodes_per_group_max: 6
+    total_nodes_max: 20
+    edge_density_max_ratio: 1.5
+    require_input_output: true
