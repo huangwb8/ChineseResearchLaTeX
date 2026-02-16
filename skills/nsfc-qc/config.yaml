@@ -1,0 +1,71 @@
+# ================================
+# nsfc-qc 默认配置（Single Source of Truth for version）
+# ================================
+
+skill_info:
+  name: nsfc-qc
+  version: 0.1.0
+  description: "NSFC 标书质量控制（只读）：多线程检查文风生硬/引用真伪与一致性/篇幅与结构分布/逻辑清晰度等，并输出标准化 QC 报告（中间文件归档到 .nsfc-qc/）"
+  category: writing
+  author: "Bensz Conan"
+
+parameters:
+  project_root:
+    type: string
+    required: true
+    description: 标书项目根目录（如 projects/NSFC_Young 或你的标书目录）
+  main_tex:
+    type: string
+    required: false
+    default: main.tex
+    description: 主入口 tex 文件名（相对 project_root），默认 main.tex
+  threads:
+    type: integer
+    required: false
+    default: 5
+    description: parallel-vibe 线程数（默认 5，范围 1-9）
+  execution:
+    type: string
+    required: false
+    default: serial
+    allowed_values: [serial, parallel]
+    description: parallel-vibe 执行模式；默认 serial（串联），仅在用户明确要求并行时使用 parallel
+  runner_type:
+    type: string
+    required: false
+    default: codex
+    allowed_values: [codex, claude]
+    description: parallel-vibe runner.type（默认 codex；环境支持 claude 时可切换）
+  runner_profile:
+    type: string
+    required: false
+    default: deep
+    allowed_values: [fast, default, deep]
+    description: parallel-vibe runner.profile（默认 deep）
+  page_limit_soft:
+    type: integer
+    required: false
+    default: 30
+    description: 正文页数软约束（青年/面上：原则上不超过 30 页；仅建议优化，不作硬失败）
+  runs_root:
+    type: string
+    required: false
+    default: .nsfc-qc/runs
+    description: 运行目录根（相对 project_root）；所有中间文件必须落在该目录下
+
+guardrails:
+  # 只读：不允许修改标书内容（tex/bib 等）。所有写入必须在 .nsfc-qc/ 下。
+  allowed_write_globs:
+    - ".nsfc-qc/**"
+  forbidden_write_globs:
+    - "**/*.tex"
+    - "**/*.bib"
+    - "**/*.cls"
+    - "**/*.sty"
+
+output_contract:
+  # 标准输出（run_id 由技能生成；latest 由人类/脚本按需创建）
+  final_report: ".nsfc-qc/runs/{run_id}/final/nsfc-qc_report.md"
+  final_metrics: ".nsfc-qc/runs/{run_id}/final/nsfc-qc_metrics.json"
+  final_findings: ".nsfc-qc/runs/{run_id}/final/nsfc-qc_findings.json"
+

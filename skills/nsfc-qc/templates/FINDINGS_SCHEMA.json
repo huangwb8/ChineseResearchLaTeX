@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "description": "nsfc-qc findings schema (machine-readable). Keep JSON ASCII-only.",
+  "fields": {
+    "run_id": "string",
+    "project_root": "string",
+    "generated_at": "string (ISO-8601)",
+    "findings": [
+      {
+        "id": "string (e.g., P0-001)",
+        "severity": "P0|P1|P2",
+        "category": "style|citation|length|structure|logic|consistency|format|other",
+        "location": {
+          "path": "string (relative to project_root)",
+          "anchor": "string (e.g., section title or file:line)"
+        },
+        "problem": "string",
+        "evidence": [
+          {
+            "type": "quote|bibtex|metric|link|command_output|note",
+            "detail": "string"
+          }
+        ],
+        "recommendation": "string",
+        "status": "open|uncertain|needs_human_review"
+      }
+    ]
+  }
+}
+
