@@ -47,6 +47,28 @@ STRAIGHT_DQUOTE_CJK_RE = re.compile(r'"([^"\n]*[\u4e00-\u9fff][^"\n]*)"')
 
 DOI_IN_TEXT_RE = re.compile(r"\b10\.\d{4,9}/[^\s\"<>{}]+", flags=re.I)
 
+# Abbreviation convention checks (best-effort heuristics):
+# - Detect likely English abbreviations (e.g., "GNN", "LLM", "COVID-19") in LaTeX sources.
+# - For the first occurrence of each abbreviation, check whether it is introduced with a definition-like
+#   pattern such as "中文全称（English Full Name, ABBR）" or "English Full Name (ABBR)".
+# - Later, recommend using ABBR only (avoid repeating "Full Name (ABBR)" multiple times).
+ABBR_TOKEN_RE = re.compile(r"\b[A-Z][A-Z0-9]{1,11}\b")
+ABBR_HYPHEN_RE = re.compile(r"\b[A-Z]{2,}(?:-[A-Z0-9]{1,})+\b")
+
+# Keep the stoplist conservative to avoid overwhelming false positives.
+ABBR_STOPLIST = {
+    "NSFC",
+    "PDF",
+    "TEX",
+    "LATEX",
+    "DOI",
+    "URL",
+    "HTTP",
+    "HTTPS",
+    # Keep only obvious "infra tokens" that rarely need "full name + abbreviation" introductions.
+    # Domain-specific abbreviations (AI/ML/GPU/DNA/...) are intentionally NOT excluded.
+}
+
 
 def _is_within(base: Path, target: Path) -> bool:
     try:
@@ -320,6 +342,206 @@ def _detect_quote_issues(tex_files: Iterable[Path], *, project_root: Path) -> di
             "occurrences_preview": occurrences,
             "note": "In Chinese-heavy proposals, avoid straight quotes like \"...\"; prefer TeX quotes ``...''.",
         }
+    }
+
+
+def _simplify_latex_for_abbrev_scan(line: str) -> str:
+    """
+    Best-effort conversion from a LaTeX source line to a plain-ish string for abbreviation scanning.
+    We intentionally keep this lightweight and dependency-free (false positives are acceptable).
+    """
+    s = line
+    # Remove common math segments to avoid capturing variable names as abbreviations.
+    s = re.sub(r"\$[^$]*\$", " ", s)
+    s = re.sub(r"\\\([^)]*\\\)", " ", s)
+    s = re.sub(r"\\\[[^\]]*\\\]", " ", s)
+    # Remove TeX commands (keep arguments content untouched).
+    s = re.sub(r"\\[a-zA-Z@]+\*?", " ", s)
+    # Normalize separators
+    s = s.replace("{", " ").replace("}", " ")
+    s = re.sub(r"\s+", " ", s)
+    return s.strip()
+
+
+def _detect_abbreviation_conventions(tex_files: List[Path], *, project_root: Path) -> dict:
+    """
+    Detect a common writing convention in NSFC proposals:
+    - First occurrence of an important concept: Chinese full name + English full name + English abbreviation.
+    - Later occurrences: use the abbreviation only.
+
+    This is heuristic and line-level; it provides "actionable hints" rather than strict enforcement.
+    """
+    @dataclass(frozen=True)
+    class _Occ:
+        abbr: str
+        seq: int
+        path: str
+        line: int
+        excerpt: str
+
+    occurrences: List[_Occ] = []
+    seq = 0
+    for p in tex_files:
+        try:
+            raw = _strip_comments(_read_text(p))
+        except Exception:
+            continue
+        lines = raw.splitlines()
+        for i, line in enumerate(lines, start=1):
+            scan = _simplify_latex_for_abbrev_scan(line)
+            if not scan:
+                continue
+            tokens = set()
+            for m in ABBR_TOKEN_RE.finditer(scan):
+                tokens.add(m.group(0))
+            for m in ABBR_HYPHEN_RE.finditer(scan):
+                tokens.add(m.group(0))
+            if not tokens:
+                continue
+
+            excerpt = line.strip()
+            if len(excerpt) > 140:
+                excerpt = excerpt[:137] + "..."
+            try:
+                rel = str(p.relative_to(project_root))
+            except Exception:
+                rel = str(p)
+
+            for t in sorted(tokens):
+                t2 = t.strip()
+                if not t2:
+                    continue
+                if len(t2) < 2 or len(t2) > 20:
+                    continue
+                if t2.upper() in ABBR_STOPLIST:
+                    continue
+                # Filter obvious false positives: pure digits / single-letter / roman numerals-ish.
+                if re.fullmatch(r"[IVX]{2,}", t2):
+                    continue
+                occurrences.append(_Occ(abbr=t2, seq=seq, path=rel, line=i, excerpt=excerpt))
+                seq += 1
+
+    # Group by abbreviation.
+    by_abbr: Dict[str, List[_Occ]] = {}
+    for oc in occurrences:
+        by_abbr.setdefault(oc.abbr, []).append(oc)
+
+    # Analyze each abbreviation and create issue items.
+    issues: List[dict] = []
+    total_abbr = len(by_abbr)
+
+    def _load_context(path_rel: str, line_no: int) -> str:
+        # Load 3-line context from the file for better pattern detection.
+        try:
+            fp = (project_root / path_rel).resolve()
+            if not fp.exists():
+                return ""
+            raw2 = _strip_comments(_read_text(fp))
+            ls = raw2.splitlines()
+            idx = max(1, min(line_no, len(ls))) - 1
+            prev_ln = ls[idx - 1].strip() if idx - 1 >= 0 else ""
+            cur_ln = ls[idx].strip() if 0 <= idx < len(ls) else ""
+            next_ln = ls[idx + 1].strip() if idx + 1 < len(ls) else ""
+            snip = " ".join([x for x in (prev_ln, cur_ln, next_ln) if x]).strip()
+            if len(snip) > 260:
+                snip = snip[:257] + "..."
+            return snip
+        except Exception:
+            return ""
+
+    for abbr, occs in sorted(by_abbr.items(), key=lambda kv: kv[0]):
+        # First occurrence (deterministic by LaTeX include order + file scan order).
+        first = min(occs, key=lambda o: o.seq)
+        ctx = _load_context(first.path, first.line) or first.excerpt
+
+        paren_re = re.compile(r"[(（]\s*" + re.escape(abbr) + r"\s*[)）]")
+        m_paren = paren_re.search(ctx)
+
+        # Count repeated "definition-like" uses across all occurrences (line-level).
+        def_total = 0
+        for oc in occs:
+            sn = _load_context(oc.path, oc.line) or oc.excerpt
+            if paren_re.search(sn):
+                def_total += 1
+
+        if not m_paren:
+            issues.append(
+                {
+                    "abbr": abbr,
+                    "issue_kind": "bare_first_use",
+                    "severity": "P1",
+                    "path": first.path,
+                    "line": first.line,
+                    "excerpt": first.excerpt,
+                    "context": ctx,
+                    "recommendation": f"首次出现建议写成：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
+                }
+            )
+        else:
+            before = ctx[: m_paren.start()]
+            # Heuristic: English full name exists if we see >=2 English-like words before (ABBR).
+            eng_words = re.findall(r"[A-Za-z]{2,}(?:[-/][A-Za-z]{2,})?", before)
+            has_english_full = len(eng_words) >= 2
+            has_chinese_full = bool(re.search(r"[\u4e00-\u9fff]", before))
+
+            if not has_english_full:
+                issues.append(
+                    {
+                        "abbr": abbr,
+                        "issue_kind": "missing_english_full",
+                        "severity": "P1",
+                        "path": first.path,
+                        "line": first.line,
+                        "excerpt": first.excerpt,
+                        "context": ctx,
+                        "recommendation": f"首次出现建议补全英文全称：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
+                    }
+                )
+            elif not has_chinese_full:
+                issues.append(
+                    {
+                        "abbr": abbr,
+                        "issue_kind": "missing_chinese_full",
+                        "severity": "P2",
+                        "path": first.path,
+                        "line": first.line,
+                        "excerpt": first.excerpt,
+                        "context": ctx,
+                        "recommendation": f"首次出现建议同时给出中文全称：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
+                    }
+                )
+
+        # Repeated definition-like patterns are often unnecessary after the first definition.
+        if def_total >= 2:
+            issues.append(
+                {
+                    "abbr": abbr,
+                    "issue_kind": "repeated_expansion",
+                    "severity": "P2",
+                    "path": first.path,
+                    "line": first.line,
+                    "excerpt": first.excerpt,
+                    "context": ctx,
+                    "recommendation": f"已检测到多次出现类似“...({abbr})”的定义式写法（>=2 次）。建议首次定义后，后文尽量只用 {abbr}，避免重复展开。",
+                }
+            )
+
+    # Keep preview bounded.
+    preview = issues[:200]
+    counts = {"P0": 0, "P1": 0, "P2": 0}
+    for it in issues:
+        sev = str(it.get("severity") or "")
+        if sev in counts:
+            counts[sev] += 1
+
+    return {
+        "summary": {
+            "abbreviations_detected": total_abbr,
+            "issues": len(issues),
+            "issues_by_severity": counts,
+        },
+        "issues_preview": preview,
+        "note": "Heuristic check: detect likely English abbreviations and whether the first occurrence is introduced as '中文全称（English Full Name, ABBR）' or 'English Full Name (ABBR)'. False positives/negatives are possible; treat as writing guidance.",
     }
 
 
@@ -827,6 +1049,7 @@ def main() -> int:
     bib_entries = _parse_bib_keys(bib_files)
     lengths = _rough_text_metrics(tex_files)
     typography = _detect_quote_issues(tex_files, project_root=project_root)
+    abbreviation_conventions = _detect_abbreviation_conventions(tex_files, project_root=project_root)
     citation_contexts = _extract_citation_contexts(tex_files, project_root=project_root)
 
     cited_keys = sorted(citations.keys())
@@ -883,6 +1106,7 @@ def main() -> int:
             }
         },
         "typography": typography,
+        "abbreviation_conventions": abbreviation_conventions,
         "reference_evidence": reference_evidence,
         "compile": compile_info,
     }
@@ -914,6 +1138,25 @@ def main() -> int:
         w.writerow(["path", "line", "found", "recommendation", "excerpt"])
         for it in quote_items:
             w.writerow([it.get("path", ""), it.get("line", ""), it.get("found", ""), it.get("recommendation", ""), it.get("excerpt", "")])
+
+    # abbreviation conventions CSV (best-effort)
+    abbr_items = (abbreviation_conventions.get("issues_preview") or []) if isinstance(abbreviation_conventions, dict) else []
+    with (out_dir / "abbreviation_issues.csv").open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["severity", "issue_kind", "abbr", "path", "line", "recommendation", "excerpt", "context"])
+        for it in abbr_items:
+            w.writerow(
+                [
+                    it.get("severity", ""),
+                    it.get("issue_kind", ""),
+                    it.get("abbr", ""),
+                    it.get("path", ""),
+                    it.get("line", ""),
+                    it.get("recommendation", ""),
+                    it.get("excerpt", ""),
+                    it.get("context", ""),
+                ]
+            )
 
     print(str(out_dir))
     return 0

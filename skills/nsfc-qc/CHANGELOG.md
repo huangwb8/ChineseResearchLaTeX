@@ -6,6 +6,20 @@
 
 （暂无）
 
+## [0.1.6] - 2026-02-17
+
+### Added（新增）
+- `scripts/nsfc_qc_precheck.py`：新增“全称与缩写规范”预检（启发式）。输出 `abbreviation_issues.csv`，并在 `precheck.json` 中给出结构化统计与建议（首次出现建议“中文全称（English Full Name, ABBR）”；后文尽量仅用 ABBR）。
+- `scripts/run_parallel_qc.py`：将 `abbreviation_issues.csv` 复制进 snapshot 的 `./.nsfc-qc/input/`，供多线程 QC 只读引用；同时在 thread prompt 的“证据包”中显式提示该文件。
+
+### Changed（变更）
+- `scripts/materialize_final_outputs.py`：把缩写预检信号映射为确定性 findings（P1/P2），并纳入 metrics 的 precheck 聚合与 artifacts 索引。
+
+## [0.1.7] - 2026-02-17
+
+### Changed（变更）
+- `scripts/run_parallel_qc.py`：将 thread 的“证据包”目录统一到 `snapshot/.nsfc-qc/input/`（位于 `.nsfc-qc/` 下），确保 snapshot 内的中间操作对用户更干净、更一致。
+
 ## [0.1.5] - 2026-02-17
 
 ### Changed（变更）
@@ -42,7 +56,7 @@
 - `scripts/nsfc_qc_compile.py`：新增“4 步法隔离编译”脚本（xelatex→bibtex→xelatex→xelatex），作为 QC 的最后一步执行，并回填 metrics
 
 ### Changed（变更）
-- `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc_input/`，thread 可只读使用；可选 `--compile-last` 作为最后一步更新编译信息
+- `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc/input/`，thread 可只读使用；可选 `--compile-last` 作为最后一步更新编译信息
 - `SKILL.md`/`README.md`/`references/qc_checklist.md`：明确“引用真伪=硬编码证据 + AI 语义判断”“4 步法编译=QC 最后一步”
 
 ## [0.1.1] - 2026-02-16

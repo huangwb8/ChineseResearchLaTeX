@@ -53,7 +53,7 @@
 
 - **nsfc-qc v0.1.2 → v0.1.3**：引用真伪核查升级为“硬编码证据包 + AI 语义判断”，并将 4 步法隔离编译固定为 QC 最后一步
   - `scripts/nsfc_qc_precheck.py`：新增 `--resolve-refs`（抓取标题/摘要/可选 OA PDF 片段）与标书引用上下文提取，输出 `reference_evidence.jsonl`
-  - `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc_input/`，thread 可只读使用；新增 `--compile-last`
+  - `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc/input/`，thread 可只读使用；新增 `--compile-last`
   - `scripts/nsfc_qc_compile.py`：新增 4 步法隔离编译脚本（xelatex→bibtex→xelatex→xelatex），回填 metrics
 
 - **nsfc-qc v0.1.3 → v0.1.4**：实例隔离输出（deliver-dir + sidecar 工作区）+ 报告/JSON 一致性校验 + 路径可搬运性增强
@@ -65,6 +65,14 @@
 - **nsfc-qc v0.1.4 → v0.1.5**：默认工作区改为交付目录内隐藏目录（`.nsfc-qc/`），并减少交付目录中间文件噪声
   - `scripts/nsfc_qc_run.py`：默认 workspace_dir 从 `QC/{run_id}.nsfc-qc/` 调整为 `QC/{run_id}/.nsfc-qc/`
   - `scripts/nsfc_qc_run.py`：交付目录仅保留最终报告与结构化输出；预检/编译等中间 artifacts 保留在隐藏工作区 run 目录下
+
+- **nsfc-qc v0.1.5 → v0.1.6**：新增“全称与缩写规范”确定性预检（启发式）
+  - `scripts/nsfc_qc_precheck.py`：输出 `abbreviation_issues.csv`，并在 `precheck.json` 中给出结构化统计与建议（首次出现建议“中文全称（English Full Name, ABBR）”；后文尽量仅用 ABBR）
+  - `scripts/run_parallel_qc.py`：把 `abbreviation_issues.csv` 复制进 snapshot 的 `./.nsfc-qc/input/` 供 thread 只读引用
+  - `scripts/materialize_final_outputs.py`：将缩写预检信号映射为确定性 findings（P1/P2）并纳入 metrics 聚合与 artifacts 索引
+
+- **nsfc-qc v0.1.6 → v0.1.7**：thread 证据包目录统一到 `snapshot/.nsfc-qc/input/`（确保所有中间操作严格落在 `.nsfc-qc/` 下）
+  - `scripts/run_parallel_qc.py`：证据包路径统一为 `./.nsfc-qc/input/*`，确保所有中间操作严格落在 `.nsfc-qc/` 下
 
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程

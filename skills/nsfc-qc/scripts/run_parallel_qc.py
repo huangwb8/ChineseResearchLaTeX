@@ -10,7 +10,7 @@ This script:
 - Creates a run directory (see above) with subfolders: artifacts/, final/, snapshot/
 - (Default) Runs deterministic precheck and reference evidence collection into artifacts/
 - Creates an isolated snapshot of the proposal (read-only) for thread workspaces
-- Copies key artifacts into snapshot/.nsfc-qc_input/ for threads to read
+- Copies key artifacts into snapshot/.nsfc-qc/input/ for threads to read
 - Generates a deterministic parallel-vibe plan.json with N identical QC threads
 - Executes parallel-vibe with --out-dir set to the run directory (so .parallel_vibe lives under the run)
 - (Optional) Runs isolated 4-step compile as the LAST step and updates metrics
@@ -143,9 +143,10 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "- 禁止访问父目录（..）与任何绝对路径写入。\n"
         "- 不编造引用与论文内容；无法确定时标记为 uncertain，并给出可复核路径。\n\n"
         "证据包（只读，可用于“引用真伪/错引风险”的语义核查）：\n"
-        "- `./.nsfc-qc_input/precheck.json`\n"
-        "- `./.nsfc-qc_input/citations_index.csv`\n"
-        "- `./.nsfc-qc_input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
+        "- `./.nsfc-qc/input/precheck.json`\n"
+        "- `./.nsfc-qc/input/citations_index.csv`\n"
+        "- `./.nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检：首次出现是否按“全称+缩写”引入；后文是否重复展开）\n"
+        "- `./.nsfc-qc/input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
         f"输入：\n- project_root: .\n- main_tex: {main_tex}\n\n"
         "请在 RESULT.md 中按以下结构输出（标题必须一致）：\n"
         "1) 执行摘要\n"
@@ -304,13 +305,14 @@ def main() -> int:
     _copy_snapshot(project_root, snapshot_dir)
 
     # Make deterministic artifacts readable inside thread workspaces (still read-only).
-    qc_in = snapshot_dir / ".nsfc-qc_input"
+    qc_in = snapshot_dir / ".nsfc-qc" / "input"
     qc_in.mkdir(parents=True, exist_ok=True)
     for name in (
         "precheck.json",
         "citations_index.csv",
         "tex_lengths.csv",
         "quote_issues.csv",
+        "abbreviation_issues.csv",
         "reference_evidence.jsonl",
         "reference_evidence_summary.json",
     ):

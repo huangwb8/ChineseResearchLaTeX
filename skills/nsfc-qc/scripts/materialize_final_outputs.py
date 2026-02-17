@@ -215,6 +215,41 @@ def _deterministic_findings(*, precheck: dict, compile_info: dict, artifacts: di
             )
         )
 
+    # P1/P2: abbreviation conventions (best-effort)
+    abbr = precheck.get("abbreviation_conventions") or {}
+    abbr_sum = (abbr.get("summary") or {}) if isinstance(abbr, dict) else {}
+    by_sev = (abbr_sum.get("issues_by_severity") or {}) if isinstance(abbr_sum, dict) else {}
+    abbr_p1 = int(by_sev.get("P1") or 0)
+    abbr_p2 = int(by_sev.get("P2") or 0)
+    if abbr_p1 > 0:
+        out.append(
+            _mk_finding(
+                fid="P1-003",
+                severity="P1",
+                category="style",
+                path="",
+                anchor="precheck.abbreviation_conventions",
+                problem=f"检测到“全称+缩写”首次引入可能不规范的情况：P1 级 {abbr_p1} 项（启发式，需人工复核）。",
+                evidence=[{"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for preview"}],
+                recommendation="一般建议：重要概念首次出现写为“中文全称（English Full Name, ABBR）”，后文尽量仅用 ABBR；按 CSV 逐条核对并做最小修改。",
+                status="needs_human_review",
+            )
+        )
+    if abbr_p2 > 0:
+        out.append(
+            _mk_finding(
+                fid="P2-003",
+                severity="P2",
+                category="style",
+                path="",
+                anchor="precheck.abbreviation_conventions",
+                problem=f"检测到缩写规范的可选优化项（如缺中文全称/重复展开）：P2 级 {abbr_p2} 项（启发式）。",
+                evidence=[{"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for preview"}],
+                recommendation="按重要性逐条处理：首次定义尽量完整；后文避免重复“Full Name (ABBR)”展开，保持一致性与节省篇幅。",
+                status="open",
+            )
+        )
+
     # Compile-based findings (compile can be under precheck.compile or compile.json)
     ci = compile_info or {}
     if bool(ci.get("enabled")):
@@ -454,6 +489,7 @@ def main() -> int:
         "citations_index_csv": _safe_rel_from(run_dir, artifacts_dir / "citations_index.csv") if (artifacts_dir / "citations_index.csv").exists() else "",
         "tex_lengths_csv": _safe_rel_from(run_dir, artifacts_dir / "tex_lengths.csv") if (artifacts_dir / "tex_lengths.csv").exists() else "",
         "quote_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "quote_issues.csv") if (artifacts_dir / "quote_issues.csv").exists() else "",
+        "abbreviation_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_issues.csv") if (artifacts_dir / "abbreviation_issues.csv").exists() else "",
         "reference_evidence_jsonl": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence.jsonl") if (artifacts_dir / "reference_evidence.jsonl").exists() else "",
         "reference_evidence_summary_json": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence_summary.json") if (artifacts_dir / "reference_evidence_summary.json").exists() else "",
         "compile_json": _safe_rel_from(run_dir, artifacts_dir / "compile.json") if (artifacts_dir / "compile.json").exists() else "",
@@ -481,6 +517,7 @@ def main() -> int:
             "citation_stats": (precheck.get("citation_stats") or {}),
             "compile": (compile_json or precheck.get("compile") or {}),
             "typography": (precheck.get("typography") or {}),
+            "abbreviation_conventions": (precheck.get("abbreviation_conventions") or {}),
         },
         "artifacts": artifacts_rel,
         "status": {
