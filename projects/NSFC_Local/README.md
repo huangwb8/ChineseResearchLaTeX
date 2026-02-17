@@ -121,7 +121,69 @@ NSFC_Local/
 更低层级说明：
 
 - 若需要“第 5 层”及以下，建议使用 `\paragraph/\subparagraph` 并配合 `titlesec` 自定义 `\titleformat` + `\titlespacing*`。
-- 模板也提供 `\ssssubtitle{1}` 这种“圈号小标题”作为行内标题；若要统一控制其上下间距，建议封装一个带 `\vspace{...}` 的新命令来管理。
+- 模板也提供 `\ssssubtitle{1}` 这种"圈号小标题"作为行内标题；若要统一控制其上下间距，建议封装一个带 `\vspace{...}` 的新命令来管理。
+
+### 标题编号样式
+
+标题编号由 `extraTex/@config.tex` 的"标题计数"区域控制（`\titleformat` 的 label 参数 + `\renewcommand\theXXX`）。
+
+**当前默认编号**：
+
+| 层级 | 命令 | 编号样式 | 示例 |
+|------|------|----------|------|
+| section | `\section` | 无自动编号（正文手写） | （一）立项依据 |
+| subsection | `\subsection` | 无自动编号（正文手写） | 1. 研究意义 |
+| subsubsection | `\subsubsection` | `\arabic{subsection}.\arabic{subsubsection}` | 1.1 |
+| subsubsubsection | `\subsubsubsection` | `（\arabic{subsubsubsection}）` | （1） |
+
+**自定义 subsubsection 编号**（第 201-206 行）：
+
+```latex
+% 默认：1.1 风格
+\titleformat{\subsubsection}
+  {\color{MsBlue} \subsubsectionzihao \templatefont \bfseries}
+  {\hspace{1.1em}  \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}}
+  {0.5em}
+  {}
+\renewcommand\thesubsubsection{\arabic{subsection}.\arabic{subsubsection}}
+```
+
+**自定义 subsubsubsection 编号**（第 208-215 行）：
+
+```latex
+% 默认：（1）风格
+\renewcommand\thesubsubsubsection{（\arabic{subsubsubsection}）}
+\titleformat{\subsubsubsection}
+  {\templatefont \bfseries}
+  {\hspace{1em} （\arabic{subsubsubsection}）}
+  {0.5pt}
+  {}
+```
+
+**常见替换方案**：
+
+```latex
+% 方案 A：三级层级编号（1.1 → 1.1.1）
+% 修改 subsubsubsection 的 label 和 \theXXX
+\renewcommand\thesubsubsubsection{\arabic{subsection}.\arabic{subsubsection}.\arabic{subsubsubsection}}
+\titleformat{\subsubsubsection}
+  {\templatefont \bfseries}
+  {\hspace{1em} \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}.\arabic{subsubsubsection}}}
+  {0.5pt}
+  {}
+```
+
+```latex
+% 方案 B：纯数字递进（1) → a) → i)）
+\renewcommand\thesubsubsubsection{\alph{subsubsubsection})}
+\titleformat{\subsubsubsection}
+  {\templatefont \bfseries}
+  {\hspace{1em} \alph{subsubsubsection})}
+  {0.5pt}
+  {}
+```
+
+> 注意：修改编号样式时，`\titleformat` 的 label 参数（控制显示）和 `\renewcommand\theXXX`（控制交叉引用）需要同步修改，否则 `\ref{}` 引用会与显示不一致。
 
 ## 列表格式与序号样式（enumerate）
 
@@ -151,7 +213,7 @@ label={\templatefont \bfseries \hspace{1em} \color{MsBlue}(\alph*)}             
 \setlist[enumerate,2]{label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic{enumii}）}} % （1）(二级)
 ```
 
-**三套常用“多级序号组合”（复制即用）**：适合有嵌套列表（`enumerate` 里再 `enumerate`）的情况。把其中一套粘贴到 `extraTex/@config.tex`（放在 `\setlist[enumerate]{...}` 之后即可）。
+**三套常用"多级序号组合"（复制即用）**：适合有嵌套列表（`enumerate` 里再 `enumerate`）的情况。把其中一套粘贴到 `extraTex/@config.tex`（放在 `\setlist[enumerate]{...}` 之后即可）。
 
 ```latex
 % 组合 A：中文标书常见（（一）→ 1. → （1）→ a)）
