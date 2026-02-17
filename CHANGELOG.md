@@ -56,6 +56,12 @@
   - `scripts/run_parallel_qc.py`：默认先跑预检并把证据包复制到 snapshot 的 `./.nsfc-qc_input/`，thread 可只读使用；新增 `--compile-last`
   - `scripts/nsfc_qc_compile.py`：新增 4 步法隔离编译脚本（xelatex→bibtex→xelatex→xelatex），回填 metrics
 
+- **nsfc-qc v0.1.3 → v0.1.4**：实例隔离输出（deliver-dir + sidecar 工作区）+ 报告/JSON 一致性校验 + 路径可搬运性增强
+  - `scripts/nsfc_qc_run.py`：新增“一键实例隔离”运行器，默认输出到 `QC/{run_id}/` + `QC/{run_id}.nsfc-qc/`
+  - `scripts/run_parallel_qc.py`：支持 `--workspace-dir` 重定向中间产物；run_id 冲突自动后缀 `r1/r2...`；parallel-vibe 不可用/plan-only 也会落盘 final 输出
+  - `scripts/materialize_final_outputs.py`：支持 `--run-dir`；metrics/artifacts 路径改为相对 run_dir；把 precheck/compile 的确定性信号映射为“底线 findings”，并注入报告表格；新增 `final/validation.json`
+  - `scripts/nsfc_qc_precheck.py`、`scripts/nsfc_qc_compile.py`：compile.json 路径字段优先输出相对 out_dir（同时保留 *_abs）
+
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
   - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）
@@ -81,6 +87,9 @@
 - 更新 `.gitignore`：忽略 `projects/**/.nsfc-qc/`（nsfc-qc 的运行产物与报告目录），避免污染工作区
 
 ### Added（新增）
+
+- **nsfc-qc**：新增实例辅助优化计划文档（目录隔离/相对路径/报告结构校验方案）
+  - [skills/nsfc-qc/plans/实例辅助优化-v202602170903.md](skills/nsfc-qc/plans/实例辅助优化-v202602170903.md)
 
 - **nsfc-reviewers v0.5.0**：新增 NSFC 标书专家评审模拟技能（🚧 开发中）
   - 模拟 5 位领域专家角色（创新性/可行性/基础与团队/严格综合/建设性）对标书进行多维度评审

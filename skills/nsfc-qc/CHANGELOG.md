@@ -6,6 +6,19 @@
 
 （暂无）
 
+## [0.1.4] - 2026-02-17
+
+### Added（新增）
+- `scripts/nsfc_qc_run.py`：新增“一键实例隔离”运行器，默认输出到 `QC/{run_id}/` + sidecar 工作区 `QC/{run_id}.nsfc-qc/`，避免污染标书根目录
+- `scripts/validate_final_outputs.py`：新增 final 输出一致性校验脚本（报告固定章节 + findings JSON 与表格行一致）
+- `final/validation.json`：final 目录新增结构一致性校验结果（由 `materialize_final_outputs.py` 生成）
+
+### Changed（变更）
+- `scripts/run_parallel_qc.py`：支持 `--workspace-dir` 重定向所有中间产物；run_id 冲突自动后缀 `r1/r2...`；parallel-vibe 不可用/plan-only 也会落盘 final 输出
+- `scripts/materialize_final_outputs.py`：支持 `--run-dir` 模式；metrics/artifacts 路径改为相对 run_dir（更可搬运）；把 precheck/compile 的确定性信号映射为“底线 findings”，并注入报告 P0/P1/P2 表格
+- `scripts/nsfc_qc_precheck.py`、`scripts/nsfc_qc_compile.py`：compile.json 相关路径字段优先输出相对 out_dir（同时保留 *_abs），提升搬运一致性
+- `SKILL.md`、`README.md`、`config.yaml`：更新默认产物布局与脚本用法说明
+
 ## [0.1.2] - 2026-02-16
 
 ### Added（新增）

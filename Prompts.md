@@ -1,6 +1,4 @@
----
-ai不要看这个文件，除非用户要求。
----
+
 
 # Skills 开发
 
@@ -24,6 +22,20 @@ ai不要看这个文件，除非用户要求。
 - 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
 
 ## nsfc-qc
+
+根据 skills/nsfc-qc/plans/实例辅助优化-v202602170903.md 优化skill；如果某些点你有更好的策略，你直接按你的想法就行，不用问我。然后，使用 auto-test-skill 优化1轮。
+
+---
+
+
+(～￣▽￣)～ 这是一个实例： /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/QC/v202602170654。 有一些问题：
+
+- .nsfc-qc 隐藏文件夹保存在 /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/.nsfc-qc 而不是 /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/QC/v202602170654.nsfc-qc。 说明目前skill的文件夹的管理有问题（当前我已经手动纠正； 但我希望以后工作时不要出现类似的错误）
+- 你评估一下输出结果，看看还有哪些skill可以改良的空间
+
+将优化计划写到： skills/nsfc-qc/plans/实例辅助优化-v202602170903.md
+
+---
 
 (～￣▽￣)～ 请开发一个skill，保存在 ./skills/nsfc-qc 文件夹里。 它的主要作用是： 对标书进行质量控制。它的步骤大致如下：
 

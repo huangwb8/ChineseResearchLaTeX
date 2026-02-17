@@ -56,6 +56,13 @@ def _is_within(base: Path, target: Path) -> bool:
         return False
 
 
+def _rel_to_out(out_dir: Path, p: Path) -> str:
+    try:
+        return str(p.resolve().relative_to(out_dir.resolve()))
+    except Exception:
+        return str(p)
+
+
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
@@ -542,7 +549,7 @@ def _resolve_reference_evidence(
     Deterministically gather reference-side evidence (title/abstract/pdf excerpt when possible),
     plus proposal-side citation contexts, to enable later AI semantic judgment.
     """
-    user_agent = "nsfc-qc/0.1.3 (reference-evidence)"
+    user_agent = "nsfc-qc/0.1.4 (reference-evidence)"
     evidence_path = out_dir / "reference_evidence.jsonl"
     summary_path = out_dir / "reference_evidence_summary.json"
 
@@ -736,10 +743,17 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
 
     main_tex = src / main_tex_rel
     if not main_tex.exists():
-        return {"enabled": True, "ok": False, "error": f"main_tex not found in isolated src: {main_tex_rel}"}
+        return {
+            "enabled": True,
+            "ok": False,
+            "error": f"main_tex not found in isolated src: {main_tex_rel}",
+            "compile_dir": _rel_to_out(out_dir, compile_dir),
+            "compile_dir_abs": str(compile_dir),
+        }
 
     base = main_tex.stem
     log = out_dir / "compile.log"
+    log_rel = _rel_to_out(out_dir, log)
 
     missing_tools = [t for t in ("xelatex", "bibtex") if shutil.which(t) is None]
     if missing_tools:
@@ -757,7 +771,10 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
             "ok": False,
             "missing_tools": missing_tools,
             "error": "TeX toolchain not available; skip compile step",
-            "log": str(log),
+            "log": log_rel,
+            "log_abs": str(log),
+            "compile_dir": _rel_to_out(out_dir, compile_dir),
+            "compile_dir_abs": str(compile_dir),
         }
 
     r1 = _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={build}", str(main_tex)], cwd=src, log_path=log)
@@ -771,10 +788,14 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
     return {
         "enabled": True,
         "ok": (r4 == 0 and pdf_path.exists()),
-        "pdf": str(pdf_path) if pdf_path.exists() else "",
+        "pdf": _rel_to_out(out_dir, pdf_path) if pdf_path.exists() else "",
+        "pdf_abs": str(pdf_path) if pdf_path.exists() else "",
         "pages": pages if pages is not None else None,
         "steps_rc": {"xelatex1": r1, "bibtex": r2, "xelatex2": r3, "xelatex3": r4},
-        "log": str(log),
+        "log": log_rel,
+        "log_abs": str(log),
+        "compile_dir": _rel_to_out(out_dir, compile_dir),
+        "compile_dir_abs": str(compile_dir),
     }
 
 

@@ -24,6 +24,13 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 
+def _rel_to_out(out_dir: Path, p: Path) -> str:
+    try:
+        return str(p.resolve().relative_to(out_dir.resolve()))
+    except Exception:
+        return str(p)
+
+
 def _run(cmd: List[str], cwd: Path, log_path: Path) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with log_path.open("a", encoding="utf-8") as f:
@@ -88,10 +95,17 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
 
     main_tex = src / main_tex_rel
     if not main_tex.exists():
-        return {"enabled": True, "ok": False, "error": f"main_tex not found in isolated src: {main_tex_rel}"}
+        return {
+            "enabled": True,
+            "ok": False,
+            "error": f"main_tex not found in isolated src: {main_tex_rel}",
+            "compile_dir": _rel_to_out(out_dir, compile_dir),
+            "compile_dir_abs": str(compile_dir),
+        }
 
     base = main_tex.stem
     log = out_dir / "compile.log"
+    log_rel = _rel_to_out(out_dir, log)
 
     missing_tools = [t for t in ("xelatex", "bibtex") if shutil.which(t) is None]
     if missing_tools:
@@ -108,7 +122,10 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
             "ok": False,
             "missing_tools": missing_tools,
             "error": "TeX toolchain not available; skip compile step",
-            "log": str(log),
+            "log": log_rel,
+            "log_abs": str(log),
+            "compile_dir": _rel_to_out(out_dir, compile_dir),
+            "compile_dir_abs": str(compile_dir),
         }
 
     r1 = _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={build}", str(main_tex)], cwd=src, log_path=log)
@@ -121,10 +138,14 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
     return {
         "enabled": True,
         "ok": (r4 == 0 and pdf_path.exists()),
-        "pdf": str(pdf_path) if pdf_path.exists() else "",
+        "pdf": _rel_to_out(out_dir, pdf_path) if pdf_path.exists() else "",
+        "pdf_abs": str(pdf_path) if pdf_path.exists() else "",
         "pages": pages if pages is not None else None,
         "steps_rc": {"xelatex1": r1, "bibtex": r2, "xelatex2": r3, "xelatex3": r4},
-        "log": str(log),
+        "log": log_rel,
+        "log_abs": str(log),
+        "compile_dir": _rel_to_out(out_dir, compile_dir),
+        "compile_dir_abs": str(compile_dir),
     }
 
 
@@ -171,4 +192,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

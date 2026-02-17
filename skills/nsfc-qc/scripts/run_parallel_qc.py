@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """
-Run nsfc-qc multi-thread QC via parallel-vibe, while keeping all artifacts under .nsfc-qc/.
+Run nsfc-qc multi-thread QC via parallel-vibe.
+
+This script supports two output layouts:
+1) Legacy (default): all artifacts under <project_root>/.nsfc-qc/runs/<run_id>/
+2) Workspace-driven: all artifacts under <workspace_dir>/<runs_root>/<run_id>/
 
 This script:
-- Creates a run directory: <project_root>/.nsfc-qc/runs/<run_id>/
+- Creates a run directory (see above) with subfolders: artifacts/, final/, snapshot/
 - (Default) Runs deterministic precheck and reference evidence collection into artifacts/
 - Creates an isolated snapshot of the proposal (read-only) for thread workspaces
 - Copies key artifacts into snapshot/.nsfc-qc_input/ for threads to read
 - Generates a deterministic parallel-vibe plan.json with N identical QC threads
-- Executes parallel-vibe with --out-dir set to the run directory (so .parallel_vibe lives under .nsfc-qc/)
+- Executes parallel-vibe with --out-dir set to the run directory (so .parallel_vibe lives under the run)
 - (Optional) Runs isolated 4-step compile as the LAST step and updates metrics
 
-Note: This script does NOT modify proposal source files. It only writes into .nsfc-qc/.
+Note: This script does NOT modify proposal source files. It only writes into the run directory.
 """
 
 from __future__ import annotations
@@ -55,6 +59,42 @@ def _find_parallel_vibe_script() -> Optional[Path]:
         except Exception:
             continue
     return None
+
+
+def _is_safe_rel_path(p: Path) -> bool:
+    return (not p.is_absolute()) and (".." not in p.parts)
+
+
+def _resolve_unique_run_dir(*, base_dir: Path, runs_root: Path, run_id: str) -> tuple[Path, str]:
+    """
+    Resolve <base_dir>/<runs_root>/<run_id> while preventing directory traversal.
+    If the target directory already exists, auto-suffix with r1/r2/... to avoid overwriting.
+    """
+    base_dir = base_dir.expanduser().resolve()
+    runs_root = Path(str(runs_root))
+    if not _is_safe_rel_path(runs_root):
+        raise ValueError("runs_root must be a relative path without '..'")
+
+    # Prevent path injection: run_id must be a simple name.
+    if Path(run_id).name != run_id or ("/" in run_id) or ("\\" in run_id):
+        raise ValueError("run_id must be a simple name (no path separators)")
+
+    def mk(rid: str) -> Path:
+        rd = (base_dir / runs_root / rid).resolve()
+        rd.relative_to(base_dir)  # will raise if escapes
+        return rd
+
+    run_dir = mk(run_id)
+    if not run_dir.exists():
+        return run_dir, run_id
+
+    for i in range(1, 100):
+        rid2 = f"{run_id}r{i}"
+        rd2 = mk(rid2)
+        if not rd2.exists():
+            return rd2, rid2
+
+    raise RuntimeError("failed to pick a unique run directory after 99 attempts")
 
 
 def _copy_snapshot(project_root: Path, snapshot_dir: Path) -> None:
@@ -171,7 +211,12 @@ def main() -> int:
     ap.add_argument("--max-parallel", type=int, default=3)
     ap.add_argument("--runner-type", choices=["codex", "claude"], default="codex")
     ap.add_argument("--runner-profile", choices=["fast", "default", "deep"], default="deep")
-    ap.add_argument("--runs-root", default=".nsfc-qc/runs", help="relative to project-root")
+    ap.add_argument("--workspace-dir", default="", help="optional; if set, all outputs go under this directory")
+    ap.add_argument(
+        "--runs-root",
+        default="",
+        help="relative root for runs; defaults to '.nsfc-qc/runs' (legacy) or 'runs' (when --workspace-dir is set)",
+    )
     ap.add_argument("--plan-only", action="store_true", help="only write plan + snapshot; do not run threads")
     ap.add_argument("--precheck", dest="precheck", action="store_true", default=True, help="run deterministic precheck before threads")
     ap.add_argument("--no-precheck", dest="precheck", action="store_false", help="skip deterministic precheck")
@@ -197,26 +242,30 @@ def main() -> int:
         print(f"error: main_tex not found: {main_tex}", file=sys.stderr)
         return 2
 
-    run_id = args.run_id.strip() or _now_run_id()
-    # Prevent path injection: run_id must be a simple name.
-    if Path(run_id).name != run_id or ("/" in run_id) or ("\\" in run_id):
-        print("error: --run-id must be a simple name (no path separators)", file=sys.stderr)
-        return 2
+    requested_run_id = args.run_id.strip() or _now_run_id()
 
-    runs_root = Path(args.runs_root)
-    # Enforce skill boundary: all artifacts must stay under project_root/.nsfc-qc/
-    if runs_root.is_absolute() or ".." in runs_root.parts:
-        print("error: --runs-root must be a relative path without '..'", file=sys.stderr)
-        return 2
-    if not runs_root.parts or runs_root.parts[0] != ".nsfc-qc":
-        print("error: --runs-root must start with .nsfc-qc/ to keep artifacts isolated", file=sys.stderr)
-        return 2
+    workspace_dir = Path(str(args.workspace_dir or "")).expanduser()
+    base_dir: Path
+    if str(args.workspace_dir or "").strip():
+        base_dir = workspace_dir.resolve()
+        if not base_dir.exists():
+            base_dir.mkdir(parents=True, exist_ok=True)
+        runs_root = Path(args.runs_root.strip() or "runs")
+    else:
+        base_dir = project_root
+        runs_root = Path(args.runs_root.strip() or ".nsfc-qc/runs")
+        # Legacy safety: keep artifacts isolated under project_root/.nsfc-qc/ unless workspace-dir is used.
+        if not runs_root.parts or runs_root.parts[0] != ".nsfc-qc":
+            print("error: --runs-root must start with .nsfc-qc/ unless --workspace-dir is set", file=sys.stderr)
+            return 2
 
-    run_dir = (project_root / runs_root / run_id).resolve()
     try:
-        run_dir.relative_to(project_root.resolve())
-    except Exception:
-        print("error: resolved run directory escapes project_root", file=sys.stderr)
+        run_dir, run_id = _resolve_unique_run_dir(base_dir=base_dir, runs_root=runs_root, run_id=requested_run_id)
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    except RuntimeError as e:
+        print(f"error: {e}", file=sys.stderr)
         return 2
     artifacts = run_dir / "artifacts"
     final_dir = run_dir / "final"
@@ -288,6 +337,7 @@ def main() -> int:
 
     meta = {
         "run_id": run_id,
+        "requested_run_id": requested_run_id,
         "project_root": str(project_root),
         "main_tex": str(Path(args.main_tex)),
         "threads": int(args.threads),
@@ -297,6 +347,8 @@ def main() -> int:
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "artifacts_dir": str(artifacts),
         "final_dir": str(final_dir),
+        "workspace_dir": str(base_dir) if base_dir != project_root else "",
+        "runs_root": str(runs_root),
     }
     _write_json(artifacts / "run_meta.json", meta)
 
@@ -306,10 +358,40 @@ def main() -> int:
             "parallel-vibe script not found. See skills/nsfc-qc/SKILL.md for downgrade strategy.\n",
             encoding="utf-8",
         )
+        # Still materialize deterministic final outputs (report/metrics/findings/validation).
+        materialize_py = skill_root / "scripts" / "materialize_final_outputs.py"
+        subprocess.run(
+            [
+                sys.executable,
+                str(materialize_py),
+                "--run-dir",
+                str(run_dir),
+                "--project-root",
+                str(project_root),
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
         print(str(run_dir))
         return 0
 
     if args.plan_only:
+        # Create deterministic final outputs even in plan-only mode.
+        materialize_py = skill_root / "scripts" / "materialize_final_outputs.py"
+        subprocess.run(
+            [
+                sys.executable,
+                str(materialize_py),
+                "--run-dir",
+                str(run_dir),
+                "--project-root",
+                str(project_root),
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
         print(str(run_dir))
         return 0
 
@@ -336,16 +418,7 @@ def main() -> int:
     # Materialize standard final outputs skeleton (safe, deterministic).
     materialize_py = skill_root / "scripts" / "materialize_final_outputs.py"
     subprocess.run(
-        [
-            sys.executable,
-            str(materialize_py),
-            "--project-root",
-            str(project_root),
-            "--run-id",
-            str(run_id),
-            "--runs-root",
-            str(args.runs_root),
-        ],
+        [sys.executable, str(materialize_py), "--run-dir", str(run_dir), "--project-root", str(project_root)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,

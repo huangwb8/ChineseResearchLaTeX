@@ -78,6 +78,8 @@ def main() -> int:
         skill_root / "scripts" / "run_parallel_qc.py",
         skill_root / "scripts" / "nsfc_qc_compile.py",
         skill_root / "scripts" / "materialize_final_outputs.py",
+        skill_root / "scripts" / "nsfc_qc_run.py",
+        skill_root / "scripts" / "validate_final_outputs.py",
         skill_root / "templates" / "REPORT_TEMPLATE.md",
         skill_root / "templates" / "FINDINGS_SCHEMA.json",
         skill_root / "references" / "qc_checklist.md",

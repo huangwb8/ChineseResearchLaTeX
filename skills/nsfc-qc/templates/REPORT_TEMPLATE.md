@@ -73,6 +73,5 @@
 ## 附录：复现信息（命令/路径/产物索引）
 
 - run 目录：
-- 若启用 parallel-vibe：`.parallel_vibe/{project_id}/@main/summary.md`
+- 若启用 parallel-vibe：`.parallel_vibe/<project_id>/@main/summary.md`
 - 预检脚本（如有）：
-
