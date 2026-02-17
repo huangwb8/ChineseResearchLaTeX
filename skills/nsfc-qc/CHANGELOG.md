@@ -6,6 +6,21 @@
 
 （暂无）
 
+## [0.1.9] - 2026-02-17
+
+### Changed（变更）
+- `nsfc-qc`：移除“编译是否成功/PDF 页数”相关流程与输出；skill 定位为“内容质量 QC”（标书写得怎么样），不再将编译成功与否作为 QC 结论的一部分。
+- `scripts/nsfc_qc_run.py`、`scripts/run_parallel_qc.py`：移除 `--compile-last` 参数与相关逻辑。
+- `scripts/nsfc_qc_precheck.py`：移除 `--compile` 与隔离编译逻辑，预检专注于引用/篇幅分布/排版与证据包。
+- `scripts/materialize_final_outputs.py`、`templates/REPORT_TEMPLATE.md`：final 输出不再聚合 compile 信息；报告中“页数”改为提示用户自行编译核对。
+- `scripts/nsfc_qc_compile.py`：保留为可选的手工调试脚本，但不再回填 `precheck.json`/`nsfc-qc_metrics.json`。
+
+## [0.1.8] - 2026-02-17
+
+### Changed（变更）
+- `scripts/run_parallel_qc.py`：snapshot 由“全量拷贝项目目录”改为“仅拷贝 `*.tex/*.bib`”（并跳过 `QC/` 等大目录），显著降低 `.nsfc-qc/` 中间产物体积与线程倍增开销。
+- `scripts/nsfc_qc_precheck.py`、`scripts/nsfc_qc_compile.py`：隔离编译的 copytree ignore 列表加入 `QC/`，避免把历史 QC 交付目录拷入 `compile/src` 导致体积膨胀。
+
 ## [0.1.6] - 2026-02-17
 
 ### Added（新增）

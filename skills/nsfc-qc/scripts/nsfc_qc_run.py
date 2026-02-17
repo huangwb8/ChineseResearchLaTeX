@@ -6,7 +6,7 @@ Default layout (when --deliver-dir not provided):
   <project_root>/QC/<run_id>/               (deliver-dir; for humans)
   <project_root>/QC/<run_id>/.nsfc-qc/      (workspace-dir; for reproducibility)
 
-All QC intermediate products (runs/, snapshot/, .parallel_vibe/, compile artifacts) go to workspace-dir.
+All QC intermediate products (runs/, snapshot/, .parallel_vibe/, artifacts) go to workspace-dir.
 Deliver-dir receives a copy of final outputs for review.
 
 This script is deterministic and does NOT modify proposal sources.
@@ -84,7 +84,6 @@ def main() -> int:
     ap.add_argument("--fetch-pdf", action="store_true")
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""))
     ap.add_argument("--timeout-s", type=int, default=20)
-    ap.add_argument("--compile-last", action="store_true")
     args = ap.parse_args()
 
     project_root = Path(args.project_root).expanduser().resolve()
@@ -158,8 +157,6 @@ def main() -> int:
         cmd.append("--fetch-pdf")
     if str(args.unpaywall_email or "").strip():
         cmd += ["--unpaywall-email", str(args.unpaywall_email).strip()]
-    if bool(args.compile_last):
-        cmd.append("--compile-last")
 
     rc, out = _run_cmd(cmd)
     # run_parallel_qc prints run_dir path (last line).

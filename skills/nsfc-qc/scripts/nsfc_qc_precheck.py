@@ -4,7 +4,6 @@ Deterministic, read-only precheck for NSFC LaTeX proposals.
 
 - Extracts citations and checks bibkey existence.
 - Produces rough length metrics (per tex file and overall).
-- Optionally compiles in an isolated copy to get PDF page count.
 
 All outputs must be written under a user-provided --out directory (recommended inside .nsfc-qc/).
 """
@@ -16,8 +15,6 @@ import csv
 import json
 import os
 import re
-import shutil
-import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -76,13 +73,6 @@ def _is_within(base: Path, target: Path) -> bool:
         return True
     except Exception:
         return False
-
-
-def _rel_to_out(out_dir: Path, p: Path) -> str:
-    try:
-        return str(p.resolve().relative_to(out_dir.resolve()))
-    except Exception:
-        return str(p)
 
 
 def _read_text(path: Path) -> str:
@@ -891,142 +881,11 @@ def _resolve_reference_evidence(
     return summary
 
 
-def _run(cmd: List[str], cwd: Path, log_path: Path) -> int:
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    with log_path.open("a", encoding="utf-8") as f:
-        f.write("\n$ " + " ".join(cmd) + "\n")
-        try:
-            p = subprocess.run(cmd, cwd=str(cwd), stdout=f, stderr=subprocess.STDOUT)
-            return int(p.returncode)
-        except FileNotFoundError:
-            # Keep precheck robust across environments (TeX toolchain may not exist).
-            f.write(f"[nsfc-qc] command not found: {cmd[0]}\n")
-            return 127
-
-
-def _get_pdf_pages(pdf_path: Path) -> Optional[int]:
-    # Try pdfinfo (poppler) first, then qpdf.
-    for tool in (["pdfinfo"], ["qpdf", "--show-npages"]):
-        try:
-            if tool[0] == "pdfinfo":
-                p = subprocess.run(
-                    tool + [str(pdf_path)],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-                if p.returncode == 0:
-                    for line in p.stdout.splitlines():
-                        if line.lower().startswith("pages:"):
-                            return int(line.split(":", 1)[1].strip())
-            else:
-                p = subprocess.run(
-                    tool + [str(pdf_path)],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-                if p.returncode == 0:
-                    return int(p.stdout.strip())
-        except Exception:
-            continue
-    return None
-
-
-def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> dict:
-    compile_dir = out_dir / "compile"
-    src = compile_dir / "src"
-    build = compile_dir / "build"
-    if compile_dir.exists():
-        shutil.rmtree(compile_dir)
-    compile_dir.mkdir(parents=True, exist_ok=True)
-
-    def ignore(_dir: str, names: List[str]) -> Set[str]:
-        # Keep this conservative; only avoid obvious junk.
-        bad = {
-            ".git",
-            ".nsfc-qc",
-            ".parallel_vibe",
-            "__pycache__",
-            ".DS_Store",
-            "node_modules",
-            ".venv",
-            "venv",
-            "build",
-            "dist",
-            "target",
-        }
-        return {n for n in names if n in bad}
-
-    shutil.copytree(project_root, src, ignore=ignore, dirs_exist_ok=False)
-    build.mkdir(parents=True, exist_ok=True)
-
-    main_tex = src / main_tex_rel
-    if not main_tex.exists():
-        return {
-            "enabled": True,
-            "ok": False,
-            "error": f"main_tex not found in isolated src: {main_tex_rel}",
-            "compile_dir": _rel_to_out(out_dir, compile_dir),
-            "compile_dir_abs": str(compile_dir),
-        }
-
-    base = main_tex.stem
-    log = out_dir / "compile.log"
-    log_rel = _rel_to_out(out_dir, log)
-
-    missing_tools = [t for t in ("xelatex", "bibtex") if shutil.which(t) is None]
-    if missing_tools:
-        # Do not crash; record downgrade information.
-        try:
-            log.write_text(
-                "[nsfc-qc] TeX toolchain not available; skip compile step.\n"
-                f"missing_tools={missing_tools}\n",
-                encoding="utf-8",
-            )
-        except Exception:
-            pass
-        return {
-            "enabled": True,
-            "ok": False,
-            "missing_tools": missing_tools,
-            "error": "TeX toolchain not available; skip compile step",
-            "log": log_rel,
-            "log_abs": str(log),
-            "compile_dir": _rel_to_out(out_dir, compile_dir),
-            "compile_dir_abs": str(compile_dir),
-        }
-
-    r1 = _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={build}", str(main_tex)], cwd=src, log_path=log)
-    # bibtex must run in build dir on the generated .aux
-    r2 = _run(["bibtex", base], cwd=build, log_path=log) if r1 == 0 else 1
-    r3 = _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={build}", str(main_tex)], cwd=src, log_path=log) if r2 == 0 else 1
-    r4 = _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={build}", str(main_tex)], cwd=src, log_path=log) if r3 == 0 else 1
-
-    pdf_path = build / f"{base}.pdf"
-    pages = _get_pdf_pages(pdf_path) if pdf_path.exists() else None
-    return {
-        "enabled": True,
-        "ok": (r4 == 0 and pdf_path.exists()),
-        "pdf": _rel_to_out(out_dir, pdf_path) if pdf_path.exists() else "",
-        "pdf_abs": str(pdf_path) if pdf_path.exists() else "",
-        "pages": pages if pages is not None else None,
-        "steps_rc": {"xelatex1": r1, "bibtex": r2, "xelatex2": r3, "xelatex3": r4},
-        "log": log_rel,
-        "log_abs": str(log),
-        "compile_dir": _rel_to_out(out_dir, compile_dir),
-        "compile_dir_abs": str(compile_dir),
-    }
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--project-root", required=True)
     ap.add_argument("--main-tex", default="main.tex", help="relative to project-root")
     ap.add_argument("--out", required=True, help="output directory (recommended: .nsfc-qc/.../artifacts)")
-    ap.add_argument("--compile", action="store_true", help="compile in an isolated copy to estimate PDF page count")
     ap.add_argument("--resolve-refs", action="store_true", help="fetch reference evidence (title/abstract/optional pdf) for AI semantic checks")
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""), help="required by Unpaywall API (or set env UNPAYWALL_EMAIL)")
     ap.add_argument("--fetch-pdf", action="store_true", help="attempt to download OA PDFs (arXiv/Unpaywall/bib url) and extract a short text excerpt")
@@ -1061,10 +920,6 @@ def main() -> int:
         # Minimal fields in BibTeX vary by entry type, but these are common.
         if not f.get("title") or not (f.get("author") or f.get("editor")) or not f.get("year"):
             incomplete.append(k)
-
-    compile_info = {"enabled": False}
-    if bool(args.compile):
-        compile_info = _compile_isolated(project_root, args.main_tex, out_dir)
 
     reference_evidence = {"enabled": False}
     if bool(args.resolve_refs):
@@ -1108,7 +963,6 @@ def main() -> int:
         "typography": typography,
         "abbreviation_conventions": abbreviation_conventions,
         "reference_evidence": reference_evidence,
-        "compile": compile_info,
     }
 
     (out_dir / "precheck.json").write_text(json.dumps(precheck, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

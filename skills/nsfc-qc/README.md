@@ -46,8 +46,7 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
   --main-tex main.tex \
   --deliver-dir projects/NSFC_Young/QC/vYYYYMMDDHHMMSS \
   --threads 5 \
-  --execution serial \
-  --compile-last
+  --execution serial
 ```
 
 ## 常见用法（Prompt 模板）
@@ -83,7 +82,7 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
 | 产物 | 路径（相对 project_root） | 说明 |
 |---|---|---|
 | 最终报告 | `QC/{run_id}/nsfc-qc_report.md` | 人类可读，含 P0/P1/P2 与路线图 |
-| 指标 | `QC/{run_id}/nsfc-qc_metrics.json` | 页数/字符数/引用统计/编译信息等 |
+| 指标 | `QC/{run_id}/nsfc-qc_metrics.json` | 字符数/引用统计/预检信号聚合等 |
 | 结构化问题清单 | `QC/{run_id}/nsfc-qc_findings.json` | 便于后续人工审核或二次处理 |
 | 结构一致性校验 | `QC/{run_id}/validation.json` | report 与 findings JSON 的一致性校验 |
 | 工作区 run 目录 | `QC/{run_id}/.nsfc-qc/runs/{run_id}/` | 完整可复现数据（snapshot/artifacts/final/.parallel_vibe 等都在这里） |
@@ -97,7 +96,7 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
 - **中间产物隔离**：所有过程文件集中到 `.nsfc-qc/`，不污染标书工程。
 - **多线程独立**：同一份清单多视角复核，减少漏检；最后再聚合去重。
 - **确定性优先**：能用脚本做的（引用 key 缺失、篇幅统计、引用证据包抓取）先脚本做，降低 AI 幻觉风险。
-- **编译放最后**：4 步法隔离编译依赖环境且耗时，放在 QC 最后一步更稳健。
+- **不做编译检查**：`nsfc-qc` 只关注“标书写得怎么样”（内容质量）；编译是否成功属于环境/工程质量，请在你的 TeX/Overleaf 环境自行验证。
 - **中文排版先扫雷**：直引号等“看起来没错但不规范/不美观”的问题，先确定性列出再人工改。
 
 ## WHICHMODEL
@@ -149,7 +148,7 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_precheck.py \
   --resolve-refs
 ```
 
-### 2) 运行 parallel-vibe（只写入 `.nsfc-qc/`；可选最后一步隔离编译）
+### 2) 运行 parallel-vibe（只写入 `.nsfc-qc/`）
 
 ```bash
 # 生成 snapshot + plan，并把 parallel-vibe 产物落在 projects/NSFC_Young/.nsfc-qc/ 下
@@ -157,8 +156,7 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --project-root projects/NSFC_Young \
   --run-id vYYYYMMDDHHMMSS \
   --threads 5 \
-  --execution serial \
-  --compile-last
+  --execution serial
 ```
 
 ### 3) 生成标准化 final 输出骨架（只写入 `.nsfc-qc/`）

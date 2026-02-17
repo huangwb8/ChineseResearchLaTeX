@@ -8,8 +8,9 @@ Goal:
     xelatex -> bibtex -> xelatex -> xelatex
 - Write all outputs under a user-provided --out directory (recommended: .../.nsfc-qc/runs/<run_id>/artifacts).
 
-This script is designed to be the LAST step of a QC run (after AI/threads), because it can be slow and
-depends on local TeX toolchain availability.
+Note:
+- `nsfc-qc` is positioned as "content quality QC"; compile success is an environment/engineering concern.
+- This script is kept as an optional, manual debugging helper and is NOT used by the nsfc-qc runners.
 """
 
 from __future__ import annotations
@@ -87,6 +88,8 @@ def _compile_isolated(project_root: Path, main_tex_rel: str, out_dir: Path) -> d
             "build",
             "dist",
             "target",
+            # In this repo, QC deliveries can be huge and are never needed for isolated compile.
+            "QC",
         }
         return {n for n in names if n in bad}
 
@@ -154,17 +157,6 @@ def _write_json(path: Path, obj: dict) -> None:
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _try_update_json(path: Path, patch_fn) -> None:
-    try:
-        if not path.exists():
-            return
-        obj = json.loads(path.read_text(encoding="utf-8"))
-        patch_fn(obj)
-        _write_json(path, obj)
-    except Exception:
-        return
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--project-root", required=True)
@@ -179,12 +171,6 @@ def main() -> int:
     info = _compile_isolated(project_root, str(Path(args.main_tex)), out_dir)
     info["generated_at"] = datetime.now().isoformat(timespec="seconds")
     _write_json(out_dir / "compile.json", info)
-
-    # If precheck.json exists, update its "compile" field in-place (safe; still under artifacts).
-    _try_update_json(out_dir / "precheck.json", lambda o: o.__setitem__("compile", info))
-
-    # If final metrics exists, update compile info without touching the report body.
-    _try_update_json(out_dir.parent / "final" / "nsfc-qc_metrics.json", lambda o: o.setdefault("precheck", {}).__setitem__("compile", info))
 
     print(str(out_dir))
     return 0

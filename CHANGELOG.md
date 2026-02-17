@@ -74,6 +74,15 @@
 - **nsfc-qc v0.1.6 → v0.1.7**：thread 证据包目录统一到 `snapshot/.nsfc-qc/input/`（确保所有中间操作严格落在 `.nsfc-qc/` 下）
   - `scripts/run_parallel_qc.py`：证据包路径统一为 `./.nsfc-qc/input/*`，确保所有中间操作严格落在 `.nsfc-qc/` 下
 
+- **nsfc-qc v0.1.7 → v0.1.8**：snapshot 最小化为仅拷贝 `*.tex/*.bib`（并跳过 `QC/` 等大目录），显著降低隐藏工作区体积与线程倍增开销
+  - `scripts/run_parallel_qc.py`：`_copy_snapshot()` 改为按扩展名白名单拷贝（`.tex/.bib`），避免全量 copytree
+  - `scripts/nsfc_qc_precheck.py`、`scripts/nsfc_qc_compile.py`：隔离编译 ignore 列表加入 `QC/`，避免把历史 QC 交付目录拷入编译工作区
+
+- **nsfc-qc v0.1.8 → v0.1.9**：移除“编译是否成功/PDF 页数”相关流程与输出，定位为“内容质量 QC”（标书写得怎么样）
+  - `scripts/nsfc_qc_run.py`、`scripts/run_parallel_qc.py`：移除 `--compile-last`
+  - `scripts/nsfc_qc_precheck.py`：移除 `--compile` 与隔离编译逻辑
+  - `scripts/materialize_final_outputs.py`、`templates/REPORT_TEMPLATE.md`：final 输出不再聚合 compile 信息；报告中页数改为提示用户自行编译核对
+
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
   - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）

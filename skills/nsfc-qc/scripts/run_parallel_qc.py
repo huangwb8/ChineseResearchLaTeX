@@ -13,7 +13,6 @@ This script:
 - Copies key artifacts into snapshot/.nsfc-qc/input/ for threads to read
 - Generates a deterministic parallel-vibe plan.json with N identical QC threads
 - Executes parallel-vibe with --out-dir set to the run directory (so .parallel_vibe lives under the run)
-- (Optional) Runs isolated 4-step compile as the LAST step and updates metrics
 
 Note: This script does NOT modify proposal source files. It only writes into the run directory.
 """
@@ -101,27 +100,47 @@ def _copy_snapshot(project_root: Path, snapshot_dir: Path) -> None:
     if snapshot_dir.exists():
         shutil.rmtree(snapshot_dir)
 
-    def ignore(_dir: str, names: List[str]) -> Set[str]:
-        bad = {
-            ".git",
-            ".nsfc-qc",
-            ".parallel_vibe",
-            "__pycache__",
-            ".DS_Store",
-            "node_modules",
-            ".venv",
-            "venv",
-            ".pytest_cache",
-            ".mypy_cache",
-            ".ruff_cache",
-            ".cache",
-            "dist",
-            "build",
-            "target",
-        }
-        return {n for n in names if n in bad}
+    # Minimize snapshot size aggressively: only copy sources needed for "read-only QC".
+    # We intentionally do NOT copy compiled artifacts, figures, fonts, templates, etc.
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-    shutil.copytree(project_root, snapshot_dir, ignore=ignore, dirs_exist_ok=False)
+    bad_dirs = {
+        ".git",
+        ".nsfc-qc",
+        ".parallel_vibe",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".cache",
+        ".venv",
+        "venv",
+        "node_modules",
+        "dist",
+        "build",
+        "target",
+        # Common in this repo: previous QC deliveries can be huge; never snapshot them.
+        "QC",
+    }
+
+    for root, dirs, files in os.walk(project_root):
+        # Prune large / irrelevant directories early to avoid expensive traversal.
+        dirs[:] = [d for d in dirs if d not in bad_dirs]
+        for fn in files:
+            ext = Path(fn).suffix.lower()
+            if ext not in {".tex", ".bib"}:
+                continue
+            src = Path(root) / fn
+            try:
+                rel = src.relative_to(project_root)
+            except Exception:
+                continue
+            dst = snapshot_dir / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                shutil.copy2(src, dst)
+            except Exception:
+                continue
 
     # Enforce read-only at filesystem level (files only; keep directories writable so the run folder remains removable).
     for p in snapshot_dir.rglob("*"):
@@ -139,6 +158,7 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "你将对 NSFC 标书进行“只读质量控制（QC）”。\n"
         "硬约束：\n"
         "- 你的当前工作目录（cwd）就是标书项目根目录（来自原项目的 snapshot 拷贝）。\n"
+        "- 注意：snapshot 是“最小化副本”，通常只包含 `*.tex/*.bib` 与 `./.nsfc-qc/input/` 证据包；缺失的图片/模板/字体/编译产物不影响你做文本 QC。\n"
         "- 禁止修改任何已有文件（尤其是 .tex/.bib/.cls/.sty）。把建议写进 RESULT.md。\n"
         "- 禁止访问父目录（..）与任何绝对路径写入。\n"
         "- 不编造引用与论文内容；无法确定时标记为 uncertain，并给出可复核路径。\n\n"
@@ -226,7 +246,6 @@ def main() -> int:
     ap.add_argument("--fetch-pdf", action="store_true", help="when resolving refs, attempt to download OA PDFs and extract a short text excerpt")
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""), help="optional; required by Unpaywall API (or set env UNPAYWALL_EMAIL)")
     ap.add_argument("--timeout-s", type=int, default=20, help="network timeout seconds for reference resolution")
-    ap.add_argument("--compile-last", action="store_true", help="run isolated 4-step compile as the last step and update metrics")
     args = ap.parse_args()
 
     if args.threads < 1 or args.threads > 9:
@@ -425,24 +444,6 @@ def main() -> int:
         stderr=subprocess.DEVNULL,
         check=False,
     )
-
-    # 4) 4-step compile must be the last step (optional).
-    if bool(args.compile_last):
-        compile_py = skill_root / "scripts" / "nsfc_qc_compile.py"
-        cmd2 = [
-            sys.executable,
-            str(compile_py),
-            "--project-root",
-            str(project_root),
-            "--main-tex",
-            str(Path(args.main_tex)),
-            "--out",
-            str(artifacts),
-        ]
-        log2 = artifacts / "compile_runner.log"
-        with log2.open("w", encoding="utf-8") as f:
-            f.write("$ " + " ".join(cmd2) + "\n\n")
-            subprocess.run(cmd2, stdout=f, stderr=subprocess.STDOUT, check=False)
 
     print(str(run_dir))
     return int(p.returncode)

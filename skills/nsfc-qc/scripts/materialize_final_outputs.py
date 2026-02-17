@@ -63,44 +63,6 @@ def _load_report_template() -> Optional[str]:
         return None
 
 
-def _load_page_limit_soft_default() -> int:
-    """
-    Best-effort parse for config.yaml:
-      parameters:
-        page_limit_soft:
-          default: 30
-    Keep this dependency-free (no PyYAML).
-    """
-    skill_root = Path(__file__).resolve().parents[1]
-    cfg = skill_root / "config.yaml"
-    try:
-        lines = cfg.read_text(encoding="utf-8", errors="ignore").splitlines()
-    except Exception:
-        return 30
-
-    in_block = False
-    block_indent = 0
-    for ln in lines:
-        # Enter block
-        if re.match(r"^\s*page_limit_soft:\s*$", ln):
-            in_block = True
-            block_indent = len(ln) - len(ln.lstrip(" "))
-            continue
-        if not in_block:
-            continue
-        # Exit block if indentation decreases to the same or less than the block key.
-        cur_indent = len(ln) - len(ln.lstrip(" "))
-        if ln.strip() and cur_indent <= block_indent:
-            break
-        m = re.match(r"^\s*default:\s*(\d+)\s*$", ln)
-        if m:
-            try:
-                return int(m.group(1))
-            except Exception:
-                return 30
-    return 30
-
-
 REQUIRED_HEADINGS = [
     "执行摘要",
     "范围与只读声明",
@@ -145,9 +107,9 @@ def _mk_finding(
     }
 
 
-def _deterministic_findings(*, precheck: dict, compile_info: dict, artifacts: dict, page_limit_soft: int) -> List[dict]:
+def _deterministic_findings(*, precheck: dict, artifacts: dict) -> List[dict]:
     """
-    Convert deterministic precheck/compile signals into a baseline findings list.
+    Convert deterministic precheck signals into a baseline findings list.
     This provides a "won't be wrong" floor even if AI threads are unavailable.
     """
     out: List[dict] = []
@@ -249,57 +211,6 @@ def _deterministic_findings(*, precheck: dict, compile_info: dict, artifacts: di
                 status="open",
             )
         )
-
-    # Compile-based findings (compile can be under precheck.compile or compile.json)
-    ci = compile_info or {}
-    if bool(ci.get("enabled")):
-        if ci.get("missing_tools"):
-            out.append(
-                _mk_finding(
-                    fid="P2-001",
-                    severity="P2",
-                    category="format",
-                    path="",
-                    anchor="compile.missing_tools",
-                    problem="本机缺少 TeX 工具链，无法完成隔离编译（不一定代表标书无法编译）。",
-                    evidence=[{"type": "note", "detail": f"missing_tools={ci.get('missing_tools')} (see `{artifacts.get('compile_log','')}`)"}],
-                    recommendation="在具备 TeX 环境（或 Overleaf/CI）中复现编译；若仍失败，再按 compile.log 定位缺文件/宏包等问题。",
-                    status="uncertain",
-                )
-            )
-        elif not bool(ci.get("ok")):
-            # Keep ID stable: if P0-001 already used, use P0-002.
-            fid = "P0-002" if any(x.get("severity") == "P0" for x in out) else "P0-001"
-            out.append(
-                _mk_finding(
-                    fid=fid,
-                    severity="P0",
-                    category="format",
-                    path="",
-                    anchor="compile.log",
-                    problem="隔离编译失败（需优先定位阻塞错误，如缺图/缺文件/宏包冲突）。",
-                    evidence=[{"type": "note", "detail": f"see `{artifacts.get('compile_log','')}` and `{artifacts.get('compile_json','')}`"}],
-                    recommendation="优先在 compile.log 中定位第一个 fatal error（常见：缺图文件、路径大小写、未提交 .sty/.cls、bibtex 报错）。",
-                    status="open",
-                )
-            )
-        else:
-            # Soft page limit hint (optional)
-            pages = ci.get("pages")
-            if isinstance(pages, int) and pages > 0 and pages > int(page_limit_soft):
-                out.append(
-                    _mk_finding(
-                        fid="P2-002",
-                        severity="P2",
-                        category="length",
-                        path="",
-                        anchor="compile.pages",
-                        problem=f"PDF 页数偏多（pages={pages}；软约束：原则上不超过 {int(page_limit_soft)} 页）。",
-                        evidence=[{"type": "metric", "detail": f"pages={pages}"}],
-                        recommendation="优先压缩重复叙述与背景综述；保留核心科学问题/创新点/可行性证据链。",
-                        status="needs_human_review",
-                    )
-                )
 
     return out
 
@@ -466,7 +377,6 @@ def main() -> int:
 
     precheck = _read_json(artifacts_dir / "precheck.json") or {}
     run_meta = _read_json(artifacts_dir / "run_meta.json") or {}
-    compile_json = _read_json(artifacts_dir / "compile.json") or {}
 
     main_tex = str(run_meta.get("main_tex") or precheck.get("main_tex") or "main.tex")
     execution = str(run_meta.get("execution") or "")
@@ -492,8 +402,6 @@ def main() -> int:
         "abbreviation_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_issues.csv") if (artifacts_dir / "abbreviation_issues.csv").exists() else "",
         "reference_evidence_jsonl": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence.jsonl") if (artifacts_dir / "reference_evidence.jsonl").exists() else "",
         "reference_evidence_summary_json": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence_summary.json") if (artifacts_dir / "reference_evidence_summary.json").exists() else "",
-        "compile_json": _safe_rel_from(run_dir, artifacts_dir / "compile.json") if (artifacts_dir / "compile.json").exists() else "",
-        "compile_log": _safe_rel_from(run_dir, artifacts_dir / "compile.log") if (artifacts_dir / "compile.log").exists() else "",
         "parallel_vibe_summary": pv_main_summary,
         "thread_results": thread_results,
     }
@@ -515,7 +423,6 @@ def main() -> int:
         },
         "precheck": {
             "citation_stats": (precheck.get("citation_stats") or {}),
-            "compile": (compile_json or precheck.get("compile") or {}),
             "typography": (precheck.get("typography") or {}),
             "abbreviation_conventions": (precheck.get("abbreviation_conventions") or {}),
         },
@@ -526,13 +433,9 @@ def main() -> int:
         },
     }
 
-    compile_info_for_findings = compile_json or (precheck.get("compile") or {})
-    page_limit_soft = _load_page_limit_soft_default()
     det_findings = _deterministic_findings(
         precheck=precheck,
-        compile_info=compile_info_for_findings,
         artifacts=artifacts_rel,
-        page_limit_soft=page_limit_soft,
     )
 
     findings = {
@@ -586,10 +489,6 @@ def main() -> int:
     if cs:
         report_body = re.sub(r"^- 引用总数（去重 bibkey）：\s*$", f"- 引用总数（去重 bibkey）：{cs.get('unique_citations','')}", report_body, flags=re.M)
         report_body = re.sub(r"^- 缺失 bibkey：\s*$", f"- 缺失 bibkey：{cs.get('missing_bibkeys','')}", report_body, flags=re.M)
-
-    pages = compile_info_for_findings.get("pages") if isinstance(compile_info_for_findings, dict) else None
-    if isinstance(pages, int) and pages > 0:
-        report_body = re.sub(r"^- PDF 页数（如可得）：\s*$", f"- PDF 页数（如可得）：{pages}", report_body, flags=re.M)
 
     # Inject deterministic findings into P0/P1/P2 tables.
     report_body = _inject_table_rows(report_body, section_title="硬性问题（P0）", rows=_render_md_table_rows(det_findings, severity="P0"))

@@ -1,6 +1,6 @@
 ---
 name: nsfc-qc
-version: 0.1.7
+version: 0.1.9
 description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到“交付目录内的隐藏工作区（.nsfc-qc/）”，并兼容 legacy `.nsfc-qc/`。
 author: Bensz Conan
 metadata:
@@ -86,7 +86,6 @@ references: skills/nsfc-qc/references/
 - 引用真伪/错引的“证据包”（硬编码抓取）：对每个被引用的 bibkey，尽最大努力获取论文标题/摘要（可选获取 OA PDF 并抽取正文片段），并同时提取标书内的引用上下文；供后续 AI 做语义判断（不确定就标 uncertain）
 - 章节/文件级篇幅分布（字符数/粗略字数）
 - 中文排版易错项（确定性）：检测直引号 `"免疫景观"` 这类写法，并给出替换建议（推荐 TeX 引号 ``免疫景观''）
--（可选）编译得到 PDF 页数（软约束：原则上不超过 30 页；过长标 P2，过短标 P1）
 
 产物落点（示例）：
 - `.../artifacts/precheck.json`
@@ -102,8 +101,8 @@ references: skills/nsfc-qc/references/
 
 - `parallel-vibe --out-dir {run_dir}/`
   - 这样 `.parallel_vibe/` 会被创建在 run 内部（无论 legacy 还是 workspace 模式）
-- `parallel-vibe --src-dir project_root`
-  - 每个 thread 的 workspace 都是标书的**独立拷贝**，天然满足“对原标书只读”
+- `parallel-vibe --src-dir {run_dir}/snapshot/`
+  - 每个 thread 的 workspace 都是 snapshot 的**独立拷贝**；snapshot 为“最小化副本”（通常仅 `*.tex/*.bib` + `./.nsfc-qc/input/` 证据包）
 
 并行策略：
 - 默认 `serial`（串联执行 threads）
@@ -118,7 +117,7 @@ references: skills/nsfc-qc/references/
    - P1：可能错引（正文断言与论文题目/摘要方向明显不符）、元信息疑点（年份/期刊/作者异常）
    - 逐条给出证据锚点：`bibkey`、所在句子（原文片段 ≤ 50 字）、bib 条目、可核验链接/检索关键词
 3. **篇幅与结构分布**：
-   - 总体是否过短/过长（页数优先；无 PDF 时用字符数近似）
+   - 总体是否过短/过长（用字符数与章节分布做近似判断）
    - 各章节比例是否合理（例如：立项依据/研究内容/研究基础的分配是否失衡）
 4. **逻辑与论证**：论证链是否闭合（科学问题→假说→目标→方法→验证→预期），是否存在跳步、歧义、概念偷换、缺对照/缺指标。
 5. **其它 QC**（至少 3 项）：例如术语一致性、缩略语首次定义、图表/公式编号与引用、风险与备选方案、创新点可验证性、夸大措辞等。
@@ -150,19 +149,16 @@ references: skills/nsfc-qc/references/
 9. `附录：复现信息（命令/路径/产物索引）`
 
 同时输出两份 JSON（用于后续人工复核/自动化处理）：
-- `nsfc-qc_metrics.json`：页数、字符数、章节分布、引用数量、缺失引用数量、编译是否成功等
+- `nsfc-qc_metrics.json`：字符数、章节分布、引用数量、缺失引用数量、预检信号聚合等
 - `nsfc-qc_findings.json`：结构化问题列表（id/severity/location/evidence/recommendation/status）
 
 你可以使用 `templates/` 下的模板文件（可选，但推荐）：
 - `templates/REPORT_TEMPLATE.md`
 - `templates/FINDINGS_SCHEMA.json`
 
-### 5) 4 步法自动编译（最后一步；可选但推荐）
+### 5) 非目标：编译检查
 
-为尽可能模拟真实提交效果并得到页数信息，编译必须放在 QC 的最后一步执行：
-- 采用隔离编译（复制一份项目到 `.nsfc-qc/` 内），不触碰标书源文件
-- 严格按 4 步法：`xelatex → bibtex → xelatex → xelatex`
-- 产物写入 `.../artifacts/compile.json` 与 `.../artifacts/compile.log`，并回填到 `precheck.json`/`nsfc-qc_metrics.json`
+`nsfc-qc` 的定位是“内容质量 QC”（标书写得怎么样）。PDF 能否编译成功属于环境/工程质量，不在本技能范围内；请你在自己的 TeX/Overleaf 环境自行验证。
 
 ## 快捷脚本（可选，但推荐）
 
@@ -176,15 +172,14 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
   --main-tex main.tex \
   --deliver-dir projects/NSFC_Young/QC/vYYYYMMDDHHMMSS \
   --threads 5 \
-  --execution serial \
-  --compile-last
+  --execution serial
 ```
 
 > 输出：交付目录内会有 `nsfc-qc_report.md/nsfc-qc_metrics.json/nsfc-qc_findings.json/validation.json` + `artifacts/`（选取的确定性证据）。
 
 也支持 legacy/拆分式调用（只写入 `project_root/.nsfc-qc/`）：
 
-1) 预检（引用/篇幅/章节分布 + 引用证据包；编译留到最后一步）
+1) 预检（引用/篇幅/章节分布 + 引用证据包）
 
 ```bash
 python3 skills/nsfc-qc/scripts/nsfc_qc_precheck.py \
@@ -201,8 +196,7 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --project-root projects/NSFC_Young \
   --run-id vYYYYMMDDHHMMSS \
   --threads 5 \
-  --execution serial \
-  --compile-last
+  --execution serial
 ```
 
 3) 生成标准化 final 输出骨架（即使 threads 尚未运行也可执行）
@@ -211,15 +205,6 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
 python3 skills/nsfc-qc/scripts/materialize_final_outputs.py \
   --project-root projects/NSFC_Young \
   --run-id vYYYYMMDDHHMMSS
-```
-
-4) 4 步法隔离编译（最后一步；只写入 `.nsfc-qc/`）
-
-```bash
-python3 skills/nsfc-qc/scripts/nsfc_qc_compile.py \
-  --project-root projects/NSFC_Young \
-  --main-tex main.tex \
-  --out projects/NSFC_Young/.nsfc-qc/runs/vYYYYMMDDHHMMSS/artifacts
 ```
 
 ## 降级策略（必须提供）
