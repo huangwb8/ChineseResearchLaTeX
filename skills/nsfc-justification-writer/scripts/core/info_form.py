@@ -22,16 +22,16 @@ class InfoFormAnswers:
 
     def to_markdown(self, *, version: str) -> str:
         lines = [
-            f"# NSFC 2026 写作信息表（{version}）",
+            f"# NSFC 写作信息表（{version}）",
             "",
             "## 必填",
             f"1. **研究对象/应用场景**：{self.research_object.strip()}",
             "2. **痛点与现有不足**：",
             self._indent_block(self.pain_points),
-            f"3. **核心假说**：{self.core_hypothesis.strip()}",
-            "4. **关键科学问题**：",
+            "3. **关键科学问题（疑问句，非研究目标）**：",
             self._indent_block(self.key_questions),
-            "5. **本项目切入点**：",
+            f"4. **核心科学假设（陈述句，预测性结果，不写验证方式）**：{self.core_hypothesis.strip()}",
+            "5. **本项目切入点（差异化切口）**：",
             self._indent_block(self.entry_point),
             "",
             "## 选填",
@@ -81,10 +81,22 @@ def _ask(prompt: str, *, required: bool, multiline: bool) -> str:
 
 def interactive_collect_info_form() -> InfoFormAnswers:
     research_object = _ask("1) 研究对象/应用场景（一句话边界）：", required=True, multiline=False)
-    pain_points = _ask("2) 痛点与现有不足（可量化更好）：", required=True, multiline=True)
-    core_hypothesis = _ask("3) 核心假说（1 句可证伪表述）：", required=True, multiline=False)
-    key_questions = _ask("4) 关键科学问题（1–3 条）：", required=True, multiline=True)
-    entry_point = _ask("5) 本项目切入点（差异化切口，怎么破局）：", required=True, multiline=True)
+    pain_points = _ask(
+        "2) 痛点与现有不足（建议包含 2–4 条关键瓶颈，并尽量给出“瓶颈→问题约束”的映射）：",
+        required=True,
+        multiline=True,
+    )
+    key_questions = _ask(
+        "3) 关键科学问题（1–3 条；疑问句；避免“能否构建/开发/实现...”这类研究目标句式）：",
+        required=True,
+        multiline=True,
+    )
+    core_hypothesis = _ask(
+        "4) 核心科学假设（1 句可证伪陈述；预测性结果；避免“在...验证中/通过...验证”）：",
+        required=True,
+        multiline=False,
+    )
+    entry_point = _ask("5) 本项目切入点（差异化切口，怎么破局；并用 1 句承上启下到 2.1 研究内容）：", required=True, multiline=True)
     methods_overview = _ask("6) 拟解决技术/方法概览（选填）：", required=False, multiline=True)
     prior_work = _ask("7) 前期基础（可核验）（选填）：", required=False, multiline=True)
     related_work = _ask("8) 主流路线与代表工作（选填；引用先核验）：", required=False, multiline=True)
@@ -116,4 +128,3 @@ def copy_info_form_template(*, template_path: Path, out_path: Path) -> bool:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(template_path.read_text(encoding="utf-8", errors="ignore"), encoding="utf-8")
     return True
-

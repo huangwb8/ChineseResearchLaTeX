@@ -181,7 +181,7 @@ git clone https://github.com/huangwb8/skills.git &&
 - **transfer_old_latex_to_new**：标书迁移（将旧标书内容迁移到新模板）
 
 #### ✍️ 标书写作阶段与图表生成
-- **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/假说 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
+- **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/科学假设 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
 - **nsfc-research-content-writer**：研究内容编排，同步生成"研究内容 + 特色与创新 + 三年年度计划"，确保子目标带"指标/对照/验证方案"三件套，创新点用"相对坐标系"表达
 - **nsfc-research-foundation-writer**：研究基础编排，同步生成"研究基础 + 工作条件 + 风险应对措施"，用"证据链 + 条件对位 + 风险预案"证明项目可行性
 - **nsfc-roadmap**：从 NSFC 标书自动生成可打印、A4 可读的技术路线图，输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果，支持多轮评估-优化与模板库选择
@@ -206,7 +206,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
 | [nsfc-abstract](skills/nsfc-abstract/) | v0.3.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | 🚧 开发中 |
-| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.7 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
+| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.8 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.2.2 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-roadmap](skills/nsfc-roadmap/) | v0.8.0 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |

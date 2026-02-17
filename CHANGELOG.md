@@ -47,6 +47,12 @@
   - `README.md`：移除年份绑定表述，补充 `output_mode` 与自检命令
   - `skills/README.md`：同步移除年份绑定表述，补齐推荐 Prompt 模板的 `output_mode` 与禁改约束
 
+- **nsfc-justification-writer v0.7.7 → v0.7.8**：强化“科学问题/科学假设”写作闭环与信息表口径
+  - `references/`：新增科学问题与科学假设写作要点（瓶颈→约束→问题→假设闭环自检）
+  - `references/info_form.md` 与 `scripts/core/info_form.py`：信息表字段提示强化（科学问题≠研究目标、假设不写验证方式、瓶颈→约束映射）
+  - `scripts/core/writing_coach.py` 与 `assets/prompts/*.txt`：写作教练与诊断/评审提示加入“逻辑链闭环”检查要点
+  - `README.md`、`skills/README.md`：同步版本号与“科学问题/科学假设”措辞
+
 - **nsfc-qc v0.1.1 → v0.1.2**：新增中文直引号排版预检（只读）
   - `scripts/nsfc_qc_precheck.py`：检测 `"免疫景观"` 这类直引号写法，输出 `quote_issues.csv` 并在 `precheck.json` 中给出结构化统计与替换建议（``免疫景观''）
   - `scripts/materialize_final_outputs.py`：metrics 聚合时纳入 `typography` 预检信息并补齐产物索引
@@ -106,6 +112,8 @@
   - AI 主评估生效时默认跳过多维度启发式扣分，避免重复扣分导致口径漂移
 
 - 更新 `.gitignore`：忽略 `projects/**/.nsfc-qc/`（nsfc-qc 的运行产物与报告目录），避免污染工作区
+
+- 更新 `.gitignore`：修正 `/tests/` 仅忽略根目录 `tests/`，并放行 `skills/nsfc-justification-writer` 的 `plans/`、`tests/` 进入版本控制（中间产物目录仍默认忽略）
 
 ### Added（新增）
 

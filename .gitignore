@@ -194,5 +194,4 @@ test.md
 # 默认忽略各 skill 的 auto-test-skill 会话 plans/tests（避免污染仓库）；需要纳入版本控制的 skill 再显式放行
 skills/*/plans/
 skills/*/tests/
-
-tests/
+/tests/
