@@ -21,7 +21,7 @@
 默认使用“**交付目录 + sidecar 工作区**”隔离中间产物（避免污染标书根目录）：
 
 - 交付目录（面向人读）：`{deliver_dir}/`
-- 工作区（面向复现/归档）：`{deliver_dir}.nsfc-qc/`（包含 runs/snapshot/.parallel_vibe/artifacts/final）
+- 工作区（面向复现/归档）：`{deliver_dir}/.nsfc-qc/`（包含 runs/snapshot/.parallel_vibe/artifacts/final）
 
 同时兼容 legacy：把工作区写入 `project_root/.nsfc-qc/`（旧用法）。
 
@@ -76,19 +76,16 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
 每次运行会创建一个 run 目录（`run_id` 为时间戳）。推荐布局是：
 
 - 交付目录：`QC/{run_id}/`
-- 工作区：`QC/{run_id}.nsfc-qc/`
-- run 目录：`QC/{run_id}.nsfc-qc/runs/{run_id}/`
+- 工作区：`QC/{run_id}/.nsfc-qc/`
+- run 目录：`QC/{run_id}/.nsfc-qc/runs/{run_id}/`
 
 | 产物 | 路径（相对 project_root） | 说明 |
 |---|---|---|
-| 最终报告 | `QC/{run_id}.nsfc-qc/runs/{run_id}/final/nsfc-qc_report.md` | 人类可读，含 P0/P1/P2 与路线图 |
-| 指标 | `QC/{run_id}.nsfc-qc/runs/{run_id}/final/nsfc-qc_metrics.json` | 页数/字符数/引用统计/编译信息等 |
-| 结构化问题清单 | `QC/{run_id}.nsfc-qc/runs/{run_id}/final/nsfc-qc_findings.json` | 便于后续人工审核或二次处理 |
-| 结构一致性校验 | `QC/{run_id}.nsfc-qc/runs/{run_id}/final/validation.json` | report 与 findings JSON 的一致性校验 |
-| parallel-vibe 产物（如启用） | `QC/{run_id}.nsfc-qc/runs/{run_id}/.parallel_vibe/...` | 每个 thread 的 workspace 与 RESULT.md |
-| 预检排版问题索引（可选） | `QC/{run_id}.nsfc-qc/runs/{run_id}/artifacts/quote_issues.csv` | 直引号等中文排版易错项（确定性扫描） |
-| 引用证据包（可选） | `QC/{run_id}.nsfc-qc/runs/{run_id}/artifacts/reference_evidence.jsonl` | 每个 bibkey：标书引用上下文 +（尽力）论文题目/摘要/（可选）PDF 片段 |
-| 编译日志（可选，最后一步） | `QC/{run_id}.nsfc-qc/runs/{run_id}/artifacts/compile.log` | 4 步法隔离编译日志（xelatex→bibtex→xelatex→xelatex） |
+| 最终报告 | `QC/{run_id}/nsfc-qc_report.md` | 人类可读，含 P0/P1/P2 与路线图 |
+| 指标 | `QC/{run_id}/nsfc-qc_metrics.json` | 页数/字符数/引用统计/编译信息等 |
+| 结构化问题清单 | `QC/{run_id}/nsfc-qc_findings.json` | 便于后续人工审核或二次处理 |
+| 结构一致性校验 | `QC/{run_id}/validation.json` | report 与 findings JSON 的一致性校验 |
+| 工作区 run 目录 | `QC/{run_id}/.nsfc-qc/runs/{run_id}/` | 完整可复现数据（snapshot/artifacts/final/.parallel_vibe 等都在这里） |
 
 补充说明：
 - `nsfc-qc_metrics.json` 的 `schema_version` 当前为 **2**（artifacts 路径以 **run_dir 为基准的相对路径**输出，便于搬运复现）。

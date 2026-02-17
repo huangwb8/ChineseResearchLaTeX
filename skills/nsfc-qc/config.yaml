@@ -4,8 +4,8 @@
 
 skill_info:
   name: nsfc-qc
-  version: 0.1.4
-  description: "NSFC 标书质量控制（只读）：多线程检查文风生硬/引用真伪与一致性/篇幅与结构分布/逻辑清晰度等，输出标准化 QC 报告；支持“交付目录 + sidecar 工作区”隔离中间产物（默认不污染标书根目录）"
+  version: 0.1.5
+  description: "NSFC 标书质量控制（只读）：多线程检查文风生硬/引用真伪与一致性/篇幅与结构分布/逻辑清晰度等，输出标准化 QC 报告；支持“交付目录 + 隐藏工作区（.nsfc-qc/）”隔离中间产物（默认不污染标书根目录）"
   category: writing
   author: "Bensz Conan"
 
@@ -51,7 +51,7 @@ parameters:
     type: string
     required: false
     default: ""
-    description: 工作区目录（中间产物 + 可复现）。为空则默认 `{deliver_dir}.nsfc-qc/`
+    description: 工作区目录（中间产物 + 可复现）。为空则默认 `{deliver_dir}/.nsfc-qc/`
   page_limit_soft:
     type: integer
     required: false

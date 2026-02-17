@@ -549,7 +549,7 @@ def _resolve_reference_evidence(
     Deterministically gather reference-side evidence (title/abstract/pdf excerpt when possible),
     plus proposal-side citation contexts, to enable later AI semantic judgment.
     """
-    user_agent = "nsfc-qc/0.1.4 (reference-evidence)"
+    user_agent = "nsfc-qc/0.1.5 (reference-evidence)"
     evidence_path = out_dir / "reference_evidence.jsonl"
     summary_path = out_dir / "reference_evidence_summary.json"
 

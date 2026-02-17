@@ -1,7 +1,7 @@
 ---
 name: nsfc-qc
-version: 0.1.4
-description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到“交付目录同级的 sidecar 工作区（*.nsfc-qc/）”，并兼容 legacy `.nsfc-qc/`。
+version: 0.1.5
+description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到“交付目录内的隐藏工作区（.nsfc-qc/）”，并兼容 legacy `.nsfc-qc/`。
 author: Bensz Conan
 metadata:
   author: Bensz Conan
@@ -35,7 +35,7 @@ references: skills/nsfc-qc/references/
 - **只读**：对标书内容完全只读（不修改任何 `.tex/.bib/.cls/.sty`）。
 - **隔离（推荐）**：使用“交付目录 + sidecar 工作区”组织产物，默认不污染标书根目录：
   - 交付目录（面向人读）：`{deliver_dir}/`
-  - 工作区（面向复现/归档）：`{deliver_dir}.nsfc-qc/`（包含 runs/snapshot/.parallel_vibe/artifacts/final）
+  - 工作区（面向复现/归档）：`{deliver_dir}/.nsfc-qc/`（包含 runs/snapshot/.parallel_vibe/artifacts/final）
 - **兼容（legacy）**：仍支持把工作区写入 `project_root/.nsfc-qc/`（旧用法）。
 - **交付物（标准化）**：
   - `{run_dir}/final/nsfc-qc_report.md`
@@ -69,7 +69,7 @@ references: skills/nsfc-qc/references/
 1. 校验 `project_root` 存在；`main_tex` 默认 `main.tex`，若不存在则在 `project_root` 下优先探测 `main.tex`，否则列出候选 `*.tex` 并让用户确认。
 2. 生成 `run_id = vYYYYMMDDHHMMSS`（本地时间），并优先采用“实例隔离”布局：
    - `deliver_dir = project_root/QC/{run_id}/`（可由用户显式提供）
-   - `workspace_dir = {deliver_dir}.nsfc-qc/`
+   - `workspace_dir = {deliver_dir}/.nsfc-qc/`
    - `run_dir = {workspace_dir}/runs/{run_id}/`
 
 > 若用户明确要求 legacy（或不方便创建交付目录），才使用 `project_root/.nsfc-qc/runs/{run_id}/`。

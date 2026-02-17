@@ -6,6 +6,13 @@
 
 （暂无）
 
+## [0.1.5] - 2026-02-17
+
+### Changed（变更）
+- `scripts/nsfc_qc_run.py`：默认工作区从 `QC/{run_id}.nsfc-qc/` 调整为交付目录内的隐藏目录 `QC/{run_id}/.nsfc-qc/`（更优雅，且更符合“交付目录内隐藏中间产物”的直觉）
+- `scripts/nsfc_qc_run.py`：交付目录不再复制预检/编译等中间 artifacts（这些文件保留在工作区 run 目录下），交付目录只保留最终报告与结构化输出
+- `SKILL.md`、`README.md`、`config.yaml`：同步更新默认产物布局说明与版本号
+
 ## [0.1.4] - 2026-02-17
 
 ### Added（新增）

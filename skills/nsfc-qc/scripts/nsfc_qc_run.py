@@ -4,10 +4,10 @@ High-level runner for nsfc-qc with "deliver dir + sidecar workspace" layout.
 
 Default layout (when --deliver-dir not provided):
   <project_root>/QC/<run_id>/               (deliver-dir; for humans)
-  <project_root>/QC/<run_id>.nsfc-qc/       (workspace-dir; for reproducibility)
+  <project_root>/QC/<run_id>/.nsfc-qc/      (workspace-dir; for reproducibility)
 
 All QC intermediate products (runs/, snapshot/, .parallel_vibe/, compile artifacts) go to workspace-dir.
-Deliver-dir receives a copy of final outputs + selected deterministic artifacts for review.
+Deliver-dir receives a copy of final outputs for review.
 
 This script is deterministic and does NOT modify proposal sources.
 """
@@ -40,7 +40,9 @@ def _ensure_unique_dir(path: Path) -> Path:
     base = path.name
     parent = path.parent
     for i in range(1, 100):
-        cand = parent / f"{base}r{i}"
+        # Keep hidden directories hidden (e.g. ".nsfc-qc" -> ".nsfc-qc.r1").
+        suffix = f".r{i}" if base.startswith(".") else f"r{i}"
+        cand = parent / f"{base}{suffix}"
         if not cand.exists():
             return cand
     raise RuntimeError("failed to pick a unique deliver/workspace directory after 99 attempts")
@@ -70,7 +72,7 @@ def main() -> int:
     ap.add_argument("--project-root", required=True)
     ap.add_argument("--main-tex", default="main.tex")
     ap.add_argument("--deliver-dir", default="", help="deliver directory (recommended: .../QC/vYYYYMMDDHHMMSS)")
-    ap.add_argument("--workspace-dir", default="", help="workspace directory (recommended: <deliver-dir>.nsfc-qc)")
+    ap.add_argument("--workspace-dir", default="", help="workspace directory (recommended: <deliver-dir>/.nsfc-qc)")
     ap.add_argument("--threads", type=int, default=5)
     ap.add_argument("--execution", choices=["serial", "parallel"], default="serial")
     ap.add_argument("--max-parallel", type=int, default=3)
@@ -115,7 +117,7 @@ def main() -> int:
         workspace_dir = Path(args.workspace_dir).expanduser().resolve()
         workspace_dir = _ensure_unique_dir(workspace_dir)
     else:
-        workspace_dir = _ensure_unique_dir(deliver_dir.with_name(deliver_dir.name + ".nsfc-qc"))
+        workspace_dir = _ensure_unique_dir(deliver_dir / ".nsfc-qc")
 
     deliver_dir.mkdir(parents=True, exist_ok=True)
     workspace_dir.mkdir(parents=True, exist_ok=True)
@@ -184,23 +186,12 @@ def main() -> int:
     )
 
     final_dir = run_dir / "final"
-    artifacts_dir = run_dir / "artifacts"
 
     # Copy deliverables (final outputs).
     _copy_if_exists(final_dir / "nsfc-qc_report.md", deliver_dir / "nsfc-qc_report.md")
     _copy_if_exists(final_dir / "nsfc-qc_metrics.json", deliver_dir / "nsfc-qc_metrics.json")
     _copy_if_exists(final_dir / "nsfc-qc_findings.json", deliver_dir / "nsfc-qc_findings.json")
     _copy_if_exists(final_dir / "validation.json", deliver_dir / "validation.json")
-
-    # Copy selected deterministic artifacts (for review). Keep them isolated.
-    deliver_art = deliver_dir / "artifacts"
-    _copy_if_exists(artifacts_dir / "precheck.json", deliver_art / "precheck.json")
-    _copy_if_exists(artifacts_dir / "citations_index.csv", deliver_art / "citations_index.csv")
-    _copy_if_exists(artifacts_dir / "tex_lengths.csv", deliver_art / "tex_lengths.csv")
-    _copy_if_exists(artifacts_dir / "quote_issues.csv", deliver_art / "quote_issues.csv")
-    _copy_if_exists(artifacts_dir / "compile.json", deliver_art / "compile.json")
-    _copy_if_exists(artifacts_dir / "compile.log", deliver_art / "compile.log")
-    _copy_if_exists(artifacts_dir / "reference_evidence_summary.json", deliver_art / "reference_evidence_summary.json")
 
     # Write a small manifest for portability.
     try:
@@ -214,7 +205,7 @@ def main() -> int:
         "workspace_dir_rel_from_deliver": ws_rel,
         "run_dir": str(run_dir),
         "project_root": str(project_root),
-        "note": "deliver_dir contains copied final outputs and selected artifacts; full reproducibility data is in workspace_dir.",
+        "note": "deliver_dir contains copied final outputs; full reproducibility data (runs/snapshot/artifacts/.parallel_vibe/final) is in workspace_dir.",
     }
     (deliver_dir / "nsfc-qc_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

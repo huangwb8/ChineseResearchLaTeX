@@ -62,6 +62,10 @@
   - `scripts/materialize_final_outputs.py`：支持 `--run-dir`；metrics/artifacts 路径改为相对 run_dir；把 precheck/compile 的确定性信号映射为“底线 findings”，并注入报告表格；新增 `final/validation.json`
   - `scripts/nsfc_qc_precheck.py`、`scripts/nsfc_qc_compile.py`：compile.json 路径字段优先输出相对 out_dir（同时保留 *_abs）
 
+- **nsfc-qc v0.1.4 → v0.1.5**：默认工作区改为交付目录内隐藏目录（`.nsfc-qc/`），并减少交付目录中间文件噪声
+  - `scripts/nsfc_qc_run.py`：默认 workspace_dir 从 `QC/{run_id}.nsfc-qc/` 调整为 `QC/{run_id}/.nsfc-qc/`
+  - `scripts/nsfc_qc_run.py`：交付目录仅保留最终报告与结构化输出；预检/编译等中间 artifacts 保留在隐藏工作区 run 目录下
+
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
   - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）
