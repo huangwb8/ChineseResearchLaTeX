@@ -23,7 +23,9 @@
 
 ## nsfc-qc
 
-根据 skills/nsfc-qc/plans/实例辅助优化-v202602170903.md 优化skill；如果某些点你有更好的策略，你直接按你的想法就行，不用问我。然后，使用 auto-test-skill 优化1轮。
+---
+
+(～￣▽￣)～ 根据 skills/nsfc-qc/plans/实例辅助优化-v202602170903.md 优化skill；如果某些点你有更好的策略，你直接按你的想法就行，不用问我。然后，使用 auto-test-skill 优化1轮。
 
 ---
 
