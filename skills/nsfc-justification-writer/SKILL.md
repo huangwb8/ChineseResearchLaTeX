@@ -6,12 +6,14 @@ metadata:
   author: Bensz Conan
   short-description: 科研立项依据写作/重构
   keywords:
+    - nsfc-justification-writer
     - 立项依据
     - 科学问题
     - 假说
     - 国内外现状
     - LaTeX
   triggers:
+    - nsfc-justification-writer
     - 立项依据
     - 研究意义
     - 为什么要做
