@@ -1,0 +1,121 @@
+# nsfc-schematic 图类型模板库
+#
+# 设计原则：
+# - KISS：只覆盖最常见的 5 类原理图骨架；不追求“万能模板”。
+# - 稳健默认：当无法确定时，回退到 linear-pipeline（输入→处理→输出）。
+# - 可读性优先：模板仅约束“叙事结构/分组骨架”，具体节点与连线由规划阶段补全。
+#
+# 注意：此文件主要供 `scripts/plan_schematic.py` 在“规划模式”中选择合适的图类型；
+#       不直接参与渲染/评估流程。
+
+version: 1
+
+templates:
+  - id: model-01
+    name: 输入-处理-输出（线性流程）
+    family: linear-pipeline
+    scenarios:
+      - 算法流程
+      - 数据处理管线
+      - 实验流程的机制抽象
+    keywords:
+      - 管线
+      - 流程
+      - 预处理
+      - 特征提取
+      - 建模
+      - 推断
+      - 输出
+    blueprint:
+      groups:
+        - {id: input, label: 输入层, style: dashed-border, role: input}
+        - {id: process, label: 处理层, style: solid-border, role: process}
+        - {id: output, label: 输出层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-02
+    name: 层次架构（分层模块）
+    family: layered-arch
+    scenarios:
+      - 系统架构
+      - 分层模型
+      - 模块依赖关系
+    keywords:
+      - 架构
+      - 分层
+      - 模块
+      - 平台
+      - 系统
+      - 组件
+    blueprint:
+      groups:
+        - {id: layer_data, label: 数据层, style: dashed-border, role: input}
+        - {id: layer_rep, label: 表征层, style: solid-border, role: process}
+        - {id: layer_model, label: 模型层, style: solid-border, role: process}
+        - {id: layer_app, label: 应用层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-03
+    name: 机制环路（反馈/调控/闭环）
+    family: feedback-loop
+    scenarios:
+      - 信号通路
+      - 调控机制
+      - 闭环系统
+    keywords:
+      - 反馈
+      - 调控
+      - 闭环
+      - 回路
+      - 循环
+      - 通路
+    blueprint:
+      groups:
+        - {id: input, label: 输入/刺激, style: dashed-border, role: input}
+        - {id: process, label: 核心机制, style: solid-border, role: process}
+        - {id: output, label: 输出/表型, style: background-fill, role: output}
+      edges: feedback
+
+  - id: model-04
+    name: 并行分支（多路径/多模态）
+    family: parallel-branch
+    scenarios:
+      - 多组学/多模态
+      - 多路线并行验证
+      - 两条/多条技术路径汇合
+    keywords:
+      - 并行
+      - 多组学
+      - 多模态
+      - 多路径
+      - 两条路线
+      - 分支
+      - 融合
+    blueprint:
+      groups:
+        - {id: input, label: 输入, style: dashed-border, role: input}
+        - {id: branch_a, label: 路径A, style: solid-border, role: process}
+        - {id: branch_b, label: 路径B, style: solid-border, role: process}
+        - {id: output, label: 融合输出, style: background-fill, role: output}
+      edges: parallel_merge
+
+  - id: model-05
+    name: 中心辐射（核心-外围）
+    family: hub-spoke
+    scenarios:
+      - 核心机制与多个下游效应
+      - 核心算法模块连接多个任务/应用
+    keywords:
+      - 核心
+      - 枢纽
+      - 下游
+      - 辐射
+      - 多任务
+      - 多应用
+    blueprint:
+      groups:
+        - {id: input, label: 上游输入, style: dashed-border, role: input}
+        - {id: hub, label: 核心枢纽, style: solid-border, role: process}
+        - {id: output, label: 下游效应, style: background-fill, role: output}
+      edges: hub_spoke
+

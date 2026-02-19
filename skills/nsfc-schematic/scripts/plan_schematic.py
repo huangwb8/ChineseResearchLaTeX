@@ -7,13 +7,214 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from extract_from_tex import extract_research_content_section, extract_research_terms, find_candidate_tex
-from utils import dump_yaml, fatal, info, load_yaml, read_text, skill_root, warn, write_text
+from utils import dump_yaml, fatal, info, is_safe_relative_path, load_yaml, read_text, skill_root, warn, write_text
 
 
 @dataclass(frozen=True)
 class CheckResult:
     level: str  # OK|WARN|P1|P0
     message: str
+
+
+@dataclass(frozen=True)
+class TemplateModel:
+    id: str
+    name: str
+    family: str
+    keywords: List[str]
+    blueprint: Dict[str, Any]
+
+
+@dataclass(frozen=True)
+class TemplateSelection:
+    selected: TemplateModel
+    reason: str
+    matched_keywords: List[str]
+    top_candidates: List[Tuple[TemplateModel, int]]
+
+
+def _load_template_models(config: Dict[str, Any]) -> List[TemplateModel]:
+    """
+    Load templates from references/models/templates.yaml (or planning.models_file).
+    Keep it deterministic and resilient: invalid entries are skipped with WARN.
+    """
+    planning = config.get("planning", {}) if isinstance(config.get("planning"), dict) else {}
+    rel = str(planning.get("models_file", "references/models/templates.yaml")).strip() or "references/models/templates.yaml"
+    if not is_safe_relative_path(rel):
+        warn(f"planning.models_file 不安全（已忽略，回退默认模板库）：{rel!r}")
+        rel = "references/models/templates.yaml"
+
+    root = skill_root()
+    path = root / rel
+    if not path.exists():
+        warn(f"未找到模板库文件：{path}（将仅使用内置线性模板兜底）")
+        return []
+
+    data = load_yaml(path)
+    raw = data.get("templates") if isinstance(data, dict) else None
+    if not isinstance(raw, list) or not raw:
+        warn(f"模板库文件格式不合法或为空：{path}（将仅使用内置线性模板兜底）")
+        return []
+
+    out: List[TemplateModel] = []
+    for i, item in enumerate(raw, start=1):
+        if not isinstance(item, dict):
+            continue
+        tid = str(item.get("id", "")).strip()
+        name = str(item.get("name", "")).strip()
+        family = str(item.get("family", "")).strip()
+        if not tid or not name or not family:
+            warn(f"模板条目缺少必填字段（id/name/family），已跳过：templates[{i}]")
+            continue
+        kws = item.get("keywords", [])
+        if not isinstance(kws, list):
+            kws = []
+        keywords = [str(k).strip() for k in kws if isinstance(k, (str, int, float)) and str(k).strip()]
+        blueprint = item.get("blueprint") if isinstance(item.get("blueprint"), dict) else {}
+        out.append(TemplateModel(id=tid, name=name, family=family, keywords=keywords, blueprint=blueprint))
+
+    return out
+
+
+def _select_template_model(
+    models: List[TemplateModel],
+    template_ref: Optional[str],
+    combined_text: str,
+    extracted_terms: List[str],
+) -> TemplateSelection:
+    """
+    Deterministic template selection:
+    1) explicit template_ref (id or family)
+    2) keyword scoring
+    3) fallback to linear-pipeline (model-01) or the first model
+    """
+    ref = (template_ref or "").strip()
+    ref_low = ref.lower()
+
+    def choose(model: TemplateModel, reason: str, matched: Optional[List[str]] = None, scored: Optional[List[Tuple[TemplateModel, int]]] = None) -> TemplateSelection:
+        return TemplateSelection(
+            selected=model,
+            reason=reason,
+            matched_keywords=matched or [],
+            top_candidates=scored or [],
+        )
+
+    # 1) explicit ref
+    if ref:
+        for m in models:
+            if m.id.lower() == ref_low or m.family.lower() == ref_low:
+                return choose(m, reason=f"用户指定 template_ref={ref}", matched=[], scored=[])
+        warn(f"未识别的 template_ref：{ref!r}（将尝试自动选择）")
+
+    # 2) keyword scoring
+    text_low = (combined_text or "").lower()
+    terms_low = " ".join([t.lower() for t in extracted_terms if isinstance(t, str)])
+
+    scored: List[Tuple[TemplateModel, int, List[str]]] = []
+    for m in models:
+        score = 0
+        matched: List[str] = []
+        for kw in m.keywords:
+            k = kw.strip()
+            if not k:
+                continue
+            k_low = k.lower()
+            hit = False
+            if k_low in text_low:
+                score += 2
+                hit = True
+            if k_low in terms_low:
+                score += 3
+                hit = True
+            if hit:
+                matched.append(k)
+        scored.append((m, score, matched))
+
+    scored_sorted = sorted(scored, key=lambda x: (-x[1], x[0].id))
+    top = [(m, s) for (m, s, _mk) in scored_sorted[:5] if s > 0]
+    if scored_sorted and scored_sorted[0][1] > 0:
+        m0, s0, mk0 = scored_sorted[0]
+        reason = f"自动选择：关键词命中得分最高（score={s0}）"
+        return choose(m0, reason=reason, matched=mk0[:8], scored=top)
+
+    # 3) fallback
+    fallback = next((m for m in models if m.family == "linear-pipeline" or m.id == "model-01"), None)
+    if fallback is None and models:
+        fallback = models[0]
+    if fallback is None:
+        # Hard fallback: minimal built-in linears.
+        fallback = TemplateModel(
+            id="model-01",
+            name="输入-处理-输出（线性流程）",
+            family="linear-pipeline",
+            keywords=[],
+            blueprint={
+                "groups": [
+                    {"id": "input", "label": "输入层", "style": "dashed-border", "role": "input"},
+                    {"id": "process", "label": "处理层", "style": "solid-border", "role": "process"},
+                    {"id": "output", "label": "输出层", "style": "background-fill", "role": "output"},
+                ],
+                "edges": "linear",
+            },
+        )
+    return choose(fallback, reason="无法可靠判定模板，回退线性流程（稳健默认）", matched=[], scored=[])
+
+
+def _term_key(s: str) -> str:
+    """
+    Conservative normalization for “术语一致性”提示（warning only）：
+    - 去空白/标点/大小写差异
+    - 移除少量常见虚词（避免误报过多）
+    """
+    x = (s or "").strip().lower()
+    x = re.sub(r"[\s\-_:/,，。;；（）()【】\\[\\]{}<>“”\"'`]+", "", x)
+    # Remove very common suffix/prefix tokens; keep short list to avoid overreach.
+    x = re.sub(r"(数据|信息|特征|方法|算法|模型|模块|系统|平台|流程)$", "", x)
+    return x
+
+
+def _term_consistency_checks(spec: Dict[str, Any]) -> List[CheckResult]:
+    root = spec.get("schematic", spec)
+    if not isinstance(root, dict):
+        return []
+    groups = root.get("groups")
+    if not isinstance(groups, list):
+        return []
+
+    labels: List[str] = []
+    for g in groups:
+        if not isinstance(g, dict):
+            continue
+        glabel = g.get("label")
+        if isinstance(glabel, str) and glabel.strip():
+            labels.append(glabel.strip())
+        children = g.get("children")
+        if not isinstance(children, list):
+            continue
+        for c in children:
+            if not isinstance(c, dict):
+                continue
+            lab = c.get("label")
+            if isinstance(lab, str) and lab.strip():
+                labels.append(lab.strip())
+
+    buckets: Dict[str, List[str]] = {}
+    for lab in labels:
+        k = _term_key(lab)
+        if not k:
+            continue
+        buckets.setdefault(k, [])
+        if lab not in buckets[k]:
+            buckets[k].append(lab)
+
+    results: List[CheckResult] = []
+    for k, vals in buckets.items():
+        if len(vals) <= 1:
+            continue
+        # “同一概念多种叫法”只能做弱提示：只提示、不中断。
+        msg = "术语可能不一致（疑似同一概念多种写法）： " + " / ".join(vals[:4])
+        results.append(CheckResult(level="WARN", message=msg))
+    return results
 
 
 def _load_yaml_text(text: str) -> Dict[str, Any]:
@@ -81,19 +282,26 @@ def _split_terms_to_groups(terms: List[str]) -> Tuple[List[str], List[str], List
     return input_terms, process_terms, output_terms
 
 
-def _build_spec_draft(config: Dict[str, Any], terms: List[str]) -> Dict[str, Any]:
+def _build_spec_draft(config: Dict[str, Any], terms: List[str], template: Optional[TemplateModel] = None) -> Dict[str, Any]:
     planning = config.get("planning", {}) if isinstance(config.get("planning"), dict) else {}
     defaults = planning.get("defaults", {}) if isinstance(planning.get("defaults"), dict) else {}
 
     title = str(defaults.get("title", "NSFC 原理图（规划草案）"))
     direction = str(defaults.get("direction", config.get("layout", {}).get("direction", "top-to-bottom")))
 
-    group_defs = defaults.get("groups")
+    # Group blueprint: template -> planning.defaults -> built-in I/P/O fallback
+    group_defs = None
+    if template and isinstance(template.blueprint, dict):
+        bp_groups = template.blueprint.get("groups")
+        if isinstance(bp_groups, list) and bp_groups:
+            group_defs = bp_groups
+    if group_defs is None:
+        group_defs = defaults.get("groups")
     if not isinstance(group_defs, list) or not group_defs:
         group_defs = [
-            {"id": "input", "label": "输入层", "style": "dashed-border"},
-            {"id": "process", "label": "处理层", "style": "solid-border"},
-            {"id": "output", "label": "输出层", "style": "background-fill"},
+            {"id": "input", "label": "输入层", "style": "dashed-border", "role": "input"},
+            {"id": "process", "label": "处理层", "style": "solid-border", "role": "process"},
+            {"id": "output", "label": "输出层", "style": "background-fill", "role": "output"},
         ]
 
     max_terms = (
@@ -163,7 +371,7 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str]) -> Dict[str, Any
 
         glabel = str(gd.get("label", raw_id)).strip() or raw_id
         gstyle = str(gd.get("style", "solid-border")).strip() or "solid-border"
-        role = "process"
+        role = str(gd.get("role", "process")).strip() or "process"
         if gid == "input" or "输入" in glabel:
             role = "input"
         if gid == "output" or "输出" in glabel:
@@ -304,24 +512,44 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str]) -> Dict[str, Any
         for a, b in zip(ids, ids[1:]):
             edges.append({"from": a, "to": b, "style": "solid"})
 
-    # Between-group links.
-    for prev_gid, next_gid in zip(ordered_gids, ordered_gids[1:]):
-        prev_last = last_node_id(prev_gid)
-        next_first = first_node_id(next_gid)
-        if not prev_last or not next_first:
-            continue
-        style = "thick" if next_gid == output_gid else "solid"
-        edges.append({"from": prev_last, "to": next_first, "style": style})
+    # Between-group links (template-aware).
+    edge_mode = ""
+    if template and isinstance(template.blueprint, dict):
+        edge_mode = str(template.blueprint.get("edges", "")).strip().lower()
 
-    # Optional auxiliary: other input nodes -> first node of the first process group.
-    first_process_gid = next((gid for gid in ordered_gids if gid not in (input_gid, output_gid)), None)
-    if first_process_gid:
-        target = first_node_id(first_process_gid)
+    def _link_group(prev_gid: str, next_gid: str, style: str = "solid", label: str = "") -> None:
+        a = last_node_id(prev_gid)
+        b = first_node_id(next_gid)
+        if not a or not b:
+            return
+        e: Dict[str, Any] = {"from": a, "to": b, "style": style}
+        if label:
+            e["label"] = label
+        edges.append(e)
+
+    if edge_mode in {"parallel_merge"}:
+        # Expect: input -> branch_a/branch_b -> output
+        # We treat all non-(input/output) groups as branches; connect input to each branch, then each branch to output.
+        branch_gids = [gid for gid in ordered_gids if gid not in (input_gid, output_gid)]
+        for bg in branch_gids:
+            _link_group(input_gid, bg, style="solid")
+        for bg in branch_gids:
+            _link_group(bg, output_gid, style="thick")
+    else:
+        # Default: chain in ordered_gids
+        for prev_gid, next_gid in zip(ordered_gids, ordered_gids[1:]):
+            style = "thick" if next_gid == output_gid else "solid"
+            _link_group(prev_gid, next_gid, style=style)
+
+    # Optional auxiliary: other input nodes -> first node of the first process/branch group.
+    first_mid_gid = next((gid for gid in ordered_gids if gid not in (input_gid, output_gid)), None)
+    if first_mid_gid:
+        target = first_node_id(first_mid_gid)
         if target:
             for nid in all_node_ids(input_gid)[1:]:
                 edges.append({"from": nid, "to": target, "style": "dashed", "label": "辅助输入"})
 
-    # Optional: last process -> other outputs.
+    # Optional: last process/branch -> other outputs.
     last_process_gid = None
     for gid in reversed(ordered_gids):
         if gid not in (input_gid, output_gid):
@@ -332,6 +560,24 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str]) -> Dict[str, Any
         if src:
             for nid in all_node_ids(output_gid)[1:]:
                 edges.append({"from": src, "to": nid, "style": "solid"})
+
+    # Template-specific extra edges (weak heuristics; user can edit spec_draft.yaml later).
+    if edge_mode in {"feedback"}:
+        # Add a single feedback edge: first output -> first process (dashed + label)
+        proc_gid = next((gid for gid in ordered_gids if gid not in (input_gid, output_gid)), None)
+        if proc_gid:
+            out0 = first_node_id(output_gid)
+            proc0 = first_node_id(proc_gid)
+            if out0 and proc0:
+                edges.append({"from": out0, "to": proc0, "style": "dashed", "label": "反馈/调控"})
+    if edge_mode in {"hub_spoke"}:
+        # Connect hub (first node of first process group) to every output node (spokes).
+        hub_gid = next((gid for gid in ordered_gids if gid not in (input_gid, output_gid)), None)
+        if hub_gid:
+            hub = first_node_id(hub_gid)
+            if hub:
+                for nid in all_node_ids(output_gid):
+                    edges.append({"from": hub, "to": nid, "style": "solid"})
 
     # De-duplicate edges while preserving order to avoid noisy/over-dense specs.
     deduped: List[Dict[str, Any]] = []
@@ -352,7 +598,7 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str]) -> Dict[str, Any
         deduped.append(e)
     edges = deduped
 
-    return {
+    out = {
         "schematic": {
             "title": title,
             "direction": direction,
@@ -360,6 +606,11 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str]) -> Dict[str, Any
             "edges": edges,
         }
     }
+    if template:
+        # Extra meta keys are ignored by spec_parser; keep them for human review in planning stage.
+        out["schematic"]["template_ref"] = template.id
+        out["schematic"]["template_family"] = template.family
+    return out
 
 
 def _run_checks(config: Dict[str, Any], spec: Dict[str, Any]) -> List[CheckResult]:
@@ -466,6 +717,9 @@ def _run_checks(config: Dict[str, Any], spec: Dict[str, Any]) -> List[CheckResul
         else:
             results.append(CheckResult(level="OK", message=f"输入/输出节点：input={input_nodes}, output={output_nodes}（OK）"))
 
+    # Warning-only: terminology consistency hints.
+    results.extend(_term_consistency_checks(spec))
+
     return results
 
 
@@ -475,6 +729,7 @@ def _format_plan_md(
     extracted_terms: List[str],
     spec: Dict[str, Any],
     checks: List[CheckResult],
+    selection: Optional[TemplateSelection],
 ) -> str:
     planning = config.get("planning", {}) if isinstance(config.get("planning"), dict) else {}
     defaults = planning.get("defaults", {}) if isinstance(planning.get("defaults"), dict) else {}
@@ -557,11 +812,34 @@ def _format_plan_md(
             out.append(f"- [{c.level}] {c.message}")
         return out
 
+    tpl_lines: List[str] = ["## 图类型模板（建议）", ""]
+    if selection:
+        tpl_lines.append(
+            f"- selected: {selection.selected.id} / {selection.selected.family} / {selection.selected.name}"
+        )
+        tpl_lines.append(f"- reason: {selection.reason}")
+        if selection.matched_keywords:
+            tpl_lines.append(f"- matched_keywords: {', '.join(selection.matched_keywords)}")
+        if selection.top_candidates:
+            tpl_lines.append(
+                "Top candidates: " + "; ".join([f"{m.id}({s})" for (m, s) in selection.top_candidates])
+            )
+    else:
+        tpl_lines.append("- selected: （未选择模板，回退默认线性流程）")
+    tpl_lines.extend(
+        [
+            "",
+            "（如需强制指定模板：在规划命令中使用 `--template-ref model-xx`，或设置 `config.yaml:layout.template_ref`。）",
+            "",
+        ]
+    )
+
     lines: List[str] = [
         "# 原理图规划草案",
         "",
         f"- input: {source_label}",
         "",
+        *tpl_lines,
         "## 核心目标",
         "",
         "（一句话描述：这张图要传达什么核心机制/结构/因果链条？）",
@@ -606,6 +884,12 @@ def main() -> None:
     p.add_argument("--proposal", type=Path, default=None, help="标书 TEX 文件或目录（目录会自动搜索 *.tex）")
     p.add_argument("--context", type=str, default=None, help="自然语言描述（与 --proposal 二选一）")
     p.add_argument("--plan-md", type=Path, default=None, help="从已有 PLAN.md 中提取 spec 草案并导出 spec_draft.yaml")
+    p.add_argument(
+        "--template-ref",
+        type=str,
+        default=None,
+        help="规划模式：强制选择图类型模板 id/family（见 references/models/templates.yaml；默认 auto）",
+    )
     p.add_argument("--output", type=Path, required=True, help="输出目录（会写入 PLAN.md 与 spec_draft.yaml）")
     p.add_argument(
         "--no-workspace-plan",
@@ -662,6 +946,7 @@ def main() -> None:
     source_label = ""
     extracted_terms: List[str] = []
     used_ai_spec = False
+    combined_text = ""
 
     if args.context:
         source_label = "context"
@@ -669,23 +954,55 @@ def main() -> None:
         # We reuse extract_research_terms interface by writing a tiny temp-like path? Keep it simple: just split.
         chunks = re.split(r"[。\n；;]+", args.context)
         extracted_terms = [c.strip() for c in chunks if 2 <= len(c.strip()) <= 36][:max_terms]
+        combined_text = args.context
     else:
         proposal = args.proposal
         if proposal is None:
             fatal("proposal 为空（内部错误）")
         if not proposal.exists():
             fatal(f"proposal 不存在：{proposal}")
-        tex_path = find_candidate_tex(proposal)
-        if tex_path is None:
+
+        def collect_tex_sources(p0: Path) -> List[Path]:
+            if p0.is_file():
+                return [p0]
+            # Prefer the NSFC template structure: extraTex/1.1.立项依据.tex + extraTex/2.1.研究内容.tex
+            base = p0
+            candidates = [
+                base / "extraTex" / "1.1.立项依据.tex",
+                base / "extraTex" / "2.1.研究内容.tex",
+                base / "extraTex" / "2.研究内容.tex",
+                base / "extraTex" / "研究内容.tex",
+            ]
+            out = [c for c in candidates if c.exists() and c.is_file()]
+            # De-dup while preserving order.
+            seen: set[str] = set()
+            uniq: List[Path] = []
+            for c in out:
+                k = str(c.resolve())
+                if k in seen:
+                    continue
+                seen.add(k)
+                uniq.append(c)
+            if uniq:
+                return uniq
+            # Fallback: pick a single representative tex.
+            one = find_candidate_tex(p0)
+            return [one] if one is not None else []
+
+        tex_sources = collect_tex_sources(proposal)
+        if not tex_sources:
             fatal(f"未在 proposal 中找到可用的 .tex：{proposal}")
-        source_label = str(tex_path)
+        source_label = " + ".join([str(p) for p in tex_sources[:3]]) + (" ..." if len(tex_sources) > 3 else "")
+
+        # Prefer "研究内容" for AI TEX extraction when available (it is usually more structured for spec drafting).
+        tex_for_ai = next((p for p in tex_sources if "研究内容" in p.name), tex_sources[0])
         eval_mode = str((config.get("evaluation", {}) or {}).get("evaluation_mode", "heuristic")).strip().lower()
         if eval_mode == "ai":
             try:
                 from ai_extract_tex import AI_TEX_RESPONSE_JSON, consume_tex_extraction, prepare_tex_extraction_request
 
                 args.output.mkdir(parents=True, exist_ok=True)
-                req, resp = prepare_tex_extraction_request(tex_path, config=config, output_dir=args.output)
+                req, resp = prepare_tex_extraction_request(tex_for_ai, config=config, output_dir=args.output)
                 payload = consume_tex_extraction(resp)
                 if payload and isinstance(payload.get("spec_draft"), dict) and payload.get("spec_draft"):
                     spec = payload["spec_draft"]
@@ -699,29 +1016,57 @@ def main() -> None:
                 warn(f"AI TEX 提取协议生成/消费失败，已降级为正则抽取（{exc}）")
 
         if not used_ai_spec:
-            extracted_terms = extract_research_terms(tex_path, max_terms=max_terms)
-            # Keep a bit more context-derived terms if possible.
-            section = extract_research_content_section(tex_path)
-            if section and len(extracted_terms) < 6:
-                extra = re.split(r"[。\n；;]+", section)
-                for c in extra:
-                    c = re.sub(r"\\[a-zA-Z]+", " ", c)
-                    c = re.sub(r"\$[^$]*\$", " ", c)
-                    c = re.sub(r"\s+", " ", c).strip(" ：:;，,")
-                    if 6 <= len(c) <= 36 and c not in extracted_terms:
-                        extracted_terms.append(c)
-                    if len(extracted_terms) >= max_terms:
+            # Merge terms from (立项依据 + 研究内容) for better narrative/template selection.
+            merged: List[str] = []
+            for tp in tex_sources:
+                for t in extract_research_terms(tp, max_terms=max_terms):
+                    if t not in merged:
+                        merged.append(t)
+                    if len(merged) >= max_terms:
                         break
+                if len(merged) >= max_terms:
+                    break
+            extracted_terms = merged[:max_terms]
+
+        # Combine text for template selection (keyword-only; keep bounded).
+        parts: List[str] = []
+        for tp in tex_sources[:2]:  # keep bounded for safety
+            try:
+                sec = extract_research_content_section(tp)
+            except Exception:
+                sec = ""
+            if sec:
+                parts.append(sec[:20000])
+        combined_text = "\n\n".join(parts)
+
+    # Template selection (always available; for AI spec it is a human-facing guide).
+    models = _load_template_models(config)
+    cfg_ref = str((config.get("layout", {}) or {}).get("template_ref", "auto")).strip()
+    if cfg_ref.lower() == "auto":
+        cfg_ref = ""
+    sel = _select_template_model(models, args.template_ref or cfg_ref, combined_text, extracted_terms)
 
     if not used_ai_spec:
-        spec = _build_spec_draft(config, extracted_terms)
+        spec = _build_spec_draft(config, extracted_terms, template=sel.selected)
+    else:
+        root = spec.get("schematic") if isinstance(spec.get("schematic"), dict) else None
+        if root is not None:
+            root["template_ref"] = sel.selected.id
+            root["template_family"] = sel.selected.family
     checks = _run_checks(config, spec)
 
     args.output.mkdir(parents=True, exist_ok=True)
     plan_path = args.output / plan_name
     spec_out = args.output / spec_name
 
-    plan_md = _format_plan_md(config, source_label=source_label, extracted_terms=extracted_terms, spec=spec, checks=checks)
+    plan_md = _format_plan_md(
+        config,
+        source_label=source_label,
+        extracted_terms=extracted_terms,
+        spec=spec,
+        checks=checks,
+        selection=sel,
+    )
     write_text(plan_path, plan_md)
     write_text(spec_out, dump_yaml(spec))
     workspace_plan_written = False

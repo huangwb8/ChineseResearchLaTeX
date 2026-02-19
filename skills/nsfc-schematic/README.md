@@ -11,6 +11,7 @@
 - 支持分组（输入层/处理层/输出层）+ 任意连线
 - 多轮评估-优化循环（默认 5 轮），自动提升图面质量
 - 节点文案自动扩容，避免导出后文字溢出/遮挡
+- 图类型模板库（5 类常用骨架）+ 规划阶段自动选型，提升“第一次就画对”的概率
 - 输出 draw.io 源文件，可继续人工微调
 
 **重要声明**：本技能仅用于科研写作与可视化表达优化，不代表任何官方评审口径或资助结论。
@@ -65,7 +66,7 @@ schematic_output/
 ├── schematic.drawio         # 可编辑源文件（推荐用 draw.io 打开）
 ├── schematic.svg            # 矢量图（优先用于 LaTeX/Word 嵌入）
 ├── schematic.png            # 预览图
-├── schematic.pdf            # 可选（若启用）
+├── schematic.pdf            # 默认尝试导出（需 draw.io CLI；否则仅导出 svg/png）
 └── .nsfc-schematic/         # 隐藏目录（中间产物）
     ├── optimization_report.md
     ├── spec_latest.yaml
@@ -97,6 +98,8 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
+当 `--proposal` 为目录且包含标准 NSFC 结构（如 `extraTex/1.1.立项依据.tex` + `extraTex/2.1.研究内容.tex`）时，规划阶段会优先综合提取两者用于术语提示与模板选型。
+
 或用自然语言描述：
 
 ```bash
@@ -107,18 +110,31 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
 
 该命令除了写入 `schematic_plan/PLAN.md`，还会在**当前工作目录**额外输出一份扁平交付文件：`schematic-plan.md`（默认覆盖更新；如不需要可加 `--no-workspace-plan`）。
 
-### 步骤 2：审阅规划
+### 步骤 2：选图类型模板（可选但推荐）
+
+规划脚本会自动在 5 类常用骨架中选择最合适的图类型（无法判定时回退线性流程）。如需强制指定：
+
+```bash
+python3 nsfc-schematic/scripts/plan_schematic.py \
+  --proposal /path/to/proposal/ \
+  --template-ref model-03 \
+  --output ./schematic_plan/
+```
+
+模板库见：`nsfc-schematic/references/models/templates.yaml`。
+
+### 步骤 3：审阅规划
 
 打开 `schematic-plan.md`（推荐，便于审阅）或 `schematic_plan/PLAN.md`，确认：
 - 模块划分是否合理
 - 节点命名是否与正文一致
 - 连线关系是否准确
 
-### 步骤 3：按需修改 spec
+### 步骤 4：按需修改 spec
 
 编辑 `schematic_plan/spec_draft.yaml`，调整节点、连线、分组。
 
-### 步骤 4：生成原理图
+### 步骤 5：生成原理图
 
 ```bash
 python3 nsfc-schematic/scripts/generate_schematic.py \
@@ -167,7 +183,7 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 
 ## AI 自主评估模式（离线协议）
 
-默认评估为 AI 离线协议模式（`config.yaml:evaluation.evaluation_mode: ai`）。如需强制恢复纯启发式评估，可设置为 `heuristic`。
+默认评估为启发式模式（`config.yaml:evaluation.evaluation_mode: heuristic`）。如需启用 AI 离线协议增强，可设置为 `ai`（无响应自动回退启发式，保证生成流程可跑通）。
 
 - 开关：`config.yaml:evaluation.evaluation_mode: ai`
 - 产物：在每个 `round_*/_candidates/cand_*/` 下生成

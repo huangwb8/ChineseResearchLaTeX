@@ -39,6 +39,7 @@ metadata:
 - `output_dir`：输出目录（可选；默认使用 `config.yaml:output.dirname`，相对当前工作目录）
 - `config`：配置文件路径（可选；默认使用技能自带 `nsfc-schematic/config.yaml`；用于为某个项目单独覆盖 `output.hide_intermediate` 等参数）
 - `context`：自然语言机制描述（仅用于“规划模式”；由 `plan_schematic.py` 生成规划草案与 spec 草案）
+- `template_ref`：图类型模板 id/family（可选；用于“规划模式”强制指定图的叙事骨架；默认 auto，见 `references/models/templates.yaml`）
 
 ## 输出
 
@@ -65,7 +66,7 @@ metadata:
 - `critique_structure.json / critique_visual.json / critique_readability.json`：多维度批判性自检证据（`evaluation.multi_round_self_check`；仅在启发式评估或 AI 回退路径下生成，避免与 AI 口径重复扣分）
 - `_candidates/`：每轮有限候选对比（`evaluation.exploration.candidates_per_round`）
 
-当 `config.yaml:evaluation.evaluation_mode=ai` 时（默认），脚本会输出离线协议文件（脚本不在本地调用外部模型）：
+当 `config.yaml:evaluation.evaluation_mode=ai` 时（可选增强），脚本会输出离线协议文件（脚本不在本地调用外部模型）：
 - `round_*/_candidates/cand_*/ai_eval_request.md` + `ai_eval_response.json`：AI 评估请求/响应（主评估）
 - `run_*/ai_tex_request.md` + `ai_tex_response.json`：当输入来自 TEX 且未提供 spec_file 时，用于“AI 直接读 TEX → 生成 spec 草案”的离线请求/响应（如未响应则自动降级为正则抽取）
 
@@ -81,22 +82,24 @@ metadata:
 - `renderer`：画布尺寸、字体、渲染行为
 - `renderer.drawio`：draw.io CLI 缺失时的提示/（可选）自动安装策略
 - `layout`：自动布局参数
+- `layout.template_ref`：图类型模板（`auto` 或 `model-xx`；主要用于规划阶段的模板选择，见 `references/models/templates.yaml`）
 - `layout.title`：是否将 `spec.title` 落图，以及为标题预留的顶部空间（避免标题配置僵尸化）
 - `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
 - `layout.auto_expand_canvas`：当节点/分组被自动扩容后，是否自动扩展画布以避免越界
 - `layout.font.edge_label_size`：连线标签字号（edge label 不会自动跟随 `node_label_size`，需单独配置）
 - `color_scheme`：配色方案
 - `evaluation`：评分阈值、停止策略（stop_strategy）、权重与多轮探索参数
-- `evaluation.evaluation_mode`：评估模式（`ai` 默认：输出离线 AI 协议文件并消费宿主 AI 响应；无响应则自动降级为启发式评估）
+- `evaluation.evaluation_mode`：评估模式（默认 `heuristic`；`ai` 为可选增强：输出离线 AI 协议文件并消费宿主 AI 响应；无响应则自动降级）
 - `evaluation.thresholds.min_edge_font_px/warn_edge_font_px`：连线标签字号门禁阈值（含缩印等效字号检查）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
+- `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
 
 ### 规划模式（推荐首次使用）
 
 当用户首次为标书生成原理图时，推荐先“规划 → 审阅 → 再生成”：
 
-1. 生成规划草案与 spec 草案：
+1. 调查标书并生成规划草案与 spec 草案（脚本会综合提取“立项依据 + 研究内容/技术路线”，以增强叙事结构判断）：
 
 ```bash
 python3 nsfc-schematic/scripts/plan_schematic.py \
@@ -112,10 +115,21 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-2. 审阅 `schematic-plan.md`（工作区交付文件）或 `schematic_plan/PLAN.md`：确认模块划分、节点清单、连接关系与布局建议是否合理。
-3. 按审阅结论修改 `schematic_plan/spec_draft.yaml`（建议把“节点命名/连线语义”在此阶段定稿）。
+2. 选图类型模板（脚本默认自动选择；如需强制指定）：
+
+```bash
+python3 nsfc-schematic/scripts/plan_schematic.py \
+  --proposal /path/to/proposal/ \
+  --template-ref model-03 \
+  --output ./schematic_plan/
+```
+
+模板库见：`nsfc-schematic/references/models/templates.yaml`（5 类常用骨架，无法判定时回退线性流程）。
+
+3. 审阅 `schematic-plan.md`（工作区交付文件）或 `schematic_plan/PLAN.md`：确认模块划分、节点清单、连接关系与布局建议是否合理。
+4. 按审阅结论修改 `schematic_plan/spec_draft.yaml`（建议把“节点命名/连线语义”在此阶段定稿）。
    - 如需手动起草规划草案，可参考：`nsfc-schematic/references/plan_template.md`
-4. 用 `generate_schematic.py` 进入多轮生成与优化：
+5. 用 `generate_schematic.py` 进入多轮生成与优化：
 
 ```bash
 python3 nsfc-schematic/scripts/generate_schematic.py \
@@ -197,3 +211,12 @@ AI 自主评估模式（离线协议）
 - 版本号仅记录在 `config.yaml:skill_info.version`。
 - 修改脚本后至少运行 1 组示例（`references/spec_examples/*.yaml`）。
 - 新增/调整输出字段时同步更新 README 与 CHANGELOG。
+
+## 交付与自检（交付前必须过）
+
+- A4/屏幕可读（不依赖放大）
+- 主流向清晰（上→下 或 左→右）
+- 配色 ≤ 3 种主色调（允许辅助灰）
+- 节点命名与正文一致
+- 输出包含 `schematic.drawio` 与至少一种可嵌入格式（svg 或 png）
+- 连线标签可读（缩印后等效字号 ≥ 10px）

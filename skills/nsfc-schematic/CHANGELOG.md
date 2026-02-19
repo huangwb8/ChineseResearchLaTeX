@@ -6,6 +6,25 @@
 
 （暂无）
 
+## [0.8.1] - 2026-02-19
+
+### Added（新增）
+
+- `references/models/templates.yaml`：新增图类型模板库（5 类常用骨架），用于规划阶段自动选型/强制指定。
+- `scripts/plan_schematic.py`：新增 `--template-ref`，支持在规划阶段强制指定图类型模板。
+
+### Changed（变更）
+
+- `scripts/plan_schematic.py`：`proposal_path` 场景优先综合提取“立项依据 + 研究内容”，提升模板选择与叙事结构的全面性。
+- `config.yaml`：新增 `layout.template_ref`（默认 `auto`）与 `planning.models_file`（默认指向模板库文件）。
+- `config.yaml`：`evaluation.evaluation_mode` 默认改为 `heuristic`（`ai` 作为可选增强）。
+- `config.yaml`：默认启用 PDF 导出（若检测到 draw.io CLI 则导出；否则保持 svg/png 交付）。
+- `SKILL.md` / `README.md`：补齐“模板选择”工作流与交付自检清单，更新评估模式默认值说明。
+
+### Fixed（修复）
+
+- `scripts/spec_parser.py`：增加保守的“术语一致性”提示（warning-only），帮助早期发现同一概念多种写法风险（不影响解析/渲染）。
+
 ## [0.8.0] - 2026-02-16
 
 ### Added（新增）

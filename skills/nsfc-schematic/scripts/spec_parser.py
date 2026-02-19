@@ -596,6 +596,42 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
     else:
         edges = _auto_edges(groups)
 
+    # Warning-only: conservative “术语一致性”提示（不影响解析结果）。
+    # 目的：帮助用户在规划阶段避免同一概念出现多种写法（会降低评审阅读一致性）。
+    try:
+        from utils import warn  # local import to keep spec_parser usable as a standalone module
+
+        def term_key(s: str) -> str:
+            x = (s or "").strip().lower()
+            x = re.sub(r"[\s\-_:/,，。;；（）()【】\[\]{}<>“”\"'`]+", "", x)
+            x = re.sub(r"(数据|信息|特征|方法|算法|模型|模块|系统|平台|流程)$", "", x)
+            return x
+
+        labels: List[str] = []
+        for g in groups:
+            if g.label.strip():
+                labels.append(g.label.strip())
+            for n in g.children:
+                if n.label.strip():
+                    labels.append(n.label.strip())
+
+        buckets: Dict[str, List[str]] = {}
+        for lab in labels:
+            k = term_key(lab)
+            if not k:
+                continue
+            buckets.setdefault(k, [])
+            if lab not in buckets[k]:
+                buckets[k].append(lab)
+
+        for _k, vals in buckets.items():
+            if len(vals) <= 1:
+                continue
+            warn("术语可能不一致（疑似同一概念多种写法）： " + " / ".join(vals[:4]))
+    except Exception:
+        # Never block parsing due to warning logic.
+        pass
+
     return SchematicSpec(
         title=title,
         canvas_width=canvas_w,

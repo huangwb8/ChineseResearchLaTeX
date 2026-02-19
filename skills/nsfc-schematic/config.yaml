@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.8.0
+  version: 0.8.1
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -24,7 +24,7 @@ renderer:
   svg:
     enabled: true
   pdf:
-    enabled: false
+    enabled: true
   stroke:
     width_px: 2
   fonts:
@@ -41,6 +41,10 @@ renderer:
 
 layout:
   direction: top-to-bottom
+  # 图类型模板（用于规划阶段的“模板选择”；不改变 spec 语法，属于布局/叙事层约束）
+  # - auto：由 `plan_schematic.py` 基于“立项依据+研究内容/自然语言”自动选择
+  # - model-xx：强制使用某个模板（见 references/models/templates.yaml）
+  template_ref: auto
   auto_expand_canvas: true
   title:
     enabled: true
@@ -84,7 +88,7 @@ color_scheme:
   name: academic-blue
 
 evaluation:
-  evaluation_mode: ai  # heuristic|ai（ai 模式默认：输出离线 AI 协议文件 ai_eval_request.md/ai_eval_response.json；无响应时自动降级）
+  evaluation_mode: heuristic  # heuristic|ai（ai 模式：输出离线 AI 协议文件 ai_eval_request.md/ai_eval_response.json；无响应时自动降级）
   max_rounds: 5
   multi_round_self_check:
     enabled: true
@@ -164,6 +168,7 @@ output:
 planning:
   # 规划阶段：从 TEX/自然语言生成“规划草案（PLAN.md）+ spec 草案（spec_draft.yaml）”
   # 说明：脚本不在本地直接调用 LLM；AI 语义理解由宿主 AI 完成，脚本负责结构模板与确定性校验。
+  models_file: references/models/templates.yaml
   output:
     plan_filename: PLAN.md
     spec_filename: spec_draft.yaml
