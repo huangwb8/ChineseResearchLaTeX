@@ -119,6 +119,11 @@
   - 新增 TEX → spec 的 AI 离线提取协议（`ai_tex_request.md`/`ai_tex_response.json`），无响应自动降级
   - AI 主评估生效时默认跳过多维度启发式扣分，避免重复扣分导致口径漂移
 
+- **nsfc-schematic v0.8.0 → v0.8.1**：规划阶段引入“图类型模板库”与稳健默认值
+  - `references/models/templates.yaml`：新增 5 类常用图类型模板（线性/分层/反馈/并行/中心辐射）
+  - `plan_schematic.py`：`proposal_path` 场景综合提取“立项依据 + 研究内容”，并支持 `--template-ref` 强制指定模板
+  - `evaluation.evaluation_mode` 默认改为 `heuristic`（`ai` 作为可选增强），默认启用 PDF 导出（需 draw.io CLI）
+
 - 更新 `.gitignore`：忽略 `projects/**/.nsfc-qc/`（nsfc-qc 的运行产物与报告目录），避免污染工作区
 
 - 更新 `.gitignore`：修正 `/tests/` 仅忽略根目录 `tests/`，并放行 `skills/nsfc-justification-writer` 的 `plans/`、`tests/` 进入版本控制（中间产物目录仍默认忽略）

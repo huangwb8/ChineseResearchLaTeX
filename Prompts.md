@@ -3,9 +3,9 @@
 # Skills 开发
 
 
-## Skills开发
+# Skills开发
 
-## 摘要skill
+# 摘要skill
 
 根据/Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/materials/标书写作技巧.md 里关于摘要的写作技巧，开发一个名为 `nsfc-abstract` 的skill，保存在 ./skills/nsfc-abstract。 它的作用是： 根据用户提供的内容写标书的中文、英文摘要。 一般有以下要求：
 - 要提供中文、英文两个版本。 英文是中文的翻译版
@@ -13,7 +13,7 @@
 - 遵守 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/skills/AGENTS.md 的开发规范
 先开发一个demo,然后使用 auto-test-skill 优化1次； 其中的p0-p2级的问题全部都要落实
 
-## 综述skill
+# 综述skill
 
 - 根据 skills/systematic-literature-review/plans/文献-优化-v202601251638.md 优化skill；如果某些点你有更好的策略，你直接按你的想法就行，不用问我。然后，使用 auto-test-skill 优化1轮。 最后，该skill版本升级为 1.0.9。
 
@@ -21,9 +21,12 @@
 
 - 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
 
-## nsfc-roadmap
+# nsfc-schematic
 
+PlanName = 借鉴roadmap-优化-v202602191311
+按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 
+# nsfc-roadmap
 
 ---
 
@@ -36,7 +39,7 @@
   - 根据`roadmap-plan.md`生成`spec.yaml`
 - 阶段 2、3和4的目标要相应调整，因为阶段1有重大变化
 
-## nsfc-qc
+# nsfc-qc
 
 ---
 
@@ -71,12 +74,12 @@
 - nsfc-qc 对标书内容是只读的，工作过程中不能修改标书的内容。因为它的qc report还需要被进一步审核。
 
 
-## nsfc-justification-writer
+# nsfc-justification-writer
 
 请在彻底了解 skills/nsfc-justification-writer 的工作代码/文件后回答： 目前skill的开发度如何？有哪些缺陷？如果有，请指出并将改良计划保存在 plans/v2026010xxxxx.md 里。
 
 
-## complete_example
+# complete_example
 
 ```
 请你联网调研一下日本演员佐佐木希的发展路程。假设你要以此为题材填写 projects/NSFC_General 。 请使用 skills/complete_example 辅助工作。 最后的排版，PDF要紧凑、美观，大致维持在8页左右。
@@ -84,7 +87,7 @@
 请你联网调研一下日本演员佐佐木希的发展路程。假设你要以此为题材填写 projects/NSFC_Young 。 请使用 skills/complete_example 辅助工作。 最后的排版，PDF要紧凑、美观，大致维持在8页左右。
 ```
 
-## make_latex_model
+# make_latex_model
 
 - 正式交付项目
 
@@ -101,7 +104,7 @@
 - 在 skills/make_latex_model/tests/Auto-Test-01 生成一个测试，评估 `make_latex_model`这个skill（下称`目标skill`）的能力。 以 projects/NSFC_Young 为例，利用 projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 对 projects/NSFC_Young 进行改造（当然，不要直接改动 projects/NSFC_Young 里的原始文件 ；所有过程都在测试目录里进行）。利用 auto-test-skill 这个skill（已经安装在Claude Code/Codex里）进行自动化测试。每一轮测试完成后，目标skill都要变得更好；同时，把Auto-Test-01里上一轮测试的文件清空，在同一个测试目录里进行下一轮测试。如此循环，利用ai的智能不断地优化目标skill。直到目标skill完全正常工作或者超过10轮测试为止。
 ```
 
-## `transfer_old_latex_to_new`
+# `transfer_old_latex_to_new`
 
 - 干活
 
