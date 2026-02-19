@@ -13,7 +13,12 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from extract_from_tex import extract_item_titles, extract_research_content_section, find_candidate_tex
+from extract_from_tex import (
+    extract_item_titles,
+    extract_subsubsections,
+    find_candidate_justification_tex,
+    find_candidate_research_tex,
+)
 from utils import fatal, read_text
 
 
@@ -42,6 +47,25 @@ def _split_paragraphs(text: str, max_paragraphs: int = 12) -> List[str]:
         if len(out) >= max_paragraphs:
             break
     return out
+
+
+def _extract_tex_headings(text: str, max_titles: int = 10) -> List[str]:
+    """
+    Lightweight heading extraction for .tex to help AI planning when \\itemtitlefont is absent.
+    Order-preserving and de-duplicated.
+    """
+    titles: List[str] = []
+    for pat in (r"\\subsubsection\{([^}]*)\}", r"\\subsubsubsection\{([^}]*)\}", r"\\section\{([^}]*)\}"):
+        for m in re.finditer(pat, text):
+            t = re.sub(r"\s+", " ", (m.group(1) or "").strip())
+            t = t.strip(" ：:;，,")
+            if not t:
+                continue
+            if t not in titles:
+                titles.append(t)
+            if len(titles) >= max_titles:
+                return titles
+    return titles
 
 
 def _extract_keywords(titles: List[str], text: str, max_keywords: int = 12) -> List[str]:
@@ -78,6 +102,30 @@ def _extract_keywords(titles: List[str], text: str, max_keywords: int = 12) -> L
     return out
 
 
+def _make_section_extract(source: Path, section_names: Optional[List[str]] = None) -> Dict[str, Any]:
+    raw_full = read_text(source)
+    raw = raw_full
+    if source.suffix.lower() == ".tex" and section_names:
+        raw = extract_subsubsections(raw_full, section_names)
+
+    # Titles: prefer \\itemtitlefont items (NSFC-style); fallback to heading extraction.
+    titles = extract_item_titles(source, max_items=8) if source.suffix.lower() == ".tex" else []
+    if not titles and source.suffix.lower() == ".tex":
+        titles = _extract_tex_headings(raw_full, max_titles=10)
+
+    clean = _clean_latex(raw) if source.suffix.lower() == ".tex" else re.sub(r"\s+", " ", raw).strip()
+    paragraphs = _split_paragraphs(clean, max_paragraphs=12)
+    keywords = _extract_keywords(titles, clean, max_keywords=12)
+
+    return {
+        "source": str(source),
+        "titles": titles,
+        "paragraphs": [{"text": p, "excerpt": (p[:140] + "…") if len(p) > 140 else p} for p in paragraphs],
+        "keywords": keywords,
+        "text_excerpt": (clean[:1200] + "…") if len(clean) > 1200 else clean,
+    }
+
+
 def extract(
     proposal_path: Optional[Path] = None,
     proposal_file: Optional[Path] = None,
@@ -94,7 +142,7 @@ def extract(
         if proposal_file is not None:
             src = proposal_file
         elif proposal_path is not None:
-            src = find_candidate_tex(proposal_path)
+            src = find_candidate_research_tex(proposal_path)
         if src is None:
             fatal("无法定位 proposal 输入文件（请提供 --proposal-file 或 --proposal-path）")
         if not src.exists() or not src.is_file():
@@ -105,8 +153,10 @@ def extract(
         # Extract titles for .tex; for other types, try a lightweight heading pattern.
         if src.suffix.lower() == ".tex":
             titles = extract_item_titles(src, max_items=8)
-            # Prefer research-content section for paragraphs.
-            raw = extract_research_content_section(src)
+            # Prefer research_content + 技术路线 blocks to reduce noise for planning.
+            raw = extract_subsubsections(raw, ["研究内容", "技术路线"])
+            if not titles:
+                titles = _extract_tex_headings(raw, max_titles=10)
         else:
             # Markdown headings (## / ###) as "titles".
             for m in re.finditer(r"^\s{0,3}#{2,4}\s+(.+?)\s*$", raw, re.M):
@@ -117,16 +167,37 @@ def extract(
                     break
 
     clean = _clean_latex(raw) if src and src.suffix.lower() == ".tex" else re.sub(r"\s+", " ", raw).strip()
-    paragraphs = _split_paragraphs(raw if src and src.suffix.lower() != ".tex" else clean, max_paragraphs=12)
+    paragraphs = _split_paragraphs(clean, max_paragraphs=12)
     keywords = _extract_keywords(titles, clean, max_keywords=12)
 
-    return {
+    out: Dict[str, Any] = {
+        # Backward-compatible view: keep research_content as the default/top-level.
         "source": str(src) if src is not None else "inline_text",
         "titles": titles,
         "paragraphs": [{"text": p, "excerpt": (p[:140] + "…") if len(p) > 140 else p} for p in paragraphs],
         "keywords": keywords,
         "text_excerpt": (clean[:1200] + "…") if len(clean) > 1200 else clean,
     }
+
+    # Extra planning context (when proposal_path is available).
+    if proposal_path is not None and proposal_path.exists() and proposal_path.is_dir():
+        j = find_candidate_justification_tex(proposal_path)
+        r = find_candidate_research_tex(proposal_path)
+        sections: Dict[str, Any] = {}
+        sources: Dict[str, str] = {}
+
+        if j is not None and j.exists() and j.is_file():
+            sections["justification"] = _make_section_extract(j, section_names=None)
+            sources["justification"] = str(j)
+        if r is not None and r.exists() and r.is_file():
+            sections["research_content"] = _make_section_extract(r, section_names=["研究内容", "技术路线"])
+            sources["research_content"] = str(r)
+
+        if sections:
+            out["sections"] = sections
+            out["sources"] = sources
+
+    return out
 
 
 def main() -> None:
@@ -146,4 +217,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

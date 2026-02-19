@@ -53,6 +53,11 @@
   - `scripts/core/writing_coach.py` 与 `assets/prompts/*.txt`：写作教练与诊断/评审提示加入“逻辑链闭环”检查要点
   - `README.md`、`skills/README.md`：同步版本号与“科学问题/科学假设”措辞
 
+- **nsfc-roadmap v0.8.0 → v0.8.1**：规划阶段对齐“立项依据 + 研究内容/技术路线”，并同步新增模板文档
+  - `scripts/extract_proposal.py`：`proposal_path` 场景同时提取立项依据与研究内容/技术路线，提升模板选择与路线图叙事的全面性
+  - `references/models/templates.yaml`：增加 `render_family`（概念 family 与可落地图骨架解耦，支持稳定回退）
+  - `references/models/README.md`、`skills/nsfc-roadmap/README.md`：补齐 `model-07..model-10` 与新增 family 的使用说明
+
 - **nsfc-qc v0.1.1 → v0.1.2**：新增中文直引号排版预检（只读）
   - `scripts/nsfc_qc_precheck.py`：检测 `"免疫景观"` 这类直引号写法，输出 `quote_issues.csv` 并在 `precheck.json` 中给出结构化统计与替换建议（``免疫景观''）
   - `scripts/materialize_final_outputs.py`：metrics 聚合时纳入 `typography` 预检信息并补齐产物索引

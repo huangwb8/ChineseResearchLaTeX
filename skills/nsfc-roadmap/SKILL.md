@@ -29,8 +29,8 @@ metadata:
 
 用户至少提供其一：
 
-- `proposal_path`：标书目录（包含 `.tex` / `.md` 等）
-- `proposal_file`：单个输入文件（推荐 `extraTex/2.1.研究内容.tex` 或主文件 `main.tex`）
+- `proposal_path`：标书目录（包含 `.tex` / `.md` 等；推荐，AI 将自动读取立项依据与研究内容）
+- `proposal_file`：单个输入文件（仅在无法提供目录时使用；推荐优先提供 `proposal_path`）
 - `spec_file`：结构化图规格文件（推荐，便于可控迭代）
 
 可选：
@@ -80,68 +80,59 @@ metadata:
 
 ### 阶段一：规划（推荐）
 
-先产出 `roadmap-plan.md` 与 `spec_draft.yaml` 供审阅；规划时建议先选“模板家族/模板 id”，把优秀范例的设计约束显式写进计划：
-
-- 先阅读：`references/models/templates.yaml`（单一真相来源）或 `references/models/README.md`
-- 在 `roadmap-plan.md` 明确写出：
-  - `template_ref`（模板 id 或 family）
-  - 选用原因（为什么适合当前标书叙事）
-  - 将如何落到 spec（分区/列/主线、配色与信息层级、节点密度上限等）
-
-```bash
-python3 nsfc-roadmap/scripts/plan_roadmap.py \
-  --proposal-file /path/to/extraTex/2.1.研究内容.tex \
-  --output-dir ./roadmap_output \
-  --template three-column \
-  --template-ref model-02
-```
-
-注意：`plan_roadmap.py` 至少需要提供 `proposal_path` / `proposal_file` / `context` 其一。
-
 若你已准备好 `spec_file`，可跳过规划阶段。
 
-#### 规划 AI 模式（可选：planning_mode=ai）
+#### 步骤 1：调查标书
 
-当你希望“阶段划分/节点设计/模板选择/spec 草案生成”由宿主 AI 自主完成时：
+读取标书目录下的关键 tex 文件，彻底了解整个标书的情况。至少读取：
 
-- 在 `config.yaml` 设置 `planning.planning_mode: ai`，或在命令行显式指定 `--mode ai`
-- 脚本会在隐藏中间产物目录生成 `planning/plan_request.json` 与 `planning/plan_request.md`，并暂停等待宿主 AI 写入：
-  - `roadmap-plan.md`（交付文件）
-  - `spec_draft.yaml`（中间产物，必须通过 `scripts/spec.py:load_spec()` 校验）
+- `extraTex/1.立项依据.tex`（或等效文件）：研究背景、科学问题、研究假说
+- `extraTex/2.1.研究内容.tex`（或等效文件）：具体研究内容、技术路线
 
-```bash
-python3 nsfc-roadmap/scripts/plan_roadmap.py \
-  --mode ai \
-  --proposal-file /path/to/extraTex/2.1.研究内容.tex \
-  --output-dir ./roadmap_output
-```
+仅看研究内容是不够的；立项依据提供了科学逻辑的全貌，有助于更准确地把握路线图的叙事结构与模板选择。
 
-### 阶段二：生成或准备 spec（结构化图规格）
+#### 步骤 2：选模板，生成 roadmap-plan.md
 
-优先路径：用户提供 `spec_file`（可控、可复现）。
+阅读 `references/models/templates.yaml`，结合标书实际情况选择最合适的模板，生成 `roadmap-plan.md`，明确写出：
 
-若未提供 `spec_file`：
+- `template_ref`（模板 id 或 family）
+- 选用原因（为什么适合当前标书的科学逻辑与叙事结构）
+- 路线图整体结构设计（分区/列/主线、节点密度上限、配色层级等）
 
-1. 从输入文件中抽取“研究内容/技术路线”相关段落，生成一个**初版 spec**。
-2. 该初版 spec 必须满足：
-   - 3–5 个模块（或阶段），每个模块 2–6 个节点
-   - 术语与正文一致（同一概念不出现多种叫法）
-   - 输入输出闭合（每个模块/关键节点有明确产出）
-   - 风险与备选方案可见（至少 1 个风险/对照节点）
+#### 步骤 3：生成 spec.yaml
 
-补充：模板字段（可选，推荐在 spec 中记录以便可复现）：
+基于 `roadmap-plan.md` 生成 `spec.yaml`（结构化图规格），必须满足：
+
+- 3–5 个阶段（phases），每个阶段 2–6 个节点（boxes）
+- 术语与正文一致（同一概念不出现多种叫法）
+- 输入输出闭合（每个模块/关键节点有明确产出）
+- 风险与备选方案可见（至少 1 个风险/对照节点）
+
+### 阶段二：从 roadmap-plan.md 落到 spec（结构化图规格）
+
+优先路径（按优先级）：
+
+1. **用户提供 `spec_file`**：直接使用（可控、可复现）
+2. **阶段一已完成**：使用阶段一生成的 `spec.yaml`（或脚本规划产物 `spec_draft.yaml`）
+3. **跳过阶段一**：从输入文件中自动抽取"研究内容/技术路线"相关段落生成初版 spec
+
+模板字段（可选，推荐在 spec 中记录以便可复现与复盘）：
 
 - `layout_template: auto|classic|three-column|layered-pipeline`
-- `template_ref: model-01..model-06`（若提供，将自动映射到对应 family 并优先采用）
+- `template_ref: model-01..model-10`
+  - 若提供，将自动映射到 `references/models/templates.yaml` 中的模板家族（family）
+  - 若该 family 当前渲染器尚未单独实现，将按 `templates.yaml:render_family` 近似落到已支持骨架（确保可稳定渲染）
 
 ### 阶段三：渲染（确定性脚本）
+
+目标：以 `spec.yaml` 为单一真相来源，确定性生成交付文件（drawio + svg/png/pdf）。
 
 运行（示例）：
 
 ```bash
 python3 nsfc-roadmap/scripts/generate_roadmap.py \
-  --proposal-file /path/to/extraTex/2.1.研究内容.tex \
-  --output-dir nsfc-roadmap/tests/init/output \
+  --spec-file ./roadmap_output/spec.yaml \
+  --output-dir ./roadmap_output \
   --rounds 5
 ```
 
@@ -152,6 +143,8 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 - 输出 `roadmap.svg` / `roadmap.png` / `roadmap.pdf`（交付结果）
 
 ### 阶段四：评估-优化循环（默认 5 轮）
+
+目标：围绕阶段一在 `roadmap-plan.md` 中声明的叙事与版式约束，迭代改进可读性与专业感；必要时回写 spec 并复跑。
 
 每轮必须产出结构化缺陷清单（建议 JSON）：
 

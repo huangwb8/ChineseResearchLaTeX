@@ -200,7 +200,16 @@ def main() -> None:
         try:
             db = load_template_db(root=root)
             for tid, t in sorted(db.templates.items(), key=lambda kv: kv[0]):
-                templates.append({"id": t.id, "family": t.family, "use_when": t.use_when, "avoid": t.avoid, "file": t.file})
+                templates.append(
+                    {
+                        "id": t.id,
+                        "family": t.family,
+                        "render_family": t.render_family,
+                        "use_when": t.use_when,
+                        "avoid": t.avoid,
+                        "file": t.file,
+                    }
+                )
         except Exception as exc:
             warn(f"读取 templates.yaml 失败（将仅输出空模板列表）：{exc}")
 
@@ -234,7 +243,7 @@ def main() -> None:
         req_lines: List[str] = []
         req_lines.append("# nsfc-roadmap planning request (mode=ai)")
         req_lines.append("")
-        req_lines.append("你将扮演“规划者”：基于提取的标书研究内容结构，生成可落地的路线图规划与 spec 草案。")
+        req_lines.append("你将扮演“规划者”：基于提取的标书内容（立项依据 + 研究内容/技术路线），生成可落地的路线图规划与 spec 草案。")
         req_lines.append("")
         req_lines.append("## 输入证据（脚本已生成）")
         req_lines.append("")
@@ -359,7 +368,10 @@ def main() -> None:
                 if tinfo is None:
                     lines.append(f"- template_ref: {tref}（⚠️ 未在 templates.yaml 中找到，将仅按 layout_template 回退）")
                 else:
-                    lines.append(f"- template_ref: {tinfo.id}（family: {tinfo.family}；file: {tinfo.file}）")
+                    extra = ""
+                    if tinfo.render_family and tinfo.render_family.strip() and tinfo.render_family.strip() != tinfo.family:
+                        extra = f"；render_family: {tinfo.render_family}"
+                    lines.append(f"- template_ref: {tinfo.id}（family: {tinfo.family}{extra}；file: {tinfo.file}）")
                     if tinfo.use_when:
                         lines.append(f"- use_when: {tinfo.use_when}")
                     if tinfo.avoid:

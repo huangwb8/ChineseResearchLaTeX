@@ -12,6 +12,15 @@
 
 - （暂无）
 
+## [0.8.1] - 2026-02-19
+
+### Changed（变更）
+
+- 规划证据提取增强：`scripts/extract_proposal.py` 在提供 `proposal_path` 时同时提取“立项依据 + 研究内容/技术路线”，写入 `plan_request.json` 供宿主 AI 更全面规划
+- `scripts/plan_roadmap.py`：AI 规划协议文案对齐“立项依据 + 研究内容/技术路线”的阶段一工作流；模板列表补充 `render_family`
+- 模板库对齐“概念 family vs 可落地骨架”：`references/models/templates.yaml` 增加可选字段 `render_family`，并在解析/选择中用于稳定渲染回退
+- 模板文档同步更新：`references/models/README.md` 与 `README.md` 补齐 `model-07..model-10` 与新增 family 说明（含近似落地提示）
+
 ## [0.8.0] - 2026-02-15
 
 ### Added（新增）

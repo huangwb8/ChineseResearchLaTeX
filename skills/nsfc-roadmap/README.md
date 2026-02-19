@@ -43,10 +43,12 @@
 
 ### 选择模板风格（推荐）
 
-本技能内置了 6 个“模板参考图”（见 `references/models/`），并支持两类模板家族（family）：
+本技能内置了 10 个“模板参考图”（见 `references/models/`），并提供模板家族（family）供规划阶段参考：
 
 - `three-column`：三列式（左右支撑 + 中央主线）
 - `layered-pipeline`：分层流水线（纵向主链 + 横向模块）
+- `convergence-divergence`：收敛-发散（漏斗/轮辐叙事；当前渲染会近似落到 layered-pipeline 骨架）
+- `dual-mainline`：双主线并行（当前渲染会近似落到 three-column 骨架）
 
 你可以直接说：
 

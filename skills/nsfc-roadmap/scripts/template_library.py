@@ -12,6 +12,9 @@ class TemplateInfo:
     id: str
     file: str
     family: str
+    # Optional: a renderer-supported family used for stable fallback when `family` is conceptual-only.
+    # Keep backward-compatible: when missing, renderer falls back to `family`.
+    render_family: Optional[str]
     use_when: str
     avoid: str
 
@@ -72,11 +75,23 @@ def load_template_db(root: Optional[Path] = None) -> TemplateDB:
         tid = _require_str(t, "id", f"templates[{i}]")
         file = _require_str(t, "file", f"templates[{i}]")
         fam = _require_str(t, "family", f"templates[{i}]")
+        render_family = t.get("render_family")
+        if render_family is not None:
+            if not isinstance(render_family, str) or not render_family.strip():
+                raise ValueError(f"templates[{i}].render_family 必须是非空字符串或省略")
+            render_family = render_family.strip()
         use_when = str(t.get("use_when", "") or "").strip()
         avoid = str(t.get("avoid", "") or "").strip()
         if tid in templates:
             raise ValueError(f"模板 id 重复：{tid}")
-        templates[tid] = TemplateInfo(id=tid, file=file, family=fam, use_when=use_when, avoid=avoid)
+        templates[tid] = TemplateInfo(
+            id=tid,
+            file=file,
+            family=fam,
+            render_family=render_family,  # type: ignore[arg-type]
+            use_when=use_when,
+            avoid=avoid,
+        )
 
     _DB_CACHE = TemplateDB(version=version, families=families, templates=templates)
     return _DB_CACHE
@@ -111,9 +126,13 @@ def resolve_layout_template(
 
     tmpl = get_template(ref, root=root) if ref else None
     if tmpl is not None:
-        return tmpl.family, tmpl
+        # Renderer currently supports a stable subset. If a template uses a conceptual-only family,
+        # it may provide `render_family` for stable fallback.
+        effective = (tmpl.render_family or tmpl.family or "").strip().lower()
+        if effective not in {"classic", "three-column", "layered-pipeline"}:
+            effective = "classic"
+        return effective, tmpl
 
     if not lt or lt == "auto":
         return "classic", None
     return lt, None
-

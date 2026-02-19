@@ -21,6 +21,21 @@
 
 - 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
 
+## nsfc-roadmap
+
+
+
+---
+
+(～￣▽￣)～ 可优化的点：
+
+- references/models 里有一些新的模板； 你应该更新一下 templates.yaml
+- 阶段 1：规划 这部分，步骤我建议这样优化：
+  - ai调查必要的tex，彻底了解整个标书的情况。仅看标书的研究内容来决定是不明确的； 应该看标书的立项依据和研究内容，这样可能会有更加全面的把握。
+  - 结合标书的实际情况，从 `references/models/templates.yaml` 选模板并生成最终版的 `roadmap-plan.md`
+  - 根据`roadmap-plan.md`生成`spec.yaml`
+- 阶段 2、3和4的目标要相应调整，因为阶段1有重大变化
+
 ## nsfc-qc
 
 ---
