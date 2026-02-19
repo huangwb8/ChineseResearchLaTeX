@@ -40,6 +40,9 @@
 
 ### Changed（变更）
 
+- **AGENTS.md**：在"变更边界"部分新增规则
+  - 当 `skills/` 目录内文件有变化时，需检查 `README.md` 是否需要同步更新
+
 - **nsfc-research-foundation-writer v0.1.0 → v0.1.1**：写入安全约束与只读自检脚本增强
   - `SKILL.md`：补充参数说明与“只替换正文、不改标题层级”的写入安全约束；补充可选脚本自检入口
   - `references/`：信息表去年份化；DoD 清单补齐 `.cls/.sty` 禁改约束；示例输出增加“不得编造细节”的说明

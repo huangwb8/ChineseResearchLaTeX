@@ -246,6 +246,7 @@ skill_info:
 - 保持现有代码风格和结构
 - 不自动清理/删除 `.DS_Store`（通常由 Git 全局忽略管理）
 - `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致
+- `skills/` 目录内文件有变化时，检查 `README.md` 是否需要同步更新
 
 ---
 
