@@ -502,7 +502,9 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str], template: Option
             labels = proc_slices.get(gid, []) or ["核心方法"]
             labels = labels[:6]
         children = make_children(gid, role, labels)
-        groups.append({"id": gid, "label": glabel, "style": gstyle, "children": children})
+        # Keep role in the planning-stage draft to make checks/template selection robust.
+        # spec_parser.py ignores unknown keys, so this is safe for downstream generation.
+        groups.append({"id": gid, "label": glabel, "style": gstyle, "role": role, "children": children})
 
     # Main flow: first input -> chain process -> first output
     def all_node_ids(gid: str) -> List[str]:
@@ -714,12 +716,13 @@ def _run_checks(config: Dict[str, Any], spec: Dict[str, Any]) -> List[CheckResul
             continue
         gid = str(g.get("id", "")).strip()
         glabel = str(g.get("label", "")).strip()
+        role = str(g.get("role", "")).strip()
         children = g.get("children")
         count = len(children) if isinstance(children, list) else 0
         total_nodes += count
 
-        is_input = gid == "input" or "输入" in glabel
-        is_output = gid == "output" or "输出" in glabel
+        is_input = role == "input" or gid == "input" or "输入" in glabel
+        is_output = role == "output" or gid == "output" or "输出" in glabel
         if is_input:
             input_nodes += count
         if is_output:

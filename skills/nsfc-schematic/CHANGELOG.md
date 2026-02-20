@@ -6,6 +6,15 @@
 
 （暂无）
 
+## [0.8.5] - 2026-02-20
+
+### Changed（变更）
+
+- `references/models/`：新增一批规划阶段“视觉参考模板”，并将 `curated_*.png` 统一重命名为 `model-06..model-13`，与 `model-01..model-02` 命名体系对齐。
+- `references/models/templates.yaml`：扩展模板索引（新增 `model-06..model-13`），保证新模板可被 `plan_schematic.py --template-ref model-xx` 直接选用并进入模型画廊/Contact Sheet 流程。
+- `scripts/plan_schematic.py`：规划草案分组保留 `role` 字段，并在自检阶段优先按 `role=input/output` 识别输入/输出节点，避免分层模板（如 `数据层/应用层`）触发误报 P0。
+- `README.md` / `SKILL.md`：同步说明“5 类常用骨架 + 多个 model-xx 视觉参考”的口径。
+
 ## [0.8.4] - 2026-02-20
 
 ### Changed（变更）

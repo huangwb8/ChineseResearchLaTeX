@@ -8,9 +8,10 @@
 # 视觉参考（模仿 nsfc-roadmap 的“视觉选型”策略）：
 # - 可为部分模板补充 `file` 与 `simple_file`（位于本目录下）
 # - `simple_file` 是“骨架/模式图”：更精炼，适合提示 AI 抓住 schematic 的基础架构
+#   - 若暂无独立 skeleton 图，可先令 `simple_file = file` 作为兼容回退（至少确保 simple contact sheet 可覆盖该模板）
 # - 规划脚本会（尽力）生成模型画廊 contact sheet，帮助“先看图再选 template_ref”
 
-version: 2
+version: 3
 
 templates:
   - id: model-01
@@ -124,3 +125,181 @@ templates:
         - {id: hub, label: 核心枢纽, style: solid-border, role: process}
         - {id: output, label: 下游效应, style: background-fill, role: output}
       edges: hub_spoke
+
+  # 额外视觉参考（仍归入上面的 5 类常用骨架；用于规划阶段“先看图再选 template_ref”）
+  - id: model-06
+    name: 预训练模型多任务头（BERT 示例）
+    family: hub-spoke
+    file: model-06.png
+    simple_file: model-06.png
+    scenarios:
+      - 预训练模型 + 多下游任务
+      - 核心模块连接多个任务头/应用
+    keywords:
+      - BERT
+      - 预训练
+      - 多任务
+      - 下游任务
+      - 任务头
+    blueprint:
+      groups:
+        - {id: input, label: 上游输入, style: dashed-border, role: input}
+        - {id: hub, label: 核心枢纽, style: solid-border, role: process}
+        - {id: output, label: 下游效应, style: background-fill, role: output}
+      edges: hub_spoke
+
+  - id: model-07
+    name: 分桶/重排加速（稀疏注意力示意）
+    family: linear-pipeline
+    file: model-07.png
+    simple_file: model-07.png
+    scenarios:
+      - 稀疏注意力/近似注意力
+      - 分桶/重排/分块并行
+    keywords:
+      - LSH
+      - 分桶
+      - 哈希
+      - 分块
+      - 稀疏
+      - 注意力
+    blueprint:
+      groups:
+        - {id: input, label: 输入层, style: dashed-border, role: input}
+        - {id: process, label: 处理层, style: solid-border, role: process}
+        - {id: output, label: 输出层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-08
+    name: 编码器-解码器（Transformer/DETR 风格）
+    family: layered-arch
+    file: model-08.png
+    simple_file: model-08.png
+    scenarios:
+      - 编码器-解码器架构
+      - 目标检测/序列到序列
+    keywords:
+      - 编码器
+      - 解码器
+      - Transformer
+      - DETR
+      - Seq2Seq
+    blueprint:
+      groups:
+        - {id: layer_data, label: 输入/特征层, style: dashed-border, role: input}
+        - {id: layer_rep, label: 编码层, style: solid-border, role: process}
+        - {id: layer_model, label: 解码层, style: solid-border, role: process}
+        - {id: layer_app, label: 输出层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-09
+    name: Encode-Process-Decode（三段式注意力流程）
+    family: linear-pipeline
+    file: model-09.png
+    simple_file: model-09.png
+    scenarios:
+      - 三段式流程：编码/处理/解码
+      - 注意力模块的阶段划分
+    keywords:
+      - encode
+      - decode
+      - 注意力
+      - 编码
+      - 解码
+      - 三段式
+    blueprint:
+      groups:
+        - {id: input, label: Encode/输入, style: dashed-border, role: input}
+        - {id: process, label: Process/机制, style: solid-border, role: process}
+        - {id: output, label: Decode/输出, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-10
+    name: 低秩/投影近似注意力（Linformer 风格）
+    family: layered-arch
+    file: model-10.png
+    simple_file: model-10.png
+    scenarios:
+      - 高效注意力（低秩/投影/近似）
+      - 模块替换与加速对比
+    keywords:
+      - Linformer
+      - 低秩
+      - 投影
+      - 近似注意力
+      - 加速
+    blueprint:
+      groups:
+        - {id: layer_data, label: 输入层, style: dashed-border, role: input}
+        - {id: layer_rep, label: 投影/压缩层, style: solid-border, role: process}
+        - {id: layer_model, label: 注意力计算层, style: solid-border, role: process}
+        - {id: layer_app, label: 输出层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-11
+    name: 视觉 Transformer（ViT 风格）
+    family: layered-arch
+    file: model-11.png
+    simple_file: model-11.png
+    scenarios:
+      - 图像 patch embedding + Transformer 编码器
+      - 视觉表征学习
+    keywords:
+      - ViT
+      - 视觉Transformer
+      - patch
+      - embedding
+      - 编码器
+    blueprint:
+      groups:
+        - {id: layer_data, label: 输入层, style: dashed-border, role: input}
+        - {id: layer_rep, label: Patch/Embedding 层, style: solid-border, role: process}
+        - {id: layer_model, label: Transformer 编码器, style: solid-border, role: process}
+        - {id: layer_app, label: 输出层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-12
+    name: 稀疏注意力编码器-解码器（Informer 风格）
+    family: layered-arch
+    file: model-12.png
+    simple_file: model-12.png
+    scenarios:
+      - 时序预测/序列建模
+      - 稀疏注意力 encoder-decoder
+    keywords:
+      - Informer
+      - ProbSparse
+      - 稀疏注意力
+      - 时序预测
+      - 编码器
+      - 解码器
+    blueprint:
+      groups:
+        - {id: layer_data, label: 输入层, style: dashed-border, role: input}
+        - {id: layer_rep, label: 编码层, style: solid-border, role: process}
+        - {id: layer_model, label: 解码层, style: solid-border, role: process}
+        - {id: layer_app, label: 输出层, style: background-fill, role: output}
+      edges: linear
+
+  - id: model-13
+    name: 专家路由（MoE / Switch Transformer 风格）
+    family: parallel-branch
+    file: model-13.png
+    simple_file: model-13.png
+    scenarios:
+      - MoE/专家混合
+      - 路由器 + 多专家并行
+    keywords:
+      - MoE
+      - Switch
+      - 专家
+      - 路由
+      - Router
+      - 并行
+    blueprint:
+      groups:
+        - {id: input, label: 输入, style: dashed-border, role: input}
+        - {id: branch_a, label: 专家组A, style: solid-border, role: process}
+        - {id: branch_b, label: 专家组B, style: solid-border, role: process}
+        - {id: output, label: 聚合输出, style: background-fill, role: output}
+      edges: parallel_merge

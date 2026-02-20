@@ -122,11 +122,11 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
 ```bash
 python3 nsfc-schematic/scripts/plan_schematic.py \
   --proposal /path/to/proposal/ \
-  --template-ref model-03 \
+  --template-ref model-01 \
   --output ./schematic_plan/
 ```
 
-模板库见：`nsfc-schematic/references/models/templates.yaml`（5 类常用骨架，无法判定时回退线性流程）。
+模板库见：`nsfc-schematic/references/models/templates.yaml`（5 类常用骨架 + 多个 `model-xx` 视觉参考；无法判定时回退线性流程）。
 
 规划脚本会（尽力）在 `--output` 目录下生成“模型画廊”（用于视觉选型）：
 

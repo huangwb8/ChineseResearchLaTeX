@@ -40,6 +40,11 @@
 
 ### Changed（变更）
 
+- **nsfc-schematic v0.8.4 → v0.8.5**：规划阶段模板库扩展（新增 `model-06..model-13` 视觉参考）
+  - `skills/nsfc-schematic/references/models/`：将 `curated_*.png` 统一重命名为 `model-06..model-13`
+  - `skills/nsfc-schematic/references/models/templates.yaml`：新增 `model-06..model-13` 模板索引，确保可被 `--template-ref model-xx` 选择并进入模型画廊/Contact Sheet
+  - `skills/nsfc-schematic/scripts/plan_schematic.py`：规划草案保留分组 `role`，自检阶段按 `role` 识别输入/输出节点，避免分层模板触发误报 P0
+
 - **nsfc-schematic v0.8.3 → v0.8.4**：默认画布比例改为更接近 MacBook 的 16:10（更适合屏幕审阅）
   - `skills/nsfc-schematic/config.yaml`：默认 `renderer.canvas` 高度调整（16:10）
 
