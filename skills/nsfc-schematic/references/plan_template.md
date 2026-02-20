@@ -18,6 +18,8 @@
 
 模板库见：`references/models/templates.yaml`（可通过规划脚本 `--template-ref model-xx` 强制指定）。
 
+提示：`references/models/` 下可能存在 `*.simple.*` 的“骨架/模式图”（更精炼）。在确定叙事骨架时，建议优先参考 simple 版本，再用完整参考图补齐风格与细节。
+
 ## 模块划分
 
 建议 2-5 个模块，每个模块职责清晰、边界明确。

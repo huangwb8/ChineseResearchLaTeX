@@ -6,6 +6,18 @@
 
 （暂无）
 
+## [0.8.2] - 2026-02-20
+
+### Added（新增）
+
+- `scripts/model_gallery.py`：新增“模型画廊”生成器（复制参考图 + 生成 contact sheet），用于规划阶段视觉选型。
+
+### Changed（变更）
+
+- `references/models/templates.yaml`：为模板补充可选 `file/simple_file`（其中 `simple_file` 为骨架/模式图），并升级模板库版本号。
+- `scripts/plan_schematic.py`：规划阶段自动生成模型画廊（best-effort），并在 `PLAN.md` 中输出 contact sheet 与索引路径，便于“先看 skeleton 再选 template_ref”。
+- `SKILL.md` / `README.md` / `references/plan_template.md`：补齐“视觉选型（skeleton/simple 优先）”说明与产物路径示例。
+
 ## [0.8.1] - 2026-02-19
 
 ### Added（新增）

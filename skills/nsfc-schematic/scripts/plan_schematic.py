@@ -23,6 +23,9 @@ class TemplateModel:
     family: str
     keywords: List[str]
     blueprint: Dict[str, Any]
+    # Optional visual references under references/models/ (planning-stage visual picking).
+    file: Optional[str] = None
+    simple_file: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -71,7 +74,35 @@ def _load_template_models(config: Dict[str, Any]) -> List[TemplateModel]:
             kws = []
         keywords = [str(k).strip() for k in kws if isinstance(k, (str, int, float)) and str(k).strip()]
         blueprint = item.get("blueprint") if isinstance(item.get("blueprint"), dict) else {}
-        out.append(TemplateModel(id=tid, name=name, family=family, keywords=keywords, blueprint=blueprint))
+        file = item.get("file")
+        if isinstance(file, str):
+            file = file.strip()
+        else:
+            file = None
+        if file and not is_safe_relative_path(file):
+            warn(f"模板条目 file 路径不安全（已忽略）：templates[{i}].file={file!r}")
+            file = None
+
+        simple_file = item.get("simple_file")
+        if isinstance(simple_file, str):
+            simple_file = simple_file.strip()
+        else:
+            simple_file = None
+        if simple_file and not is_safe_relative_path(simple_file):
+            warn(f"模板条目 simple_file 路径不安全（已忽略）：templates[{i}].simple_file={simple_file!r}")
+            simple_file = None
+
+        out.append(
+            TemplateModel(
+                id=tid,
+                name=name,
+                family=family,
+                keywords=keywords,
+                blueprint=blueprint,
+                file=file,
+                simple_file=simple_file,
+            )
+        )
 
     return out
 
@@ -730,6 +761,7 @@ def _format_plan_md(
     spec: Dict[str, Any],
     checks: List[CheckResult],
     selection: Optional[TemplateSelection],
+    model_gallery: Optional[Dict[str, str]] = None,
 ) -> str:
     planning = config.get("planning", {}) if isinstance(config.get("planning"), dict) else {}
     defaults = planning.get("defaults", {}) if isinstance(planning.get("defaults"), dict) else {}
@@ -818,6 +850,10 @@ def _format_plan_md(
             f"- selected: {selection.selected.id} / {selection.selected.family} / {selection.selected.name}"
         )
         tpl_lines.append(f"- reason: {selection.reason}")
+        if selection.selected.simple_file:
+            tpl_lines.append(f"- simple_ref: references/models/{selection.selected.simple_file}")
+        elif selection.selected.file:
+            tpl_lines.append(f"- visual_ref: references/models/{selection.selected.file}")
         if selection.matched_keywords:
             tpl_lines.append(f"- matched_keywords: {', '.join(selection.matched_keywords)}")
         if selection.top_candidates:
@@ -834,12 +870,37 @@ def _format_plan_md(
         ]
     )
 
+    gallery_lines: List[str] = []
+    if model_gallery:
+        if model_gallery.get("contact_sheet_simple"):
+            gallery_lines.append(f"- skeleton contact sheet: {model_gallery['contact_sheet_simple']}")
+        if model_gallery.get("contact_sheet"):
+            gallery_lines.append(f"- full contact sheet: {model_gallery['contact_sheet']}")
+        if model_gallery.get("models_dir"):
+            gallery_lines.append(f"- models_dir: {model_gallery['models_dir']}")
+        if model_gallery.get("models_index"):
+            gallery_lines.append(f"- models_index: {model_gallery['models_index']}")
+        if not gallery_lines:
+            gallery_lines.append("- （未生成；不影响规划输出）")
+        gallery_lines.extend(
+            [
+                "",
+                "建议：优先看 skeleton（`*.simple.*`）来把握“骨架/分组/主流向”；再参考 full 版本做风格与细节补全。",
+                "",
+            ]
+        )
+    else:
+        gallery_lines = ["- （未生成；不影响规划输出）", ""]
+
     lines: List[str] = [
         "# 原理图规划草案",
         "",
         f"- input: {source_label}",
         "",
         *tpl_lines,
+        "## 模型画廊（模板参考图）",
+        "",
+        *gallery_lines,
         "## 核心目标",
         "",
         "（一句话描述：这张图要传达什么核心机制/结构/因果链条？）",
@@ -1059,6 +1120,40 @@ def main() -> None:
     plan_path = args.output / plan_name
     spec_out = args.output / spec_name
 
+    # Visual picker evidence (model gallery + contact sheets), best-effort.
+    model_gallery: Optional[Dict[str, str]] = None
+    try:
+        from model_gallery import TemplateVisual, materialize_model_gallery
+
+        out_cfg = config.get("output", {}) if isinstance(config.get("output"), dict) else {}
+        intermediate_dirname = str(out_cfg.get("intermediate_dir", ".nsfc-schematic") or ".nsfc-schematic").strip()
+        if not intermediate_dirname or not is_safe_relative_path(intermediate_dirname):
+            intermediate_dirname = ".nsfc-schematic"
+
+        gallery_out_dir = args.output / intermediate_dirname / "planning"
+        src_models = skill_root() / "references" / "models"
+
+        fonts_cfg = (
+            (config.get("renderer", {}) or {}).get("fonts", {})
+            if isinstance((config.get("renderer", {}) or {}).get("fonts", {}), dict)
+            else {}
+        )
+        candidates = fonts_cfg.get("candidates", []) if isinstance(fonts_cfg.get("candidates", []), list) else []
+        font_candidates = [str(x) for x in candidates if isinstance(x, str)]
+
+        visual = [
+            TemplateVisual(id=m.id, family=m.family, file=m.file, simple_file=m.simple_file)
+            for m in models
+        ]
+        model_gallery = materialize_model_gallery(
+            visual,
+            src_dir=src_models,
+            out_dir=gallery_out_dir,
+            font_candidates=font_candidates,
+        )
+    except Exception as exc:
+        warn(f"生成模型画廊失败（已跳过，不影响规划输出）：{exc}")
+
     plan_md = _format_plan_md(
         config,
         source_label=source_label,
@@ -1066,6 +1161,7 @@ def main() -> None:
         spec=spec,
         checks=checks,
         selection=sel,
+        model_gallery=model_gallery,
     )
     write_text(plan_path, plan_md)
     write_text(spec_out, dump_yaml(spec))

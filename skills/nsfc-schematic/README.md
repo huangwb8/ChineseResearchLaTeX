@@ -123,6 +123,11 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
 
 模板库见：`nsfc-schematic/references/models/templates.yaml`。
 
+同时，规划脚本会（尽力）在 `./schematic_plan/.nsfc-schematic/planning/` 下生成“模型画廊”（contact sheet），用于**先看图再选 `template_ref`**：
+
+- `models_simple_contact_sheet.png`：骨架/模式图（推荐优先看，更利于抓住 schematic 的基础架构）
+- `models_contact_sheet.png`：完整参考图（用于风格与细节补全）
+
 ### 步骤 3：审阅规划
 
 打开 `schematic-plan.md`（推荐，便于审阅）或 `schematic_plan/PLAN.md`，确认：

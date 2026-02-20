@@ -1,19 +1,23 @@
-# nsfc-schematic 图类型模板库
+# nsfc-schematic 图类型模板库（规划阶段用）
 #
 # 设计原则：
 # - KISS：只覆盖最常见的 5 类原理图骨架；不追求“万能模板”。
 # - 稳健默认：当无法确定时，回退到 linear-pipeline（输入→处理→输出）。
 # - 可读性优先：模板仅约束“叙事结构/分组骨架”，具体节点与连线由规划阶段补全。
 #
-# 注意：此文件主要供 `scripts/plan_schematic.py` 在“规划模式”中选择合适的图类型；
-#       不直接参与渲染/评估流程。
+# 视觉参考（模仿 nsfc-roadmap 的“视觉选型”策略）：
+# - 可为部分模板补充 `file` 与 `simple_file`（位于本目录下）
+# - `simple_file` 是“骨架/模式图”：更精炼，适合提示 AI 抓住 schematic 的基础架构
+# - 规划脚本会（尽力）生成模型画廊 contact sheet，帮助“先看图再选 template_ref”
 
-version: 1
+version: 2
 
 templates:
   - id: model-01
     name: 输入-处理-输出（线性流程）
     family: linear-pipeline
+    file: model-01.jpg
+    simple_file: model-01.simple.jpg
     scenarios:
       - 算法流程
       - 数据处理管线
@@ -36,6 +40,8 @@ templates:
   - id: model-02
     name: 层次架构（分层模块）
     family: layered-arch
+    file: model-02.jpg
+    simple_file: model-02.simple.jpg
     scenarios:
       - 系统架构
       - 分层模型
@@ -118,4 +124,3 @@ templates:
         - {id: hub, label: 核心枢纽, style: solid-border, role: process}
         - {id: output, label: 下游效应, style: background-fill, role: output}
       edges: hub_spoke
-

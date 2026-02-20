@@ -126,6 +126,11 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
 
 模板库见：`nsfc-schematic/references/models/templates.yaml`（5 类常用骨架，无法判定时回退线性流程）。
 
+规划脚本会（尽力）在 `--output` 目录下生成“模型画廊”（用于视觉选型）：
+
+- `./schematic_plan/.nsfc-schematic/planning/models_simple_contact_sheet.png`：骨架/模式图（推荐优先看）
+- `./schematic_plan/.nsfc-schematic/planning/models_contact_sheet.png`：完整参考图（用于风格与细节补全）
+
 3. 审阅 `schematic-plan.md`（工作区交付文件）或 `schematic_plan/PLAN.md`：确认模块划分、节点清单、连接关系与布局建议是否合理。
 4. 按审阅结论修改 `schematic_plan/spec_draft.yaml`（建议把“节点命名/连线语义”在此阶段定稿）。
    - 如需手动起草规划草案，可参考：`nsfc-schematic/references/plan_template.md`

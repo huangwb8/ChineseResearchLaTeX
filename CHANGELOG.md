@@ -139,6 +139,11 @@
   - `plan_schematic.py`：`proposal_path` 场景综合提取“立项依据 + 研究内容”，并支持 `--template-ref` 强制指定模板
   - `evaluation.evaluation_mode` 默认改为 `heuristic`（`ai` 作为可选增强），默认启用 PDF 导出（需 draw.io CLI）
 
+- **nsfc-schematic v0.8.1 → v0.8.2**：规划阶段新增“模型画廊”（skeleton/simple 优先）辅助视觉选型
+  - `skills/nsfc-schematic/references/models/templates.yaml`：为部分模板补充 `file/simple_file`（其中 `simple_file` 为骨架/模式图）
+  - `skills/nsfc-schematic/scripts/model_gallery.py`：新增 contact sheet 生成器（full + skeleton）
+  - `skills/nsfc-schematic/scripts/plan_schematic.py`：规划输出 `PLAN.md` 中增加模型画廊路径提示
+
 - 更新 `.gitignore`：忽略 `projects/**/.nsfc-qc/`（nsfc-qc 的运行产物与报告目录），避免污染工作区
 
 - 更新 `.gitignore`：修正 `/tests/` 仅忽略根目录 `tests/`，并放行 `skills/nsfc-justification-writer` 的 `plans/`、`tests/` 进入版本控制（中间产物目录仍默认忽略）
