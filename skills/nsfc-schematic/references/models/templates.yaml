@@ -9,7 +9,7 @@
 # - 可为部分模板补充 `file` 与 `simple_file`（位于本目录下）
 # - `simple_file` 是“骨架/模式图”：更精炼，适合提示 AI 抓住 schematic 的基础架构
 #   - 若暂无独立 skeleton 图，可先令 `simple_file = file` 作为兼容回退（至少确保 simple contact sheet 可覆盖该模板）
-# - 规划脚本会（尽力）生成模型画廊 contact sheet，帮助“先看图再选 template_ref”
+# - 规划脚本会（尽力）生成模型画廊 contact sheet，供学习优秀结构与视觉风格（默认不要求单选 template_ref）
 
 version: 3
 
@@ -126,7 +126,7 @@ templates:
         - {id: output, label: 下游效应, style: background-fill, role: output}
       edges: hub_spoke
 
-  # 额外视觉参考（仍归入上面的 5 类常用骨架；用于规划阶段“先看图再选 template_ref”）
+  # 额外视觉参考（仍归入上面的 5 类常用骨架；用于规划阶段学习参考图的结构与风格）
   - id: model-06
     name: 预训练模型多任务头（BERT 示例）
     family: hub-spoke

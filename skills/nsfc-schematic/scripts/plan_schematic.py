@@ -847,7 +847,7 @@ def _format_plan_md(
             out.append(f"- [{c.level}] {c.message}")
         return out
 
-    tpl_lines: List[str] = ["## 图类型模板（建议）", ""]
+    tpl_lines: List[str] = ["## 图类型模板（参考）", ""]
     if selection:
         tpl_lines.append(
             f"- selected: {selection.selected.id} / {selection.selected.family} / {selection.selected.name}"
@@ -864,14 +864,17 @@ def _format_plan_md(
                 "Top candidates: " + "; ".join([f"{m.id}({s})" for (m, s) in selection.top_candidates])
             )
     else:
-        tpl_lines.append("- selected: （未选择模板，回退默认线性流程）")
-    tpl_lines.extend(
-        [
-            "",
-            "（如需强制指定模板：在规划命令中使用 `--template-ref model-xx`，或设置 `config.yaml:layout.template_ref`。）",
-            "",
-        ]
-    )
+        tpl_lines.append("- selected: （未选择模板：纯 AI 规划模式不需要从模板库中单选一个模板）")
+    if selection:
+        tpl_lines.extend(
+            [
+                "",
+                "（如需强制指定模板：在规划命令中使用 `--template-ref model-xx`，或设置 `config.yaml:layout.template_ref`。）",
+                "",
+            ]
+        )
+    else:
+        tpl_lines.extend(["", "（提示：模型画廊仅用于学习优秀结构与视觉风格，不要求把某个模板写成硬约束。）", ""])
 
     gallery_lines: List[str] = []
     if model_gallery:
@@ -945,6 +948,12 @@ def _format_plan_md(
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Plan a NSFC schematic before generating drawio artifacts.")
+    p.add_argument(
+        "--mode",
+        type=str,
+        default=None,
+        help="template|ai（默认取 config.yaml:planning.planning_mode；若配置缺失则为 template）",
+    )
     p.add_argument("--proposal", type=Path, default=None, help="标书 TEX 文件或目录（目录会自动搜索 *.tex）")
     p.add_argument("--context", type=str, default=None, help="自然语言描述（与 --proposal 二选一）")
     p.add_argument("--plan-md", type=Path, default=None, help="从已有 PLAN.md 中提取 spec 草案并导出 spec_draft.yaml")
@@ -961,6 +970,11 @@ def main() -> None:
         help="不在当前工作目录额外输出 schematic-plan.md（默认会输出，便于作为交付文件给用户审阅）",
     )
     args = p.parse_args()
+
+    if args.mode is not None and str(args.mode).strip():
+        m = str(args.mode).strip().lower()
+        if m not in {"template", "ai"}:
+            fatal(f"--mode 不合法：{m!r}（允许：template|ai）")
 
     if args.output.exists() and not args.output.is_dir():
         fatal(f"--output 不是目录：{args.output}")
@@ -1004,6 +1018,10 @@ def main() -> None:
     out_cfg = planning.get("output", {}) if isinstance(planning.get("output"), dict) else {}
     plan_name = str(out_cfg.get("plan_filename", "PLAN.md"))
     spec_name = str(out_cfg.get("spec_filename", "spec_draft.yaml"))
+    mode_cfg = str(planning.get("planning_mode", "template") or "template").strip().lower()
+    mode_effective = (str(args.mode).strip().lower() if (args.mode and str(args.mode).strip()) else mode_cfg) or "template"
+    if mode_effective not in {"template", "ai"}:
+        fatal(f"config.yaml:planning.planning_mode 不合法：{mode_cfg!r}（允许 template|ai）")
     extraction_cfg = planning.get("extraction", {}) if isinstance(planning.get("extraction"), dict) else {}
     max_terms = int(extraction_cfg.get("max_terms", 12))
 
@@ -1103,35 +1121,21 @@ def main() -> None:
                 parts.append(sec[:20000])
         combined_text = "\n\n".join(parts)
 
-    # Template selection (always available; for AI spec it is a human-facing guide).
-    models = _load_template_models(config)
-    cfg_ref = str((config.get("layout", {}) or {}).get("template_ref", "auto")).strip()
-    if cfg_ref.lower() == "auto":
-        cfg_ref = ""
-    sel = _select_template_model(models, args.template_ref or cfg_ref, combined_text, extracted_terms)
-
-    if not used_ai_spec:
-        spec = _build_spec_draft(config, extracted_terms, template=sel.selected)
-    else:
-        root = spec.get("schematic") if isinstance(spec.get("schematic"), dict) else None
-        if root is not None:
-            root["template_ref"] = sel.selected.id
-            root["template_family"] = sel.selected.family
-    checks = _run_checks(config, spec)
-
-    args.output.mkdir(parents=True, exist_ok=True)
-    plan_path = args.output / plan_name
-    spec_out = args.output / spec_name
-
     # Visual picker evidence (model gallery + contact sheets), best-effort.
+    # NOTE: In AI planning mode, the gallery is for learning only (no single-template binding).
+    models = _load_template_models(config)
     model_gallery: Optional[Dict[str, str]] = None
+    intermediate_dirname = ".nsfc-schematic"
     try:
-        from model_gallery import TemplateVisual, materialize_model_gallery
-
-        out_cfg = config.get("output", {}) if isinstance(config.get("output"), dict) else {}
-        intermediate_dirname = str(out_cfg.get("intermediate_dir", ".nsfc-schematic") or ".nsfc-schematic").strip()
+        out_cfg2 = config.get("output", {}) if isinstance(config.get("output"), dict) else {}
+        intermediate_dirname = str(out_cfg2.get("intermediate_dir", ".nsfc-schematic") or ".nsfc-schematic").strip()
         if not intermediate_dirname or not is_safe_relative_path(intermediate_dirname):
             intermediate_dirname = ".nsfc-schematic"
+    except Exception:
+        intermediate_dirname = ".nsfc-schematic"
+
+    try:
+        from model_gallery import TemplateVisual, materialize_model_gallery
 
         gallery_out_dir = args.output / intermediate_dirname / "planning"
         src_models = skill_root() / "references" / "models"
@@ -1144,10 +1148,7 @@ def main() -> None:
         candidates = fonts_cfg.get("candidates", []) if isinstance(fonts_cfg.get("candidates", []), list) else []
         font_candidates = [str(x) for x in candidates if isinstance(x, str)]
 
-        visual = [
-            TemplateVisual(id=m.id, family=m.family, file=m.file, simple_file=m.simple_file)
-            for m in models
-        ]
+        visual = [TemplateVisual(id=m.id, family=m.family, file=m.file, simple_file=m.simple_file) for m in models]
         model_gallery = materialize_model_gallery(
             visual,
             src_dir=src_models,
@@ -1156,6 +1157,136 @@ def main() -> None:
         )
     except Exception as exc:
         warn(f"生成模型画廊失败（已跳过，不影响规划输出）：{exc}")
+
+    args.output.mkdir(parents=True, exist_ok=True)
+    plan_path = args.output / plan_name
+    spec_out = args.output / spec_name
+
+    if mode_effective == "ai":
+        # AI planning is a 2-step protocol:
+        # 1) script writes plan_request.json/plan_request.md (+ visual gallery evidence)
+        # 2) host AI writes PLAN.md + spec_draft.yaml, then rerun to validate
+        req_dir = args.output / intermediate_dirname / "planning"
+        req_dir.mkdir(parents=True, exist_ok=True)
+        req_json = req_dir / "plan_request.json"
+        req_md = req_dir / "plan_request.md"
+
+        # Keep the excerpt bounded to reduce accidental sensitive leakage in the request payload.
+        max_chars = int(extraction_cfg.get("ai_tex_max_chars", 20000))
+        combined_excerpt = (combined_text or "")[: max(2000, min(max_chars, 60000))]
+
+        checks_cfg = planning.get("checks", {}) if isinstance(planning.get("checks", {}), dict) else {}
+        constraints = {
+            "groups_min": int(checks_cfg.get("groups_min", 2)),
+            "groups_max": int(checks_cfg.get("groups_max", 5)),
+            "nodes_per_group_min": int(checks_cfg.get("nodes_per_group_min", 1)),
+            "nodes_per_group_max": int(checks_cfg.get("nodes_per_group_max", 6)),
+            "total_nodes_max": int(checks_cfg.get("total_nodes_max", 20)),
+            "edge_density_max_ratio": float(checks_cfg.get("edge_density_max_ratio", 1.5)),
+            "require_input_output": bool(checks_cfg.get("require_input_output", True)),
+            "id_rules": "group/node id 必须匹配 ^[A-Za-z_][A-Za-z0-9_-]{0,63}$（ASCII；以字母/下划线开头；长度<=64）",
+            "template_policy": {
+                "use_template_ref": False,
+                "note": "纯 AI 规划：模型画廊仅用于学习，不要求也不建议从模板库中单选一个模板。",
+            },
+        }
+
+        req = {
+            "source": {"label": source_label, "proposal": str(args.proposal) if args.proposal else None},
+            "extracted_terms": extracted_terms,
+            "combined_text_excerpt": combined_excerpt,
+            "model_gallery": model_gallery or {},
+            "constraints": constraints,
+            "references": {
+                "spec_example": (skill_root() / "references" / "spec_examples" / "ccs_framework.yaml").as_posix(),
+                "spec_parser": (skill_root() / "scripts" / "spec_parser.py").as_posix(),
+            },
+            "output": {
+                "write_plan_to": plan_path.as_posix(),
+                "write_spec_to": spec_out.as_posix(),
+                "optional_write_workspace_plan_to": (Path("schematic-plan.md").resolve().as_posix() if not args.no_workspace_plan else None),
+            },
+        }
+
+        import json
+
+        write_text(req_json, json.dumps(req, ensure_ascii=False, indent=2) + "\n")
+
+        req_lines: List[str] = []
+        req_lines.append("# nsfc-schematic planning request (mode=ai)")
+        req_lines.append("")
+        req_lines.append("你将扮演“规划者”：基于提取到的标书内容/上下文，生成可落地的机制图（原理图）规划与 spec 草案。")
+        req_lines.append("")
+        req_lines.append("重要：本模式为“纯 AI 规划”，不要求也不建议从模板库中单选一个 template_ref。模型画廊仅用于学习优秀结构与视觉风格。")
+        req_lines.append("")
+        req_lines.append("## 输入证据（脚本已生成）")
+        req_lines.append("")
+        req_lines.append(f"- request_data: `{req_json.as_posix()}`")
+        if model_gallery and model_gallery.get("contact_sheet_simple"):
+            req_lines.append(f"- skeleton contact sheet（可先看图学习）: `{model_gallery['contact_sheet_simple']}`")
+        if model_gallery and model_gallery.get("contact_sheet"):
+            req_lines.append(f"- full contact sheet（可选）: `{model_gallery['contact_sheet']}`")
+        if model_gallery and model_gallery.get("models_dir"):
+            req_lines.append(f"- models_dir（单张参考图）: `{model_gallery['models_dir']}`")
+        req_lines.append("")
+        req_lines.append("## 你的输出（必须同时写出 2 个文件）")
+        req_lines.append("")
+        req_lines.append(f"1) `PLAN.md` → 写到：`{plan_path.as_posix()}`")
+        req_lines.append(f"2) `spec_draft.yaml` → 写到：`{spec_out.as_posix()}`")
+        if not args.no_workspace_plan:
+            req_lines.append("")
+            req_lines.append("（可选交付）额外在工作目录写出：`schematic-plan.md`（便于用户快速审阅）")
+        req_lines.append("")
+        req_lines.append("### 约束（必须满足）")
+        req_lines.append("")
+        req_lines.append("- spec 必须能被 `scripts/spec_parser.py:load_schematic_spec()` 解析通过（字段齐全、结构合法）")
+        req_lines.append("- 输入/处理/输出 的主链清晰；辅助边用虚线（dashed）或标注 label")
+        req_lines.append("- 不要写 `template_ref` 作为硬约束；用你自己的结构规划来表达场景的微妙性")
+        req_lines.append("")
+        req_lines.append("当你写完两个文件后，请再次运行本脚本以进行合法性校验。")
+        req_lines.append("")
+        write_text(req_md, "\n".join(req_lines) + "\n")
+
+        # If host AI already wrote outputs, validate and exit success.
+        if plan_path.exists() and spec_out.exists():
+            try:
+                from spec_parser import load_schematic_spec as _load
+
+                raw = load_yaml(spec_out)
+                _ = _load(raw, config)  # noqa: F841
+            except Exception as exc:
+                fatal(f"AI 产出的 spec_draft.yaml 非法：{exc}")
+            checks = _run_checks(config, load_yaml(spec_out))
+            worst = "OK"
+            order = {"OK": 0, "WARN": 1, "P1": 2, "P0": 3}
+            for c in checks:
+                worst = c.level if order.get(c.level, 0) > order.get(worst, 0) else worst
+            if worst == "P0":
+                fatal(f"AI 产出的 spec_draft.yaml 存在 P0 问题（建议先修正再进入生成阶段）：{spec_out}")
+            warn(f"AI 规划产物已就绪：{plan_path}")
+            info(f"spec 草案：{spec_out}")
+            return
+
+        warn("AI 规划请求已生成，等待宿主 AI 写入 PLAN.md + spec_draft.yaml：")
+        info(f"- request: {req_md}")
+        info(f"- data: {req_json}")
+        return
+
+    # Template planning mode (legacy/compat).
+    cfg_ref_raw = (config.get("layout", {}) or {}).get("template_ref")
+    cfg_ref = str(cfg_ref_raw).strip() if isinstance(cfg_ref_raw, str) else ""
+    if cfg_ref.lower() == "auto":
+        cfg_ref = ""
+    sel = _select_template_model(models, args.template_ref or cfg_ref, combined_text, extracted_terms)
+
+    if not used_ai_spec:
+        spec = _build_spec_draft(config, extracted_terms, template=sel.selected)
+    else:
+        root2 = spec.get("schematic") if isinstance(spec.get("schematic"), dict) else None
+        if root2 is not None:
+            root2["template_ref"] = sel.selected.id
+            root2["template_family"] = sel.selected.family
+    checks = _run_checks(config, spec)
 
     plan_md = _format_plan_md(
         config,
@@ -1168,6 +1299,7 @@ def main() -> None:
     )
     write_text(plan_path, plan_md)
     write_text(spec_out, dump_yaml(spec))
+
     workspace_plan_written = False
     if not args.no_workspace_plan:
         # Deliverable for humans: keep a stable, flat file in the workspace root for quick review.

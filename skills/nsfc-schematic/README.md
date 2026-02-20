@@ -90,7 +90,7 @@ schematic_output/
 
 当你首次为标书生成原理图时，推荐"规划 → 审阅 → 再生成"：
 
-### 步骤 1：生成规划草案
+### 步骤 1：生成规划请求（纯 AI 规划协议）
 
 ```bash
 python3 nsfc-schematic/scripts/plan_schematic.py \
@@ -98,7 +98,7 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-当 `--proposal` 为目录且包含标准 NSFC 结构（如 `extraTex/1.1.立项依据.tex` + `extraTex/2.1.研究内容.tex`）时，规划阶段会优先综合提取两者用于术语提示与模板选型。
+当 `--proposal` 为目录且包含标准 NSFC 结构（如 `extraTex/1.1.立项依据.tex` + `extraTex/2.1.研究内容.tex`）时，规划阶段会优先综合提取两者用于术语提示与规划证据。
 
 或用自然语言描述：
 
@@ -108,29 +108,35 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-该命令除了写入 `schematic_plan/PLAN.md`，还会在**当前工作目录**额外输出一份扁平交付文件：`schematic-plan.md`（默认覆盖更新；如不需要可加 `--no-workspace-plan`）。
+该命令会在 `./schematic_plan/.nsfc-schematic/planning/` 下生成 `plan_request.md/plan_request.json` 与“模型画廊”（contact sheet）。随后由宿主 AI 写出 `PLAN.md + spec_draft.yaml`，再复跑脚本完成合法性校验。
 
-### 步骤 2：选图类型模板（可选但推荐）
+（兼容旧流程）如需让脚本按确定性规则直接生成草案（模板规划），加 `--mode template`。
 
-规划脚本会自动在模板库中选择最合适的图类型（仍归入 5 类常用骨架；无法判定时回退线性流程）。如需强制指定：
+### 步骤 2：宿主 AI 写出规划与 spec 草案
 
-```bash
-python3 nsfc-schematic/scripts/plan_schematic.py \
-  --proposal /path/to/proposal/ \
-  --template-ref model-01 \
-  --output ./schematic_plan/
-```
+根据 `./schematic_plan/.nsfc-schematic/planning/plan_request.md` 的要求，写出：
 
-模板库见：`nsfc-schematic/references/models/templates.yaml`。
+- `./schematic_plan/PLAN.md`
+- `./schematic_plan/spec_draft.yaml`
 
-同时，规划脚本会（尽力）在 `./schematic_plan/.nsfc-schematic/planning/` 下生成“模型画廊”（contact sheet），用于**先看图再选 `template_ref`**：
+可选：为便于审阅，也可在当前工作目录额外写出扁平交付文件 `schematic-plan.md`（同名覆盖更新）。
+
+模型画廊用于学习优秀结构与视觉风格（不要求也不建议把复杂场景固定到单一 `template_ref`）：
 
 - `models_simple_contact_sheet.png`：骨架/模式图（推荐优先看，更利于抓住 schematic 的基础架构）
 - `models_contact_sheet.png`：完整参考图（用于风格与细节补全）
 
-### 步骤 3：审阅规划
+### 步骤 3：复跑脚本做合法性校验
 
-打开 `schematic-plan.md`（推荐，便于审阅）或 `schematic_plan/PLAN.md`，确认：
+再次运行同一条命令即可校验（脚本将检查 spec 结构合法性，并给出 P0/WARN 提示）：
+
+```bash
+python3 nsfc-schematic/scripts/plan_schematic.py \
+  --proposal /path/to/proposal/ \
+  --output ./schematic_plan/
+```
+
+然后打开 `schematic-plan.md`（如你有生成）或 `schematic_plan/PLAN.md`，确认：
 - 模块划分是否合理
 - 节点命名是否与正文一致
 - 连线关系是否准确

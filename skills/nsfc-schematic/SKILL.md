@@ -39,7 +39,7 @@ metadata:
 - `output_dir`：输出目录（可选；默认使用 `config.yaml:output.dirname`，相对当前工作目录）
 - `config`：配置文件路径（可选；默认使用技能自带 `nsfc-schematic/config.yaml`；用于为某个项目单独覆盖 `output.hide_intermediate` 等参数）
 - `context`：自然语言机制描述（仅用于“规划模式”；由 `plan_schematic.py` 生成规划草案与 spec 草案）
-- `template_ref`：图类型模板 id/family（可选；用于“规划模式”强制指定图的叙事骨架；默认 auto，见 `references/models/templates.yaml`）
+- `template_ref`：图类型模板 id/family（高级选项；默认“纯 AI 规划”不需要也不建议设置）
 
 ## 输出
 
@@ -82,7 +82,7 @@ metadata:
 - `renderer`：画布尺寸、字体、渲染行为
 - `renderer.drawio`：draw.io CLI 缺失时的提示/（可选）自动安装策略
 - `layout`：自动布局参数
-- `layout.template_ref`：图类型模板（`auto` 或 `model-xx`；主要用于规划阶段的模板选择，见 `references/models/templates.yaml`）
+- `layout.template_ref`：图类型模板（高级选项；默认不启用；模型画廊仅用于学习，见 `references/models/templates.yaml`）
 - `layout.title`：是否将 `spec.title` 落图，以及为标题预留的顶部空间（避免标题配置僵尸化）
 - `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
 - `layout.auto_expand_canvas`：当节点/分组被自动扩容后，是否自动扩展画布以避免越界
@@ -96,15 +96,25 @@ metadata:
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
 - `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
+- `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
 
 ### 规划模式（推荐首次使用）
 
 当用户首次为标书生成原理图时，推荐先“规划 → 审阅 → 再生成”：
 
-1. 调查标书并生成规划草案与 spec 草案（脚本会综合提取“立项依据 + 研究内容/技术路线”，以增强叙事结构判断）：
+1. 调查标书并生成“规划请求协议”（脚本会综合提取“立项依据 + 研究内容/技术路线”，并生成模型画廊供学习；**不要求选模板**）：
 
 ```bash
 python3 nsfc-schematic/scripts/plan_schematic.py \
+  --proposal /path/to/proposal/ \
+  --output ./schematic_plan/
+```
+
+（兼容旧流程）如需让脚本按确定性规则直接生成草案（模板规划），使用：
+
+```bash
+python3 nsfc-schematic/scripts/plan_schematic.py \
+  --mode template \
   --proposal /path/to/proposal/ \
   --output ./schematic_plan/
 ```
@@ -117,24 +127,25 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-2. 选图类型模板（脚本默认自动选择；如需强制指定）：
+2. 宿主 AI 纯规划：根据 `./schematic_plan/.nsfc-schematic/planning/plan_request.md` 的要求，写出：
 
-```bash
-python3 nsfc-schematic/scripts/plan_schematic.py \
-  --proposal /path/to/proposal/ \
-  --template-ref model-01 \
-  --output ./schematic_plan/
-```
+- `./schematic_plan/PLAN.md`
+- `./schematic_plan/spec_draft.yaml`
 
-模板库见：`nsfc-schematic/references/models/templates.yaml`（5 类常用骨架 + 多个 `model-xx` 视觉参考；无法判定时回退线性流程）。
-
-规划脚本会（尽力）在 `--output` 目录下生成“模型画廊”（用于视觉选型）：
+（视觉学习可选）规划脚本会（尽力）在 `--output` 目录下生成“模型画廊”（用于学习优秀结构/风格）：
 
 - `./schematic_plan/.nsfc-schematic/planning/models_simple_contact_sheet.png`：骨架/模式图（推荐优先看）
 - `./schematic_plan/.nsfc-schematic/planning/models_contact_sheet.png`：完整参考图（用于风格与细节补全）
 
-3. 审阅 `schematic-plan.md`（工作区交付文件）或 `schematic_plan/PLAN.md`：确认模块划分、节点清单、连接关系与布局建议是否合理。
-4. 按审阅结论修改 `schematic_plan/spec_draft.yaml`（建议把“节点命名/连线语义”在此阶段定稿）。
+3. 再次运行规划脚本进行合法性校验（脚本将校验 spec 结构，并给出 P0/WARN 提示）：
+
+```bash
+python3 nsfc-schematic/scripts/plan_schematic.py \
+  --proposal /path/to/proposal/ \
+  --output ./schematic_plan/
+```
+
+4. 审阅 `schematic_plan/PLAN.md` 与 `schematic_plan/spec_draft.yaml`：确认模块划分、节点清单、连接关系与布局建议是否合理。
    - 如需手动起草规划草案，可参考：`nsfc-schematic/references/plan_template.md`
 5. 用 `generate_schematic.py` 进入多轮生成与优化：
 

@@ -6,6 +6,15 @@
 
 （暂无）
 
+## [0.8.6] - 2026-02-20
+
+### Changed（变更）
+
+- 默认启用纯 AI 规划：`config.yaml:planning.planning_mode=ai`，规划阶段不再要求/默认从模板库中单选 `template_ref`
+- `config.yaml:layout.template_ref` 默认置空（高级选项；仅在用户明确要求“参考某个模板”时使用）
+- `scripts/plan_schematic.py`：新增 `--mode template|ai`（默认取配置）；AI 模式输出 `plan_request.json/plan_request.md` 并在宿主 AI 写入 `PLAN.md + spec_draft.yaml` 后复跑校验
+- 文档口径对齐：`SKILL.md`、`README.md`
+
 ## [0.8.5] - 2026-02-20
 
 ### Changed（变更）
