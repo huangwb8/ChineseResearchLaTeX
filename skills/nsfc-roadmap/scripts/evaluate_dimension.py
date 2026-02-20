@@ -457,7 +457,7 @@ def evaluate_readability(
             Defect(
                 severity="P1",
                 where="global",
-                message=f"整体偏拥挤（density={density:.2f} >= {crowded_p1:.2f}），建议增大画布/间距或精简文本",
+                message=f"整体偏拥挤（density={density:.2f} >= {crowded_p1:.2f}），优先精简文本/合并节点；如仍需更多空间，应在规划阶段减少内容而非无限拉长画布",
                 dimension="readability",
             )
         )

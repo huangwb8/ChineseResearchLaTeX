@@ -188,8 +188,10 @@ roadmap_output/
 
 另提供两个预设（可在 `config.yaml:color_scheme.name` 切换）：
 
-- `outline-print`：白底 + 彩色描边（更接近“打印友好”的清爽风格）
-- `tint-layered`：低饱和浅填充（更适合 `layered-pipeline` 的分层/分区感）
+- `tint-layered`：低饱和浅填充（更适合 `layered-pipeline` 的分层/分区感；也常用于“配色更克制但仍保留层次”）
+- `outline-print`：白底 + 彩色描边（**仅在你明确需要黑白/描边打印风格时使用**；不要用它来解决“配色干扰”——配色干扰通常应通过减少/修正 box 的 `kind` 种类与语义来解决）
+
+> 注意：`config_local.yaml`（实例级覆盖）为安全起见仅允许 `color_scheme.name ∈ {academic-blue, tint-layered}`。如需 `outline-print`，请修改全局 `config.yaml` 或在脚本调用时使用 `--config` 指定自定义配置文件。
 
 ## 常见问题
 
@@ -203,7 +205,12 @@ roadmap_output/
 
 ### Q：为什么图太小/太挤？
 
-检查 `config.yaml:renderer.canvas` 中的画布尺寸，可以增大 `width_px` 和 `height_px`。
+先区分原因（建议按优先级处理）：
+
+1) **拥挤（density 高）**：通常是**内容问题** → 优先缩短节点文案、合并相近节点、减少节点数；不建议用缩字号来“通过阈值”，也不建议无限拉长画布破坏 A4 约束。  
+2) **文字溢出（overflow）**：才考虑减字号或增大 box 高度（`layout.box.min_height_px`）。  
+3) **字号偏小**：应增大字号，并回看是否存在 overflow 风险。  
+4) **结构不清**：优先换模板家族（`three-column` / `layered-pipeline`）或在规划阶段重写主线/分区/收口。
 
 ### Q：如何只生成不优化？
 

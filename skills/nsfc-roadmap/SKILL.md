@@ -60,7 +60,7 @@ metadata:
   - `spec_latest.yaml`：最新 spec 快照（可复现）
   - `optimization_report.md`：迭代记录（每轮缺陷与修改点）
   - `config_used_best.yaml` / `evaluation_best.json`：best round 复现证据
-  - `config_local.yaml`：实例级局部配置覆盖（白名单字段；用于“只覆盖本次图参数/停止策略”，不改全局 `config.yaml`）
+  - `config_local.yaml`：实例级局部配置覆盖（白名单字段；用于“只覆盖本次图参数/停止策略”，不改全局 `config.yaml`；其中 `color_scheme.name` 仅允许 `{academic-blue, tint-layered}`）
   - `ai/`：AI 证据包与 request/response 协议（仅在 `stop_strategy=ai_critic` 工作流中使用）
     - `ai/ACTIVE_RUN.txt`：当前 ai_critic 活跃 run（用于 resume）
     - `ai/{run_dir}/ai_pack_round_XX/`：本轮 AI 证据包（供宿主 AI 读图批判）
@@ -152,6 +152,13 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 - `P1`：显著影响专业印象（布局混乱、重叠、刺眼配色、字号过小）
 - `P2`：一般优化（间距不均、边距偏小、箭头不清晰、信息拥挤）
 
+纠偏原则（避免“越优化越不可读”）：
+
+- **density（拥挤）通常是内容问题**：优先改 `spec`（缩短节点文案/合并相近节点/减少节点数）；不要用缩字号来“通过阈值”。
+- **overflow 才是缩字号的正确触发条件**：出现文字溢出/接近溢出时，才考虑减字号或增大 box 高度。
+- **字号偏小应增大字体**：当评估为“字号偏小/过小”且没有 overflow 风险时，应增大字号，优先保证 A4 打印可读。
+- **配色干扰是 spec 层面的 kind 分配问题**：优先减少 kind 种类、修正 kind 语义；不要用切换到黑白方案替代结构修正。
+
 停止策略以 `config.yaml:evaluation` 为准：
 
 - `early_stop`：legacy 提前终止规则（可选开启）
@@ -198,7 +205,7 @@ reason: "一句话说明本轮行动与停止/继续依据"
 # 可选：给 config_local patch（仅允许 renderer/layout/color_scheme/evaluation.stop_strategy 的安全子集）
 # config_local:
 #   color_scheme:
-#     name: outline-print
+#     name: tint-layered
 ```
 
 ### 阶段五：交付与自检

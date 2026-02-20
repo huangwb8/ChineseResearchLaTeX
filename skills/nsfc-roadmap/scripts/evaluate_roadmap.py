@@ -91,13 +91,27 @@ def _visual_score_from_measurements(
         density = 0.0
     metrics["density"] = density
 
-    crowded_p1 = float(thresholds.get("crowded_density_p1", 0.35))
-    if density > crowded_p1:
+    crowded_p1 = float(thresholds.get("crowded_density_p1", 0.55))
+    crowded_p0 = float(thresholds.get("crowded_density_p0", max(crowded_p1 + 0.10, 0.65)))
+    metrics["crowded_density_p1"] = crowded_p1
+    metrics["crowded_density_p0"] = crowded_p0
+
+    if density >= crowded_p0:
+        defects.append(
+            Defect(
+                severity="P0",
+                where="global",
+                message=f"画面整体过度拥挤（像素密度={density:.2f} >= {crowded_p0:.2f}），A4 打印可读性风险高；优先精简文案/合并节点/减少节点数",
+                dimension="density",
+            )
+        )
+        score -= 25
+    elif density >= crowded_p1:
         defects.append(
             Defect(
                 severity="P1",
                 where="global",
-                message=f"画面元素偏拥挤（像素密度={density:.2f}），建议增加画布/间距或缩短文案",
+                message=f"画面元素偏拥挤（像素密度={density:.2f} >= {crowded_p1:.2f}），优先精简文案/合并节点；不建议用缩字号来“通过阈值”",
                 dimension="density",
             )
         )

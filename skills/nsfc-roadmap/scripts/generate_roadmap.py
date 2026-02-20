@@ -469,7 +469,13 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
 
     cs = local_cfg.get("color_scheme")
     if isinstance(cs, dict) and "name" in cs:
-        out["color_scheme"] = {"name": as_str(cs.get("name"), "color_scheme.name")}
+        name = as_str(cs.get("name"), "color_scheme.name")
+        # Safety: config_local is primarily used by ai_critic; keep palette choices conservative.
+        # Users who explicitly need outline-print can pass `--config` or edit the base config.yaml.
+        allowed = {"academic-blue", "tint-layered"}
+        if name not in allowed:
+            fatal("config_local.color_scheme.name 不合法（允许 academic-blue|tint-layered；outline-print 请改全局 config.yaml 或使用 --config）")
+        out["color_scheme"] = {"name": name}
 
     ev = local_cfg.get("evaluation")
     if isinstance(ev, dict) and "stop_strategy" in ev:
@@ -676,7 +682,18 @@ def _write_ai_critic_request(
     lines.append("# config_local:")
     lines.append("#   layout:")
     lines.append("#     template: three-column")
+    lines.append("#   color_scheme:")
+    lines.append("#     name: tint-layered")
     lines.append("```")
+    lines.append("")
+    lines.append("### 关键纠偏（必须遵守）")
+    lines.append("")
+    lines.append("- density（拥挤）通常是**内容问题**：优先改 spec（缩短节点文案/合并相近节点/减少节点数），不要用缩字号来“通过阈值”。")
+    lines.append("- 字号只在两种场景调整：")
+    lines.append("  - 发生 overflow（文字溢出/接近溢出）→ 才考虑减字号或增大 box 高度。")
+    lines.append("  - 评估为“字号偏小/过小”且无 overflow 风险 → 增大字号。")
+    lines.append("- 配色干扰是 spec 层面的 kind 分配问题：优先减少 kind 种类/修正 kind 语义；禁止通过切换到 outline-print 来“减少干扰”。")
+    lines.append("- 若需要调整配色，config_local.color_scheme.name 仅允许 {academic-blue, tint-layered}。")
     lines.append("")
     lines.append("### 缺陷分级口径")
     lines.append("")
@@ -865,35 +882,70 @@ def _apply_tex_hints(spec: Dict[str, Any], tex_path: Path, effective_layout: Opt
 
 def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[str, Any]:
     out = deepcopy(cfg)
-    counts = evaluation.get("counts", {})
-    p0 = int(counts.get("p0", 0))
-    p1 = int(counts.get("p1", 0))
 
     renderer = out["renderer"]
     layout = out["layout"]
     thresholds = (out.get("evaluation", {}) or {}).get("thresholds", {})
     min_font_px = int(thresholds.get("min_font_px", layout.get("min_font_size", renderer["fonts"]["min_size"])))
 
-    if p0 > 0:
-        renderer["canvas"]["height_px"] = int(renderer["canvas"]["height_px"]) + 220
-        renderer["fonts"]["default_size"] = max(
-            max(int(renderer["fonts"]["min_size"]), min_font_px),
-            int(renderer["fonts"]["default_size"]) - 2,
-        )
-        layout["spacing_px"] = max(14, int(layout["spacing_px"]) - 2)
-        return out
+    # Directional fixes (avoid "density -> shrink font -> unreadable" anti-pattern).
+    defects = evaluation.get("defects", [])
+    if not isinstance(defects, list):
+        defects = []
 
-    if p1 > 0:
-        renderer["fonts"]["default_size"] = max(
-            max(int(renderer["fonts"]["min_size"]), min_font_px),
-            int(renderer["fonts"]["default_size"]) - 2,
-        )
-        renderer["canvas"]["height_px"] = int(renderer["canvas"]["height_px"]) + 200
-        return out
+    def has_defect(sev: str, dimension: str) -> bool:
+        for d in defects:
+            if not isinstance(d, dict):
+                continue
+            if str(d.get("severity", "")).strip() != sev:
+                continue
+            if str(d.get("dimension", "")).strip() != dimension:
+                continue
+            return True
+        return False
+
+    def has_msg_contains(sev: str, needle: str) -> bool:
+        needle = (needle or "").strip()
+        if not needle:
+            return False
+        for d in defects:
+            if not isinstance(d, dict):
+                continue
+            if str(d.get("severity", "")).strip() != sev:
+                continue
+            msg = str(d.get("message", "") or "")
+            if needle in msg:
+                return True
+        return False
+
+    overflow_p0 = has_defect("P0", "overflow") or has_msg_contains("P0", "文字溢出")
+    near_overflow_p1 = has_defect("P1", "overflow") or has_msg_contains("P1", "接近溢出")
+
+    font_too_small = (
+        has_msg_contains("P0", "字号过小")
+        or has_msg_contains("P1", "字号偏小")
+        or has_msg_contains("P0", "默认字号过小")
+    )
 
     current = int(renderer["fonts"]["default_size"])
     target_max = int(renderer["fonts"]["title_size"]) - 2
-    if current < target_max:
+    warn_font_px = int(thresholds.get("warn_font_px", max(min_font_px + 4, 24)))
+
+    if overflow_p0:
+        # Overflow is one of the few cases where reducing font makes sense.
+        renderer["fonts"]["default_size"] = max(
+            max(int(renderer["fonts"]["min_size"]), min_font_px),
+            current - 2,
+        )
+        return out
+
+    if font_too_small and not near_overflow_p1:
+        # If font is judged too small (but no overflow signal), prioritize readability.
+        renderer["fonts"]["default_size"] = max(current, min(warn_font_px, target_max))
+        return out
+
+    # Gentle nudge upward for readability, but never if overflow is near.
+    if current < target_max and not near_overflow_p1:
         renderer["fonts"]["default_size"] = current + 1
     return out
 

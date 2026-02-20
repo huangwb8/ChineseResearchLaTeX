@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-roadmap
-  version: 0.8.1
+  version: 0.8.2
   description: "为 NSFC 标书生成可打印、A4 可读的技术路线图（drawio + SVG/PNG/PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -59,7 +59,9 @@ evaluation:
     phase_balance_warn_ratio: 1.8
     min_png_width_px: 1600
     min_png_height_px: 1500
-    crowded_density_p1: 0.35
+    # 提示：NSFC 路线图属于信息密集型图表，density 不宜阈值过低，否则会驱动错误的“缩字号/改渲染参数”优化方向。
+    crowded_density_p1: 0.55
+    crowded_density_p0: 0.65
     blank_check_min_boxes: 8
     blank_density_p0: 0.010
     blank_density_p1: 0.020
@@ -85,7 +87,8 @@ evaluation:
       margin_px: 20
       spacing_px: 8
       width_px: 0
-      height_px: 120
+      # 画布高度保持 A4 约束（默认 2/3 A4），避免在优化循环中通过“拉长画布”掩盖内容拥挤问题。
+      height_px: 0
   multi_round_self_check:
     enabled: true
     # 多维度批判性评估：补足纯几何/密度指标难以覆盖的人类感知维度

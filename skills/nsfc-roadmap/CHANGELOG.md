@@ -12,6 +12,17 @@
 
 - （暂无）
 
+## [0.8.2] - 2026-02-20
+
+### Changed（变更）
+
+- 重校准拥挤阈值（NSFC 信息密集型场景）：`config.yaml:evaluation.thresholds` 将 `crowded_density_p1` 调整为 0.55，并显式加入 `crowded_density_p0=0.65`
+- 固定画布高度约束：`config.yaml:evaluation.exploration.jitter_px.height_px` 设为 0，避免在优化循环中通过“拉长画布”掩盖内容拥挤问题
+- 修正多轮优化方向：`scripts/generate_roadmap.py` 的自动修复逻辑不再用“缩字号/扩画布/缩间距”来应对拥挤；仅在 overflow 时减字号，在字号偏小时增字号，并避免密度驱动可读性下降
+- `scripts/evaluate_roadmap.py` / `scripts/evaluate_dimension.py`：对齐拥挤提示文案与 P0/P1 判定口径，强调“优先精简内容/合并节点”，避免误导改渲染参数
+- ai_critic 协议增强：request 增加“密度/字号/配色”纠偏约束；`config_local.color_scheme.name` 限制为 `{academic-blue, tint-layered}`，减少误切 `outline-print`
+- 文档同步：`SKILL.md`、`README.md` 增补纠偏原则与常见问题口径
+
 ## [0.8.1] - 2026-02-19
 
 ### Changed（变更）

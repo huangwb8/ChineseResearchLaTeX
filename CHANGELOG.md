@@ -61,6 +61,14 @@
   - `references/models/templates.yaml`：增加 `render_family`（概念 family 与可落地图骨架解耦，支持稳定回退）
   - `references/models/README.md`、`skills/nsfc-roadmap/README.md`：补齐 `model-07..model-10` 与新增 family 的使用说明
 
+- **nsfc-roadmap v0.8.1 → v0.8.2**：密度/字号/配色纠偏（内容与渲染解耦），修复多轮优化“越改越差”的方向性问题
+  - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：移除 P0/P1 触发时的“缩字号/扩画布/缩间距”自动修复逻辑；改为仅在 overflow 时减字号、在字号偏小时增字号，并避免密度驱动参数劣化
+  - `skills/nsfc-roadmap/config.yaml`：重校准拥挤阈值（P1=0.55，P0=0.65），避免对信息密集型路线图误判
+  - `skills/nsfc-roadmap/config.yaml`：固定画布高度约束（禁用 exploration 的 `height_px` 抖动），避免在优化循环中通过“拉长画布”掩盖内容拥挤问题
+  - `skills/nsfc-roadmap/scripts/evaluate_roadmap.py` / `skills/nsfc-roadmap/scripts/evaluate_dimension.py`：对齐拥挤提示文案与 P0/P1 判定口径（强调优先精简内容，不靠缩字号“过阈值”）
+  - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：ai_critic request 增加“密度/字号/配色”纠偏约束；`config_local.color_scheme.name` 限制为 `{academic-blue, tint-layered}`，避免误切 `outline-print`
+  - 文档同步：`skills/nsfc-roadmap/SKILL.md`、`skills/nsfc-roadmap/README.md`、`skills/README.md`、根 `README.md` 更新相关说明与版本号
+
 - **nsfc-qc v0.1.1 → v0.1.2**：新增中文直引号排版预检（只读）
   - `scripts/nsfc_qc_precheck.py`：检测 `"免疫景观"` 这类直引号写法，输出 `quote_issues.csv` 并在 `precheck.json` 中给出结构化统计与替换建议（``免疫景观''）
   - `scripts/materialize_final_outputs.py`：metrics 聚合时纳入 `typography` 预检信息并补齐产物索引
@@ -132,6 +140,9 @@
 
 - **nsfc-qc**：新增实例辅助优化计划文档（目录隔离/相对路径/报告结构校验方案）
   - [skills/nsfc-qc/plans/实例辅助优化-v202602170903.md](skills/nsfc-qc/plans/实例辅助优化-v202602170903.md)
+
+- **nsfc-roadmap**：新增路线图“画图经验”沉淀文档（模板共性规律 + family 选型 + 密度/字号优化经验）
+  - [skills/nsfc-roadmap/plans/画图经验-优化-v202602200803.md](skills/nsfc-roadmap/plans/画图经验-优化-v202602200803.md)
 
 - **nsfc-reviewers v0.5.0**：新增 NSFC 标书专家评审模拟技能（🚧 开发中）
   - 模拟 5 位领域专家角色（创新性/可行性/基础与团队/严格综合/建设性）对标书进行多维度评审
