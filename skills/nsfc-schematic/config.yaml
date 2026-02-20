@@ -3,15 +3,17 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.8.2
+  version: 0.8.4
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
   author: "Bensz Conan"
   category: 科研写作
 
 renderer:
   canvas:
-    width_px: 2400
-    height_px: 1400
+    # Default export canvas follows a MacBook-like 16:10 ratio, friendly for on-screen review.
+    # Users can still override via spec.schematic.canvas.{width,height}.
+    width_px: 3200
+    height_px: 2000
   drawio_border_px: 20
   background: "#FFFFFF"
   allow_internal_fallback: true
@@ -65,14 +67,28 @@ layout:
     widen_step_px: 20
   font:
     title_size: 34
-    group_label_size: 24
+    group_label_size: 22
     node_label_size: 26
     node_label_size_target: 28
-    edge_label_size: 24
+    edge_label_size: 22
+  # Canvas fitting (deterministic):
+  # - expand when content overflows;
+  # - optionally shrink when user-provided canvas is excessively larger than content,
+  #   to avoid extreme aspect ratios and wasted whitespace.
+  canvas_fit:
+    enabled: true
+    shrink_to_content: true
+    # Only shrink when the provided canvas is larger than needed by this ratio.
+    # (Keep some slack to avoid “每次小改就抖动画布尺寸”。)
+    shrink_trigger_ratio: 1.15
+  # Routing tweaks for readability (deterministic, draw.io CLI independent).
+  routing:
+    obstacle_padding_px: 16
+    avoid_group_headers: true
   auto:
-    margin_x: 120
+    margin_x: 110
     margin_y: 120
-    group_gap_x: 140
+    group_gap_x: 120
     group_gap_y: 80
     group_padding_x: 36
     group_padding_y: 28

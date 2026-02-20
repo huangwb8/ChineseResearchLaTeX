@@ -6,6 +6,25 @@
 
 （暂无）
 
+## [0.8.4] - 2026-02-20
+
+### Changed（变更）
+
+- `config.yaml`：默认画布比例从 A4 横版调整为更接近 MacBook 的 16:10（更适合屏幕审阅）。
+
+## [0.8.3] - 2026-02-20
+
+### Changed（变更）
+
+- `config.yaml`：默认画布改为更接近 A4 横版比例，降低“过扁/过宽”观感风险。
+- `config.yaml`：新增 `layout.canvas_fit`（可选自动“收缩到内容”）与 `layout.routing`（路由避让与障碍 padding）配置项，提升排版一致性与可读性。
+- `scripts/schematic_writer.py`：分组容器改用 swimlane 渲染“统一标题栏”，改善长中文分组标题的观感与对齐一致性。
+
+### Fixed（修复）
+
+- `scripts/schematic_writer.py`：连线路由加入“分组标题栏”避让与更保守的障碍 padding，降低连线/标签遮挡节点与标题的概率。
+- `scripts/spec_parser.py`：当用户显式给出超大画布时，可选按内容边界收缩画布，避免极端比例与大量空白。
+
 ## [0.8.2] - 2026-02-20
 
 ### Added（新增）

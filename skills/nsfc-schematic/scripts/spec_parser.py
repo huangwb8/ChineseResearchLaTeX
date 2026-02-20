@@ -476,7 +476,8 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         raise ValueError(f"schematic.direction 不合法：{direction_raw}")
     direction: Direction = direction_raw  # type: ignore[assignment]
 
-    canvas = root.get("canvas") if isinstance(root.get("canvas"), dict) else {}
+    canvas_explicit = isinstance(root.get("canvas"), dict)
+    canvas = root.get("canvas") if canvas_explicit else {}
     canvas = _require_mapping(canvas, "schematic.canvas")
     canvas_w = int(canvas.get("width", config["renderer"]["canvas"]["width_px"]))
     canvas_h = int(canvas.get("height", config["renderer"]["canvas"]["height_px"]))
@@ -574,6 +575,41 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         bottom = max(g.y + g.h for g in groups)
         canvas_w = max(canvas_w, int(right + margin_x))
         canvas_h = max(canvas_h, int(bottom + margin_y))
+
+    # Optional "shrink to content" to avoid extreme aspect ratios when user-specified
+    # canvas is much larger than the actual content bounds.
+    fit_cfg = (config.get("layout", {}) or {}).get("canvas_fit", {})
+    if isinstance(fit_cfg, dict) and bool(fit_cfg.get("enabled", True)) and groups:
+        shrink = bool(fit_cfg.get("shrink_to_content", True))
+        try:
+            trigger = float(fit_cfg.get("shrink_trigger_ratio", 1.15))
+        except Exception:
+            trigger = 1.15
+        trigger = max(1.0, trigger)
+
+        auto = config.get("layout", {}).get("auto", {}) or {}
+        margin_x = int(auto.get("margin_x", 80))
+        margin_y = int(auto.get("margin_y", 80))
+        right = max(g.x + g.w for g in groups)
+        bottom = max(g.y + g.h for g in groups)
+
+        need_w = int(right + margin_x)
+        need_h = int(bottom + margin_y)
+
+        # Only enforce renderer defaults as minimum when canvas is not explicitly specified in spec.
+        if not canvas_explicit:
+            need_w = max(need_w, int(config.get("renderer", {}).get("canvas", {}).get("width_px", need_w)))
+            need_h = max(need_h, int(config.get("renderer", {}).get("canvas", {}).get("height_px", need_h)))
+
+        if shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
+            canvas_w = need_w
+        else:
+            canvas_w = max(canvas_w, need_w)
+
+        if shrink and need_h > 0 and canvas_h > need_h and (canvas_h / max(1, need_h)) >= trigger:
+            canvas_h = need_h
+        else:
+            canvas_h = max(canvas_h, need_h)
 
     node_index = {n.id: n for g in groups for n in g.children}
 

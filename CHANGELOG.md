@@ -40,6 +40,15 @@
 
 ### Changed（变更）
 
+- **nsfc-schematic v0.8.3 → v0.8.4**：默认画布比例改为更接近 MacBook 的 16:10（更适合屏幕审阅）
+  - `skills/nsfc-schematic/config.yaml`：默认 `renderer.canvas` 高度调整（16:10）
+
+- **nsfc-schematic v0.8.2 → v0.8.3**：分组标题栏统一、画布比例更稳健、连线路由避让增强
+  - `skills/nsfc-schematic/scripts/schematic_writer.py`：分组容器改用 swimlane 渲染统一标题栏，改善长中文分组标题排版一致性
+  - `skills/nsfc-schematic/scripts/spec_parser.py`：新增可选“收缩到内容”画布拟合，避免极端比例与大量空白
+  - `skills/nsfc-schematic/scripts/schematic_writer.py`：连线路由加入分组标题栏避让与更保守的障碍 padding，降低遮挡风险
+  - `skills/nsfc-schematic/config.yaml`：默认画布更接近 A4 横版比例，并新增 `layout.canvas_fit` / `layout.routing` 配置项
+
 - **AGENTS.md**：在"变更边界"部分新增规则
   - 当 `skills/` 目录内文件有变化时，需检查 `README.md` 是否需要同步更新
 

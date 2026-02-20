@@ -52,12 +52,18 @@ def _group_style(group_style: str, palette: Dict[str, Any], config: Dict[str, An
     text = palette.get("text", "#1F1F1F")
     font_size = int(config["layout"]["font"]["group_label_size"])
     stroke_w = int(config["renderer"]["stroke"]["width_px"])
+    header_h = int(((config.get("layout", {}) or {}).get("auto", {}) or {}).get("group_header_h", 56))
 
+    # Use swimlane to render a consistent, print-friendly “group header bar”.
+    # This looks better than the default container label for long CJK titles (e.g. “数据与特征（输入层）”).
     base = (
-        "rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;"
-        "verticalAlign=top;align=left;"
-        f"fillColor={fill};strokeColor={stroke};"
+        "swimlane;rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;"
+        "childLayout=none;"
+        f"startSize={header_h};"
+        f"fillColor={fill};swimlaneFillColor={fill};strokeColor={stroke};"
         f"fontColor={text};fontSize={font_size};fontStyle=1;strokeWidth={stroke_w};"
+        "align=center;verticalAlign=middle;"
+        "spacingLeft=14;spacingRight=14;spacingTop=8;spacingBottom=8;"
     )
     if group_style == "dashed-border":
         return base + "dashed=1;dashPattern=8 4;"
@@ -103,7 +109,7 @@ def _edge_style(style: str, palette: Dict[str, Any], config: Dict[str, Any], rou
     base = (
         f"edgeStyle={edge_style};rounded=1;orthogonalLoop=1;"
         f"strokeColor={arrow};"
-        f"fontSize={edge_font};fontColor={text};fontStyle=1;labelBackgroundColor={bg};"
+        f"fontSize={edge_font};fontColor={text};fontStyle=0;labelBackgroundColor={bg};labelBorderColor=none;labelPadding=4;"
     )
     if style == "dashed":
         return base + "strokeWidth=2;dashed=1;dashPattern=8 4;endArrow=open;endFill=0;"
@@ -210,10 +216,21 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
     # Z-order: groups (background) -> edges -> nodes (foreground, avoid lines covering text).
     routing_raw = str(config.get("renderer", {}).get("internal_routing", "orthogonal"))
     mode = "straight" if routing_raw == "straight" else "orthogonal"
+    routing_cfg = ((config.get("layout", {}) or {}).get("routing", {}) or {}) if isinstance((config.get("layout", {}) or {}).get("routing", {}), dict) else {}
+    obstacle_pad = int(routing_cfg.get("obstacle_padding_px", 10))
+    avoid_headers = bool(routing_cfg.get("avoid_group_headers", True))
+    header_h = int(((config.get("layout", {}) or {}).get("auto", {}) or {}).get("group_header_h", 56))
+
     node_lookup: Dict[str, Tuple[int, int, int, int]] = {}
     for g in spec.groups:
         for n in g.children:
             node_lookup[n.id] = (n.x, n.y, n.x + n.w, n.y + n.h)
+
+    header_obstacles: List[Tuple[int, int, int, int]] = []
+    if avoid_headers:
+        pad = max(0, obstacle_pad // 2)
+        for g in spec.groups:
+            header_obstacles.append(rect_expand((g.x, g.y, g.x + g.w, g.y + header_h), pad))
 
     edge_idx = 1
     for edge in spec.edges:
@@ -227,11 +244,8 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
         src = node_lookup.get(edge.source)
         tgt = node_lookup.get(edge.target)
         if mode == "orthogonal" and src and tgt:
-            obs = [
-                rect_expand(r, 10)
-                for nid, r in node_lookup.items()
-                if nid not in {edge.source, edge.target}
-            ]
+            obs = [rect_expand(r, obstacle_pad) for nid, r in node_lookup.items() if nid not in {edge.source, edge.target}]
+            obs.extend(header_obstacles)
             pts = route_edge_points(
                 spec.direction,  # type: ignore[arg-type]
                 mode,  # type: ignore[arg-type]

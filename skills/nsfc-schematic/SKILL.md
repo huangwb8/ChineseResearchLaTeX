@@ -86,6 +86,8 @@ metadata:
 - `layout.title`：是否将 `spec.title` 落图，以及为标题预留的顶部空间（避免标题配置僵尸化）
 - `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
 - `layout.auto_expand_canvas`：当节点/分组被自动扩容后，是否自动扩展画布以避免越界
+- `layout.canvas_fit`：画布拟合策略（可选按内容边界收缩，避免极端比例与大量空白）
+- `layout.routing`：路由避让参数（更保守的障碍 padding、避让分组标题栏）
 - `layout.font.edge_label_size`：连线标签字号（edge label 不会自动跟随 `node_label_size`，需单独配置）
 - `color_scheme`：配色方案
 - `evaluation`：评分阈值、停止策略（stop_strategy）、权重与多轮探索参数
