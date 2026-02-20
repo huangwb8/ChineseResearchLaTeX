@@ -307,7 +307,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ### 10. nsfc-roadmap - NSFC 技术路线图生成
 
-**状态**：🚧 开发中（v0.9.0）
+**状态**：🚧 开发中（v0.9.1）
 
 **类型**：📝 日常
 
@@ -322,15 +322,14 @@ output_mode：preview（先预览）/ apply（确认后写入）
 ```
 请使用 nsfc-roadmap 生成技术路线图：
 目标项目：projects/NSFC_Young
-参考模板：model-02（可选；建议先运行规划阶段生成 models_contact_sheet.png 再选）
 ```
 
 **技能特点**：
 - 输出 `.drawio`（可编辑）与 `.svg`/`.png`/`.pdf`（交付）
-- 内置 10 个参考模板（model-01 ~ model-10）；规划阶段自动生成“模型画廊”（contact sheet）用于视觉选型
+- 内置参考图（model-01 ~ model-10）；规划阶段自动生成“模型画廊”（contact sheet）用于学习优秀结构与信息密度控制（默认不建议固定到单一模板）
 - 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
 - "平台期停止"策略：基于 PNG 哈希与分数提升阈值自动停止
-- 支持规划模式：先审阅 `roadmap-plan.md` 再生成
+- 支持规划模式：纯 AI 规划（默认），先审阅 `roadmap-plan.md` 再生成
 
 [详细文档 →](nsfc-roadmap/SKILL.md)
 
@@ -338,7 +337,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ### 11. nsfc-schematic - NSFC 原理图/机制图生成
 
-**状态**：🚧 开发中（v0.8.5）
+**状态**：🚧 开发中（v0.8.6）
 
 **类型**：📝 日常
 
@@ -362,7 +361,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - 正交路由，避免连线穿字
 - 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
 - 元素层级保护：分组底层 → 连线中层 → 节点顶层
-- 图类型模板库（5 类常用骨架 + 多个 `model-xx` 视觉参考）+ 规划阶段自动选型 + “模型画廊”（skeleton/simple 优先）辅助视觉选型
+- 图类型参考图（5 类常用骨架 + 多个 `model-xx` 视觉参考）+ “模型画廊”（skeleton/simple 优先）用于学习结构与风格（默认纯 AI 规划，不要求模板单选）
 - 支持规划模式：先审阅 `schematic-plan.md` 再生成
 
 [详细文档 →](nsfc-schematic/SKILL.md)

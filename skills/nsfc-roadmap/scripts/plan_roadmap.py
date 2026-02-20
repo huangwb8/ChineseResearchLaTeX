@@ -110,7 +110,7 @@ def main() -> None:
         "--mode",
         type=str,
         default=None,
-        help="template|ai（默认取 config.yaml:planning.planning_mode；缺省为 template）",
+        help="template|ai（默认取 config.yaml:planning.planning_mode；若配置缺失则为 template）",
     )
     p.add_argument("--proposal-path", type=Path, default=None)
     p.add_argument("--proposal-file", type=Path, default=None)
@@ -190,14 +190,22 @@ def main() -> None:
         req_md = req_dir / "plan_request.md"
 
         # Produce proposal extraction (deterministic).
+        # In AI planning mode, allow "context-only" runs by treating context as inline proposal_text.
+        context_text = _load_context_text(args.context, args.context_file)
+        inline_text: Optional[str] = None
+        if args.proposal and str(args.proposal).strip():
+            inline_text = str(args.proposal).strip()
+        if context_text:
+            inline_text = (inline_text + "\n\n" + context_text).strip() if inline_text else context_text.strip()
+
         proposal_extract = extract_proposal(
             proposal_path=args.proposal_path,
             proposal_file=args.proposal_file,
-            proposal_text=args.proposal,
+            proposal_text=inline_text,
         )
 
-        # Available templates (stable ids from templates.yaml).
-        templates: List[Dict[str, Any]] = []
+        # Model gallery is for visual learning only in AI planning mode.
+        # Host AI should not be forced to pick a single template_ref; keep the spec flexible.
         gallery: Dict[str, str] = {}
         try:
             db = load_template_db(root=root)
@@ -218,19 +226,8 @@ def main() -> None:
                 out_dir=req_dir,
                 font_candidates=[str(x) for x in candidates if isinstance(x, str)],
             )
-            for tid, t in sorted(db.templates.items(), key=lambda kv: kv[0]):
-                templates.append(
-                    {
-                        "id": t.id,
-                        "family": t.family,
-                        "render_family": t.render_family,
-                        "file": t.file,
-                        # Prefer evidence-pack paths (copied) to make selection portable.
-                        "image_path": (Path(gallery["models_dir"]) / t.file).as_posix() if gallery.get("models_dir") else (root / "references" / "models" / t.file).as_posix(),
-                    }
-                )
         except Exception as exc:
-            warn(f"读取 templates.yaml 失败（将仅输出空模板列表）：{exc}")
+            warn(f"生成模型画廊失败（将继续，仅影响视觉参考证据）：{exc}")
 
         # Constraints from config (script-owned hard constraints).
         canvas = (config.get("renderer", {}) or {}).get("canvas", {}) if isinstance((config.get("renderer", {}) or {}).get("canvas", {}), dict) else {}
@@ -240,12 +237,16 @@ def main() -> None:
             "max_phases": 5,
             "boxes_per_phase": "2-6",
             "font_size_px": int(fonts.get("default_size", 28)),
+            "template_policy": {
+                "use_template_ref": False,
+                "note": "纯 AI 规划：模板画廊仅用于学习，不要求也不建议在 spec 中写 template_ref。",
+            },
         }
 
         req = {
             "proposal_extract": proposal_extract,
-            "available_templates": templates,
             "model_gallery": gallery,
+            "extra_context": context_text,
             "constraints": constraints,
             "output": {
                 "write_plan_to": plan_path.as_posix(),
@@ -269,7 +270,7 @@ def main() -> None:
         req_lines.append("")
         req_lines.append(f"- request_data: `{req_json.as_posix()}`")
         if gallery.get("contact_sheet"):
-            req_lines.append(f"- models_contact_sheet（请先看图选型）: `{gallery['contact_sheet']}`")
+            req_lines.append(f"- models_contact_sheet（可先看图学习优秀结构/信息密度控制）: `{gallery['contact_sheet']}`")
         if gallery.get("models_dir"):
             req_lines.append(f"- models_dir（单张参考图）: `{gallery['models_dir']}`")
         req_lines.append("")
@@ -282,7 +283,8 @@ def main() -> None:
         req_lines.append("")
         req_lines.append("- spec 必须符合 `scripts/spec.py:load_spec()` 校验（字段齐全、结构合法）")
         req_lines.append("- 每阶段建议 2-6 个节点；主线闭环清晰；至少 1 个风险/替代方案节点（若研究叙事允许）")
-        req_lines.append("- 选择一个 template_ref 或至少给出 layout_template（并在 plan 中说明“为什么适合”）")
+        req_lines.append("- 纯 AI 规划：不要在 spec 中写 `template_ref`（除非用户明确要求固定某个模板）")
+        req_lines.append("- `layout_template` 可选；不写也可以（渲染阶段会使用 config 的默认 layout 策略）")
         req_lines.append("")
         req_lines.append("当你写完两个文件后，请再次运行本脚本以进行合法性校验。")
         req_lines.append("")
@@ -422,7 +424,7 @@ def main() -> None:
         if gallery.get("contact_sheet"):
             lines.append("## 模型画廊（视觉选型）")
             lines.append("")
-            lines.append(f"- models_contact_sheet: `{gallery['contact_sheet']}`（推荐：先看图再选 template_ref）")
+            lines.append(f"- models_contact_sheet: `{gallery['contact_sheet']}`（推荐：先看图学习优秀结构与信息密度控制）")
             if gallery.get("models_dir"):
                 lines.append(f"- models_dir: `{gallery['models_dir']}`（单张参考图）")
             lines.append("")

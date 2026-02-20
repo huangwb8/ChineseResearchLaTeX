@@ -184,7 +184,7 @@ git clone https://github.com/huangwb8/skills.git &&
 - **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/科学假设 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
 - **nsfc-research-content-writer**：研究内容编排，同步生成"研究内容 + 特色与创新 + 三年年度计划"，确保子目标带"指标/对照/验证方案"三件套，创新点用"相对坐标系"表达
 - **nsfc-research-foundation-writer**：研究基础编排，同步生成"研究基础 + 工作条件 + 风险应对措施"，用"证据链 + 条件对位 + 风险预案"证明项目可行性
-- **nsfc-roadmap**：从 NSFC 标书自动生成可打印、A4 可读的技术路线图，输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果，支持多轮评估-优化与模板库选择
+- **nsfc-roadmap**：从 NSFC 标书自动生成可打印、A4 可读的技术路线图，输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果，默认纯 AI 规划 + 多轮评估-优化（模板仅作可选参考）
 - **nsfc-schematic**：将标书中的研究机制、算法架构、模块关系转成原理图/机制图，输出 `.drawio` 源文件与 `.svg`/`.png` 渲染结果，支持分组结构、正交路由与多轮自检优化
 - **nsfc-abstract**：标题建议 + 中英文摘要生成（默认 1 个推荐标题 + 5 个候选标题及理由；中文≤400字含标点；英文≤4000字符含标点；英文为中文的忠实翻译，不新增信息；输出写入工作目录 `NSFC-ABSTRACTS.md`）
 
@@ -209,8 +209,8 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.8 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.2.2 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
-| [nsfc-roadmap](skills/nsfc-roadmap/) | v0.9.0 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
-| [nsfc-schematic](skills/nsfc-schematic/) | v0.8.5 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
+| [nsfc-roadmap](skills/nsfc-roadmap/) | v0.9.1 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
+| [nsfc-schematic](skills/nsfc-schematic/) | v0.8.6 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
 | [nsfc-qc](skills/nsfc-qc/) | v0.1.5 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | 🚧 开发中 |
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v0.5.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | 🚧 开发中 |
 

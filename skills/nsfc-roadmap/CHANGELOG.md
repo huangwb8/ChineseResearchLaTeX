@@ -12,6 +12,14 @@
 
 - （暂无）
 
+## [0.9.1] - 2026-02-20
+
+### Changed（变更）
+
+- 默认启用纯 AI 规划：`config.yaml:planning.planning_mode` 由 `template` 改为 `ai`
+- `scripts/plan_roadmap.py`（AI 规划模式）：不再要求/引导“必须选择 template_ref”；模型画廊仅用于学习结构与信息密度控制
+- 文档口径对齐：`SKILL.md`、`README.md`
+
 ## [0.9.0] - 2026-02-20
 
 ### Added（新增）

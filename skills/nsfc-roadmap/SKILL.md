@@ -38,7 +38,7 @@ metadata:
 - `rounds`：评估-优化轮次（默认 5，单一真相来源见 `config.yaml:evaluation.max_rounds`）
 - `output_dir`：输出目录（默认在当前工作目录下创建 `roadmap_output/`）
 - `layout`：布局模板名（默认 `auto`，见 `config.yaml:layout`；支持 `classic/three-column/layered-pipeline`）
-- `template_ref`：具体模板 id（如 `model-02`；由 `references/models/templates.yaml` 提供最小映射；优先级高于 `layout`）
+- `template_ref`：具体模板 id（如 `model-02`；高级选项；默认“纯 AI 规划”不需要也不建议设置）
 
 ## 输出
 
@@ -82,6 +82,18 @@ metadata:
 
 若你已准备好 `spec_file`，可跳过规划阶段。
 
+#### 纯 AI 规划（默认）
+
+本技能默认启用 `config.yaml:planning.planning_mode=ai`：规划阶段不要求/不建议选择单一 `template_ref`。
+
+工作流：
+
+1. 运行 `plan_roadmap.py` 生成规划请求协议（`plan_request.json/plan_request.md` + 模型画廊）。
+2. 宿主 AI 按 `plan_request.md` 写出 `roadmap-plan.md + spec_draft.yaml`。
+3. 再次运行 `plan_roadmap.py`，脚本将校验 `spec_draft.yaml` 是否满足 `scripts/spec.py:load_spec()` 约束。
+
+（兼容旧流程）如需让脚本按确定性规则直接生成草案（模板规划），使用 `--mode template` 或设置 `planning_mode=template`。
+
 #### 步骤 1：调查标书
 
 读取标书目录下的关键 tex 文件，彻底了解整个标书的情况。至少读取：
@@ -89,19 +101,18 @@ metadata:
 - `extraTex/1.立项依据.tex`（或等效文件）：研究背景、科学问题、研究假说
 - `extraTex/2.1.研究内容.tex`（或等效文件）：具体研究内容、技术路线
 
-仅看研究内容是不够的；立项依据提供了科学逻辑的全貌，有助于更准确地把握路线图的叙事结构与模板选择。
+仅看研究内容是不够的；立项依据提供了科学逻辑的全貌，有助于更准确地把握路线图的叙事结构与路线叙事设计。
 
-#### 步骤 2：选模板（视觉选型优先），生成 roadmap-plan.md
+#### 步骤 2：视觉参考（学习优秀结构），生成 roadmap-plan.md
 
-优先基于“视觉选型”来选模板：
+优先基于“视觉参考”来学习优秀结构（不要求也不建议固定到某个 `template_ref`）：
 
 - 运行规划脚本后，查看 `output_dir/.nsfc-roadmap/planning/models_contact_sheet.png`（模型画廊 contact sheet）
 - 或直接查看 `references/models/` 下的单张参考图
 
 然后在 `roadmap-plan.md` 中明确写出：
 
-- `template_ref`（模板 id 或 family）
-- 选用原因（为什么适合当前标书的科学逻辑与叙事结构）
+- 视觉/结构学习点（例如：分区方式、主链走向、信息密度控制、配色层级）
 - 路线图整体结构设计（分区/列/主线、节点密度上限、配色层级等）
 
 #### 步骤 3：生成 spec.yaml
@@ -123,9 +134,8 @@ metadata:
 
 模板字段（可选，推荐在 spec 中记录以便可复现与复盘）：
 
-- `layout_template: auto|classic|three-column|layered-pipeline`
-- `template_ref: model-01..model-10`
-  - 若提供，将按 `templates.yaml` 中的 `family/render_family` 映射到可稳定渲染的骨架（确保可复现、可离线）
+- `layout_template: auto|classic|three-column|layered-pipeline`（可选；不写也可以）
+- `template_ref: model-01..model-10`（可选；默认不建议使用，以避免把复杂场景“框死”在单一模板上）
 
 ### 阶段三：渲染（确定性脚本）
 

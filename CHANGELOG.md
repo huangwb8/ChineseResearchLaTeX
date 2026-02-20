@@ -40,6 +40,16 @@
 
 ### Changed（变更）
 
+- **nsfc-schematic v0.8.5 → v0.8.6**：规划阶段默认改为“纯 AI 规划”（不再要求/默认单选 `template_ref`）
+  - `skills/nsfc-schematic/config.yaml`：新增 `planning.planning_mode=ai`，并将 `layout.template_ref` 默认置空（高级选项）
+  - `skills/nsfc-schematic/scripts/plan_schematic.py`：新增 `--mode template|ai`；AI 模式输出 `plan_request.json/plan_request.md` 并在宿主 AI 写入 `PLAN.md + spec_draft.yaml` 后复跑校验
+  - 文档口径对齐：`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/README.md`
+
+- **nsfc-roadmap v0.9.0 → v0.9.1**：规划阶段默认改为“纯 AI 规划”（不再要求/引导必须选择 `template_ref`）
+  - `skills/nsfc-roadmap/config.yaml`：`planning.planning_mode` 默认由 `template` 改为 `ai`
+  - `skills/nsfc-roadmap/scripts/plan_roadmap.py`（AI 规划模式）：模型画廊仅用于学习结构/信息密度控制；request 协议不再要求 `template_ref`
+  - 文档口径对齐：`skills/nsfc-roadmap/SKILL.md`、`skills/nsfc-roadmap/README.md`
+
 - **nsfc-schematic v0.8.4 → v0.8.5**：规划阶段模板库扩展（新增 `model-06..model-13` 视觉参考）
   - `skills/nsfc-schematic/references/models/`：将 `curated_*.png` 统一重命名为 `model-06..model-13`
   - `skills/nsfc-schematic/references/models/templates.yaml`：新增 `model-06..model-13` 模板索引，确保可被 `--template-ref model-xx` 选择并进入模型画廊/Contact Sheet

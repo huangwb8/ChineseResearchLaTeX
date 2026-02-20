@@ -33,8 +33,8 @@
 
 > 提示：规划阶段需要提供 `proposal_path` / `proposal_file` / `context` 其一。
 
-可选：如果你希望由宿主 AI 自主完成阶段划分与 spec 草案生成，可启用 `config.yaml:planning.planning_mode: ai`（或脚本 `plan_roadmap.py --mode ai`），脚本会输出 `plan_request.json` 并等待你写入 `roadmap-plan.md + spec_draft.yaml`。
-同时，规划阶段会自动生成“模型画廊”（contact sheet），推荐让宿主 AI **先看图再选 `template_ref`**（见下文“选择模板风格”）。
+默认：本技能采用 `config.yaml:planning.planning_mode: ai`。此时脚本会先输出 `plan_request.json`，并等待宿主 AI 写入 `roadmap-plan.md + spec_draft.yaml`，再复跑脚本完成合法性校验。
+规划阶段会自动生成“模型画廊”（contact sheet），用于学习优秀结构与信息密度控制；**不要求也不建议**把复杂场景绑定到单一 `template_ref`（见下文“选择模板风格（可选）”）。
 
 ### 指定输出目录
 
@@ -42,7 +42,7 @@
 请为 /path/to/your/nsfc_proposal 生成技术路线图，输出到 ./roadmap_output/
 ```
 
-### 选择模板风格（推荐）
+### 选择模板风格（可选）
 
 本技能内置了 10 个“模板参考图”（见 `references/models/`），并提供模板家族（family）供规划阶段参考：
 
@@ -51,7 +51,7 @@
 - `convergence-divergence`：收敛-发散（漏斗/轮辐叙事；当前渲染会近似落到 layered-pipeline 骨架）
 - `dual-mainline`：双主线并行（当前渲染会近似落到 three-column 骨架）
 
-你可以直接说：
+你可以直接说（高级选项；默认不建议固定模板）：
 
 ```
 请按 three-column 风格生成技术路线图
@@ -123,7 +123,7 @@ roadmap_output/
     ├── planning/              # planning_mode=ai 时生成：规划 request 协议
     │   ├── plan_request.json
     │   └── plan_request.md
-    │   ├── models_contact_sheet.png  # 视觉选型：模型画廊（推荐先看图选 template_ref）
+    │   ├── models_contact_sheet.png  # 视觉参考：模型画廊（用于学习结构/密度控制；默认不建议固定 template_ref）
     │   ├── models_index.yaml         # 模型索引（id/file/family/render_family）
     │   └── models/                   # 单张参考图（从 references/models/ 复制）
     └── ai/                   # stop_strategy=ai_critic 时生成：证据包 + request/response
@@ -136,7 +136,7 @@ roadmap_output/
 
 ## 迭代流程
 
-1. **规划**：运行 `plan_roadmap.py` 生成 `roadmap-plan.md` + `spec_draft.yaml`
+1. **规划（纯 AI）**：运行 `plan_roadmap.py` 生成 `plan_request.json`，按请求写出 `roadmap-plan.md + spec_draft.yaml`，再复跑脚本做合法性校验
 2. **生成初版**：基于草案/标书抽取内容 → 渲染
 3. **评估**：检查字号、重叠、溢出、平衡等问题
 4. **优化**：调整布局、间距、配色
