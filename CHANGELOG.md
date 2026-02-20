@@ -69,6 +69,13 @@
   - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：ai_critic request 增加“密度/字号/配色”纠偏约束；`config_local.color_scheme.name` 限制为 `{academic-blue, tint-layered}`，避免误切 `outline-print`
   - 文档同步：`skills/nsfc-roadmap/SKILL.md`、`skills/nsfc-roadmap/README.md`、`skills/README.md`、根 `README.md` 更新相关说明与版本号
 
+- **nsfc-roadmap v0.8.2 → v0.9.0**：新增“视觉选型模式”（模型画廊 contact sheet）+ 模板索引最小化
+  - `skills/nsfc-roadmap/scripts/plan_roadmap.py`：规划阶段自动生成 `models_contact_sheet.png` / `models/` / `models_index.yaml`，并在 AI 规划请求中显式引导“先看图再选 template_ref”
+  - `skills/nsfc-roadmap/references/models/templates.yaml`：精简为最小机器索引（仅保留 `id/file/family/render_family`），避免硬编码叙事 token
+  - `skills/nsfc-roadmap/scripts/template_library.py` / `skills/nsfc-roadmap/scripts/generate_roadmap.py`：对齐最小 schema，去除对 `use_when/avoid/family tokens` 的依赖
+  - `skills/nsfc-roadmap/scripts/render_roadmap.py`：修复 classic 布局导出 `.drawio` 时的 `UnboundLocalError` 崩溃（主线 anchor 节点写入位置修正）
+  - 文档同步：`skills/nsfc-roadmap/references/models/README.md`、`skills/nsfc-roadmap/README.md`、`skills/nsfc-roadmap/SKILL.md`、`skills/README.md`、根 `README.md`
+
 - **nsfc-qc v0.1.1 → v0.1.2**：新增中文直引号排版预检（只读）
   - `scripts/nsfc_qc_precheck.py`：检测 `"免疫景观"` 这类直引号写法，输出 `quote_issues.csv` 并在 `precheck.json` 中给出结构化统计与替换建议（``免疫景观''）
   - `scripts/materialize_final_outputs.py`：metrics 聚合时纳入 `typography` 预检信息并补齐产物索引

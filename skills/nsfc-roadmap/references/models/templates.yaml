@@ -1,164 +1,53 @@
-version: 2
+version: 3
 
-# 本文件是“模板经验”的单一真相来源（machine-readable）。
-# 用途：
-# - 供 AI 规划阶段引用（选模板/抽约束/落到 spec）
-# - 供脚本读取（template_ref -> family -> 渲染策略）
+# 本文件仅保留“机器需要的最小信息”：
+# - template_ref(id) -> 图片文件(file)
+# - template_ref(id) -> 概念模板家族(family)
+# - 可选：render_family（当 family 为概念家族，但渲染器仅支持稳定骨架时，用于回退）
 #
-# 重要：这里的 token 是“参考约束”，不是像素级复刻参数。
-#
-# 注意：
-# - `family` 用于表达“概念模板家族”（给 AI 规划阶段参考）。
-# - `render_family`（可选）用于表达“当前渲染器可稳定落地的骨架家族”。
-#   若省略，则默认 render_family=family；若渲染器尚不支持该 family，可显式指定 render_family 做近似落地。
-
-families:
-  three-column:
-    description: 三列式：左右支撑列 + 中央主线；适合"研究框架/内容/方法"或"支撑-主线-支撑"的结构。
-    tokens:
-      layout_skeleton:
-        direction: top-to-bottom
-        columns: 3
-        center_is_mainline: true
-        column_headers: ["研究框架/支撑", "研究主线", "研究方法/支撑"]
-      grouping:
-        section_header: horizontal-bar
-        container_border: dashed-rounded
-      node_styles:
-        corner_radius: medium
-        min_font_px: 20
-        max_lines_per_box: 5
-      palette:
-        style: low-saturation
-        prefer_max_primary_colors: 3
-      connectors:
-        mainline: vertical
-        branch: lateral
-
-  layered-pipeline:
-    description: 纵向主流程 + 横向分层/模块；适合"起点→并行模块→汇总输出"的主链结构。
-    tokens:
-      layout_skeleton:
-        direction: top-to-bottom
-        mainline: center
-        layers: true
-      grouping:
-        section_header: none-or-minimal
-        container_border: solid-rounded
-      node_styles:
-        corner_radius: medium
-        min_font_px: 20
-        max_lines_per_box: 5
-      palette:
-        style: low-saturation
-        prefer_max_primary_colors: 3
-      connectors:
-        mainline: vertical
-        branch: lateral
-
-  convergence-divergence:
-    description: 收敛-发散型：多输入在中部汇聚为核心概念，再向下发散为多输出；适合"多来源→核心机制→多体系"的漏斗/轮辐结构。
-    tokens:
-      layout_skeleton:
-        direction: top-to-bottom
-        convergence_point: center
-        divergence_after_convergence: true
-      grouping:
-        section_header: minimal
-        container_border: none-or-oval
-      node_styles:
-        corner_radius: large
-        min_font_px: 20
-        max_lines_per_box: 4
-      palette:
-        style: low-saturation
-        prefer_max_primary_colors: 3
-      connectors:
-        mainline: converging-then-diverging
-        branch: lateral
-
-  dual-mainline:
-    description: 双主线并行型：左右两条主线（驱动力/维度）并行推进，中央为核心研究内容，每层横向展开；适合"双驱动力"或"力学+化学"等双维度框架。
-    tokens:
-      layout_skeleton:
-        direction: top-to-bottom
-        mainlines: 2
-        mainline_position: left-right
-        center_is_content: true
-      grouping:
-        section_header: horizontal-bar
-        container_border: dashed-rounded
-      node_styles:
-        corner_radius: medium
-        min_font_px: 20
-        max_lines_per_box: 5
-      palette:
-        style: low-saturation
-        prefer_max_primary_colors: 3
-      connectors:
-        mainline: vertical-bilateral
-        branch: lateral
+# 重要：本技能不追求“像素级复刻 model 图”。实际选型请以规划阶段生成的
+# contact sheet（模型画廊）为准，让宿主 AI 直接看图选择 template_ref。
 
 templates:
   - id: model-01
     file: roadmap-model-01.jpeg
     family: three-column
-    use_when: 研究路线能自然分成三列（框架/内容/方法），且希望中央主线保持“分区分层”叙事。
-    avoid: 节点过多但无法做分区时；或希望严格按时间阶段条呈现时（用 classic）。
 
   - id: model-02
     file: roadmap-model-02.jpeg
     family: three-column
-    use_when: 三列结构清晰，但左右支撑需要与中央主线强绑定（同层对齐）。
-    avoid: 文本特别长、需要大面积说明块时（优先 layered-pipeline 或 classic）。
 
   - id: model-03
     file: roadmap-model-03.jpeg
     family: layered-pipeline
-    use_when: 有明显“起点→并行模块→汇总输出”主链，且想用横向模块体现并行研究任务。
-    avoid: 仅有线性阶段条但没有并行模块时（用 classic）。
 
   - id: model-04
     file: roadmap-model-04.jpeg
     family: three-column
-    use_when: 需要三列支撑，但希望容器分组更明显、区块更强“成品感”。
-    avoid: 节点密度极高且需要多行网格堆叠时（用 classic）。
 
   - id: model-05
     file: roadmap-model-05.jpeg
     family: three-column
-    use_when: 三列 + 中央主线更强调“阶段/分区标题条”，适合评审快速扫读。
-    avoid: 需要大量跨列连线表达复杂依赖时（本技能不追求复杂连线）。
 
   - id: model-06
     file: roadmap-model-06.jpeg
     family: layered-pipeline
-    use_when: 纵向主链明显，且每一层都有"关键模块/输出"，适合树状或分层流水线。
-    avoid: 内容更像"阶段条 + 网格填充"的典型路线图时（用 classic）。
 
   - id: model-07
     file: roadmap-model-07.png
     family: layered-pipeline
-    use_when: 顶部有多来源汇聚式输入（多技术/条件→单一研究对象），底部展开为三列并行模块（如工艺窗口/能量积累/调控工艺）；适合"制备-表征-性能"或"多输入→核心→三维并行"结构。
-    avoid: 研究内容无明显三列并行结构时；或主线是纯时间阶段条时（用 classic）。
 
   - id: model-08
     file: roadmap-model-08.png
     family: convergence-divergence
     render_family: layered-pipeline
-    use_when: 多个研究维度/来源在中部汇聚为核心概念（漏斗形），再向下发散为多个研究体系或输出；适合"成分设计→核心机制→典型体系"的漏斗型叙事。
-    avoid: 研究内容是线性阶段推进而非收敛-发散结构时（用 layered-pipeline 或 classic）。
 
   - id: model-09
     file: roadmap-model-09.png
     family: convergence-divergence
     render_family: layered-pipeline
-    use_when: 以一个核心概念/机制为中枢（如"多元素协同效应"），多个研究维度向中枢汇聚后再向下展开为多维度输出；适合"多元素协同→核心效应→多维度输出"的轮辐型叙事。
-    avoid: 核心概念不突出或研究维度超过 5 个时（节点过密，改用 layered-pipeline）。
 
   - id: model-10
     file: roadmap-model-10.png
     family: dual-mainline
     render_family: three-column
-    use_when: 两条并行主线（如"位错移动主导"与"力学与表面化学交互"）共同驱动中央研究内容，每层横向展开为具体研究任务；适合"双驱动力/双维度"并行推进的研究框架。
-    avoid: 只有单一主线或研究内容无法自然分成两个并行驱动维度时（用 layered-pipeline）。

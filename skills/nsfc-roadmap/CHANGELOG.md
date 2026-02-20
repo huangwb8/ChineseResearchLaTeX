@@ -12,6 +12,26 @@
 
 - （暂无）
 
+## [0.9.0] - 2026-02-20
+
+### Added（新增）
+
+- 视觉选型证据包：规划阶段自动生成“模型画廊”
+  - `output_dir/.nsfc-roadmap/planning/models_contact_sheet.png`（contact sheet）
+  - `output_dir/.nsfc-roadmap/planning/models/`（单张参考图拷贝）
+  - `output_dir/.nsfc-roadmap/planning/models_index.yaml`（索引）
+
+### Changed（变更）
+
+- `references/models/templates.yaml` 精简为最小机器索引（仅保留 `id/file/family/render_family`），避免“硬编码叙事 token”
+- `scripts/plan_roadmap.py`（AI 规划模式）：`plan_request.json/plan_request.md` 增补模型画廊路径，引导宿主 AI 先看图再选 `template_ref`
+- `scripts/template_library.py`：模板库解析改为兼容“最小 schema”（`families`/叙事字段可省略）
+- 文档同步：`references/models/README.md`、`README.md`、`skills/README.md`、`SKILL.md`、`skills/nsfc-roadmap/README.md`
+
+### Fixed（修复）
+
+- 修复 classic 布局生成 `.drawio` 时的崩溃：`scripts/render_roadmap.py` 将主线 anchor 节点写入逻辑移动到 draw.io 导出阶段，避免 `UnboundLocalError: drawio_nodes referenced before assignment`
+
 ## [0.8.2] - 2026-02-20
 
 ### Changed（变更）

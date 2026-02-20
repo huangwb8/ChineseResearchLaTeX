@@ -1323,8 +1323,6 @@ def main() -> None:
                     layout_cfg.get("template_ref") if isinstance(layout_cfg.get("template_ref"), str) else None
                 )
                 effective, tmpl = resolve_layout_template(layout_template=lt, template_ref=ref, root=root)
-                db = load_template_db(root=root)
-                fam = db.families.get(effective, {}) if isinstance(db.families, dict) else {}
                 selected = {
                     "effective_layout": effective,
                     "template_ref": ref,
@@ -1332,13 +1330,10 @@ def main() -> None:
                         "id": tmpl.id,
                         "file": tmpl.file,
                         "family": tmpl.family,
-                        "use_when": tmpl.use_when,
-                        "avoid": tmpl.avoid,
+                        "render_family": tmpl.render_family,
                     }
                     if tmpl is not None
                     else None,
-                    "family_description": fam.get("description") if isinstance(fam, dict) else None,
-                    "family_tokens": fam.get("tokens") if isinstance(fam, dict) else None,
                 }
                 templates_selected_path = round_dir / "templates_selected.yaml"
                 write_text(templates_selected_path, dump_yaml(selected))  # type: ignore[arg-type]

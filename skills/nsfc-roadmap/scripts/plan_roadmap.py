@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from extract_proposal import extract as extract_proposal
 from extract_from_tex import extract_item_titles, find_candidate_tex
 from generate_roadmap import _apply_tex_hints
+from model_gallery import materialize_model_gallery
 from spec import default_spec_for_nsfc_young_2026
 from template_library import get_template, load_template_db, resolve_layout_template
 from utils import dump_yaml, fatal, info, load_yaml, read_text, skill_root, warn, write_text
@@ -197,17 +198,35 @@ def main() -> None:
 
         # Available templates (stable ids from templates.yaml).
         templates: List[Dict[str, Any]] = []
+        gallery: Dict[str, str] = {}
         try:
             db = load_template_db(root=root)
+            # Visual picker evidence (contact sheet + copied images).
+            fonts_cfg = (
+                (config.get("renderer", {}) or {}).get("fonts", {})
+                if isinstance((config.get("renderer", {}) or {}).get("fonts", {}), dict)
+                else {}
+            )
+            candidates = (
+                fonts_cfg.get("candidates", [])
+                if isinstance(fonts_cfg.get("candidates", []), list)
+                else []
+            )
+            gallery = materialize_model_gallery(
+                list(db.templates.values()),
+                src_dir=root / "references" / "models",
+                out_dir=req_dir,
+                font_candidates=[str(x) for x in candidates if isinstance(x, str)],
+            )
             for tid, t in sorted(db.templates.items(), key=lambda kv: kv[0]):
                 templates.append(
                     {
                         "id": t.id,
                         "family": t.family,
                         "render_family": t.render_family,
-                        "use_when": t.use_when,
-                        "avoid": t.avoid,
                         "file": t.file,
+                        # Prefer evidence-pack paths (copied) to make selection portable.
+                        "image_path": (Path(gallery["models_dir"]) / t.file).as_posix() if gallery.get("models_dir") else (root / "references" / "models" / t.file).as_posix(),
                     }
                 )
         except Exception as exc:
@@ -226,6 +245,7 @@ def main() -> None:
         req = {
             "proposal_extract": proposal_extract,
             "available_templates": templates,
+            "model_gallery": gallery,
             "constraints": constraints,
             "output": {
                 "write_plan_to": plan_path.as_posix(),
@@ -248,6 +268,10 @@ def main() -> None:
         req_lines.append("## 输入证据（脚本已生成）")
         req_lines.append("")
         req_lines.append(f"- request_data: `{req_json.as_posix()}`")
+        if gallery.get("contact_sheet"):
+            req_lines.append(f"- models_contact_sheet（请先看图选型）: `{gallery['contact_sheet']}`")
+        if gallery.get("models_dir"):
+            req_lines.append(f"- models_dir（单张参考图）: `{gallery['models_dir']}`")
         req_lines.append("")
         req_lines.append("## 你的输出（必须同时写出 2 个文件）")
         req_lines.append("")
@@ -353,7 +377,22 @@ def main() -> None:
     # Template reference (optional, but recommended).
     try:
         # Ensure templates.yaml is readable early; do not fail hard if missing.
-        _ = load_template_db(root=root)
+        db = load_template_db(root=root)
+        # Always emit the visual model gallery for human/host-AI selection.
+        planning_dir = intermediate_dir / "planning"
+        planning_dir.mkdir(parents=True, exist_ok=True)
+        fonts_cfg = (
+            (config.get("renderer", {}) or {}).get("fonts", {})
+            if isinstance((config.get("renderer", {}) or {}).get("fonts", {}), dict)
+            else {}
+        )
+        candidates = fonts_cfg.get("candidates", []) if isinstance(fonts_cfg.get("candidates", []), list) else []
+        gallery = materialize_model_gallery(
+            list(db.templates.values()),
+            src_dir=root / "references" / "models",
+            out_dir=planning_dir,
+            font_candidates=[str(x) for x in candidates if isinstance(x, str)],
+        )
         effective, tmpl = resolve_layout_template(
             layout_template=spec_data.get("layout_template"),
             template_ref=spec_data.get("template_ref"),
@@ -372,10 +411,6 @@ def main() -> None:
                     if tinfo.render_family and tinfo.render_family.strip() and tinfo.render_family.strip() != tinfo.family:
                         extra = f"；render_family: {tinfo.render_family}"
                     lines.append(f"- template_ref: {tinfo.id}（family: {tinfo.family}{extra}；file: {tinfo.file}）")
-                    if tinfo.use_when:
-                        lines.append(f"- use_when: {tinfo.use_when}")
-                    if tinfo.avoid:
-                        lines.append(f"- avoid: {tinfo.avoid}")
             if spec_data.get("layout_template"):
                 lines.append(f"- layout_template: {spec_data.get('layout_template')}")
             lines.append(f"- effective_layout（用于渲染策略选择）: {effective}")
@@ -383,6 +418,13 @@ def main() -> None:
             lines.append("落地到 spec 的要求（建议）：")
             lines.append("- 保持“参考而非照搬”；先落骨架（分区/列/主链），再微调配色与信息层级")
             lines.append("- 约束写在本计划里（配色/分区/层级），并映射到 spec 节点分组与文本密度控制")
+            lines.append("")
+        if gallery.get("contact_sheet"):
+            lines.append("## 模型画廊（视觉选型）")
+            lines.append("")
+            lines.append(f"- models_contact_sheet: `{gallery['contact_sheet']}`（推荐：先看图再选 template_ref）")
+            if gallery.get("models_dir"):
+                lines.append(f"- models_dir: `{gallery['models_dir']}`（单张参考图）")
             lines.append("")
     except Exception:
         # Keep plan generation robust; template selection is optional.

@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-roadmap
-  version: 0.8.2
+  version: 0.9.0
   description: "为 NSFC 标书生成可打印、A4 可读的技术路线图（drawio + SVG/PNG/PDF）"
   author: "Bensz Conan"
   category: 科研写作

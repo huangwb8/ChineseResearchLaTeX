@@ -1,23 +1,40 @@
 # 技术路线图模板库（references/models）
 
-本目录包含 10 个“成品感较强”的路线图风格示例（JPEG/PNG），以及一份结构化模板索引：
+本目录包含 10 个“成品感较强”的路线图风格示例（JPEG/PNG），供**视觉参考选型**使用。
 
-- 机器可读（单一真相来源）：`templates.yaml`
-- 人类可读索引（本文件）：帮助快速挑选模板与理解“参考约束”
+配套文件：
 
-重要说明：
+- `templates.yaml`：**最小机器索引**（`id/file/family/render_family`），用于 `template_ref → 渲染骨架` 的稳定映射与兜底。
+- 本 README：**人类可读说明**（经验性解释/选型提示）。
+- 规划脚本会生成“模型画廊（contact sheet）”，让宿主 AI / 人类直接看图选型。
+
+重要说明（请先读）：
 
 - 这里的模板用于“参考而非照搬”；本技能不做像素级复刻，也不从 JPEG 逆向生成可编辑 drawio。
 - 渲染器只承诺提供“模板家族级别”的稳定骨架，不承诺完全一致的细节。
-- 部分模板家族目前会“近似落地”：模板的 `family` 用于规划参考；真正渲染时可能按 `templates.yaml:render_family` 回退到已支持的骨架。
+- 部分概念家族会“近似落地”：当 `family` 非渲染器稳定支持的骨架时，将按 `render_family` 回退（见 `templates.yaml`）。
 
 ## 如何使用（给使用者/AI）
 
-- 若用户明确要求：按 `model-02` / `three-column` / `layered-pipeline` 风格生成
-  - 规划阶段应在 `roadmap-plan.md` 中写明：选用的 `template_ref`（模板 id 或 family）+ 选用原因 + 将如何落到 spec 的约束清单
-  - 生成阶段可在 `spec.yaml` 中写入：
-    - `template_ref: model-02`
-    - `layout_template: auto|classic|three-column|layered-pipeline`
+推荐工作流：先“看图选型”，再把选择固化为 `template_ref`（用于可复现）。
+
+1) 运行规划脚本（推荐 `--mode ai`，让宿主 AI 直接看图选）后，会在输出目录生成：
+
+- `output_dir/.nsfc-roadmap/planning/models_contact_sheet.png`（模型画廊，推荐先看这一张）
+- `output_dir/.nsfc-roadmap/planning/models/`（单张参考图）
+
+2) 在 `roadmap-plan.md` 写清楚：
+
+- 选用的 `template_ref`（例如 `model-02`）
+- 选用理由（基于**视觉风格**与叙事结构：三列/流水线/收敛-发散/双主线等）
+- 你打算如何把参考风格落到 spec（分区/主线/节点密度/配色语义）
+
+3) 在 `spec.yaml`（或 `spec_draft.yaml`）中写入（可选但推荐）：
+
+```yaml
+template_ref: model-02
+layout_template: auto  # 或 classic/three-column/layered-pipeline
+```
 
 ## 模板家族（family）
 
@@ -68,7 +85,7 @@
 
 说明：
 
-- 当前渲染器会按 `templates.yaml:render_family` 将该家族近似落到 `layered-pipeline` 骨架。
+- 当前渲染器会按 `templates.yaml:render_family` 将该家族近似落到 `layered-pipeline` 骨架（即：风格参考仍在，但骨架以可稳定渲染为准）。
 
 ### dual-mainline
 
@@ -80,11 +97,11 @@
 
 说明：
 
-- 当前渲染器会按 `templates.yaml:render_family` 将该家族近似落到 `three-column` 骨架。
+- 当前渲染器会按 `templates.yaml:render_family` 将该家族近似落到 `three-column` 骨架（即：双主线是概念参考，骨架以可稳定渲染为准）。
 
 ## 模板索引（template id）
 
-下表用于快速选型；详细 token 见 `templates.yaml`。
+下表用于快速定位图片文件（以及一个“经验性”适用场景提示）。最终以“看图选型”为准。
 
 | id | file | family | 适用场景（简述） |
 |---|---|---|---|

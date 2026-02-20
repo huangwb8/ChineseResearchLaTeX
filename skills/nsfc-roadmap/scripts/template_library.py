@@ -15,13 +15,12 @@ class TemplateInfo:
     # Optional: a renderer-supported family used for stable fallback when `family` is conceptual-only.
     # Keep backward-compatible: when missing, renderer falls back to `family`.
     render_family: Optional[str]
-    use_when: str
-    avoid: str
 
 
 @dataclass(frozen=True)
 class TemplateDB:
     version: int
+    # Optional metadata for human-facing docs (may be omitted in minimal templates.yaml).
     families: Dict[str, Dict[str, Any]]
     templates: Dict[str, TemplateInfo]
 
@@ -41,7 +40,8 @@ def load_template_db(root: Optional[Path] = None) -> TemplateDB:
     Load template database from references/models/templates.yaml.
 
     This is intentionally lightweight: validation is strict enough to catch typos,
-    but we do not over-model the token schema (keep forward-compatible).
+    and the file is allowed to stay minimal (id/file/family/render_family).
+    Any extra fields are ignored to keep forward-compatible.
     """
     global _DB_CACHE
     if _DB_CACHE is not None:
@@ -60,9 +60,11 @@ def load_template_db(root: Optional[Path] = None) -> TemplateDB:
     if not isinstance(version, int) or version <= 0:
         raise ValueError("templates.yaml:version 必须是正整数")
 
-    families = data.get("families", {})
+    families = data.get("families")
+    if families is None:
+        families = {}
     if not isinstance(families, dict):
-        raise ValueError("templates.yaml:families 必须是 mapping")
+        raise ValueError("templates.yaml:families 必须是 mapping（或省略）")
 
     templates_raw = data.get("templates", [])
     if not isinstance(templates_raw, list):
@@ -80,8 +82,6 @@ def load_template_db(root: Optional[Path] = None) -> TemplateDB:
             if not isinstance(render_family, str) or not render_family.strip():
                 raise ValueError(f"templates[{i}].render_family 必须是非空字符串或省略")
             render_family = render_family.strip()
-        use_when = str(t.get("use_when", "") or "").strip()
-        avoid = str(t.get("avoid", "") or "").strip()
         if tid in templates:
             raise ValueError(f"模板 id 重复：{tid}")
         templates[tid] = TemplateInfo(
@@ -89,8 +89,6 @@ def load_template_db(root: Optional[Path] = None) -> TemplateDB:
             file=file,
             family=fam,
             render_family=render_family,  # type: ignore[arg-type]
-            use_when=use_when,
-            avoid=avoid,
         )
 
     _DB_CACHE = TemplateDB(version=version, families=families, templates=templates)

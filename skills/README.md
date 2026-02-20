@@ -307,7 +307,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ### 10. nsfc-roadmap - NSFC 技术路线图生成
 
-**状态**：🚧 开发中（v0.8.2）
+**状态**：🚧 开发中（v0.9.0）
 
 **类型**：📝 日常
 
@@ -322,12 +322,12 @@ output_mode：preview（先预览）/ apply（确认后写入）
 ```
 请使用 nsfc-roadmap 生成技术路线图：
 目标项目：projects/NSFC_Young
-参考模板：model-02（可选，从 references/models/ 中选择）
+参考模板：model-02（可选；建议先运行规划阶段生成 models_contact_sheet.png 再选）
 ```
 
 **技能特点**：
 - 输出 `.drawio`（可编辑）与 `.svg`/`.png`/`.pdf`（交付）
-- 内置 10 个参考模板（model-01 ~ model-10）+ 模板家族（family）选择
+- 内置 10 个参考模板（model-01 ~ model-10）；规划阶段自动生成“模型画廊”（contact sheet）用于视觉选型
 - 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
 - "平台期停止"策略：基于 PNG 哈希与分数提升阈值自动停止
 - 支持规划模式：先审阅 `roadmap-plan.md` 再生成

@@ -34,6 +34,7 @@
 > 提示：规划阶段需要提供 `proposal_path` / `proposal_file` / `context` 其一。
 
 可选：如果你希望由宿主 AI 自主完成阶段划分与 spec 草案生成，可启用 `config.yaml:planning.planning_mode: ai`（或脚本 `plan_roadmap.py --mode ai`），脚本会输出 `plan_request.json` 并等待你写入 `roadmap-plan.md + spec_draft.yaml`。
+同时，规划阶段会自动生成“模型画廊”（contact sheet），推荐让宿主 AI **先看图再选 `template_ref`**（见下文“选择模板风格”）。
 
 ### 指定输出目录
 
@@ -63,6 +64,8 @@
 ```
 
 > 说明：模板用于“参考而非照搬”，渲染器承诺的是“模板家族级别的稳定骨架”，不追求像素级复刻。
+>
+> 提示：运行规划脚本后，会在 `output_dir/.nsfc-roadmap/planning/` 生成 `models_contact_sheet.png` 与 `models/`，用于视觉选型。
 
 ### 备选用法：脚本调用
 
@@ -120,6 +123,9 @@ roadmap_output/
     ├── planning/              # planning_mode=ai 时生成：规划 request 协议
     │   ├── plan_request.json
     │   └── plan_request.md
+    │   ├── models_contact_sheet.png  # 视觉选型：模型画廊（推荐先看图选 template_ref）
+    │   ├── models_index.yaml         # 模型索引（id/file/family/render_family）
+    │   └── models/                   # 单张参考图（从 references/models/ 复制）
     └── ai/                   # stop_strategy=ai_critic 时生成：证据包 + request/response
         ├── ACTIVE_RUN.txt
         └── run_YYYYMMDDHHMMSS/

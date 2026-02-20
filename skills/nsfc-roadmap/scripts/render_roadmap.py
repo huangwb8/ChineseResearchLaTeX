@@ -513,21 +513,6 @@ def _render_png_classic(
         area_y0 = phase_y0
         area_y1 = phase_y1
 
-        # Invisible anchor for mainline edges (keeps classic layout compatible with mainline arrows).
-        anchor_x = area_x0 + max(0, (area_x1 - area_x0) // 2) - 5
-        anchor_y = area_y0 + max(0, (area_y1 - area_y0) // 2) - 5
-        drawio_nodes.append(
-            DrawioNode(
-                id=f"p{idx+1}_main",
-                value="",
-                x=anchor_x,
-                y=anchor_y,
-                w=10,
-                h=10,
-                style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;",
-            )
-        )
-
         rows = phase.rows
         if not rows:
             continue
@@ -674,6 +659,21 @@ def _render_png_classic(
         area_x1 = content_right
         area_y0 = phase_y0
         area_y1 = phase_y1
+
+        # Invisible anchor for mainline edges (required by write_drawio edges below).
+        anchor_x = area_x0 + max(0, (area_x1 - area_x0) // 2) - 5
+        anchor_y = area_y0 + max(0, (area_y1 - area_y0) // 2) - 5
+        drawio_nodes.append(
+            DrawioNode(
+                id=f"p{idx+1}_main",
+                value="",
+                x=anchor_x,
+                y=anchor_y,
+                w=10,
+                h=10,
+                style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;",
+            )
+        )
 
         rows = phase.rows
         if not rows:
