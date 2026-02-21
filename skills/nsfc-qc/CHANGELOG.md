@@ -6,6 +6,18 @@
 
 （暂无）
 
+## [0.2.0] - 2026-02-21
+
+### Added（新增）
+- `scripts/nsfc_qc_precheck.py`：缩写预检新增 `abbreviation_issues_summary.json`（便于 AI 快速消费的摘要 JSON）。
+- `SKILL.md`：将“缩略语规范”提升为 thread 统一任务的独立必检项，并补齐预检产物清单。
+- `references/qc_checklist.md`：新增“缩略语规范（独立章节）”，细化检查点与分级口径。
+
+### Changed（变更）
+- `scripts/nsfc_qc_precheck.py`：扩展缩写 stoplist（Fig/Tab/Sec 等），并增强误报过滤（清除 `\\label/\\ref/\\cite` 参数与 `\\begin/\\end` 环境名；过滤 `V2` 这类版本号 token）。
+- `scripts/run_parallel_qc.py`：将 `abbreviation_issues_summary.json` 纳入 snapshot 证据包，并在 thread prompt 中要求独立输出“缩略语规范”小节（按文件/行号给出建议）。
+- `config.yaml`：版本号 `0.1.9 → 0.2.0`。
+
 ## [0.1.9] - 2026-02-17
 
 ### Changed（变更）

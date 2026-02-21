@@ -1,6 +1,6 @@
 ---
 name: nsfc-qc
-version: 0.1.9
+version: 0.2.0
 description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到“交付目录内的隐藏工作区（.nsfc-qc/）”，并兼容 legacy `.nsfc-qc/`。
 author: Bensz Conan
 metadata:
@@ -92,6 +92,8 @@ references: skills/nsfc-qc/references/
 - `.../artifacts/citations_index.csv`
 - `.../artifacts/tex_lengths.csv`
 - `.../artifacts/quote_issues.csv`
+- `.../artifacts/abbreviation_issues.csv`
+- `.../artifacts/abbreviation_issues_summary.json`
 - `.../artifacts/reference_evidence.jsonl`
 - `.../artifacts/reference_evidence_summary.json`
 
@@ -120,7 +122,15 @@ references: skills/nsfc-qc/references/
    - 总体是否过短/过长（用字符数与章节分布做近似判断）
    - 各章节比例是否合理（例如：立项依据/研究内容/研究基础的分配是否失衡）
 4. **逻辑与论证**：论证链是否闭合（科学问题→假说→目标→方法→验证→预期），是否存在跳步、歧义、概念偷换、缺对照/缺指标。
-5. **其它 QC**（至少 3 项）：例如术语一致性、缩略语首次定义、图表/公式编号与引用、风险与备选方案、创新点可验证性、夸大措辞等。
+5. **缩略语规范**：
+   - 读取预检产物 `abbreviation_issues.csv`（或 `abbreviation_issues_summary.json`）作为起点
+   - 对每条 P1 问题（`bare_first_use` / `missing_english_full`）做语义判断：
+     - 确认是否为真正的“重要专业术语”（领域常识词如 DNA/RNA 可豁免）
+     - 确认首次出现位置是否确实缺少“中文全称（English Full Name, ABBR）”格式
+   - 对 P2 问题（`missing_chinese_full` / `repeated_expansion`）：确认是否确实缺中文全称/是否真的多次重复展开
+   - 过滤误报：LaTeX 标签、图表编号、数学变量等不是缩写
+   - 输出：按文件/行号定位的可执行建议（只写建议，不改文件）
+6. **其它 QC**（至少 3 项）：例如术语一致性、图表/公式编号与引用、风险与备选方案、创新点可验证性、夸大措辞等。
 
 > 注意：thread 工作区内也**禁止修改**任何标书源文件；如需记录建议，写在 `RESULT.md` 或 thread 内新增的 `notes/*.md`（不改原文件）。
 

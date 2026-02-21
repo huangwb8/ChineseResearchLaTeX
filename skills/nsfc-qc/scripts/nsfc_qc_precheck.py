@@ -54,6 +54,7 @@ ABBR_HYPHEN_RE = re.compile(r"\b[A-Z]{2,}(?:-[A-Z0-9]{1,})+\b")
 
 # Keep the stoplist conservative to avoid overwhelming false positives.
 ABBR_STOPLIST = {
+    # Base infra tokens (rarely need "full name + abbreviation" introductions).
     "NSFC",
     "PDF",
     "TEX",
@@ -62,8 +63,21 @@ ABBR_STOPLIST = {
     "URL",
     "HTTP",
     "HTTPS",
-    # Keep only obvious "infra tokens" that rarely need "full name + abbreviation" introductions.
-    # Domain-specific abbreviations (AI/ML/GPU/DNA/...) are intentionally NOT excluded.
+    # LaTeX typesetting conventional tokens (avoid noisy "Fig/Tab/Sec" false positives).
+    "FIG",
+    "TAB",
+    "EQ",
+    "SEC",
+    "REF",
+    "APP",
+    "APPENDIX",
+    # Common academic writing shorthand.
+    "ET",
+    "AL",
+    "IE",
+    "EG",
+    "VS",
+    "CF",
 }
 
 
@@ -345,6 +359,19 @@ def _simplify_latex_for_abbrev_scan(line: str) -> str:
     s = re.sub(r"\$[^$]*\$", " ", s)
     s = re.sub(r"\\\([^)]*\\\)", " ", s)
     s = re.sub(r"\\\[[^\]]*\\\]", " ", s)
+    # Remove label/ref/cite arguments (bibkey/label often contain ALLCAPS tokens; not abbreviations).
+    s = re.sub(
+        r"\\(?:label|ref|eqref|pageref)\s*(?:\[[^\]]*\]\s*)?\{[^}]*\}",
+        " ",
+        s,
+    )
+    s = re.sub(
+        r"\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*\{[^}]*\}",
+        " ",
+        s,
+    )
+    # Remove environment names (\begin{...}/\end{...}) to avoid capturing env IDs as abbreviations.
+    s = re.sub(r"\\(?:begin|end)\s*\{[^}]*\}\s*(?:\[[^\]]*\])?", " ", s)
     # Remove TeX commands (keep arguments content untouched).
     s = re.sub(r"\\[a-zA-Z@]+\*?", " ", s)
     # Normalize separators
@@ -407,6 +434,9 @@ def _detect_abbreviation_conventions(tex_files: List[Path], *, project_root: Pat
                     continue
                 # Filter obvious false positives: pure digits / single-letter / roman numerals-ish.
                 if re.fullmatch(r"[IVX]{2,}", t2):
+                    continue
+                # Filter simple version tokens like "V2" (but keep mixed tokens like "COVID19").
+                if re.fullmatch(r"[A-Z]\d{1,4}", t2):
                     continue
                 occurrences.append(_Occ(abbr=t2, seq=seq, path=rel, line=i, excerpt=excerpt))
                 seq += 1
@@ -1011,6 +1041,46 @@ def main() -> int:
                     it.get("context", ""),
                 ]
             )
+
+    # abbreviation conventions JSON summary (for AI-friendly consumption)
+    abbr_summary = {}
+    if isinstance(abbreviation_conventions, dict):
+        abbr_summary = abbreviation_conventions.get("summary") or {}
+    issues_by_sev = {}
+    if isinstance(abbr_summary, dict):
+        issues_by_sev = abbr_summary.get("issues_by_severity") or {}
+    total_abbr_detected = int((abbr_summary.get("abbreviations_detected") or 0) if isinstance(abbr_summary, dict) else 0)
+    issues_count = {
+        "P0": int((issues_by_sev.get("P0") or 0) if isinstance(issues_by_sev, dict) else 0),
+        "P1": int((issues_by_sev.get("P1") or 0) if isinstance(issues_by_sev, dict) else 0),
+        "P2": int((issues_by_sev.get("P2") or 0) if isinstance(issues_by_sev, dict) else 0),
+    }
+    top_issues = []
+    for it in abbr_items[:20]:
+        top_issues.append(
+            {
+                "abbr": it.get("abbr", ""),
+                "issue_kind": it.get("issue_kind", ""),
+                "severity": it.get("severity", ""),
+                "path": it.get("path", ""),
+                "line": it.get("line", ""),
+                "recommendation": it.get("recommendation", ""),
+            }
+        )
+    (out_dir / "abbreviation_issues_summary.json").write_text(
+        json.dumps(
+            {
+                "total_abbreviations_detected": total_abbr_detected,
+                "issues_count": issues_count,
+                "top_issues": top_issues,
+                "note": "Heuristic only. AI threads should verify each item and filter false positives.",
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     print(str(out_dir))
     return 0

@@ -43,6 +43,11 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+PlanName = 缩写检查-新特性-v202602212344
+按 skills/nsfc-qc/plans/{PlanName}.md 的要求优化skill；有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-qc/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
+
+---
+
 (～￣▽￣)～ 根据 skills/nsfc-qc/plans/实例辅助优化-v202602170903.md 优化skill；如果某些点你有更好的策略，你直接按你的想法就行，不用问我。然后，使用 auto-test-skill 优化1轮。
 
 ---

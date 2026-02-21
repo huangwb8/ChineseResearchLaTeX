@@ -136,6 +136,12 @@
   - `scripts/nsfc_qc_precheck.py`：移除 `--compile` 与隔离编译逻辑
   - `scripts/materialize_final_outputs.py`、`templates/REPORT_TEMPLATE.md`：final 输出不再聚合 compile 信息；报告中页数改为提示用户自行编译核对
 
+- **nsfc-qc v0.1.9 → v0.2.0**：缩略语检查增强（误报过滤 + AI 友好摘要），并将缩略语规范升级为 thread 独立必检项
+  - `skills/nsfc-qc/scripts/nsfc_qc_precheck.py`：扩展 stoplist（Fig/Tab/Sec 等）与误报过滤（清除 `\\label/\\ref/\\cite` 参数与 `\\begin/\\end` 环境名；过滤 `V2` 这类版本 token）；新增 `abbreviation_issues_summary.json`
+  - `skills/nsfc-qc/scripts/run_parallel_qc.py`：将 `abbreviation_issues_summary.json` 纳入 snapshot 证据包，并在 thread prompt 中要求独立输出“缩略语规范”小节（按文件/行号给出建议）
+  - `skills/nsfc-qc/SKILL.md`：thread 统一任务新增“缩略语规范”独立必检项，预检产物清单补齐缩写相关产物
+  - `skills/nsfc-qc/references/qc_checklist.md`：缩略语规范独立成章，细化检查点与分级口径
+
 - 优化 [AGENTS.md](AGENTS.md)：有机整合外部 [huangwb8/skills](https://github.com/huangwb8/skills) 项目的 Skill 开发规范
   - 新增"Skill 开发规范"章节，包含完整的目录结构、文档规范（SKILL.md/README.md/config.yaml）、版本管理、六大质量原则、文档更新与发布流程
   - 融合外部规范的核心原则：SKILL.md ≤500 行、description ≤1024 字符（单行格式、融入负向约束）、移除版本标记、简洁标题（无序号前缀）

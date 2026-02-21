@@ -165,8 +165,15 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "证据包（只读，可用于“引用真伪/错引风险”的语义核查）：\n"
         "- `./.nsfc-qc/input/precheck.json`\n"
         "- `./.nsfc-qc/input/citations_index.csv`\n"
-        "- `./.nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检：首次出现是否按“全称+缩写”引入；后文是否重复展开）\n"
+        "- `./.nsfc-qc/input/abbreviation_issues_summary.json`（缩写规范预检摘要：建议先读，快速定位高优先级项）\n"
+        "- `./.nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检明细：按行定位；注意过滤 LaTeX 标签/数学变量等误报）\n"
         "- `./.nsfc-qc/input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
+        "缩略语规范（必检，独立小节输出）：\n"
+        "- 以 `abbreviation_issues_summary.json`/`abbreviation_issues.csv` 为起点，逐条核对。\n"
+        "- 对 P1（`bare_first_use`/`missing_english_full`）：确认是否为重要专业术语；首次出现建议采用“中文全称（English Full Name, ABBR）”。\n"
+        "- 对 P2（`missing_chinese_full`/`repeated_expansion`）：确认是否确实缺中文全称/是否确实重复展开。\n"
+        "- 过滤误报：LaTeX 标签（如 `fig:ABC`）、图表编号、数学变量、bibkey/label 不是缩写。\n"
+        "- 你必须在 RESULT.md 的「3) 重要建议（P1）」中写一个二级标题：`### 缩略语规范`，并按 `文件:行号` 给出可执行建议（只写建议，不改文件）。\n\n"
         f"输入：\n- project_root: .\n- main_tex: {main_tex}\n\n"
         "请在 RESULT.md 中按以下结构输出（标题必须一致）：\n"
         "1) 执行摘要\n"
@@ -332,6 +339,7 @@ def main() -> int:
         "tex_lengths.csv",
         "quote_issues.csv",
         "abbreviation_issues.csv",
+        "abbreviation_issues_summary.json",
         "reference_evidence.jsonl",
         "reference_evidence_summary.json",
     ):

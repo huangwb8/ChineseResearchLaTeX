@@ -192,7 +192,10 @@ def _deterministic_findings(*, precheck: dict, artifacts: dict) -> List[dict]:
                 path="",
                 anchor="precheck.abbreviation_conventions",
                 problem=f"检测到“全称+缩写”首次引入可能不规范的情况：P1 级 {abbr_p1} 项（启发式，需人工复核）。",
-                evidence=[{"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for preview"}],
+                evidence=[
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_summary_json','')}` for quick summary"},
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for line-level preview"},
+                ],
                 recommendation="一般建议：重要概念首次出现写为“中文全称（English Full Name, ABBR）”，后文尽量仅用 ABBR；按 CSV 逐条核对并做最小修改。",
                 status="needs_human_review",
             )
@@ -206,7 +209,10 @@ def _deterministic_findings(*, precheck: dict, artifacts: dict) -> List[dict]:
                 path="",
                 anchor="precheck.abbreviation_conventions",
                 problem=f"检测到缩写规范的可选优化项（如缺中文全称/重复展开）：P2 级 {abbr_p2} 项（启发式）。",
-                evidence=[{"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for preview"}],
+                evidence=[
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_summary_json','')}` for quick summary"},
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for line-level preview"},
+                ],
                 recommendation="按重要性逐条处理：首次定义尽量完整；后文避免重复“Full Name (ABBR)”展开，保持一致性与节省篇幅。",
                 status="open",
             )
@@ -400,6 +406,7 @@ def main() -> int:
         "tex_lengths_csv": _safe_rel_from(run_dir, artifacts_dir / "tex_lengths.csv") if (artifacts_dir / "tex_lengths.csv").exists() else "",
         "quote_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "quote_issues.csv") if (artifacts_dir / "quote_issues.csv").exists() else "",
         "abbreviation_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_issues.csv") if (artifacts_dir / "abbreviation_issues.csv").exists() else "",
+        "abbreviation_issues_summary_json": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_issues_summary.json") if (artifacts_dir / "abbreviation_issues_summary.json").exists() else "",
         "reference_evidence_jsonl": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence.jsonl") if (artifacts_dir / "reference_evidence.jsonl").exists() else "",
         "reference_evidence_summary_json": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence_summary.json") if (artifacts_dir / "reference_evidence_summary.json").exists() else "",
         "parallel_vibe_summary": pv_main_summary,
