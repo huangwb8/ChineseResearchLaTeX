@@ -40,6 +40,12 @@
 
 ### Changed（变更）
 
+- **nsfc-research-content-writer v0.2.2 → v0.2.3**：补充篇幅控制约束、差异化组织框架与任务结束提醒
+  - `skills/nsfc-research-content-writer/SKILL.md`：新增篇幅控制原则（12–15页/12000–15000字）、基础/应用研究框架建议，并在任务结束后提醒使用 `nsfc-roadmap` 生成技术路线图；强化创新点“少而精”与年度计划“推进逻辑”
+  - `skills/nsfc-research-content-writer/references/page_budget.md`：新增研究内容篇幅控制参考（页数/字数/图表策略）
+  - `skills/nsfc-research-content-writer/references/anti_patterns.md`：新增反模式 10（忽视页数控制，以字数为导向）
+  - `README.md`：同步版本号
+
 - **nsfc-schematic v0.8.5 → v0.8.6**：规划阶段默认改为“纯 AI 规划”（不再要求/默认单选 `template_ref`）
   - `skills/nsfc-schematic/config.yaml`：新增 `planning.planning_mode=ai`，并将 `layout.template_ref` 默认置空（高级选项）
   - `skills/nsfc-schematic/scripts/plan_schematic.py`：新增 `--mode template|ai`；AI 模式输出 `plan_request.json/plan_request.md` 并在宿主 AI 写入 `PLAN.md + spec_draft.yaml` 后复跑校验

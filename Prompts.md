@@ -78,6 +78,11 @@ PlanName = 缩写检查-新特性-v202602212344
 - 有标准的输出结果。
 - nsfc-qc 对标书内容是只读的，工作过程中不能修改标书的内容。因为它的qc report还需要被进一步审核。
 
+# nsfc-research-content-writer
+
+PlanName = v202602221258
+按 skills/nsfc-research-content-writer/plans/{PlanName}.md 的要求优化skill。 使用 awesome-code skill 辅助规划、优化。 有疑问的地方，按你认为最优方案执行，不要问我。在 skills/nsfc-research-content-writer/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
+
 
 # nsfc-justification-writer
 

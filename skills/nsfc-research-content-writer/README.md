@@ -22,9 +22,19 @@ project_root：projects/NSFC_Young
 信息表：请按 skills/nsfc-research-content-writer/references/info_form.md 提供
 输出：写入 extraTex/2.1.研究内容.tex、extraTex/2.2.特色与创新.tex、extraTex/2.3.年度研究计划.tex
 output_mode：apply（默认）/ preview（只预览不写入）
+研究类型：基础研究 / 应用研究（用于选择更贴合的组织框架；不确定时按“问题→目标→内容→路线→验证”通用主线组织）
+篇幅目标（推荐）：研究内容 12–15 页（含图表），纯文字约 12000–15000 字；以“页数控制”为主，不要以字数为导向
 额外要求：子目标编号 S1–S4；每个子目标必须写清 指标+对照+数据来源；2.2/2.3 标注回溯到对应 Sx
 禁止改动：不要改 main.tex、extraTex/@config.tex、任何 .cls/.sty
 ```
+
+## 篇幅与图表（写作提醒）
+
+- 研究内容推荐页数：12–15 页（含图表），约占标书总页数（≤28 页）的 50%
+- 研究内容推荐字数：12000–15000 字（纯文字部分）
+- 评审标准已从“字数控制”转向“页数控制”，建议先按页数规划结构，再用图表提质
+- 技术路线图建议放在研究内容开头：可使用 `nsfc-roadmap` skill 生成
+- 参考：`skills/nsfc-research-content-writer/references/page_budget.md`
 
 ## 推荐工作流（先预览再写入）
 
