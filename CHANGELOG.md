@@ -58,6 +58,14 @@
 
 ### Changed（变更）
 
+- **nsfc-humanization 0.1.0 → 0.1.2**：补齐结构保护规则与最小改动策略，修正示例避免“新增信息”，并增加提示词注入防护
+  - `skills/nsfc-humanization/SKILL.md`：新增 YAML frontmatter；新增“结构保护与可编辑范围”“强度控制”“结构/语义自检”；将“不确定性表达”限定为“仅原文已包含时才允许更自然表达”
+  - `skills/nsfc-humanization/SKILL.md`：新增提示词注入防护规则，并补充“整篇标书按段落/小节分批输入”的建议
+  - `skills/nsfc-humanization/references/machine-patterns.md`：修正会引入新场景/新实体的示例；新增 LaTeX token（`\cite/\ref/\eqref/数学模式`）保留示例
+  - `skills/nsfc-humanization/config.yaml`：版本号更新至 0.1.2（单一真相来源）
+  - `skills/nsfc-humanization/CHANGELOG.md`、`skills/nsfc-humanization/README.md`：同步版本号与变更记录（README 补齐推荐用法与 FAQ）
+  - `README.md`：技能版本表同步更新为 v0.1.2
+
 - **nsfc-research-content-writer v0.2.2 → v0.2.3**：补充篇幅控制约束、差异化组织框架与任务结束提醒
   - `skills/nsfc-research-content-writer/SKILL.md`：新增篇幅控制原则（12–15页/12000–15000字）、基础/应用研究框架建议，并在任务结束后提醒使用 `nsfc-roadmap` 生成技术路线图；强化创新点“少而精”与年度计划“推进逻辑”
   - `skills/nsfc-research-content-writer/references/page_budget.md`：新增研究内容篇幅控制参考（页数/字数/图表策略）
