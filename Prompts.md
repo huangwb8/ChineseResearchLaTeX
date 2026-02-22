@@ -83,8 +83,14 @@ PlanName = 缩写检查-新特性-v202602212344
 PlanName = v202602221258
 按 skills/nsfc-research-content-writer/plans/{PlanName}.md 的要求优化skill。 使用 awesome-code skill 辅助规划、优化。 有疑问的地方，按你认为最优方案执行，不要问我。在 skills/nsfc-research-content-writer/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 
-
 # nsfc-justification-writer
+
+---
+
+PlanName = 第三方约束-优化-v202602221613
+按 skills/nsfc-justification-writer/plans/{PlanName}.md 的要求优化skill。 使用 awesome-code skill 辅助规划、优化。 有疑问的地方，按你认为最优方案执行，不要问我。在 skills/nsfc-rjustification-writer/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
+
+---
 
 请在彻底了解 skills/nsfc-justification-writer 的工作代码/文件后回答： 目前skill的开发度如何？有哪些缺陷？如果有，请指出并将改良计划保存在 plans/v2026010xxxxx.md 里。
 

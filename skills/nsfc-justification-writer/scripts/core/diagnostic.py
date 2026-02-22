@@ -11,6 +11,7 @@ from .config_access import get_mapping
 from .hard_rules import QualityRule, StructureRule, load_quality_rule, load_structure_rule
 from .latex_parser import parse_subsubsections, strip_comments
 from .reference_validator import CitationCheckResult, check_citations
+from .validator import snapshot_third_party_constraints
 from .wordcount import WordCountResult, count_cjk_chars
 
 
@@ -26,6 +27,7 @@ class Tier1Report:
     word_count: int
     forbidden_phrases_hits: List[str]
     avoid_commands_hits: List[str]
+    constraints: Dict[str, Any]
 
 
 @dataclass
@@ -50,6 +52,7 @@ class DiagnosticReport:
                 "word_count": self.tier1.word_count,
                 "forbidden_phrases_hits": self.tier1.forbidden_phrases_hits,
                 "avoid_commands_hits": self.tier1.avoid_commands_hits,
+                "constraints": self.tier1.constraints,
             },
             "tier2": self.tier2,
             "dimension_coverage": self.dimension_coverage,
@@ -104,6 +107,8 @@ def run_tier1(
     wc: WordCountResult = count_cjk_chars(tex_text, mode=mode)
     forbidden_hits, cmd_hits = _check_quality(tex_text, quality_rule)
 
+    constraints: Dict[str, Any] = snapshot_third_party_constraints(tex_text=tex_text, config=config)
+
     return Tier1Report(
         structure_ok=structure_ok,
         subsubsection_count=count,
@@ -115,6 +120,7 @@ def run_tier1(
         word_count=wc.cjk_count,
         forbidden_phrases_hits=forbidden_hits,
         avoid_commands_hits=cmd_hits,
+        constraints=constraints,
     )
 
 
@@ -137,6 +143,39 @@ def format_tier1(report: Tier1Report) -> str:
         lines.append(f"- ⚠️ DOI 格式疑似不合法：建议核验/修正 keys：{', '.join(report.invalid_doi_keys[:10])}")
 
     lines.append(f"- ℹ️ 字数统计（中文字符，不含注释）：{report.word_count}")
+
+    c = report.constraints or {}
+    if isinstance(c, dict) and c:
+        page = c.get("page_limit") if isinstance(c.get("page_limit"), dict) else {}
+        pages = c.get("estimated_pages")
+        pstatus = str(c.get("page_status", "") or "")
+        if isinstance(page, dict) and isinstance(pages, (int, float)):
+            rec = page.get("recommended", [])
+            rec_text = f"{rec[0]}-{rec[1]}" if isinstance(rec, list) and len(rec) >= 2 else "6-8"
+            lim_text = f"{page.get('min', 6)}-{page.get('max', 10)}"
+            if pstatus in {"near_limit", "exceed"}:
+                lines.append(f"- ⚠️ 页数预警（经验估算）：{pages} 页（目标 {lim_text}，推荐 {rec_text}）")
+            else:
+                lines.append(f"- ℹ️ 预估页数（经验估算）：{pages} 页（目标 {lim_text}，推荐 {rec_text}）")
+
+        refs = c.get("references_range") if isinstance(c.get("references_range"), dict) else {}
+        uniq = c.get("references_unique")
+        rstatus = str(refs.get("status", "") or "")
+        if isinstance(refs, dict) and isinstance(uniq, int):
+            rng = f"{refs.get('min', 30)}-{refs.get('max', 50)}"
+            prefix = "⚠️" if rstatus in {"too_few", "too_many"} else "ℹ️"
+            lines.append(f"- {prefix} 核心文献（去重 cite keys）：{uniq}（建议 {rng}）")
+
+        opening = c.get("opening") if isinstance(c.get("opening"), dict) else {}
+        if isinstance(opening, dict) and "ok" in opening:
+            ok = bool(opening.get("ok"))
+            n = int(opening.get("cjk_chars", 300))
+            if ok:
+                lines.append(f"- ✅ 开篇 {n} 字：卡点/局限 + 突破/切入点 信号均命中（启发式）")
+            else:
+                issues = opening.get("issues", [])
+                if isinstance(issues, list) and issues:
+                    lines.append(f"- ⚠️ 开篇 {n} 字：{issues[0]}")
 
     if report.forbidden_phrases_hits:
         lines.append(f"- ⚠️ 高风险表述（示例命中）：{', '.join(report.forbidden_phrases_hits)}")

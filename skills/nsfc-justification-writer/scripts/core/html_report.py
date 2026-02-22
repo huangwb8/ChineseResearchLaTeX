@@ -137,11 +137,18 @@ def render_diagnostic_html(
     template = _load_template(tpl_path)
 
     t1 = report.tier1
+    c = t1.constraints if isinstance(getattr(t1, "constraints", None), dict) else {}
+    pages = c.get("estimated_pages") if isinstance(c, dict) else None
+    refs_unique = c.get("references_unique") if isinstance(c, dict) else None
     tier1_items = [
         _kv("结构", ("✅ 完整" if t1.structure_ok else "❌ 缺失") + _badge(f"subsubsection={t1.subsubsection_count}", "warn")),
         _kv("引用", ("✅ 正常" if t1.citation_ok else "❌ 缺失") + _badge(f"missing={len(t1.missing_citation_keys)}", "bad" if (not t1.citation_ok) else "ok")),
         _kv("字数", _escape(str(t1.word_count))),
     ]
+    if isinstance(pages, (int, float)):
+        tier1_items.append(_kv("预估页数", _escape(str(pages))))
+    if isinstance(refs_unique, int):
+        tier1_items.append(_kv("核心文献", _escape(str(refs_unique))))
     if getattr(t1, "missing_doi_keys", None):
         tier1_items.append(_kv("DOI", _badge(f"缺失={len(t1.missing_doi_keys)}", "warn")))
     if t1.forbidden_phrases_hits:

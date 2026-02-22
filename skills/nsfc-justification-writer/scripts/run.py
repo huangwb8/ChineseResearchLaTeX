@@ -53,7 +53,13 @@ def _now_ts() -> str:
     return _dt.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def _make_test_session_dir(skill_root: Path, *, round_label: str, session_id: Optional[str]) -> Path:
+def _make_test_session_dir(
+    skill_root: Path,
+    *,
+    round_label: str,
+    session_id: Optional[str],
+    reuse_if_exists: bool = False,
+) -> Path:
     """
     每次测试创建一个独立目录（可追溯、可归档）。默认按秒级时间戳，避免同分钟冲突。
     """
@@ -66,7 +72,7 @@ def _make_test_session_dir(skill_root: Path, *, round_label: str, session_id: Op
     name = sid if round_label == "A" else f"{round_label}-{sid}"
 
     out = (tests_root / name).resolve()
-    if out.exists():
+    if out.exists() and (not reuse_if_exists):
         # 极小概率冲突：再加一次时间戳兜底
         out = (tests_root / f"{name}-{_now_ts()}").resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -342,19 +348,25 @@ def cmd_test_session(args: argparse.Namespace) -> int:
     if round_label not in {"A", "B轮"}:
         round_label = "A"
 
-    sid = str(getattr(args, "session_id", "") or "").strip()
+    sid_raw = getattr(args, "session_id", None)
+    sid = str(sid_raw or "").strip()
     if not sid:
         sid = f"v{_now_ts()}"
-    if not sid.startswith("v"):
-        sid = "v" + sid
 
-    session_dir = _make_test_session_dir(skill_root, round_label=round_label, session_id=sid)
+    session_dir = _make_test_session_dir(
+        skill_root,
+        round_label=round_label,
+        session_id=sid,
+        reuse_if_exists=bool(sid_raw),
+    )
     _write_test_plan(session_dir, skill_root=skill_root, round_label=round_label, session_id=sid)
 
     env = os.environ.copy()
     # 测试环境避免受用户全局 override.yaml 影响；并把 runs/cache 隔离到本次会话目录
     env.setdefault("NSFC_JUSTIFICATION_WRITER_DISABLE_USER_OVERRIDE", "1")
     env["NSFC_JUSTIFICATION_WRITER_RUNS_DIR"] = str((session_dir / "_artifacts" / "runs").resolve())
+    # 将 Python/pytest 的缓存也隔离到会话目录（满足“测试中间产物全部落在 tests/<session>/”的约束）
+    env.setdefault("PYTHONPYCACHEPREFIX", str((session_dir / "_artifacts" / "pycache").resolve()))
 
     results: list[tuple[str, _CmdResult]] = []
 
@@ -364,7 +376,13 @@ def cmd_test_session(args: argparse.Namespace) -> int:
 
     pytest_cmd = _pick_pytest_cmd(cwd=skill_root, env=env)
     r2 = _run_capture(
-        pytest_cmd + ["-q", str((skill_root / "tests" / "pytest").resolve())],
+        pytest_cmd
+        + [
+            "-q",
+            "-o",
+            f"cache_dir={str((session_dir / '_artifacts' / 'pytest_cache').resolve())}",
+            str((skill_root / "tests" / "pytest").resolve()),
+        ],
         cwd=skill_root,
         env=env,
     )

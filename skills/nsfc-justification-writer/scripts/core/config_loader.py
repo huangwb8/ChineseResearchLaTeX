@@ -338,6 +338,46 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
         if "fallback_rules" in writing_coach and not isinstance(writing_coach.get("fallback_rules"), dict):
             err("writing_coach.fallback_rules 必须是 dict")
 
+    # 第三方约束：仅做类型校验（不要求必须存在）
+    constraints = config.get("constraints")
+    if constraints is not None and not isinstance(constraints, dict):
+        err("constraints 必须是 dict")
+    elif isinstance(constraints, dict):
+        page = constraints.get("page_limit")
+        if page is not None and not isinstance(page, dict):
+            err("constraints.page_limit 必须是 dict")
+        elif isinstance(page, dict):
+            for k in ["min", "max", "warning_threshold", "chars_per_page"]:
+                if k in page and not isinstance(page.get(k), int):
+                    err(f"constraints.page_limit.{k} 必须是 int")
+            if "recommended" in page:
+                rec = page.get("recommended")
+                if not (isinstance(rec, list) and len(rec) >= 2 and all(isinstance(x, int) for x in rec[:2])):
+                    err("constraints.page_limit.recommended 必须是 [int, int]")
+
+        wc = constraints.get("word_count")
+        if wc is not None and not isinstance(wc, dict):
+            err("constraints.word_count 必须是 dict")
+        elif isinstance(wc, dict):
+            for k in ["min", "max"]:
+                if k in wc and not isinstance(wc.get(k), int):
+                    err(f"constraints.word_count.{k} 必须是 int")
+
+        refs = constraints.get("references")
+        if refs is not None and not isinstance(refs, dict):
+            err("constraints.references 必须是 dict")
+        elif isinstance(refs, dict):
+            for k in ["min", "max"]:
+                if k in refs and not isinstance(refs.get(k), int):
+                    err(f"constraints.references.{k} 必须是 int")
+
+        opening = constraints.get("opening")
+        if opening is not None and not isinstance(opening, dict):
+            err("constraints.opening 必须是 dict")
+        elif isinstance(opening, dict):
+            if "cjk_chars" in opening and not isinstance(opening.get("cjk_chars"), int):
+                err("constraints.opening.cjk_chars 必须是 int")
+
     return errors
 
 

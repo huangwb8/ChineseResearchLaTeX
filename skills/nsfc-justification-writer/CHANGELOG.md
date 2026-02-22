@@ -8,6 +8,15 @@ The version number is the single source of truth in `config.yaml` (`skill_info.v
 
 （暂无）
 
+## [0.7.9] - 2026-02-22
+
+### Added
+- 第三方约束（瘦身提质）诊断预警：预估页数（经验估算）、核心文献数（去重 cite keys）、开篇 300 字信号检查（启发式）
+
+### Changed
+- 配置兜底字数调整为 9000±800，并新增 `constraints.*` 约束区间（页数/字数/文献数量/开篇长度）
+- `test-session` 将 pytest/python 缓存隔离到会话目录，保证测试中间产物可追溯且集中收口
+
 ## [0.7.8] - 2026-02-17
 
 ### Added
