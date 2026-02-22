@@ -64,7 +64,13 @@
   - `skills/nsfc-humanization/references/machine-patterns.md`：修正会引入新场景/新实体的示例；新增 LaTeX token（`\cite/\ref/\eqref/数学模式`）保留示例
   - `skills/nsfc-humanization/config.yaml`：版本号更新至 0.1.2（单一真相来源）
   - `skills/nsfc-humanization/CHANGELOG.md`、`skills/nsfc-humanization/README.md`：同步版本号与变更记录（README 补齐推荐用法与 FAQ）
-  - `README.md`：技能版本表同步更新为 v0.1.2
+  - `README.md`：技能版本表同步更新（先到 v0.1.2，后续更新见 0.1.3 条目）
+
+- **nsfc-humanization 0.1.2 → 0.1.3**：将“括号嵌套括号 + 分号罗列（数据来源/规模）”纳入机器味识别与高优先级改写策略
+  - `skills/nsfc-humanization/SKILL.md`：新增“括号嵌套与信息堆砌”识别项，并在执行流程中补充“括号重写优先级”（括号仅保留短提示，信息优先改写为连续句子流）
+  - `skills/nsfc-humanization/references/machine-patterns.md`：新增“括号嵌套与信息堆砌（数据来源/规模）”对比示例
+  - `skills/nsfc-humanization/config.yaml`、`skills/nsfc-humanization/CHANGELOG.md`、`skills/nsfc-humanization/README.md`：版本号更新至 0.1.3（单一真相来源）
+  - `README.md`：技能版本表同步更新为 v0.1.3
 
 - **nsfc-research-content-writer v0.2.2 → v0.2.3**：补充篇幅控制约束、差异化组织框架与任务结束提醒
   - `skills/nsfc-research-content-writer/SKILL.md`：新增篇幅控制原则（12–15页/12000–15000字）、基础/应用研究框架建议，并在任务结束后提醒使用 `nsfc-roadmap` 生成技术路线图；强化创新点“少而精”与年度计划“推进逻辑”
