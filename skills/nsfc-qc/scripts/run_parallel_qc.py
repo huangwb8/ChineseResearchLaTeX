@@ -167,13 +167,22 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "- `./.nsfc-qc/input/citations_index.csv`\n"
         "- `./.nsfc-qc/input/abbreviation_issues_summary.json`（缩写规范预检摘要：建议先读，快速定位高优先级项）\n"
         "- `./.nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检明细：按行定位；注意过滤 LaTeX 标签/数学变量等误报）\n"
+        "- `./.nsfc-qc/input/terminology_issues_summary.json`（术语一致性预检摘要：英文术语大小写/连字符变体）\n"
+        "- `./.nsfc-qc/input/terminology_issues.csv`（术语一致性预检明细：按 normalized_key 分组，列出所有变体）\n"
         "- `./.nsfc-qc/input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
-        "缩略语规范（必检，独立小节输出）：\n"
-        "- 以 `abbreviation_issues_summary.json`/`abbreviation_issues.csv` 为起点，逐条核对。\n"
-        "- 对 P1（`bare_first_use`/`missing_english_full`）：确认是否为重要专业术语；首次出现建议采用“中文全称（English Full Name, ABBR）”。\n"
-        "- 对 P2（`missing_chinese_full`/`repeated_expansion`）：确认是否确实缺中文全称/是否确实重复展开。\n"
-        "- 过滤误报：LaTeX 标签（如 `fig:ABC`）、图表编号、数学变量、bibkey/label 不是缩写。\n"
-        "- 你必须在 RESULT.md 的「3) 重要建议（P1）」中写一个二级标题：`### 缩略语规范`，并按 `文件:行号` 给出可执行建议（只写建议，不改文件）。\n\n"
+        “缩略语规范（必检，独立小节输出）：\n”
+        “- 以 `abbreviation_issues_summary.json`/`abbreviation_issues.csv` 为起点，逐条核对。\n”
+        “- 对 P1（`bare_first_use`/`missing_english_full`）：确认是否为重要专业术语；首次出现建议采用”中文全称（English Full Name, ABBR）”。\n”
+        “- 对 P2（`missing_chinese_full`/`repeated_expansion`）：确认是否确实缺中文全称/是否确实重复展开。\n”
+        “- 过滤误报：LaTeX 标签（如 `fig:ABC`）、图表编号、数学变量、bibkey/label 不是缩写。\n”
+        “- 你必须在 RESULT.md 的「3) 重要建议（P1）」中写一个二级标题：`### 缩略语规范`，并按 `文件:行号` 给出可执行建议（只写建议，不改文件）。\n\n”
+        “术语一致性（必检，独立小节输出）：\n”
+        “- 以 `terminology_issues_summary.json`/`terminology_issues.csv` 为起点，逐条核对。\n”
+        “- 每条 `term_variant` 问题列出了同一概念的多种英文写法（大小写/连字符差异），请判断：\n”
+        “  - 是否为真正的不一致（而非专有名词的合理变体，如 “T cell” vs “T-cell” 在不同语境下均可接受）。\n”
+        “  - 建议统一使用哪种形式（通常选出现次数最多的）。\n”
+        “- 过滤误报：不同语境下合理的大小写差异（如句首大写）不算不一致。\n”
+        “- 你必须在 RESULT.md 的「4) 可选优化（P2）」中写一个二级标题：`### 术语一致性`，并给出可执行建议（只写建议，不改文件）。\n\n”
         f"输入：\n- project_root: .\n- main_tex: {main_tex}\n\n"
         "请在 RESULT.md 中按以下结构输出（标题必须一致）：\n"
         "1) 执行摘要\n"
@@ -340,6 +349,8 @@ def main() -> int:
         "quote_issues.csv",
         "abbreviation_issues.csv",
         "abbreviation_issues_summary.json",
+        "terminology_issues.csv",
+        "terminology_issues_summary.json",
         "reference_evidence.jsonl",
         "reference_evidence_summary.json",
     ):

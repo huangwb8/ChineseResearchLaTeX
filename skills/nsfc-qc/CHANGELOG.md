@@ -6,6 +6,16 @@
 
 （暂无）
 
+## [0.2.1] - 2026-02-22
+
+### Added（新增）
+- `scripts/nsfc_qc_precheck.py`：新增 `_detect_terminology_consistency()` 函数，启发式检测英文术语大小写/连字符不一致（如 "deep learning" vs "Deep Learning"）；输出 `terminology_issues.csv` 与 `terminology_issues_summary.json`。
+- `SKILL.md`：将"术语一致性"提升为 thread 统一任务的独立必检项（第 6 项），并补齐预检产物清单；原"其它 QC"降为第 7 项，要求从"至少 3 项"调整为"至少 2 项"。
+
+### Changed（变更）
+- `scripts/run_parallel_qc.py`：将 `terminology_issues.csv`/`terminology_issues_summary.json` 纳入 snapshot 证据包；在 thread prompt 中新增"术语一致性（必检，独立小节输出）"指令，要求在 RESULT.md 的「4) 可选优化（P2）」中输出 `### 术语一致性` 小节。
+- `config.yaml`：版本号 `0.2.0 → 0.2.1`。
+
 ## [0.2.0] - 2026-02-21
 
 ### Added（新增）

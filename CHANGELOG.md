@@ -6,11 +6,18 @@
 
 ---
 
+## [v3.2.4] - 2026-02-22
+
+### Changed（变更）
+
+- **nsfc-qc v0.2.0 → v0.2.1**：新增术语一致性检查
+  - `nsfc_qc_precheck.py`：新增 `_detect_terminology_consistency()` 启发式检测英文术语大小写/连字符不一致，输出 `terminology_issues.csv` 与 `terminology_issues_summary.json`
+  - `run_parallel_qc.py`：术语文件纳入 snapshot 证据包，thread prompt 新增"术语一致性（必检）"指令
+  - `SKILL.md`：术语一致性提升为独立必检项（第 6 项），原"其它 QC"降为第 7 项
+
+---
+
 ## [v3.2.3] - 2026-01-24
-
-### Added（新增）
-
-- **check-review-alignment v1.0.2**：新增综述引用语义一致性检查技能
   - 通过宿主 AI 的语义理解逐条核查引用是否与文献内容吻合
   - 只在发现致命性引用错误时对"包含引用的句子"做最小化改写
   - 支持 LaTeX、Markdown、Word 多格式文档

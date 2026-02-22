@@ -565,6 +565,88 @@ def _detect_abbreviation_conventions(tex_files: List[Path], *, project_root: Pat
     }
 
 
+def _detect_terminology_consistency(tex_files: List[Path], *, project_root: Path) -> dict:
+    """
+    Detect potential English terminology inconsistencies (heuristic, read-only):
+    1. Capitalization variants: "deep learning" vs "Deep Learning"
+    2. Hyphenation variants: "deep-learning" vs "deep learning"
+
+    Normalizes each term to lowercase+no-hyphens, then flags keys with multiple surface forms.
+    False positives are possible; treat results as writing guidance only.
+    """
+    HYPHEN_TERM_RE = re.compile(r"\b([A-Za-z]{2,}(?:-[A-Za-z]{2,}){1,3})\b")
+    TITLE_PHRASE_RE = re.compile(r"\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,3})\b")
+
+    # normalized_key -> {surface_form -> [(path, line)]}
+    term_map: Dict[str, Dict[str, List[Tuple[str, int]]]] = {}
+
+    for p in tex_files:
+        try:
+            raw = _strip_comments(_read_text(p))
+        except Exception:
+            continue
+        lines = raw.splitlines()
+        for i, line in enumerate(lines, start=1):
+            scan = _simplify_latex_for_abbrev_scan(line)
+            if not scan:
+                continue
+            try:
+                rel = str(p.relative_to(project_root))
+            except Exception:
+                rel = str(p)
+
+            for m in HYPHEN_TERM_RE.finditer(scan):
+                term = m.group(1)
+                if term.upper() == term:  # skip all-caps abbreviations
+                    continue
+                key = term.lower().replace("-", " ")
+                if len(key.split()) < 2:
+                    continue
+                term_map.setdefault(key, {}).setdefault(term, []).append((rel, i))
+
+            for m in TITLE_PHRASE_RE.finditer(scan):
+                term = m.group(1)
+                key = term.lower()
+                term_map.setdefault(key, {}).setdefault(term, []).append((rel, i))
+
+    issues: List[dict] = []
+    for key, surface_map in sorted(term_map.items()):
+        if len(surface_map) <= 1:
+            continue
+        variants = [
+            {
+                "surface": surface,
+                "count": len(locs),
+                "first_occurrence": {"path": locs[0][0], "line": locs[0][1]},
+            }
+            for surface, locs in sorted(surface_map.items(), key=lambda kv: -len(kv[1]))
+        ]
+        canonical = variants[0]["surface"]
+        issues.append(
+            {
+                "normalized_key": key,
+                "severity": "P2",
+                "issue_kind": "term_variant",
+                "variants": variants,
+                "recommendation": f"建议统一使用最常见形式：\"{canonical}\"，检查其他变体是否为笔误或不一致。",
+            }
+        )
+
+    counts = {"P0": 0, "P1": 0, "P2": len(issues)}
+    return {
+        "summary": {
+            "unique_normalized_terms": len(term_map),
+            "inconsistent_terms": len(issues),
+            "issues_by_severity": counts,
+        },
+        "issues_preview": issues[:100],
+        "note": (
+            "Heuristic check for English term capitalization/hyphenation inconsistencies. "
+            "False positives possible; treat as writing guidance."
+        ),
+    }
+
+
 def _extract_citation_contexts(tex_files: Iterable[Path], *, project_root: Path) -> Dict[str, List[dict]]:
     """
     Extract per-bibkey occurrences with a short context snippet from the proposal.
@@ -939,6 +1021,7 @@ def main() -> int:
     lengths = _rough_text_metrics(tex_files)
     typography = _detect_quote_issues(tex_files, project_root=project_root)
     abbreviation_conventions = _detect_abbreviation_conventions(tex_files, project_root=project_root)
+    terminology_consistency = _detect_terminology_consistency(tex_files, project_root=project_root)
     citation_contexts = _extract_citation_contexts(tex_files, project_root=project_root)
 
     cited_keys = sorted(citations.keys())
@@ -992,6 +1075,7 @@ def main() -> int:
         },
         "typography": typography,
         "abbreviation_conventions": abbreviation_conventions,
+        "terminology_consistency": terminology_consistency,
         "reference_evidence": reference_evidence,
     }
 
@@ -1073,6 +1157,61 @@ def main() -> int:
                 "total_abbreviations_detected": total_abbr_detected,
                 "issues_count": issues_count,
                 "top_issues": top_issues,
+                "note": "Heuristic only. AI threads should verify each item and filter false positives.",
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    # terminology consistency CSV
+    term_issues = (terminology_consistency.get("issues_preview") or []) if isinstance(terminology_consistency, dict) else []
+    with (out_dir / "terminology_issues.csv").open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["severity", "issue_kind", "normalized_key", "variants_count", "canonical", "path", "line"])
+        for it in term_issues:
+            variants = it.get("variants") or []
+            canonical = variants[0].get("surface", "") if variants else ""
+            first = variants[0].get("first_occurrence", {}) if variants else {}
+            w.writerow(
+                [
+                    it.get("severity", ""),
+                    it.get("issue_kind", ""),
+                    it.get("normalized_key", ""),
+                    len(variants),
+                    canonical,
+                    first.get("path", ""),
+                    first.get("line", ""),
+                ]
+            )
+
+    # terminology consistency JSON summary
+    term_summary = (terminology_consistency.get("summary") or {}) if isinstance(terminology_consistency, dict) else {}
+    term_issues_count = (term_summary.get("issues_by_severity") or {}) if isinstance(term_summary, dict) else {}
+    top_term_issues = []
+    for it in term_issues[:20]:
+        variants = it.get("variants") or []
+        top_term_issues.append(
+            {
+                "normalized_key": it.get("normalized_key", ""),
+                "severity": it.get("severity", ""),
+                "variants": [v.get("surface", "") for v in variants],
+                "recommendation": it.get("recommendation", ""),
+            }
+        )
+    (out_dir / "terminology_issues_summary.json").write_text(
+        json.dumps(
+            {
+                "total_normalized_terms": int((term_summary.get("unique_normalized_terms") or 0) if isinstance(term_summary, dict) else 0),
+                "inconsistent_terms": int((term_summary.get("inconsistent_terms") or 0) if isinstance(term_summary, dict) else 0),
+                "issues_count": {
+                    "P0": int((term_issues_count.get("P0") or 0) if isinstance(term_issues_count, dict) else 0),
+                    "P1": int((term_issues_count.get("P1") or 0) if isinstance(term_issues_count, dict) else 0),
+                    "P2": int((term_issues_count.get("P2") or 0) if isinstance(term_issues_count, dict) else 0),
+                },
+                "top_issues": top_term_issues,
                 "note": "Heuristic only. AI threads should verify each item and filter false positives.",
             },
             ensure_ascii=False,

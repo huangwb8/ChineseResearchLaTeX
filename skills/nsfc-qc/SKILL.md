@@ -94,6 +94,8 @@ references: skills/nsfc-qc/references/
 - `.../artifacts/quote_issues.csv`
 - `.../artifacts/abbreviation_issues.csv`
 - `.../artifacts/abbreviation_issues_summary.json`
+- `.../artifacts/terminology_issues.csv`
+- `.../artifacts/terminology_issues_summary.json`
 - `.../artifacts/reference_evidence.jsonl`
 - `.../artifacts/reference_evidence_summary.json`
 
@@ -125,12 +127,19 @@ references: skills/nsfc-qc/references/
 5. **缩略语规范**：
    - 读取预检产物 `abbreviation_issues.csv`（或 `abbreviation_issues_summary.json`）作为起点
    - 对每条 P1 问题（`bare_first_use` / `missing_english_full`）做语义判断：
-     - 确认是否为真正的“重要专业术语”（领域常识词如 DNA/RNA 可豁免）
-     - 确认首次出现位置是否确实缺少“中文全称（English Full Name, ABBR）”格式
+     - 确认是否为真正的”重要专业术语”（领域常识词如 DNA/RNA 可豁免）
+     - 确认首次出现位置是否确实缺少”中文全称（English Full Name, ABBR）”格式
    - 对 P2 问题（`missing_chinese_full` / `repeated_expansion`）：确认是否确实缺中文全称/是否真的多次重复展开
    - 过滤误报：LaTeX 标签、图表编号、数学变量等不是缩写
    - 输出：按文件/行号定位的可执行建议（只写建议，不改文件）
-6. **其它 QC**（至少 3 项）：例如术语一致性、图表/公式编号与引用、风险与备选方案、创新点可验证性、夸大措辞等。
+6. **术语一致性**：
+   - 读取预检产物 `terminology_issues_summary.json`/`terminology_issues.csv` 作为起点
+   - 每条 `term_variant` 问题列出了同一概念的多种英文写法（大小写/连字符差异），逐条判断：
+     - 是否为真正的不一致（而非合理变体，如 “T cell” vs “T-cell” 在不同语境下均可接受）
+     - 建议统一使用哪种形式（通常选出现次数最多的）
+   - 过滤误报：句首大写、专有名词等合理的大小写差异不算不一致
+   - 输出：按文件/行号定位的可执行建议（只写建议，不改文件）
+7. **其它 QC**（至少 2 项）：例如图表/公式编号与引用、风险与备选方案、创新点可验证性、夸大措辞等。
 
 > 注意：thread 工作区内也**禁止修改**任何标书源文件；如需记录建议，写在 `RESULT.md` 或 thread 内新增的 `notes/*.md`（不改原文件）。
 
