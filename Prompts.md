@@ -1,9 +1,27 @@
 
 
-# Skills 开发
+# 通用
 
+如果本项目要创建新release，要这样做：
 
-# Skills开发
+- 使用 git-commit skill 创建commit信息并push
+- 创建一个新的tag
+- 使用 git-publish-release 生成release
+- projects里的每个项目，都要生成 .zip 文件，保存在在 ./tests/release-{本次的tag} 这个文件夹里。生成.zip时，zip里仅保留这些文件/文件夹（当然，不能对projects里的文件有任何修改； 这一步只是在一个测试文件夹里生成zip）
+  - .vscode
+  - bibtex-style
+  - code
+  - extraTex
+  - figures
+  - fonts
+  - references
+  - template
+  - main.pdf
+  - main.tex
+  - README.md
+- 把这些zip当作release的Assets推送到github
+
+请把上述规则有机地融入 @AGENTS.md 里
 
 # 摘要skill
 

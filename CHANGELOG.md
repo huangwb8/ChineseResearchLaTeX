@@ -6,6 +6,14 @@
 
 ---
 
+## [Unreleased]
+
+### Changed（变更）
+
+- **AGENTS.md**：新增"Release 发布流程"章节，规范 Release 创建的完整步骤（git-commit → tag → git-publish-release → 打包 zip → 上传 Assets）及项目模板打包规范（输出目录、zip 内容白名单、严格约束）
+
+---
+
 ## [v3.2.5] - 2026-02-22
 
 ### Added（新增）

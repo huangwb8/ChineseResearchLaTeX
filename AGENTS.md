@@ -329,6 +329,38 @@ xelatex → bibtex → xelatex → xelatex
 - **修改后**：完善变更描述，添加具体细节和影响范围
 - **发布时**：将 `[Unreleased]` 内容移至具体版本号下
 
+### Release 发布流程
+
+每次创建新 Release 时，按以下顺序执行：
+
+1. **提交代码**：使用 `git-commit` skill 生成 commit 信息并 push
+2. **创建 Tag**：创建新的版本 tag（遵循 Semver，如 `v3.3.0`）
+3. **生成 Release**：使用 `git-publish-release` skill 生成 Release Notes 并发布
+4. **打包项目模板**：为 `projects/` 下每个子项目生成 `.zip` 文件，保存至 `./tests/release-{tag}/`
+5. **上传 Assets**：将所有 `.zip` 文件作为 Release Assets 推送到 GitHub
+
+#### 项目模板打包规范
+
+- 输出目录：`./tests/release-{tag}/`（如 `./tests/release-v3.3.0/`）
+- 每个子项目生成独立 `.zip`，文件名格式：`{项目名}-{tag}.zip`
+- **zip 内仅保留以下文件/文件夹**：
+
+  ```
+  .vscode/
+  bibtex-style/
+  code/
+  extraTex/
+  figures/
+  fonts/
+  references/
+  template/
+  main.pdf
+  main.tex
+  README.md
+  ```
+
+- **严格约束**：不得修改 `projects/` 目录内的任何文件；zip 生成操作仅在 `tests/` 目录进行
+
 ### Skill 文档编写原则
 
 **核心理念**：Skill 文档应始终展示最新状态，不包含版本标记等对 AI 执行无用的元信息。
