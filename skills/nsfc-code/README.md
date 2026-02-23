@@ -36,3 +36,4 @@ python3 skills/nsfc-code/scripts/nsfc_code_new_report.py --output-dir ./
 
 - 只读：不修改任何 `.tex/.bib/.cls/.sty`
 - 不编造代码：只输出 overrides TOML 中存在的代码 key
+- **交叉科学部局限性**：本技能未针对"交叉科学部"（T 类代码）做专项优化。交叉科学部的申请代码选择逻辑与常规学部差异较大（需同时满足"跨学科"和"不适合归入单一学部"两个条件），推荐结果仅供参考，建议结合 NSFC 官方指南和领域专家意见做最终判断。

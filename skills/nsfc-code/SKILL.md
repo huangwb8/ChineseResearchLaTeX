@@ -1,6 +1,6 @@
 ---
 name: nsfc-code
-description: 根据 NSFC 标书正文内容，结合 2026 申请代码推荐库，为你给出 5 组申请代码1/2（主/次）推荐与理由；输出到 NSFC-CODE-vYYYYMMDDHHmm.md（只读，不修改标书）
+description: 根据 NSFC 标书正文内容，结合申请代码推荐库，为你给出 5 组申请代码1/2（主/次）推荐与理由；输出到 NSFC-CODE-vYYYYMMDDHHmm.md（只读，不修改标书）
 metadata:
   author: Bensz Conan
   short-description: NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读）
@@ -122,4 +122,4 @@ python3 skills/nsfc-code/scripts/nsfc_code_new_report.py --output-dir ./
 
 ## 参考库
 
-- 2026 代码推荐覆盖库：`skills/nsfc-code/references/nsfc_code_recommend.toml`
+- 代码推荐覆盖库：`skills/nsfc-code/references/nsfc_code_recommend.toml`
