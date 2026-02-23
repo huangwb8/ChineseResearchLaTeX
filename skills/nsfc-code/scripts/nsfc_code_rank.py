@@ -6,7 +6,7 @@ Rank NSFC application codes by heuristic similarity between:
 
 Design goals:
 - Dependency-free (no third-party packages; Python 3.9+).
-- Read-only on inputs; writes only if --out is provided.
+- Read-only on inputs; writes only if --out/--output-dir is provided.
 - Provide a "candidate shortlist" for the LLM to finalize 5 code pairs.
 """
 
@@ -25,6 +25,11 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OVERRIDES = SKILL_ROOT / "references" / "nsfc_code_recommend.toml"
 
+try:
+    import tomllib  # py311+
+except Exception:  # pragma: no cover - runtime dependent
+    tomllib = None  # type: ignore[assignment]
+
 
 _HEADER_RE = re.compile(r"^\[([A-Za-z0-9_.-]+)\]\s*$")
 _RECOMMEND_RE = re.compile(r'^\s*recommend\s*=\s*"(.*)"\s*$')
@@ -42,6 +47,24 @@ def load_overrides(path: Path) -> Dict[str, str]:
     """
     if not path.exists():
         raise FileNotFoundError(str(path))
+
+    # Prefer a real TOML parser when available (Python 3.11+),
+    # but keep a zero-deps fallback for Python 3.9/3.10.
+    if tomllib is not None:
+        try:
+            data = tomllib.loads(_read_text(path))
+            codes: Dict[str, str] = {}
+            for code, payload in data.items():
+                if not isinstance(payload, dict):
+                    continue
+                rec = payload.get("recommend")
+                if isinstance(rec, str) and rec.strip():
+                    codes[str(code)] = rec
+            if codes:
+                return codes
+        except Exception:
+            # Fall back to the minimal parser below.
+            pass
 
     codes: Dict[str, str] = {}
     current: Optional[str] = None
@@ -78,6 +101,7 @@ def is_binary_file(path: Path) -> bool:
 def iter_input_files(inputs: Sequence[Path]) -> Iterable[Path]:
     exts = {".tex", ".md", ".txt"}
     skip_md_basenames = {"README.md", "CHANGELOG.md", "SKILL.md"}
+    skip_dir_parts = {".git", ".latex-cache", "build", "dist", "out", ".nsfc-code"}
     for inp in inputs:
         if inp.is_file():
             if inp.suffix.lower() in exts and not is_binary_file(inp):
@@ -95,7 +119,7 @@ def iter_input_files(inputs: Sequence[Path]) -> Iterable[Path]:
                         continue
                     if p.name.startswith("NSFC-"):
                         continue
-                if any(part in {".git", ".latex-cache", "build", "dist", "out"} for part in p.parts):
+                if any(part in skip_dir_parts for part in p.parts):
                     continue
                 if is_binary_file(p):
                     continue
@@ -143,7 +167,6 @@ _RECOMMEND_BOILERPLATE = [
     "基础与应用基础研究",
     "重点围绕",
     "重点支持",
-    "开展理论、方法与应用研究",
     "开展理论、方法与应用研究",
     "开展理论、方法与应用研究，",
     "鼓励交叉创新",
@@ -293,8 +316,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--top-k", type=int, default=50, help="How many candidates to print (default: 50)")
     ap.add_argument("--format", choices=["table", "json"], default="table", help="Output format")
     ap.add_argument("--suggest-pairs", action="store_true", help="Also print 5 suggested (code1, code2) pairs")
-    ap.add_argument("--out", default="", help="Write output to a file (optional)")
+    ap.add_argument("--out", default="", help="Write output to a file path (optional)")
+    ap.add_argument(
+        "--output-dir",
+        default="",
+        help="Write output into a directory (optional). File name defaults to nsfc_code_rank.{json|md}.",
+    )
     args = ap.parse_args(list(argv) if argv is not None else None)
+
+    if args.out and args.output_dir:
+        print("FAIL: use only one of --out or --output-dir.", file=sys.stderr)
+        return 2
 
     inputs = [Path(x).expanduser().resolve() for x in args.input]
     for p in inputs:
@@ -369,10 +401,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 lines.append(f"- {p['code1']} + {p['code2']}")
         out_text = "\n".join(lines)
 
+    out_path: Optional[Path] = None
     if args.out:
         out_path = Path(args.out).expanduser().resolve()
+    elif args.output_dir:
+        out_dir = Path(args.output_dir).expanduser().resolve()
+        ext = "json" if args.format == "json" else "md"
+        out_path = out_dir / f"nsfc_code_rank.{ext}"
+
+    if out_path is not None:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(out_text, encoding="utf-8")
+        print(str(out_path))
     else:
         print(out_text)
     return 0

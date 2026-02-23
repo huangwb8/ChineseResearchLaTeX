@@ -16,6 +16,11 @@
 
 - **AGENTS.md**：Release 发布流程步骤 4/5 合并，改为引用 `scripts/pack_release.py`，消除硬编码描述
 - **AGENTS.md**：Release 发布流程新增步骤 5「发布微信动态」，规范发布后的社区通知格式（100–200 字，含项目名、版本号、更新亮点、Release 地址）
+- **nsfc-code 0.1.5 → 0.1.6**：修复脚本/文档口径不一致与工作区回灌风险
+  - `skills/nsfc-code/scripts/nsfc_code_rank.py`：新增 `--output-dir`（与 `SKILL.md` 示例对齐），并跳过 `.nsfc-code/`；TOML 解析优先用 `tomllib`（Python 3.11+）
+  - `skills/nsfc-code/SKILL.md`：修复 shell 代码块弯引号；`nsfc_code_new_report.py` 示例补齐 `--ts "${TS}"`
+  - `skills/nsfc-code/scripts/validate_skill.py`：smoke 校验改为 JSON 结构解析并覆盖 `--output-dir`
+  - 文档口径对齐：`README.md` / `skills/README.md` / `Prompts.md`
 
 ---
 
@@ -72,7 +77,7 @@
 ### Added（新增）
 
 - **nsfc-code v0.1.2**：新增 NSFC 申请代码推荐技能（只读）
-  - 读取标书正文内容，参考 `skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml`
+  - 读取标书正文内容，参考 `skills/nsfc-code/references/nsfc_code_recommend.toml`
   - 输出 5 组推荐（申请代码1=主代码、申请代码2=次代码）及理由，写入 `NSFC-CODE-vYYYYMMDDHHmm.md`
   - 提供候选粗排脚本 `skills/nsfc-code/scripts/nsfc_code_rank.py`（支持 `--prefix` 降噪、避免 `NSFC-*` 报告回灌）
   - 提供报告骨架脚本 `skills/nsfc-code/scripts/nsfc_code_new_report.py`（固定结构 + 时间戳，降低手误）

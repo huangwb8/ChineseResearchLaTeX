@@ -467,7 +467,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 **类型**：📝 日常
 
-**功能**：只读读取标书正文内容，结合 `skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml`，给出 5 组申请代码推荐（每组包含主代码/次代码）及理由，并写入 `NSFC-CODE-vYYYYMMDDHHmm.md`。
+**功能**：只读读取标书正文内容，结合 `skills/nsfc-code/references/nsfc_code_recommend.toml`，给出 5 组申请代码推荐（每组包含主代码/次代码）及理由，并写入 `NSFC-CODE-vYYYYMMDDHHmm.md`。
 
 **使用场景**：
 - 你有一份 NSFC 标书正文，但不确定申请代码怎么选

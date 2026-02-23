@@ -46,7 +46,7 @@
 开发一个skill，名为 nsfc-code，保存在 ./skills/nsfc-code 里。 它的基本任务是： 根据标书的内容提供基金代码的选择。它大致的工作原理是：
 
 - 彻底了解标书的正文内容
-- 调研 skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml ，找到最贴切的代码
+- 调研 skills/nsfc-code/references/nsfc_code_recommend.toml ，找到最贴切的代码
 - 给出5个推荐，每个推荐都包含申请代码1、申请代码2。申请代码1是主要代码，申请代码2是次要代码（但也是比较相关的）
 - 每个推荐要附带理由
 - 结果保存在工作目录的 NSFC-CODE-v{当前的年月日时分}.md 里。如果用户对保存目录或文件名另有约定，按用户的办。
@@ -281,4 +281,3 @@ skill开发的时候要遵守 '/Users/bensz/Nutstore Files/PythonCloud/Agents/pi
 - 请按 plans/v202601051748.md  这个计划设计skill，保存在当前项目的 skills 文件夹内。
 
 - NSFC基金每年的模板都可能会变化。以NSFC_Young为例，一般projects/NSFC_Young/template 里会包含今年的最新模板（比如今年是2026年，那么 projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 就是最新的官方模板）。而 projects/NSFC_Young/main.tex 有可能是旧的（比如是去年的仿Word样式的Latex模板）。我希望在 `skills` 目录下开发一个skill，名为`make_latex_model`。它的作用是： 在充分了解目前main.tex和projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc的基础上，优化main.tex及其相关的 projects/NSFC_Young/extraTex/@config.tex 文件，以实现对doc的高仿（渲染的PDF和Word版打印的PDF在标题样式上完全一样）。 国自然基金委对格式的要求很严格，因此这种模仿的保真度要求非常高。这个skill在工作的时候要非常注意：1、尽量轻量地修改main.tex和@config.tex，不要进行大的重构（除非有必要这样做），特别是样式的规定。老样式经过长期维护，可靠性非常高；一般只需要在它的基础上优化就行 2、 最新版的word模板有时有main.tex很不一样，有时差不多。你要注意优化时的度，不能过度开发，也不能太懒开发。 3、 skill的开发必须遵守 '/Users/bensz/Nutstore Files/PythonCloud/Agents/pipelines/skills' 的相关规范。请给出开发该skill的计划供我审查。 
-

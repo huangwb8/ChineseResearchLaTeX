@@ -208,7 +208,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [check-review-alignment](skills/check-review-alignment/) | v1.0.2 | 📝 日常 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
-| [nsfc-code](skills/nsfc-code/) | v0.1.2 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | 🚧 开发中 |
+| [nsfc-code](skills/nsfc-code/) | v0.1.6 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | 🚧 开发中 |
 | [nsfc-abstract](skills/nsfc-abstract/) | v0.3.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | 🚧 开发中 |
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.9 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.2.3 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
