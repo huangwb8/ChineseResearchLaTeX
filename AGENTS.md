@@ -336,30 +336,11 @@ xelatex → bibtex → xelatex → xelatex
 1. **提交代码**：使用 `git-commit` skill 生成 commit 信息并 push
 2. **创建 Tag**：创建新的版本 tag（遵循 Semver，如 `v3.3.0`）
 3. **生成 Release**：使用 `git-publish-release` skill 生成 Release Notes 并发布
-4. **打包项目模板**：为 `projects/` 下每个子项目生成 `.zip` 文件，保存至 `./tests/release-{tag}/`
-5. **上传 Assets**：将所有 `.zip` 文件作为 Release Assets 推送到 GitHub
+4. **打包并上传 Assets**：运行 [pack_release.py](scripts/pack_release.py) 完成打包与上传
 
-#### 项目模板打包规范
-
-- 输出目录：`./tests/release-{tag}/`（如 `./tests/release-v3.3.0/`）
-- 每个子项目生成独立 `.zip`，文件名格式：`{项目名}-{tag}.zip`
-- **zip 内仅保留以下文件/文件夹**：
-
-  ```
-  .vscode/
-  bibtex-style/
-  code/
-  extraTex/
-  figures/
-  fonts/
-  references/
-  template/
-  main.pdf
-  main.tex
-  README.md
-  ```
-
-- **严格约束**：不得修改 `projects/` 目录内的任何文件；zip 生成操作仅在 `tests/` 目录进行
+   ```bash
+   python scripts/pack_release.py --tag v3.3.0 --upload
+   ```
 
 ### Skill 文档编写原则
 

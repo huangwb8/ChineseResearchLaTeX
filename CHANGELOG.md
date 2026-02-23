@@ -8,9 +8,13 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- **scripts/pack_release.py**：新增 Release 打包脚本，自动为 `projects/` 下各子项目生成 zip 并可选上传到 GitHub Release（`--upload`）
+
 ### Changed（变更）
 
-- **AGENTS.md**：新增"Release 发布流程"章节，规范 Release 创建的完整步骤（git-commit → tag → git-publish-release → 打包 zip → 上传 Assets）及项目模板打包规范（输出目录、zip 内容白名单、严格约束）
+- **AGENTS.md**：Release 发布流程步骤 4/5 合并，改为引用 `scripts/pack_release.py`，消除硬编码描述
 
 ---
 
