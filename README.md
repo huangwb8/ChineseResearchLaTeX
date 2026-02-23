@@ -180,13 +180,14 @@ git clone https://github.com/huangwb8/skills.git &&
 - **guide-updater**：指南优化（基于文献综述结果优化项目指南，明确研究方向和亮点）
 - **transfer_old_latex_to_new**：标书迁移（将旧标书内容迁移到新模板）
 
-#### ✍️ 标书写作阶段与图表生成
+#### ✍️ 标书写作阶段
 - **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/科学假设 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
 - **nsfc-research-content-writer**：研究内容编排，同步生成"研究内容 + 特色与创新 + 三年年度计划"，确保子目标带"指标/对照/验证方案"三件套，创新点用"相对坐标系"表达
 - **nsfc-research-foundation-writer**：研究基础编排，同步生成"研究基础 + 工作条件 + 风险应对措施"，用"证据链 + 条件对位 + 风险预案"证明项目可行性
 - **nsfc-roadmap**：从 NSFC 标书自动生成可打印、A4 可读的技术路线图，输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果，默认纯 AI 规划 + 多轮评估-优化（模板仅作可选参考）
 - **nsfc-schematic**：将标书中的研究机制、算法架构、模块关系转成原理图/机制图，输出 `.drawio` 源文件与 `.svg`/`.png` 渲染结果，支持分组结构、正交路由与多轮自检优化
 - **nsfc-abstract**：标题建议 + 中英文摘要生成（默认 1 个推荐标题 + 5 个候选标题及理由；中文≤400字含标点；英文≤4000字符含标点；英文为中文的忠实翻译，不新增信息；输出写入工作目录 `NSFC-ABSTRACTS.md`）
+- **nsfc-code**：申请代码推荐（只读读取标书正文 + 2026 申请代码推荐库，输出 5 组主/次代码与理由，写入 `NSFC-CODE-vYYYYMMDDHHmm.md`）。写完标书时再用。 
 
 #### 🎯 质量保障
 - **nsfc-qc**：标书只读质量控制（多线程并行检查文风生硬、引用真伪与一致性、篇幅与结构分布、逻辑清晰度等，输出标准化 QC 报告）
@@ -207,6 +208,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [check-review-alignment](skills/check-review-alignment/) | v1.0.2 | 📝 日常 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
+| [nsfc-code](skills/nsfc-code/) | v0.1.2 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | 🚧 开发中 |
 | [nsfc-abstract](skills/nsfc-abstract/) | v0.3.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | 🚧 开发中 |
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.9 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.2.3 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |

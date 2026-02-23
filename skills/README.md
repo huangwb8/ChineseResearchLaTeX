@@ -461,6 +461,33 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
+### 15. nsfc-code - NSFC 申请代码推荐
+
+**状态**：🚧 开发中（版本见 `skills/nsfc-code/config.yaml`）
+
+**类型**：📝 日常
+
+**功能**：只读读取标书正文内容，结合 `skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml`，给出 5 组申请代码推荐（每组包含主代码/次代码）及理由，并写入 `NSFC-CODE-vYYYYMMDDHHmm.md`。
+
+**使用场景**：
+- 你有一份 NSFC 标书正文，但不确定申请代码怎么选
+- 希望推荐理由可追溯到“标书要点 + 代码库推荐描述”
+
+**推荐 Prompt 模板**：
+
+```
+请使用 nsfc-code 为以下标书推荐申请代码：
+标书路径：projects/NSFC_Young
+输出：5 个推荐，每个包含申请代码1（主）+ 申请代码2（次）+ 理由
+输出方式：写入工作目录 NSFC-CODE-vYYYYMMDDHHmm.md
+约束：全程只读，不修改任何 .tex/.bib/.cls/.sty
+（可选）如果我只可能申报 A 类学部，请在候选粗排时优先考虑 A 前缀
+```
+
+[详细文档 →](nsfc-code/SKILL.md)
+
+---
+
 ## 技能依赖关系
 
 某些技能依赖其他技能的输出，形成完整的工作流：
@@ -481,11 +508,12 @@ output_mode：preview（先预览）/ apply（确认后写入）
 1. **get-review-theme** → 提取综述主题
 2. **systematic-literature-review** → 生成文献综述
 3. **guide-updater** → 优化项目指南（⭐ 重要环节）
-4. **nsfc-justification-writer** → 撰写立项依据
-5. **nsfc-research-content-writer** → 撰写研究内容
-6. **nsfc-research-foundation-writer** → 撰写研究基础
-7. **nsfc-roadmap** / **nsfc-schematic** → 生成技术路线图与原理图
-8. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
+4. **nsfc-code** → 推荐申请代码（主/次代码 + 理由）
+5. **nsfc-justification-writer** → 撰写立项依据
+6. **nsfc-research-content-writer** → 撰写研究内容
+7. **nsfc-research-foundation-writer** → 撰写研究基础
+8. **nsfc-roadmap** / **nsfc-schematic** → 生成技术路线图与原理图
+9. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
 
 ---
 

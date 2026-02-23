@@ -56,6 +56,14 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- **nsfc-code v0.1.2**：新增 NSFC 申请代码推荐技能（只读）
+  - 读取标书正文内容，参考 `skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml`
+  - 输出 5 组推荐（申请代码1=主代码、申请代码2=次代码）及理由，写入 `NSFC-CODE-vYYYYMMDDHHmm.md`
+  - 提供候选粗排脚本 `skills/nsfc-code/scripts/nsfc_code_rank.py`（支持 `--prefix` 降噪、避免 `NSFC-*` 报告回灌）
+  - 提供报告骨架脚本 `skills/nsfc-code/scripts/nsfc_code_new_report.py`（固定结构 + 时间戳，降低手误）
+
 ### Changed（变更）
 
 - **nsfc-humanization 0.1.0 → 0.1.2**：补齐结构保护规则与最小改动策略，修正示例避免“新增信息”，并增加提示词注入防护

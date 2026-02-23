@@ -21,6 +21,27 @@
 
 - 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
 
+# nsfc-code
+
+---
+
+开发一个skill，名为 nsfc-code，保存在 ./skills/nsfc-code 里。 它的基本任务是： 根据标书的内容提供基金代码的选择。它大致的工作原理是：
+
+- 彻底了解标书的正文内容
+- 调研 skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml ，找到最贴切的代码
+- 给出5个推荐，每个推荐都包含申请代码1、申请代码2。申请代码1是主要代码，申请代码2是次要代码（但也是比较相关的）
+- 每个推荐要附带理由
+- 结果保存在工作目录的 NSFC-CODE-v{当前的年月日时分}.md 里。如果用户对保存目录或文件名另有约定，按用户的办。
+- 全程对标书内容只读，不要修改。
+- 全程按 Skill 开发规范：  https://github.com/huangwb8/skills/blob/main/AGENTS.md
+
+为了更好地开发skill，你可以：
+
+- 先使用 better-prompt skill 优化上述提示词
+- 利用 awsome-code skill 辅助规划和工作，确定好ai规划和硬编码的部分。
+- 做出一个demo
+- 使用 auto-test-skill skill 对该 demo 进行1次优化。
+
 # nsfc-schematic
 
 PlanName = 借鉴roadmap-优化-v202602191311
