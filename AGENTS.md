@@ -342,6 +342,16 @@ xelatex → bibtex → xelatex → xelatex
    python scripts/pack_release.py --tag v3.3.0 --upload
    ```
 
+5. **发布微信动态**：在当前与用户交互的界面中生成一条微信动态，内容包含项目名、版本号、核心更新亮点和 Release 地址，字数控制在 100–200 字。参考格式：
+
+   ```
+   ChineseResearchLaTeX v3.4.0 发布 🎉
+
+   本次更新重点强化了 NSFC 标书 AI 辅助写作能力：新增「去 AI 味」润色技能（nsfc-humanization）和篇幅自动对齐技能（nsfc-length-aligner），帮你把机器感文字改写成专家手笔；新增申请代码智能推荐（nsfc-code），告别选代码的纠结；技术路线图与原理图生成也全面升级，默认启用 AI 规划模式，出图更稳。
+
+   Release 地址：https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v3.4.0
+   ```
+
 ### Skill 文档编写原则
 
 **核心理念**：Skill 文档应始终展示最新状态，不包含版本标记等对 AI 执行无用的元信息。

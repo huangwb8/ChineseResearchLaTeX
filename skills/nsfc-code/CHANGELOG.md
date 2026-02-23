@@ -2,6 +2,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.1.3] - 2026-02-23
+
+### Changed（变更）
+
+- 将推荐库文件从 `nsfc_2026_recommend_overrides.toml` 重命名为 `nsfc_code_recommend.toml`，去除年份绑定，提升通用性
+- 同步更新所有引用该文件名的文档与脚本（`SKILL.md`、`README.md`、`config.yaml`、`scripts/nsfc_code_rank.py`、`scripts/nsfc_code_new_report.py`、`scripts/validate_skill.py`、`references/demo/NSFC-CODE-v202602230900.md`）
+
 ## [0.1.2] - 2026-02-23
 
 ### Added（新增）

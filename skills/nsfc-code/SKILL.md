@@ -23,12 +23,12 @@ config: skills/nsfc-code/config.yaml
 ## 技能定位
 
 - 你已经有一份 NSFC 标书正文（常见为 LaTeX 项目），但不确定应选择哪个申请代码。
-- 本技能读取你的正文内容，并结合 `skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml` 的“推荐描述”，输出 5 组代码推荐与理由。
+- 本技能读取你的正文内容，并结合 `skills/nsfc-code/references/nsfc_code_recommend.toml` 的“推荐描述”，输出 5 组代码推荐与理由。
 
 ## 硬性约束（必须遵守）
 
 - **只读标书**：不得改动用户的任何标书文件（尤其是 `.tex/.bib/.cls/.sty`）。
-- **不编造代码**：推荐的申请代码必须来自 `nsfc_2026_recommend_overrides.toml` 的 section key（例如 `A.A06.A0606`）。禁止输出“看起来像代码但库里不存在”的字符串。
+- **不编造代码**：推荐的申请代码必须来自 `nsfc_code_recommend.toml` 的 section key（例如 `A.A06.A0606`）。禁止输出“看起来像代码但库里不存在”的字符串。
 - **必须给 5 条推荐**：每条包含 `申请代码1` 与 `申请代码2`，并附带理由。
 - **理由必须可追溯**：理由需同时引用：
   1) 你从标书正文读到的研究主题/对象/方法/场景关键词；以及
@@ -94,7 +94,7 @@ python3 skills/nsfc-code/scripts/nsfc_code_new_report.py --output-dir ./
 
 - 生成时间：YYYY-MM-DD HH:mm
 - 输入来源：xxx（标书路径/文件列表）
-- 参考库：skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml
+- 参考库：skills/nsfc-code/references/nsfc_code_recommend.toml
 
 ## 标书内容要点（只读提炼）
 
@@ -122,4 +122,4 @@ python3 skills/nsfc-code/scripts/nsfc_code_new_report.py --output-dir ./
 
 ## 参考库
 
-- 2026 代码推荐覆盖库：`skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml`
+- 2026 代码推荐覆盖库：`skills/nsfc-code/references/nsfc_code_recommend.toml`

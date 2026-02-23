@@ -20,7 +20,7 @@ def main() -> int:
     required = [
         skill_root / "SKILL.md",
         skill_root / "config.yaml",
-        skill_root / "references" / "nsfc_2026_recommend_overrides.toml",
+        skill_root / "references" / "nsfc_code_recommend.toml",
         skill_root / "scripts" / "nsfc_code_rank.py",
         skill_root / "scripts" / "nsfc_code_new_report.py",
     ]

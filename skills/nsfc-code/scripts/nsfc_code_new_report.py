@@ -19,7 +19,7 @@ TEMPLATE = """# NSFC 申请代码推荐
 
 - 生成时间：{generated_at}
 - 输入来源：{input_hint}
-- 参考库：skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml
+- 参考库：skills/nsfc-code/references/nsfc_code_recommend.toml
 
 ## 标书内容要点（只读提炼）
 

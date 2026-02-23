@@ -23,7 +23,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OVERRIDES = SKILL_ROOT / "references" / "nsfc_2026_recommend_overrides.toml"
+DEFAULT_OVERRIDES = SKILL_ROOT / "references" / "nsfc_code_recommend.toml"
 
 
 _HEADER_RE = re.compile(r"^\[([A-Za-z0-9_.-]+)\]\s*$")

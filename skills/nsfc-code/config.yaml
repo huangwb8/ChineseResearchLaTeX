@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-code
-  version: 0.1.2
+  version: 0.1.3
   description: "根据 NSFC 标书正文内容，结合 2026 申请代码推荐库，为你给出 5 组申请代码1/2（主/次）推荐与理由；输出到 NSFC-CODE-vYYYYMMDDHHmm.md（只读，不修改标书）"
   category: writing
   author: "Bensz Conan"
@@ -48,7 +48,7 @@ guardrails:
     - "**/*.sty"
 
 references:
-  overrides_toml: "skills/nsfc-code/references/nsfc_2026_recommend_overrides.toml"
+  overrides_toml: "skills/nsfc-code/references/nsfc_code_recommend.toml"
 
 output_contract:
   # 最终交付（默认工作目录；文件名按分钟级时间戳）
