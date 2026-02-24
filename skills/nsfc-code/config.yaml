@@ -4,7 +4,7 @@
 
 skill_info:
   name: nsfc-code
-  version: 0.1.6
+  version: 1.0.0
   description: "根据 NSFC 标书正文内容，结合申请代码推荐库，为你给出 5 组申请代码1/2（主/次）推荐与理由；输出到 NSFC-CODE-vYYYYMMDDHHmm.md（只读，不修改标书）"
   category: writing
   author: "Bensz Conan"

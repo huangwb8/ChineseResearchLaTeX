@@ -25,6 +25,14 @@
   - `skills/nsfc-humanization/README.md`：补充参数用法与 STYLE_CARD 工作流示例
   - `skills/nsfc-humanization/references/machine-patterns.md`：补充 `field` 的领域表达偏好提示
   - `skills/nsfc-humanization/config.yaml` / `skills/nsfc-humanization/CHANGELOG.md`：版本号更新至 0.4.0（单一真相来源）
+- **nsfc-code 0.1.6 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **nsfc-abstract 0.3.1 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **nsfc-justification-writer 0.7.9 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **nsfc-research-content-writer 0.2.3 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新；新增 `CHANGELOG.md`）
+- **nsfc-qc 0.2.1 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **nsfc-reviewers 0.5.0 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **nsfc-humanization 0.4.0 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **get-review-theme**：已为 v1.0.0 稳定版，无需升级
 - **nsfc-code 0.1.5 → 0.1.6**：修复脚本/文档口径不一致与工作区回灌风险
   - `skills/nsfc-code/scripts/nsfc_code_rank.py`：新增 `--output-dir`（与 `SKILL.md` 示例对齐），并跳过 `.nsfc-code/`；TOML 解析优先用 `tomllib`（Python 3.11+）
   - `skills/nsfc-code/SKILL.md`：修复 shell 代码块弯引号；`nsfc_code_new_report.py` 示例补齐 `--ts "${TS}"`

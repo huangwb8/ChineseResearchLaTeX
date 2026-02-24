@@ -4,7 +4,7 @@
 # 技能基本信息
 skill_info:
   name: nsfc-reviewers
-  version: 0.5.0
+  version: 1.0.0
   description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议"
   author: "Bensz Conan"
   category: 科研写作

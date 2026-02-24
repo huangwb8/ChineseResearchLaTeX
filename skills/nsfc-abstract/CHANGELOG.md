@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-02-24
+
+### Changed
+
+- `config.yaml`：版本号 `0.3.1 → 1.0.0`，标记为正式稳定版本
+
 ## [0.3.1] - 2026-02-24
 
 ### Changed

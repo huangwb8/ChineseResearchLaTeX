@@ -8,6 +8,11 @@ The version number is the single source of truth in `config.yaml` (`skill_info.v
 
 （暂无）
 
+## [1.0.0] - 2026-02-24
+
+### Changed
+- `config.yaml`：版本号 `0.7.9 → 1.0.0`，标记为正式稳定版本
+
 ## [0.7.9] - 2026-02-22
 
 ### Added

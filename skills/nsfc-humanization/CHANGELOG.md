@@ -2,6 +2,12 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.0.0] - 2026-02-24
+
+### Changed（变更）
+
+- `config.yaml`：版本号 `0.4.0 → 1.0.0`，标记为正式稳定版本
+
 ## [0.4.0] - 2026-02-24
 
 ### Added（新增）
