@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-24
+
+### Changed
+
+- `SKILL.md`：标题建议输出格式新增英文版；推荐标题下方增加 `Recommended Title: ...` 行，每个候选条目末尾附 `/ EN: ...` 英文翻译
+- `examples/demo_output.txt`：更新示例以对应新格式（含英文推荐标题与候选英文翻译）
+
 ## [0.3.0] - 2026-02-11
 
 ### Added

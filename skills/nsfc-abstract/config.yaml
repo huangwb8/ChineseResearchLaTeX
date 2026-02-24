@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-abstract
-  version: 0.3.0
+  version: 0.3.1
   description: NSFC 标书中英文摘要生成（英文为中文的忠实翻译）与长度校验
   author: "Bensz Conan"
   category: writing

@@ -16,6 +16,15 @@
 
 - **AGENTS.md**：Release 发布流程步骤 4/5 合并，改为引用 `scripts/pack_release.py`，消除硬编码描述
 - **AGENTS.md**：Release 发布流程新增步骤 5「发布微信动态」，规范发布后的社区通知格式（100–200 字，含项目名、版本号、更新亮点、Release 地址）
+- **nsfc-humanization 0.1.3 → 0.2.0**：补齐列表/图表标题覆盖并提升输出自检能力
+  - `skills/nsfc-humanization/SKILL.md`：明确 `itemize/enumerate` 与 `\item` 的结构保护规则；将 `\caption{...}` 纳入可编辑自然语言范围；新增风格自评（最多 1 轮回修）
+  - `skills/nsfc-humanization/references/machine-patterns.md`：扩充机器味模式库与对比示例（模板句式堆叠、被动语态滥用、数字罗列无解读、目标/内容混同等）
+  - `skills/nsfc-humanization/config.yaml` / `skills/nsfc-humanization/README.md`：版本号更新至 0.2.0（单一真相来源）
+- **nsfc-humanization 0.2.0 → 0.4.0**：补齐章节/领域/强度/一致性机制，并提供可核查输出
+  - `skills/nsfc-humanization/SKILL.md`：新增 `section_type`/`field`/`strength`/`output_mode`/`self_eval_rounds`；支持 `diagnosis_only`；支持“变更摘要”与 STYLE_CARD（跨段落一致性）
+  - `skills/nsfc-humanization/README.md`：补充参数用法与 STYLE_CARD 工作流示例
+  - `skills/nsfc-humanization/references/machine-patterns.md`：补充 `field` 的领域表达偏好提示
+  - `skills/nsfc-humanization/config.yaml` / `skills/nsfc-humanization/CHANGELOG.md`：版本号更新至 0.4.0（单一真相来源）
 - **nsfc-code 0.1.5 → 0.1.6**：修复脚本/文档口径不一致与工作区回灌风险
   - `skills/nsfc-code/scripts/nsfc_code_rank.py`：新增 `--output-dir`（与 `SKILL.md` 示例对齐），并跳过 `.nsfc-code/`；TOML 解析优先用 `tomllib`（Python 3.11+）
   - `skills/nsfc-code/SKILL.md`：修复 shell 代码块弯引号；`nsfc_code_new_report.py` 示例补齐 `--ts "${TS}"`

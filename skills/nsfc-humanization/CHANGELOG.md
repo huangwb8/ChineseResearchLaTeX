@@ -2,6 +2,33 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.4.0] - 2026-02-24
+
+### Added（新增）
+
+- 新增可选控制参数：`section_type`（章节类型）/ `field`（领域）/ `strength`（强度）/ `output_mode`（输出模式）/ `self_eval_rounds`（自评轮数上限）
+- 新增 `output_mode=diagnosis_only`：仅输出机器味诊断报告（模式 + 严重程度 + 建议设置）
+- 新增 `output_mode=text_with_change_summary*`：支持输出“变更摘要”（用于快速核查语义保留）
+- 新增 STYLE_CARD（风格卡）：为跨段落一致性提供可复用的“风格约束”，支持用户在后续批次粘贴回传
+
+### Changed（变更）
+
+- 更新 `SKILL.md`：补齐 D2/D3/D4/D5/D7 的可操作机制（领域/章节感知、强度参数化、变更摘要、STYLE_CARD 一致性）
+- 更新 `references/machine-patterns.md`：新增 `field` 的领域表达偏好提示，支持“模式库 + 领域框架”联动
+- 更新 `config.yaml` / `README.md`：版本号更新至 0.4.0（单一真相来源）
+
+## [0.2.0] - 2026-02-24
+
+### Added（新增）
+
+- 执行流程新增“风格自评（最多 1 轮回修）”：在语义自检后复核机器味残留，并在不触碰硬性约束前提下进行第二轮最小修正
+- 更新 `references/machine-patterns.md`：补充“模板句式堆叠 / 被动语态滥用 / 数字罗列无解读 / 研究目标与研究内容混同”等模式对比示例
+
+### Changed（变更）
+
+- 更新 `SKILL.md`：明确 `itemize/enumerate` 环境标记与 `\item` 关键字保护规则；将 `\caption{...}` 纳入可编辑自然语言范围
+- 更新 `config.yaml` / `README.md`：版本号更新至 0.2.0（单一真相来源）
+
 ## [0.1.3] - 2026-02-23
 
 ### Added（新增）

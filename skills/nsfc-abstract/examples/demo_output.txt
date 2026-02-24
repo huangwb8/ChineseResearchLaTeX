@@ -3,11 +3,12 @@
 标题建议：
 [TITLE]
 推荐标题：跨尺度可解释特征驱动的肿瘤免疫治疗反应预测与机制溯源
-1) 多模态影像与循环标志物联合特征用于免疫治疗应答预测及机制解析 —— 理由：对象与判据清楚，强调可验证终点
-2) 面向免疫治疗分层的可解释表征模型构建与关键通路验证 —— 理由：突出方法创新与验证闭环
-3) 肿瘤微环境时空异质性表征及其与免疫治疗反应的因果链研究 —— 理由：机制向，贴合生医评审口味
-4) 跨中心多模态数据标准化与免疫治疗反应评估工具开发 —— 理由：强调可行性与工程交付
-5) 可解释联合特征揭示免疫抑制通路动态变化并指导分层干预 —— 理由：整合机制+应用，但仍保留“可验证”语义
+Recommended Title: Cross-scale Interpretable Feature-driven Prediction and Mechanism Tracing of Tumor Immunotherapy Response
+1) 多模态影像与循环标志物联合特征用于免疫治疗应答预测及机制解析 —— 理由：对象与判据清楚，强调可验证终点 / EN: Multimodal Imaging and Circulating Biomarker Combined Features for Immunotherapy Response Prediction and Mechanism Analysis
+2) 面向免疫治疗分层的可解释表征模型构建与关键通路验证 —— 理由：突出方法创新与验证闭环 / EN: Construction of Interpretable Representation Models and Key Pathway Validation for Immunotherapy Stratification
+3) 肿瘤微环境时空异质性表征及其与免疫治疗反应的因果链研究 —— 理由：机制向，贴合生医评审口味 / EN: Characterization of Tumor Microenvironment Spatiotemporal Heterogeneity and Its Causal Links to Immunotherapy Response
+4) 跨中心多模态数据标准化与免疫治疗反应评估工具开发 —— 理由：强调可行性与工程交付 / EN: Cross-center Multimodal Data Standardization and Development of Immunotherapy Response Assessment Tools
+5) 可解释联合特征揭示免疫抑制通路动态变化并指导分层干预 —— 理由：整合机制+应用，但仍保留”可验证”语义 / EN: Interpretable Combined Features Reveal Dynamic Immunosuppressive Pathway Changes to Guide Stratified Intervention
 [/TITLE]
 
 中文摘要：
