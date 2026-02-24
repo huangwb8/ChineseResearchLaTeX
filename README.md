@@ -206,19 +206,19 @@ git clone https://github.com/huangwb8/skills.git &&
 | [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | v1.4.1 | 📝 日常 | 将旧标书内容迁移到新模板 | ✅ 稳定 |
 | [systematic-literature-review](skills/systematic-literature-review/) | v1.0.9 | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
 | [check-review-alignment](skills/check-review-alignment/) | v1.0.2 | 📝 日常 | 综述引用语义一致性检查 | ✅ 稳定 |
-| [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | 🚧 开发中 |
+| [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | ✅ 稳定 |
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
-| [nsfc-code](skills/nsfc-code/) | v0.1.6 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | 🚧 开发中 |
-| [nsfc-abstract](skills/nsfc-abstract/) | v0.3.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | 🚧 开发中 |
-| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v0.7.9 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
-| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v0.2.3 | 📝 日常 | NSFC 研究内容编排写作 | 🚧 开发中 |
+| [nsfc-code](skills/nsfc-code/) | v1.0.0 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | ✅ 稳定 |
+| [nsfc-abstract](skills/nsfc-abstract/) | v1.0.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
+| [nsfc-justification-writer](skills/nsfc-justification-writer/) | v1.0.0 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
+| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v1.0.0 | 📝 日常 | NSFC 研究内容编排写作 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-roadmap](skills/nsfc-roadmap/) | v0.9.1 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
 | [nsfc-schematic](skills/nsfc-schematic/) | v0.8.6 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
-| [nsfc-qc](skills/nsfc-qc/) | v0.2.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | 🚧 开发中 |
-| [nsfc-reviewers](skills/nsfc-reviewers/) | v0.5.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | 🚧 开发中 |
+| [nsfc-qc](skills/nsfc-qc/) | v1.0.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | ✅ 稳定 |
+| [nsfc-reviewers](skills/nsfc-reviewers/) | v1.0.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | ✅ 稳定 |
 | [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.0 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |
-| [nsfc-humanization](skills/nsfc-humanization/) | v0.4.0 | 📝 日常 | 去 AI 机器味，使标书读起来像专家亲笔撰写 | 🚧 开发中 |
+| [nsfc-humanization](skills/nsfc-humanization/) | v1.0.0 | 📝 日常 | 去 AI 机器味，使标书读起来像专家亲笔撰写 | ✅ 稳定 |
 
 ---
 
