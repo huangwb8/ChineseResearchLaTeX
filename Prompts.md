@@ -82,6 +82,10 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+你觉得 skills/nsfc-humanization 还有哪些值得优化的点； 哪些缺陷限制了它所能完成的目标？ 请把优化计划写在： skills/nsfc-humanization/plans/v202602241320.md
+
+---
+
 ```
 # Identity
 你是一位资深的 AI Skill 开发工程师，专注于 NSFC 标书写作辅助工具开发。
