@@ -14,6 +14,7 @@
 
 ### Changed（变更）
 
+- **projects/NSFC_{General,Local,Young}/.vscode/settings.json**：优化 LaTeX Workshop 编译链路，强制将所有中间文件输出到 `.latex-cache/`，并在编译结束后复制 `main.pdf` 到项目根目录（根目录不再残留 `.aux/.log/.xdv/...` 等产物）
 - **AGENTS.md**：Release 发布流程步骤 4/5 合并，改为引用 `scripts/pack_release.py`，消除硬编码描述
 - **AGENTS.md**：Release 发布流程新增步骤 5「发布微信动态」，规范发布后的社区通知格式（100–200 字，含项目名、版本号、更新亮点、Release 地址）
 - **nsfc-humanization 0.1.3 → 0.2.0**：补齐列表/图表标题覆盖并提升输出自检能力

@@ -9,9 +9,9 @@ pack_release.py - 打包 projects/ 下各子项目为 Release Assets
 打包规范：
   - 输出目录：./tests/release-{tag}/（如 ./tests/release-v3.3.0/）
   - 每个子项目生成独立 zip，文件名格式：{项目名}-{tag}.zip
-  - zip 内仅保留 INCLUDE_ITEMS 白名单中的文件/目录：
-      .vscode/  bibtex-style/  code/  extraTex/  figures/  fonts/
-      references/  template/  main.pdf  main.tex  README.md
+  - zip 内保留：
+      1. INCLUDE_ITEMS 白名单中的文件/目录
+      2. 项目根目录下的 *.code-workspace 文件
   - 不存在的白名单项自动跳过（如 .vscode/ 不存在时不报错）
 
 严格约束：
@@ -62,6 +62,7 @@ def pack_project(project_dir: Path, output_dir: Path, tag: str) -> Path:
     zip_path = output_dir / zip_name
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        # 1. 打包白名单中的文件/目录
         for item_name in INCLUDE_ITEMS:
             item_path = project_dir / item_name
             if not item_path.exists():
@@ -72,6 +73,10 @@ def pack_project(project_dir: Path, output_dir: Path, tag: str) -> Path:
                 for file in sorted(item_path.rglob("*")):
                     if file.is_file():
                         zf.write(file, arcname=file.relative_to(project_dir))
+
+        # 2. 打包项目根目录下的 *.code-workspace 文件
+        for workspace_file in project_dir.glob("*.code-workspace"):
+            zf.write(workspace_file, arcname=workspace_file.name)
 
     return zip_path
 
