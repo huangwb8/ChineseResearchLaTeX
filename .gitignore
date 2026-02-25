@@ -81,7 +81,7 @@ Desktop.ini
 *.sublime-workspace
 
 # VSCode
-.vscode/
+.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json

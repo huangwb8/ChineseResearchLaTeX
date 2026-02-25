@@ -1,0 +1,100 @@
+{
+  // Keep ALL LaTeX build artifacts in `.latex-cache/`.
+  // The final deliverable is copied back to the project root as `main.pdf`.
+  "latex-workshop.latex.outDir": ".latex-cache",
+  "latex-workshop.latex.auxDir": ".latex-cache",
+
+  // Prevent magic comments from bypassing our custom recipe/outDir.
+  "latex-workshop.latex.build.enableMagicComments": false,
+  "latex-workshop.latex.build.forceRecipeUsage": true,
+
+  "latex-workshop.latex.recipe.default": "xelatex -> bibtex -> xelatex*2",
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "xelatex -> bibtex -> xelatex*2",
+      "tools": [
+        "clean-root-artifacts",
+        "prepare-latex-cache",
+        "xelatex",
+        "bibtex",
+        "xelatex",
+        "xelatex",
+        "copy-pdf-to-root"
+      ]
+    }
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "clean-root-artifacts",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "rm -f -- *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg *.fls *.fdb_latexmk *.synctex.gz *.synctex\\(busy\\) *.dvi *.xdv *.bcf *.run.xml *.nav *.snm *.vrb"
+      ]
+    },
+    {
+      "name": "prepare-latex-cache",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "mkdir -p .latex-cache && rm -rf .latex-cache/bibtex-style .latex-cache/references && ln -sfn ../bibtex-style .latex-cache/bibtex-style && ln -sfn ../references .latex-cache/references"
+      ]
+    },
+    {
+      "name": "xelatex",
+      "command": "xelatex",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-output-directory",
+        ".latex-cache",
+        "%DOC%"
+      ]
+    },
+    {
+      "name": "bibtex",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "cd .latex-cache && bibtex \"%DOCFILE%\""
+      ]
+    },
+    {
+      "name": "copy-pdf-to-root",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "cp -f \".latex-cache/%DOCFILE%.pdf\" \"%DIR%/%DOCFILE%.pdf\""
+      ]
+    }
+  ],
+
+  // Logging / UX
+  "latex-workshop.message.log.level": "info",
+  "latex-workshop.linting.chktex.enabled": false,
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoClean.run": "never",
+
+  // PDF preview
+  "latex-workshop.view.pdf.viewer": "tab",
+
+  // Explorer: hide cache dir and any root-level LaTeX intermediates (should be none after using this recipe).
+  "files.exclude": {
+    "%OUTDIR%/": true,
+    "*.aux": true,
+    "*.log": true,
+    "*.out": true,
+    "*.toc": true,
+    "*.lof": true,
+    "*.lot": true,
+    "*.bbl": true,
+    "*.blg": true,
+    "*.fls": true,
+    "*.fdb_latexmk": true,
+    "*.synctex.gz": true,
+    "*.synctex(busy)": true,
+    "*.dvi": true,
+    "*.xdv": true
+  }
+}
