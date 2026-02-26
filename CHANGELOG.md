@@ -15,6 +15,7 @@
 ### Changed（变更）
 
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
+- **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用
 - **projects/NSFC_{General,Local,Young}/.vscode/settings.json**：优化 LaTeX Workshop 编译链路，强制将所有中间文件输出到 `.latex-cache/`，并在编译结束后复制 `main.pdf` 到项目根目录（根目录不再残留 `.aux/.log/.xdv/...` 等产物）
 - **projects/NSFC_{General,Local,Young}/.vscode/settings.json**：LaTeX Workshop 的 `xelatex/bibtex` 调用改为通过项目内 `code/tex-tool.sh` 解析可执行文件路径，降低 VS Code 未继承 PATH（尤其 macOS Finder 启动）导致的“找不到 xelatex/bibtex”概率
 - **AGENTS.md**：Release 发布流程步骤 4/5 合并，改为引用 `scripts/pack_release.py`，消除硬编码描述
