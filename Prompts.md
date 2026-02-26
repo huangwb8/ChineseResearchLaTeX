@@ -8,6 +8,7 @@
 
 - 研究内容样式
 - 对于 \begin{enumerate} 里，我希望换行后的首行可以空2个中文字符，这样看上去更加规整。
+- 加粗相关的 AutoFakeBold=3 改为 AutoFakeBold=5
 
 写作skill的优化
 
@@ -54,6 +55,10 @@
 - 根据 skills/systematic-literature-review/plans/样式-v202601242025.md 优化skill；如果某些点你有更好的策略，你直接按你的想法就行，不用问我。然后，使用 auto-test-skill 优化1轮。 注意，不要大改 systematic-literature-review 的框架，它目前的业务逻辑很好； 把本次计划里关键的优化点落实就行。最后，该skill版本升级为 1.0.3。不要修改 README.md关于该skill的用法。
 
 - 我看 /Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 这个skill改动挺大的，我担心它不能正常工作。 请在 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/reviews/TEST01 里测试/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 。如果有bug，就修复。 最后保证/Volumes/2T01/Github/ChineseResearchLaTeX/skills/systematic-literature-review 可以跑通。
+
+# VSCode配置
+
+目前， projects 里项目的 .vscode/settings.json 里， xelatex 之类的路径是绝对路径； 或者说是一个确定性的路径。 然而，用户的配置环境可能是很多样的。 不一定是这个路径。 在这方面，有没有办法让 settings.json  变得更加通用，即可以智能识别用户当前环境下的这些编译器的路径？
 
 # nsfc-code
 
@@ -177,6 +182,10 @@ PlanName =v202602241320
 ```
 
 # nsfc-qc
+
+---
+
+目前，nsfc-qc 的逻辑里是否包含术语的规范使用检查？
 
 ---
 
