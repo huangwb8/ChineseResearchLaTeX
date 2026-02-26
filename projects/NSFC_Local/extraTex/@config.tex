@@ -74,24 +74,24 @@
 %%%————————————————————————————————字体
 \ifwindows
   % 可参考[LaTeX 中文字体配置基础指南 - 知乎](https://zhuanlan.zhihu.com/p/538459335) 选择自己喜欢的字体。 个人感觉中宋（SimSun）还可以 (～￣▽￣)～ 
-  \setCJKfamilyfont{sectionzhfont}{KaiTi}[AutoFakeBold=3] % 定义模板中文字体为楷体
+  \setCJKfamilyfont{sectionzhfont}{KaiTi}[AutoFakeBold=5] % 定义模板中文字体为楷体
   \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
   \newfontfamily\sectionenfont{KaiTi}[AutoFakeBold] % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
   \NewDocumentCommand \templatefont { } {\sectionzhfont \sectionenfont} % 模板中英文字体
-  \setCJKmainfont{KaiTi}[AutoFakeBold=3]  % 定义主体内容的字体为Kaiti
-  \setCJKmonofont{KaiTi}[AutoFakeBold=3]  % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
+  \setCJKmainfont{KaiTi}[AutoFakeBold=5]  % 定义主体内容的字体为Kaiti
+  \setCJKmonofont{KaiTi}[AutoFakeBold=5]  % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
   \setmainfont{Times New Roman} % 定义主体内容的英文字体为Times New Roman
-  % \setCJKmainfont{SimSun}[AutoFakeBold=3]  % 定义主体内容的字体为SimSun
+  % \setCJKmainfont{SimSun}[AutoFakeBold=5]  % 定义主体内容的字体为SimSun
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \else
-  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中文字体为楷体
+  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义模板中文字体为楷体
   \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
-  \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
+  \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
   \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
   % \setmainfont[Path=./fonts/, Extension=.ttf]{TimesNewRoman} % 定义主体内容的英文字体为Times New Roman。由于是外挂字体，无法自由使用英文斜体和粗体。
-  % \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{SimSun} % 定义主体内容的字体为SimSun
-  \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义主体内容的字体为Kaiti
-  \setCJKmonofont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{Kaiti} % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
+  % \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{SimSun} % 定义主体内容的字体为SimSun
+  \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义主体内容的字体为Kaiti
+  \setCJKmonofont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
   \setmainfont[BoldFont=Times New Roman, AutoFakeBold=5]{Times New Roman} %使用MacOS自带的Times New Roman，可以自由使用英文斜体和粗体。
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \fi
@@ -135,7 +135,8 @@
   itemsep=0em, % 列表项之间的垂直间距。
   labelsep=0.1pt,  % label与content的距离
   parsep=0em,  % 两个段落之间的垂直间距。效果上与itemsep类似。
-  topsep=0em % 列表与上一段对象的垂直间距。
+  topsep=0em, % 列表与上一段对象的垂直间距。
+  before={\setlength{\hangindent}{2em}\hangafter=1} % enumerate 换行后的续行额外缩进 2 个中文字符
   % after=\vspace{5pt}
 }
 % \newcommand{\itemtitlefont}[1]{\textbf{\color{MsBlue} #1}} % 定义item小标题字体；

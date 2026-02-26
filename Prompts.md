@@ -4,11 +4,15 @@
 
 ---
 
+./projects 里的模板的正文里，应该要使用到 enumerate 和 ssssubtitle ，否则用户不知道可以使用它们。
+
+---
+
 模板优化：
 
 - 研究内容样式
-- 对于 \begin{enumerate} 里，我希望换行后的首行可以空2个中文字符，这样看上去更加规整。
-- 加粗相关的 AutoFakeBold=3 改为 AutoFakeBold=5
+- ~~对于 \begin{enumerate} 里，我希望换行后的首行可以空2个中文字符，这样看上去更加规整。~~
+- ~~加粗相关的 AutoFakeBold=3 改为 AutoFakeBold=5~~
 
 写作skill的优化
 

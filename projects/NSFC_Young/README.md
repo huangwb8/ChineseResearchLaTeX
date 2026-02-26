@@ -236,10 +236,10 @@ NSFC_Young/
 
 ```latex
 % macOS 下改用宋体
-\setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=3]{SimSun}
+\setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{SimSun}
 
 % Windows 下改用黑体
-\setCJKmainfont{SimHei}[AutoFakeBold=3]
+\setCJKmainfont{SimHei}[AutoFakeBold=5]
 ```
 
 **字号对照表**（第 49-67 行）：
