@@ -11,9 +11,13 @@
 ### Added（新增）
 
 - **scripts/pack_release.py**：新增 Release 打包脚本，自动为 `projects/` 下各子项目生成 zip 并可选上传到 GitHub Release（`--upload`）
+- **nsfc-ref-alignment v0.1.1**：新增 NSFC 标书“引用-参考文献”一致性核查技能（只读 + 报告制）
+  - `skills/nsfc-ref-alignment/scripts/run_ref_alignment.py`：抽取 `\cite{}` 等引用并核对 `.bib` 完整性（缺失 bibkey/重复条目/字段缺失/DOI 格式），中间产物隔离在 `.nsfc-ref-alignment/run_{timestamp}/`
+  - 默认仅输出审核报告（写入 `./references`），不直接修改标书正文或 `.bib`
 
 ### Changed（变更）
 
+- **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
 - **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用
 - **projects/NSFC_{General,Local,Young}/.vscode/settings.json**：优化 LaTeX Workshop 编译链路，强制将所有中间文件输出到 `.latex-cache/`，并在编译结束后复制 `main.pdf` 到项目根目录（根目录不再残留 `.aux/.log/.xdv/...` 等产物）

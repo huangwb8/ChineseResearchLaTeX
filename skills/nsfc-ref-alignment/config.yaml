@@ -1,0 +1,82 @@
+# ================================
+# nsfc-ref-alignment 默认配置（Single Source of Truth for version）
+# ================================
+
+skill_info:
+  name: nsfc-ref-alignment
+  version: 0.1.1
+  description: "NSFC 标书参考文献与正文引用一致性核查（只读）：检查 bibkey 是否存在、BibTeX 字段基本完备性与格式（如 DOI）、并生成结构化输入供 AI 逐条评估“引用-语义”是否匹配；默认仅输出审核报告，不直接修改标书或参考文献（除非用户明确要求）。"
+  category: writing
+  author: "Bensz Conan"
+
+parameters:
+  project_root:
+    type: string
+    required: true
+    description: 标书项目根目录（如 projects/NSFC_Young 或你的标书目录）
+  main_tex:
+    type: string
+    required: false
+    default: main.tex
+    description: 主入口 tex 文件名（相对 project_root），默认 main.tex
+  report_dir:
+    type: string
+    required: false
+    default: references
+    description: 报告输出目录（相对当前工作目录）；默认 ./references
+  verify_online:
+    type: boolean
+    required: false
+    default: false
+    description: 是否进行在线核验（仅做确定性查询：优先用 DOI 到 Crossref/OpenAlex 检查“存在性/元信息一致性”；失败则降级为未核验）
+
+citation_commands:
+  # 常见 natbib / plain LaTeX / ctex 场景
+  - cite
+  - citep
+  - citet
+  - citealp
+  - citeauthor
+  - Cite
+  - Citet
+  - Ccite
+  - nocite
+
+bibliography_commands:
+  - bibliography
+  - addbibresource
+
+ai:
+  input_limits:
+    max_sentence_chars: 500
+    max_title_chars: 400
+    max_bib_abstract_chars: 1200
+    max_entries: 500
+    max_citations: 2000
+
+checks:
+  bib_required_fields:
+    common: [title, author]
+    year_like: [year, date]
+  doi:
+    enabled: true
+    regex: "(?i)\\b10\\.\\d{4,9}/[-._;()/:A-Z0-9]+\\b"
+
+guardrails:
+  # 只读：脚本与 AI 都不得修改标书内容（tex/bib 等）。所有写入必须在 .nsfc-ref-alignment 下；
+  # 最终报告默认写到 ./references（可由用户指定）。
+  allowed_write_globs:
+    - ".nsfc-ref-alignment/**"
+    - "references/**"
+  forbidden_write_globs:
+    - "**/*.tex"
+    - "**/*.bib"
+    - "**/*.cls"
+    - "**/*.sty"
+
+output_contract:
+  # run_dir = {project_root}/.nsfc-ref-alignment/run_{run_id}
+  ai_input_json: "{run_dir}/ai_ref_alignment_input.json"
+  deterministic_report: "{run_dir}/ref_integrity_report.md"
+  citations_csv: "{run_dir}/citations.csv"
+  bib_inventory_json: "{run_dir}/bib_inventory.json"

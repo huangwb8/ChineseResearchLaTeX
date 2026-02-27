@@ -45,6 +45,7 @@ projects/**/.complete_example/
 
 # nsfc-qc 项目级工作空间（只读 QC 中间文件与报告）
 projects/**/.nsfc-qc/
+**/.nsfc-ref-alignment/
 
 # complete_example / format guard runtime artifacts
 .format_hashes.json
@@ -195,3 +196,4 @@ test.md
 skills/*/plans/
 skills/*/tests/
 /tests/
+

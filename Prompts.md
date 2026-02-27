@@ -246,6 +246,24 @@ PlanName = 第三方约束-优化-v202602221613
 
 请在彻底了解 skills/nsfc-justification-writer 的工作代码/文件后回答： 目前skill的开发度如何？有哪些缺陷？如果有，请指出并将改良计划保存在 plans/v2026010xxxxx.md 里。
 
+# nsfc-ref-alignment
+
+---
+
+检验参考文献时，应该
+
+---
+
+开发一个名为 nsfc-ref-alignment 的skill，保存在 ./skills 它的作用是： 检查标书里的引用有没有问题。是要保证：
+
+- skill工作时的所有中间文件都托管在工作目录的 .nsfc-ref-alignment 隐藏文件夹里。 每次分析都是 run_xxx 的命名； 后面的 xxx 是时间戳； 这样可以保证每次分析不冲突
+- skill工作的时候不修改任务标书的配置或正文，以保证标书内容的安全； 除非用户另有指定。
+- 标书里所有的参考文献都是真实存在的，没有错误
+- 参考文献的引用与它对应的正文内容是相适应的，不是乱来的
+- skill仅输出参考文献的相关报告让用户审核，不直接修改。 因为改标书的参考文献是件大事，要让用户审查一下计划。这个报告默认保存在 ./references 里，除非用户另有指定
+- 重点参考 check-review-alignment的开发经验；这是一个类似的skill
+
+先把demo做出来，然后使用 auto-test-skill skill进行1次优化迭代。最后， 使用 write-skill-readme  skill 来写它的README.md； 使用 which-model 来写README的相关章节
 
 # complete_example
 
