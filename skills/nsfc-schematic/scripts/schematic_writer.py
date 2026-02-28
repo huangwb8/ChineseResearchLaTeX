@@ -5,7 +5,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from spec_parser import Edge, Group, Node, SchematicSpec
-from routing import rect_expand, route_edge_points
+from routing import (
+    choose_edge_label_anchor,
+    label_bbox_from_anchor,
+    rect_expand,
+    route_edge_points,
+)
 from utils import is_safe_relative_path, load_yaml, skill_root, write_text
 
 
@@ -73,11 +78,14 @@ def _group_style(group_style: str, palette: Dict[str, Any], config: Dict[str, An
     return base + "dashed=0;"
 
 
-def _node_shape(kind: str) -> str:
-    if kind == "decision":
-        return "shape=rhombus;perimeter=rhombusPerimeter;"
-    if kind == "risk":
-        return "shape=hexagon;perimeter=hexagonPerimeter2;"
+def _node_shape(kind: str, config: Dict[str, Any]) -> str:
+    layout_cfg = config.get("layout", {}) if isinstance(config.get("layout", {}), dict) else {}
+    shape_policy = str(layout_cfg.get("shape_policy", "uniform-rounded")).strip().lower()
+    if shape_policy == "semantic":
+        if kind == "decision":
+            return "shape=rhombus;perimeter=rhombusPerimeter;"
+        if kind == "risk":
+            return "shape=hexagon;perimeter=hexagonPerimeter2;"
     return "rounded=1;"
 
 
@@ -91,7 +99,7 @@ def _node_style(kind: str, palette: Dict[str, Any], config: Dict[str, Any]) -> s
 
     return (
         "whiteSpace=wrap;html=1;"
-        + _node_shape(kind)
+        + _node_shape(kind, config)
         + f"fillColor={fill};strokeColor={stroke};"
         + f"fontColor={text};fontSize={font_size};"
         # Extra spacing reduces "贴边/拥挤" and makes exports more publication-ready.
@@ -179,8 +187,8 @@ def _write_edge_debug_json(out_dir: Path, mode: str, edges_debug: List[Dict[str,
 
 
 def _graph_header(spec: SchematicSpec) -> List[str]:
-    page_w = max(850, spec.canvas_width)
-    page_h = max(1100, spec.canvas_height)
+    page_w = max(1, int(spec.canvas_width))
+    page_h = max(1, int(spec.canvas_height))
     return [
         '<mxfile host="app.diagrams.net" modified="auto" agent="nsfc-schematic">',
         '  <diagram name="schematic" id="schematic">',
@@ -280,6 +288,7 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
     obstacle_pad = int(routing_cfg.get("obstacle_padding_px", 10))
     avoid_headers = bool(routing_cfg.get("avoid_group_headers", True))
     header_h = int(((config.get("layout", {}) or {}).get("auto", {}) or {}).get("group_header_h", 56))
+    edge_font = int(config.get("layout", {}).get("font", {}).get("edge_label_size", config.get("layout", {}).get("font", {}).get("node_label_size", 22)))
 
     node_lookup: Dict[str, Tuple[int, int, int, int]] = {}
     for g in spec.groups:
@@ -291,6 +300,9 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
         pad = max(0, obstacle_pad // 2)
         for g in spec.groups:
             header_obstacles.append(rect_expand((g.x, g.y, g.x + g.w, g.y + header_h), pad))
+
+    label_obstacles: List[Tuple[int, int, int, int]] = [rect_expand(r, max(6, obstacle_pad // 2)) for r in node_lookup.values()]
+    label_obstacles.extend(header_obstacles)
 
     edge_debug_rows: List[Dict[str, Any]] = []
     for edge in spec.edges:
@@ -304,7 +316,8 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
         src = node_lookup.get(edge.source)
         tgt = node_lookup.get(edge.target)
         waypoints: Optional[List[Tuple[int, int]]] = None
-        if route_mode == "orthogonal" and src and tgt:
+        pts: Optional[List[Tuple[int, int]]] = None
+        if src and tgt:
             obs = [rect_expand(r, obstacle_pad) for nid, r in node_lookup.items() if nid not in {edge.source, edge.target}]
             obs.extend(header_obstacles)
             pts = route_edge_points(
@@ -315,19 +328,42 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
                 obs,
                 canvas_w=spec.canvas_width,
                 canvas_h=spec.canvas_height,
+                edge_kind=edge.kind,
             )
-            mid = pts[1:-1]
+
+        label_anchor: Optional[Tuple[int, int]] = None
+        label_offset: Optional[Tuple[int, int]] = None
+        if pts and edge.label:
+            label_anchor = choose_edge_label_anchor(
+                pts,
+                text=edge.label,
+                font_px=edge_font,
+                obstacles=label_obstacles,
+                canvas_w=spec.canvas_width,
+                canvas_h=spec.canvas_height,
+            )
+            default_anchor = ((pts[0][0] + pts[-1][0]) // 2, (pts[0][1] + pts[-1][1]) // 2)
+            dx = int(label_anchor[0] - default_anchor[0])
+            dy = int(label_anchor[1] - default_anchor[1])
+            if dx != 0 or dy != 0:
+                label_offset = (dx, dy)
+
+        mid = pts[1:-1] if pts and len(pts) >= 3 else []
+        if mid:
+            waypoints = [(int(x), int(y)) for x, y in mid]
+
+        if mid or label_offset:
+            lines.append('          <mxGeometry relative="1" as="geometry">')
             if mid:
-                waypoints = [(int(x), int(y)) for x, y in mid]
-            if mid:
-                lines.append('          <mxGeometry relative="1" as="geometry">')
                 lines.append('            <Array as="points">')
                 for x, y in mid:
                     lines.append(f'              <mxPoint x="{int(x)}" y="{int(y)}"/>')
                 lines.append("            </Array>")
-                lines.append("          </mxGeometry>")
-            else:
-                lines.append('          <mxGeometry relative="1" as="geometry"/>')
+            if label_offset:
+                lines.append(
+                    f'            <mxPoint x="{label_offset[0]}" y="{label_offset[1]}" as="offset"/>'
+                )
+            lines.append("          </mxGeometry>")
         else:
             lines.append('          <mxGeometry relative="1" as="geometry"/>')
         lines.append("        </mxCell>")
@@ -343,6 +379,8 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
                 "style": edge.style,
                 "label": edge.label or None,
                 "waypoints": waypoints,
+                "label_anchor": label_anchor,
+                "label_bbox": label_bbox_from_anchor(label_anchor, edge.label, edge_font) if (label_anchor and edge.label) else None,
             }
         )
 

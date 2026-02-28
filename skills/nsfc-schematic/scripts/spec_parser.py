@@ -65,6 +65,8 @@ class SchematicSpec:
     direction: Direction
     groups: List[Group]
     edges: List[Edge]
+    explicit_layout_ratio: float = 0.0
+    explicit_layout: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -579,7 +581,13 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
     root = data.get("schematic") if isinstance(data.get("schematic"), dict) else data
     root = _require_mapping(root, "schematic")
 
-    title = _require_str(root.get("title"), "schematic.title")
+    title_raw = root.get("title", "")
+    if title_raw is None:
+        title = ""
+    elif isinstance(title_raw, str):
+        title = title_raw.strip()
+    else:
+        raise ValueError("schematic.title 必须是字符串（可留空或省略）")
 
     direction_raw = root.get("direction", config["layout"].get("direction", "top-to-bottom"))
     if direction_raw not in ("top-to-bottom", "left-to-right", "bottom-to-top"):
@@ -602,6 +610,8 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
 
     default_node_w = int(config["layout"]["node_default_size"]["w"])
     default_node_h = int(config["layout"]["node_default_size"]["h"])
+    explicit_nodes = 0
+    total_nodes = 0
 
     for i, g_raw in enumerate(groups_raw, start=1):
         g = _require_mapping(g_raw, f"schematic.groups[{i}]")
@@ -632,6 +642,9 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
 
             nx, ny = _parse_position(c, f"schematic.groups[{i}].children[{j}]")
             nw, nh = _parse_size(c, f"schematic.groups[{i}].children[{j}]")
+            total_nodes += 1
+            if (nx is not None and ny is not None) and (nw is not None and nh is not None):
+                explicit_nodes += 1
 
             node = Node(
                 id=nid,
@@ -817,6 +830,9 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         # Never block parsing due to warning logic.
         pass
 
+    explicit_ratio = (float(explicit_nodes) / float(total_nodes)) if total_nodes > 0 else 0.0
+    explicit_layout = explicit_ratio >= 0.70
+
     return SchematicSpec(
         title=title,
         canvas_width=canvas_w,
@@ -824,6 +840,8 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         direction=direction,
         groups=groups,
         edges=edges,
+        explicit_layout_ratio=explicit_ratio,
+        explicit_layout=explicit_layout,
     )
 
 

@@ -15,7 +15,7 @@ from geometry import (
     segment_intersects_rect as _segment_intersects_rect,
 )
 from spec_parser import Edge, Node, SchematicSpec
-from routing import rect_expand, route_edge_points
+from routing import choose_edge_label_anchor, label_bbox_from_anchor, rect_expand, route_edge_points
 
 
 @dataclass
@@ -33,6 +33,14 @@ def _resolve_edge_route_mode(edge: Edge, default_mode: str) -> str:
     if route == "orthogonal":
         return "orthogonal"
     return default_mode
+
+
+def _rect_overlap(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> bool:
+    return not (a[2] <= b[0] or a[0] >= b[2] or a[3] <= b[1] or a[1] >= b[3])
+
+
+def _safe_margin_rect(r: Tuple[int, int, int, int], pad: int) -> Tuple[int, int, int, int]:
+    return (r[0] - pad, r[1] - pad, r[2] + pad, r[3] + pad)
 
 
 def _visual_score(
@@ -268,6 +276,13 @@ def evaluate_schematic_heuristic(
     edge_node_min_dist = int(thresholds.get("edge_node_min_dist_px", 14))
     edge_long_diag_ratio = float(thresholds.get("edge_long_diag_warn_ratio", 0.35))
     edge_diagness_warn = float(thresholds.get("edge_diagness_warn", 0.35))
+    label_node_clear = int(thresholds.get("label_node_min_clear_px", 4))
+    label_header_clear = int(thresholds.get("label_header_min_clear_px", 4))
+    min_content_margin = int(thresholds.get("min_content_margin_px", 16))
+    max_content_margin = int(thresholds.get("max_content_margin_px", 220))
+    coverage_warn = float(thresholds.get("content_coverage_warn_ratio", 0.45))
+    coverage_low = float(thresholds.get("content_coverage_low_ratio", 0.30))
+    title_overlap_warn = int(thresholds.get("title_group_overlap_warn_px", 8))
 
     # Export resolution sanity check (helps keep scoring stable across draw.io CLI variations).
     if png_path is not None and png_path.exists() and png_path.is_file():
@@ -418,6 +433,14 @@ def evaluate_schematic_heuristic(
     edge_lengths: List[float] = []
     edge_diagness: List[float] = []
     edge_segs: List[Tuple[Edge, List[Tuple[Tuple[float, float], Tuple[float, float]]]]] = []
+    header_h = int(((config.get("layout", {}) or {}).get("auto", {}) or {}).get("group_header_h", 56))
+    header_rects = [
+        (int(g.x), int(g.y), int(g.x + g.w), int(g.y + header_h))
+        for g in spec.groups
+    ]
+
+    label_overlap_nodes = 0
+    label_overlap_headers = 0
 
     for e in spec.edges:
         routing_mode = _resolve_edge_route_mode(e, routing_mode_default)
@@ -441,6 +464,7 @@ def evaluate_schematic_heuristic(
             [(int(r[0]), int(r[1]), int(r[2]), int(r[3])) for r in obstacles],
             canvas_w=int(spec.canvas_width),
             canvas_h=int(spec.canvas_height),
+            edge_kind=e.kind,
         )
 
         segs: List[Tuple[Tuple[float, float], Tuple[float, float]]] = []
@@ -490,6 +514,52 @@ def evaluate_schematic_heuristic(
                             where=f"edge:{e.source}->{e.target}",
                             message=f"连线可能贴近节点 {nid}（最小距离≈{dist:.1f}px），缩印可读性可能受影响",
                             dimension="edge_node_proximity",
+                        )
+                    )
+                    break
+
+        if e.label:
+            label_obstacles = [
+                (int(other.x), int(other.y), int(other.x + other.w), int(other.y + other.h))
+                for nid, other in node_map.items()
+                if nid not in {e.source, e.target}
+            ]
+            label_obstacles.extend(header_rects)
+            anchor_pt = choose_edge_label_anchor(
+                [(int(x), int(y)) for x, y in pts],
+                text=e.label,
+                font_px=edge_font,
+                obstacles=label_obstacles,
+                canvas_w=int(spec.canvas_width),
+                canvas_h=int(spec.canvas_height),
+            )
+            label_box = label_bbox_from_anchor(anchor_pt, e.label, edge_font)
+            node_box = _safe_margin_rect(label_box, label_node_clear)
+            header_box = _safe_margin_rect(label_box, label_header_clear)
+            for nid, other in node_map.items():
+                if nid in {e.source, e.target}:
+                    continue
+                nr = (int(other.x), int(other.y), int(other.x + other.w), int(other.y + other.h))
+                if _rect_overlap(node_box, nr):
+                    label_overlap_nodes += 1
+                    defects.append(
+                        Defect(
+                            severity="P1",
+                            where=f"edge:{e.source}->{e.target}",
+                            message=f"连线标签可能压到节点 {nid} 文本区，建议调整标签锚点/路由",
+                            dimension="edge_label_occlusion",
+                        )
+                    )
+                    break
+            for hr in header_rects:
+                if _rect_overlap(header_box, hr):
+                    label_overlap_headers += 1
+                    defects.append(
+                        Defect(
+                            severity="P2",
+                            where=f"edge:{e.source}->{e.target}",
+                            message="连线标签可能压到分组标题区，建议调整标签锚点",
+                            dimension="edge_label_occlusion",
                         )
                     )
                     break
@@ -580,6 +650,87 @@ def evaluate_schematic_heuristic(
                 )
             )
 
+    # 4b) title/group overlap risk (important for explicit layout specs)
+    title_enabled = bool((config.get("layout", {}).get("title", {}) or {}).get("enabled", True))
+    if title_enabled and spec.title.strip() and spec.groups:
+        title_h = int(config.get("layout", {}).get("font", {}).get("title_size", 34)) + int((config.get("layout", {}).get("title", {}) or {}).get("padding_y", 18)) * 2
+        first_group_top = min(int(g.y) for g in spec.groups)
+        overlap = max(0, title_h - first_group_top)
+        if overlap > title_overlap_warn:
+            sev = "P1" if not getattr(spec, "explicit_layout", False) else "P0"
+            defects.append(
+                Defect(
+                    severity=sev,
+                    where="global",
+                    message=f"标题区与顶部分组存在重叠风险：overlap={overlap}px（建议关闭图内标题或下移分组）",
+                    dimension="title_layout_overlap",
+                )
+            )
+
+    # 4c) space usage (content bbox)
+    if spec.groups:
+        xs = [int(g.x) for g in spec.groups]
+        ys = [int(g.y) for g in spec.groups]
+        xe = [int(g.x + g.w) for g in spec.groups]
+        ye = [int(g.y + g.h) for g in spec.groups]
+        for n in nodes:
+            xs.append(int(n.x))
+            ys.append(int(n.y))
+            xe.append(int(n.x + n.w))
+            ye.append(int(n.y + n.h))
+        x0, y0, x1, y1 = min(xs), min(ys), max(xe), max(ye)
+        margins = {
+            "left": x0,
+            "top": y0,
+            "right": max(0, spec.canvas_width - x1),
+            "bottom": max(0, spec.canvas_height - y1),
+        }
+        min_margin = min(margins.values())
+        max_margin = max(margins.values())
+        coverage = float(max(1, (x1 - x0) * (y1 - y0)) / max(1.0, float(spec.canvas_width * spec.canvas_height)))
+        metrics["space_usage"] = {
+            "margins": {k: int(v) for k, v in margins.items()},
+            "min_margin": int(min_margin),
+            "max_margin": int(max_margin),
+            "coverage_ratio": coverage,
+        }
+        if min_margin < min_content_margin:
+            defects.append(
+                Defect(
+                    severity="P1",
+                    where="global",
+                    message=f"内容贴边偏紧：min_margin={min_margin}px < {min_content_margin}px",
+                    dimension="space_usage",
+                )
+            )
+        if max_margin > max_content_margin:
+            defects.append(
+                Defect(
+                    severity="P1",
+                    where="global",
+                    message=f"内容留白偏大：max_margin={max_margin}px > {max_content_margin}px",
+                    dimension="space_usage",
+                )
+            )
+        if coverage < coverage_low:
+            defects.append(
+                Defect(
+                    severity="P1",
+                    where="global",
+                    message=f"内容覆盖率偏低：coverage={coverage:.2f} < {coverage_low:.2f}",
+                    dimension="space_usage",
+                )
+            )
+        elif coverage < coverage_warn:
+            defects.append(
+                Defect(
+                    severity="P2",
+                    where="global",
+                    message=f"内容覆盖率可进一步提升：coverage={coverage:.2f} < {coverage_warn:.2f}",
+                    dimension="space_usage",
+                )
+            )
+
     # 5) visual balance
     total_area = sum(max(1, n.w * n.h) for n in nodes)
     if total_area > 0:
@@ -630,6 +781,8 @@ def evaluate_schematic_heuristic(
         "long_diagonal_edges": long_diag_edges,
         "edge_node_intersections": edge_node_intersections,
         "edge_node_too_close": edge_node_too_close,
+        "edge_label_overlap_nodes": label_overlap_nodes,
+        "edge_label_overlap_headers": label_overlap_headers,
     }
     metrics["text"] = {"crowded_nodes": crowded_nodes}
 
@@ -645,12 +798,18 @@ def evaluate_schematic_heuristic(
             "overflow": overflow,
             "near_margin": near_margin,
             "edge_crossings": crossings,
+            "label_overlap_nodes": label_overlap_nodes,
+            "label_overlap_headers": label_overlap_headers,
             "p0": p0,
             "p1": p1,
             "p2": p2,
         },
         "defects": [asdict(d) for d in defects],
         "canvas": {"width": spec.canvas_width, "height": spec.canvas_height},
+        "layout_mode": {
+            "explicit_layout": bool(getattr(spec, "explicit_layout", False)),
+            "explicit_layout_ratio": float(getattr(spec, "explicit_layout_ratio", 0.0)),
+        },
         "font": {
             "node_label_size": node_font,
             "edge_label_size": edge_font,

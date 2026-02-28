@@ -6,6 +6,23 @@
 
 （暂无）
 
+## [0.10.0] - 2026-02-28
+
+### Added（新增）
+
+- `scripts/routing.py`：升级为“单折线 + 双折线候选 + 代价函数”路由搜索，并支持 `edge_kind` 走廊偏好；新增 edge label 锚点选择与 bbox 估计工具（用于避障定位）。
+- `scripts/evaluate_schematic.py` / `scripts/measure_schematic.py`：新增空间利用率度量与告警（content bbox margin/coverage），新增 edge label 压字检查（node/header occlusion）。
+- `scripts/spec_parser.py`：新增显式布局识别（`explicit_layout` / `explicit_layout_ratio`），用于自动修复阶段避免破坏式膨胀。
+
+### Changed（变更）
+
+- `config.yaml`：版本升级至 `0.10.0`；默认关闭图内标题（`layout.title.enabled=false`）；新增 `layout.shape_policy`、`renderer.drawio_border_mode` 以及空间利用/标签净距阈值配置。
+- `scripts/schematic_writer.py`：去除 draw.io `pageWidth/pageHeight` 硬最小值，严格对齐 spec 画布；edge label 写入 `mxGeometry offset`，降低压字风险。
+- `scripts/render_schematic.py`：导出边框支持 adaptive 模式；内部渲染支持形状策略（uniform/semantic）与标签避障锚点。
+- `scripts/generate_schematic.py`：auto-fix 改为“边标签优先修复 + 显式布局保守策略”；`config_local` 新增 `layout.font.edge_label_size` 白名单覆盖。
+- `scripts/plan_schematic.py`：规划草案默认不写图内标题，并新增边标签长度/数量约束（防止规划阶段先天拥挤）。
+- `README.md` / `SKILL.md`：同步更新标题策略、形状策略、自适应边框与配置说明。
+
 ## [0.9.0] - 2026-02-28
 
 ### Added（新增）

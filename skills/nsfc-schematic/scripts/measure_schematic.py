@@ -20,7 +20,7 @@ from geometry import (
     rect,
     segment_intersects_rect,
 )
-from routing import rect_expand, route_edge_points
+from routing import choose_edge_label_anchor, label_bbox_from_anchor, rect_expand, route_edge_points
 from spec_parser import Edge, Node, SchematicSpec
 
 
@@ -99,10 +99,35 @@ def measure_overlap(spec: SchematicSpec) -> List[Dict[str, Any]]:
     return out
 
 
+def _content_bbox(spec: SchematicSpec) -> Optional[Tuple[int, int, int, int]]:
+    xs: List[int] = []
+    ys: List[int] = []
+    xe: List[int] = []
+    ye: List[int] = []
+
+    for g in spec.groups:
+        xs.append(int(g.x))
+        ys.append(int(g.y))
+        xe.append(int(g.x + g.w))
+        ye.append(int(g.y + g.h))
+        for n in g.children:
+            xs.append(int(n.x))
+            ys.append(int(n.y))
+            xe.append(int(n.x + n.w))
+            ye.append(int(n.y + n.h))
+
+    if not xs:
+        return None
+    return (min(xs), min(ys), max(xe), max(ye))
+
+
 def measure_canvas_bounds(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]:
     thresholds = config.get("evaluation", {}).get("thresholds", {})
     thresholds = thresholds if isinstance(thresholds, dict) else {}
     node_margin_warn = int(thresholds.get("node_margin_warn_px", 20))
+    min_content_margin = int(thresholds.get("min_content_margin_px", 16))
+    max_content_margin = int(thresholds.get("max_content_margin_px", 220))
+    coverage_warn = float(thresholds.get("content_coverage_warn_ratio", 0.45))
 
     nodes = [n for g in spec.groups for n in g.children]
     out_of_bounds: List[Dict[str, Any]] = []
@@ -123,11 +148,40 @@ def measure_canvas_bounds(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[s
             near_boundary.append({"node_id": n.id, "min_margin_px": int(min_margin)})
 
     near_boundary.sort(key=lambda x: int(x.get("min_margin_px", 1_000_000)))
+
+    bbox = _content_bbox(spec)
+    content = None
+    if bbox is not None:
+        x0, y0, x1, y1 = bbox
+        bw = max(1, x1 - x0)
+        bh = max(1, y1 - y0)
+        margins = {
+            "left": int(x0),
+            "top": int(y0),
+            "right": int(max(0, spec.canvas_width - x1)),
+            "bottom": int(max(0, spec.canvas_height - y1)),
+        }
+        coverage = float((bw * bh) / max(1.0, float(spec.canvas_width * spec.canvas_height)))
+        content = {
+            "bbox": {"x0": int(x0), "y0": int(y0), "x1": int(x1), "y1": int(y1), "w": int(bw), "h": int(bh)},
+            "margins": margins,
+            "min_margin_px": int(min(margins.values())),
+            "max_margin_px": int(max(margins.values())),
+            "coverage_ratio": coverage,
+            "underfilled": bool(coverage < coverage_warn),
+        }
+
     return {
         "canvas": {"w": int(spec.canvas_width), "h": int(spec.canvas_height)},
         "out_of_bounds_nodes": out_of_bounds,
         "near_boundary_nodes": near_boundary,
-        "config_bounds": {"node_margin_warn_px": node_margin_warn},
+        "content": content,
+        "config_bounds": {
+            "node_margin_warn_px": node_margin_warn,
+            "min_content_margin_px": min_content_margin,
+            "max_content_margin_px": max_content_margin,
+            "content_coverage_warn_ratio": coverage_warn,
+        },
     }
 
 
@@ -167,11 +221,18 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
     edge_node_min_dist = int(thresholds.get("edge_node_min_dist_px", 14))
     edge_long_diag_ratio = float(thresholds.get("edge_long_diag_warn_ratio", 0.35))
     edge_diagness_warn = float(thresholds.get("edge_diagness_warn", 0.35))
+    label_node_clear = int(thresholds.get("label_node_min_clear_px", 4))
+    label_header_clear = int(thresholds.get("label_header_min_clear_px", 4))
+
+    edge_font = int(config.get("layout", {}).get("font", {}).get("edge_label_size", config.get("layout", {}).get("font", {}).get("node_label_size", 22)))
+    header_h = int(((config.get("layout", {}) or {}).get("auto", {}) or {}).get("group_header_h", 56))
 
     missing_endpoints: List[Dict[str, Any]] = []
     self_loops: List[Dict[str, Any]] = []
     node_intersections: List[Dict[str, Any]] = []
     node_proximity: List[Dict[str, Any]] = []
+    label_overlaps_nodes: List[Dict[str, Any]] = []
+    label_overlaps_headers: List[Dict[str, Any]] = []
 
     diag_len = math.hypot(spec.canvas_width, spec.canvas_height)
     long_diagonal_edges = 0
@@ -179,6 +240,11 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
     diagness: List[float] = []
 
     edge_segs: List[Tuple[Edge, List[Tuple[Tuple[float, float], Tuple[float, float]]]]] = []
+
+    header_rects = [
+        (int(g.x), int(g.y), int(g.x + g.w), int(g.y + header_h))
+        for g in spec.groups
+    ]
 
     for e in spec.edges:
         routing_mode = _resolve_edge_route_mode(e, routing_mode_default)
@@ -204,6 +270,7 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
             [(int(r[0]), int(r[1]), int(r[2]), int(r[3])) for r in obstacles],
             canvas_w=int(spec.canvas_width),
             canvas_h=int(spec.canvas_height),
+            edge_kind=e.kind,
         )
 
         segs: List[Tuple[Tuple[float, float], Tuple[float, float]]] = []
@@ -227,7 +294,6 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
         else:
             diagness.append(0.0)
 
-        # Route-aware segment vs other nodes.
         for nid, other in node_map.items():
             if nid in (e.source, e.target):
                 continue
@@ -243,7 +309,38 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
                     )
                     break
 
-    # Edge-edge crossings
+        if e.label and pts:
+            label_obstacles = [
+                (int(other.x), int(other.y), int(other.x + other.w), int(other.y + other.h))
+                for nid, other in node_map.items()
+                if nid not in {e.source, e.target}
+            ]
+            label_obstacles.extend(header_rects)
+            anchor = choose_edge_label_anchor(
+                pts,
+                text=e.label,
+                font_px=edge_font,
+                obstacles=label_obstacles,
+                canvas_w=int(spec.canvas_width),
+                canvas_h=int(spec.canvas_height),
+            )
+            label_box = label_bbox_from_anchor(anchor, e.label, edge_font)
+            label_box_node_clear = rect_expand(label_box, label_node_clear)
+            label_box_header_clear = rect_expand(label_box, label_header_clear)
+
+            for nid, other in node_map.items():
+                if nid in {e.source, e.target}:
+                    continue
+                nr = (int(other.x), int(other.y), int(other.x + other.w), int(other.y + other.h))
+                if segment_intersects_rect((float(label_box_node_clear[0]), float(label_box_node_clear[1])), (float(label_box_node_clear[2]), float(label_box_node_clear[1])), nr) or segment_intersects_rect((float(label_box_node_clear[2]), float(label_box_node_clear[1])), (float(label_box_node_clear[2]), float(label_box_node_clear[3])), nr) or segment_intersects_rect((float(label_box_node_clear[2]), float(label_box_node_clear[3])), (float(label_box_node_clear[0]), float(label_box_node_clear[3])), nr) or segment_intersects_rect((float(label_box_node_clear[0]), float(label_box_node_clear[3])), (float(label_box_node_clear[0]), float(label_box_node_clear[1])), nr):
+                    label_overlaps_nodes.append({"edge": f"{e.source}->{e.target}", "node": nid})
+                    break
+
+            for gr in header_rects:
+                if segment_intersects_rect((float(label_box_header_clear[0]), float(label_box_header_clear[1])), (float(label_box_header_clear[2]), float(label_box_header_clear[1])), gr) or segment_intersects_rect((float(label_box_header_clear[2]), float(label_box_header_clear[1])), (float(label_box_header_clear[2]), float(label_box_header_clear[3])), gr) or segment_intersects_rect((float(label_box_header_clear[2]), float(label_box_header_clear[3])), (float(label_box_header_clear[0]), float(label_box_header_clear[3])), gr) or segment_intersects_rect((float(label_box_header_clear[0]), float(label_box_header_clear[3])), (float(label_box_header_clear[0]), float(label_box_header_clear[1])), gr):
+                    label_overlaps_headers.append({"edge": f"{e.source}->{e.target}"})
+                    break
+
     crossings = 0
     all_straight = all(_resolve_edge_route_mode(e, routing_mode_default) == "straight" for e in spec.edges)
     if all_straight:
@@ -287,14 +384,17 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
         "crossings": int(crossings),
         "node_intersections": node_intersections,
         "node_proximity": node_proximity,
+        "label_overlaps_nodes": label_overlaps_nodes,
+        "label_overlaps_headers": label_overlaps_headers,
         "lengths": lengths_out,
         "diagness_avg": (sum(diagness) / len(diagness)) if diagness else 0.0,
         "long_diagonal_edges": int(long_diagonal_edges),
-        # Reference thresholds only (NOT a pass/fail standard in AI mode).
         "config_bounds": {
             "edge_node_min_dist_px": edge_node_min_dist,
             "edge_long_diag_warn_ratio": edge_long_diag_ratio,
             "edge_diagness_warn": edge_diagness_warn,
+            "label_node_min_clear_px": label_node_clear,
+            "label_header_min_clear_px": label_header_clear,
         },
     }
 
@@ -353,12 +453,14 @@ def measure_visual(spec: SchematicSpec, png_path: Optional[Path]) -> Dict[str, A
 
 
 def measure_schematic(spec: SchematicSpec, config: Dict[str, Any], png_path: Optional[Path] = None) -> Dict[str, Any]:
+    canvas = measure_canvas_bounds(spec, config)
     return {
         "measurements": {
             "text": measure_text(spec, config),
             "text_density": measure_text_density(spec, config),
             "overlap": measure_overlap(spec),
-            "canvas_bounds": measure_canvas_bounds(spec, config),
+            "canvas_bounds": canvas,
+            "space_usage": canvas.get("content") if isinstance(canvas, dict) else None,
             "balance": measure_balance(spec),
             "edges": measure_edges(spec, config),
             "visual": measure_visual(spec, png_path),

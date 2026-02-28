@@ -17,6 +17,14 @@
 
 ### Changed（变更）
 
+- **nsfc-schematic v0.9.0 → v0.10.0**：实例辅助优化（标题策略、标签可读性、空间利用率、形状统一）
+  - `skills/nsfc-schematic/config.yaml`：默认关闭图内标题；新增 `layout.shape_policy`、`renderer.drawio_border_mode` 及空间利用/标签净距阈值
+  - `skills/nsfc-schematic/scripts/routing.py` / `schematic_writer.py` / `render_schematic.py`：路由升级为双折线候选+代价函数，edge label 增加避障锚点与 offset，导出边框支持 adaptive
+  - `skills/nsfc-schematic/scripts/evaluate_schematic.py` / `measure_schematic.py`：新增内容 bbox 覆盖率/边距检查与 label 压字检查
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：auto-fix 改为“边标签优先、显式布局保守”，并放开 `config_local.layout.font.edge_label_size`
+  - `skills/nsfc-schematic/scripts/plan_schematic.py`：规划阶段默认无图内标题，并限制边标签长度/数量
+  - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`README.md`、`skills/README.md`
+
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
 - **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用

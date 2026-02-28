@@ -89,6 +89,24 @@
 
 ---
 
+PlanName = 实例辅助优化-v202602282149.md
+按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
+
+---
+
+/Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2 是 skills/nsfc-schematic 的1个实例，直接出品。目前，我感觉有一些缺陷：
+
+- 不应该有类似`SeqCCS 原理图：秩排序输入 → 双模态 MLM 预训练 → 个体化分型与验证`这样的标题。不能有图的title； 因为title会占用很多空间
+- 有些字，比如尺度约束、缺失约束、异质性约束之类的逻辑箭头里的字太小
+- 空间利用率不高。理论上，最上/下/左/右的框框边缘应该很接近画布的边缘
+- 有些逻辑箭头会挡住框框里的字
+- 框框的形态的选择有点随便，并不够和谐、美观
+- 其它有待你发现的问题
+
+请你彻底地调查 skills/nsfc-schematic 的工作文件和工作代码，充分地理解上述实例暴露出来的问题，给出一个该skill的优化计划，保存在： skills/nsfc-schematic/plans/实例辅助优化-v2026xxxx.md 里
+
+---
+
 PlanName = 借鉴roadmap-优化-v202602282005
 按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 

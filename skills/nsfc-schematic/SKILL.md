@@ -115,7 +115,7 @@ edges:
 - `layout`：自动布局参数
 - `layout.auto_edges`：未提供显式 edges 时的自动连线策略（`minimal|off`）
 - `layout.template_ref`：图类型模板（高级选项；默认不启用；模型画廊仅用于学习，见 `references/models/templates.yaml`）
-- `layout.title`：是否将 `spec.title` 落图，以及为标题预留的顶部空间（避免标题配置僵尸化）
+- `layout.title`：图内标题开关与顶部预留（默认关闭图内标题，推荐外部图注）
 - `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
 - `layout.auto_expand_canvas`：当节点/分组被自动扩容后，是否自动扩展画布以避免越界
 - `layout.canvas_fit`：画布拟合策略（可选按内容边界收缩，避免极端比例与大量空白）

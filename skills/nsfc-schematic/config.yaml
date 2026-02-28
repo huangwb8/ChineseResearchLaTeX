@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.9.0
+  version: 0.10.0
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -14,7 +14,8 @@ renderer:
     # Users can still override via spec.schematic.canvas.{width,height}.
     width_px: 3200
     height_px: 2000
-  drawio_border_px: 20
+  drawio_border_px: 4
+  drawio_border_mode: adaptive  # fixed|adaptive（adaptive: 小画布/显式布局自动减小边框）
   background: "#FFFFFF"
   allow_internal_fallback: true
   internal_routing: orthogonal  # straight|orthogonal
@@ -44,13 +45,14 @@ renderer:
 layout:
   direction: top-to-bottom
   auto_edges: minimal   # minimal|off（仅在 spec 未显式提供 edges 时生效）
+  shape_policy: uniform-rounded  # uniform-rounded|semantic
   # 图类型模板（仅用于“视觉学习/参考图库”；默认不要求选择、不写入 spec 约束）
   # - 为空/省略：纯 AI 规划（推荐；由宿主 AI 自主规划分组与主链结构）
   # - model-xx：仅在用户明确要求“参考某个模板”时才使用（见 references/models/templates.yaml）
   template_ref:
   auto_expand_canvas: true
   title:
-    enabled: true
+    enabled: false
     padding_y: 18
   node_default_size:
     w: 280
@@ -126,6 +128,13 @@ evaluation:
     edge_node_min_dist_px: 14
     edge_long_diag_warn_ratio: 0.35   # 相对画布对角线比例
     edge_diagness_warn: 0.35          # 0(轴向)~1(45度对角)
+    label_node_min_clear_px: 4         # edge label 与节点 bbox 最小净距
+    label_header_min_clear_px: 4       # edge label 与分组标题区最小净距
+    min_content_margin_px: 16          # 内容包围盒最小边距
+    max_content_margin_px: 220         # 内容包围盒最大合理边距（过大视为留白过多）
+    content_coverage_warn_ratio: 0.45  # 内容覆盖率建议值
+    content_coverage_low_ratio: 0.30   # 内容覆盖率过低告警阈值
+    title_group_overlap_warn_px: 8     # 标题区与分组重叠告警阈值
     blank_check_min_nodes: 6          # spec 节点数达到该值才启用“近空白渲染”判定（避免小图误报）
     blank_density_p0: 0.010           # spec 有内容但 PNG 近空白：提升为 P0（疑似渲染内容缺失）
     blank_density_p1: 0.020           # spec 有内容但 PNG 偏空：提升为 P1（建议检查渲染链路）
@@ -196,7 +205,7 @@ planning:
     max_terms: 12
     ai_tex_max_chars: 20000
   defaults:
-    title: "NSFC 原理图（规划草案）"
+    title: ""
     direction: top-to-bottom
     color_scheme: academic-blue
     groups:
@@ -216,4 +225,6 @@ planning:
     nodes_per_group_max: 6
     total_nodes_max: 20
     edge_density_max_ratio: 1.5
+    edge_label_max_chars: 16
+    edge_label_max_count: 6
     require_input_output: true

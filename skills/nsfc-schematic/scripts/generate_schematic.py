@@ -187,10 +187,14 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
                 fatal("config_local.layout.direction 不合法（允许 top-to-bottom|left-to-right|bottom-to-top）")
             l_out["direction"] = d
         font = layout.get("font")
-        if isinstance(font, dict) and "node_label_size" in font:
-            l_out["font"] = {
-                "node_label_size": as_int(font.get("node_label_size"), "layout.font.node_label_size", 14, 60)
-            }
+        if isinstance(font, dict):
+            f_out: Dict[str, Any] = {}
+            if "node_label_size" in font:
+                f_out["node_label_size"] = as_int(font.get("node_label_size"), "layout.font.node_label_size", 14, 60)
+            if "edge_label_size" in font:
+                f_out["edge_label_size"] = as_int(font.get("edge_label_size"), "layout.font.edge_label_size", 14, 60)
+            if f_out:
+                l_out["font"] = f_out
         if "auto_edges" in layout:
             m = as_str(layout.get("auto_edges"), "layout.auto_edges").strip().lower()
             if m not in {"minimal", "off", "none"}:
@@ -441,6 +445,9 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
     if not isinstance(defects, list):
         defects = []
 
+    layout_mode = evaluation.get("layout_mode", {}) if isinstance(evaluation.get("layout_mode", {}), dict) else {}
+    explicit_layout = bool(layout_mode.get("explicit_layout", False))
+
     # AI-mode: apply host AI suggestions (if provided) with strict safety guards.
     if str(evaluation.get("evaluation_source", "")).strip().lower() == "ai":
         thresholds = out.get("evaluation", {}).get("thresholds", {})
@@ -463,7 +470,6 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
             if not action:
                 continue
 
-            # Stop applying after a few steps to avoid runaway inflation.
             if applied >= 6:
                 break
 
@@ -474,12 +480,12 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
                 except Exception:
                     continue
                 if dw:
-                    dw = max(50, min(500, dw))
+                    dw = max(40, min(300, dw))
                     canvas["width_px"] = int(canvas["width_px"]) + dw
                     changed = True
                     applied += 1
                 if dh:
-                    dh = max(50, min(500, dh))
+                    dh = max(40, min(300, dh))
                     canvas["height_px"] = int(canvas["height_px"]) + dh
                     changed = True
                     applied += 1
@@ -495,7 +501,7 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
                     continue
                 if not delta:
                     continue
-                delta = max(2, min(30, delta))
+                delta = max(2, min(20, delta))
                 auto[param] = int(auto.get(param, 0)) + delta
                 changed = True
                 applied += 1
@@ -505,27 +511,28 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
                 param = str(sug.get("parameter", "")).strip()
                 if param not in allowed_fonts:
                     continue
+                if explicit_layout and param == "node_label_size":
+                    # 显式布局模式下避免节点整体膨胀。
+                    continue
                 try:
                     delta = int(sug.get("delta", 0) or 0)
                 except Exception:
                     continue
                 if not delta:
                     continue
-                delta = max(1, min(8, delta))
+                delta = max(1, min(4, delta))
                 layout_font[param] = int(layout_font.get(param, 0) or 0) + delta
                 changed = True
                 applied += 1
                 continue
 
         if changed:
-            # Minimal hard-guards so AI suggestion can't silently break basic readability.
             layout_font["node_label_size"] = max(min_font, int(layout_font.get("node_label_size", min_font) or min_font))
             layout_font["edge_label_size"] = max(
                 min_edge_font, int(layout_font.get("edge_label_size", min_edge_font) or min_edge_font)
             )
             return out
 
-    # Feature-driven fixes: bind to defect dimensions, not just counts.
     dims_p0 = {str(d.get("dimension", "")) for d in defects if isinstance(d, dict) and str(d.get("severity")) == "P0"}
     dims_p1 = {str(d.get("dimension", "")) for d in defects if isinstance(d, dict) and str(d.get("severity")) == "P1"}
     dims_any = {str(d.get("dimension", "")) for d in defects if isinstance(d, dict)}
@@ -534,51 +541,77 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
     if not isinstance(thresholds, dict):
         thresholds = {}
 
-    # 1) Print readability: edge label size should be fixed explicitly (doesn't auto-follow node size).
+    min_font = int(thresholds.get("min_font_px", 18))
+    min_edge_font = int(thresholds.get("min_edge_font_px", min_font))
+    print_scale_check = bool(thresholds.get("print_scale_check", False))
+
+    # Readability repair: prioritize edge labels, avoid inflating node font on explicit layout.
     if "print_readability" in dims_any or "text_readability" in dims_any:
-        scale = float(thresholds.get("print_scale_ratio", 0.5))
-        min_after_scale = int(thresholds.get("print_scale_min_font", 10))
-        suggest = int(math.ceil(min_after_scale / max(1e-9, scale)))
-        layout_font["node_label_size"] = max(int(layout_font.get("node_label_size", suggest)), suggest)
-        layout_font["edge_label_size"] = max(int(layout_font.get("edge_label_size", suggest)), suggest)
+        if print_scale_check:
+            scale = float(thresholds.get("print_scale_ratio", 0.5))
+            min_after_scale = int(thresholds.get("print_scale_min_font", 10))
+            suggest = int(math.ceil(min_after_scale / max(1e-9, scale)))
+        else:
+            suggest = int(thresholds.get("warn_edge_font_px", thresholds.get("warn_font_px", 24)) or 24)
 
-    # 2) Hard layout issues: overflow/overlap/crossings -> add space + spacing.
-    hard = bool({"canvas_overflow", "node_overlap"} & (dims_p0 | dims_p1)) or bool(
-        {"edge_integrity", "edge_crossings"} & (dims_p0 | dims_p1)
-    )
-    if hard or p0 > 0:
-        canvas["width_px"] = int(canvas["width_px"]) + 160
-        canvas["height_px"] = int(canvas["height_px"]) + 160
-        # P0 通常意味着溢出/重叠/字号不达标等硬问题：优先“加空间 + 增加间距”，避免盲目降字号。
-        layout_font["node_label_size"] = max(int(thresholds.get("min_font_px", 18)), int(layout_font["node_label_size"]))
-        auto["node_gap_x"] = int(auto["node_gap_x"]) + 8
-        auto["node_gap_y"] = int(auto["node_gap_y"]) + 8
-        auto["group_gap_y"] = int(auto["group_gap_y"]) + 8
+        cur_edge = int(layout_font.get("edge_label_size", min_edge_font))
+        if cur_edge < suggest:
+            step = 2 if (suggest - cur_edge) > 2 else 1
+            layout_font["edge_label_size"] = cur_edge + step
+
+        # 仅当节点字号本身低于硬下限时修复；不再跟随 edge 一起暴涨。
+        cur_node = int(layout_font.get("node_label_size", min_font))
+        if cur_node < min_font:
+            layout_font["node_label_size"] = min_font
+
+    hard_layout_dims = {"canvas_overflow", "node_overlap", "edge_integrity", "edge_crossings", "edge_node_intersection"}
+    if bool(hard_layout_dims & (dims_p0 | dims_p1)) or p0 > 0:
+        # 显式布局下保守处理，优先微调而不是大幅放大。
+        if explicit_layout:
+            canvas["width_px"] = int(canvas["width_px"]) + 60
+            canvas["height_px"] = int(canvas["height_px"]) + 60
+            auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 4
+        else:
+            canvas["width_px"] = int(canvas["width_px"]) + 140
+            canvas["height_px"] = int(canvas["height_px"]) + 140
+            auto["node_gap_x"] = int(auto.get("node_gap_x", 40)) + 8
+            auto["node_gap_y"] = int(auto.get("node_gap_y", 28)) + 8
+            auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 8
         return out
 
-    # 3) Edge-node intersections / crossings: prefer increasing gaps (avoid only canvas inflation).
-    if ("edge_node_intersection" in dims_any) or ("edge_crossings" in dims_any):
-        auto["node_gap_x"] = int(auto["node_gap_x"]) + 10
-        auto["node_gap_y"] = int(auto["node_gap_y"]) + 10
-        auto["group_gap_y"] = int(auto["group_gap_y"]) + 10
-        auto["group_gap_x"] = int(auto["group_gap_x"]) + 6
-        # Encourage a cleaner vertical narrative (TTB): fewer columns reduces horizontal weaving.
-        if int(auto.get("max_cols", 1)) > 1:
-            auto["max_cols"] = max(1, int(auto["max_cols"]) - 1)
+    if {"edge_label_occlusion", "edge_node_proximity"} & dims_any:
+        auto["node_gap_x"] = int(auto.get("node_gap_x", 40)) + 6
+        auto["node_gap_y"] = int(auto.get("node_gap_y", 28)) + 6
+        auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 6
+        cur_edge = int(layout_font.get("edge_label_size", min_edge_font))
+        layout_font["edge_label_size"] = max(cur_edge, min_edge_font) + 1
         return out
 
-    if p1 > 0:
-        # Avoid "blind inflation" for unrelated P1s: only react when extra vertical room plausibly helps.
-        if {"visual_balance", "overall_aesthetics", "text_overflow", "edge_node_proximity"} & dims_p1:
-            canvas["height_px"] = int(canvas["height_px"]) + 120
-            auto["group_gap_y"] = int(auto["group_gap_y"]) + 10
-            return out
+    if "space_usage" in dims_any:
+        # 对自动布局收紧边距，提升画布利用率。
+        auto["margin_x"] = max(40, int(auto.get("margin_x", 110)) - 10)
+        auto["margin_y"] = max(40, int(auto.get("margin_y", 120)) - 10)
+        if int(out.get("renderer", {}).get("drawio_border_px", 4)) > 0:
+            out["renderer"]["drawio_border_px"] = max(0, int(out["renderer"]["drawio_border_px"]) - 1)
+        return out
 
-    # 轻微恢复字号，让“通过后”的图观感更好
-    current = int(layout_font["node_label_size"])
+    if "title_layout_overlap" in dims_any:
+        out.setdefault("layout", {}).setdefault("title", {})["enabled"] = False
+        return out
+
+    if p1 > 0 and {"visual_balance", "overall_aesthetics", "text_overflow"} & dims_p1:
+        canvas["height_px"] = int(canvas["height_px"]) + 100
+        auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 8
+        return out
+
+    # 轻微恢复字号，让通过后的图观感更好（不强制推高）。
+    current = int(layout_font.get("node_label_size", min_font))
     target = int(out["layout"]["font"].get("node_label_size_target", current))
-    if current < target:
+    if current < target and "text_overflow" not in dims_any and not explicit_layout:
         layout_font["node_label_size"] = current + 1
+
+    layout_font["edge_label_size"] = max(min_edge_font, int(layout_font.get("edge_label_size", min_edge_font)))
+    layout_font["node_label_size"] = max(min_font, int(layout_font.get("node_label_size", min_font)))
     return out
 
 

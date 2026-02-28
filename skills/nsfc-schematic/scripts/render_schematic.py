@@ -9,7 +9,7 @@ from subprocess import CompletedProcess, run
 from typing import Any, Dict, List, Optional, Tuple
 
 from spec_parser import SchematicSpec
-from routing import rect_expand, route_edge_points
+from routing import choose_edge_label_anchor, label_bbox_from_anchor, rect_expand, route_edge_points
 from utils import FontChoice, hex_to_rgb, pick_font, warn, write_text
 
 
@@ -307,6 +307,12 @@ def _shape_colors(kind: str, palette: Dict[str, Any]) -> Tuple[str, str]:
     return selected.get("fill", "#D9E8FF"), selected.get("stroke", "#2F5597")
 
 
+def _semantic_shape_enabled(config: Dict[str, Any]) -> bool:
+    layout_cfg = config.get("layout", {}) if isinstance(config.get("layout", {}), dict) else {}
+    policy = str(layout_cfg.get("shape_policy", "uniform-rounded")).strip().lower()
+    return policy == "semantic"
+
+
 def _svg_marker_def(fill_rgb: Tuple[int, int, int]) -> str:
     fill = f"rgb({fill_rgb[0]},{fill_rgb[1]},{fill_rgb[2]})"
     return (
@@ -465,6 +471,7 @@ def _render_internal_png_svg(
             obs,
             canvas_w=spec.canvas_width,
             canvas_h=spec.canvas_height,
+            edge_kind=e.kind,
         )
 
         stroke_w = 4 if e.style == "thick" else 2
@@ -480,18 +487,37 @@ def _render_internal_png_svg(
             _draw_arrow_head(draw, pts[-2], pts[-1], arrow_color, size=14)
 
         if e.label:
-            lx = (pts[0][0] + pts[-1][0]) // 2
-            ly = (pts[0][1] + pts[-1][1]) // 2 - 8
-            # Provide a small white background for better print readability.
-            bbox = draw.textbbox((lx, ly), e.label, font=edge_font)
-            if bbox is not None:
-                pad = 2
-                draw.rectangle(
-                    [bbox[0] - pad, bbox[1] - pad, bbox[2] + pad, bbox[3] + pad],
-                    fill=bg,
-                    outline=None,
-                )
-            draw.text((lx, ly), e.label, font=edge_font, fill=text_color)
+            label_obstacles = [
+                r for nid, r in node_lookup.items() if nid not in {e.source, e.target}
+            ]
+            label_obstacles.extend(
+                [
+                    (g.x, g.y, g.x + g.w, g.y + int(config.get("layout", {}).get("auto", {}).get("group_header_h", 56)))
+                    for g in spec.groups
+                ]
+            )
+            anchor = choose_edge_label_anchor(
+                pts,
+                text=e.label,
+                font_px=edge_size,
+                obstacles=label_obstacles,
+                canvas_w=spec.canvas_width,
+                canvas_h=spec.canvas_height,
+            )
+            bbox = label_bbox_from_anchor(anchor, e.label, edge_size)
+            pad = 2
+            draw.rectangle(
+                [bbox[0] - pad, bbox[1] - pad, bbox[2] + pad, bbox[3] + pad],
+                fill=bg,
+                outline=None,
+            )
+            text_box = draw.textbbox((0, 0), e.label, font=edge_font)
+            tw = max(0, text_box[2] - text_box[0]) if text_box else 0
+            th = max(0, text_box[3] - text_box[1]) if text_box else 0
+            tx = anchor[0] - tw // 2
+            ty = anchor[1] - th // 2
+            draw.text((tx, ty), e.label, font=edge_font, fill=text_color)
+
 
     # Nodes (draw last to avoid edges covering text)
     for g in spec.groups:
@@ -500,7 +526,7 @@ def _render_internal_png_svg(
             fill = hex_to_rgb(fill_hex)
             stroke = hex_to_rgb(stroke_hex)
             x0, y0, x1, y1 = n.x, n.y, n.x + n.w, n.y + n.h
-            if n.kind == "decision":
+            if _semantic_shape_enabled(config) and n.kind == "decision":
                 cx = (x0 + x1) // 2
                 cy = (y0 + y1) // 2
                 draw.polygon([(cx, y0), (x1, cy), (cx, y1), (x0, cy)], fill=fill, outline=stroke)
@@ -585,6 +611,7 @@ def _render_internal_png_svg(
             obs,
             canvas_w=spec.canvas_width,
             canvas_h=spec.canvas_height,
+            edge_kind=e.kind,
         )
 
         stroke_w = 4 if e.style == "thick" else 2
@@ -595,18 +622,34 @@ def _render_internal_png_svg(
             f'marker-end="url(#arrow)"{dash}/>'
         )
         if e.label:
-            lx = (pts[0][0] + pts[-1][0]) // 2
-            ly = (pts[0][1] + pts[-1][1]) // 2 - 6
+            label_obstacles = [
+                r for nid, r in node_lookup.items() if nid not in {e.source, e.target}
+            ]
+            label_obstacles.extend(
+                [
+                    (g.x, g.y, g.x + g.w, g.y + int(config.get("layout", {}).get("auto", {}).get("group_header_h", 56)))
+                    for g in spec.groups
+                ]
+            )
+            anchor = choose_edge_label_anchor(
+                pts,
+                text=e.label,
+                font_px=edge_size,
+                obstacles=label_obstacles,
+                canvas_w=spec.canvas_width,
+                canvas_h=spec.canvas_height,
+            )
             svg_lines.append(
                 _svg_text_lines(
-                    lx,
-                    ly,
+                    anchor[0],
+                    anchor[1],
                     [e.label],
                     edge_size,
                     f"rgb({text_color[0]},{text_color[1]},{text_color[2]})",
                     anchor="middle",
                 ).rstrip("\n")
             )
+
 
     # Nodes
     for g in spec.groups:
@@ -615,7 +658,7 @@ def _render_internal_png_svg(
             fill = hex_to_rgb(fill_hex)
             stroke = hex_to_rgb(stroke_hex)
             x0, y0, w0, h0 = n.x, n.y, n.w, n.h
-            if n.kind == "decision":
+            if _semantic_shape_enabled(config) and n.kind == "decision":
                 cx = x0 + w0 // 2
                 cy = y0 + h0 // 2
                 pts = f"{cx},{y0} {x0 + w0},{cy} {cx},{y0 + h0} {x0},{cy}"
@@ -662,10 +705,20 @@ def render_artifacts(
     pdf_path = output_dir / artifacts["pdf"]
 
     render_cfg = config["renderer"]
-    border = int(render_cfg.get("drawio_border_px", 20))
+    border_base = int(render_cfg.get("drawio_border_px", 20))
+    border_mode = str(render_cfg.get("drawio_border_mode", "fixed")).strip().lower()
     # Prefer spec canvas as the single source of truth for exported resolution.
     width = int(spec.canvas_width)
     height = int(spec.canvas_height)
+    if border_mode == "adaptive":
+        border = border_base
+        if min(width, height) <= 1600:
+            border = min(border, 2)
+        if getattr(spec, "explicit_layout", False):
+            border = min(border, 2)
+        border = max(0, border)
+    else:
+        border = max(0, border_base)
     bg = hex_to_rgb(render_cfg.get("background", "#FFFFFF"))
 
     drawio_cmd = ensure_drawio_cli(config)

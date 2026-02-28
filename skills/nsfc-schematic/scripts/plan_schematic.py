@@ -317,7 +317,7 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str], template: Option
     planning = config.get("planning", {}) if isinstance(config.get("planning"), dict) else {}
     defaults = planning.get("defaults", {}) if isinstance(planning.get("defaults"), dict) else {}
 
-    title = str(defaults.get("title", "NSFC 原理图（规划草案）"))
+    title = str(defaults.get("title", ""))
     direction = str(defaults.get("direction", config.get("layout", {}).get("direction", "top-to-bottom")))
 
     # Group blueprint: template -> planning.defaults -> built-in I/P/O fallback
@@ -593,6 +593,30 @@ def _build_spec_draft(config: Dict[str, Any], terms: List[str], template: Option
         if src:
             for nid in all_node_ids(output_gid)[1:]:
                 edges.append({"from": src, "to": nid, "style": "solid"})
+
+    checks_cfg = planning.get("checks", {}) if isinstance(planning.get("checks"), dict) else {}
+    edge_label_max_chars = int(checks_cfg.get("edge_label_max_chars", 16) or 16)
+    edge_label_max_count = int(checks_cfg.get("edge_label_max_count", 6) or 6)
+
+    # Keep edge labels concise and sparse by default (better readability in exported diagrams).
+    labeled = 0
+    for e in edges:
+        if not isinstance(e, dict):
+            continue
+        lab = e.get("label")
+        if not isinstance(lab, str):
+            continue
+        txt = lab.strip()
+        if not txt:
+            e.pop("label", None)
+            continue
+        if len(txt) > edge_label_max_chars:
+            txt = txt[: edge_label_max_chars - 1].rstrip() + "…"
+        if labeled >= edge_label_max_count:
+            e.pop("label", None)
+            continue
+        e["label"] = txt
+        labeled += 1
 
     # Template-specific extra edges (weak heuristics; user can edit spec_draft.yaml later).
     if edge_mode in {"feedback"}:

@@ -200,7 +200,7 @@ edges:
 - **节点文案自动扩容**：避免导出后文字溢出或贴边（见 `config.yaml:layout.text_fit`）
 - **元素层级保护**：分组底层、连线中层、节点顶层，降低"线压字"风险
 - **连线标签门禁**：edge label 字号单独配置，并检查缩印 50% 后的等效字号
-- **标题落图**：默认将 `spec.title` 写入图中（可关闭：`config.yaml:layout.title.enabled=false`）
+- **标题策略**：默认不在图内落标题（`layout.title.enabled=false`），建议用外部图注；确需图内标题可显式开启
 
 ## 停止策略
 
@@ -282,9 +282,9 @@ TEX 场景（未提供 `--spec-file` 且启用 AI 模式）：
 
 确保本机安装了中文字体（见 `config.yaml:renderer.fonts.candidates`）。
 
-### Q：如何关闭标题显示？
+### Q：如何开启图内标题显示？
 
-设置 `config.yaml:layout.title.enabled=false`。
+默认已关闭图内标题。若需要图内标题，设置 `config.yaml:layout.title.enabled=true`。
 
 ### Q：中间文件太多，如何清理？
 
@@ -300,9 +300,10 @@ TEX 场景（未提供 `--spec-file` 且启用 AI 模式）：
 
 配置文件位于 `config.yaml`：
 
-- `renderer`：画布尺寸、字体、渲染行为
+- `renderer`：画布尺寸、字体、渲染行为（含 `drawio_border_mode` 自适应边框）
 - `layout`：分组、间距、字号、自动扩容
 - `layout.auto_edges`：未提供显式 `edges` 时的自动连线策略（`minimal|off`）
+- `layout.shape_policy`：形状策略（`uniform-rounded|semantic`，默认统一圆角）
 - `evaluation`：评估阈值、停止策略（含 `evaluation.evaluation_mode`）
 - `output`：输出目录、隐藏模式
 - `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单字段，适合单项目微调）

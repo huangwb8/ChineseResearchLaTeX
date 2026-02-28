@@ -214,7 +214,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v1.0.0 | 📝 日常 | NSFC 研究内容编排写作 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-roadmap](skills/nsfc-roadmap/) | v0.9.1 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
-| [nsfc-schematic](skills/nsfc-schematic/) | v0.9.0 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
+| [nsfc-schematic](skills/nsfc-schematic/) | v0.10.0 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
 | [nsfc-qc](skills/nsfc-qc/) | v1.0.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | ✅ 稳定 |
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v1.0.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | ✅ 稳定 |
 | [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.0 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |
