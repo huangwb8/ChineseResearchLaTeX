@@ -24,6 +24,7 @@
 - **projects/NSFC_{General,Local,Young}/.vscode/settings.json**：LaTeX Workshop 的 `xelatex/bibtex` 调用改为通过项目内 `code/tex-tool.sh` 解析可执行文件路径，降低 VS Code 未继承 PATH（尤其 macOS Finder 启动）导致的“找不到 xelatex/bibtex”概率
 - **AGENTS.md**：Release 发布流程步骤 4/5 合并，改为引用 `scripts/pack_release.py`，消除硬编码描述
 - **AGENTS.md**：Release 发布流程新增步骤 5「发布微信动态」，规范发布后的社区通知格式（100–200 字，含项目名、版本号、更新亮点、Release 地址）
+- **AGENTS.md**：新增「系统 Skill 保护」规则，禁止直接修改系统级 Skill（如 `~/.claude/skills/`、`~/.codex/skills/`），项目个性化需求应在项目目录内实现
 - **nsfc-humanization 0.1.3 → 0.2.0**：补齐列表/图表标题覆盖并提升输出自检能力
   - `skills/nsfc-humanization/SKILL.md`：明确 `itemize/enumerate` 与 `\item` 的结构保护规则；将 `\caption{...}` 纳入可编辑自然语言范围；新增风格自评（最多 1 轮回修）
   - `skills/nsfc-humanization/references/machine-patterns.md`：扩充机器味模式库与对比示例（模板句式堆叠、被动语态滥用、数字罗列无解读、目标/内容混同等）

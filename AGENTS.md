@@ -248,6 +248,12 @@ skill_info:
 - `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致
 - `skills/` 目录内文件有变化时，检查 `README.md` 是否需要同步更新
 
+### 系统 Skill 保护
+
+- **严禁直接修改系统级 Skill 的工作文件/代码**（如 `~/.claude/skills/`、`~/.codex/skills/` 下的文件）
+- 如有项目个性化需求，应在项目目录内添加代码或配置
+- 遵循「项目级覆盖系统级」原则，通过项目内的 `skills/` 目录扩展或覆盖功能
+
 ---
 
 ## LaTeX 技术规范
