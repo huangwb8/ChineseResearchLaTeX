@@ -72,6 +72,7 @@ schematic_output/
     ├── spec_latest.yaml
     ├── config_used_best.yaml
     ├── evaluation_best.json
+    ├── ai/                  # ai_critic 闭环工作区（ACTIVE_RUN / ai_pack / request/response）
     └── runs/
         └── run_YYYYMMDDHHMMSS/
             ├── round_01/
@@ -81,6 +82,10 @@ schematic_output/
 
 每个 `round_*/` 默认会包含：
 - `evaluation.json`：本轮评估结果（含 `score_base/score_penalty/score_total`）
+- `layout_debug.json`：布局诊断（节点/分组几何信息）
+- `edge_debug.json`：连线诊断（edge id、kind、route、waypoints）
+- `measurements.json`：主评估纯度量证据
+- `dimension_measurements.json`：结构/视觉/可读性维度证据
 - `critique_structure.json / critique_visual.json / critique_readability.json`：多维度自检证据（可在 `config.yaml:evaluation.multi_round_self_check` 关闭）
 - `_candidates/`：每轮有限候选对比（数量见 `config.yaml:evaluation.exploration.candidates_per_round`）
 
@@ -171,6 +176,23 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
   --output-dir ./schematic_output
 ```
 
+## Spec v2（兼容旧版）
+
+- `node.id` 可选：未提供时脚本会按 `group + label + index` 生成稳定 id（可复现）。
+- `edges` 支持显式边协议（推荐复杂图使用）：
+
+```yaml
+edges:
+  - id: e_input_core
+    from: input_layer.data_input
+    to: process_layer.core_module
+    kind: main        # main|aux|risk|validate
+    route: orthogonal # orthogonal|straight|auto
+    label: 输入数据
+```
+
+- 渲染优先级：提供 `edges` 时严格按显式边；不提供时回退 `layout.auto_edges`（`minimal|off`）。
+
 ## 出版级图面
 
 本技能针对"缩印后可读性"做了多项优化：
@@ -189,8 +211,9 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 - 最多跑满 `config.yaml:evaluation.max_rounds`（默认 5）
 
 可选：`stop_strategy: ai_critic`
-- 当命中平台期时，会在当前 `round_*/` 自动生成 `ai_critic_request.md` 与 `ai_critic_response.json` 模板
-- 它不会在脚本内调用任何外部模型；用于把“宿主 AI 视觉复核”纳入可追溯闭环
+- 每次运行只推进 1 轮，并在 `.nsfc-schematic/ai/{run}/` 生成 `ai_pack_round_XX/` 与 `ai_critic_request.md`
+- 宿主 AI 按协议写回 `ai_critic_response.yaml`（`spec_only|config_only|both|stop`），再次运行脚本自动续跑
+- `config_local.yaml` 补丁会做白名单校验（安全子集），脚本不在本地调用任何外部模型
 
 ## AI 自主评估模式（离线协议）
 
@@ -279,8 +302,10 @@ TEX 场景（未提供 `--spec-file` 且启用 AI 模式）：
 
 - `renderer`：画布尺寸、字体、渲染行为
 - `layout`：分组、间距、字号、自动扩容
+- `layout.auto_edges`：未提供显式 `edges` 时的自动连线策略（`minimal|off`）
 - `evaluation`：评估阈值、停止策略（含 `evaluation.evaluation_mode`）
 - `output`：输出目录、隐藏模式
+- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单字段，适合单项目微调）
 
 ## 相关技能
 

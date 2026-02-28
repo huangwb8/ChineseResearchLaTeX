@@ -26,6 +26,15 @@ class Defect:
     dimension: str
 
 
+def _resolve_edge_route_mode(edge: Edge, default_mode: str) -> str:
+    route = str(getattr(edge, "route", "auto") or "auto").strip().lower()
+    if route == "straight":
+        return "straight"
+    if route == "orthogonal":
+        return "orthogonal"
+    return default_mode
+
+
 def _visual_score(
     png_path: Optional[Path],
     min_w: int,
@@ -241,8 +250,8 @@ def evaluate_schematic_heuristic(
     nodes = [n for g in spec.groups for n in g.children]
     node_map = {n.id: n for n in nodes}
     routing_raw = str(config.get("renderer", {}).get("internal_routing", "orthogonal"))
-    routing_mode = "straight" if routing_raw == "straight" else "orthogonal"
-    metrics["routing_mode"] = routing_mode
+    routing_mode_default = "straight" if routing_raw == "straight" else "orthogonal"
+    metrics["routing_mode"] = routing_mode_default
 
     evaluation_cfg = config.get("evaluation", {})
     if not isinstance(evaluation_cfg, dict):
@@ -411,6 +420,7 @@ def evaluate_schematic_heuristic(
     edge_segs: List[Tuple[Edge, List[Tuple[Tuple[float, float], Tuple[float, float]]]]] = []
 
     for e in spec.edges:
+        routing_mode = _resolve_edge_route_mode(e, routing_mode_default)
         ns = node_map.get(e.source)
         nt = node_map.get(e.target)
         if not ns or not nt:
@@ -484,7 +494,17 @@ def evaluate_schematic_heuristic(
                     )
                     break
 
-    if routing_mode == "straight" and long_diag_edges > 0:
+    route_modes = {_resolve_edge_route_mode(e, routing_mode_default) for e in spec.edges}
+    all_straight = route_modes == {"straight"}
+    if len(route_modes) > 1:
+        routing_mode_label = "mixed"
+    elif len(route_modes) == 1:
+        routing_mode_label = next(iter(route_modes))
+    else:
+        routing_mode_label = routing_mode_default
+    metrics["routing_mode"] = routing_mode_label
+
+    if all_straight and long_diag_edges > 0:
         defects.append(
             Defect(
                 severity="P1",
@@ -495,7 +515,7 @@ def evaluate_schematic_heuristic(
             )
 
     # 3c) edge-edge crossings (routing-aware for orthogonal mode)
-    if routing_mode == "straight":
+    if all_straight:
         crossings = _edge_cross_count(spec.edges, node_map)
     else:
         # Count crossings per edge-pair (not per segment-pair) to avoid over-penalizing long routed polylines.
@@ -527,7 +547,7 @@ def evaluate_schematic_heuristic(
             Defect(
                 severity=sev,
                 where="global",
-                message=f"连线交叉：{crossings} 处（routing={routing_mode}）",
+                message=f"连线交叉：{crossings} 处（routing={routing_mode_label}）",
                 dimension="edge_crossings",
             )
         )

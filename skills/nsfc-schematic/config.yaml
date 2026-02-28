@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.8.6
+  version: 0.9.0
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -43,6 +43,7 @@ renderer:
 
 layout:
   direction: top-to-bottom
+  auto_edges: minimal   # minimal|off（仅在 spec 未显式提供 edges 时生效）
   # 图类型模板（仅用于“视觉学习/参考图库”；默认不要求选择、不写入 spec 约束）
   # - 为空/省略：纯 AI 规划（推荐；由宿主 AI 自主规划分组与主链结构）
   # - model-xx：仅在用户明确要求“参考某个模板”时才使用（见 references/models/templates.yaml）
@@ -142,7 +143,7 @@ evaluation:
     consecutive_pass: 2
     allow_p1: 1
     score_threshold: 85
-  stop_strategy: plateau  # none|plateau|ai_critic（ai_critic 会生成离线评审请求文件，不在脚本内调用任何外部模型/联网）
+  stop_strategy: plateau  # none|plateau|ai_critic（ai_critic 为“宿主 AI 响应驱动”的离线闭环）
   plateau:
     min_explore_rounds: 4
     same_image_rounds: 2

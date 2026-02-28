@@ -54,6 +54,11 @@
   - 新增轻量测试闭环：`skills/nsfc-roadmap/tests/实例辅助优化-v202602281042/`（PLAN/REPORT + spec v2 fixture）
 - **nsfc-roadmap 0.10.0 → 0.10.1**：修复 draw.io 导出 PDF 可能被切成多页/拼页（单页输出更稳定）
   - `.drawio` 写入的 `pageWidth/pageHeight` 与 `renderer.canvas` 一致；PDF 导出强制 `--crop`
+- **nsfc-schematic 0.8.6 → 0.9.0**：对齐 roadmap 核心协议（spec v2 + 调试产物 + ai_critic 闭环 + 实例级配置）
+  - `skills/nsfc-schematic/scripts/spec_parser.py`：支持 `node.id` 可选稳定化与显式 `edges.id/kind/route`（含 `group.node` 路径引用）
+  - `skills/nsfc-schematic/scripts/schematic_writer.py`：每轮输出 `layout_debug.json` / `edge_debug.json`
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：新增 `.nsfc-schematic/ai/` 离线闭环（`ai_pack_round_XX`、`ai_critic_request.md`、`ai_critic_response.yaml`）与 `config_local.yaml` 白名单覆盖
+  - 文档同步：`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/CHANGELOG.md`
 
 ---
 

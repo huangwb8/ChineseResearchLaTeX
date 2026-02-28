@@ -21,6 +21,7 @@ from evaluate_dimension import (
 )
 from evaluate_schematic import evaluate_schematic
 from extract_from_tex import apply_tex_hints, extract_research_terms, find_candidate_tex
+from measure_schematic import measure_schematic
 from render_schematic import drawio_install_hints, ensure_drawio_cli, render_artifacts
 from schematic_writer import write_schematic_drawio
 from spec_parser import default_schematic_spec, load_schematic_spec
@@ -103,6 +104,178 @@ def _spec_latest_filename(config: Dict[str, Any]) -> str:
     output_cfg = config.get("output", {}) if isinstance(config.get("output", {}), dict) else {}
     artifacts = output_cfg.get("artifacts", {}) if isinstance(output_cfg.get("artifacts", {}), dict) else {}
     return str(artifacts.get("spec_latest") or "spec_latest.yaml")
+
+
+def _deep_merge_dict(base: Dict[str, Any], patch: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, Any] = deepcopy(base)
+    for k, v in (patch or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _deep_merge_dict(out[k], v)  # type: ignore[arg-type]
+        else:
+            out[k] = deepcopy(v)
+    return out
+
+
+def _load_config_local(config_local_path: Path) -> Optional[Dict[str, Any]]:
+    if not config_local_path.exists():
+        return None
+    if not config_local_path.is_file():
+        fatal(f"config_local 不是文件：{config_local_path}")
+    return load_yaml(config_local_path)
+
+
+def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    仅允许实例级白名单覆盖，避免污染全局配置或引入不安全字段。
+    """
+    if not isinstance(local_cfg, dict):
+        fatal("config_local.yaml 根必须是 mapping")
+
+    def as_int(v: Any, where: str, low: int, high: int) -> int:
+        try:
+            n = int(v)
+        except Exception:
+            fatal(f"config_local.{where} 必须是整数")
+        if n < low or n > high:
+            fatal(f"config_local.{where} 超出范围：{n}（允许 {low}..{high}）")
+        return n
+
+    def as_str(v: Any, where: str) -> str:
+        if not isinstance(v, str) or not v.strip():
+            fatal(f"config_local.{where} 必须是非空字符串")
+        return v.strip()
+
+    allowed_tops = {"renderer", "layout", "color_scheme", "evaluation"}
+    bad = [k for k in local_cfg.keys() if k not in allowed_tops]
+    if bad:
+        fatal(
+            "config_local.yaml 包含未允许的顶层字段（为安全起见已拒绝）："
+            + ", ".join(bad[:20])
+            + (" ..." if len(bad) > 20 else "")
+        )
+
+    out: Dict[str, Any] = {}
+
+    renderer = local_cfg.get("renderer")
+    if isinstance(renderer, dict):
+        r_out: Dict[str, Any] = {}
+        canvas = renderer.get("canvas")
+        if isinstance(canvas, dict):
+            c_out: Dict[str, Any] = {}
+            if "width_px" in canvas:
+                c_out["width_px"] = as_int(canvas.get("width_px"), "renderer.canvas.width_px", 1200, 12000)
+            if "height_px" in canvas:
+                c_out["height_px"] = as_int(canvas.get("height_px"), "renderer.canvas.height_px", 900, 12000)
+            if c_out:
+                r_out["canvas"] = c_out
+        stroke = renderer.get("stroke")
+        if isinstance(stroke, dict):
+            s_out: Dict[str, Any] = {}
+            if "width_px" in stroke:
+                s_out["width_px"] = as_int(stroke.get("width_px"), "renderer.stroke.width_px", 1, 20)
+            if s_out:
+                r_out["stroke"] = s_out
+        if r_out:
+            out["renderer"] = r_out
+
+    layout = local_cfg.get("layout")
+    if isinstance(layout, dict):
+        l_out: Dict[str, Any] = {}
+        if "direction" in layout:
+            d = as_str(layout.get("direction"), "layout.direction")
+            if d not in {"top-to-bottom", "left-to-right", "bottom-to-top"}:
+                fatal("config_local.layout.direction 不合法（允许 top-to-bottom|left-to-right|bottom-to-top）")
+            l_out["direction"] = d
+        font = layout.get("font")
+        if isinstance(font, dict) and "node_label_size" in font:
+            l_out["font"] = {
+                "node_label_size": as_int(font.get("node_label_size"), "layout.font.node_label_size", 14, 60)
+            }
+        if "auto_edges" in layout:
+            m = as_str(layout.get("auto_edges"), "layout.auto_edges").strip().lower()
+            if m not in {"minimal", "off", "none"}:
+                fatal("config_local.layout.auto_edges 不合法（允许 minimal|off）")
+            l_out["auto_edges"] = "off" if m in {"off", "none"} else "minimal"
+        if l_out:
+            out["layout"] = l_out
+
+    cs = local_cfg.get("color_scheme")
+    if isinstance(cs, dict) and "name" in cs:
+        name = as_str(cs.get("name"), "color_scheme.name")
+        if name not in {"academic-blue", "tint-layered"}:
+            fatal("config_local.color_scheme.name 仅允许 {academic-blue, tint-layered}。")
+        out["color_scheme"] = {"name": name}
+
+    ev = local_cfg.get("evaluation")
+    if isinstance(ev, dict):
+        e_out: Dict[str, Any] = {}
+        if "stop_strategy" in ev:
+            s = as_str(ev.get("stop_strategy"), "evaluation.stop_strategy")
+            if s not in {"none", "plateau", "ai_critic"}:
+                fatal("config_local.evaluation.stop_strategy 不合法（允许 none|plateau|ai_critic）")
+            e_out["stop_strategy"] = s
+        if "max_rounds" in ev:
+            e_out["max_rounds"] = as_int(ev.get("max_rounds"), "evaluation.max_rounds", 1, 20)
+        if e_out:
+            out["evaluation"] = e_out
+
+    return out
+
+
+def _apply_config_local(base_cfg: Dict[str, Any], local_cfg: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not local_cfg:
+        return deepcopy(base_cfg)
+    sanitized = _sanitize_config_local(local_cfg)
+    return _deep_merge_dict(base_cfg, sanitized)
+
+
+def _ai_root(intermediate_dir: Path) -> Path:
+    p = intermediate_dir / "ai"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def _ai_active_run_file(ai_root: Path) -> Path:
+    return ai_root / "ACTIVE_RUN.txt"
+
+
+def _read_active_run(ai_root: Path) -> Optional[str]:
+    p = _ai_active_run_file(ai_root)
+    if not p.exists() or not p.is_file():
+        return None
+    s = p.read_text(encoding="utf-8").strip()
+    return s or None
+
+
+def _set_active_run(ai_root: Path, run_dir: Path) -> None:
+    _ai_active_run_file(ai_root).write_text(run_dir.name + "\n", encoding="utf-8")
+
+
+def _clear_active_run(ai_root: Path) -> None:
+    p = _ai_active_run_file(ai_root)
+    if p.exists():
+        try:
+            p.unlink()
+        except Exception:
+            pass
+
+
+def _ai_run_root(ai_root: Path, run_dir: Path) -> Path:
+    p = ai_root / run_dir.name
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def _ai_response_path(ai_run_root: Path) -> Path:
+    return ai_run_root / "ai_critic_response.yaml"
+
+
+def _ai_request_path(ai_run_root: Path) -> Path:
+    return ai_run_root / "ai_critic_request.md"
+
+
+def _ai_pack_dir(ai_run_root: Path, round_idx: int) -> Path:
+    return ai_run_root / f"ai_pack_round_{round_idx:02d}"
 
 
 def _safe_move_to_dir(src: Path, dst_dir: Path) -> Optional[Path]:
@@ -465,129 +638,145 @@ def _top_defects(defects: Any, *, limit: int = 6) -> List[Dict[str, str]]:
     return items[: max(0, int(limit))]
 
 
-def _write_ai_critic_request(
-    round_dir: Path,
+def _write_ai_pack(
+    ai_run_root: Path,
     *,
+    round_idx: int,
+    round_dir: Path,
     spec_dict: Dict[str, Any],
     cfg_used: Dict[str, Any],
     evaluation: Dict[str, Any],
     png_path: Optional[Path],
-) -> Tuple[Path, Path]:
-    """
-    Generate an offline "AI critic" request for the host AI (Codex/Claude) to review the PNG.
-    This file is evidence for stop_strategy=ai_critic and does NOT call any external model.
-    """
-    req = round_dir / "ai_critic_request.md"
-    resp = round_dir / "ai_critic_response.json"
+) -> Path:
+    pack = _ai_pack_dir(ai_run_root, round_idx)
+    pack.mkdir(parents=True, exist_ok=True)
 
-    top = _top_defects(evaluation.get("defects", []), limit=10)
-    score_base = int(evaluation.get("score_base", evaluation.get("score", 0)) or 0)
-    score_penalty = int(evaluation.get("score_penalty", 0) or 0)
-    score_total = int(evaluation.get("score_total", evaluation.get("score", 0)) or 0)
+    write_text(pack / "spec.yaml", dump_yaml(spec_dict))
+    write_text(pack / "config_used.yaml", dump_yaml(cfg_used))
+    (pack / "evaluation.json").write_text(json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    spec_root = spec_dict.get("schematic", spec_dict) if isinstance(spec_dict, dict) else {}
-    spec_title = str(spec_root.get("title", "")).strip()
-    group_n = len(spec_root.get("groups", [])) if isinstance(spec_root.get("groups"), list) else "N/A"
-    edge_n = len(spec_root.get("edges", [])) if isinstance(spec_root.get("edges"), list) else "N/A"
+    for name in ["layout_debug.json", "edge_debug.json", "measurements.json", "dimension_measurements.json"]:
+        _copy_if_exists(round_dir / name, pack / name)
+    if png_path is not None:
+        _copy_if_exists(png_path, pack / "schematic.png")
+    return pack
 
-    cfg_font = (cfg_used.get("layout", {}) or {}).get("font", {}) if isinstance(cfg_used.get("layout", {}), dict) else {}
-    node_font = cfg_font.get("node_label_size")
-    edge_font = cfg_font.get("edge_label_size")
 
-    req_lines: List[str] = [
-        "# AI Critic Request (nsfc-schematic)",
-        "",
-        "你是一个严格的“审稿人视角”图稿评审员。请基于 PNG 进行视觉复核，并输出结构化 JSON 建议。",
-        "",
-        "## 产物路径",
-        "",
-        f"- round_dir: {round_dir}",
-        f"- png: {png_path if png_path else 'N/A'}",
-        "",
-        "## 图规格摘要（spec）",
-        "",
-        f"- title: {spec_title or 'N/A'}",
-        f"- groups: {group_n}",
-        f"- edges: {edge_n}",
-        "",
-        "## 关键配置摘要（config_used）",
-        "",
-        f"- node_label_size: {node_font}",
-        f"- edge_label_size: {edge_font}",
-        "",
-        "## 当前自动评估摘要",
-        "",
-        f"- score_base: {score_base}",
-        f"- score_penalty: {score_penalty}",
-        f"- score_total: {score_total}",
-        "",
-        "Top defects（来自 evaluate_schematic）：",
-        "",
-    ]
-    if top:
-        for d in top:
-            req_lines.append(f"- [{d['severity']}] [{d['dimension']}] {d['message']} ({d['where']})")
-    else:
-        req_lines.append("- N/A")
+def _write_ai_critic_request(
+    ai_run_root: Path,
+    *,
+    round_idx: int,
+    pack_dir: Path,
+    response_path: Path,
+) -> None:
+    lines: List[str] = []
+    lines.append("# nsfc-schematic ai_critic request")
+    lines.append("")
+    lines.append(f"- based_on_round: {round_idx}")
+    lines.append(f"- evidence_pack: `{pack_dir.as_posix()}`")
+    lines.append(f"- write_response_to: `{response_path.as_posix()}`")
+    lines.append("")
+    lines.append("## 任务")
+    lines.append("")
+    lines.append("请基于 `schematic.png` 的读图批判，以及 `evaluation.json / layout_debug.json / edge_debug.json` 输出下一步行动。")
+    lines.append("支持 spec 重写、config_local patch，或明确 stop。")
+    lines.append("")
+    lines.append("## 输出约束（必须满足）")
+    lines.append("")
+    lines.append("请写入 YAML 到 `ai_critic_response.yaml`，结构如下：")
+    lines.append("")
+    lines.append("```yaml")
+    lines.append("version: 1")
+    lines.append("based_on_round: 1")
+    lines.append("action: both  # spec_only|config_only|both|stop")
+    lines.append("reason: \"一句话说明本轮行动与停止/继续依据\"")
+    lines.append("# 可选：完整 spec（建议给全量）")
+    lines.append("# spec:")
+    lines.append("#   schematic:")
+    lines.append("#     title: ...")
+    lines.append("#     groups: ...")
+    lines.append("# 可选：config_local patch（仅白名单字段）")
+    lines.append("# config_local:")
+    lines.append("#   layout:")
+    lines.append("#     direction: top-to-bottom")
+    lines.append("#     font:")
+    lines.append("#       node_label_size: 28")
+    lines.append("#   color_scheme:")
+    lines.append("#     name: tint-layered")
+    lines.append("```")
+    lines.append("")
+    lines.append("### 纠偏原则（必须遵守）")
+    lines.append("")
+    lines.append("- density 拥挤优先改 spec（缩短文案/合并节点），不要靠缩字号硬过阈值。")
+    lines.append("- 只有 overflow 风险时才减字号；若字号偏小且无 overflow，应增字号。")
+    lines.append("- 配色干扰优先改 kind 分配；不要靠黑白方案掩盖结构问题。")
+    lines.append("- config_local.color_scheme.name 仅允许 {academic-blue, tint-layered}。")
+    lines.append("")
+    write_text(_ai_request_path(ai_run_root), "\n".join(lines) + "\n")
 
-    req_lines.extend(
-        [
-            "",
-            "## 期望输出（写入 ai_critic_response.json）",
-            "",
-            "请按以下 schema 输出（字段可增补，但不要删字段；数值 delta 为整数 px）：",
-            "",
-            "```json",
-            "{",
-            "  \"overall_score\": 0,",
-            "  \"analysis\": \"\",",
-            "  \"issues\": [",
-            "    {\"severity\": \"P1\", \"where\": \"global\", \"message\": \"\", \"suggestion\": \"\"}",
-            "  ],",
-            "  \"parameter_deltas\": {",
-            "    \"canvas_width_delta\": 0,",
-            "    \"canvas_height_delta\": 0,",
-            "    \"node_gap_x_delta\": 0,",
-            "    \"node_gap_y_delta\": 0,",
-            "    \"group_gap_y_delta\": 0,",
-            "    \"node_label_size_delta\": 0,",
-            "    \"edge_label_size_delta\": 0",
-            "  },",
-            "  \"confidence\": 0.0",
-            "}",
-            "```",
-            "",
-        ]
-    )
-
-    req.write_text("\n".join(req_lines) + "\n", encoding="utf-8")
-
-    if not resp.exists():
-        resp.write_text(
-            json.dumps(
+    if not response_path.exists():
+        write_text(
+            response_path,
+            dump_yaml(
                 {
-                    "overall_score": 0,
-                    "analysis": "",
-                    "issues": [],
-                    "parameter_deltas": {
-                        "canvas_width_delta": 0,
-                        "canvas_height_delta": 0,
-                        "node_gap_x_delta": 0,
-                        "node_gap_y_delta": 0,
-                        "group_gap_y_delta": 0,
-                        "node_label_size_delta": 0,
-                        "edge_label_size_delta": 0,
-                    },
-                    "confidence": 0.0,
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-            + "\n",
-            encoding="utf-8",
+                    "version": 1,
+                    "based_on_round": int(round_idx),
+                    "action": "stop",
+                    "reason": "",
+                }
+            ),
         )
 
-    return req, resp
+
+def _maybe_apply_ai_response(
+    ai_run_root: Path,
+    spec_data: Dict[str, Any],
+    spec_latest_path: Path,
+    base_config: Dict[str, Any],
+) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Returns: (updated_spec_data, config_local_patch, action)
+    """
+    resp_path = _ai_response_path(ai_run_root)
+    if not resp_path.exists():
+        return spec_data, None, None
+
+    resp = load_yaml(resp_path)
+    if int(resp.get("version", 1) or 1) != 1:
+        fatal(f"ai_critic_response.version 不支持：{resp.get(version)}")
+
+    action = str(resp.get("action", "") or "").strip()
+    if action not in {"spec_only", "config_only", "both", "stop"}:
+        fatal("ai_critic_response.action 必须是 spec_only|config_only|both|stop")
+
+    based = resp.get("based_on_round")
+    try:
+        based_i = int(based) if based is not None else 0
+    except Exception:
+        based_i = 0
+    archive = ai_run_root / f"ai_critic_response_applied_round_{based_i:02d}.yaml"
+    if not archive.exists():
+        _copy_if_exists(resp_path, archive)
+    try:
+        resp_path.unlink()
+    except Exception:
+        pass
+
+    new_spec = resp.get("spec")
+    if action in {"spec_only", "both", "stop"} and new_spec is not None:
+        if not isinstance(new_spec, dict):
+            fatal("ai_critic_response.spec 必须是 mapping（完整 spec）")
+        load_schematic_spec(new_spec, base_config)
+        spec_data = new_spec
+        write_text(spec_latest_path, dump_yaml(spec_data))
+
+    config_local_patch = resp.get("config_local")
+    if action in {"config_only", "both"} and config_local_patch is not None:
+        if not isinstance(config_local_patch, dict):
+            fatal("ai_critic_response.config_local 必须是 mapping")
+        return spec_data, config_local_patch, action
+
+    return spec_data, None, action
 
 
 def _apply_exploration(
@@ -661,21 +850,16 @@ def main() -> None:
     config_path = args.config if args.config is not None else (root / "config.yaml")
     if not config_path.exists() or not config_path.is_file():
         fatal(f"config 不存在或不是文件：{config_path}")
-    config = load_yaml(config_path)
-    cfg_round_base = deepcopy(config)
+    base_config = load_yaml(config_path)
 
-    max_rounds = int(config["evaluation"]["max_rounds"])
-    rounds = int(args.rounds) if args.rounds is not None else max_rounds
-    rounds = max(1, min(20, rounds))
-
-    out_dir = args.output_dir if args.output_dir is not None else Path(config["output"]["dirname"])
+    out_dir = args.output_dir if args.output_dir is not None else Path(base_config["output"]["dirname"])
     if args.output_dir is None:
         info(f"未指定 output_dir，使用默认输出目录：{out_dir}")
     if out_dir.exists() and not out_dir.is_dir():
         fatal(f"output_dir 不是目录：{out_dir}")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    artifacts = config.get("output", {}).get("artifacts", {})
+    artifacts = base_config.get("output", {}).get("artifacts", {})
     if not isinstance(artifacts, dict):
         fatal("config.yaml:output.artifacts 必须是 dict")
     for k in ("drawio", "svg", "png", "pdf", "spec", "spec_latest", "report", "config_best", "evaluation_best"):
@@ -687,18 +871,65 @@ def main() -> None:
         if not is_safe_relative_path(v):
             fatal(f"config.yaml:output.artifacts.{k} 必须是安全的相对路径（不得包含 `..` 或绝对/盘符路径）：{v!r}")
 
-    work_dir, intermediate_dir, hide_intermediate = _resolve_output_dirs(out_dir, config)
+    work_dir, intermediate_dir, hide_intermediate = _resolve_output_dirs(out_dir, base_config)
+
+    # Instance-local overrides (safe whitelist).
+    config_local_path = intermediate_dir / "config_local.yaml"
+    local_cfg = _load_config_local(config_local_path)
+    config = _apply_config_local(base_config, local_cfg)
+    cfg_round_base = deepcopy(config)
+
+    max_rounds = int(config["evaluation"]["max_rounds"])
+    rounds = int(args.rounds) if args.rounds is not None else max_rounds
+    rounds = max(1, min(20, rounds))
+
     _cleanup_work_dir(work_dir, intermediate_dir, artifacts, hide_intermediate)
+
+    stop_strategy_effective = str(config.get("evaluation", {}).get("stop_strategy", "none") or "none")
+    ai_mode = stop_strategy_effective == "ai_critic"
 
     # Keep per-run rounds isolated to avoid mixing historical round_* residues.
     run_base = (intermediate_dir / "runs") if hide_intermediate else intermediate_dir
-    run_dir = _make_run_dir(run_base)
-
-    input_spec_data = _load_input_spec(args, config=config, request_dir=run_dir)
+    ai_run_root: Optional[Path] = None
+    if ai_mode:
+        ai_root = _ai_root(intermediate_dir)
+        active = _read_active_run(ai_root)
+        run_dir = (run_base / active) if active else _make_run_dir(run_base)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        _set_active_run(ai_root, run_dir)
+        ai_run_root = _ai_run_root(ai_root, run_dir)
+        # ai_critic 闭环：每次运行只渲染一轮，等待宿主 AI 响应后继续。
+        rounds = 1
+    else:
+        run_dir = _make_run_dir(run_base)
 
     spec_latest = intermediate_dir / _spec_latest_filename(config)
+    input_spec_data = _load_input_spec(args, config=config, request_dir=run_dir)
+    if ai_mode and spec_latest.exists():
+        try:
+            input_spec_data = load_yaml(spec_latest)
+            info("ai_critic 模式：检测到 spec_latest.yaml，继续沿用上一轮最新 spec。")
+        except Exception as exc:
+            warn(f"spec_latest 读取失败，改用输入 spec：{exc}")
+
     write_text(spec_latest, dump_yaml(input_spec_data))
     write_text(run_dir / str(artifacts.get("spec", "spec.yaml")), dump_yaml(input_spec_data))
+
+    ai_action: Optional[str] = None
+    if ai_mode and ai_run_root is not None:
+        input_spec_data, config_local_patch, ai_action = _maybe_apply_ai_response(
+            ai_run_root,
+            input_spec_data,
+            spec_latest,
+            base_config=config,
+        )
+        if config_local_patch is not None:
+            base_local = local_cfg if isinstance(local_cfg, dict) else {}
+            merged_local = _deep_merge_dict(base_local, config_local_patch)
+            write_text(config_local_path, dump_yaml(merged_local))
+            local_cfg = _load_config_local(config_local_path)
+            config = _apply_config_local(base_config, local_cfg)
+            cfg_round_base = deepcopy(config)
 
     report_path = run_dir / _report_filename(config)
     drawio_cmd = ensure_drawio_cli(config)
@@ -730,9 +961,40 @@ def main() -> None:
         report_lines.extend([f"- {line}" for line in drawio_install_hints()])
         report_lines.append("")
 
+    if ai_mode and ai_action == "stop":
+        report_lines.extend(
+            [
+                "## AI Critic",
+                "",
+                "- action: stop（已收到宿主 AI 停止指令，本次仅导出历史最佳轮次）",
+                "",
+            ]
+        )
+
     best_round = 0
     best_score = -1
     best_round_dir: Optional[Path] = None
+    existing_round_dirs: List[Path] = []
+
+    if ai_mode:
+        existing_round_dirs = sorted(
+            [p for p in run_dir.iterdir() if p.is_dir() and p.name.startswith("round_")],
+            key=lambda p: p.name,
+        )
+        for rd in existing_round_dirs:
+            ev = _load_json_if_exists(rd / "evaluation.json")
+            if not isinstance(ev, dict):
+                continue
+            score = int(ev.get("score", 0) or 0)
+            if score > best_score:
+                best_score = score
+                try:
+                    best_round = int(rd.name.split("_")[-1])
+                except Exception:
+                    best_round = 0
+                best_round_dir = rd
+
+    start_round_idx = (len(existing_round_dirs) + 1) if ai_mode else 1
 
     early = config["evaluation"].get("early_stop", {})
     early_enabled = bool(early.get("enabled", False))
@@ -776,7 +1038,10 @@ def main() -> None:
             warn(f"配色方案加载失败，已禁用 visual critique（{exc}）")
             palette = None
 
-    for r in range(1, rounds + 1):
+    if ai_action == "stop":
+        rounds = 0
+
+    for r in range(start_round_idx, start_round_idx + rounds):
         round_dir = run_dir / f"round_{r:02d}"
         round_dir.mkdir(parents=True, exist_ok=True)
 
@@ -844,6 +1109,15 @@ def main() -> None:
                 protocol_dir=protocol_dir,
             )
 
+            try:
+                measurements = measure_schematic(spec, cfg_used, png_path=png_path if isinstance(png_path, Path) else None)
+                (cand_dir / "measurements.json").write_text(
+                    json.dumps(measurements, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+            except Exception as exc:
+                warn(f"Round {r} cand {ci + 1} measurements 生成失败（已忽略）：{exc}")
+
             # Multi-dimensional critiques (optional) -> penalty -> score_total.
             critiques: Dict[str, Dict[str, Any]] = {}
             critique_files: Dict[str, str] = {}
@@ -879,6 +1153,15 @@ def main() -> None:
                         )
                 except Exception as exc:
                     warn(f"Round {r} cand {ci + 1} critique 失败（已忽略）：{exc}")
+
+            if critiques:
+                try:
+                    (cand_dir / "dimension_measurements.json").write_text(
+                        json.dumps({"dimensions": critiques}, ensure_ascii=False, indent=2) + "\n",
+                        encoding="utf-8",
+                    )
+                except Exception:
+                    pass
 
             base_score = int(evaluation.get("score", 0))
             penalty, penalty_summary = (0, {})
@@ -932,6 +1215,10 @@ def main() -> None:
             str(artifacts.get("svg", "schematic.svg")),
             str(artifacts.get("png", "schematic.png")),
             str(artifacts.get("pdf", "schematic.pdf")),
+            "layout_debug.json",
+            "edge_debug.json",
+            "measurements.json",
+            "dimension_measurements.json",
             "critique_structure.json",
             "critique_visual.json",
             "critique_readability.json",
@@ -983,6 +1270,33 @@ def main() -> None:
                 report_lines.append(f"- [{d['severity']}] [{d['dimension']}] {d['message']} ({d['where']})")
             report_lines.append("")
 
+        if ai_mode and ai_run_root is not None:
+            pack = _write_ai_pack(
+                ai_run_root,
+                round_idx=r,
+                round_dir=round_dir,
+                spec_dict=spec.to_dict(),
+                cfg_used=cfg_used,
+                evaluation=evaluation,
+                png_path=png_path if isinstance(png_path, Path) else None,
+            )
+            _write_ai_critic_request(
+                ai_run_root,
+                round_idx=r,
+                pack_dir=pack,
+                response_path=_ai_response_path(ai_run_root),
+            )
+            report_lines.extend(
+                [
+                    "## Stop (ai_critic)",
+                    "",
+                    f"- reason: waiting for `{_ai_response_path(ai_run_root).as_posix()}`",
+                    f"- request: `{_ai_request_path(ai_run_root).as_posix()}`",
+                    "",
+                ]
+            )
+            break
+
         cfg_round_base = _apply_auto_fixes(cfg_round_base, evaluation)
 
         if early_enabled and r >= min_rounds and pass_streak >= pass_streak_need:
@@ -1006,7 +1320,7 @@ def main() -> None:
         if stop_strategy == "none":
             continue
 
-        if stop_strategy not in ("plateau", "ai_critic"):
+        if stop_strategy != "plateau":
             # Unknown value: behave like "none" to avoid surprise.
             continue
 
@@ -1033,34 +1347,15 @@ def main() -> None:
                 parts.append(f"连续 {no_improve_rounds} 轮分数提升 < {min_delta}")
             stop_reason = "；".join(parts) if parts else "plateau"
 
-            if stop_strategy == "ai_critic":
-                req, resp = _write_ai_critic_request(
-                    round_dir,
-                    spec_dict=spec.to_dict(),
-                    cfg_used=cfg_used,
-                    evaluation=evaluation,
-                    png_path=png_path if isinstance(png_path, Path) else None,
-                )
-                report_lines.extend(
-                    [
-                        "## Stop (ai_critic)",
-                        "",
-                        f"- reason: {stop_reason}",
-                        f"- ai_critic_request: `{req.name}`",
-                        f"- ai_critic_response_template: `{resp.name}`",
-                        "",
-                    ]
-                )
-            else:
-                report_lines.extend(
-                    [
-                        "## Stop (plateau)",
-                        "",
-                        f"- strategy: {stop_strategy}",
-                        f"- reason: {stop_reason}",
-                        "",
-                    ]
-                )
+            report_lines.extend(
+                [
+                    "## Stop (plateau)",
+                    "",
+                    f"- strategy: {stop_strategy}",
+                    f"- reason: {stop_reason}",
+                    "",
+                ]
+            )
             break
 
     write_text(report_path, "\n".join(report_lines) + "\n")
@@ -1069,6 +1364,8 @@ def main() -> None:
         warn("没有可导出的 best round")
         # Still surface the latest report/meta for debugging.
         _copy_if_exists(report_path, intermediate_dir / _report_filename(config))
+        if ai_mode and ai_action == "stop":
+            _clear_active_run(_ai_root(intermediate_dir))
         info(f"完成（无导出）：{run_dir}")
         return
 
@@ -1104,6 +1401,9 @@ def main() -> None:
 
     # Convenience: keep the latest report at intermediate_dir root.
     _copy_if_exists(report_path, intermediate_dir / _report_filename(config))
+
+    if ai_mode and ai_action == "stop":
+        _clear_active_run(_ai_root(intermediate_dir))
 
     if hide_intermediate:
         max_runs = int(config.get("output", {}).get("max_history_runs", 10) or 0)

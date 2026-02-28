@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from math import ceil
 from pathlib import Path
 import re
@@ -11,6 +12,8 @@ Direction = Literal["top-to-bottom", "left-to-right", "bottom-to-top"]
 NodeKind = Literal["primary", "secondary", "decision", "critical", "risk", "auxiliary"]
 GroupStyle = Literal["dashed-border", "solid-border", "background-fill"]
 EdgeStyle = Literal["solid", "dashed", "thick"]
+EdgeKind = Literal["main", "aux", "risk", "validate"]
+EdgeRoute = Literal["orthogonal", "straight", "auto"]
 
 _CJK_RANGES: tuple[tuple[int, int], ...] = (
     (0x4E00, 0x9FFF),  # CJK Unified Ideographs
@@ -45,8 +48,11 @@ class Group:
 
 @dataclass
 class Edge:
+    id: str
     source: str
     target: str
+    kind: EdgeKind
+    route: EdgeRoute
     style: EdgeStyle
     label: str
 
@@ -87,7 +93,15 @@ class SchematicSpec:
                     for g in self.groups
                 ],
                 "edges": [
-                    {"from": e.source, "to": e.target, "style": e.style, "label": e.label}
+                    {
+                        "id": e.id,
+                        "from": e.source,
+                        "to": e.target,
+                        "kind": e.kind,
+                        "route": e.route,
+                        "style": e.style,
+                        "label": e.label,
+                    }
                     for e in self.edges
                 ],
             }
@@ -175,6 +189,33 @@ def _require_id(v: Any, path: str) -> str:
     return s
 
 
+def _optional_id(v: Any, path: str) -> Optional[str]:
+    if v is None:
+        return None
+    return _require_id(v, path)
+
+
+def _stable_hash_id(prefix: str, raw: str) -> str:
+    h = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:10]
+    return f"{prefix}_{h}"
+
+
+def _make_stable_node_id(
+    group_id: str,
+    label: str,
+    *,
+    index: int,
+    used_ids: set[str],
+) -> str:
+    base = _stable_hash_id("n", f"{group_id}|{index}|{label.strip()}")
+    cand = base
+    i = 1
+    while cand in used_ids:
+        cand = f"{base}_{i}"
+        i += 1
+    return cand
+
+
 def _require_list(v: Any, path: str) -> List[Any]:
     if not isinstance(v, list) or not v:
         raise ValueError(f"{path} 必须是非空列表")
@@ -221,7 +262,31 @@ def _edge_style(v: Any, path: str) -> EdgeStyle:
     style = v if isinstance(v, str) else "solid"
     if style not in ("solid", "dashed", "thick"):
         raise ValueError(f"{path}.style 不合法：{style}")
-    return style
+    return style  # type: ignore[return-value]
+
+
+def _edge_kind(v: Any, path: str) -> EdgeKind:
+    kind = v if isinstance(v, str) else "main"
+    if kind not in ("main", "aux", "risk", "validate"):
+        raise ValueError(f"{path}.kind 不合法：{kind}")
+    return kind  # type: ignore[return-value]
+
+
+def _edge_route(v: Any, path: str) -> EdgeRoute:
+    route = v if isinstance(v, str) else "auto"
+    if route not in ("orthogonal", "straight", "auto"):
+        raise ValueError(f"{path}.route 不合法：{route}")
+    return route  # type: ignore[return-value]
+
+
+def _edge_style_from_kind(kind: EdgeKind) -> EdgeStyle:
+    if kind == "aux":
+        return "dashed"
+    if kind == "risk":
+        return "thick"
+    if kind == "validate":
+        return "solid"
+    return "solid"
 
 
 def _group_style(v: Any, path: str) -> GroupStyle:
@@ -456,13 +521,58 @@ def _auto_place_groups(
 def _auto_edges(groups: List[Group]) -> List[Edge]:
     edges: List[Edge] = []
     prev_last: Optional[Node] = None
+    used_ids: set[str] = set()
     for g in groups:
         if not g.children:
             continue
         if prev_last is not None:
-            edges.append(Edge(source=prev_last.id, target=g.children[0].id, style="solid", label=""))
+            raw = f"{prev_last.id}|{g.children[0].id}|auto"
+            eid = _stable_hash_id("e", raw)
+            if eid in used_ids:
+                i = 1
+                while f"{eid}_{i}" in used_ids:
+                    i += 1
+                eid = f"{eid}_{i}"
+            used_ids.add(eid)
+            edges.append(
+                Edge(
+                    id=eid,
+                    source=prev_last.id,
+                    target=g.children[0].id,
+                    kind="main",
+                    route="auto",
+                    style="solid",
+                    label="",
+                )
+            )
         prev_last = g.children[-1]
     return edges
+
+
+def _resolve_edge_ref(
+    ref: str,
+    *,
+    node_index: Dict[str, Node],
+    group_index: Dict[str, Group],
+    path: str,
+) -> str:
+    s = ref.strip()
+    if not s:
+        raise ValueError(f"{path} 必须是非空字符串")
+
+    if s in node_index:
+        return s
+
+    if "." in s:
+        gid, nid = s.rsplit(".", 1)
+        if gid in group_index:
+            g = group_index[gid]
+            for n in g.children:
+                if n.id == nid:
+                    return n.id
+            raise ValueError(f"{path} 引用节点不存在：{s}")
+
+    raise ValueError(f"{path} 引用节点不存在：{s}")
 
 
 def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> SchematicSpec:
@@ -510,12 +620,14 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         missing_children: List[Node] = []
         for j, c_raw in enumerate(children_raw, start=1):
             c = _require_mapping(c_raw, f"schematic.groups[{i}].children[{j}]")
-            nid = _require_id(c.get("id"), f"schematic.groups[{i}].children[{j}].id")
+            nlabel = _require_str(c.get("label"), f"schematic.groups[{i}].children[{j}].label")
+            nid = _optional_id(c.get("id"), f"schematic.groups[{i}].children[{j}].id")
+            if nid is None:
+                nid = _make_stable_node_id(gid, nlabel, index=j, used_ids=node_ids)
             if nid in node_ids:
                 raise ValueError(f"重复 node id：{nid}")
             node_ids.add(nid)
 
-            nlabel = _require_str(c.get("label"), f"schematic.groups[{i}].children[{j}].label")
             nkind = _node_kind(c.get("kind"), f"schematic.groups[{i}].children[{j}]")
 
             nx, ny = _parse_position(c, f"schematic.groups[{i}].children[{j}]")
@@ -612,25 +724,62 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
             canvas_h = max(canvas_h, need_h)
 
     node_index = {n.id: n for g in groups for n in g.children}
+    group_index = {g.id: g for g in groups}
 
     edges_raw = root.get("edges")
     edges: List[Edge] = []
     if isinstance(edges_raw, list) and edges_raw:
+        edge_ids: set[str] = set()
         for i, e_raw in enumerate(edges_raw, start=1):
             e = _require_mapping(e_raw, f"schematic.edges[{i}]")
-            source = _require_id(e.get("from"), f"schematic.edges[{i}].from")
-            target = _require_id(e.get("to"), f"schematic.edges[{i}].to")
-            style = _edge_style(e.get("style"), f"schematic.edges[{i}]")
+            fr = _require_str(e.get("from"), f"schematic.edges[{i}].from")
+            tr = _require_str(e.get("to"), f"schematic.edges[{i}].to")
+            source = _resolve_edge_ref(fr, node_index=node_index, group_index=group_index, path=f"schematic.edges[{i}].from")
+            target = _resolve_edge_ref(tr, node_index=node_index, group_index=group_index, path=f"schematic.edges[{i}].to")
+
+            kind: EdgeKind
+            if "kind" in e:
+                kind = _edge_kind(e.get("kind"), f"schematic.edges[{i}]")
+            else:
+                legacy_style = e.get("style")
+                if legacy_style == "dashed":
+                    kind = "aux"
+                elif legacy_style == "thick":
+                    kind = "risk"
+                else:
+                    kind = "main"
+
+            route = _edge_route(e.get("route"), f"schematic.edges[{i}]")
+            style = _edge_style(e.get("style"), f"schematic.edges[{i}]") if "style" in e else _edge_style_from_kind(kind)
+
+            eid = _optional_id(e.get("id"), f"schematic.edges[{i}].id")
+            if eid is None:
+                eid = _stable_hash_id("e", f"{source}|{target}|{kind}|{route}|{i}")
+            if eid in edge_ids:
+                raise ValueError(f"重复 edge id：{eid}")
+            edge_ids.add(eid)
+
             label = e.get("label", "")
             if not isinstance(label, str):
                 raise ValueError(f"schematic.edges[{i}].label 必须是字符串")
-            if source not in node_index:
-                raise ValueError(f"schematic.edges[{i}] source 节点不存在：{source}")
-            if target not in node_index:
-                raise ValueError(f"schematic.edges[{i}] target 节点不存在：{target}")
-            edges.append(Edge(source=source, target=target, style=style, label=label.strip()))
+
+            edges.append(
+                Edge(
+                    id=eid,
+                    source=source,
+                    target=target,
+                    kind=kind,
+                    route=route,
+                    style=style,
+                    label=label.strip(),
+                )
+            )
     else:
-        edges = _auto_edges(groups)
+        auto_edges_mode = str((config.get("layout", {}) or {}).get("auto_edges", "minimal") or "minimal").strip().lower()
+        if auto_edges_mode in {"off", "none", "false", "0"}:
+            edges = []
+        else:
+            edges = _auto_edges(groups)
 
     # Warning-only: conservative “术语一致性”提示（不影响解析结果）。
     # 目的：帮助用户在规划阶段避免同一概念出现多种写法（会降低评审阅读一致性）。

@@ -24,6 +24,15 @@ from routing import rect_expand, route_edge_points
 from spec_parser import Edge, Node, SchematicSpec
 
 
+def _resolve_edge_route_mode(edge: Edge, default_mode: str) -> str:
+    route = str(getattr(edge, "route", "auto") or "auto").strip().lower()
+    if route == "straight":
+        return "straight"
+    if route == "orthogonal":
+        return "orthogonal"
+    return default_mode
+
+
 def measure_text(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]:
     thresholds = config.get("evaluation", {}).get("thresholds", {})
     thresholds = thresholds if isinstance(thresholds, dict) else {}
@@ -151,7 +160,7 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
     node_map = {n.id: n for n in nodes}
 
     routing_raw = str(config.get("renderer", {}).get("internal_routing", "orthogonal"))
-    routing_mode = "straight" if routing_raw == "straight" else "orthogonal"
+    routing_mode_default = "straight" if routing_raw == "straight" else "orthogonal"
 
     thresholds = config.get("evaluation", {}).get("thresholds", {})
     thresholds = thresholds if isinstance(thresholds, dict) else {}
@@ -172,6 +181,7 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
     edge_segs: List[Tuple[Edge, List[Tuple[Tuple[float, float], Tuple[float, float]]]]] = []
 
     for e in spec.edges:
+        routing_mode = _resolve_edge_route_mode(e, routing_mode_default)
         if e.source not in node_map or e.target not in node_map:
             missing_endpoints.append({"edge": f"{e.source}->{e.target}", "source_ok": e.source in node_map, "target_ok": e.target in node_map})
             continue
@@ -235,7 +245,8 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
 
     # Edge-edge crossings
     crossings = 0
-    if routing_mode == "straight":
+    all_straight = all(_resolve_edge_route_mode(e, routing_mode_default) == "straight" for e in spec.edges)
+    if all_straight:
         crossings = edge_cross_count(spec.edges, node_map)
     else:
         cross = 0
@@ -265,8 +276,11 @@ def measure_edges(spec: SchematicSpec, config: Dict[str, Any]) -> Dict[str, Any]
             "min": min(lengths) if lengths else 0.0,
         }
 
+    route_modes = {_resolve_edge_route_mode(e, routing_mode_default) for e in spec.edges}
+    routing_mode_label = "mixed" if len(route_modes) > 1 else (next(iter(route_modes)) if route_modes else routing_mode_default)
+
     return {
-        "routing_mode": routing_mode,
+        "routing_mode": routing_mode_label,
         "total_edges": len(spec.edges),
         "missing_endpoints": missing_endpoints,
         "self_loops": self_loops,

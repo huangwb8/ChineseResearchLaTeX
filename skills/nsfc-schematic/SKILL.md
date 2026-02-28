@@ -54,6 +54,7 @@ metadata:
   - `spec_latest.yaml`：latest 使用的 spec（便于复现/追溯）
   - `config_used_best.yaml` / `evaluation_best.json`：latest 最佳轮次复现证据
   - `runs/run_YYYYMMDDHHMMSS/`：本次运行目录（含 `round_*`、每轮评估与渲染产物）
+  - `ai/`：`stop_strategy=ai_critic` 的闭环工作区（`ACTIVE_RUN.txt`、`{run}/ai_pack_round_XX/`、`ai_critic_request.md`、`ai_critic_response.yaml`）
   - `legacy/`：自动迁移/收纳的历史残留（如旧版输出的 `run_*`、`spec*.yaml`、`config_*.yaml`、`evaluation_*.json` 等）
 
 默认情况下，`output_dir` 根目录**只保留交付文件**（drawio/svg/png/pdf）与隐藏目录 `.nsfc-schematic/`，避免中间文件污染用户工作目录。
@@ -63,6 +64,10 @@ metadata:
 
 每个 `round_*/` 默认会生成以下“可追溯证据”（可通过 `config.yaml:evaluation.*` 关闭）：
 - `evaluation.json`：主评估器结果（含 `score_base/score_penalty/score_total`）
+- `layout_debug.json`：布局诊断（节点/分组几何信息）
+- `edge_debug.json`：连线诊断（edge id、kind、route、waypoints）
+- `measurements.json`：主评估的纯度量证据
+- `dimension_measurements.json`：结构/视觉/可读性维度证据（由 critique 汇总）
 - `critique_structure.json / critique_visual.json / critique_readability.json`：多维度批判性自检证据（`evaluation.multi_round_self_check`；仅在启发式评估或 AI 回退路径下生成，避免与 AI 口径重复扣分）
 - `_candidates/`：每轮有限候选对比（`evaluation.exploration.candidates_per_round`）
 
@@ -73,6 +78,32 @@ metadata:
 规划模式额外交付：
 - `schematic-plan.md`：规划草案（写在**当前工作目录**，便于用户快速审阅；可用 `plan_schematic.py --no-workspace-plan` 禁用）
 
+## Spec v2（兼容旧版）
+
+- `node.id` 现在为可选：缺失时脚本按 `group + label + index` 生成稳定 id（可复现）。
+- `schematic.edges` 支持显式边协议：
+
+```yaml
+edges:
+  - id: e_input_core
+    from: input_layer.data_input   # 支持 group.node 路径引用
+    to: process_layer.core_module
+    kind: main                     # main|aux|risk|validate
+    route: orthogonal              # orthogonal|straight|auto
+    label: 输入数据
+```
+
+- 渲染优先级：
+  - 提供 `edges`：严格按显式边输出；
+  - 未提供 `edges`：回退到 `layout.auto_edges`（`minimal|off`）。
+
+## 纠偏原则
+
+- 拥挤优先改 spec（缩短文案/合并节点/减少节点），不要靠缩字号硬过阈值。
+- 只有 overflow 风险时才减字号；若字号偏小且无 overflow，应增字号。
+- 配色干扰优先改 kind 分配，不用黑白方案掩盖结构问题。
+
+
 ## 工作流
 
 ### 读取配置（强制）
@@ -82,6 +113,7 @@ metadata:
 - `renderer`：画布尺寸、字体、渲染行为
 - `renderer.drawio`：draw.io CLI 缺失时的提示/（可选）自动安装策略
 - `layout`：自动布局参数
+- `layout.auto_edges`：未提供显式 edges 时的自动连线策略（`minimal|off`）
 - `layout.template_ref`：图类型模板（高级选项；默认不启用；模型画廊仅用于学习，见 `references/models/templates.yaml`）
 - `layout.title`：是否将 `spec.title` 落图，以及为标题预留的顶部空间（避免标题配置僵尸化）
 - `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
@@ -95,6 +127,7 @@ metadata:
 - `evaluation.thresholds.min_edge_font_px/warn_edge_font_px`：连线标签字号门禁阈值（含缩印等效字号检查）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
+- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke`、`layout.direction/font/auto_edges`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds`）
 - `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
 - `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
 

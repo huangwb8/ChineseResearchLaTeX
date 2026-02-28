@@ -344,6 +344,15 @@ def _svg_text_lines(
     return "\n".join(out)
 
 
+def _resolve_edge_route_mode(edge: Any, default_mode: str) -> str:
+    route = str(getattr(edge, "route", "auto") or "auto").strip().lower()
+    if route == "straight":
+        return "straight"
+    if route == "orthogonal":
+        return "orthogonal"
+    return default_mode
+
+
 def _render_internal_png_svg(
     spec: SchematicSpec,
     config: Dict[str, Any],
@@ -430,6 +439,7 @@ def _render_internal_png_svg(
 
     # Edges
     routing = str(config.get("renderer", {}).get("internal_routing", "orthogonal"))
+    default_mode = "straight" if routing == "straight" else "orthogonal"
     obstacles: List[Tuple[int, int, int, int]] = []
     for nid, rect in node_lookup.items():
         obstacles.append(rect_expand(rect, pad=10))
@@ -446,7 +456,7 @@ def _render_internal_png_svg(
             if nid not in {e.source, e.target}
         ]
 
-        mode = "straight" if routing == "straight" else "orthogonal"
+        mode = _resolve_edge_route_mode(e, default_mode)
         pts = route_edge_points(
             spec.direction,  # type: ignore[arg-type]
             mode,  # type: ignore[arg-type]
@@ -566,7 +576,7 @@ def _render_internal_png_svg(
             if nid not in {e.source, e.target}
         ]
 
-        mode = "straight" if routing == "straight" else "orthogonal"
+        mode = _resolve_edge_route_mode(e, default_mode)
         pts = route_edge_points(
             spec.direction,  # type: ignore[arg-type]
             mode,  # type: ignore[arg-type]

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from spec_parser import Group, Node, SchematicSpec
+from spec_parser import Edge, Group, Node, SchematicSpec
 from routing import rect_expand, route_edge_points
 from utils import is_safe_relative_path, load_yaml, skill_root, write_text
 
@@ -118,6 +119,65 @@ def _edge_style(style: str, palette: Dict[str, Any], config: Dict[str, Any], rou
     return base + "strokeWidth=2;dashed=0;endArrow=block;endFill=1;"
 
 
+def _resolve_edge_route(edge: Edge, default_mode: str) -> str:
+    route = str(getattr(edge, "route", "auto") or "auto").strip().lower()
+    if route == "straight":
+        return "straight"
+    if route == "orthogonal":
+        return "orthogonal"
+    return default_mode
+
+
+def _write_layout_debug_json(out_dir: Path, spec: SchematicSpec) -> None:
+    payload: Dict[str, Any] = {
+        "layout": "auto",
+        "canvas": {"width": int(spec.canvas_width), "height": int(spec.canvas_height)},
+        "groups": [],
+        "nodes": [],
+    }
+    for g in spec.groups:
+        payload["groups"].append(
+            {
+                "id": g.id,
+                "label": g.label,
+                "x": int(g.x),
+                "y": int(g.y),
+                "w": int(g.w),
+                "h": int(g.h),
+                "child_count": len(g.children),
+                "style": g.style,
+            }
+        )
+        for n in g.children:
+            payload["nodes"].append(
+                {
+                    "id": n.id,
+                    "group_id": g.id,
+                    "x": int(n.x),
+                    "y": int(n.y),
+                    "w": int(n.w),
+                    "h": int(n.h),
+                    "kind": n.kind,
+                    "text_len": len((n.label or "").strip()),
+                }
+            )
+    (out_dir / "layout_debug.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_edge_debug_json(out_dir: Path, mode: str, edges_debug: List[Dict[str, Any]]) -> None:
+    payload = {
+        "mode": mode,
+        "edges": edges_debug,
+    }
+    (out_dir / "edge_debug.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _graph_header(spec: SchematicSpec) -> List[str]:
     page_w = max(850, spec.canvas_width)
     page_h = max(1100, spec.canvas_height)
@@ -215,7 +275,7 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
 
     # Z-order: groups (background) -> edges -> nodes (foreground, avoid lines covering text).
     routing_raw = str(config.get("renderer", {}).get("internal_routing", "orthogonal"))
-    mode = "straight" if routing_raw == "straight" else "orthogonal"
+    mode_default = "straight" if routing_raw == "straight" else "orthogonal"
     routing_cfg = ((config.get("layout", {}) or {}).get("routing", {}) or {}) if isinstance((config.get("layout", {}) or {}).get("routing", {}), dict) else {}
     obstacle_pad = int(routing_cfg.get("obstacle_padding_px", 10))
     avoid_headers = bool(routing_cfg.get("avoid_group_headers", True))
@@ -232,23 +292,24 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
         for g in spec.groups:
             header_obstacles.append(rect_expand((g.x, g.y, g.x + g.w, g.y + header_h), pad))
 
-    edge_idx = 1
+    edge_debug_rows: List[Dict[str, Any]] = []
     for edge in spec.edges:
-        edge_style = _edge_style(edge.style, palette, config, mode)
-        eid = f"edge_{edge_idx}"
-        edge_idx += 1
+        route_mode = _resolve_edge_route(edge, mode_default)
+        edge_style = _edge_style(edge.style, palette, config, route_mode)
+        eid = edge.id
         label = _xml_escape(edge.label) if edge.label else ""
         lines.append(
             f'        <mxCell id="{eid}" value="{label}" style="{edge_style}" edge="1" parent="1" source="{edge.source}" target="{edge.target}">'
         )
         src = node_lookup.get(edge.source)
         tgt = node_lookup.get(edge.target)
-        if mode == "orthogonal" and src and tgt:
+        waypoints: Optional[List[Tuple[int, int]]] = None
+        if route_mode == "orthogonal" and src and tgt:
             obs = [rect_expand(r, obstacle_pad) for nid, r in node_lookup.items() if nid not in {edge.source, edge.target}]
             obs.extend(header_obstacles)
             pts = route_edge_points(
                 spec.direction,  # type: ignore[arg-type]
-                mode,  # type: ignore[arg-type]
+                route_mode,  # type: ignore[arg-type]
                 src,
                 tgt,
                 obs,
@@ -256,6 +317,8 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
                 canvas_h=spec.canvas_height,
             )
             mid = pts[1:-1]
+            if mid:
+                waypoints = [(int(x), int(y)) for x, y in mid]
             if mid:
                 lines.append('          <mxGeometry relative="1" as="geometry">')
                 lines.append('            <Array as="points">')
@@ -269,12 +332,29 @@ def write_schematic_drawio(spec: SchematicSpec, config: Dict[str, Any], out_draw
             lines.append('          <mxGeometry relative="1" as="geometry"/>')
         lines.append("        </mxCell>")
 
+        edge_debug_rows.append(
+            {
+                "id": edge.id,
+                "from": edge.source,
+                "to": edge.target,
+                "kind": edge.kind,
+                "route": edge.route,
+                "resolved_route": route_mode,
+                "style": edge.style,
+                "label": edge.label or None,
+                "waypoints": waypoints,
+            }
+        )
+
     for group in spec.groups:
         for node in group.children:
             _write_node(lines, node, group, palette, config)
 
     lines.extend(_graph_footer())
     write_text(out_drawio, "\n".join(lines) + "\n")
+    _write_layout_debug_json(out_drawio.parent, spec)
+    edge_mode = "explicit" if spec.edges else "auto"
+    _write_edge_debug_json(out_drawio.parent, edge_mode, edge_debug_rows)
     return out_drawio
 
 

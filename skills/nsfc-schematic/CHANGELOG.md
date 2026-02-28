@@ -6,6 +6,22 @@
 
 （暂无）
 
+## [0.9.0] - 2026-02-28
+
+### Added（新增）
+
+- `scripts/spec_parser.py`：补齐 spec v2 语义（`node.id` 可选稳定化、`edges.id/kind/route`、`group.node` 路径引用）。
+- `scripts/schematic_writer.py`：每轮新增调试证据 `layout_debug.json` / `edge_debug.json`。
+- `scripts/generate_schematic.py`：新增 `config_local.yaml` 实例级覆盖（白名单校验），支持单项目参数微调而不改全局 `config.yaml`。
+- `scripts/generate_schematic.py`：新增 `ai_critic` 离线闭环工作区（`.nsfc-schematic/ai/`、`ai_pack_round_XX`、`ai_critic_request.md`、`ai_critic_response.yaml`）。
+
+### Changed（变更）
+
+- `config.yaml`：版本升级至 `0.9.0`，新增 `layout.auto_edges`（`minimal|off`）并明确 `stop_strategy=ai_critic` 为“宿主 AI 响应驱动”闭环。
+- `scripts/render_schematic.py` / `scripts/evaluate_schematic.py` / `scripts/measure_schematic.py`：连线路由改为支持 per-edge `route`（`orthogonal|straight|auto`）并兼容 mixed routing。
+- `scripts/generate_schematic.py`：候选提升时同步保留 `layout_debug.json`/`edge_debug.json`/`measurements.json`/`dimension_measurements.json` 到 `round_XX/`。
+- `README.md` / `SKILL.md`：同步更新 spec v2、纠偏原则、ai_critic 闭环协议与调试产物说明。
+
 ## [0.8.6] - 2026-02-20
 
 ### Changed（变更）
