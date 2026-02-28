@@ -94,6 +94,14 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+目前， nsfc-roadmap输出 PDF时可能会存在严重乱码（多页/拼页）。 请按这个思路修复：
+
+- drawio 文件的 pageWidth/pageHeight 与真实画布一致，避免导出时被切成多页
+- PDF 导出时强制 --crop，确保单页输出
+- 其它保证PDF准确的设置，你也可以修复
+
+---
+
 PlanName =实例辅助优化-v202602281042
 按 skills/nsfc-roadmap/plans/{PlanName}.md 的要求优化skill，所有缺陷都要修复。 有疑问的地方，你按最优方案决定，不要问我。在skills/nsfc-roadmap/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 

@@ -12,6 +12,12 @@
 
 - （暂无）
 
+## [0.10.1] - 2026-02-28
+
+### Fixed（修复）
+
+- 修复 draw.io 导出 PDF 可能被切成多页/拼页：`.drawio` 写入的 `pageWidth/pageHeight` 与 `renderer.canvas` 一致；PDF 导出强制 `--crop`，确保单页输出
+
 ## [0.10.0] - 2026-02-28
 
 ### Added（新增）

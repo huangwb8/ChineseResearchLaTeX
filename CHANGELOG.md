@@ -52,6 +52,8 @@
   - `skills/nsfc-roadmap/scripts/render_roadmap.py`：新增 `packed-three-column` 渲染器；draw.io 导出升级为稳定节点 id + 显式/自动连线；每轮输出 `layout_debug.json`/`edge_debug.json`
   - `skills/nsfc-roadmap/config.yaml`：新增 `layout.auto_edges` 与 `layout.edge_density_limit`，并允许 `layout.template=packed-three-column`
   - 新增轻量测试闭环：`skills/nsfc-roadmap/tests/实例辅助优化-v202602281042/`（PLAN/REPORT + spec v2 fixture）
+- **nsfc-roadmap 0.10.0 → 0.10.1**：修复 draw.io 导出 PDF 可能被切成多页/拼页（单页输出更稳定）
+  - `.drawio` 写入的 `pageWidth/pageHeight` 与 `renderer.canvas` 一致；PDF 导出强制 `--crop`
 
 ---
 

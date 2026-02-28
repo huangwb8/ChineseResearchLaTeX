@@ -61,6 +61,10 @@ def _export_with_drawio_cli(
     border: int,
 ) -> None:
     cmd = [drawio_cmd, "-x", "-f", fmt, "--border", str(border)]
+    # PDF: force crop to avoid multi-page tiling when pageWidth/pageHeight (or CLI defaults)
+    # don't match the actual canvas size.
+    if fmt == "pdf":
+        cmd.append("--crop")
     if fmt == "png":
         cmd.extend(["--width", str(width), "--height", str(height)])
     cmd.extend(["-o", str(output_path), str(drawio_path)])
@@ -80,6 +84,23 @@ def _export_with_drawio_cli(
             f"stderr: {result.stderr.strip()}\n"
             "\n"
             "已尝试回退（不使用 --height）仍失败\n"
+            f"cmd2: {' '.join(cmd2)}\n"
+            f"stdout2: {result2.stdout.strip()}\n"
+            f"stderr2: {result2.stderr.strip()}"
+        )
+    if result.returncode != 0 and fmt == "pdf" and "--crop" in cmd:
+        # Backward-compat fallback: some draw.io CLI builds may not support --crop.
+        cmd2 = [c for c in cmd if c != "--crop"]
+        result2 = _run_cli(cmd2)
+        if result2.returncode == 0:
+            return
+        raise RuntimeError(
+            "draw.io CLI 导出失败（PDF）\n"
+            f"cmd: {' '.join(cmd)}\n"
+            f"stdout: {result.stdout.strip()}\n"
+            f"stderr: {result.stderr.strip()}\n"
+            "\n"
+            "已尝试回退（不使用 --crop）仍失败\n"
             f"cmd2: {' '.join(cmd2)}\n"
             f"stdout2: {result2.stdout.strip()}\n"
             f"stderr2: {result2.stderr.strip()}"
@@ -1029,7 +1050,7 @@ def _render_png_classic(
         )
     except Exception:
         pass
-    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
+    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges, page_width=width, page_height=height)
 
 
 def _render_png_three_column(
@@ -1499,7 +1520,7 @@ def _render_png_three_column(
         )
     except Exception:
         pass
-    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
+    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges, page_width=width, page_height=height)
 
 
 def _render_png_packed_three_column(
@@ -2079,7 +2100,7 @@ def _render_png_packed_three_column(
         )
     except Exception:
         pass
-    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
+    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges, page_width=width, page_height=height)
 
 
 def _render_png_layered_pipeline(
@@ -2553,7 +2574,7 @@ def _render_png_layered_pipeline(
         )
     except Exception:
         pass
-    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
+    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges, page_width=width, page_height=height)
 
 
 def _render_png(

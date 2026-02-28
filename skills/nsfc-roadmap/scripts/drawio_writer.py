@@ -38,12 +38,33 @@ def _xml_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
-def write_drawio(path: Path, nodes: List[DrawioNode], edges: List[DrawioEdge]) -> None:
+def write_drawio(
+    path: Path,
+    nodes: List[DrawioNode],
+    edges: List[DrawioEdge],
+    *,
+    page_width: int = 850,
+    page_height: int = 1100,
+    page_scale: float = 1.0,
+    page_enabled: bool = True,
+) -> None:
     # Minimal draw.io mxGraphModel that opens in diagrams.net.
+    #
+    # NOTE: pageWidth/pageHeight must match the real canvas size, otherwise draw.io CLI
+    # may tile the export into multiple pages (especially for PDF).
+    page_width = max(1, int(page_width))
+    page_height = max(1, int(page_height))
+    dx = max(1, page_width // 2)
+    dy = max(1, page_height // 2)
+    page_attr = "1" if page_enabled else "0"
+    page_scale_attr = str(page_scale).rstrip("0").rstrip(".") if isinstance(page_scale, float) else str(page_scale)
+
     parts: List[str] = []
     parts.append('<mxfile host="app.diagrams.net">')
     parts.append('  <diagram name="roadmap" id="roadmap">')
-    parts.append('    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">')
+    parts.append(
+        f'    <mxGraphModel dx="{dx}" dy="{dy}" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="{page_attr}" pageScale="{page_scale_attr}" pageWidth="{page_width}" pageHeight="{page_height}" math="0" shadow="0">'
+    )
     parts.append("      <root>")
     parts.append('        <mxCell id="0"/>')
     parts.append('        <mxCell id="1" parent="0"/>')
