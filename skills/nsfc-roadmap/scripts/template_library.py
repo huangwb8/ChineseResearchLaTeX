@@ -127,7 +127,7 @@ def resolve_layout_template(
         # Renderer currently supports a stable subset. If a template uses a conceptual-only family,
         # it may provide `render_family` for stable fallback.
         effective = (tmpl.render_family or tmpl.family or "").strip().lower()
-        if effective not in {"classic", "three-column", "layered-pipeline"}:
+        if effective not in {"classic", "three-column", "packed-three-column", "layered-pipeline"}:
             effective = "classic"
         return effective, tmpl
 

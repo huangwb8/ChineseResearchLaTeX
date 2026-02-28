@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional, Sequence, Tuple
 
 from utils import write_text
 
@@ -16,6 +16,7 @@ class DrawioNode:
     w: int
     h: int
     style: str
+    parent: str = "1"
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,10 @@ class DrawioEdge:
     source: str
     target: str
     style: str
+    value: str = ""
+    # Optional absolute waypoints (x, y) in page coordinate system.
+    waypoints: Optional[Sequence[Tuple[int, int]]] = None
+    parent: str = "1"
 
 
 def _xml_escape(s: str) -> str:
@@ -44,7 +49,7 @@ def write_drawio(path: Path, nodes: List[DrawioNode], edges: List[DrawioEdge]) -
     parts.append('        <mxCell id="1" parent="0"/>')
     for n in nodes:
         parts.append(
-            f'        <mxCell id="{n.id}" value="{_xml_escape(n.value)}" style="{n.style}" vertex="1" parent="1">'
+            f'        <mxCell id="{n.id}" value="{_xml_escape(n.value)}" style="{n.style}" vertex="1" parent="{n.parent}">'
         )
         parts.append(
             f'          <mxGeometry x="{n.x}" y="{n.y}" width="{n.w}" height="{n.h}" as="geometry"/>'
@@ -52,9 +57,17 @@ def write_drawio(path: Path, nodes: List[DrawioNode], edges: List[DrawioEdge]) -
         parts.append("        </mxCell>")
     for e in edges:
         parts.append(
-            f'        <mxCell id="{e.id}" value="" style="{e.style}" edge="1" parent="1" source="{e.source}" target="{e.target}">'
+            f'        <mxCell id="{e.id}" value="{_xml_escape(e.value)}" style="{e.style}" edge="1" parent="{e.parent}" source="{e.source}" target="{e.target}">'
         )
-        parts.append('          <mxGeometry relative="1" as="geometry"/>')
+        if e.waypoints:
+            parts.append('          <mxGeometry relative="1" as="geometry">')
+            parts.append('            <Array as="points">')
+            for x, y in e.waypoints:
+                parts.append(f'              <mxPoint x="{int(x)}" y="{int(y)}"/>')
+            parts.append("            </Array>")
+            parts.append("          </mxGeometry>")
+        else:
+            parts.append('          <mxGeometry relative="1" as="geometry"/>')
         parts.append("        </mxCell>")
     parts.append("      </root>")
     parts.append("    </mxGraphModel>")

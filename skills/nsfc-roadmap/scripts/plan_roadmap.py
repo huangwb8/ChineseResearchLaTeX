@@ -123,7 +123,7 @@ def main() -> None:
         "--template",
         type=str,
         default=None,
-        help="auto|classic|three-column|layered-pipeline（可选；也可仅用 --template-ref）",
+        help="auto|classic|three-column|packed-three-column|layered-pipeline（可选；也可仅用 --template-ref）",
     )
     p.add_argument(
         "--template-ref",
@@ -140,8 +140,8 @@ def main() -> None:
 
     if args.template and str(args.template).strip():
         t = str(args.template).strip()
-        if t not in ("auto", "classic", "three-column", "layered-pipeline"):
-            fatal(f"--template 不合法：{t!r}（允许：auto|classic|three-column|layered-pipeline）")
+        if t not in ("auto", "classic", "three-column", "packed-three-column", "layered-pipeline"):
+            fatal(f"--template 不合法：{t!r}（允许：auto|classic|three-column|packed-three-column|layered-pipeline）")
 
     if not (
         args.proposal_path

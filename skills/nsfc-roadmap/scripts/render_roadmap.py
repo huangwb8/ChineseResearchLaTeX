@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import os
 import platform
+import hashlib
+import json
 from pathlib import Path
 from shutil import which
 from subprocess import CompletedProcess, run
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -242,6 +244,58 @@ def _text_compact_len(s: str) -> int:
     return len("".join(ch for ch in (s or "") if not ch.isspace()))
 
 
+def _norm_text_for_id(s: str) -> str:
+    # Normalize for stable ids: keep semantic content, drop whitespace noise.
+    return "".join(ch for ch in (s or "").strip().replace("\r\n", "\n").replace("\r", "\n") if not ch.isspace())
+
+
+def _stable_box_id(phase_label: str, box: Any) -> str:
+    """
+    Deterministically derive a stable node id for draw.io export.
+
+    Design goal: stable across re-runs for the same spec content, and unlikely to collide.
+    """
+    txt = _norm_text_for_id(str(getattr(box, "text", "") or ""))
+    kind = str(getattr(box, "kind", "primary") or "primary").strip()
+    role = str(getattr(box, "role", "") or "").strip()
+    base = f"{phase_label}|{kind}|{role}|{txt}"
+    h = hashlib.sha1(base.encode("utf-8")).hexdigest()[:10]
+    return f"n_{h}"
+
+
+def _ensure_spec_box_ids(spec: RoadmapSpec) -> Dict[str, Any]:
+    """
+    Ensure every Box has a non-empty, unique id.
+
+    - If spec provides box.id, trust it (after stripping).
+    - Else deterministically generate one from content.
+    """
+    used: Dict[str, Any] = {}
+    for phase in getattr(spec, "phases", []) or []:
+        phase_label = str(getattr(phase, "label", "") or "").strip()
+        for row in getattr(phase, "rows", []) or []:
+            for box in getattr(row, "boxes", []) or []:
+                bid = str(getattr(box, "id", "") or "").strip()
+                if not bid:
+                    bid = _stable_box_id(phase_label, box)
+                    # Resolve collisions deterministically (rare; mainly duplicated text).
+                    if bid in used:
+                        for i in range(2, 1000):
+                            cand = f"{bid}_{i}"
+                            if cand not in used:
+                                bid = cand
+                                break
+                # Persist back to the dataclass for downstream renderers.
+                try:
+                    setattr(box, "id", bid)
+                except Exception:
+                    pass
+                if bid in used:
+                    raise ValueError(f"spec 中 box.id 重复：{bid!r}（请为重复节点显式指定不同 id）")
+                used[bid] = box
+    return used
+
+
 def _pick_main_box_idx(phase: Any) -> int:
     """
     Heuristic main box selection.
@@ -317,6 +371,246 @@ def _pick_main_box_idx(phase: Any) -> int:
     return best_idx
 
 
+def _phase_flat_boxes(phase: Any) -> List[Any]:
+    return [b for r in getattr(phase, "rows", []) or [] for b in getattr(r, "boxes", []) or []]
+
+
+def _pick_center_stack_boxes(phase: Any, main_box: Any, max_outputs: int = 2) -> List[Any]:
+    """
+    For packed layouts: allow stacking `main` with up to N `output`-like boxes.
+    """
+    flat = _phase_flat_boxes(phase)
+    out_like: List[Any] = []
+    for b in flat:
+        if b is main_box:
+            continue
+        role = str(getattr(b, "role", "") or "").strip()
+        kind = str(getattr(b, "kind", "") or "").strip()
+        if role in {"output", "validate", "deploy"} or kind in {"risk"}:
+            out_like.append(b)
+    # Deterministic: prefer explicit role, then longer text.
+    def score(b: Any) -> int:
+        role = str(getattr(b, "role", "") or "").strip()
+        txt = str(getattr(b, "text", "") or "")
+        base = 0
+        if role in {"output", "validate", "deploy"}:
+            base += 1000
+        if str(getattr(b, "kind", "") or "").strip() == "risk":
+            base += 100
+        base += min(500, _text_compact_len(txt))
+        return base
+
+    out_like.sort(key=score, reverse=True)
+    return out_like[: max(0, int(max_outputs))]
+
+
+def _resolve_spec_edges(
+    spec: RoadmapSpec,
+    config: Dict[str, Any],
+    node_ids: Dict[str, Any],
+) -> Tuple[List[DrawioEdge], Dict[str, Any]]:
+    """
+    Resolve edges to DrawioEdge list (for .drawio export), and produce a debug payload.
+
+    Precedence:
+    - If spec.edges is provided and non-empty, use it verbatim (must be resolvable).
+    - Else, build semantic auto-edges (configurable).
+    """
+    layout_cfg = config.get("layout", {}) if isinstance(config.get("layout", {}), dict) else {}
+    auto_edges_mode = str(layout_cfg.get("auto_edges", "semantic") or "semantic").strip().lower()
+    edge_density_limit = int(layout_cfg.get("edge_density_limit", 12) or 12)
+    if edge_density_limit < 0:
+        edge_density_limit = 0
+
+    renderer = config.get("renderer", {}) if isinstance(config.get("renderer", {}), dict) else {}
+    stroke_hex = str((renderer.get("stroke", {}) or {}).get("color", "#2F5597"))
+    stroke_w = max(2, int((renderer.get("stroke", {}) or {}).get("width_px", 3)))
+    base_style = default_edge_style(stroke=stroke_hex, width=stroke_w)
+
+    def style_for(route: str, extra: Optional[str]) -> str:
+        r = (route or "auto").strip().lower()
+        if r == "straight":
+            s = (
+                "edgeStyle=straightEdgeStyle;rounded=0;html=1;"
+                "endArrow=block;endFill=1;"
+                f"strokeColor={stroke_hex};strokeWidth={stroke_w};"
+            )
+        else:
+            # orthogonal/elbow/auto: keep orthogonalEdgeStyle
+            s = base_style
+        if extra and str(extra).strip():
+            s = s + str(extra).strip()
+            if not s.endswith(";"):
+                s += ";"
+        return s
+
+    resolved: List[DrawioEdge] = []
+    debug: Dict[str, Any] = {"mode": "explicit" if (getattr(spec, "edges", None) or []) else auto_edges_mode, "edges": []}
+
+    # Explicit edges (spec v2)
+    spec_edges = getattr(spec, "edges", None) or []
+    if spec_edges:
+        used_edge_ids: set[str] = set()
+        for i, e in enumerate(spec_edges, start=1):
+            eid = str(getattr(e, "id", "") or "").strip()
+            if not eid:
+                # Deterministic edge id based on endpoints + kind/route/label
+                raw = (
+                    f"{getattr(e, 'from_ref', '')}|{getattr(e, 'to_ref', '')}|"
+                    f"{getattr(e, 'kind', '')}|{getattr(e, 'route', '')}|{getattr(e, 'label', '')}"
+                )
+                eid = "e_" + hashlib.sha1(raw.encode("utf-8")).hexdigest()[:10]
+            if eid in used_edge_ids:
+                raise ValueError(f"spec.edges 中 edge.id 重复：{eid!r}")
+            used_edge_ids.add(eid)
+
+            fr = str(getattr(e, "from_ref", "") or "").strip()
+            tr = str(getattr(e, "to_ref", "") or "").strip()
+            if fr not in node_ids:
+                raise ValueError(f"spec.edges[{i}].from 引用的节点不存在：{fr!r}")
+            if tr not in node_ids:
+                raise ValueError(f"spec.edges[{i}].to 引用的节点不存在：{tr!r}")
+            route = str(getattr(e, "route", "auto") or "auto")
+            waypoints = getattr(e, "waypoints", None)
+            label = str(getattr(e, "label", "") or "")
+            st_extra = getattr(e, "style", None)
+
+            resolved.append(
+                DrawioEdge(
+                    id=eid,
+                    source=fr,
+                    target=tr,
+                    style=style_for(route, cast(Optional[str], st_extra)),
+                    value=label,
+                    waypoints=cast(Optional[List[Tuple[int, int]]], waypoints),
+                )
+            )
+            debug["edges"].append(
+                {
+                    "id": eid,
+                    "from": fr,
+                    "to": tr,
+                    "kind": str(getattr(e, "kind", "main") or "main"),
+                    "route": route,
+                    "waypoints": list(waypoints) if waypoints else None,
+                    "label": label or None,
+                }
+            )
+        return resolved, debug
+
+    # Auto edges (semantic/minimal/off)
+    if auto_edges_mode in {"off", "none"}:
+        return [], debug
+
+    # Pick one main box per phase (heuristic + role=main).
+    phases = getattr(spec, "phases", []) or []
+    phase_main: List[Optional[str]] = []
+    phase_center_last: List[Optional[str]] = []
+    for phase in phases:
+        flat = _phase_flat_boxes(phase)
+        if not flat:
+            phase_main.append(None)
+            phase_center_last.append(None)
+            continue
+        main_idx = min(max(_pick_main_box_idx(phase), 0), len(flat) - 1)
+        main_box = flat[main_idx]
+        mid = str(getattr(main_box, "id", "") or "").strip()
+        phase_main.append(mid if mid in node_ids else None)
+        # If packed layouts stacked outputs, we still approximate "center_last" as main.
+        phase_center_last.append(mid if mid in node_ids else None)
+
+    def add_edge(eid: str, fr: str, tr: str, kind: str, route: str = "auto") -> None:
+        if fr not in node_ids or tr not in node_ids:
+            return
+        resolved.append(
+            DrawioEdge(
+                id=eid,
+                source=fr,
+                target=tr,
+                style=style_for(route, None),
+            )
+        )
+        debug["edges"].append({"id": eid, "from": fr, "to": tr, "kind": kind, "route": route, "waypoints": None, "label": None})
+
+    # Phase mainline chain
+    chain_added = 0
+    for i in range(len(phases) - 1):
+        fr = phase_center_last[i]
+        tr = phase_main[i + 1]
+        if fr and tr:
+            add_edge(f"e_main_{i+1}", fr, tr, kind="main", route="orthogonal")
+            chain_added += 1
+
+    if auto_edges_mode == "minimal":
+        return resolved[: max(0, edge_density_limit)], debug
+
+    # Semantic intra-phase edges: connect inputs->main and main->outputs/risk/validate/deploy.
+    per_phase_budget = max(0, edge_density_limit)
+    for pi, phase in enumerate(phases, start=1):
+        if len(resolved) >= edge_density_limit and edge_density_limit > 0:
+            break
+        main_id = phase_main[pi - 1]
+        if not main_id:
+            continue
+        flat = _phase_flat_boxes(phase)
+        edges_added_here = 0
+        for b in flat:
+            if edges_added_here >= per_phase_budget and per_phase_budget > 0:
+                break
+            bid = str(getattr(b, "id", "") or "").strip()
+            if not bid or bid == main_id:
+                continue
+            role = str(getattr(b, "role", "") or "").strip()
+            kind = str(getattr(b, "kind", "") or "").strip()
+            if role in {"input"}:
+                add_edge(f"e_p{pi}_in_{edges_added_here+1}", bid, main_id, kind="aux", route="orthogonal")
+                edges_added_here += 1
+            elif role in {"output", "validate", "deploy", "compare"} or kind in {"risk"} or role in {"risk"}:
+                add_edge(f"e_p{pi}_out_{edges_added_here+1}", main_id, bid, kind="aux", route="orthogonal")
+                edges_added_here += 1
+        # Keep going; global limit enforced above.
+
+    if edge_density_limit > 0:
+        resolved = resolved[:edge_density_limit]
+        debug["edges"] = debug["edges"][:edge_density_limit]
+    return resolved, debug
+
+
+def _write_layout_debug_json(
+    out_dir: Path,
+    layout_name: str,
+    nodes: List[DrawioNode],
+    node_ids: Dict[str, Any],
+) -> None:
+    """
+    Lightweight layout debug payload.
+
+    Note: coordinates are whatever the .drawio writer receives (typically absolute).
+    Packed layouts may choose to write their own debug file with absolute coordinates.
+    """
+    try:
+        out: Dict[str, Any] = {"layout": layout_name, "nodes": []}
+        for n in nodes:
+            if n.id not in node_ids:
+                continue
+            b = node_ids.get(n.id)
+            out["nodes"].append(
+                {
+                    "id": n.id,
+                    "x": int(n.x),
+                    "y": int(n.y),
+                    "w": int(n.w),
+                    "h": int(n.h),
+                    "kind": str(getattr(b, "kind", "") or ""),
+                    "role": str(getattr(b, "role", "") or "") or None,
+                    "text_len": _text_compact_len(str(getattr(b, "text", "") or "")),
+                }
+            )
+        (out_dir / "layout_debug.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+    except Exception:
+        pass
 def _draw_vertical_arrow_png(
     draw: ImageDraw.ImageDraw,
     x: int,
@@ -604,7 +898,9 @@ def _render_png_classic(
     if bool((renderer.get("svg", {}) or {}).get("enabled", True)):
         write_text(out_svg, "\n".join(svg_elements) + "\n")
 
-    # Write draw.io (nodes only; arrows/edges are optional and can be edited manually)
+    # draw.io export: stable node ids + (optional) explicit/auto edges.
+    node_ids = _ensure_spec_box_ids(spec)
+    node_ids = _ensure_spec_box_ids(spec)
     drawio_nodes: List[DrawioNode] = []
     font_size = int(renderer["fonts"]["default_size"])
 
@@ -660,21 +956,6 @@ def _render_png_classic(
         area_y0 = phase_y0
         area_y1 = phase_y1
 
-        # Invisible anchor for mainline edges (required by write_drawio edges below).
-        anchor_x = area_x0 + max(0, (area_x1 - area_x0) // 2) - 5
-        anchor_y = area_y0 + max(0, (area_y1 - area_y0) // 2) - 5
-        drawio_nodes.append(
-            DrawioNode(
-                id=f"p{idx+1}_main",
-                value="",
-                x=anchor_x,
-                y=anchor_y,
-                w=10,
-                h=10,
-                style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;",
-            )
-        )
-
         rows = phase.rows
         if not rows:
             continue
@@ -698,9 +979,13 @@ def _render_png_classic(
                 bx0, bx1 = x, x + w
                 by0, by1 = row_y0, row_y1
                 fill_hex, stroke_hex = kind_fill_stroke(box.kind)
+                bid = str(getattr(box, "id", "") or "").strip()
+                if not bid:
+                    # Should not happen; defensive fallback.
+                    bid = _stable_box_id(str(getattr(phase, "label", "") or ""), box)
                 drawio_nodes.append(
                     DrawioNode(
-                        id=f"p{idx+1}_r{r_idx+1}_b{b_idx+1}",
+                        id=bid,
                         value=box.text,
                         x=bx0,
                         y=by0,
@@ -736,20 +1021,14 @@ def _render_png_classic(
             )
         )
 
-    edge_style = default_edge_style(
-        stroke=str((renderer.get("stroke", {}) or {}).get("color", "#2F5597")),
-        width=max(2, int((renderer.get("stroke", {}) or {}).get("width_px", 3))),
-    )
-    edges: List[DrawioEdge] = []
-    for i in range(1, len(phases)):
-        edges.append(
-            DrawioEdge(
-                id=f"e_main_{i}",
-                source=f"p{i}_main",
-                target=f"p{i+1}_main",
-                style=edge_style,
-            )
+    edges, edge_debug = _resolve_spec_edges(spec, config, node_ids)
+    _write_layout_debug_json(out_drawio.parent, "classic", drawio_nodes, node_ids)
+    try:
+        (out_drawio.parent / "edge_debug.json").write_text(
+            json.dumps(edge_debug, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
+    except Exception:
+        pass
     write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
 
 
@@ -1056,6 +1335,7 @@ def _render_png_three_column(
         write_text(out_svg, "\n".join(svg_elements) + "\n")
 
     # draw.io nodes
+    node_ids = _ensure_spec_box_ids(spec)
     drawio_nodes: List[DrawioNode] = []
     font_size = int(renderer["fonts"]["default_size"])
 
@@ -1108,19 +1388,6 @@ def _render_png_three_column(
         area_y1 = phase_y1
         flat_boxes = [b for r in phase.rows for b in r.boxes]
         if not flat_boxes:
-            # Keep mainline edges stable even for empty phases.
-            cx0, cx1 = col_x[1], col_x[1] + col_w
-            drawio_nodes.append(
-                DrawioNode(
-                    id=f"p{idx+1}_main",
-                    value="",
-                    x=cx0 + (cx1 - cx0) // 2 - 5,
-                    y=area_y0 + max(0, (area_y1 - area_y0) // 2) - 5,
-                    w=10,
-                    h=10,
-                    style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;",
-                )
-            )
             continue
         main_idx = min(max(_pick_main_box_idx(phase), 0), len(flat_boxes) - 1)
         main_box = flat_boxes[main_idx]
@@ -1136,25 +1403,31 @@ def _render_png_three_column(
         text_h = len(wrapped) * line_h + max(0, (len(wrapped) - 1) * 2)
         area_h = max(1, area_y1 - area_y0)
         main_h = max(min_box_h, min(area_h, text_h + 2 * box_padding + 4))
+        main_id = str(getattr(main_box, "id", "") or "").strip()
+        if not main_id:
+            main_id = _stable_box_id(str(getattr(phase, "label", "") or ""), main_box)
         drawio_nodes.append(
             DrawioNode(
-                id=f"p{idx+1}_main",
+                id=main_id,
                 value=main_box.text,
                 x=cx0,
                 y=area_y0,
                 w=(cx1 - cx0),
                 h=main_h,
-                style=default_box_style(
-                    fill=fill_hex,
-                    stroke=stroke_hex,
-                    font_size=font_size,
-                    font_color=str(color_presets.get("text", "#1F1F1F")),
-                )
-                + "align=center;verticalAlign=middle;",
+                style=(
+                    str(getattr(main_box, "style", "") or "").strip()
+                    or default_box_style(
+                        fill=fill_hex,
+                        stroke=stroke_hex,
+                        font_size=font_size,
+                        font_color=str(color_presets.get("text", "#1F1F1F")),
+                    )
+                    + "align=center;verticalAlign=middle;"
+                ),
             )
         )
 
-        def add_side(col: int, boxes: List[Any], prefix: str) -> None:
+        def add_side(col: int, boxes: List[Any]) -> None:
             if not boxes:
                 return
             x0 = col_x[col]
@@ -1164,34 +1437,40 @@ def _render_png_three_column(
             area_h = max(1, area_y1 - area_y0)
             h_each = max(1, int((area_h - gap * (n - 1)) // n))
             y = area_y0
-            for i, b in enumerate(boxes, start=1):
+            for b in boxes:
                 bh = max(1, min(area_y1 - y, max(min_box_h, h_each)))
                 if y + bh > area_y1:
                     bh = max(1, area_y1 - y)
                 fhex, shex = kind_fill_stroke(b.kind)
+                bid = str(getattr(b, "id", "") or "").strip()
+                if not bid:
+                    bid = _stable_box_id(str(getattr(phase, "label", "") or ""), b)
                 drawio_nodes.append(
                     DrawioNode(
-                        id=f"p{idx+1}_{prefix}{i}",
+                        id=bid,
                         value=b.text,
                         x=x0,
                         y=y,
                         w=(x1 - x0),
                         h=bh,
-                        style=default_box_style(
-                            fill=fhex,
-                            stroke=shex,
-                            font_size=font_size,
-                            font_color=str(color_presets.get("text", "#1F1F1F")),
-                        )
-                        + "align=center;verticalAlign=middle;",
+                        style=(
+                            str(getattr(b, "style", "") or "").strip()
+                            or default_box_style(
+                                fill=fhex,
+                                stroke=shex,
+                                font_size=font_size,
+                                font_color=str(color_presets.get("text", "#1F1F1F")),
+                            )
+                            + "align=center;verticalAlign=middle;"
+                        ),
                     )
                 )
                 y = y + bh + gap
                 if y >= area_y1:
                     break
 
-        add_side(0, left_boxes, "l")
-        add_side(2, right_boxes, "r")
+        add_side(0, left_boxes)
+        add_side(2, right_boxes)
 
     if notes_enabled and note:
         drawio_nodes.append(
@@ -1212,20 +1491,594 @@ def _render_png_three_column(
             )
         )
 
-    edge_style = default_edge_style(
-        stroke=str((renderer.get("stroke", {}) or {}).get("color", "#2F5597")),
-        width=max(2, int((renderer.get("stroke", {}) or {}).get("width_px", 3))),
+    edges, edge_debug = _resolve_spec_edges(spec, config, node_ids)
+    _write_layout_debug_json(out_drawio.parent, "three-column", drawio_nodes, node_ids)
+    try:
+        (out_drawio.parent / "edge_debug.json").write_text(
+            json.dumps(edge_debug, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+    except Exception:
+        pass
+    write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
+
+
+def _render_png_packed_three_column(
+    spec: RoadmapSpec,
+    config: Dict[str, Any],
+    out_png: Path,
+    out_svg: Path,
+    out_drawio: Path,
+) -> None:
+    """
+    Packed three-column layout:
+    - Box heights are based on measured wrapped text height (no forced equal-split stretching).
+    - Center column may stack main + up to 2 output-like boxes to reduce whitespace.
+    - Footer (role=header) renders as full-width boxes at the bottom of the phase band.
+
+    This renderer focuses on draw.io fidelity: when draw.io CLI exists, PNG/SVG/PDF are exported
+    from the generated .drawio to reflect edges and routing consistently.
+    """
+    renderer = config["renderer"]
+    layout = config["layout"]
+    color_presets = config["color_scheme"]["presets"][config["color_scheme"]["name"]]
+
+    node_ids = _ensure_spec_box_ids(spec)
+
+    width = int(renderer["canvas"]["width_px"])
+    height = int(renderer["canvas"]["height_px"])
+    margin = int(renderer["canvas"]["margin_px"])
+    spacing = int(layout["spacing_px"])
+
+    background = hex_to_rgb(renderer["background"])
+    img = Image.new("RGB", (width, height), background)
+    draw = ImageDraw.Draw(img)
+
+    main_choice = pick_font(renderer["fonts"]["candidates"], int(renderer["fonts"]["default_size"]))
+    title_choice = pick_font(renderer["fonts"]["candidates"], int(renderer["fonts"]["title_size"]))
+    if main_choice.path is None or title_choice.path is None:
+        warn("未找到可用中文字体候选；输出可能出现中文乱码/方框。")
+    font_main = _load_font(main_choice)
+    font_title = _load_font(title_choice)
+
+    text_color = hex_to_rgb(color_presets["text"])
+
+    title_cfg = layout.get("title", {}) if isinstance(layout.get("title", {}), dict) else {}
+    notes_cfg = layout.get("notes", {}) if isinstance(layout.get("notes", {}), dict) else {}
+    title_enabled = bool(title_cfg.get("enabled", True))
+    notes_enabled = bool(notes_cfg.get("enabled", True))
+
+    title_h = 0
+    title_y = margin
+    if title_enabled:
+        title_bbox = draw.textbbox((0, 0), spec.title, font=font_title)
+        title_h = title_bbox[3] - title_bbox[1]
+        draw.text((margin, title_y), spec.title, font=font_title, fill=text_color)
+
+    note = (spec.notes or "").strip()
+    note_h = 0
+    if notes_enabled and note:
+        note_bbox = draw.textbbox((0, 0), note, font=font_main)
+        note_h = note_bbox[3] - note_bbox[1]
+
+    content_top = margin + (title_h + spacing if title_enabled else 0)
+    content_left = margin
+    content_right = width - margin
+    content_bottom = height - margin - (note_h + spacing if (notes_enabled and note) else 0)
+
+    phases = spec.phases
+    if not phases:
+        raise ValueError("spec.phases 不能为空")
+
+    box_radius = int(layout["box"]["radius_px"])
+    box_padding = int(layout["box"]["padding_px"])
+    min_box_h = int(layout["box"]["min_height_px"])
+    stroke_w = int(renderer["stroke"]["width_px"])
+
+    def kind_fill_stroke(kind: str) -> Tuple[str, str]:
+        pal = color_presets.get(kind, color_presets["primary"])
+        return (pal["fill"], pal["stroke"])
+
+    def box_colors(kind: str) -> Tuple[Tuple[int, int, int], Tuple[int, int, int], str, str]:
+        palette = color_presets.get(kind, color_presets["primary"])
+        fill_hex = palette["fill"]
+        stroke_hex = palette["stroke"]
+        return (hex_to_rgb(fill_hex), hex_to_rgb(stroke_hex), fill_hex, stroke_hex)
+
+    lb = draw.textbbox((0, 0), "测", font=font_main)
+    line_h = max(1, lb[3] - lb[1])
+
+    content_w = content_right - content_left
+    col_gap = spacing
+    center_w = int(content_w * 0.46)
+    side_w = max(1, int((content_w - center_w - 2 * col_gap) // 2))
+    center_w = max(1, content_w - 2 * side_w - 2 * col_gap)
+    left_x0 = content_left
+    center_x0 = left_x0 + side_w + col_gap
+    right_x0 = center_x0 + center_w + col_gap
+
+    def needed_height(box: Any, col_width: int) -> Dict[str, Any]:
+        max_text_w = max(1, int(col_width - 2 * box_padding))
+        txt = str(getattr(box, "text", "") or "")
+        wrapped = _wrap_text(draw, txt, font_main, max_text_w)
+        text_h = len(wrapped) * line_h + max(0, (len(wrapped) - 1) * 2)
+        h = max(min_box_h, text_h + 2 * box_padding + 4)
+        # Optional spec v2 size_hint (soft)
+        sh = getattr(box, "size_hint", None)
+        if sh is not None:
+            try:
+                prefer_h = getattr(sh, "prefer_h", None)
+                min_h = getattr(sh, "min_h", None)
+                max_h = getattr(sh, "max_h", None)
+                if isinstance(prefer_h, int) and prefer_h > 0:
+                    h = max(h, prefer_h)
+                if isinstance(min_h, int) and min_h > 0:
+                    h = max(h, min_h)
+                if isinstance(max_h, int) and max_h > 0:
+                    h = min(h, max_h)
+            except Exception:
+                pass
+        return {"wrapped": wrapped, "text_h": text_h, "h": int(h)}
+
+    def fit_stack(items: List[Dict[str, Any]], area_h: int, gap: int) -> Tuple[List[int], int, bool]:
+        """
+        Fit items into available height by:
+        1) optionally shrinking gap
+        2) proportionally scaling heights if still overflowing
+        """
+        if not items:
+            return [], gap, False
+        heights = [int(it["h"]) for it in items]
+        g = int(gap)
+        total = sum(heights) + g * (len(heights) - 1)
+        if total <= area_h:
+            return heights, g, False
+        # Try reduce gap first
+        g2 = min(g, 8)
+        total2 = sum(heights) + g2 * (len(heights) - 1)
+        if total2 <= area_h:
+            return heights, g2, True
+        # Scale heights (last resort; may go below min_box_h to keep all nodes present)
+        avail = max(1, area_h - g2 * (len(heights) - 1))
+        s = avail / max(1, sum(heights))
+        scaled = [max(24, int(round(h * s))) for h in heights]
+        drift = avail - sum(scaled)
+        if drift != 0:
+            scaled[-1] = max(24, scaled[-1] + drift)
+        return scaled, g2, True
+
+    # Estimate phase weights by required packed heights (for better vertical allocation).
+    phase_gap = spacing
+    header_min = max(int(renderer["fonts"]["default_size"]) + box_padding, 44)
+    weights: List[int] = []
+    for phase in phases:
+        flat = _phase_flat_boxes(phase)
+        if not flat:
+            weights.append(1)
+            continue
+        main_idx = min(max(_pick_main_box_idx(phase), 0), len(flat) - 1)
+        main_box = flat[main_idx]
+        center_stack = [main_box] + _pick_center_stack_boxes(phase, main_box, max_outputs=2)
+        footer = [b for b in flat if str(getattr(b, "role", "") or "").strip() == "header"]
+        side = [b for b in flat if (b not in center_stack and b not in footer)]
+        left = [b for b in side if str(getattr(b, "role", "") or "").strip() == "input" or str(getattr(b, "kind", "") or "").strip() in {"secondary", "auxiliary"}]
+        right = [b for b in side if b not in left]
+        h_center = sum(needed_height(b, center_w)["h"] for b in center_stack) + spacing * max(0, len(center_stack) - 1)
+        h_left = sum(needed_height(b, side_w)["h"] for b in left) + spacing * max(0, len(left) - 1)
+        h_right = sum(needed_height(b, side_w)["h"] for b in right) + spacing * max(0, len(right) - 1)
+        h_footer = sum(needed_height(b, content_w)["h"] for b in footer) + spacing * max(0, len(footer) - 1)
+        weights.append(max(1, header_min + spacing + max(h_center, h_left, h_right) + (spacing + h_footer if footer else 0)))
+
+    available_h = content_bottom - content_top - phase_gap * (len(phases) - 1)
+    available_h = max(1, available_h)
+    total_wt = max(1, sum(weights))
+    phase_heights: List[int] = []
+    used = 0
+    for i, w in enumerate(weights):
+        if i == len(weights) - 1:
+            h = max(1, available_h - used)
+        else:
+            h = max(1, int(round(available_h * (w / total_wt))))
+        phase_heights.append(h)
+        used += h
+    drift = available_h - sum(phase_heights)
+    if drift != 0:
+        phase_heights[-1] = max(1, phase_heights[-1] + drift)
+
+    svg_elements: List[str] = []
+    svg_elements.append(
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
     )
-    edges: List[DrawioEdge] = []
-    for i in range(1, len(phases)):
-        edges.append(
-            DrawioEdge(
-                id=f"e_main_{i}",
-                source=f"p{i}_main",
-                target=f"p{i+1}_main",
-                style=edge_style,
+    stroke_hex = str((renderer.get("stroke", {}) or {}).get("color", "#2F5597"))
+    svg_elements.append(
+        f'<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">'
+        f'<path d="M0,0 L0,6 L6,3 z" fill="{stroke_hex}"/></marker></defs>'
+    )
+    svg_elements.append(f'<rect x="0" y="0" width="{width}" height="{height}" fill="{renderer["background"]}"/>')
+
+    def svg_escape(s: str) -> str:
+        return (
+            s.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+        )
+
+    if title_enabled:
+        svg_elements.append(
+            f'<text x="{margin}" y="{title_y + title_h}" font-size="{renderer["fonts"]["title_size"]}" '
+            f'fill="{color_presets["text"]}" font-family="sans-serif">{svg_escape(spec.title)}</text>'
+        )
+
+    header_fill = hex_to_rgb(layout["phase_bar"]["fill"])
+    header_text = hex_to_rgb(layout["phase_bar"]["text_color"])
+
+    layout_debug: Dict[str, Any] = {
+        "layout": "packed-three-column",
+        "canvas": {"width_px": width, "height_px": height, "margin_px": margin},
+        "phases": [],
+        "nodes": [],
+    }
+
+    phase_bounds: List[Tuple[int, int]] = []
+    for idx, phase in enumerate(phases):
+        phase_y0 = content_top + sum(phase_heights[:idx]) + idx * phase_gap
+        phase_h = phase_heights[idx]
+        phase_y1 = phase_y0 + phase_h
+        phase_bounds.append((phase_y0, phase_y1))
+
+        header_h = min(max(int(renderer["fonts"]["default_size"]) + box_padding, 44), max(36, phase_h // 5))
+        header_value = phase.label
+        if getattr(phase, "phase_header_override", None):
+            header_value = f"{phase.label}：{str(getattr(phase, 'phase_header_override') or '').strip()}"
+
+        _draw_rounded_rect(
+            draw,
+            (content_left, phase_y0, content_right, phase_y0 + header_h),
+            radius=box_radius,
+            fill=header_fill,
+            outline=header_fill,
+            width=stroke_w,
+        )
+        draw.text(
+            (content_left + box_padding, phase_y0 + (header_h - int(renderer["fonts"]["default_size"])) // 2),
+            header_value,
+            font=font_main,
+            fill=header_text,
+        )
+        svg_elements.append(
+            f'<rect x="{content_left}" y="{phase_y0}" width="{content_right - content_left}" height="{header_h}" '
+            f'rx="{box_radius}" ry="{box_radius}" fill="{layout["phase_bar"]["fill"]}" stroke="{layout["phase_bar"]["fill"]}" stroke-width="{stroke_w}"/>'
+        )
+        svg_elements.append(
+            f'<text x="{content_left + box_padding}" y="{phase_y0 + header_h - box_padding}" '
+            f'font-size="{renderer["fonts"]["default_size"]}" fill="{layout["phase_bar"]["text_color"]}" '
+            f'font-family="sans-serif">{svg_escape(header_value)}</text>'
+        )
+
+        area_y0 = phase_y0 + header_h + spacing
+        area_y1 = phase_y1
+        area_h = max(1, area_y1 - area_y0)
+
+        flat = _phase_flat_boxes(phase)
+        if not flat:
+            layout_debug["phases"].append({"label": phase.label, "boxes": 0, "compressed": False})
+            continue
+
+        main_idx = min(max(_pick_main_box_idx(phase), 0), len(flat) - 1)
+        main_box = flat[main_idx]
+        center_stack = [main_box] + _pick_center_stack_boxes(phase, main_box, max_outputs=2)
+        footer_boxes = [b for b in flat if str(getattr(b, "role", "") or "").strip() == "header"]
+        side_boxes = [b for b in flat if (b not in center_stack and b not in footer_boxes)]
+
+        # Lane hints (optional)
+        left_boxes: List[Any] = []
+        right_boxes: List[Any] = []
+        for b in side_boxes:
+            role = str(getattr(b, "role", "") or "").strip()
+            kind = str(getattr(b, "kind", "") or "").strip()
+            lh = getattr(b, "layout_hint", None)
+            lane = str(getattr(lh, "lane", "") or "").strip() if lh is not None else ""
+            if lane == "left" or role == "input" or kind in {"secondary", "auxiliary"}:
+                left_boxes.append(b)
+            elif lane == "right":
+                right_boxes.append(b)
+            else:
+                right_boxes.append(b)
+
+        # Footer (full width) pinned to bottom.
+        footer_items = [{"box": b, **needed_height(b, content_w)} for b in footer_boxes]
+        footer_total = sum(it["h"] for it in footer_items) + spacing * max(0, len(footer_items) - 1)
+        footer_y0 = area_y1 - footer_total if footer_items else area_y1
+        footer_y0 = max(area_y0, footer_y0)
+        main_area_y1 = footer_y0 - (spacing if footer_items else 0)
+        main_area_y1 = max(area_y0, main_area_y1)
+        main_area_h = max(1, main_area_y1 - area_y0)
+
+        # Prepare stacks with measurements
+        center_items = [{"box": b, **needed_height(b, center_w)} for b in center_stack]
+        left_items = [{"box": b, **needed_height(b, side_w)} for b in left_boxes]
+        right_items = [{"box": b, **needed_height(b, side_w)} for b in right_boxes]
+
+        center_heights, center_gap, center_compress = fit_stack(center_items, main_area_h, spacing)
+        left_heights, left_gap, left_compress = fit_stack(left_items, main_area_h, spacing)
+        right_heights, right_gap, right_compress = fit_stack(right_items, main_area_h, spacing)
+
+        def draw_box_abs(b: Any, x0: int, y0: int, w: int, h: int, wrapped: List[str], fill_hex: str, stroke_hex: str) -> None:
+            frgb, srgb = hex_to_rgb(fill_hex), hex_to_rgb(stroke_hex)
+            _draw_rounded_rect(draw, (x0, y0, x0 + w, y0 + h), radius=box_radius, fill=frgb, outline=srgb, width=stroke_w)
+            ty = y0 + box_padding
+            for ln in wrapped:
+                if ty + int(renderer["fonts"]["default_size"]) > y0 + h - box_padding:
+                    break
+                draw.text((x0 + box_padding, ty), ln, font=font_main, fill=text_color)
+                ty += int(renderer["fonts"]["default_size"]) + 2
+
+            svg_elements.append(
+                f'<rect x="{x0}" y="{y0}" width="{w}" height="{h}" rx="{box_radius}" ry="{box_radius}" '
+                f'fill="{fill_hex}" stroke="{stroke_hex}" stroke-width="{stroke_w}"/>'
+            )
+            if wrapped:
+                base_y = y0 + box_padding + int(renderer["fonts"]["default_size"])
+                svg_elements.append(
+                    f'<text x="{x0 + box_padding}" y="{base_y}" font-size="{renderer["fonts"]["default_size"]}" '
+                    f'fill="{color_presets["text"]}" font-family="sans-serif">'
+                )
+                y = base_y
+                for i, ln in enumerate(wrapped):
+                    if i == 0:
+                        svg_elements.append(f"{svg_escape(ln)}")
+                    else:
+                        y += int(renderer["fonts"]["default_size"]) + 2
+                        svg_elements.append(f'<tspan x="{x0 + box_padding}" y="{y}">{svg_escape(ln)}</tspan>')
+                svg_elements.append("</text>")
+
+        # Draw center stack
+        y = area_y0
+        for it, h in zip(center_items, center_heights):
+            b = it["box"]
+            fhex, shex = kind_fill_stroke(str(getattr(b, "kind", "primary") or "primary"))
+            draw_box_abs(b, center_x0, y, center_w, h, cast(List[str], it["wrapped"]), fhex, shex)
+            layout_debug["nodes"].append(
+                {
+                    "id": str(getattr(b, "id", "") or ""),
+                    "phase": phase.label,
+                    "phase_idx": idx + 1,
+                    "role": str(getattr(b, "role", "") or "") or None,
+                    "kind": str(getattr(b, "kind", "") or ""),
+                    "x": center_x0,
+                    "y": y,
+                    "w": center_w,
+                    "h": h,
+                    "wrapped_lines": len(cast(List[str], it["wrapped"])),
+                    "text_h": int(it["text_h"]),
+                    "compressed": bool(center_compress),
+                }
+            )
+            y += h + center_gap
+
+        def draw_side(items: List[Dict[str, Any]], heights: List[int], x0: int, w: int, gap: int, compressed: bool) -> None:
+            y = area_y0
+            for it, h in zip(items, heights):
+                b = it["box"]
+                fhex, shex = kind_fill_stroke(str(getattr(b, "kind", "primary") or "primary"))
+                draw_box_abs(b, x0, y, w, h, cast(List[str], it["wrapped"]), fhex, shex)
+                layout_debug["nodes"].append(
+                    {
+                        "id": str(getattr(b, "id", "") or ""),
+                        "phase": phase.label,
+                        "phase_idx": idx + 1,
+                        "role": str(getattr(b, "role", "") or "") or None,
+                        "kind": str(getattr(b, "kind", "") or ""),
+                        "x": x0,
+                        "y": y,
+                        "w": w,
+                        "h": h,
+                        "wrapped_lines": len(cast(List[str], it["wrapped"])),
+                        "text_h": int(it["text_h"]),
+                        "compressed": bool(compressed),
+                    }
+                )
+                y += h + gap
+
+        draw_side(left_items, left_heights, left_x0, side_w, left_gap, left_compress)
+        draw_side(right_items, right_heights, right_x0, side_w, right_gap, right_compress)
+
+        # Draw footer full-width
+        y = footer_y0
+        for it in footer_items:
+            b = it["box"]
+            fhex, shex = kind_fill_stroke(str(getattr(b, "kind", "auxiliary") or "auxiliary"))
+            h = int(it["h"])
+            draw_box_abs(b, content_left, y, content_w, h, cast(List[str], it["wrapped"]), fhex, shex)
+            layout_debug["nodes"].append(
+                {
+                    "id": str(getattr(b, "id", "") or ""),
+                    "phase": phase.label,
+                    "phase_idx": idx + 1,
+                    "role": str(getattr(b, "role", "") or "") or None,
+                    "kind": str(getattr(b, "kind", "") or ""),
+                    "x": content_left,
+                    "y": y,
+                    "w": content_w,
+                    "h": h,
+                    "wrapped_lines": len(cast(List[str], it["wrapped"])),
+                    "text_h": int(it["text_h"]),
+                    "compressed": False,
+                }
+            )
+            y += h + spacing
+
+        layout_debug["phases"].append(
+            {
+                "label": phase.label,
+                "boxes": len(flat),
+                "compressed": bool(center_compress or left_compress or right_compress),
+                "center_stack": [str(getattr(b, "id", "") or "") for b in center_stack],
+            }
+        )
+
+    # Mainline arrows between phases (internal fallback only; draw.io export uses real edges).
+    stroke_rgb = hex_to_rgb(stroke_hex)
+    arrow_w = max(2, int((renderer.get("stroke", {}) or {}).get("width_px", 3)))
+    main_x = int(center_x0 + center_w // 2)
+    for i in range(len(phase_bounds) - 1):
+        y0 = phase_bounds[i][1] - max(2, arrow_w)
+        y1 = phase_bounds[i + 1][0] + max(2, arrow_w)
+        _draw_vertical_arrow_png(draw, main_x, y0, y1, stroke_rgb, arrow_w)
+        svg_elements.append(
+            f'<line x1="{main_x}" y1="{y0}" x2="{main_x}" y2="{y1}" '
+            f'stroke="{stroke_hex}" stroke-width="{arrow_w}" marker-end="url(#arrow)"/>'
+        )
+
+    if notes_enabled and note:
+        ny = height - margin - note_h
+        draw.text((margin, ny), note, font=font_main, fill=text_color)
+        svg_elements.append(
+            f'<text x="{margin}" y="{height - margin}" font-size="{renderer["fonts"]["default_size"]}" '
+            f'fill="{color_presets["text"]}" font-family="sans-serif">{svg_escape(note)}</text>'
+        )
+
+    svg_elements.append("</svg>")
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out_png)
+    if bool((renderer.get("svg", {}) or {}).get("enabled", True)):
+        write_text(out_svg, "\n".join(svg_elements) + "\n")
+
+    # draw.io nodes: use absolute coordinates and stable ids; group phases for convenient move.
+    drawio_nodes: List[DrawioNode] = []
+    font_size = int(renderer["fonts"]["default_size"])
+
+    if title_enabled:
+        drawio_nodes.append(
+            DrawioNode(
+                id="title",
+                value=spec.title,
+                x=margin,
+                y=title_y,
+                w=max(300, min(1400, content_right - margin)),
+                h=title_h + 12,
+                style=default_box_style(
+                    fill="#FFFFFF",
+                    stroke="#FFFFFF",
+                    font_size=int(renderer["fonts"]["title_size"]),
+                    font_color=str(color_presets.get("text", "#1F1F1F")),
+                )
+                + "align=left;verticalAlign=top;",
             )
         )
+
+    # Build draw.io nodes based on layout_debug absolute positions.
+    # First create phase group containers, then attach nodes to groups with relative geometry.
+    phase_groups: List[Tuple[str, int, int]] = []
+    for idx, phase in enumerate(phases):
+        phase_y0 = content_top + sum(phase_heights[:idx]) + idx * phase_gap
+        phase_h = phase_heights[idx]
+        gid = f"g_phase_{idx+1}"
+        drawio_nodes.append(
+            DrawioNode(
+                id=gid,
+                value="",
+                x=content_left,
+                y=phase_y0,
+                w=content_w,
+                h=phase_h,
+                style="group;opacity=0;fillColor=none;strokeColor=none;",
+            )
+        )
+        phase_groups.append((gid, content_left, phase_y0))
+
+        header_h = min(max(int(renderer["fonts"]["default_size"]) + box_padding, 44), max(36, phase_h // 5))
+        header_value = phase.label
+        if getattr(phase, "phase_header_override", None):
+            header_value = f"{phase.label}：{str(getattr(phase, 'phase_header_override') or '').strip()}"
+        drawio_nodes.append(
+            DrawioNode(
+                id=f"phase_{idx+1}_header",
+                value=header_value,
+                x=0,
+                y=0,
+                w=content_w,
+                h=header_h,
+                parent=gid,
+                style=default_bar_style(
+                    fill=str(layout.get("phase_bar", {}).get("fill", "#2F75B5")),
+                    font_size=font_size,
+                    font_color=str(layout.get("phase_bar", {}).get("text_color", "#FFFFFF")),
+                )
+                + "align=left;verticalAlign=middle;",
+            )
+        )
+
+    # Attach boxes to their phase group by matching (phase_idx, node id) in layout_debug.
+    phase_origin_by_label = {i + 1: phase_groups[i] for i in range(len(phase_groups))}
+    for nd in cast(List[Dict[str, Any]], layout_debug.get("nodes", [])):
+        nid = str(nd.get("id") or "").strip()
+        phase_idx = int(nd.get("phase_idx") or 0)
+        if not nid or phase_idx not in phase_origin_by_label:
+            continue
+        gid, gx, gy = phase_origin_by_label[phase_idx]
+        x = int(nd.get("x", 0)) - gx
+        y = int(nd.get("y", 0)) - gy
+        w = int(nd.get("w", 10))
+        h = int(nd.get("h", 10))
+        box_obj = node_ids.get(nid)
+        kind = str(getattr(box_obj, "kind", "primary") or "primary").strip() if box_obj is not None else "primary"
+        fhex, shex = kind_fill_stroke(kind)
+        style_override = str(getattr(box_obj, "style", "") or "").strip() if box_obj is not None else ""
+        drawio_nodes.append(
+            DrawioNode(
+                id=nid,
+                value=str(getattr(box_obj, "text", "") or "") if box_obj is not None else "",
+                x=x,
+                y=y,
+                w=w,
+                h=h,
+                parent=gid,
+                style=(
+                    style_override
+                    or default_box_style(
+                        fill=fhex,
+                        stroke=shex,
+                        font_size=font_size,
+                        font_color=str(color_presets.get("text", "#1F1F1F")),
+                    )
+                    + "align=center;verticalAlign=middle;"
+                ),
+            )
+        )
+
+    if notes_enabled and note:
+        drawio_nodes.append(
+            DrawioNode(
+                id="notes",
+                value=note,
+                x=margin,
+                y=height - margin - note_h - 12,
+                w=max(300, content_right - margin),
+                h=note_h + 12,
+                style=default_box_style(
+                    fill="#FFFFFF",
+                    stroke="#FFFFFF",
+                    font_size=font_size,
+                    font_color=str(color_presets.get("text", "#1F1F1F")),
+                )
+                + "align=left;verticalAlign=top;",
+            )
+        )
+
+    edges, edge_debug = _resolve_spec_edges(spec, config, node_ids)
+    try:
+        (out_drawio.parent / "layout_debug.json").write_text(
+            json.dumps(layout_debug, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+    except Exception:
+        pass
+    try:
+        (out_drawio.parent / "edge_debug.json").write_text(
+            json.dumps(edge_debug, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+    except Exception:
+        pass
     write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
 
 
@@ -1591,17 +2444,6 @@ def _render_png_layered_pipeline(
         area_y1 = phase_y1
         flat_boxes = [b for r in phase.rows for b in r.boxes]
         if not flat_boxes:
-            drawio_nodes.append(
-                DrawioNode(
-                    id=f"p{idx+1}_main",
-                    value="",
-                    x=center_x0 + center_w // 2 - 5,
-                    y=area_y0 + max(0, (area_y1 - area_y0) // 2) - 5,
-                    w=10,
-                    h=10,
-                    style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;",
-                )
-            )
             continue
         main_idx = min(max(_pick_main_box_idx(phase), 0), len(flat_boxes) - 1)
         main_box = flat_boxes[main_idx]
@@ -1617,25 +2459,31 @@ def _render_png_layered_pipeline(
         text_h = len(wrapped) * line_h + max(0, (len(wrapped) - 1) * 2)
         area_h = max(1, area_y1 - area_y0)
         main_h = max(min_box_h, min(area_h, text_h + 2 * box_padding + 4))
+        main_id = str(getattr(main_box, "id", "") or "").strip()
+        if not main_id:
+            main_id = _stable_box_id(str(getattr(phase, "label", "") or ""), main_box)
         drawio_nodes.append(
             DrawioNode(
-                id=f"p{idx+1}_main",
+                id=main_id,
                 value=main_box.text,
                 x=center_x0,
                 y=area_y0,
                 w=center_w,
                 h=main_h,
-                style=default_box_style(
-                    fill=fill_hex,
-                    stroke=stroke_hex,
-                    font_size=font_size,
-                    font_color=str(color_presets.get("text", "#1F1F1F")),
-                )
-                + "align=center;verticalAlign=middle;",
+                style=(
+                    str(getattr(main_box, "style", "") or "").strip()
+                    or default_box_style(
+                        fill=fill_hex,
+                        stroke=stroke_hex,
+                        font_size=font_size,
+                        font_color=str(color_presets.get("text", "#1F1F1F")),
+                    )
+                    + "align=center;verticalAlign=middle;"
+                ),
             )
         )
 
-        def add_side(x0: int, w: int, boxes: List[Any], prefix: str) -> None:
+        def add_side(x0: int, w: int, boxes: List[Any]) -> None:
             if not boxes:
                 return
             n = len(boxes)
@@ -1643,34 +2491,40 @@ def _render_png_layered_pipeline(
             area_h = max(1, area_y1 - area_y0)
             h_each = max(1, int((area_h - gap * (n - 1)) // n))
             y = area_y0
-            for i, b in enumerate(boxes, start=1):
+            for b in boxes:
                 bh = max(1, min(area_y1 - y, max(min_box_h, h_each)))
                 if y + bh > area_y1:
                     bh = max(1, area_y1 - y)
                 fhex, shex = kind_fill_stroke(b.kind)
+                bid = str(getattr(b, "id", "") or "").strip()
+                if not bid:
+                    bid = _stable_box_id(str(getattr(phase, "label", "") or ""), b)
                 drawio_nodes.append(
                     DrawioNode(
-                        id=f"p{idx+1}_{prefix}{i}",
+                        id=bid,
                         value=b.text,
                         x=x0,
                         y=y,
                         w=w,
                         h=bh,
-                        style=default_box_style(
-                            fill=fhex,
-                            stroke=shex,
-                            font_size=font_size,
-                            font_color=str(color_presets.get("text", "#1F1F1F")),
-                        )
-                        + "align=center;verticalAlign=middle;",
+                        style=(
+                            str(getattr(b, "style", "") or "").strip()
+                            or default_box_style(
+                                fill=fhex,
+                                stroke=shex,
+                                font_size=font_size,
+                                font_color=str(color_presets.get("text", "#1F1F1F")),
+                            )
+                            + "align=center;verticalAlign=middle;"
+                        ),
                     )
                 )
                 y = y + bh + gap
                 if y >= area_y1:
                     break
 
-        add_side(left_x0, side_w, left_boxes, "l")
-        add_side(right_x0, side_w, right_boxes, "r")
+        add_side(left_x0, side_w, left_boxes)
+        add_side(right_x0, side_w, right_boxes)
 
     if notes_enabled and note:
         drawio_nodes.append(
@@ -1691,20 +2545,14 @@ def _render_png_layered_pipeline(
             )
         )
 
-    edge_style = default_edge_style(
-        stroke=str((renderer.get("stroke", {}) or {}).get("color", "#2F5597")),
-        width=max(2, int((renderer.get("stroke", {}) or {}).get("width_px", 3))),
-    )
-    edges: List[DrawioEdge] = []
-    for i in range(1, len(phases)):
-        edges.append(
-            DrawioEdge(
-                id=f"e_main_{i}",
-                source=f"p{i}_main",
-                target=f"p{i+1}_main",
-                style=edge_style,
-            )
+    edges, edge_debug = _resolve_spec_edges(spec, config, node_ids)
+    _write_layout_debug_json(out_drawio.parent, "layered-pipeline", drawio_nodes, node_ids)
+    try:
+        (out_drawio.parent / "edge_debug.json").write_text(
+            json.dumps(edge_debug, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
+    except Exception:
+        pass
     write_drawio(out_drawio, nodes=drawio_nodes, edges=edges)
 
 
@@ -1728,6 +2576,8 @@ def _render_png(
     effective, _ = resolve_layout_template(layout_template=lt, template_ref=ref)
     if effective == "three-column":
         return _render_png_three_column(spec, config, out_png, out_svg, out_drawio)
+    if effective == "packed-three-column":
+        return _render_png_packed_three_column(spec, config, out_png, out_svg, out_drawio)
     if effective == "layered-pipeline":
         return _render_png_layered_pipeline(spec, config, out_png, out_svg, out_drawio)
     # Unknown / classic fallback

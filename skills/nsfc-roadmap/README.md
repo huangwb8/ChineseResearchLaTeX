@@ -47,6 +47,7 @@
 本技能内置了 10 个“模板参考图”（见 `references/models/`），并提供模板家族（family）供规划阶段参考：
 
 - `three-column`：三列式（左右支撑 + 中央主线）
+- `packed-three-column`：紧凑三列（按文本高度紧凑堆叠 + 中央可堆叠 main/output，减少空白并为走线留空间）
 - `layered-pipeline`：分层流水线（纵向主链 + 横向模块）
 - `convergence-divergence`：收敛-发散（漏斗/轮辐叙事；当前渲染会近似落到 layered-pipeline 骨架）
 - `dual-mainline`：双主线并行（当前渲染会近似落到 three-column 骨架）
@@ -55,6 +56,12 @@
 
 ```
 请按 three-column 风格生成技术路线图
+```
+
+或在“节点多/走线拥挤/中间空白大”的场景下：
+
+```
+请按 packed-three-column 风格生成技术路线图
 ```
 
 或更具体地说：
@@ -81,7 +88,7 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 | 你的需求 | 推荐用法 | 说明 |
 |---------|---------|------|
 | 首次生成路线图 | 从标书目录直接生成 | 自动抽取研究内容 |
-| 精细控制节点/连线 | 编辑 `spec_draft.yaml` 或 `spec_latest.yaml` 后重新生成 | 可复现、可迭代 |
+| 精细控制节点/连线 | 编辑 `spec_draft.yaml` 或 `spec_latest.yaml` 后重新生成 | 可复现、可迭代（支持 spec v2：`box.id` + `edges`） |
 | 快速微调 | 用 draw.io 打开 `.drawio` 编辑 | 人工精修 |
 | 多轮优化 | 增加 `--rounds` 到 7-10 | 追求最佳效果 |
 
@@ -93,6 +100,25 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 | 布局 | 上→下 / 左→右 流程 | 输入层→处理层→输出层 |
 | 适用 | 时间线、里程碑、阶段划分 | 机制、算法架构、模块关系 |
 | 例子 | 三年研究计划、实验流程图 | 深度学习架构、信号通路 |
+
+## 精细控制连线（spec v2：box.id + edges）
+
+当你需要“关键框之间”的语义连线时，推荐在 spec 中显式写 `id` 与 `edges`：
+
+- 渲染器会**优先复现** `spec.edges`（显式连线）。
+- 未提供 `spec.edges` 时，才按 `config.yaml:layout.auto_edges` 自动连线（并受 `layout.edge_density_limit` 限制）。
+
+示例（节选）：
+
+```yaml
+phases:
+  - label: 数据准备
+    rows:
+      - - { id: data_tcga, text: "公开组学数据\\nTCGA/ICGC/GEO", role: input, kind: primary }
+      - - { id: prep_main, text: "统一数据表征\\n训练-部署脱钩", role: main, kind: critical }
+edges:
+  - { from: data_tcga, to: prep_main, kind: aux, route: orthogonal, label: "输入" }
+```
 
 ## 输出文件
 
@@ -110,6 +136,8 @@ roadmap_output/
     │       ├── round_01/
     │       │   ├── measurements.json            # 纯度量采集（不含 P0/P1/P2 判定，供宿主 AI 解读）
     │       │   ├── dimension_measurements.json  # structure/visual/readability 三维度度量
+    │       │   ├── layout_debug.json            # 布局诊断（节点尺寸/压缩等）
+    │       │   ├── edge_debug.json              # 连线诊断（显式/自动 edges 的解析结果）
     │       │   ├── critique_structure.json
     │       │   ├── critique_visual.json
     │       │   ├── critique_readability.json
@@ -216,7 +244,7 @@ roadmap_output/
 1) **拥挤（density 高）**：通常是**内容问题** → 优先缩短节点文案、合并相近节点、减少节点数；不建议用缩字号来“通过阈值”，也不建议无限拉长画布破坏 A4 约束。  
 2) **文字溢出（overflow）**：才考虑减字号或增大 box 高度（`layout.box.min_height_px`）。  
 3) **字号偏小**：应增大字号，并回看是否存在 overflow 风险。  
-4) **结构不清**：优先换模板家族（`three-column` / `layered-pipeline`）或在规划阶段重写主线/分区/收口。
+4) **结构不清**：优先换模板家族（`packed-three-column` / `three-column` / `layered-pipeline`）或在规划阶段重写主线/分区/收口。
 
 ### Q：如何只生成不优化？
 

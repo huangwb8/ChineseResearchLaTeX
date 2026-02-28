@@ -427,8 +427,8 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
         l_out: Dict[str, Any] = {}
         if "template" in layout:
             t = as_str(layout.get("template"), "layout.template")
-            if t not in {"auto", "classic", "three-column", "layered-pipeline"}:
-                fatal("config_local.layout.template 不合法（允许 auto|classic|three-column|layered-pipeline）")
+            if t not in {"auto", "classic", "three-column", "packed-three-column", "layered-pipeline"}:
+                fatal("config_local.layout.template 不合法（允许 auto|classic|three-column|packed-three-column|layered-pipeline）")
             l_out["template"] = t
         if "template_ref" in layout:
             l_out["template_ref"] = as_opt_str(layout.get("template_ref"), "layout.template_ref")
@@ -436,6 +436,13 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
             l_out["direction"] = as_str(layout.get("direction"), "layout.direction")
         if "spacing_px" in layout:
             l_out["spacing_px"] = as_int(layout.get("spacing_px"), "layout.spacing_px", 8, 120)
+        if "auto_edges" in layout:
+            m = as_str(layout.get("auto_edges"), "layout.auto_edges").strip().lower()
+            if m not in {"off", "none", "minimal", "semantic"}:
+                fatal("config_local.layout.auto_edges 不合法（允许 off|minimal|semantic）")
+            l_out["auto_edges"] = ("off" if m in {"off", "none"} else m)
+        if "edge_density_limit" in layout:
+            l_out["edge_density_limit"] = as_int(layout.get("edge_density_limit"), "layout.edge_density_limit", 0, 200)
         pb = layout.get("phase_bar")
         if isinstance(pb, dict):
             pb_out: Dict[str, Any] = {}

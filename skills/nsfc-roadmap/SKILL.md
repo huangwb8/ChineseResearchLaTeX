@@ -37,7 +37,7 @@ metadata:
 
 - `rounds`：评估-优化轮次（默认 5，单一真相来源见 `config.yaml:evaluation.max_rounds`）
 - `output_dir`：输出目录（默认在当前工作目录下创建 `roadmap_output/`）
-- `layout`：布局模板名（默认 `auto`，见 `config.yaml:layout`；支持 `classic/three-column/layered-pipeline`）
+- `layout`：布局模板名（默认 `auto`，见 `config.yaml:layout`；支持 `classic/three-column/packed-three-column/layered-pipeline`）
 - `template_ref`：具体模板 id（如 `model-02`；高级选项；默认“纯 AI 规划”不需要也不建议设置）
 
 ## 输出
@@ -54,6 +54,8 @@ metadata:
   - `runs/run_YYYYMMDDHHMMSS/`：本次运行隔离目录（包含各轮 `round_XX/`）
     - `round_XX/measurements.json`：纯度量采集（密度/溢出/阶段平衡/连线/字体等；不含 P0/P1/P2 判定）
     - `round_XX/dimension_measurements.json`：structure/visual/readability 三维度度量（供宿主 AI 语义解读）
+    - `round_XX/layout_debug.json`：布局诊断（节点尺寸/压缩等）
+    - `round_XX/edge_debug.json`：连线诊断（显式/自动 edges 的解析结果）
     - `round_XX/critique_structure.json`：结构完整性评估（术语一致性/重复节点/阶段合理性等）
     - `round_XX/critique_visual.json`：视觉美学评估（对比度/配色区分度等）
     - `round_XX/critique_readability.json`：人类可读性评估（字号门槛/密度分布/边缘拥挤等）
@@ -134,8 +136,13 @@ metadata:
 
 模板字段（可选，推荐在 spec 中记录以便可复现与复盘）：
 
-- `layout_template: auto|classic|three-column|layered-pipeline`（可选；不写也可以）
+- `layout_template: auto|classic|three-column|packed-three-column|layered-pipeline`（可选；不写也可以）
 - `template_ref: model-01..model-10`（可选；默认不建议使用，以避免把复杂场景“框死”在单一模板上）
+
+spec v2（可选；用于逼近 draw.io 手工连线上限）：
+
+- `box.id`：为关键节点显式指定稳定 id（用于可复现连线与手工微调不丢失）
+- `edges`：显式关键连线（当提供 `spec.edges` 时，渲染器必须优先复现；未提供时才按 `config.yaml:layout.auto_edges` 自动连线）
 
 ### 阶段三：渲染（确定性脚本）
 

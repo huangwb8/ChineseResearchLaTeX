@@ -12,6 +12,21 @@
 
 - （暂无）
 
+## [0.10.0] - 2026-02-28
+
+### Added（新增）
+
+- spec v2 能力：节点可选 `box.id`（稳定 id）与顶层 `edges`（显式连线，优先复现）
+- 新增布局模板 `packed-three-column`：按文本高度紧凑堆叠，中心列支持 main/output 堆叠，减少空白并为走线留空间
+- 每轮输出调试文件：`round_XX/layout_debug.json` 与 `round_XX/edge_debug.json`（布局/连线诊断）
+- 新增轻量测试闭环：`tests/实例辅助优化-v202602281042/`（PLAN/REPORT + spec v2 fixture）
+
+### Changed（变更）
+
+- draw.io 导出改为节点稳定 id + 连线策略升级：当 `spec.edges` 未提供时按 `config.yaml:layout.auto_edges` 自动连线，并受 `layout.edge_density_limit` 限制
+- `config.yaml`：新增 `layout.auto_edges` 与 `layout.edge_density_limit`；layout.template 允许 `packed-three-column`
+- 文档同步：`SKILL.md`、`README.md` 补齐 packed 模板与 spec v2/调试产物说明
+
 ## [0.9.1] - 2026-02-20
 
 ### Changed（变更）

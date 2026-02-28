@@ -47,6 +47,11 @@
   - `skills/nsfc-code/SKILL.md`：修复 shell 代码块弯引号；`nsfc_code_new_report.py` 示例补齐 `--ts "${TS}"`
   - `skills/nsfc-code/scripts/validate_skill.py`：smoke 校验改为 JSON 结构解析并覆盖 `--output-dir`
   - 文档口径对齐：`README.md` / `skills/README.md` / `Prompts.md`
+- **nsfc-roadmap 0.9.1 → 0.10.0**：补齐 spec v2（稳定 id + 显式 edges）与紧凑布局能力，逼近 draw.io 上限
+  - `skills/nsfc-roadmap/scripts/spec.py`：新增 `box.id`、`edges`、`size_hint/layout_hint/style` 等可选字段（保持向后兼容）
+  - `skills/nsfc-roadmap/scripts/render_roadmap.py`：新增 `packed-three-column` 渲染器；draw.io 导出升级为稳定节点 id + 显式/自动连线；每轮输出 `layout_debug.json`/`edge_debug.json`
+  - `skills/nsfc-roadmap/config.yaml`：新增 `layout.auto_edges` 与 `layout.edge_density_limit`，并允许 `layout.template=packed-three-column`
+  - 新增轻量测试闭环：`skills/nsfc-roadmap/tests/实例辅助优化-v202602281042/`（PLAN/REPORT + spec v2 fixture）
 
 ---
 

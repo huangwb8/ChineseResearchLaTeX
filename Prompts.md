@@ -94,6 +94,11 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+PlanName =实例辅助优化-v202602281042
+按 skills/nsfc-roadmap/plans/{PlanName}.md 的要求优化skill，所有缺陷都要修复。 有疑问的地方，你按最优方案决定，不要问我。在skills/nsfc-roadmap/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
+
+---
+
 (～￣▽￣)～ 可优化的点：
 
 - references/models 里有一些新的模板； 你应该更新一下 templates.yaml
