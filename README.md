@@ -191,6 +191,7 @@ git clone https://github.com/huangwb8/skills.git &&
 
 #### 🎯 质量保障
 - **nsfc-qc**：标书只读质量控制（多线程并行检查文风生硬、引用真伪与一致性、篇幅与结构分布、逻辑清晰度等，输出标准化 QC 报告）
+- **nsfc-ref-alignment**：参考文献与正文引用一致性核查（只读），检查 bibkey 是否存在、BibTeX 字段完备性与格式，并生成结构化输入供 AI 逐条评估"引用-语义"是否匹配
 - **nsfc-reviewers**：模拟领域专家视角对 NSFC 标书进行多维度评审（创新性/可行性/基础与团队等），输出分级问题（P0/P1/P2）与可执行修改建议，支持并行多组评审与跨组共识聚合
 - **nsfc-length-aligner**：篇幅对齐（基于国自然标书篇幅预算标准，检查目标标书篇幅并总结差距，给出针对性优化建议，在尽量不改变原意的前提下扩写/压缩到达标）
 - **nsfc-humanization**：去 AI 机器味（使标书文本读起来像资深领域专家亲笔撰写，而非 AI 生成）
@@ -213,9 +214,10 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v1.0.0 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v1.0.0 | 📝 日常 | NSFC 研究内容编排写作 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
-| [nsfc-roadmap](skills/nsfc-roadmap/) | v0.9.1 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
-| [nsfc-schematic](skills/nsfc-schematic/) | v0.10.0 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
+| [nsfc-roadmap](skills/nsfc-roadmap/) | v0.11.0 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
+| [nsfc-schematic](skills/nsfc-schematic/) | v0.13.1 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | 🚧 开发中 |
 | [nsfc-qc](skills/nsfc-qc/) | v1.0.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | ✅ 稳定 |
+| [nsfc-ref-alignment](skills/nsfc-ref-alignment/) | v0.1.1 | 📝 日常 | NSFC 参考文献与正文引用一致性核查（只读） | 🚧 开发中 |
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v1.0.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | ✅ 稳定 |
 | [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.0 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |
 | [nsfc-humanization](skills/nsfc-humanization/) | v1.0.0 | 📝 日常 | 去 AI 机器味，使标书读起来像专家亲笔撰写 | ✅ 稳定 |
