@@ -223,11 +223,46 @@ python3 nsfc-roadmap/scripts/nano_banana_check.py
 
 - 脚本每次只渲染/评估 1 轮，并在 `output_dir/.nsfc-roadmap/ai/{run_dir}/` 生成证据包与 `ai_critic_request.md`
 - 你（宿主 AI）阅读证据包后，把结构化响应写入 `ai_critic_response.yaml`（spec/config_local patch + stop/continue）
+- 若 `--renderer nano_banana`（Gemini PNG-only），证据包还会包含 `nano_banana_prompt.md`；你也可在响应中提供 `nano_banana_prompt` 字段来控制下一轮传给 Gemini 的 prompt（含 `nano_banana_prompt_only` action）
 - 再次运行脚本即可自动应用 patch 并进入下一轮（不在脚本内调用外部模型 API）
 
-> 推荐做法：把 `evaluation.stop_strategy: ai_critic` 写到 `output_dir/.nsfc-roadmap/config_local.yaml`，作为“仅本次实例生效”的开关。
+> 推荐做法：把 `evaluation.stop_strategy: ai_critic` 写到 `output_dir/.nsfc-roadmap/config_local.yaml`，作为”仅本次实例生效”的开关。
 
-补充：若启用 `evaluation.evaluation_mode: ai`（常与 `ai_critic` 搭配），每轮会额外导出 `measurements.json/dimension_measurements.json`，把“度量证据”与“阈值判定”解耦，便于宿主 AI 做上下文判断。
+补充：若启用 `evaluation.evaluation_mode: ai`（常与 `ai_critic` 搭配），每轮会额外导出 `measurements.json/dimension_measurements.json`，把”度量证据”与”阈值判定”解耦，便于宿主 AI 做上下文判断。
+
+### Nano Banana + ai_critic 实际工作流
+
+使用 `--renderer nano_banana` + `stop_strategy: ai_critic` 时，完整循环如下：
+
+```
+阶段一：理解标书 → roadmap-plan.md + spec.yaml
+        ↓
+运行脚本（--renderer nano_banana），Gemini 生成第 1 轮 PNG
+        ↓
+脚本暂停，输出证据包（roadmap.png / spec_latest.yaml /
+critique_*.json / nano_banana_prompt.md 等）+ ai_critic_request.md
+        ↓
+宿主 AI 读 roadmap.png（视觉判断为主）
+        + critique_*.json / evaluation.json（参考）
+        ↓
+宿主 AI 写 ai_critic_response.yaml
+  - action: stop              → 结束，交付当前 PNG
+  - action: spec_only         → 更新研究内容结构（nodes/phases）
+  - action: nano_banana_prompt_only → 只改给 Gemini 的绘图指令
+  - action: both              → 同时更新 spec + 绘图指令
+        ↓
+宿主 AI 再次运行脚本 → 脚本读 response → Gemini 重新生成新 PNG
+        ↓
+循环，直到 action=stop 或达到 max_rounds
+```
+
+**三个关键点**（与直觉不同）：
+
+1. **宿主 AI 不直接调用 Gemini API**：宿主 AI 只写 `ai_critic_response.yaml`，再次运行 `generate_roadmap.py` 后，由脚本（硬编码）负责调用 Gemini API。
+
+2. **脚本协作暂停**：每轮脚本只渲染 1 轮后主动停止；整个循环靠”脚本 ↔ 宿主 AI”交替驱动，不是脚本内自动闭环。
+
+3. **Gemini 每轮从文本 prompt 重新生成**：传给 Gemini 的是文本绘图指令（`nano_banana_prompt`），而不是”上一轮 PNG + 修改指令”。每轮产出的是全新图，不是对旧图的局部修改。
 
 ## 多维度自检
 

@@ -250,13 +250,14 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 - Nano Banana 模式下脚本会自动关闭 SVG/PDF 导出，并在每轮只生成 1 个候选（避免成本乘法）；多方案对比请用 `parallel-vibe` 多线程并行。
 - 该模式的 prompt 会从 spec（分组/节点/edges）**确定性构建**；优化时优先改 spec 的标签长度、分组边界与边关系，保证“缩印可读”。
 
-### 评估-优化循环（默认：自动收敛）
+### 评估-优化循环（默认：AI 闭环）
 
-- 默认配置：`evaluation.stop_strategy=plateau` + `evaluation.exploration.enabled=true`
+- 默认配置：`evaluation.stop_strategy=ai_critic`
 - 脚本行为：
-  - 每轮生成有限候选（`_candidates/`），择优进入 `round_XX/`
+  - 每次运行只推进 1 轮，生成证据包后暂停，等待宿主 AI 响应
   - 自动打分与落盘证据（`evaluation.json` + `*_debug.json` + `measurements*.json`）
-  - 达到平台期后自动停止，并导出 best round 到 `output_dir/`（交付文件）
+  - 宿主 AI 写回 `ai_critic_response.yaml` 后，resume 即推进下一轮；写 `action: stop` 则导出最终交付文件
+- 如需无人值守的自动收敛，可在 `config_local.yaml` 覆盖为 `stop_strategy: plateau`
 
 ### 多方案并行优化（parallel-vibe，可选，推荐用于“开很多 run 反复对比”）
 
@@ -277,18 +278,9 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 
 ### AI 自主闭环（ai_critic，离线协议）
 
-适用：需要“结构性改动”（例如分组重构、节点合并/拆分、主链重写），仅靠启发式修复难以持续变好时。
+默认模式。每次运行只推进 1 轮，由宿主 AI 评价证据包并决定下一步。如需回退到无人值守的自动收敛，可在 `config_local.yaml` 中覆盖 `stop_strategy: plateau`。
 
-1) 启用（推荐用实例级覆盖，不改全局配置）：
-
-在 `output_dir/.nsfc-schematic/config_local.yaml` 写入：
-
-```yaml
-evaluation:
-  stop_strategy: ai_critic
-```
-
-2) 运行生成脚本（每次只推进 1 轮）：
+1) 运行生成脚本（每次只推进 1 轮）：
 
 ```bash
 python3 nsfc-schematic/scripts/generate_schematic.py \

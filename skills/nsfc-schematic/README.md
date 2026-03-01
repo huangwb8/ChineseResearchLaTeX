@@ -131,6 +131,42 @@ OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-pre
 
 ---
 
+## Nano Banana 模式工作原理
+
+理解这个模式的内部机制，有助于正确使用和调优。
+
+### 实际流程
+
+```
+[准备] 规划 spec（分组/节点/连接关系）
+   ↓
+[Round N]
+  1. 脚本从 spec 确定性构建纯文本 prompt
+     （_build_nano_banana_prompt：硬编码拼接，不由宿主 AI 生成）
+  2. 调用 Gemini API（只传文本，无图片输入）→ 得到新 PNG
+  3. 脚本对 PNG 做启发式评估，生成证据包（evaluation.json 等）
+  4. 宿主 AI 读证据包（含 PNG），写回 ai_critic_response.yaml
+     → 修改的是 spec 或 config_local，而非 prompt 本身
+  5. 下一轮用更新后的 spec 重新构建 prompt，从头生成新 PNG
+   ↓
+满足停止条件（达轮次上限，或宿主 AI 写 action: stop）→ 导出最终 PNG
+```
+
+### 两个常见误解
+
+| 误解 | 实际行为 |
+|------|----------|
+| "宿主 AI 直接写 prompt 传给 Gemini" | Prompt 由脚本从 spec 确定性生成；宿主 AI 通过改 spec/config 间接影响 prompt |
+| "把上一轮 PNG 传回 Gemini 做图上修改" | 每轮只传纯文本；Gemini 每次从头独立生成新 PNG，上一轮图不作为输入 |
+
+### 优化思路
+
+- **想改图的内容/结构** → 让宿主 AI 修改 spec（节点 label、分组划分、连接关系）
+- **想改图的视觉参数** → 让宿主 AI 修改 config_local（字号、画布尺寸、配色等）
+- **想并行对比多种方案** → 用 `parallel-vibe` 开多个隔离工作区，每个线程用不同 spec 或 config
+
+---
+
 ## 配置选项（常用）
 
 | 参数 | 默认值 | 说明 |

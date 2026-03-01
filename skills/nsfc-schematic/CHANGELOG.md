@@ -6,6 +6,13 @@
 
 （暂无）
 
+## [0.14.0] - 2026-03-01
+
+### Changed（变更）
+
+- `config.yaml`：将 `evaluation.stop_strategy` 默认值从 `plateau` 改为 `ai_critic`，使 AI 闭环评价成为开箱即用的默认模式（无需手动配置 `config_local.yaml`）
+- `SKILL.md`：更新"评估-优化循环"章节，反映 ai_critic 为默认模式；更新"AI 自主闭环"章节，去掉"可选"表述，并说明如何回退到 plateau
+
 ## [0.13.1] - 2026-03-01
 
 ### Changed（变更）

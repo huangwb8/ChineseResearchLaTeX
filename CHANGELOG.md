@@ -17,6 +17,7 @@
 
 ### Changed（变更）
 
+- **nsfc-schematic v0.13.1 → v0.14.0**：将 `evaluation.stop_strategy` 默认值从 `plateau` 改为 `ai_critic`，AI 闭环评价成为开箱即用的默认模式；如需无人值守自动收敛，可在 `config_local.yaml` 覆盖 `stop_strategy: plateau`
 - **nsfc-schematic v0.9.0 → v0.10.0**：实例辅助优化（标题策略、标签可读性、空间利用率、形状统一）
   - `skills/nsfc-schematic/config.yaml`：默认关闭图内标题；新增 `layout.shape_policy`、`renderer.drawio_border_mode` 及空间利用/标签净距阈值
   - `skills/nsfc-schematic/scripts/routing.py` / `schematic_writer.py` / `render_schematic.py`：路由升级为双折线候选+代价函数，edge label 增加避障锚点与 offset，导出边框支持 adaptive
@@ -68,6 +69,10 @@
   - `skills/nsfc-schematic/scripts/nano_banana_check.py`：Gemini 配置连通性检查
   - `skills/nsfc-schematic/scripts/nano_banana_generate_png.py`：独立的 PNG 生成器（便于调试）
   - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`skills/nsfc-schematic/config.yaml`
+
+- **nsfc-roadmap v0.11.0 → v0.11.1**：Nano Banana + `ai_critic` 组合增强（宿主 AI 主导读图评估 + 可控 Gemini prompt）
+  - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：`ai_critic_response.yaml` 支持 `nano_banana_prompt`（full/patch）与 `action: nano_banana_prompt_only`；证据包新增 `nano_banana_prompt.md`
+  - 文档同步：`skills/nsfc-roadmap/README.md`、`skills/nsfc-roadmap/SKILL.md`、`skills/nsfc-roadmap/CHANGELOG.md`、`skills/nsfc-roadmap/config.yaml`
 
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`

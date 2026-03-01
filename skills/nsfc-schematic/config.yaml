@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.13.1
+  version: 0.14.0
   description: "为 NSFC 标书生成原理图/机制图（默认 drawio + SVG/PNG/PDF；可选 Nano Banana/Gemini PNG 模式）"
   author: "Bensz Conan"
   category: 科研写作
@@ -168,7 +168,7 @@ evaluation:
     consecutive_pass: 2
     allow_p1: 1
     score_threshold: 85
-  stop_strategy: plateau  # none|plateau|ai_critic（ai_critic 为“宿主 AI 响应驱动”的离线闭环）
+  stop_strategy: ai_critic  # none|plateau|ai_critic（ai_critic 为”宿主 AI 响应驱动”的离线闭环；plateau 为自动平台期检测）
   plateau:
     min_explore_rounds: 4
     same_image_rounds: 2

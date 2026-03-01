@@ -234,18 +234,27 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 - 在其中设置：`evaluation.stop_strategy: ai_critic`（这是实例级开关，不改全局 `config.yaml`）
 - 运行 `generate_roadmap.py` 后脚本会：
   - 只渲染 1 轮（或在已有 run 上继续渲染下一轮）
-  - 生成证据包：`output_dir/.nsfc-roadmap/ai/{run_dir}/ai_pack_round_XX/`（含 `roadmap.png/spec_latest.yaml/config_used.yaml/evaluation.json/measurements.json/dimension_measurements.json/critique_*.json`）
+  - 生成证据包：`output_dir/.nsfc-roadmap/ai/{run_dir}/ai_pack_round_XX/`（含 `roadmap.png/spec_latest.yaml/config_used.yaml/evaluation.json/measurements.json/dimension_measurements.json/critique_*.json`；若 `renderer=nano_banana` 还会包含 `nano_banana_prompt.md`）
   - 写出固定请求：`ai_critic_request.md`
   - 暂停等待你（宿主 AI）写入：`ai_critic_response.yaml`
 - 你把宿主 AI 的结构化响应写入 `ai_critic_response.yaml` 后，再次运行脚本即可自动应用 patch 并进入下一轮。
+
+#### Nano Banana + ai_critic（可选组合）
+
+当你使用 `--renderer nano_banana`（Gemini 图片模型）并同时启用 `evaluation.stop_strategy: ai_critic` 时：
+
+- 宿主 AI 应以 **直接读图（`roadmap.png`）的视觉判断** 为主；`evaluation.json/critique_*.json` 仅作参考。
+- 证据包会携带 `nano_banana_prompt.md`（本轮传给 Gemini 的完整 prompt），便于你对照当前绘图指令。
+- 你可以在响应中提供 `nano_banana_prompt` 字段，用于控制下一轮传给 Gemini 的 prompt（见下方协议）。
 
 #### ai_critic_response.yaml 最小协议（version=1）
 
 ```yaml
 version: 1
 based_on_round: 1
-action: both  # spec_only|config_only|both|stop
+action: both  # spec_only|config_only|both|nano_banana_prompt_only|stop
 reason: "一句话说明本轮行动与停止/继续依据"
+# 说明：nano_banana_prompt_only = 只更新 prompt，不修改 spec/config_local
 
 # 推荐：直接给完整 spec（避免 patch 合并歧义）
 # spec:
@@ -256,6 +265,12 @@ reason: "一句话说明本轮行动与停止/继续依据"
 # config_local:
 #   color_scheme:
 #     name: tint-layered
+
+# 可选（仅 nano_banana 模式）：提供下一轮传给 Gemini 的 prompt
+# nano_banana_prompt:
+#   mode: full    # full=全量替换（推荐）| patch=追加到确定性 prompt 末尾
+#   content: |
+#     你是一名科研申请书插图设计师...
 ```
 
 ### 阶段五：交付与自检

@@ -12,6 +12,17 @@
 
 - （暂无）
 
+## [0.11.1] - 2026-03-01
+
+### Added（新增）
+
+- Nano Banana + `ai_critic` 组合增强：宿主 AI 可在 `ai_critic_response.yaml` 中通过 `nano_banana_prompt` 控制下一轮传给 Gemini 的 prompt（支持 `full/patch`），并新增 `action: nano_banana_prompt_only`
+- AI 证据包新增 `nano_banana_prompt.md`（本轮传给 Gemini 的完整 prompt），便于宿主 AI 对照读图批判
+
+### Changed（变更）
+
+- `ai_critic_request.md`：Nano Banana 模式下新增“直接读图为主/硬编码规则仅参考”的提示段落与响应协议说明
+
 ## [0.11.0] - 2026-03-01
 
 ### Added（新增）

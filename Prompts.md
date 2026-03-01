@@ -89,6 +89,23 @@
 
 ---
 
+nsfc-schematic 使用 nano banana 模式时，是不是这样：
+
+- 先理解内容，了解用户的标书内容，制定一个计划
+- 请求 nano banana api，获得第1版。它是1个png图
+- 宿主ai（就是codex或者claude code所在的ai环境； 非 nano banana ）读这个png图，找到它的不足，然后总结优化建议
+- 宿主ai规划一个合适的prompt
+- 宿主ai调用一个硬编码代码，将prompt + 第1版的png图传回nano banana api； 获得第2版
+- 继续优化（如此类推）
+- 直到：
+  - 达到了用户定义或者系统默认的自优化次数
+  - 宿主ai判断当前的图已经足够好，不需要再改（即触发了早停）
+- 结束
+
+目前的流程是这样吗？如果不是，有哪些出入？
+
+---
+
 nsfc-schematic 优化
 
 - 新增一个 基于 Nano Banana 模型 制作原理图的模式。 大致的工作流程是
@@ -181,6 +198,28 @@ PlanName = 借鉴roadmap-优化-v202602191311
 按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 
 # nsfc-roadmap
+
+---
+
+nsfc-roadmap使用 nano banana 模式时，是不是这样：
+
+- 先理解内容，了解用户的标书内容，制定一个计划
+- 请求 nano banana api，获得第1版。它是1个png图
+- 宿主ai（就是codex或者claude code所在的ai环境； 非 nano banana ）读这个png图，找到它的不足，然后总结优化建议
+- 宿主ai规划一个合适的prompt
+- 宿主ai调用一个硬编码代码，将prompt + 第1版的png图传回nano banana api； 获得第2版
+- 继续优化（如此类推）
+- 直到：
+  - 达到了用户定义或者系统默认的自优化次数
+  - 宿主ai判断当前的图已经足够好，不需要再改（即触发了早停）
+- 结束
+
+目前的流程是这样吗？如果不是，有哪些出入？
+
+---
+
+PlanName = Gemini画图-优化-v202603012236
+按 skills/nsfc-roadmap/plans/{PlanName}.md 的要求优化skill，所有缺陷都要修复。 有疑问的地方，你按最优方案决定，不要问我。在skills/nsfc-roadmap/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 
 ---
 

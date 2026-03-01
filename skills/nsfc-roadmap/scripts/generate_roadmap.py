@@ -730,6 +730,7 @@ def _write_ai_pack(
     round_cfg: Path,
     out_png: Path,
     round_dir: Path,
+    prompt_path: Optional[Path] = None,
 ) -> Path:
     pack = _ai_pack_dir(ai_run_root, round_idx)
     pack.mkdir(parents=True, exist_ok=True)
@@ -740,6 +741,8 @@ def _write_ai_pack(
     _copy_if_exists(round_spec, pack / "spec_latest.yaml")
     _copy_if_exists(round_cfg, pack / "config_used.yaml")
     _copy_if_exists(out_png, pack / "roadmap.png")
+    if prompt_path is not None and prompt_path.exists():
+        _copy_if_exists(prompt_path, pack / "nano_banana_prompt.md")
     _copy_if_exists(round_dir / "evaluation.json", pack / "evaluation.json")
     _copy_if_exists(round_dir / "measurements.json", pack / "measurements.json")
     _copy_if_exists(round_dir / "dimension_measurements.json", pack / "dimension_measurements.json")
@@ -753,6 +756,8 @@ def _write_ai_critic_request(
     round_idx: int,
     pack_dir: Path,
     response_path: Path,
+    *,
+    is_nano_banana: bool = False,
 ) -> None:
     lines: List[str] = []
     lines.append("# nsfc-roadmap ai_critic request")
@@ -761,6 +766,20 @@ def _write_ai_critic_request(
     lines.append(f"- evidence_pack: `{pack_dir.as_posix()}`")
     lines.append(f"- write_response_to: `{response_path.as_posix()}`")
     lines.append("")
+    if is_nano_banana:
+        lines.extend(
+            [
+                "## 模式说明（Nano Banana + ai_critic）",
+                "",
+                "当前图片（`roadmap.png`）由 Gemini 图片模型根据 prompt 直接生成。",
+                "**请直接读取并分析 `roadmap.png` 图片**，做出视觉评价；",
+                "`evaluation.json/critique_*.json` 的硬编码规则结果仅供参考，以你的视觉判断为主。",
+                "",
+                "当前使用的 prompt：`nano_banana_prompt.md`（本轮传给 Gemini 的完整文本）。",
+                "如需调整 Gemini 的绘图行为，可在响应中提供 `nano_banana_prompt` 字段。",
+                "",
+            ]
+        )
     lines.append("## 任务")
     lines.append("")
     lines.append(
@@ -775,7 +794,10 @@ def _write_ai_critic_request(
     lines.append("```yaml")
     lines.append("version: 1")
     lines.append("based_on_round: 1")
-    lines.append("action: both  # spec_only|config_only|both|stop")
+    if is_nano_banana:
+        lines.append("action: both  # spec_only|config_only|both|nano_banana_prompt_only|stop")
+    else:
+        lines.append("action: both  # spec_only|config_only|both|stop")
     lines.append("reason: \"一句话说明本轮行动与停止/继续依据\"")
     lines.append("# 可选：提供完整 spec（推荐直接给全量，避免 patch 合并歧义）")
     lines.append("# spec:")
@@ -787,6 +809,15 @@ def _write_ai_critic_request(
     lines.append("#     template: three-column")
     lines.append("#   color_scheme:")
     lines.append("#     name: tint-layered")
+    if is_nano_banana:
+        lines.append("# 可选（仅 nano_banana 模式）：提供下一轮传给 Gemini 的 prompt")
+        lines.append("# nano_banana_prompt:")
+        lines.append("#   mode: full    # full=全量替换（推荐）| patch=追加到确定性 prompt 末尾")
+        lines.append("#   content: |")
+        lines.append("#     你是一名科研申请书插图设计师...")
+        lines.append("")
+        lines.append("# 新增 action 值（仅 nano_banana 模式）：")
+        lines.append("# action: nano_banana_prompt_only  # 只更新 prompt，不改 spec/config_local")
     lines.append("```")
     lines.append("")
     lines.append("### 关键纠偏（必须遵守）")
@@ -815,19 +846,20 @@ def _maybe_apply_ai_response(
     ai_run_root: Path,
     spec_data: Dict[str, Any],
     spec_latest_path: Path,
-) -> tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str]]:
+) -> tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str], Optional[str]]:
     """
-    Returns: (updated_spec_data, config_local_patch, action)
+    Returns: (updated_spec_data, config_local_patch, action, nano_banana_prompt_override)
     """
     resp_path = _ai_response_path(ai_run_root)
     if not resp_path.exists():
-        return spec_data, None, None
+        return spec_data, None, None, None
     resp = load_yaml(resp_path)
     if int(resp.get("version", 1) or 1) != 1:
         fatal(f"ai_critic_response.version 不支持：{resp.get('version')}")
     action = str(resp.get("action", "") or "").strip()
-    if action not in {"spec_only", "config_only", "both", "stop"}:
-        fatal("ai_critic_response.action 必须是 spec_only|config_only|both|stop")
+    valid_actions = {"spec_only", "config_only", "both", "nano_banana_prompt_only", "stop"}
+    if action not in valid_actions:
+        fatal("ai_critic_response.action 必须是 spec_only|config_only|both|nano_banana_prompt_only|stop")
 
     # Archive the response first (avoid repeated application on crash/retry).
     based = resp.get("based_on_round")
@@ -842,6 +874,19 @@ def _maybe_apply_ai_response(
         resp_path.unlink()
     except Exception:
         pass
+
+    nano_banana_prompt_override: Optional[str] = None
+    nb_prompt_cfg = resp.get("nano_banana_prompt")
+    if isinstance(nb_prompt_cfg, dict):
+        nb_mode = str(nb_prompt_cfg.get("mode", "full") or "full").strip()
+        nb_content = str(nb_prompt_cfg.get("content", "") or "").strip()
+        if nb_content:
+            if nb_mode == "full":
+                nano_banana_prompt_override = nb_content
+            elif nb_mode == "patch":
+                nano_banana_prompt_override = f"__PATCH__\n{nb_content}"
+            else:
+                warn(f"nano_banana_prompt.mode 不支持：{nb_mode!r}，已忽略")
 
     new_spec = resp.get("spec")
     if action in {"spec_only", "both", "stop"} and new_spec is not None:
@@ -858,9 +903,9 @@ def _maybe_apply_ai_response(
     if action in {"config_only", "both"} and config_local_patch is not None:
         if not isinstance(config_local_patch, dict):
             fatal("ai_critic_response.config_local 必须是 mapping")
-        return spec_data, config_local_patch, action
+        return spec_data, config_local_patch, action, nano_banana_prompt_override
 
-    return spec_data, None, action
+    return spec_data, None, action, nano_banana_prompt_override
 
 
 def _apply_exploration(cfg: Dict[str, Any], round_idx: int, exploration: Dict[str, Any]) -> Dict[str, Any]:
@@ -1267,8 +1312,11 @@ def main() -> None:
 
     # ai_critic: apply response patches (spec/config_local) before rendering the next round.
     ai_action: Optional[str] = None
+    ai_nano_banana_prompt: Optional[str] = None
     if ai_mode and ai_run_root is not None:
-        spec_data, config_local_patch, ai_action = _maybe_apply_ai_response(ai_run_root, spec_data, spec_latest)
+        spec_data, config_local_patch, ai_action, ai_nano_banana_prompt = _maybe_apply_ai_response(
+            ai_run_root, spec_data, spec_latest
+        )
         if config_local_patch is not None:
             base_local = local_cfg if isinstance(local_cfg, dict) else {}
             merged_local = _deep_merge_dict(base_local, config_local_patch)
@@ -1441,6 +1489,7 @@ def main() -> None:
                         round_idx=last_round,
                         pack_dir=pack_dir,
                         response_path=_ai_response_path(ai_run_root),
+                        is_nano_banana=(renderer_backend == "nano_banana"),
                     )
                     info(f"ai_critic: 等待响应文件：{_ai_response_path(ai_run_root)}")
                     info(f"ai_critic: request：{_ai_request_path(ai_run_root)}")
@@ -1546,7 +1595,17 @@ def main() -> None:
             ch = int(canvas_cfg.get("height_px", 1800) or 1800)
 
             out_png = round_dir / str(artifacts.get("png", "roadmap.png"))
-            prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
+            if renderer_backend == "nano_banana" and ai_nano_banana_prompt is not None:
+                if ai_nano_banana_prompt.startswith("__PATCH__\n"):
+                    base_prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
+                    patch_content = ai_nano_banana_prompt[len("__PATCH__\n") :]
+                    prompt = base_prompt.rstrip("\n") + "\n\n## AI 补充指令\n\n" + patch_content + "\n"
+                    info("nano_banana: 使用 patch 模式 prompt（确定性 prompt + AI 补充指令）")
+                else:
+                    prompt = ai_nano_banana_prompt
+                    info("nano_banana: 使用 AI 提供的 full prompt")
+            else:
+                prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
             write_text(round_dir / "nano_banana_prompt.md", prompt)
             try:
                 nano_banana_generate_png(
@@ -1620,12 +1679,14 @@ def main() -> None:
                 round_cfg=round_cfg,
                 out_png=out_png,
                 round_dir=round_dir,
+                prompt_path=round_dir / "nano_banana_prompt.md",
             )
             _write_ai_critic_request(
                 ai_run_root,
                 round_idx=r,
                 pack_dir=pack,
                 response_path=_ai_response_path(ai_run_root),
+                is_nano_banana=(renderer_backend == "nano_banana"),
             )
 
         score = int(evaluation.get("score", 0) or 0)
