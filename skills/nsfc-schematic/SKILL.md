@@ -75,8 +75,9 @@ metadata:
 - `round_*/_candidates/cand_*/ai_eval_request.md` + `ai_eval_response.json`：AI 评估请求/响应（主评估）
 - `run_*/ai_tex_request.md` + `ai_tex_response.json`：当输入来自 TEX 且未提供 spec_file 时，用于“AI 直接读 TEX → 生成 spec 草案”的离线请求/响应（如未响应则自动降级为正则抽取）
 
-规划模式额外交付：
-- `schematic-plan.md`：规划草案（写在**当前工作目录**，便于用户快速审阅；可用 `plan_schematic.py --no-workspace-plan` 禁用）
+规划模式交付：
+- `output_dir/schematic-plan.md`：规划草案（由宿主 AI 写入；脚本负责生成请求协议并在复跑时做合法性校验）
+- （可选）`schematic-plan.md`：如需额外复制一份到**当前工作目录**便于审阅，使用 `plan_schematic.py --also-write-workspace-plan`
 
 ## Spec v2（兼容旧版）
 
@@ -162,7 +163,7 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
 
 2. 宿主 AI 纯规划：根据 `./schematic_plan/.nsfc-schematic/planning/plan_request.md` 的要求，写出：
 
-- `./schematic_plan/PLAN.md`
+- `./schematic_plan/schematic-plan.md`
 - `./schematic_plan/spec_draft.yaml`
 
 （视觉学习可选）规划脚本会（尽力）在 `--output` 目录下生成“模型画廊”（用于学习优秀结构/风格）：
@@ -178,7 +179,7 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-4. 审阅 `schematic_plan/PLAN.md` 与 `schematic_plan/spec_draft.yaml`：确认模块划分、节点清单、连接关系与布局建议是否合理。
+4. 审阅 `schematic_plan/schematic-plan.md` 与 `schematic_plan/spec_draft.yaml`：确认模块划分、节点清单、连接关系与布局建议是否合理。
    - 如需手动起草规划草案，可参考：`nsfc-schematic/references/plan_template.md`
 5. 用 `generate_schematic.py` 进入多轮生成与优化：
 
@@ -207,6 +208,64 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 5. 评估图质量（`evaluate_schematic.py`），并增强“近空白渲染/内容丢失”的识别与分级。
 6. 多维度自检（`evaluate_dimension.py`）：结构/视觉/可读性独立证据落盘，并按缺陷线性扣分得到 `score_total`。
 7. 记录每轮结果并导出 best round。
+
+### 评估-优化循环（默认：自动收敛）
+
+- 默认配置：`evaluation.stop_strategy=plateau` + `evaluation.exploration.enabled=true`
+- 脚本行为：
+  - 每轮生成有限候选（`_candidates/`），择优进入 `round_XX/`
+  - 自动打分与落盘证据（`evaluation.json` + `*_debug.json` + `measurements*.json`）
+  - 达到平台期后自动停止，并导出 best round 到 `output_dir/`（交付文件）
+
+### AI 自主闭环（ai_critic，离线协议）
+
+适用：需要“结构性改动”（例如分组重构、节点合并/拆分、主链重写），仅靠启发式修复难以持续变好时。
+
+1) 启用（推荐用实例级覆盖，不改全局配置）：
+
+在 `output_dir/.nsfc-schematic/config_local.yaml` 写入：
+
+```yaml
+evaluation:
+  stop_strategy: ai_critic
+```
+
+2) 运行生成脚本（每次只推进 1 轮）：
+
+```bash
+python3 nsfc-schematic/scripts/generate_schematic.py \
+  --spec-file ./schematic_plan/spec_draft.yaml \
+  --output-dir ./schematic_output/
+```
+
+3) 找到 request 与证据包（脚本会提示路径；默认在隐藏目录内）：
+
+- `output_dir/.nsfc-schematic/ai/ACTIVE_RUN.txt`：当前闭环 run（用于 resume）
+- `output_dir/.nsfc-schematic/ai/<run>/ai_critic_request.md`：宿主 AI 的指令
+- `output_dir/.nsfc-schematic/ai/<run>/ai_pack_round_XX/`：证据包（含 `schematic.png` + `evaluation.json` 等）
+
+4) 宿主 AI 写回响应：
+
+按 `ai_critic_request.md` 的协议写入：
+
+- `output_dir/.nsfc-schematic/ai/<run>/ai_critic_response.yaml`
+
+最小示例：
+
+```yaml
+version: 1
+based_on_round: 1
+action: config_only  # spec_only|config_only|both|stop
+reason: "一句话说明为什么这样改"
+config_local:
+  layout:
+    font:
+      node_label_size: 28
+```
+
+5) Resume：
+
+再次运行 `generate_schematic.py` 即可自动消费响应、推进下一轮；当写入 `action: stop` 后脚本会清除 `ACTIVE_RUN.txt` 并导出最终交付文件。
 
 ### 脚本职责
 

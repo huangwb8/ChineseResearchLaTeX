@@ -24,7 +24,7 @@
 请为 /path/to/your/nsfc_proposal 生成原理图
 ```
 
-AI 会先生成规划草案（`PLAN.md`）和 spec 草案（`spec_draft.yaml`），你审阅后再进入生成。
+AI 会先生成规划草案（`schematic-plan.md`）和 spec 草案（`spec_draft.yaml`），你审阅后再进入生成。
 
 ### 从已有 spec 直接生成
 
@@ -42,7 +42,7 @@ AI 会先生成规划草案（`PLAN.md`）和 spec 草案（`spec_draft.yaml`）
 
 | 你的需求 | 推荐用法 | 说明 |
 |---------|---------|------|
-| 首次生成原理图 | 规划模式 | 先审阅 PLAN.md 再生成 |
+| 首次生成原理图 | 规划模式 | 先审阅 schematic-plan.md 再生成 |
 | 已有 spec 草案 | 直接生成 | 可控、可复现 |
 | 快速预览效果 | `--rounds 1` | 跳过优化循环 |
 | 精细控制分组/连线 | 编辑 `spec.yaml` | 结构化迭代 |
@@ -113,7 +113,7 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-该命令会在 `./schematic_plan/.nsfc-schematic/planning/` 下生成 `plan_request.md/plan_request.json` 与“模型画廊”（contact sheet）。随后由宿主 AI 写出 `PLAN.md + spec_draft.yaml`，再复跑脚本完成合法性校验。
+该命令会在 `./schematic_plan/.nsfc-schematic/planning/` 下生成 `plan_request.md/plan_request.json` 与“模型画廊”（contact sheet）。随后由宿主 AI 写出 `schematic-plan.md + spec_draft.yaml`，再复跑脚本完成合法性校验。
 
 （兼容旧流程）如需让脚本按确定性规则直接生成草案（模板规划），加 `--mode template`。
 
@@ -121,10 +121,10 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
 
 根据 `./schematic_plan/.nsfc-schematic/planning/plan_request.md` 的要求，写出：
 
-- `./schematic_plan/PLAN.md`
+- `./schematic_plan/schematic-plan.md`
 - `./schematic_plan/spec_draft.yaml`
 
-可选：为便于审阅，也可在当前工作目录额外写出扁平交付文件 `schematic-plan.md`（同名覆盖更新）。
+可选：如需额外复制一份到当前工作目录便于审阅，可在运行规划脚本时加 `--also-write-workspace-plan`（默认不会在 CWD 产生新文件）。
 
 模型画廊用于学习优秀结构与视觉风格（不要求也不建议把复杂场景固定到单一 `template_ref`）：
 
@@ -141,7 +141,7 @@ python3 nsfc-schematic/scripts/plan_schematic.py \
   --output ./schematic_plan/
 ```
 
-然后打开 `schematic-plan.md`（如你有生成）或 `schematic_plan/PLAN.md`，确认：
+然后打开 `schematic_plan/schematic-plan.md`（或你通过 `--also-write-workspace-plan` 复制出来的 `./schematic-plan.md`），确认：
 - 模块划分是否合理
 - 节点命名是否与正文一致
 - 连线关系是否准确

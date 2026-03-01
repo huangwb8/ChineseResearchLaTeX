@@ -1,0 +1,39 @@
+schematic:
+  title: "ai_critic 最小闭环示例"
+  direction: top-to-bottom
+  groups:
+    - id: input
+      label: "输入层"
+      style: dashed-border
+      children:
+        - id: data
+          label: "数据输入"
+          kind: primary
+    - id: process
+      label: "处理层"
+      style: solid-border
+      children:
+        - id: core
+          label: "核心模块"
+          kind: critical
+    - id: output
+      label: "输出层"
+      style: background-fill
+      children:
+        - id: result
+          label: "结果输出"
+          kind: primary
+  edges:
+    - id: e_in
+      from: input.data
+      to: process.core
+      kind: main
+      route: orthogonal
+      label: "输入"
+    - id: e_out
+      from: process.core
+      to: output.result
+      kind: main
+      route: orthogonal
+      label: "输出"
+

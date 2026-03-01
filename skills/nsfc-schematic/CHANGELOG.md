@@ -6,6 +6,20 @@
 
 （暂无）
 
+## [0.11.0] - 2026-03-01
+
+### Added（新增）
+
+- `references/spec_examples/ai_critic_min.yaml`：新增 `ai_critic` 最小闭环 spec 夹具，便于维护者快速跑通离线闭环。
+
+### Changed（变更）
+
+- `config.yaml`：版本升级至 `0.11.0`；规划输出文件名改为 `schematic-plan.md`（替代 `PLAN.md`，对齐 roadmap 的交付口径）。
+- `scripts/plan_schematic.py`：默认不再在当前工作目录（CWD）写出 `schematic-plan.md`；如需额外复制到 CWD，使用 `--also-write-workspace-plan`（显式开关）。
+- `scripts/plan_schematic.py`：规划阶段中间产物统一托管到 `output_dir/.nsfc-schematic/`，并自动创建 `.nsfc-schematic/.gitignore`，降低误提交运行历史的概率。
+- `scripts/generate_schematic.py`：`.nsfc-schematic/.gitignore` 规则补齐 `/planning/`（与规划阶段一致），避免规划证据污染 `git status`。
+- `README.md` / `SKILL.md`：补齐“评估-优化闭环（plateau）”与“AI 自主闭环（ai_critic）”可执行 runbook，并同步规划文件名与输出口径。
+
 ## [0.10.0] - 2026-02-28
 
 ### Added（新增）

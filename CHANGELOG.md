@@ -25,6 +25,13 @@
   - `skills/nsfc-schematic/scripts/plan_schematic.py`：规划阶段默认无图内标题，并限制边标签长度/数量
   - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`README.md`、`skills/README.md`
 
+- **nsfc-schematic v0.10.0 → v0.11.0**：规划阶段“中间文件托管”一致性 + 自优化闭环显式化
+  - `skills/nsfc-schematic/scripts/plan_schematic.py`：默认不再在 CWD 写出 `schematic-plan.md`；如需额外复制到 CWD，使用 `--also-write-workspace-plan`
+  - `skills/nsfc-schematic/config.yaml`：规划输出文件名统一为 `schematic-plan.md`（替代 `PLAN.md`）
+  - `skills/nsfc-schematic/scripts/plan_schematic.py` / `skills/nsfc-schematic/scripts/generate_schematic.py`：自动创建 `output_dir/.nsfc-schematic/.gitignore`（忽略 `/planning/` + `/runs/`），中间产物统一托管到 `.nsfc-schematic/`
+  - `skills/nsfc-schematic/SKILL.md` / `skills/nsfc-schematic/README.md`：补齐 “plateau 自动收敛” 与 “ai_critic 离线闭环” 的可执行 runbook
+  - `skills/nsfc-schematic/references/spec_examples/ai_critic_min.yaml`：新增最小闭环 spec 夹具
+
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
 - **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用

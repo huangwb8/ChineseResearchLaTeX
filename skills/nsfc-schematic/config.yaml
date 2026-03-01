@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.10.0
+  version: 0.11.0
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -192,14 +192,14 @@ output:
     evaluation_best: evaluation_best.json
 
 planning:
-  # 规划阶段：从 TEX/自然语言生成“规划草案（PLAN.md）+ spec 草案（spec_draft.yaml）”
+  # 规划阶段：从 TEX/自然语言生成“规划草案（schematic-plan.md）+ spec 草案（spec_draft.yaml）”
   # 说明：脚本不在本地直接调用 LLM；AI 语义理解由宿主 AI 完成。
-  # - planning_mode=ai：脚本输出 plan_request.json/plan_request.md，等待宿主 AI 写入 PLAN.md + spec_draft.yaml；随后复跑脚本进行合法性校验。
+  # - planning_mode=ai：脚本输出 plan_request.json/plan_request.md，等待宿主 AI 写入 schematic-plan.md + spec_draft.yaml；随后复跑脚本进行合法性校验。
   # - planning_mode=template：脚本按确定性规则生成草案（兼容旧流程）。
   planning_mode: ai
   models_file: references/models/templates.yaml
   output:
-    plan_filename: PLAN.md
+    plan_filename: schematic-plan.md
     spec_filename: spec_draft.yaml
   extraction:
     max_terms: 12

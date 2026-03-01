@@ -261,7 +261,7 @@ def _load_yaml_text(text: str) -> Dict[str, Any]:
     try:
         data = yaml.safe_load(text)
     except Exception as exc:
-        fatal(f"解析 YAML 失败（来自 PLAN.md 的 spec 草案）：\n{exc}")
+        fatal(f"解析 YAML 失败（来自规划文档的 spec 草案）：\n{exc}")
     if not isinstance(data, dict):
         fatal("spec 草案 YAML 根节点必须为 mapping（dict）")
     return data
@@ -970,6 +970,29 @@ def _format_plan_md(
     return "\n".join(lines)
 
 
+def _ensure_intermediate_gitignore(intermediate_dir: Path) -> None:
+    """
+    Create a conservative .gitignore for intermediate dir.
+    Keep consistent with generate_schematic.py (do not overwrite user files).
+    """
+    p = intermediate_dir / ".gitignore"
+    if p.exists():
+        return
+    dirname = intermediate_dir.name or ".nsfc-schematic"
+    p.write_text(
+        f"# {dirname}/.gitignore\n"
+        f"# 如需追踪版本历史，可删除此文件并 git add {dirname}/\n"
+        "\n"
+        "# 默认忽略规划/运行历史\n"
+        "/planning/\n"
+        "/runs/\n"
+        "\n"
+        "# 但保留配置\n"
+        "!config_local.yaml\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Plan a NSFC schematic before generating drawio artifacts.")
     p.add_argument(
@@ -980,20 +1003,35 @@ def main() -> None:
     )
     p.add_argument("--proposal", type=Path, default=None, help="标书 TEX 文件或目录（目录会自动搜索 *.tex）")
     p.add_argument("--context", type=str, default=None, help="自然语言描述（与 --proposal 二选一）")
-    p.add_argument("--plan-md", type=Path, default=None, help="从已有 PLAN.md 中提取 spec 草案并导出 spec_draft.yaml")
+    p.add_argument("--plan-md", type=Path, default=None, help="从已有规划文档（如 schematic-plan.md）中提取 spec 草案并导出 spec_draft.yaml")
     p.add_argument(
         "--template-ref",
         type=str,
         default=None,
         help="规划模式：强制选择图类型模板 id/family（见 references/models/templates.yaml；默认 auto）",
     )
-    p.add_argument("--output", type=Path, required=True, help="输出目录（会写入 PLAN.md 与 spec_draft.yaml）")
+    p.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="输出目录（会写入 schematic-plan.md 与 spec_draft.yaml；中间产物默认写入 output_dir/.nsfc-schematic/）",
+    )
+    p.add_argument(
+        "--also-write-workspace-plan",
+        action="store_true",
+        help="额外在当前工作目录输出 schematic-plan.md（默认关闭；仅当你希望复制一份扁平交付文件到 CWD 时使用）",
+    )
+    # Backward-compat: this flag used to control the default CWD write.
+    # Now the default is already "no CWD outputs"; keep the flag as a no-op alias.
     p.add_argument(
         "--no-workspace-plan",
         action="store_true",
-        help="不在当前工作目录额外输出 schematic-plan.md（默认会输出，便于作为交付文件给用户审阅）",
+        help="（兼容保留，不建议使用）旧版用于禁用 CWD 的 schematic-plan.md；新版默认不在 CWD 写入。",
     )
     args = p.parse_args()
+
+    if args.no_workspace_plan and args.also_write_workspace_plan:
+        fatal("--no-workspace-plan 与 --also-write-workspace-plan 冲突：请二选一。")
 
     if args.mode is not None and str(args.mode).strip():
         m = str(args.mode).strip().lower()
@@ -1009,7 +1047,7 @@ def main() -> None:
         plan_md = read_text(args.plan_md)
         spec_text = _extract_spec_yaml_from_plan_md(plan_md)
         if not spec_text:
-            fatal("未在 PLAN.md 中找到 spec 草案的 YAML fenced code block（```yaml ... ```）")
+            fatal("未在规划文档中找到 spec 草案的 YAML fenced code block（```yaml ... ```）")
         spec = _load_yaml_text(spec_text)
         args.output.mkdir(parents=True, exist_ok=True)
 
@@ -1027,10 +1065,10 @@ def main() -> None:
         for c in checks:
             worst = c.level if order.get(c.level, 0) > order.get(worst, 0) else worst
         if worst == "P0":
-            warn(f"从 PLAN.md 提取的 spec 草案存在 P0 问题（已导出，但建议修正后再进入生成阶段）：{spec_out}")
+            warn(f"从规划文档提取的 spec 草案存在 P0 问题（已导出，但建议修正后再进入生成阶段）：{spec_out}")
             raise SystemExit(2)
 
-        info(f"已从 PLAN.md 提取 spec 草案并导出：{spec_out}")
+        info(f"已从规划文档提取 spec 草案并导出：{spec_out}")
         return
 
     if bool(args.proposal) == bool(args.context):
@@ -1040,7 +1078,7 @@ def main() -> None:
     config = load_yaml(root / "config.yaml")
     planning = config.get("planning", {}) if isinstance(config.get("planning"), dict) else {}
     out_cfg = planning.get("output", {}) if isinstance(planning.get("output"), dict) else {}
-    plan_name = str(out_cfg.get("plan_filename", "PLAN.md"))
+    plan_name = str(out_cfg.get("plan_filename", "schematic-plan.md"))
     spec_name = str(out_cfg.get("spec_filename", "spec_draft.yaml"))
     mode_cfg = str(planning.get("planning_mode", "template") or "template").strip().lower()
     mode_effective = (str(args.mode).strip().lower() if (args.mode and str(args.mode).strip()) else mode_cfg) or "template"
@@ -1183,13 +1221,16 @@ def main() -> None:
         warn(f"生成模型画廊失败（已跳过，不影响规划输出）：{exc}")
 
     args.output.mkdir(parents=True, exist_ok=True)
+    intermediate_root = args.output / intermediate_dirname
+    intermediate_root.mkdir(parents=True, exist_ok=True)
+    _ensure_intermediate_gitignore(intermediate_root)
     plan_path = args.output / plan_name
     spec_out = args.output / spec_name
 
     if mode_effective == "ai":
         # AI planning is a 2-step protocol:
         # 1) script writes plan_request.json/plan_request.md (+ visual gallery evidence)
-        # 2) host AI writes PLAN.md + spec_draft.yaml, then rerun to validate
+        # 2) host AI writes schematic-plan.md + spec_draft.yaml, then rerun to validate
         req_dir = args.output / intermediate_dirname / "planning"
         req_dir.mkdir(parents=True, exist_ok=True)
         req_json = req_dir / "plan_request.json"
@@ -1228,7 +1269,11 @@ def main() -> None:
             "output": {
                 "write_plan_to": plan_path.as_posix(),
                 "write_spec_to": spec_out.as_posix(),
-                "optional_write_workspace_plan_to": (Path("schematic-plan.md").resolve().as_posix() if not args.no_workspace_plan else None),
+                "optional_write_workspace_plan_to": (
+                    Path("schematic-plan.md").resolve().as_posix()
+                    if bool(args.also_write_workspace_plan) and (not args.no_workspace_plan)
+                    else None
+                ),
             },
         }
 
@@ -1255,9 +1300,9 @@ def main() -> None:
         req_lines.append("")
         req_lines.append("## 你的输出（必须同时写出 2 个文件）")
         req_lines.append("")
-        req_lines.append(f"1) `PLAN.md` → 写到：`{plan_path.as_posix()}`")
+        req_lines.append(f"1) `{plan_path.name}` → 写到：`{plan_path.as_posix()}`")
         req_lines.append(f"2) `spec_draft.yaml` → 写到：`{spec_out.as_posix()}`")
-        if not args.no_workspace_plan:
+        if bool(args.also_write_workspace_plan) and (not args.no_workspace_plan):
             req_lines.append("")
             req_lines.append("（可选交付）额外在工作目录写出：`schematic-plan.md`（便于用户快速审阅）")
         req_lines.append("")
@@ -1291,7 +1336,7 @@ def main() -> None:
             info(f"spec 草案：{spec_out}")
             return
 
-        warn("AI 规划请求已生成，等待宿主 AI 写入 PLAN.md + spec_draft.yaml：")
+        warn(f"AI 规划请求已生成，等待宿主 AI 写入 {plan_path.name} + spec_draft.yaml：")
         info(f"- request: {req_md}")
         info(f"- data: {req_json}")
         return
@@ -1325,7 +1370,7 @@ def main() -> None:
     write_text(spec_out, dump_yaml(spec))
 
     workspace_plan_written = False
-    if not args.no_workspace_plan:
+    if bool(args.also_write_workspace_plan) and (not args.no_workspace_plan):
         # Deliverable for humans: keep a stable, flat file in the workspace root for quick review.
         workspace_plan = Path("schematic-plan.md")
         write_text(workspace_plan, plan_md)
