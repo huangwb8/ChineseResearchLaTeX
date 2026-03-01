@@ -12,6 +12,12 @@
 
 - （暂无）
 
+## [0.11.0] - 2026-03-01
+
+### Added（新增）
+
+- 支持 Nano Banana / Gemini PNG-only 渲染模式：`generate_roadmap.py --renderer nano_banana`（仅当用户明确提出使用图片模型时启用）
+
 ## [0.10.1] - 2026-02-28
 
 ### Fixed（修复）

@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.13.0
+  version: 0.13.1
   description: "为 NSFC 标书生成原理图/机制图（默认 drawio + SVG/PNG/PDF；可选 Nano Banana/Gemini PNG 模式）"
   author: "Bensz Conan"
   category: 科研写作
@@ -78,7 +78,7 @@ layout:
     group_label_size: 22
     node_label_size: 26
     node_label_size_target: 28
-    edge_label_size: 22
+    edge_label_size: 24
   # Canvas fitting (deterministic):
   # - expand when content overflows;
   # - optionally shrink when user-provided canvas is excessively larger than content,
@@ -86,6 +86,8 @@ layout:
   canvas_fit:
     enabled: true
     shrink_to_content: true
+    # When canvas is kept large (stable embedding size), center auto-layout content to avoid large one-sided whitespace.
+    center_content: true
     # Only shrink when the provided canvas is larger than needed by this ratio.
     # (Keep some slack to avoid “每次小改就抖动画布尺寸”。)
     shrink_trigger_ratio: 1.15

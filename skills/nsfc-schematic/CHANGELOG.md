@@ -6,6 +6,13 @@
 
 （暂无）
 
+## [0.13.1] - 2026-03-01
+
+### Changed（变更）
+
+- `config.yaml`：默认将 `layout.font.edge_label_size` 从 22 调整为 24，提升连线标签缩印可读性
+- `config.yaml` / `scripts/spec_parser.py`：新增 `layout.canvas_fit.center_content`（默认 true），自动布局下将内容包围盒居中，减少单侧大留白与视觉重心偏移
+
 ## [0.13.0] - 2026-03-01
 
 ### Added（新增）

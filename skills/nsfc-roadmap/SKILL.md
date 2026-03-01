@@ -1,9 +1,9 @@
 ---
 name: nsfc-roadmap
-description: 当用户明确要求"生成 NSFC 技术路线图/技术路线图绘制/roadmap/flowchart"或需要把标书研究内容转成"可打印、A4 可读"的技术路线图时使用。输出可编辑源文件（`.drawio`）与可嵌入文档的渲染结果（`.svg`/`.png`/`.pdf`）。⚠️ 不适用：用户只是想修改某张已有图片的格式/尺寸（应使用图片处理技能）、只是想润色技术路线文字描述（应直接改写正文）。
+description: 当用户明确要求"生成 NSFC 技术路线图/技术路线图绘制/roadmap/flowchart"或需要把标书研究内容转成"可打印、A4 可读"的技术路线图时使用。默认输出可编辑源文件（`.drawio`）与可嵌入文档的渲染结果（`.svg`/`.png`/`.pdf`）；当用户主动提及 Nano Banana/Gemini 图片模型时，可切换为 PNG-only 模式。⚠️ 不适用：用户只是想修改某张已有图片的格式/尺寸（应使用图片处理技能）、只是想润色技术路线文字描述（应直接改写正文）。
 metadata:
   author: Bensz Conan
-  short-description: 生成 NSFC 技术路线图（drawio + SVG/PNG/PDF）
+  short-description: 生成 NSFC 技术路线图（默认 drawio + SVG/PNG/PDF；可选 Nano Banana PNG-only）
   keywords:
     - nsfc-roadmap
     - nsfc
@@ -37,6 +37,8 @@ metadata:
 
 - `rounds`：评估-优化轮次（默认 5，单一真相来源见 `config.yaml:evaluation.max_rounds`）
 - `output_dir`：输出目录（默认在当前工作目录下创建 `roadmap_output/`）
+- `renderer`：渲染后端（默认 `drawio`；仅当用户主动提及 Nano Banana/Gemini 图片模型时才允许使用 `nano_banana`，该模式仅输出 PNG）
+- `dotenv`：可选：显式指定 `.env` 路径（仅 `renderer=nano_banana` 使用；默认从当前工作目录向上搜索）
 - `layout`：布局模板名（默认 `auto`，见 `config.yaml:layout`；支持 `classic/three-column/packed-three-column/layered-pipeline`）
 - `template_ref`：具体模板 id（如 `model-02`；高级选项；默认“纯 AI 规划”不需要也不建议设置）
 
@@ -50,6 +52,7 @@ metadata:
   - `roadmap.png`：高分辨率位图（用于预览与兜底）
   - `roadmap.pdf`：默认生成（无 draw.io CLI 时为 PNG→PDF 栅格降级）
   - `roadmap-plan.md`：规划阶段产出（可审阅/修改）
+- Nano Banana / Gemini PNG-only 模式：仅交付 `roadmap.png`（不生成 `.drawio/.svg/.pdf`）
 - **隐藏中间产物**：`output_dir/.nsfc-roadmap/`
   - `runs/run_YYYYMMDDHHMMSS/`：本次运行隔离目录（包含各轮 `round_XX/`）
     - `round_XX/measurements.json`：纯度量采集（密度/溢出/阶段平衡/连线/字体等；不含 P0/P1/P2 判定）
@@ -162,6 +165,32 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 - 将最新 spec 固化到 `output_dir/.nsfc-roadmap/spec_latest.yaml`
 - 输出 `roadmap.drawio`（可编辑源文件）
 - 输出 `roadmap.svg` / `roadmap.png` / `roadmap.pdf`（交付结果）
+
+### 生成流程（Nano Banana / Gemini PNG-only，仅当用户主动要求）
+
+硬规则：**只有当用户明确提出要用 Nano Banana/Gemini 图片模型**（例如用户说“用 Nano Banana”“用 Gemini 出图”“不用 draw.io”）时，才允许启用该模式；否则必须保持默认 draw.io 流程。
+
+环境变量（写入项目根目录 `.env` 或系统环境变量）：
+
+- `GEMINI_BASE_URL`（例如 `https://generativelanguage.googleapis.com/v1beta`）
+- `GEMINI_API`（Gemini API Key；也兼容 `GEMINI_API_KEY`/`GOOGLE_API_KEY`）
+- `GEMINI_MODEL`（例如 `gemini-3.1-flash-image-preview`）
+
+连通性检查：
+
+```bash
+python3 nsfc-roadmap/scripts/nano_banana_check.py
+```
+
+生成（PNG-only）：
+
+```bash
+python3 nsfc-roadmap/scripts/generate_roadmap.py \
+  --spec-file ./roadmap_output/spec.yaml \
+  --output-dir ./roadmap_output \
+  --rounds 1 \
+  --renderer nano_banana
+```
 
 ### 阶段四：评估-优化循环（默认 5 轮）
 

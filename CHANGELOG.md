@@ -58,6 +58,13 @@
 
 - **nsfc-schematic v0.12.3 → v0.13.0**：新增 Nano Banana/Gemini PNG-only 原理图模式（仅当用户主动要求）
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：新增 `--renderer`（默认 drawio；`nano_banana` 模式只交付 PNG，并避免每轮多候选导致成本乘法）
+
+- **nsfc-schematic v0.13.0 → v0.13.1**：自动布局可读性小幅提升（居中 + 标签字号）
+  - `skills/nsfc-schematic/scripts/spec_parser.py`：新增 `layout.canvas_fit.center_content`（默认 true），自动布局下将内容包围盒居中，减少单侧大留白/视觉重心偏移
+  - `skills/nsfc-schematic/config.yaml`：默认将 `layout.font.edge_label_size` 从 22 调整为 24
+
+- **nsfc-roadmap v0.10.1 → v0.11.0**：新增 Nano Banana/Gemini PNG-only 技术路线图模式（仅当用户主动要求）
+  - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：新增 `--renderer`（默认 drawio；`nano_banana` 模式只交付 PNG）
   - `skills/nsfc-schematic/scripts/nano_banana_check.py`：Gemini 配置连通性检查
   - `skills/nsfc-schematic/scripts/nano_banana_generate_png.py`：独立的 PNG 生成器（便于调试）
   - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`skills/nsfc-schematic/config.yaml`

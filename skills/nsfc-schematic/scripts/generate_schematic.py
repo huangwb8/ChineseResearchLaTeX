@@ -391,6 +391,13 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
             if m not in {"minimal", "off", "none"}:
                 fatal("config_local.layout.auto_edges 不合法（允许 minimal|off|none）")
             l_out["auto_edges"] = "off" if m in {"off", "none"} else "minimal"
+        canvas_fit = layout.get("canvas_fit")
+        if isinstance(canvas_fit, dict):
+            cf_out: Dict[str, Any] = {}
+            if "center_content" in canvas_fit:
+                cf_out["center_content"] = as_bool(canvas_fit.get("center_content"), "layout.canvas_fit.center_content")
+            if cf_out:
+                l_out["canvas_fit"] = cf_out
         auto = layout.get("auto")
         if isinstance(auto, dict):
             a_out: Dict[str, Any] = {}

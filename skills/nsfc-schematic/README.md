@@ -142,7 +142,8 @@ OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-pre
 | `evaluation.stop_strategy` | `plateau` | 停止策略（`plateau`/`ai_critic`/`none`） |
 | `output.hide_intermediate` | true | 是否隐藏中间产物到 `.nsfc-schematic/` |
 | `layout.font.node_label_size` | 26 | 节点字号 |
-| `layout.font.edge_label_size` | 22 | 连线标签字号 |
+| `layout.font.edge_label_size` | 24 | 连线标签字号 |
+| `layout.canvas_fit.center_content` | true | 自动布局下将内容 bbox 居中（减少单侧留白；显式布局默认不启用） |
 | `color_scheme.name` | `academic-blue` | 配色方案 |
 
 在 `config.yaml` 中修改这些参数。

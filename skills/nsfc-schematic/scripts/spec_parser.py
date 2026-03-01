@@ -605,6 +605,26 @@ def _auto_edges(groups: List[Group]) -> List[Edge]:
     return edges
 
 
+def _content_bbox_from_groups(groups: List[Group]) -> Optional[Tuple[int, int, int, int]]:
+    xs: List[int] = []
+    ys: List[int] = []
+    xe: List[int] = []
+    ye: List[int] = []
+    for g in groups:
+        xs.append(int(g.x))
+        ys.append(int(g.y))
+        xe.append(int(g.x + g.w))
+        ye.append(int(g.y + g.h))
+        for n in g.children:
+            xs.append(int(n.x))
+            ys.append(int(n.y))
+            xe.append(int(n.x + n.w))
+            ye.append(int(n.y + n.h))
+    if not xs:
+        return None
+    return (min(xs), min(ys), max(xe), max(ye))
+
+
 def _resolve_edge_ref(
     ref: str,
     *,
@@ -876,6 +896,53 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         else:
             edges = _auto_edges(groups)
 
+    explicit_ratio = (float(explicit_nodes) / float(total_nodes)) if total_nodes > 0 else 0.0
+    explicit_layout = explicit_ratio >= 0.70
+
+    # Optional post-pass: center the content bbox inside the canvas.
+    # This improves print readability when the canvas is kept large (stable embedding size),
+    # but auto layout produces left-biased content.
+    fit_cfg = (config.get("layout", {}) or {}).get("canvas_fit", {})
+    if (
+        isinstance(fit_cfg, dict)
+        and bool(fit_cfg.get("enabled", True))
+        and bool(fit_cfg.get("center_content", True))
+        and (not explicit_layout)
+        and groups
+    ):
+        bbox = _content_bbox_from_groups(groups)
+        if bbox is not None:
+            x0, y0, x1, y1 = bbox
+            bw = max(1, int(x1 - x0))
+            bh = max(1, int(y1 - y0))
+
+            auto = (config.get("layout", {}) or {}).get("auto", {}) or {}
+            margin_x = int(auto.get("margin_x", 80))
+            margin_y = int(auto.get("margin_y", 80)) + _title_reserved_height(title, config)
+
+            max_x0 = max(0, int(canvas_w) - bw)
+            max_y0 = max(0, int(canvas_h) - bh)
+            desired_x0 = int((int(canvas_w) - bw) / 2)
+            desired_y0 = int((int(canvas_h) - bh) / 2)
+
+            target_x0 = max(0, min(desired_x0, max_x0))
+            target_y0 = max(0, min(desired_y0, max_y0))
+            # Respect margins only when feasible.
+            if margin_x <= max_x0:
+                target_x0 = max(int(margin_x), target_x0)
+            if margin_y <= max_y0:
+                target_y0 = max(int(margin_y), target_y0)
+
+            dx = int(target_x0 - x0)
+            dy = int(target_y0 - y0)
+            if dx != 0 or dy != 0:
+                for g in groups:
+                    g.x += dx
+                    g.y += dy
+                    for n in g.children:
+                        n.x += dx
+                        n.y += dy
+
     # Warning-only: conservative “术语一致性”提示（不影响解析结果）。
     # 目的：帮助用户在规划阶段避免同一概念出现多种写法（会降低评审阅读一致性）。
     try:
@@ -911,9 +978,6 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
     except Exception:
         # Never block parsing due to warning logic.
         pass
-
-    explicit_ratio = (float(explicit_nodes) / float(total_nodes)) if total_nodes > 0 else 0.0
-    explicit_layout = explicit_ratio >= 0.70
 
     return SchematicSpec(
         title=title,

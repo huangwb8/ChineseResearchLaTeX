@@ -5,7 +5,7 @@
 
 ## 这是什么
 
-为 NSFC 标书生成可打印、A4 可读的技术路线图，输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果。
+为 NSFC 标书生成可打印、A4 可读的技术路线图，默认输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果；当你明确提出使用 Nano Banana/Gemini 图片模型时，可切换为 **PNG-only**（仅交付 `roadmap.png`）。
 
 **核心价值**：
 - 从标书 `.tex` 自动抽取研究内容 → 生成结构化 spec
@@ -14,6 +14,7 @@
 - 输出 draw.io 源文件，可继续人工微调
 - 默认生成“主线箭头”（`Phase1 → Phase2 → …`），让成品更像路线图而不是贴纸盒子
 - A4 打印可读（字号、间距、配色均针对打印优化）
+- 可选 Nano Banana / Gemini PNG-only（仅当你明确要求；适合“不要 draw.io、只要一张 PNG”）
 
 **重要声明**：本技能生成的技术路线图仅用于写作与展示优化，不代表任何官方评审口径或资助结论。
 
@@ -40,6 +41,13 @@
 
 ```
 请为 /path/to/your/nsfc_proposal 生成技术路线图，输出到 ./roadmap_output/
+```
+
+### Nano Banana / Gemini PNG-only（仅当我明确要求）
+
+```
+我明确要用 Nano Banana（Gemini 图片模型）出图，接受仅 PNG 交付。
+请基于 /path/to/your/nsfc_proposal 生成技术路线图，输出到 ./roadmap_output/。
 ```
 
 ### 选择模板风格（可选）
@@ -81,6 +89,20 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
   --proposal-file /path/to/extraTex/2.1.研究内容.tex \
   --output-dir ./roadmap_output \
   --rounds 5
+```
+
+#### Nano Banana / Gemini PNG-only（脚本调用）
+
+```bash
+# 连通性检查（读取 .env / 环境变量 GEMINI_*）
+python3 nsfc-roadmap/scripts/nano_banana_check.py
+
+# PNG-only 生成（仅当你明确提出）
+python3 nsfc-roadmap/scripts/generate_roadmap.py \
+  --renderer nano_banana \
+  --proposal-file /path/to/extraTex/2.1.研究内容.tex \
+  --output-dir ./roadmap_output \
+  --rounds 1
 ```
 
 ## 适用场景
@@ -160,6 +182,24 @@ roadmap_output/
             ├── ai_pack_round_01/
             ├── ai_critic_request.md
             └── ai_critic_response.yaml
+```
+
+**PNG-only 模式**：仅交付 `roadmap.png`（不会生成 `.drawio/.svg/.pdf`）。
+
+## Gemini API 配置（Nano Banana 模式）
+
+如果你要使用 **Nano Banana / Gemini PNG-only**，需先配置 Gemini API（项目根目录 `.env` 或系统环境变量）：
+
+```bash
+GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+GEMINI_API=你的API密钥
+GEMINI_MODEL=gemini-3.1-flash-image-preview
+```
+
+连通性验证：
+
+```bash
+python3 nsfc-roadmap/scripts/nano_banana_check.py
 ```
 
 ## 迭代流程

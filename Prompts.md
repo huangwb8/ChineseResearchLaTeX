@@ -184,6 +184,14 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+Nsfc-roadmap 优化
+
+- 我希望它可以像 nsfc-schematic 一样支持nano banana 模式。 你参考nsfc-schematic 为Nsfc-roadmap 添加这个模式
+- 开发完成后，使用 auto-test-skill skill 对 nsfc-schematic 进行1次优化。
+- 使用write-skill-readme skill写好readme
+
+---
+
 目前， nsfc-roadmap输出 PDF时可能会存在严重乱码（多页/拼页）。 请按这个思路修复：
 
 - drawio 文件的 pageWidth/pageHeight 与真实画布一致，避免导出时被切成多页
