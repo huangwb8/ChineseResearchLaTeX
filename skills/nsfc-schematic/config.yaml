@@ -3,8 +3,8 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.12.3
-  description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG/PDF）"
+  version: 0.13.0
+  description: "为 NSFC 标书生成原理图/机制图（默认 drawio + SVG/PNG/PDF；可选 Nano Banana/Gemini PNG 模式）"
   author: "Bensz Conan"
   category: 科研写作
 

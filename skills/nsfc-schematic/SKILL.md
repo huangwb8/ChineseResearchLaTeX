@@ -1,9 +1,9 @@
 ---
 name: nsfc-schematic
-description: 当用户明确要求"生成 NSFC 原理图/机制图/schematic diagram/mechanism diagram"或需要把标书中的研究机制、算法架构、模块关系转成"可编辑 + 可嵌入文档"的图示时使用。输出可编辑源文件（`.drawio`）和可交付渲染文件（`.pdf`/`.svg`/`.png`），支持多轮评估优化。⚠️ 不适用：用户只是想润色正文文本（应直接改写文本）、只是想改已有图片格式/尺寸（应使用图片处理技能）、没有明确"原理图/机制图"意图。
+description: 当用户明确要求"生成 NSFC 原理图/机制图/schematic diagram/mechanism diagram"或需要把标书中的研究机制、算法架构、模块关系转成"可编辑 + 可嵌入文档"的图示时使用。默认输出可编辑源文件（`.drawio`）与渲染文件（`.pdf`/`.svg`/`.png`）；当用户主动提及 Nano Banana/Gemini 图片模型时，可切换为 PNG-only 模式。⚠️ 不适用：用户只是想润色正文文本（应直接改写文本）、只是想改已有图片格式/尺寸（应使用图片处理技能）、没有明确"原理图/机制图"意图。
 metadata:
   author: Bensz Conan
-  short-description: 生成 NSFC 原理图（drawio + PDF/SVG/PNG）
+  short-description: 生成 NSFC 原理图（默认 drawio + PDF/SVG/PNG；可选 Nano Banana PNG-only）
   keywords:
     - nsfc-schematic
     - nsfc
@@ -36,6 +36,7 @@ metadata:
 可选：
 
 - `rounds`：优化轮次（默认见 `config.yaml:evaluation.max_rounds`）
+- `renderer`：渲染后端（默认 `drawio`；仅当用户主动提及 Nano Banana/Gemini 图片模型时才允许使用 `nano_banana`，该模式仅输出 PNG）
 - `output_dir`：输出目录（可选；默认使用 `config.yaml:output.dirname`，相对当前工作目录）
 - `config`：配置文件路径（可选；默认使用技能自带 `nsfc-schematic/config.yaml`；用于为某个项目单独覆盖 `output.hide_intermediate` 等参数）
 - `context`：自然语言机制描述（仅用于“规划模式”；由 `plan_schematic.py` 生成规划草案与 spec 草案）
@@ -49,6 +50,7 @@ metadata:
 - `schematic.pdf`：推荐用于 LaTeX/Word 嵌入（优先矢量；无 draw.io CLI 时降级为 PNG→PDF 栅格）
 - `schematic.svg`：矢量图（更适合网页/幻灯片；draw.io SVG 可能包含 foreignObject，部分工具链会丢字）
 - `schematic.png`：预览图
+- Nano Banana / Gemini PNG-only 模式：仅交付 `schematic.png`（不生成 `.drawio/.svg/.pdf`）
 - `.nsfc-schematic/`：中间产物目录（默认开启隐藏；目录名可配置）
   - `optimization_report.md`：latest 优化记录（每次运行覆盖更新）
   - `spec_latest.yaml`：latest 使用的 spec（便于复现/追溯）
@@ -210,6 +212,44 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 6. 多维度自检（`evaluate_dimension.py`）：结构/视觉/可读性独立证据落盘，并按缺陷线性扣分得到 `score_total`。
 7. 记录每轮结果并导出 best round。
 
+### 生成流程（Nano Banana / Gemini PNG-only，仅当用户主动要求）
+
+硬规则：**只有当用户明确提出要用 Nano Banana/Gemini 图片模型**（例如用户说“用 Nano Banana”“用 Gemini 出图”“不用 draw.io”）时，才允许启用该模式；否则必须保持默认 draw.io 流程。
+
+前置条件：在项目根目录 `.env`（或系统环境变量）配置并可连通：
+
+- `GEMINI_BASE_URL`（示例：`https://generativelanguage.googleapis.com/v1beta`）
+- `GEMINI_API`（Gemini API Key）
+- `GEMINI_MODEL`（示例：`gemini-3.1-flash-image-preview`）
+
+建议先做连通性检查（不会输出图片）：
+
+```bash
+python3 nsfc-schematic/scripts/nano_banana_check.py
+```
+
+如你不是在项目根目录执行，可显式指定 `.env`：
+
+```bash
+python3 nsfc-schematic/scripts/nano_banana_check.py --dotenv /path/to/.env
+```
+
+生成 PNG（默认 `--rounds 5`；仅输出 `schematic.png`）：
+
+```bash
+python3 nsfc-schematic/scripts/generate_schematic.py \
+  --renderer nano_banana \
+  --dotenv /path/to/.env \
+  --spec-file ./schematic_plan/spec_draft.yaml \
+  --output-dir ./schematic_output/ \
+  --rounds 5
+```
+
+说明：
+
+- Nano Banana 模式下脚本会自动关闭 SVG/PDF 导出，并在每轮只生成 1 个候选（避免成本乘法）；多方案对比请用 `parallel-vibe` 多线程并行。
+- 该模式的 prompt 会从 spec（分组/节点/edges）**确定性构建**；优化时优先改 spec 的标签长度、分组边界与边关系，保证“缩印可读”。
+
 ### 评估-优化循环（默认：自动收敛）
 
 - 默认配置：`evaluation.stop_strategy=plateau` + `evaluation.exploration.enabled=true`
@@ -223,6 +263,8 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 适用：当你需要同时尝试不同的优化策略（画布/字号/间距/路由/探索种子等），避免在同一 `output_dir` 内来回改 `config_local.yaml` 导致 run 混淆。
 
 核心策略：用 `parallel-vibe` 创建多个**隔离工作区**，每个线程各自维护一份 `output_dir/.nsfc-schematic/config_local.yaml`（仅白名单字段），并用 `--run-tag` 标记本次运行来源。
+
+默认建议开 **5 个线程**（与 `evaluation.max_rounds=5` 的“默认轮次”对齐；也更方便 1 轮就筛掉明显不优方案）。
 
 推荐线程（示例，按常见痛点拆分）：
 
@@ -297,6 +339,10 @@ config_local:
 - `scripts/routing.py`：确定性正交路由（waypoints），用于渲染兜底、drawio 写入与评估口径对齐。
 - `scripts/extract_from_tex.py`：从 TEX 抽取术语用于初版 spec 填充。
 - `scripts/generate_schematic.py`：一键编排多轮迭代。
+- `scripts/env_utils.py`：`.env` 解析与向上查找（用于 Nano Banana/Gemini 模式读取 GEMINI_* 配置）。
+- `scripts/nano_banana_client.py`：Gemini REST 调用封装（连通性检查 + PNG 生成 + 限流重试）。
+- `scripts/nano_banana_check.py`：Nano Banana 连通性检查 CLI（不生成图片）。
+- `scripts/nano_banana_generate_png.py`：Nano Banana PNG 生成 CLI（便于单独调试 prompt）。
 
 ## 评估标准
 

@@ -26,6 +26,7 @@ from measure_schematic import measure_schematic
 from render_schematic import drawio_install_hints, ensure_drawio_cli, render_artifacts
 from schematic_writer import write_schematic_drawio
 from spec_parser import default_schematic_spec, load_schematic_spec
+from nano_banana_client import nano_banana_generate_png, nano_banana_health_check
 from utils import dump_yaml, fatal, info, is_safe_relative_path, load_yaml, skill_root, warn, write_text
 
 
@@ -628,6 +629,80 @@ def _validate_drawio_xml(drawio_path: Path) -> None:
         ) from exc
 
 
+def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
+    """
+    Deterministic prompt builder for Nano Banana (Gemini image model).
+
+    Notes:
+    - This is a *default* prompt; the host AI can still refine it via parallel-vibe / ai_critic.
+    - Keep it deterministic and avoid external dependencies.
+    """
+    canvas_w = int(getattr(spec, "canvas_width", 3200) or 3200)
+    canvas_h = int(getattr(spec, "canvas_height", 2000) or 2000)
+    direction = str((cfg_used.get("layout", {}) or {}).get("direction", "top-to-bottom") or "top-to-bottom")
+    node_font = int(((cfg_used.get("layout", {}) or {}).get("font", {}) or {}).get("node_label_size", 26) or 26)
+    edge_font = int(((cfg_used.get("layout", {}) or {}).get("font", {}) or {}).get("edge_label_size", 22) or 22)
+    color_name = str((cfg_used.get("color_scheme", {}) or {}).get("name", "") or "").strip()
+
+    lines: List[str] = []
+    lines.append("你是一名科研插图设计师。请生成一张“NSFC 申请书可直接嵌入”的中文原理图/机制图。")
+    lines.append("")
+    lines.append("硬性要求：")
+    lines.append("- 输出 1 张 PNG 图片（白底），视觉风格接近矢量图，线条清晰，适合打印/缩印。")
+    lines.append(f"- 画布建议比例接近 {canvas_w}:{canvas_h}，内容需居中且四周留白均衡。")
+    lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。")
+    lines.append("- 不要水印/签名/LOGO/背景纹理；不要 3D、不要拟物、不要照片风。")
+    lines.append("")
+    lines.append("布局要求：")
+    lines.append(f"- 主方向：{direction}（尽量对齐/成列）。")
+    lines.append("- 节点使用圆角矩形；分组使用淡色大框 + 分组标题；主链用粗箭头，辅助/验证用细箭头/虚线。")
+    if color_name:
+        lines.append(f"- 配色：{color_name}（学术风、低饱和，保证对比度）。")
+    else:
+        lines.append("- 配色：学术蓝/灰为主（低饱和），保证文字与背景对比度。")
+    lines.append("")
+    lines.append("图内容（必须覆盖以下分组、节点与连接关系；文字尽量短）：")
+
+    id2label: Dict[str, str] = {}
+    groups = getattr(spec, "groups", None)
+    if isinstance(groups, list):
+        for g in groups:
+            gl = str(getattr(g, "label", "") or "").strip() or "（无标题分组）"
+            lines.append(f"- 分组：{gl}")
+            children = getattr(g, "children", None)
+            if isinstance(children, list):
+                for n in children:
+                    nid = str(getattr(n, "id", "") or "").strip()
+                    lab = str(getattr(n, "label", "") or "").strip()
+                    if lab:
+                        lines.append(f"  - 节点：{lab}")
+                    if nid and lab:
+                        id2label[nid] = lab
+
+    edges = getattr(spec, "edges", None)
+    if isinstance(edges, list) and edges:
+        lines.append("")
+        lines.append("连接关系（箭头方向必须正确）：")
+        for e in edges:
+            f_id = str(getattr(e, "source", "") or getattr(e, "from", "") or "").strip()
+            t_id = str(getattr(e, "target", "") or getattr(e, "to", "") or "").strip()
+            el = str(getattr(e, "label", "") or "").strip()
+            f_show = id2label.get(f_id, f_id)
+            t_show = id2label.get(t_id, t_id)
+            if f_show and t_show and (f_show != f_id or t_show != t_id):
+                pair = f"{f_show}（{f_id}） → {t_show}（{t_id}）"
+            else:
+                pair = f"{f_id} → {t_id}"
+            if el:
+                lines.append(f"- {pair}（{el}）")
+            else:
+                lines.append(f"- {pair}")
+
+    lines.append("")
+    lines.append("输出要求：只输出图片本身（不要输出解释文本）。")
+    return "\n".join(lines) + "\n"
+
+
 def _load_input_spec(args: argparse.Namespace, config: Dict[str, Any], request_dir: Path) -> Dict[str, Any]:
     if args.spec_file:
         if not args.spec_file.exists() or not args.spec_file.is_file():
@@ -1134,6 +1209,18 @@ def main() -> None:
     p.add_argument("--config", type=Path, required=False, default=None)
     p.add_argument("--rounds", type=int, default=None)
     p.add_argument(
+        "--renderer",
+        type=str,
+        default="drawio",
+        help="渲染后端：drawio（默认）| nano_banana（Gemini 图片模型，仅输出 PNG）",
+    )
+    p.add_argument(
+        "--dotenv",
+        type=Path,
+        default=None,
+        help="可选：显式指定 .env 路径（仅 nano_banana 模式使用；默认从 CWD 向上搜索）",
+    )
+    p.add_argument(
         "--run-tag",
         type=str,
         default=None,
@@ -1173,6 +1260,31 @@ def main() -> None:
     local_cfg = _load_config_local(config_local_path)
     config = _apply_config_local(base_config, local_cfg)
     cfg_round_base = deepcopy(config)
+
+    renderer_backend = str(args.renderer or "drawio").strip().lower()
+    if renderer_backend not in {"drawio", "nano_banana"}:
+        fatal(f"--renderer 不支持：{renderer_backend!r}（仅支持 drawio / nano_banana）")
+
+    gemini_cfg = None
+    if renderer_backend == "nano_banana":
+        # Nano Banana (Gemini image model) only supports PNG output.
+        config = deepcopy(config)
+        config.setdefault("renderer", {}).setdefault("svg", {})
+        config.setdefault("renderer", {}).setdefault("pdf", {})
+        config.setdefault("renderer", {}).setdefault("png", {})
+        config["renderer"]["svg"]["enabled"] = False
+        config["renderer"]["pdf"]["enabled"] = False
+        config["renderer"]["png"]["enabled"] = True
+        cfg_round_base = deepcopy(config)
+
+        try:
+            gemini_cfg = nano_banana_health_check(dotenv_path=args.dotenv, search_from=Path.cwd())
+        except Exception as exc:
+            fatal(
+                "已选择 --renderer nano_banana，但 Nano Banana 连通性检查失败。\n"
+                "请检查项目根目录 `.env` 中的 GEMINI_* 配置是否正确，并确认网络可用。\n"
+                f"错误：{exc}"
+            )
 
     max_rounds = int(config["evaluation"]["max_rounds"])
     rounds = int(args.rounds) if args.rounds is not None else max_rounds
@@ -1236,11 +1348,24 @@ def main() -> None:
             write_text(config_local_path, dump_yaml(merged_local))
             local_cfg = _load_config_local(config_local_path)
             config = _apply_config_local(base_config, local_cfg)
+            # Keep renderer_backend constraints stable after AI responses.
+            if renderer_backend == "nano_banana":
+                config = deepcopy(config)
+                config.setdefault("renderer", {}).setdefault("svg", {})
+                config.setdefault("renderer", {}).setdefault("pdf", {})
+                config.setdefault("renderer", {}).setdefault("png", {})
+                config["renderer"]["svg"]["enabled"] = False
+                config["renderer"]["pdf"]["enabled"] = False
+                config["renderer"]["png"]["enabled"] = True
             cfg_round_base = deepcopy(config)
 
     report_path = run_dir / _report_filename(config)
-    drawio_cmd = ensure_drawio_cli(config)
-    drawio_mode = "drawio_cli" if drawio_cmd else "internal_fallback"
+    if renderer_backend == "drawio":
+        drawio_cmd = ensure_drawio_cli(config)
+        drawio_mode = "drawio_cli" if drawio_cmd else "internal_fallback"
+    else:
+        drawio_cmd = None
+        drawio_mode = "nano_banana"
 
     report_lines: List[str] = [
         "# 原理图优化记录",
@@ -1249,25 +1374,40 @@ def main() -> None:
         f"- work_dir: {work_dir}",
         f"- rounds: {rounds}",
         f"- spec_latest: {spec_latest}",
+        f"- renderer_backend: {renderer_backend}",
         f"- renderer_mode: {drawio_mode}",
         f"- spec_variants: {spec_variants_mode} (wrap_max_chars={wrap_max_chars}, truncate_max_chars={truncate_max_chars})",
         "",
     ]
 
-    if drawio_cmd:
-        report_lines.extend([f"- drawio_cli: {drawio_cmd}", ""])
+    if renderer_backend == "drawio":
+        if drawio_cmd:
+            report_lines.extend([f"- drawio_cli: {drawio_cmd}", ""])
+        else:
+            report_lines.extend(
+                [
+                    "## 重要提示：未检测到 draw.io CLI",
+                    "",
+                    "当前将退回到内部渲染兜底：可用于迭代与预览，但最终交付质量通常不如 draw.io CLI 导出。",
+                    "建议安装 draw.io CLI（macOS/Windows/Linux 指引）：",
+                    "",
+                ]
+            )
+            report_lines.extend([f"- {line}" for line in drawio_install_hints()])
+            report_lines.append("")
     else:
-        report_lines.extend(
-            [
-                "## 重要提示：未检测到 draw.io CLI",
-                "",
-                "当前将退回到内部渲染兜底：可用于迭代与预览，但最终交付质量通常不如 draw.io CLI 导出。",
-                "建议安装 draw.io CLI（macOS/Windows/Linux 指引）：",
-                "",
-            ]
-        )
-        report_lines.extend([f"- {line}" for line in drawio_install_hints()])
-        report_lines.append("")
+        if gemini_cfg is not None:
+            dotenv = str(gemini_cfg.dotenv_path) if gemini_cfg.dotenv_path is not None else "(not found)"
+            report_lines.extend(
+                [
+                    "## Nano Banana (Gemini)",
+                    "",
+                    f"- dotenv: {dotenv}",
+                    f"- base_url: {gemini_cfg.base_url}",
+                    f"- model: {gemini_cfg.model}",
+                    "",
+                ]
+            )
 
     if ai_mode and ai_action == "stop":
         report_lines.extend(
@@ -1355,7 +1495,11 @@ def main() -> None:
 
         # Limited candidate branching: try N small config variations per round and pick the best.
         exploration_cfg = exploration if isinstance(exploration, dict) else {}
-        if not bool(exploration_cfg.get("enabled", False)):
+        if renderer_backend == "nano_banana":
+            # Avoid multiplicative image-generation calls in one round.
+            # Prompt variation is expected to happen via host AI / parallel-vibe.
+            cand_n = 1
+        elif not bool(exploration_cfg.get("enabled", False)):
             cand_n = 1
         else:
             cand_n = int(exploration_cfg.get("candidates_per_round", 1) or 1)
@@ -1396,29 +1540,54 @@ def main() -> None:
             write_text(cand_spec, dump_yaml(spec.to_dict()))
             write_text(cand_cfg, dump_yaml(cfg_used))
 
-            drawio_path = cand_dir / str(artifacts.get("drawio", "schematic.drawio"))
-            try:
-                write_schematic_drawio(spec, cfg_used, drawio_path)
-                _validate_drawio_xml(drawio_path)
-            except Exception as exc:
-                warn(f"Round {r} cand {ci + 1} preflight 失败：{exc}")
-                # Record as a failed candidate (but don't abort the whole run).
-                ev = {
-                    "score": 0,
-                    "counts": {"p0": 1, "p1": 0, "p2": 0},
-                    "defects": [],
-                    "preflight_error": str(exc),
-                }
-                (cand_dir / "evaluation.json").write_text(json.dumps(ev, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-                cand_results.append({"idx": ci, "dir": cand_dir, "spec": spec, "cfg_used": cfg_used, "evaluation": ev})
-                continue
+            png_path: Optional[Path] = None
+            if renderer_backend == "drawio":
+                drawio_path = cand_dir / str(artifacts.get("drawio", "schematic.drawio"))
+                try:
+                    write_schematic_drawio(spec, cfg_used, drawio_path)
+                    _validate_drawio_xml(drawio_path)
+                except Exception as exc:
+                    warn(f"Round {r} cand {ci + 1} preflight 失败：{exc}")
+                    # Record as a failed candidate (but don't abort the whole run).
+                    ev = {
+                        "score": 0,
+                        "counts": {"p0": 1, "p1": 0, "p2": 0},
+                        "defects": [],
+                        "preflight_error": str(exc),
+                    }
+                    (cand_dir / "evaluation.json").write_text(
+                        json.dumps(ev, ensure_ascii=False, indent=2) + "\n",
+                        encoding="utf-8",
+                    )
+                    cand_results.append({"idx": ci, "dir": cand_dir, "spec": spec, "cfg_used": cfg_used, "evaluation": ev})
+                    continue
 
-            try:
-                rendered = render_artifacts(spec, cfg_used, drawio_path, cand_dir)
-                png_path = rendered.get("png")
-            except Exception as exc:
-                warn(f"Round {r} cand {ci + 1} 渲染失败：{exc}")
-                png_path = None
+                try:
+                    rendered = render_artifacts(spec, cfg_used, drawio_path, cand_dir)
+                    rp = rendered.get("png")
+                    png_path = rp if isinstance(rp, Path) else None
+                except Exception as exc:
+                    warn(f"Round {r} cand {ci + 1} 渲染失败：{exc}")
+                    png_path = None
+            else:
+                if gemini_cfg is None:
+                    fatal("内部错误：nano_banana 模式下 gemini_cfg 为空（health_check 未执行）。")
+                prompt = _build_nano_banana_prompt(spec, cfg_used)
+                write_text(cand_dir / "nano_banana_prompt.md", prompt)
+                out_png = cand_dir / str(artifacts.get("png", "schematic.png"))
+                try:
+                    nano_banana_generate_png(
+                        cfg=gemini_cfg,
+                        prompt=prompt,
+                        output_png=out_png,
+                        canvas_w=int(spec.canvas_width),
+                        canvas_h=int(spec.canvas_height),
+                        debug_dir=cand_dir,
+                    )
+                    png_path = out_png
+                except Exception as exc:
+                    warn(f"Round {r} cand {ci + 1} Nano Banana 生成失败：{exc}")
+                    png_path = None
 
             # evaluation_mode:
             # - heuristic (default): deterministic evaluator
@@ -1763,7 +1932,10 @@ def main() -> None:
         png_name = str(artifacts.get("png", "schematic.png"))
         pdf_enabled = bool(((config.get("renderer", {}) or {}).get("pdf", {}) or {}).get("enabled", False))
         pdf_name = str(artifacts.get("pdf", "schematic.pdf"))
-        exported = [drawio_name, svg_name, png_name] + ([pdf_name] if pdf_enabled else [])
+        if renderer_backend == "nano_banana":
+            exported = [png_name]
+        else:
+            exported = [drawio_name, svg_name, png_name] + ([pdf_name] if pdf_enabled else [])
         f.write("- exported: " + ", ".join(f"`{x}`" for x in exported) + "\n")
         f.write(
             "- exported_meta: "

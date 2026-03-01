@@ -6,6 +6,21 @@
 
 （暂无）
 
+## [0.13.0] - 2026-03-01
+
+### Added（新增）
+
+- Nano Banana / Gemini PNG-only 渲染模式：`scripts/generate_schematic.py --renderer nano_banana`（仅当用户主动要求时使用；只交付 `schematic.png`）。
+- `scripts/nano_banana_check.py`：基于项目根目录 `.env` 的 Gemini 配置做连通性检查（不会生成图片）。
+- `scripts/nano_banana_generate_png.py`：独立的 Nano Banana PNG 生成器（便于调试与复用）。
+- `scripts/nano_banana_client.py` / `scripts/env_utils.py`：Gemini 配置加载与 REST 调用封装（支持从 CWD 向上查找 `.env`）。
+- Nano Banana 调试证据：每次生成会在 debug_dir 写出 `nano_banana_request.json` / `nano_banana_response.json`（不包含 API key）。
+
+### Changed（变更）
+
+- `scripts/generate_schematic.py`：新增 `--renderer`（默认 drawio；nano_banana 模式自动关闭 SVG/PDF 导出，并避免每轮多候选导致的成本乘法）。
+- `README.md` / `SKILL.md`：补齐 Nano Banana 模式的触发规则、环境变量要求与可执行 runbook。
+
 ## [0.12.3] - 2026-03-01
 
 ### Added（新增）

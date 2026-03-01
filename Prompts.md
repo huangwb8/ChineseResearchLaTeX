@@ -91,6 +91,20 @@
 
 nsfc-schematic 优化
 
+- 新增一个 基于 Nano Banana 模型 制作原理图的模式。 大致的工作流程是
+  - 彻底了解用户的需要
+  - 构建合适的prompt
+  - 查找用户 .env  里的Gemini配置； 如果能正常连接 nano banana 模型就继续工作（这里需要你设计一些脚本，保存在 skills/nsfc-schematic/scripts 即可）； 不然就中止任务让用户正常配置（目前，我在  .env 我放了一个真实可用的Gemini API，它可以用于访问 Nano Banana 模型； 它一定可以跑通）
+  - 完美接入目前的自优化步骤（基于 parallel-vibe ），默认也是5
+  - 中间文件的管理基本一样
+  - 结果出高分辨率的、能在标书里使用的 png 文件就行，因为 Nano Banana 不支持生成svg和pdf
+- 目前的 draw.io 模式是默认的； 这个 Nano Banana 的模式必须用户主动提及才会调用。 所以正常情况下， Nsfc-schematic 的工作过程基本同前。
+- 开发完成后，使用 auto-test-skill skill 对 nsfc-schematic 进行1次优化。
+
+---
+
+nsfc-schematic 优化
+
 - 目前， nsfc-schematic 开不同的run不断优化图时， 应该像 nstc-roadmap 一样使用 parallel-vibe 的策略。 请你参考nstc-roadmap，优化一下nsfc-schematic 这方面的设计。
 
 ---
