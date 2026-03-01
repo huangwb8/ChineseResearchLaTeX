@@ -126,9 +126,10 @@ edges:
 - `evaluation`：评分阈值、停止策略（stop_strategy）、权重与多轮探索参数
 - `evaluation.evaluation_mode`：评估模式（默认 `heuristic`；`ai` 为可选增强：输出离线 AI 协议文件并消费宿主 AI 响应；无响应则自动降级）
 - `evaluation.thresholds.min_edge_font_px/warn_edge_font_px`：连线标签字号门禁阈值（含缩印等效字号检查）
+- `evaluation.spec_variants`：Spec 安全变体（默认关闭；只对 label 做 wrap/truncate/candidates，用于缓解长文案导致的拥挤/溢出）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
-- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke`、`layout.direction/font/auto_edges`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds`）
+- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke`、`layout.direction/font/auto_edges`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants`）
 - `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
 - `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
 

@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.11.0
+  version: 0.12.0
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -109,6 +109,15 @@ color_scheme:
 evaluation:
   evaluation_mode: heuristic  # heuristic|ai（ai 模式：输出离线 AI 协议文件 ai_eval_request.md/ai_eval_response.json；无响应时自动降级）
   max_rounds: 5
+  # Spec-level safe variants (default OFF).
+  # Motivation: sometimes layout issues are driven by overly-long labels; safe variants can improve readability
+  # without requiring host AI. Keep OFF by default to avoid surprising semantic changes.
+  spec_variants:
+    mode: none  # none|wrap|truncate|candidates
+    wrap_max_chars: 12
+    truncate_max_chars: 16
+    # By default, disable in ai_critic mode (host AI owns structural edits).
+    allow_in_ai_critic: false
   multi_round_self_check:
     enabled: true
     critique_dimensions: [structure, visual, readability]

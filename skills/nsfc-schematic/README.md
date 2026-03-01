@@ -215,6 +215,18 @@ edges:
 - 宿主 AI 按协议写回 `ai_critic_response.yaml`（`spec_only|config_only|both|stop`），再次运行脚本自动续跑
 - `config_local.yaml` 补丁会做白名单校验（安全子集），脚本不在本地调用任何外部模型
 
+## Spec 安全变体（默认关闭）
+
+当图“怎么都挤/怎么都溢出”且根因是 **label 过长** 时，可启用 `config.yaml:evaluation.spec_variants` 做“安全变体”（只改 label，不改 id/edges）：
+
+- `mode: wrap`：自动插入换行（提升可读性）
+- `mode: truncate`：自动截断并加 `...`（更激进，但不一定适合所有场景）
+- `mode: candidates`：每轮候选中同时尝试 `none/wrap/truncate` 并择优
+
+产物会在 `optimization_report.md` 中显式记录本轮选用的变体与变更摘要。
+
+推荐做法：在项目输出目录的 `output_dir/.nsfc-schematic/config_local.yaml` 中覆盖 `evaluation.spec_variants`，避免改全局配置。
+
 ## AI 自主评估模式（离线协议）
 
 默认评估为启发式模式（`config.yaml:evaluation.evaluation_mode: heuristic`）。如需启用 AI 离线协议增强，可设置为 `ai`（无响应自动回退启发式，保证生成流程可跑通）。

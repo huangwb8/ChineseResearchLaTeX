@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import random
+import re
 import shutil
 from copy import deepcopy
 from pathlib import Path
@@ -26,6 +27,162 @@ from render_schematic import drawio_install_hints, ensure_drawio_cli, render_art
 from schematic_writer import write_schematic_drawio
 from spec_parser import default_schematic_spec, load_schematic_spec
 from utils import dump_yaml, fatal, info, is_safe_relative_path, load_yaml, skill_root, warn, write_text
+
+
+def _cfg_snapshot(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Snapshot a small set of config values that are commonly auto-adjusted.
+    Used for writing explainable “auto-fix deltas” into optimization_report.md.
+    """
+    out: Dict[str, Any] = {}
+
+    def get(path: str, default: Any = None) -> Any:
+        cur: Any = cfg
+        for part in path.split("."):
+            if not isinstance(cur, dict):
+                return default
+            cur = cur.get(part)
+        return cur if cur is not None else default
+
+    keys = [
+        "renderer.canvas.width_px",
+        "renderer.canvas.height_px",
+        "renderer.drawio_border_px",
+        "layout.title.enabled",
+        "layout.auto.margin_x",
+        "layout.auto.margin_y",
+        "layout.auto.node_gap_x",
+        "layout.auto.node_gap_y",
+        "layout.auto.group_gap_x",
+        "layout.auto.group_gap_y",
+        "layout.font.node_label_size",
+        "layout.font.edge_label_size",
+    ]
+    for k in keys:
+        out[k] = get(k)
+    return out
+
+
+def _cfg_delta(before: Dict[str, Any], after: Dict[str, Any]) -> List[str]:
+    a = _cfg_snapshot(before)
+    b = _cfg_snapshot(after)
+    out: List[str] = []
+    for k in sorted(a.keys()):
+        if a.get(k) != b.get(k):
+            out.append(f"{k}: {a.get(k)!r} -> {b.get(k)!r}")
+    return out
+
+
+def _wrap_label(s: str, *, max_chars: int) -> str:
+    t = (s or "").strip()
+    if not t:
+        return t
+    if "\n" in t or len(t) <= max_chars:
+        return t
+    max_chars = max(4, int(max_chars))
+
+    # Prefer whitespace boundaries for English-ish labels.
+    if re.search(r"\\s", t):
+        words = t.split()
+        lines: List[str] = []
+        cur: List[str] = []
+        cur_len = 0
+        for w in words:
+            add = (1 if cur else 0) + len(w)
+            if cur and (cur_len + add) > max_chars:
+                lines.append(" ".join(cur))
+                cur = [w]
+                cur_len = len(w)
+            else:
+                cur.append(w)
+                cur_len += add
+        if cur:
+            lines.append(" ".join(cur))
+        return "\n".join(lines)
+
+    # CJK-ish: hard wrap by characters.
+    parts = [t[i : i + max_chars] for i in range(0, len(t), max_chars)]
+    return "\n".join(parts)
+
+
+def _truncate_label(s: str, *, max_chars: int) -> str:
+    t = (s or "").strip()
+    if not t:
+        return t
+    max_chars = max(6, int(max_chars))
+    if len(t) <= max_chars:
+        return t
+    # Keep ASCII ellipsis to avoid introducing new Unicode in dumps.
+    return t[: max(1, max_chars - 3)].rstrip() + "..."
+
+
+def _apply_spec_variant(
+    spec_dict: Dict[str, Any],
+    *,
+    mode: str,
+    wrap_max_chars: int,
+    truncate_max_chars: int,
+) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
+    """
+    Safe spec-level variants that only touch labels (no ids, no edges).
+    Return (new_spec, changes[]) where changes are small text diffs.
+    """
+    mode = str(mode or "none").strip().lower()
+    if mode not in {"wrap", "truncate"}:
+        return spec_dict, []
+
+    root = spec_dict.get("schematic", spec_dict)
+    if not isinstance(root, dict):
+        return spec_dict, []
+
+    out = deepcopy(spec_dict)
+    root2 = out.get("schematic", out)
+    if not isinstance(root2, dict):
+        return spec_dict, []
+
+    changes: List[Dict[str, str]] = []
+
+    def transform(label: str) -> str:
+        if mode == "wrap":
+            return _wrap_label(label, max_chars=wrap_max_chars)
+        return _truncate_label(label, max_chars=truncate_max_chars)
+
+    def record(path: str, before: str, after: str) -> None:
+        changes.append({"path": path, "before": before, "after": after})
+
+    groups = root2.get("groups")
+    if not isinstance(groups, list):
+        return out, []
+
+    def walk_nodes(children: Any, prefix: str) -> None:
+        if not isinstance(children, list):
+            return
+        for i, node in enumerate(children):
+            if not isinstance(node, dict):
+                continue
+            p = f"{prefix}.children[{i}]"
+            lab = node.get("label")
+            if isinstance(lab, str) and lab.strip():
+                new_lab = transform(lab)
+                if new_lab != lab:
+                    node["label"] = new_lab
+                    record(f"{p}.label", lab, new_lab)
+            # Nested children (rare, but keep it safe).
+            walk_nodes(node.get("children"), p)
+
+    for gi, g in enumerate(groups):
+        if not isinstance(g, dict):
+            continue
+        gp = f"schematic.groups[{gi}]"
+        gl = g.get("label")
+        if isinstance(gl, str) and gl.strip():
+            new_gl = transform(gl)
+            if new_gl != gl:
+                g["label"] = new_gl
+                record(f"{gp}.label", gl, new_gl)
+        walk_nodes(g.get("children"), gp)
+
+    return out, changes
 
 
 def _make_run_dir(base_dir: Path) -> Path:
@@ -221,6 +378,24 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
             e_out["stop_strategy"] = s
         if "max_rounds" in ev:
             e_out["max_rounds"] = as_int(ev.get("max_rounds"), "evaluation.max_rounds", 1, 20)
+        sv = ev.get("spec_variants")
+        if isinstance(sv, dict):
+            sv_out: Dict[str, Any] = {}
+            if "mode" in sv:
+                m = as_str(sv.get("mode"), "evaluation.spec_variants.mode").strip().lower()
+                if m not in {"none", "wrap", "truncate", "candidates"}:
+                    fatal("config_local.evaluation.spec_variants.mode 不合法（允许 none|wrap|truncate|candidates）")
+                sv_out["mode"] = m
+            if "wrap_max_chars" in sv:
+                sv_out["wrap_max_chars"] = as_int(sv.get("wrap_max_chars"), "evaluation.spec_variants.wrap_max_chars", 4, 40)
+            if "truncate_max_chars" in sv:
+                sv_out["truncate_max_chars"] = as_int(
+                    sv.get("truncate_max_chars"), "evaluation.spec_variants.truncate_max_chars", 6, 60
+                )
+            if "allow_in_ai_critic" in sv:
+                sv_out["allow_in_ai_critic"] = bool(sv.get("allow_in_ai_critic", False))
+            if sv_out:
+                e_out["spec_variants"] = sv_out
         if e_out:
             out["evaluation"] = e_out
 
@@ -448,6 +623,9 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
 
     layout_mode = evaluation.get("layout_mode", {}) if isinstance(evaluation.get("layout_mode", {}), dict) else {}
     explicit_layout = bool(layout_mode.get("explicit_layout", False))
+    explicit_ratio = float(layout_mode.get("explicit_layout_ratio", 0.0) or 0.0)
+    # Semi-explicit layouts still behave closer to explicit ones; be conservative to avoid “越修越乱”.
+    semi_explicit = explicit_layout or (explicit_ratio >= 0.35)
 
     # AI-mode: apply host AI suggestions (if provided) with strict safety guards.
     if str(evaluation.get("evaluation_source", "")).strip().lower() == "ai":
@@ -512,7 +690,7 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
                 param = str(sug.get("parameter", "")).strip()
                 if param not in allowed_fonts:
                     continue
-                if explicit_layout and param == "node_label_size":
+                if semi_explicit and param == "node_label_size":
                     # 显式布局模式下避免节点整体膨胀。
                     continue
                 try:
@@ -568,7 +746,7 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
     hard_layout_dims = {"canvas_overflow", "node_overlap", "edge_integrity", "edge_crossings", "edge_node_intersection"}
     if bool(hard_layout_dims & (dims_p0 | dims_p1)) or p0 > 0:
         # 显式布局下保守处理，优先微调而不是大幅放大。
-        if explicit_layout:
+        if semi_explicit:
             canvas["width_px"] = int(canvas["width_px"]) + 60
             canvas["height_px"] = int(canvas["height_px"]) + 60
             auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 4
@@ -581,17 +759,19 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
         return out
 
     if {"edge_label_occlusion", "edge_node_proximity"} & dims_any:
-        auto["node_gap_x"] = int(auto.get("node_gap_x", 40)) + 6
-        auto["node_gap_y"] = int(auto.get("node_gap_y", 28)) + 6
-        auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 6
+        inc = 3 if semi_explicit else 6
+        auto["node_gap_x"] = int(auto.get("node_gap_x", 40)) + inc
+        auto["node_gap_y"] = int(auto.get("node_gap_y", 28)) + inc
+        auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + inc
         cur_edge = int(layout_font.get("edge_label_size", min_edge_font))
         layout_font["edge_label_size"] = max(cur_edge, min_edge_font) + 1
         return out
 
     if "space_usage" in dims_any:
         # 对自动布局收紧边距，提升画布利用率。
-        auto["margin_x"] = max(40, int(auto.get("margin_x", 110)) - 10)
-        auto["margin_y"] = max(40, int(auto.get("margin_y", 120)) - 10)
+        dec = 6 if semi_explicit else 10
+        auto["margin_x"] = max(40, int(auto.get("margin_x", 110)) - dec)
+        auto["margin_y"] = max(40, int(auto.get("margin_y", 120)) - dec)
         if int(out.get("renderer", {}).get("drawio_border_px", 4)) > 0:
             out["renderer"]["drawio_border_px"] = max(0, int(out["renderer"]["drawio_border_px"]) - 1)
         return out
@@ -608,7 +788,7 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
     # 轻微恢复字号，让通过后的图观感更好（不强制推高）。
     current = int(layout_font.get("node_label_size", min_font))
     target = int(out["layout"]["font"].get("node_label_size_target", current))
-    if current < target and "text_overflow" not in dims_any and not explicit_layout:
+    if current < target and "text_overflow" not in dims_any and not semi_explicit:
         layout_font["node_label_size"] = current + 1
 
     layout_font["edge_label_size"] = max(min_edge_font, int(layout_font.get("edge_label_size", min_edge_font)))
@@ -921,6 +1101,18 @@ def main() -> None:
 
     stop_strategy_effective = str(config.get("evaluation", {}).get("stop_strategy", "none") or "none")
     ai_mode = stop_strategy_effective == "ai_critic"
+    spec_variants_cfg = (
+        config.get("evaluation", {}).get("spec_variants", {})
+        if isinstance(config.get("evaluation", {}), dict)
+        else {}
+    )
+    spec_variants_cfg = spec_variants_cfg if isinstance(spec_variants_cfg, dict) else {}
+    spec_variants_mode = str(spec_variants_cfg.get("mode", "none") or "none").strip().lower()
+    wrap_max_chars = int(spec_variants_cfg.get("wrap_max_chars", 12) or 12)
+    truncate_max_chars = int(spec_variants_cfg.get("truncate_max_chars", 16) or 16)
+    allow_in_ai_critic = bool(spec_variants_cfg.get("allow_in_ai_critic", False))
+    if ai_mode and (not allow_in_ai_critic):
+        spec_variants_mode = "none"
 
     # Keep per-run rounds isolated to avoid mixing historical round_* residues.
     run_base = (intermediate_dir / "runs") if hide_intermediate else intermediate_dir
@@ -977,6 +1169,7 @@ def main() -> None:
         f"- rounds: {rounds}",
         f"- spec_latest: {spec_latest}",
         f"- renderer_mode: {drawio_mode}",
+        f"- spec_variants: {spec_variants_mode} (wrap_max_chars={wrap_max_chars}, truncate_max_chars={truncate_max_chars})",
         "",
     ]
 
@@ -1096,7 +1289,22 @@ def main() -> None:
             cand_dir.mkdir(parents=True, exist_ok=True)
 
             cfg_used = _apply_exploration(cfg_round_base, r, exploration_cfg, cand_idx=ci)
-            spec = load_schematic_spec(input_spec_data, cfg_used)
+            spec_dict_raw = deepcopy(input_spec_data)
+            # Optional spec variants (safe label-only transforms). Keep deterministic.
+            cand_variant = spec_variants_mode
+            if spec_variants_mode == "candidates":
+                cand_variant = ["none", "wrap", "truncate"][min(2, int(ci))]
+            if cand_variant in {"wrap", "truncate"}:
+                spec_dict_raw, spec_changes = _apply_spec_variant(
+                    spec_dict_raw,
+                    mode=cand_variant,
+                    wrap_max_chars=wrap_max_chars,
+                    truncate_max_chars=truncate_max_chars,
+                )
+            else:
+                spec_changes = []
+
+            spec = load_schematic_spec(spec_dict_raw, cfg_used)
             cfg_used = deepcopy(cfg_used)
             cfg_used.setdefault("renderer", {}).setdefault("canvas", {})
             cfg_used["renderer"]["canvas"]["width_px"] = int(spec.canvas_width)
@@ -1218,6 +1426,9 @@ def main() -> None:
                 {
                     "idx": ci,
                     "dir": cand_dir,
+                    "spec_dict_raw": spec_dict_raw,
+                    "spec_variant": cand_variant,
+                    "spec_changes": spec_changes,
                     "spec": spec,
                     "cfg_used": cfg_used,
                     "png_path": png_path if isinstance(png_path, Path) else None,
@@ -1236,6 +1447,9 @@ def main() -> None:
 
         best_cand = max(cand_results, key=_cand_key)
         cand_dir = best_cand["dir"]
+        best_spec_dict_raw = best_cand.get("spec_dict_raw", input_spec_data)
+        best_spec_variant = str(best_cand.get("spec_variant", "none") or "none")
+        best_spec_changes = best_cand.get("spec_changes", []) if isinstance(best_cand.get("spec_changes", []), list) else []
         spec = best_cand["spec"]
         cfg_used = best_cand["cfg_used"]
         evaluation = best_cand["evaluation"]
@@ -1284,6 +1498,15 @@ def main() -> None:
         base_score = int(evaluation.get("score_base", score) or score)
         penalty = int(evaluation.get("score_penalty", 0) or 0)
         top = _top_defects(evaluation.get("defects", []), limit=6)
+        dims_any = sorted(
+            {
+                str(d.get("dimension", "")).strip()
+                for d in (evaluation.get("defects", []) if isinstance(evaluation.get("defects", []), list) else [])
+                if isinstance(d, dict) and str(d.get("dimension", "")).strip()
+            }
+        )
+        layout_mode = evaluation.get("layout_mode", {}) if isinstance(evaluation.get("layout_mode", {}), dict) else {}
+        explicit_ratio = float(layout_mode.get("explicit_layout_ratio", 0.0) or 0.0)
         report_lines.extend([f"## Round {r}", ""])
         if multi_enabled:
             report_lines.append(f"- score_total: {score} (base={base_score}, penalty={penalty})")
@@ -1292,8 +1515,19 @@ def main() -> None:
         report_lines.extend(
             [
                 f"- defects: P0={p0} P1={p1} P2={counts.get('p2', 0)}",
+                f"- trigger_dimensions: {', '.join(dims_any) if dims_any else 'N/A'}",
                 f"- png_sha256: {png_hash or 'N/A'}",
                 f"- selected_candidate: `{cand_dir.relative_to(round_dir)}`",
+                (
+                    f"- spec_variant: {best_spec_variant} (changes={len(best_spec_changes)})"
+                    if best_spec_variant != "none"
+                    else "- spec_variant: none"
+                ),
+                (
+                    f"- explicit_layout_ratio: {explicit_ratio:.2f}（显式布局较多：自动修复会更保守；如仍不收敛，建议启用 ai_critic 做结构性调整）"
+                    if explicit_ratio >= 0.35
+                    else f"- explicit_layout_ratio: {explicit_ratio:.2f}"
+                ),
                 f"- output: `{round_dir.name}/`",
                 "",
             ]
@@ -1303,6 +1537,22 @@ def main() -> None:
             for d in top:
                 report_lines.append(f"- [{d['severity']}] [{d['dimension']}] {d['message']} ({d['where']})")
             report_lines.append("")
+
+        # If a spec variant actually changed labels, write evidence and use it as the next-round base spec.
+        if best_spec_variant != "none" and best_spec_changes and (not ai_mode):
+            (round_dir / "spec_variant.json").write_text(
+                json.dumps(
+                    {"mode": best_spec_variant, "changes": best_spec_changes[:50]},
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            # Make the change “stick” for subsequent rounds and for reproduction.
+            input_spec_data = best_spec_dict_raw if isinstance(best_spec_dict_raw, dict) else input_spec_data
+            write_text(spec_latest, dump_yaml(input_spec_data))
+            report_lines.extend([f"- spec_variant_evidence: `{round_dir.name}/spec_variant.json`", ""])
 
         if ai_mode and ai_run_root is not None:
             pack = _write_ai_pack(
@@ -1331,7 +1581,15 @@ def main() -> None:
             )
             break
 
+        cfg_before = cfg_round_base
         cfg_round_base = _apply_auto_fixes(cfg_round_base, evaluation)
+        auto_fix_delta = _cfg_delta(cfg_before, cfg_round_base)
+        if auto_fix_delta:
+            report_lines.append("Auto fixes (next round):")
+            report_lines.extend([f"- {x}" for x in auto_fix_delta])
+            report_lines.append("")
+        else:
+            report_lines.extend(["Auto fixes (next round):", "- (none)", ""])
 
         if early_enabled and r >= min_rounds and pass_streak >= pass_streak_need:
             report_lines.extend(

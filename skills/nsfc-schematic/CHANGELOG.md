@@ -6,6 +6,17 @@
 
 （暂无）
 
+## [0.12.0] - 2026-03-01
+
+### Added（新增）
+
+- `config.yaml`：新增 `evaluation.spec_variants`（默认关闭），支持对节点/分组 label 做“安全变体”（wrap/truncate/candidates），用于缓解“长文案导致拥挤/溢出”的布局问题。
+
+### Changed（变更）
+
+- `scripts/generate_schematic.py`：`optimization_report.md` 每轮显式记录“下一轮 auto-fix 配置增量”（可解释性增强），并补齐“显式布局较多”时的保守修复/引导策略。
+- `scripts/generate_schematic.py`：`config_local.yaml` 白名单放开 `evaluation.spec_variants`（mode/wrap_max_chars/truncate_max_chars/allow_in_ai_critic），便于单项目启用 spec 安全变体而不改全局配置。
+
 ## [0.11.0] - 2026-03-01
 
 ### Added（新增）
