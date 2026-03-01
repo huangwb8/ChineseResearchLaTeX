@@ -1,0 +1,85 @@
+schematic:
+  title: "SeqCCS 最小回归夹具（fit-to-canvas + PDF 正常）"
+  canvas:
+    # 故意给一个偏窄画布：旧版会通过“自动扩画布”来消除溢出，从而导致导出缩放、等效字号变小。
+    # 该夹具用于回归：显式 canvas 时应优先 fit-to-canvas（不扩画布），并保持 overflow=0。
+    width: 1400
+    height: 3000
+  direction: top-to-bottom
+  groups:
+    - id: input
+      label: "输入层"
+      style: dashed-border
+      children:
+        - id: in_1
+          label: "多模态输入（转录组 + 表型信息）"
+          kind: primary
+          size: { w: 520, h: 120 }
+        - id: in_2
+          label: "质量控制与归一化（QC/Normalize）"
+          kind: secondary
+          size: { w: 520, h: 120 }
+        - id: in_3
+          label: "样本/细胞级元信息（Batch/Donor）"
+          kind: auxiliary
+          size: { w: 520, h: 120 }
+
+    - id: process
+      label: "核心处理层"
+      style: solid-border
+      children:
+        - id: p_1
+          label: "特征构建（Gene/Pathway/Regulon）"
+          kind: secondary
+          size: { w: 520, h: 120 }
+        - id: p_2
+          label: "表示学习编码器（Encoder Backbone）"
+          kind: critical
+          size: { w: 520, h: 120 }
+        - id: p_3
+          label: "序列一致性约束（Seq-Consistency）"
+          kind: decision
+          size: { w: 520, h: 120 }
+        - id: p_4
+          label: "跨域对齐（Domain Alignment）"
+          kind: risk
+          size: { w: 520, h: 120 }
+        - id: p_5
+          label: "可解释性模块（Attribution/Saliency）"
+          kind: auxiliary
+          size: { w: 520, h: 120 }
+        - id: p_6
+          label: "鲁棒性评估与消融（Robustness/Ablation）"
+          kind: secondary
+          size: { w: 520, h: 120 }
+
+    - id: output
+      label: "输出层"
+      style: background-fill
+      children:
+        - id: out_1
+          label: "关键生物学信号（Biomarkers/Modules）"
+          kind: primary
+          size: { w: 520, h: 120 }
+        - id: out_2
+          label: "预测结果与置信度（Prediction + Uncertainty）"
+          kind: critical
+          size: { w: 520, h: 120 }
+        - id: out_3
+          label: "验证与反馈（Wet-lab / External Cohort）"
+          kind: decision
+          size: { w: 520, h: 120 }
+
+  edges:
+    - from: in_1
+      to: p_2
+      style: solid
+    - from: in_2
+      to: p_1
+      style: solid
+    - from: p_2
+      to: out_2
+      style: thick
+    - from: out_2
+      to: out_3
+      style: solid

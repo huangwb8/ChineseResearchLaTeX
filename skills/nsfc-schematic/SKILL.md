@@ -1,9 +1,9 @@
 ---
 name: nsfc-schematic
-description: 当用户明确要求"生成 NSFC 原理图/机制图/schematic diagram/mechanism diagram"或需要把标书中的研究机制、算法架构、模块关系转成"可编辑 + 可嵌入文档"的图示时使用。输出可编辑源文件（`.drawio`）和可交付渲染文件（`.svg`/`.png`，可选 `.pdf`），支持多轮评估优化。⚠️ 不适用：用户只是想润色正文文本（应直接改写文本）、只是想改已有图片格式/尺寸（应使用图片处理技能）、没有明确"原理图/机制图"意图。
+description: 当用户明确要求"生成 NSFC 原理图/机制图/schematic diagram/mechanism diagram"或需要把标书中的研究机制、算法架构、模块关系转成"可编辑 + 可嵌入文档"的图示时使用。输出可编辑源文件（`.drawio`）和可交付渲染文件（`.pdf`/`.svg`/`.png`），支持多轮评估优化。⚠️ 不适用：用户只是想润色正文文本（应直接改写文本）、只是想改已有图片格式/尺寸（应使用图片处理技能）、没有明确"原理图/机制图"意图。
 metadata:
   author: Bensz Conan
-  short-description: 生成 NSFC 原理图（drawio + SVG/PNG）
+  short-description: 生成 NSFC 原理图（drawio + PDF/SVG/PNG）
   keywords:
     - nsfc-schematic
     - nsfc
@@ -46,9 +46,9 @@ metadata:
 在 `output_dir` 下生成（每次运行会创建隔离的 `run_*/round_*`，避免历史残留混入）：
 
 - `schematic.drawio`：可编辑源文件
-- `schematic.svg`：矢量图（优先用于文档嵌入）
+- `schematic.pdf`：推荐用于 LaTeX/Word 嵌入（优先矢量；无 draw.io CLI 时降级为 PNG→PDF 栅格）
+- `schematic.svg`：矢量图（更适合网页/幻灯片；draw.io SVG 可能包含 foreignObject，部分工具链会丢字）
 - `schematic.png`：预览图
-- `schematic.pdf`：可选（若启用并渲染器支持）
 - `.nsfc-schematic/`：中间产物目录（默认开启隐藏；目录名可配置）
   - `optimization_report.md`：latest 优化记录（每次运行覆盖更新）
   - `spec_latest.yaml`：latest 使用的 spec（便于复现/追溯）

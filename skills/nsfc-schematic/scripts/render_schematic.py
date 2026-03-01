@@ -138,18 +138,62 @@ def _export_with_drawio_cli(
     border: int,
 ) -> None:
     cmd = [drawio_cmd, "-x", "-f", fmt, "--border", str(border)]
-    if fmt == "png":
+    # PDF: force crop to avoid multi-page tiling when pageWidth/pageHeight (or CLI defaults)
+    # don't match the actual canvas size.
+    if fmt == "pdf":
+        cmd.append("--crop")
+    # Keep export resolution stable across PNG/SVG/PDF.
+    # draw.io CLI help indicates --width/--height is honored by vector formats too (fit into size).
+    if fmt in {"png", "svg", "pdf"}:
         cmd.extend(["--width", str(width), "--height", str(height)])
     cmd.extend(["-o", str(output_path), str(drawio_path)])
 
     result = _run_cli(cmd)
-    if result.returncode != 0 and fmt == "png":
-        # Backward-compat fallback: some draw.io CLI builds may not support --height.
-        cmd2 = [drawio_cmd, "-x", "-f", fmt, "--border", str(border), "--width", str(width)]
-        cmd2.extend(["-o", str(output_path), str(drawio_path)])
+
+    def drop_flag_with_value(parts: List[str], flag: str) -> List[str]:
+        out: List[str] = []
+        skip_next = False
+        for i, p in enumerate(parts):
+            if skip_next:
+                skip_next = False
+                continue
+            if p == flag:
+                # Best-effort: assume the next token is its value.
+                if i + 1 < len(parts):
+                    skip_next = True
+                continue
+            out.append(p)
+        return out
+
+    # Backward-compat fallback: some draw.io CLI builds may not support certain flags.
+    # We attempt minimal downgrades in a deterministic order.
+    if result.returncode != 0 and fmt in {"png", "svg", "pdf"} and "--height" in cmd:
+        cmd2 = drop_flag_with_value(cmd, "--height")
         result2 = _run_cli(cmd2)
         if result2.returncode == 0:
             return
+        # PDF-specific fallback: some builds may not support --crop.
+        if fmt == "pdf" and "--crop" in cmd2:
+            cmd3 = [c for c in cmd2 if c != "--crop"]
+            result3 = _run_cli(cmd3)
+            if result3.returncode == 0:
+                return
+            raise RuntimeError(
+                "draw.io CLI 渲染失败（PDF）\n"
+                f"cmd: {' '.join(cmd)}\n"
+                f"stdout: {result.stdout.strip()}\n"
+                f"stderr: {result.stderr.strip()}\n"
+                "\n"
+                "已尝试回退（不使用 --height）仍失败\n"
+                f"cmd2: {' '.join(cmd2)}\n"
+                f"stdout2: {result2.stdout.strip()}\n"
+                f"stderr2: {result2.stderr.strip()}\n"
+                "\n"
+                "已尝试回退（不使用 --crop）仍失败\n"
+                f"cmd3: {' '.join(cmd3)}\n"
+                f"stdout3: {result3.stdout.strip()}\n"
+                f"stderr3: {result3.stderr.strip()}"
+            )
         raise RuntimeError(
             "draw.io CLI 渲染失败\n"
             f"cmd: {' '.join(cmd)}\n"
@@ -157,6 +201,24 @@ def _export_with_drawio_cli(
             f"stderr: {result.stderr.strip()}\n"
             "\n"
             "已尝试回退（不使用 --height）仍失败\n"
+            f"cmd2: {' '.join(cmd2)}\n"
+            f"stdout2: {result2.stdout.strip()}\n"
+            f"stderr2: {result2.stderr.strip()}"
+        )
+
+    if result.returncode != 0 and fmt == "pdf" and "--crop" in cmd:
+        # Backward-compat fallback: some draw.io CLI builds may not support --crop.
+        cmd2 = [c for c in cmd if c != "--crop"]
+        result2 = _run_cli(cmd2)
+        if result2.returncode == 0:
+            return
+        raise RuntimeError(
+            "draw.io CLI 渲染失败（PDF）\n"
+            f"cmd: {' '.join(cmd)}\n"
+            f"stdout: {result.stdout.strip()}\n"
+            f"stderr: {result.stderr.strip()}\n"
+            "\n"
+            "已尝试回退（不使用 --crop）仍失败\n"
             f"cmd2: {' '.join(cmd2)}\n"
             f"stdout2: {result2.stdout.strip()}\n"
             f"stderr2: {result2.stderr.strip()}"
@@ -742,6 +804,21 @@ def render_artifacts(
         )
         _WARNED_NO_DRAWIO = True
     _render_internal_png_svg(spec, config, png_path, svg_path)
+    if bool(render_cfg.get("pdf", {}).get("enabled", False)):
+        # Align with nsfc-roadmap UX: when draw.io CLI is missing, still deliver a usable PDF
+        # via PNG->PDF raster downgrade (vector PDF requires draw.io CLI).
+        Image, _, _ = _require_pillow()
+        warn("未检测到 draw.io CLI：PDF 将降级为 PNG→PDF 栅格输出（如需矢量 PDF，请安装 draw.io CLI）。")
+        img = Image.open(png_path).convert("RGB")
+        try:
+            pdf_path.parent.mkdir(parents=True, exist_ok=True)
+            img.save(pdf_path, "PDF")
+        finally:
+            try:
+                img.close()
+            except Exception:
+                pass
+        return {"png": png_path, "svg": svg_path, "pdf": pdf_path}
     return {"png": png_path, "svg": svg_path, "pdf": None}
 
 

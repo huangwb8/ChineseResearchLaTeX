@@ -6,6 +6,24 @@
 
 （暂无）
 
+## [0.12.1] - 2026-03-01
+
+### Added（新增）
+
+- `references/spec_examples/seqccs_min.yaml`：新增最小回归夹具（显式 canvas 下的 fit-to-canvas + PDF 正常交付），用于防止“隐式扩画布→导出缩放→等效字号变小”回归。
+
+### Changed（变更）
+
+- `scripts/render_schematic.py`：draw.io CLI 导出参数对齐与增强：
+  - PDF 导出默认启用 `--crop`，并提供不支持 `--crop` 的兼容回退；
+  - SVG/PDF 与 PNG 一样固定 `--width/--height`，减少导出尺寸漂移；
+  - 未检测到 draw.io CLI 时，PDF 自动降级为 PNG→PDF 栅格输出（保证交付目录内始终有可用 PDF）。
+- `scripts/spec_parser.py`：显式 `schematic.canvas` 时优先 fit-to-canvas：
+  - 自动布局在计算分组网格时基于可用宽度自动降列（支持 `cols=1`），避免内容溢出触发导出缩放/平铺；
+  - 显式 canvas 不再自动扩画布（包括 `auto_expand_canvas` 与 `canvas_fit` 的扩张路径），仅允许按需收缩。
+- `scripts/generate_schematic.py`：`optimization_report.md` 的 Final 段落补齐 `schematic.pdf`（当 PDF 启用时），并对齐 `config_local.color_scheme.name` 白名单到实际内置配色方案。
+- `config.yaml`：`evaluation.exploration.max_cols_options` 扩展为 `[1, 2, 3]`，让自修复/探索能尝试 `max_cols=1`。
+
 ## [0.12.0] - 2026-03-01
 
 ### Added（新增）

@@ -37,6 +37,12 @@
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：`config_local.yaml` 白名单放开 `evaluation.spec_variants`，支持单项目启用
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：`optimization_report.md` 每轮输出“下一轮 auto-fix 配置 delta”，并在显式布局比例较高时更保守修复/引导 ai_critic
 
+- **nsfc-schematic v0.12.0 → v0.12.1**：实例辅助优化（PDF 单页稳定 + 显式画布 fit-to-canvas + 回归夹具）
+  - `skills/nsfc-schematic/scripts/render_schematic.py`：PDF 导出启用 `--crop` 并提供兼容回退；SVG/PDF 固定 `--width/--height`；无 draw.io CLI 时 PDF 自动降级为 PNG→PDF
+  - `skills/nsfc-schematic/scripts/spec_parser.py`：显式 `schematic.canvas` 时不再自动扩画布（包括 `auto_expand_canvas`/`canvas_fit` 扩张路径），并在自动布局中基于可用宽度自动降列（支持 `cols=1`）
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：报告 Final 段落补齐 `schematic.pdf`；`config_local.color_scheme.name` 白名单对齐内置配色
+  - `skills/nsfc-schematic/references/spec_examples/seqccs_min.yaml`：新增最小回归夹具
+
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
 - **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用

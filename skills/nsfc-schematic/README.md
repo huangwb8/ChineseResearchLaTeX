@@ -5,7 +5,7 @@
 
 ## 这是什么
 
-将 NSFC 标书中的机制描述、算法结构、模块关系转成可交付原理图，输出 `.drawio` 可编辑源文件与 `.svg`/`.png` 渲染结果。
+将 NSFC 标书中的机制描述、算法结构、模块关系转成可交付原理图，输出 `.drawio` 可编辑源文件与 `.pdf`/`.svg`/`.png` 渲染结果。
 
 **核心价值**：
 - 支持分组（输入层/处理层/输出层）+ 任意连线
@@ -64,9 +64,9 @@ AI 会先生成规划草案（`schematic-plan.md`）和 spec 草案（`spec_draf
 ```
 schematic_output/
 ├── schematic.drawio         # 可编辑源文件（推荐用 draw.io 打开）
-├── schematic.svg            # 矢量图（优先用于 LaTeX/Word 嵌入）
+├── schematic.pdf            # 矢量优先交付（推荐用于 LaTeX/Word 嵌入；无 draw.io CLI 时降级为 PNG→PDF 栅格）
+├── schematic.svg            # 矢量图（更适合网页/幻灯片；draw.io 导出的 SVG 可能包含 foreignObject，部分工具链会丢字）
 ├── schematic.png            # 预览图
-├── schematic.pdf            # 默认尝试导出（需 draw.io CLI；否则仅导出 svg/png）
 └── .nsfc-schematic/         # 隐藏目录（中间产物）
     ├── optimization_report.md
     ├── spec_latest.yaml

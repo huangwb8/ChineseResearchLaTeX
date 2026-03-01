@@ -89,6 +89,32 @@
 
 ---
 
+/Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2 是  skills/nsfc-schematic 的1个实例，直接出品。目前，我感觉有一些缺陷：
+
+- 用户明明指定了出图的比例； 但是最终的结果没有严格遵守这个比例。 我希望，当用户指定了图的比例，要严格执行。
+- /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2/.nsfc-schematic/runs 里， 我发现只有 2个runs。 这应该是不对的。 要默认是5个runs； 并且要跑完。 
+- 其它可能存在的问题，你自己找找
+
+请你彻底地调查 skills/nsfc-schematic 的工作文件和工作代码，充分地理解上述实例暴露出来的问题，给出一个该skill的优化计划，保存在： skills/nsfc-schematic/plans/实例辅助优化-v202603011216.md 里
+
+---
+
+PlanName = 实例辅助优化-v202603011216
+按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；所有的问题都要落实。有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
+
+---
+
+/Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2 是  skills/nsfc-schematic 的1个实例，直接出品。目前，我感觉有一些缺陷：
+
+- 字体很小，整体的人类可读性很差； 你要保证人类可读性。可适当参考 nsfc-roadmap
+- PDF的输出有问题，应该保证PDF的输出和png、svg一样是正常的。 可适当参考 nsfc-roadmap 
+- 整体的设计是比较差的
+- 其它可能存在的问题，你自己找找
+
+请你彻底地调查 skills/nsfc-schematic 的工作文件和工作代码，充分地理解上述实例暴露出来的问题，给出一个该skill的优化计划，保存在： skills/nsfc-schematic/plans/实例辅助优化-v202603011216.md 里
+
+---
+
 PlanName = 实例辅助优化-v202603011030.md
 按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；所有的问题都要落实。有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 

@@ -3,8 +3,8 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.12.0
-  description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG，可选 PDF）"
+  version: 0.12.1
+  description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG/PDF）"
   author: "Bensz Conan"
   category: 科研写作
 
@@ -181,7 +181,7 @@ evaluation:
       node_gap_y: 8
       group_gap_x: 14
       group_gap_y: 10
-    max_cols_options: [2, 3]
+    max_cols_options: [1, 2, 3]
 
 output:
   dirname: schematic_output

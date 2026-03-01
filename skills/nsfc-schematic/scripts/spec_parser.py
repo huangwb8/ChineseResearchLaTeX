@@ -413,11 +413,38 @@ def _autosize_node_for_text(node: Node, cfg: Dict[str, Any]) -> None:
         node.h = max(int(node.h), required_h)
 
 
-def _auto_group_size_for_nodes(children: List[Node], cfg: Dict[str, Any]) -> Tuple[int, int]:
+def _auto_choose_cols_for_width(
+    *,
+    child_count: int,
+    max_cols: int,
+    max_node_w: int,
+    gap_x: int,
+    pad_x: int,
+    max_group_w: int,
+) -> int:
+    """
+    Choose a deterministic column count that fits within max_group_w.
+
+    This is a "fit-to-canvas" guardrail for auto layout: avoid forcing a wide grid
+    that later triggers export scaling/tiling and makes fonts look smaller.
+    """
+    cap = max(1, min(int(max_cols), int(child_count)))
+    max_group_w = max(1, int(max_group_w))
+    for cols in range(cap, 0, -1):
+        need_w = pad_x * 2 + cols * max_node_w + max(0, cols - 1) * gap_x
+        if need_w <= max_group_w:
+            return cols
+    return 1
+
+
+def _auto_group_size_for_nodes(
+    children: List[Node],
+    cfg: Dict[str, Any],
+    *,
+    max_group_w: Optional[int] = None,
+) -> Tuple[int, int]:
     auto = cfg["layout"]["auto"]
     child_count = max(1, len(children))
-    cols = max(1, min(int(auto["max_cols"]), child_count))
-    rows = max(1, ceil(child_count / cols))
 
     gap_x = int(auto["node_gap_x"])
     gap_y = int(auto["node_gap_y"])
@@ -428,9 +455,25 @@ def _auto_group_size_for_nodes(children: List[Node], cfg: Dict[str, Any]) -> Tup
     max_node_w = max(int(cfg["layout"]["node_default_size"]["w"]), max((n.w for n in children), default=0))
     max_node_h = max(int(cfg["layout"]["node_default_size"]["h"]), max((n.h for n in children), default=0))
 
+    max_cols = max(1, min(int(auto["max_cols"]), child_count))
+    if max_group_w is not None:
+        cols = _auto_choose_cols_for_width(
+            child_count=child_count,
+            max_cols=max_cols,
+            max_node_w=max_node_w,
+            gap_x=gap_x,
+            pad_x=pad_x,
+            max_group_w=int(max_group_w),
+        )
+        group_min_w = min(int(auto["group_min_w"]), int(max_group_w))
+    else:
+        cols = max_cols
+        group_min_w = int(auto["group_min_w"])
+    rows = max(1, ceil(child_count / cols))
+
     w = pad_x * 2 + cols * max_node_w + max(0, cols - 1) * gap_x
     h = header_h + pad_y * 2 + rows * max_node_h + max(0, rows - 1) * gap_y
-    return (max(int(auto["group_min_w"]), w), max(int(auto["group_min_h"]), h))
+    return (max(group_min_w, w), max(int(auto["group_min_h"]), h))
 
 
 def _auto_place_children(
@@ -448,11 +491,22 @@ def _auto_place_children(
     gap_x = int(auto["node_gap_x"])
     gap_y = int(auto["node_gap_y"])
 
-    cols = max(1, min(int(auto["max_cols"]), len(group.children)))
+    # Prefer a column count that fits the group's width, otherwise content may overflow
+    # and later force draw.io export to scale down (making fonts look smaller).
+    max_node_w = max(int(cfg["layout"]["node_default_size"]["w"]), max((n.w for n in group.children), default=0))
+    max_cols = max(1, min(int(auto["max_cols"]), len(group.children)))
+    cols = _auto_choose_cols_for_width(
+        child_count=len(group.children),
+        max_cols=max_cols,
+        max_node_w=max_node_w,
+        gap_x=gap_x,
+        pad_x=pad_x,
+        max_group_w=int(group.w),
+    )
     rows = max(1, ceil(len(group.children) / cols))
 
     # Keep a tidy grid: use the largest node size in the group as the cell size.
-    node_w = max(int(cfg["layout"]["node_default_size"]["w"]), max((n.w for n in group.children), default=0))
+    node_w = max_node_w
     node_h = max(int(cfg["layout"]["node_default_size"]["h"]), max((n.h for n in group.children), default=0))
 
     avail_w = max(1, group.w - pad_x * 2 - max(0, cols - 1) * gap_x)
@@ -589,6 +643,7 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
     else:
         raise ValueError("schematic.title 必须是字符串（可留空或省略）")
 
+    direction_explicit = "direction" in root
     direction_raw = root.get("direction", config["layout"].get("direction", "top-to-bottom"))
     if direction_raw not in ("top-to-bottom", "left-to-right", "bottom-to-top"):
         raise ValueError(f"schematic.direction 不合法：{direction_raw}")
@@ -662,7 +717,13 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
             children.append(node)
 
         # If group size is missing or too small, expand it to fit the (possibly autosized) nodes.
-        need_w, need_h = _auto_group_size_for_nodes(children, config)
+        # When canvas is explicitly specified in spec, treat it as a hard constraint and
+        # prefer fitting layout into the canvas (avoid implicit canvas expansion which
+        # makes exported fonts "look smaller" after embedding into documents).
+        auto = config.get("layout", {}).get("auto", {}) or {}
+        margin_x = int(auto.get("margin_x", 80))
+        max_group_w = max(1, int(canvas_w) - margin_x * 2) if canvas_explicit else None
+        need_w, need_h = _auto_group_size_for_nodes(children, config, max_group_w=max_group_w)
         if gw is None:
             gw = need_w
         else:
@@ -684,6 +745,17 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
         )
         groups.append(group)
 
+    # Fit-to-canvas heuristic for default direction:
+    # If the direction is NOT explicitly specified by user and explicit canvas is narrow,
+    # avoid left-to-right overflow by switching to top-to-bottom.
+    if canvas_explicit and (not direction_explicit) and direction == "left-to-right" and groups:
+        auto = config.get("layout", {}).get("auto", {}) or {}
+        margin_x = int(auto.get("margin_x", 80))
+        group_gap_x = int(auto.get("group_gap_x", 120))
+        need_w = margin_x * 2 + sum(int(g.w) for g in groups) + max(0, len(groups) - 1) * group_gap_x
+        if need_w > int(canvas_w):
+            direction = "top-to-bottom"
+
     _auto_place_groups(groups, config, canvas_w, canvas_h, direction, title)
 
     for group in groups:
@@ -691,7 +763,10 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
 
     # Auto-expand canvas to avoid overflow after autosizing nodes/groups.
     # This is a deterministic safety net; users can still override by shrinking in their spec if desired.
-    expand_canvas = bool((config.get("layout", {}) or {}).get("auto_expand_canvas", True))
+    # Auto-expand is useful when users DON'T pin the canvas in spec.
+    # When canvas is explicit, expanding it defeats the "fit-to-canvas" goal and can
+    # make embedded fonts look smaller due to implicit down-scaling in docs.
+    expand_canvas = bool((config.get("layout", {}) or {}).get("auto_expand_canvas", True)) and (not canvas_explicit)
     if expand_canvas and groups:
         auto = config.get("layout", {}).get("auto", {})
         margin_x = int(auto.get("margin_x", 80))
@@ -726,15 +801,22 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
             need_w = max(need_w, int(config.get("renderer", {}).get("canvas", {}).get("width_px", need_w)))
             need_h = max(need_h, int(config.get("renderer", {}).get("canvas", {}).get("height_px", need_h)))
 
-        if shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
-            canvas_w = need_w
+        if canvas_explicit:
+            # Respect explicit canvas as a hard constraint: allow shrink, but do NOT auto-expand.
+            if shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
+                canvas_w = need_w
+            if shrink and need_h > 0 and canvas_h > need_h and (canvas_h / max(1, need_h)) >= trigger:
+                canvas_h = need_h
         else:
-            canvas_w = max(canvas_w, need_w)
+            if shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
+                canvas_w = need_w
+            else:
+                canvas_w = max(canvas_w, need_w)
 
-        if shrink and need_h > 0 and canvas_h > need_h and (canvas_h / max(1, need_h)) >= trigger:
-            canvas_h = need_h
-        else:
-            canvas_h = max(canvas_h, need_h)
+            if shrink and need_h > 0 and canvas_h > need_h and (canvas_h / max(1, need_h)) >= trigger:
+                canvas_h = need_h
+            else:
+                canvas_h = max(canvas_h, need_h)
 
     node_index = {n.id: n for g in groups for n in g.children}
     group_index = {g.id: g for g in groups}

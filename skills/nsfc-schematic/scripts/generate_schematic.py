@@ -364,8 +364,8 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
     cs = local_cfg.get("color_scheme")
     if isinstance(cs, dict) and "name" in cs:
         name = as_str(cs.get("name"), "color_scheme.name")
-        if name not in {"academic-blue", "tint-layered"}:
-            fatal("config_local.color_scheme.name 仅允许 {academic-blue, tint-layered}。")
+        if name not in {"academic-blue", "transformer-style", "nature-biomedical"}:
+            fatal("config_local.color_scheme.name 仅允许 {academic-blue, transformer-style, nature-biomedical}。")
         out["color_scheme"] = {"name": name}
 
     ev = local_cfg.get("evaluation")
@@ -916,7 +916,7 @@ def _write_ai_critic_request(
     lines.append("#     font:")
     lines.append("#       node_label_size: 28")
     lines.append("#   color_scheme:")
-    lines.append("#     name: tint-layered")
+    lines.append("#     name: nature-biomedical")
     lines.append("```")
     lines.append("")
     lines.append("### 纠偏原则（必须遵守）")
@@ -924,7 +924,7 @@ def _write_ai_critic_request(
     lines.append("- density 拥挤优先改 spec（缩短文案/合并节点），不要靠缩字号硬过阈值。")
     lines.append("- 只有 overflow 风险时才减字号；若字号偏小且无 overflow，应增字号。")
     lines.append("- 配色干扰优先改 kind 分配；不要靠黑白方案掩盖结构问题。")
-    lines.append("- config_local.color_scheme.name 仅允许 {academic-blue, tint-layered}。")
+    lines.append("- config_local.color_scheme.name 仅允许 {academic-blue, transformer-style, nature-biomedical}。")
     lines.append("")
     write_text(_ai_request_path(ai_run_root), "\n".join(lines) + "\n")
 
@@ -1680,11 +1680,10 @@ def main() -> None:
         drawio_name = str(artifacts.get("drawio", "schematic.drawio"))
         svg_name = str(artifacts.get("svg", "schematic.svg"))
         png_name = str(artifacts.get("png", "schematic.png"))
-        f.write(
-            "- exported: "
-            f"`{drawio_name}`, `{svg_name}`, `{png_name}`"
-            "\n"
-        )
+        pdf_enabled = bool(((config.get("renderer", {}) or {}).get("pdf", {}) or {}).get("enabled", False))
+        pdf_name = str(artifacts.get("pdf", "schematic.pdf"))
+        exported = [drawio_name, svg_name, png_name] + ([pdf_name] if pdf_enabled else [])
+        f.write("- exported: " + ", ".join(f"`{x}`" for x in exported) + "\n")
         f.write(
             "- exported_meta: "
             f"`{config_best_name}`, `{evaluation_best_name}`"
