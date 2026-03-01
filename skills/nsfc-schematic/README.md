@@ -88,6 +88,49 @@
 
 **PNG-only 模式**：仅交付 `schematic.png`（不会生成 `.drawio/.svg/.pdf`）。
 
+## Gemini API 配置（Nano Banana 模式）
+
+如果你要使用 **Nano Banana / Gemini 图片生成模式**，需先配置 Gemini API。
+
+### 配置方式
+
+在**项目根目录**创建或编辑 `.env` 文件，添加以下内容：
+
+```bash
+# Gemini API
+# 官方: https://generativelanguage.googleapis.com/v1beta
+# 第三方代理示例: https://xingjiabiapi.org/v1
+GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+GEMINI_API=你的API密钥
+GEMINI_MODEL=gemini-3.1-flash-image-preview
+```
+
+### 环境变量说明
+
+| 变量 | 必需 | 说明 |
+|------|------|------|
+| `GEMINI_BASE_URL` | ✅ | Gemini API 地址（官方或代理） |
+| `GEMINI_API` | ✅ | API 密钥（也支持 `GEMINI_API_KEY` / `GOOGLE_API_KEY`） |
+| `GEMINI_MODEL` | ✅ | 模型名称（如 `gemini-3.1-flash-image-preview`） |
+
+### 验证连通性
+
+```bash
+python3 nsfc-schematic/scripts/nano_banana_check.py
+```
+
+成功时会输出：
+```
+OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-preview
+```
+
+### 获取 API 密钥
+
+1. **官方渠道**：访问 [Google AI Studio](https://aistudio.google.com/apikey) 获取
+2. **第三方代理**：如使用代理服务，请按代理方文档配置 `GEMINI_BASE_URL`
+
+---
+
 ## 配置选项（常用）
 
 | 参数 | 默认值 | 说明 |

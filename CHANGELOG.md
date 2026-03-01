@@ -49,6 +49,8 @@
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：`config_local.yaml` 白名单放开 `renderer.drawio.cli_path`（便于单项目覆盖）
   - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`skills/nsfc-schematic/config.yaml`
 
+- **nsfc-schematic README.md**：新增「Gemini API 配置」章节，说明 Nano Banana 模式所需的环境变量（`GEMINI_BASE_URL`、`GEMINI_API`、`GEMINI_MODEL`）及连通性验证方法
+
 - **nsfc-schematic v0.12.2 → v0.12.3**：parallel-vibe 多方案并行对比（用于“开很多 run 反复优化”）
   - `skills/nsfc-schematic/README.md` / `skills/nsfc-schematic/SKILL.md`：补齐 parallel-vibe 并行优化 runbook，并推荐用 `--run-tag` 标记不同策略来源
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：新增 `--run-tag`；扩展 `config_local.yaml` 白名单，放开 `renderer.internal_routing`、`layout.auto.*` 与 `evaluation.exploration.*`（便于线程级参数对比而不改全局配置）
