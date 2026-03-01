@@ -49,6 +49,11 @@
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：`config_local.yaml` 白名单放开 `renderer.drawio.cli_path`（便于单项目覆盖）
   - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`skills/nsfc-schematic/config.yaml`
 
+- **nsfc-schematic v0.12.2 → v0.12.3**：parallel-vibe 多方案并行对比（用于“开很多 run 反复优化”）
+  - `skills/nsfc-schematic/README.md` / `skills/nsfc-schematic/SKILL.md`：补齐 parallel-vibe 并行优化 runbook，并推荐用 `--run-tag` 标记不同策略来源
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：新增 `--run-tag`；扩展 `config_local.yaml` 白名单，放开 `renderer.internal_routing`、`layout.auto.*` 与 `evaluation.exploration.*`（便于线程级参数对比而不改全局配置）
+  - `skills/nsfc-schematic/config.yaml` / `skills/nsfc-schematic/CHANGELOG.md`：版本号更新至 `0.12.3`（单一真相来源）
+
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
 - **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用

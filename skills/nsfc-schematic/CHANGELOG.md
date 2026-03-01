@@ -6,6 +6,20 @@
 
 （暂无）
 
+## [0.12.3] - 2026-03-01
+
+### Added（新增）
+
+- `README.md` / `SKILL.md`：新增“parallel-vibe 多方案并行优化”runbook，用于在需要反复开多条 run 做对比时，把不同策略拆到隔离工作区里并行尝试。
+- `scripts/generate_schematic.py`：新增 `--run-tag`，为 `run_*/` 目录附加可读标签（便于多策略对比时快速定位 run 来源）。
+
+### Changed（变更）
+
+- `scripts/generate_schematic.py`：扩展 `config_local.yaml` 白名单，支持在不修改全局 `config.yaml` 的前提下做“实例级/线程级”参数对比：
+  - `renderer.internal_routing`
+  - `layout.auto.{margin_x,margin_y,node_gap_x,node_gap_y,group_gap_x,group_gap_y,max_cols}`
+  - `evaluation.exploration.{enabled,candidates_per_round,seed}`
+
 ## [0.12.2] - 2026-03-01
 
 ### Added（新增）

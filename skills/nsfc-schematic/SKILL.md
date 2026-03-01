@@ -53,7 +53,7 @@ metadata:
   - `optimization_report.md`：latest 优化记录（每次运行覆盖更新）
   - `spec_latest.yaml`：latest 使用的 spec（便于复现/追溯）
   - `config_used_best.yaml` / `evaluation_best.json`：latest 最佳轮次复现证据
-  - `runs/run_YYYYMMDDHHMMSS/`：本次运行目录（含 `round_*`、每轮评估与渲染产物）
+  - `runs/run_YYYYMMDDHHMMSS(__tag)/`：本次运行目录（含 `round_*`、每轮评估与渲染产物；当使用 `--run-tag` 时会附加 `__tag`）
   - `ai/`：`stop_strategy=ai_critic` 的闭环工作区（`ACTIVE_RUN.txt`、`{run}/ai_pack_round_XX/`、`ai_critic_request.md`、`ai_critic_response.yaml`）
   - `legacy/`：自动迁移/收纳的历史残留（如旧版输出的 `run_*`、`spec*.yaml`、`config_*.yaml`、`evaluation_*.json` 等）
 
@@ -129,7 +129,7 @@ edges:
 - `evaluation.spec_variants`：Spec 安全变体（默认关闭；只对 label 做 wrap/truncate/candidates，用于缓解长文案导致的拥挤/溢出）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
-- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke/drawio.cli_path`、`layout.direction/font/auto_edges`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants`）
+- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke/drawio.cli_path/internal_routing`、`layout.direction/font/auto_edges/auto{margin,gap,max_cols}`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants/exploration{seed,candidates_per_round,enabled}`）
 - `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
 - `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
 
@@ -217,6 +217,21 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
   - 每轮生成有限候选（`_candidates/`），择优进入 `round_XX/`
   - 自动打分与落盘证据（`evaluation.json` + `*_debug.json` + `measurements*.json`）
   - 达到平台期后自动停止，并导出 best round 到 `output_dir/`（交付文件）
+
+### 多方案并行优化（parallel-vibe，可选，推荐用于“开很多 run 反复对比”）
+
+适用：当你需要同时尝试不同的优化策略（画布/字号/间距/路由/探索种子等），避免在同一 `output_dir` 内来回改 `config_local.yaml` 导致 run 混淆。
+
+核心策略：用 `parallel-vibe` 创建多个**隔离工作区**，每个线程各自维护一份 `output_dir/.nsfc-schematic/config_local.yaml`（仅白名单字段），并用 `--run-tag` 标记本次运行来源。
+
+推荐线程（示例，按常见痛点拆分）：
+
+- thread_1（结构与留白）：增大 `layout.auto.group_gap_y/node_gap_y`，必要时增大画布
+- thread_2（可读性优先）：增大 `layout.font.node_label_size/edge_label_size`，必要时增大画布
+- thread_3（连线与可解释性）：切换 `renderer.internal_routing=straight` 或关闭 `layout.auto_edges`
+- thread_4（跳出局部最优）：保持结构不变，仅改 `evaluation.exploration.seed`（让探索抖动走另一条轨迹）
+
+每个线程建议先跑小轮次快速筛选（如 `--rounds 3`），择优后再回到主工作区用更高轮次精修（如 `--rounds 7`）。
 
 ### AI 自主闭环（ai_critic，离线协议）
 

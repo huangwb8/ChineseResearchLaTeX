@@ -74,7 +74,7 @@ schematic_output/
     ├── evaluation_best.json
     ├── ai/                  # ai_critic 闭环工作区（ACTIVE_RUN / ai_pack / request/response）
     └── runs/
-        └── run_YYYYMMDDHHMMSS/
+        └── run_YYYYMMDDHHMMSS(__tag)/
             ├── round_01/
             ├── round_02/
             └── ...
@@ -214,6 +214,43 @@ edges:
 - 每次运行只推进 1 轮，并在 `.nsfc-schematic/ai/{run}/` 生成 `ai_pack_round_XX/` 与 `ai_critic_request.md`
 - 宿主 AI 按协议写回 `ai_critic_response.yaml`（`spec_only|config_only|both|stop`），再次运行脚本自动续跑
 - `config_local.yaml` 补丁会做白名单校验（安全子集），脚本不在本地调用任何外部模型
+
+## 多方案并行优化（parallel-vibe，可选）
+
+当你发现自己在同一个 `output_dir` 里“开很多 run、反复改参数做对比”时，推荐用 `parallel-vibe` 把不同优化策略拆到多个隔离工作区里并行尝试，避免互相覆盖/混淆。
+
+常用线程策略（示例）：
+- thread_1（结构与留白）：调大 `layout.auto.*gap*`，必要时增大画布
+- thread_2（可读性优先）：调大 `layout.font.node_label_size/edge_label_size`
+- thread_3（连线优先）：切换 `renderer.internal_routing=straight` 或关闭 `layout.auto_edges`
+- thread_4（换一条探索轨迹）：只改 `evaluation.exploration.seed`（避免同 seed 重复走到同一 plateau）
+
+每个线程建议用 `--run-tag` 标记来源，便于在 `output_dir/.nsfc-schematic/runs/` 下快速定位：
+
+```bash
+python3 nsfc-schematic/scripts/generate_schematic.py \
+  --spec-file ./schematic_plan/spec_draft.yaml \
+  --output-dir ./schematic_output \
+  --rounds 3 \
+  --run-tag thread_2_readability
+```
+
+`config_local.yaml`（每个线程各写一份）常见改法示例：
+
+```yaml
+renderer:
+  internal_routing: straight
+layout:
+  auto:
+    group_gap_y: 120
+    node_gap_y: 40
+  font:
+    node_label_size: 28
+    edge_label_size: 24
+evaluation:
+  exploration:
+    seed: 20260301
+```
 
 ## Spec 安全变体（默认关闭）
 

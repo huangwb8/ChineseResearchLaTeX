@@ -186,16 +186,31 @@ def _apply_spec_variant(
     return out, changes
 
 
-def _make_run_dir(base_dir: Path) -> Path:
+def _make_run_dir(base_dir: Path, *, run_tag: Optional[str] = None) -> Path:
+    def norm_tag(tag: Optional[str]) -> Optional[str]:
+        if tag is None:
+            return None
+        s = str(tag).strip()
+        if not s:
+            return None
+        if len(s) > 40:
+            fatal("run_tag 过长（最多 40 个字符）：{!r}".format(s))
+        # Keep it filesystem-safe and stable across platforms.
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", s):
+            fatal("run_tag 不合法（仅允许字母/数字/下划线/连字符，且需以字母或数字开头）：{!r}".format(s))
+        return s
+
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    base = base_dir / f"run_{ts}"
+    tag = norm_tag(run_tag)
+    suffix = f"__{tag}" if tag else ""
+    base = base_dir / f"run_{ts}{suffix}"
     if not base.exists():
         base.mkdir(parents=True, exist_ok=False)
         return base
 
     # Very unlikely, but keep it deterministic and safe.
     for i in range(1, 1000):
-        p = base_dir / f"run_{ts}_{i:02d}"
+        p = base_dir / f"run_{ts}{suffix}_{i:02d}"
         if not p.exists():
             p.mkdir(parents=True, exist_ok=False)
             return p
@@ -304,6 +319,11 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
             fatal(f"config_local.{where} 必须是非空字符串")
         return v.strip()
 
+    def as_bool(v: Any, where: str) -> bool:
+        if not isinstance(v, bool):
+            fatal(f"config_local.{where} 必须是布尔值 true/false")
+        return bool(v)
+
     allowed_tops = {"renderer", "layout", "color_scheme", "evaluation"}
     bad = [k for k in local_cfg.keys() if k not in allowed_tops]
     if bad:
@@ -333,6 +353,11 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
             # Allow per-output-dir overrides for CLI path (useful on Windows / non-standard installs).
             d_out["cli_path"] = as_str(drawio.get("cli_path"), "renderer.drawio.cli_path")
             r_out["drawio"] = d_out
+        if "internal_routing" in renderer:
+            mode = as_str(renderer.get("internal_routing"), "renderer.internal_routing").strip().lower()
+            if mode not in {"straight", "orthogonal"}:
+                fatal("config_local.renderer.internal_routing 不合法（允许 straight|orthogonal）")
+            r_out["internal_routing"] = mode
         stroke = renderer.get("stroke")
         if isinstance(stroke, dict):
             s_out: Dict[str, Any] = {}
@@ -365,6 +390,25 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
             if m not in {"minimal", "off", "none"}:
                 fatal("config_local.layout.auto_edges 不合法（允许 minimal|off|none）")
             l_out["auto_edges"] = "off" if m in {"off", "none"} else "minimal"
+        auto = layout.get("auto")
+        if isinstance(auto, dict):
+            a_out: Dict[str, Any] = {}
+            if "margin_x" in auto:
+                a_out["margin_x"] = as_int(auto.get("margin_x"), "layout.auto.margin_x", 0, 800)
+            if "margin_y" in auto:
+                a_out["margin_y"] = as_int(auto.get("margin_y"), "layout.auto.margin_y", 0, 800)
+            if "node_gap_x" in auto:
+                a_out["node_gap_x"] = as_int(auto.get("node_gap_x"), "layout.auto.node_gap_x", 0, 300)
+            if "node_gap_y" in auto:
+                a_out["node_gap_y"] = as_int(auto.get("node_gap_y"), "layout.auto.node_gap_y", 0, 300)
+            if "group_gap_x" in auto:
+                a_out["group_gap_x"] = as_int(auto.get("group_gap_x"), "layout.auto.group_gap_x", 0, 800)
+            if "group_gap_y" in auto:
+                a_out["group_gap_y"] = as_int(auto.get("group_gap_y"), "layout.auto.group_gap_y", 0, 800)
+            if "max_cols" in auto:
+                a_out["max_cols"] = as_int(auto.get("max_cols"), "layout.auto.max_cols", 1, 8)
+            if a_out:
+                l_out["auto"] = a_out
         if l_out:
             out["layout"] = l_out
 
@@ -403,6 +447,22 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
                 sv_out["allow_in_ai_critic"] = bool(sv.get("allow_in_ai_critic", False))
             if sv_out:
                 e_out["spec_variants"] = sv_out
+        exploration = ev.get("exploration")
+        if isinstance(exploration, dict):
+            ex_out: Dict[str, Any] = {}
+            if "enabled" in exploration:
+                ex_out["enabled"] = as_bool(exploration.get("enabled"), "evaluation.exploration.enabled")
+            if "candidates_per_round" in exploration:
+                ex_out["candidates_per_round"] = as_int(
+                    exploration.get("candidates_per_round"),
+                    "evaluation.exploration.candidates_per_round",
+                    1,
+                    8,
+                )
+            if "seed" in exploration:
+                ex_out["seed"] = as_int(exploration.get("seed"), "evaluation.exploration.seed", 0, 2_000_000_000)
+            if ex_out:
+                e_out["exploration"] = ex_out
         if e_out:
             out["evaluation"] = e_out
 
@@ -1073,6 +1133,12 @@ def main() -> None:
     p.add_argument("--output-dir", type=Path, required=False, default=None)
     p.add_argument("--config", type=Path, required=False, default=None)
     p.add_argument("--rounds", type=int, default=None)
+    p.add_argument(
+        "--run-tag",
+        type=str,
+        default=None,
+        help="可选：为本次 run_ 目录附加可读标签（例如 thread_1 / canvas / readability）。",
+    )
     args = p.parse_args()
 
     root = skill_root()
@@ -1135,14 +1201,14 @@ def main() -> None:
     if ai_mode:
         ai_root = _ai_root(intermediate_dir)
         active = _read_active_run(ai_root)
-        run_dir = (run_base / active) if active else _make_run_dir(run_base)
+        run_dir = (run_base / active) if active else _make_run_dir(run_base, run_tag=args.run_tag)
         run_dir.mkdir(parents=True, exist_ok=True)
         _set_active_run(ai_root, run_dir)
         ai_run_root = _ai_run_root(ai_root, run_dir)
         # ai_critic 闭环：每次运行只渲染一轮，等待宿主 AI 响应后继续。
         rounds = 1
     else:
-        run_dir = _make_run_dir(run_base)
+        run_dir = _make_run_dir(run_base, run_tag=args.run_tag)
 
     spec_latest = intermediate_dir / _spec_latest_filename(config)
     input_spec_data = _load_input_spec(args, config=config, request_dir=run_dir)
