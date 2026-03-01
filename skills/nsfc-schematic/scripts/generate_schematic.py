@@ -656,6 +656,7 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
     lines.append("")
     lines.append("硬性要求：")
     lines.append("- 输出 1 张 PNG 图片（白底），视觉风格接近矢量图，线条清晰，适合打印/缩印。")
+    lines.append("- 输出分辨率为 4K 级（长边>=3840px；按画布比例缩放，必要时以白底补边保持内容完整）。")
     lines.append(f"- 画布建议比例接近 {canvas_w}:{canvas_h}，内容需居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。")
     lines.append("- 【重要：文字排版必须像“打印出来的一样”】【禁止】任何文字扭曲/弯曲/透视变形/拉伸压缩/笔画融化；禁止旋转文字、禁止斜体/手写/艺术字。")
@@ -1278,6 +1279,11 @@ def main() -> None:
     if renderer_backend not in {"drawio", "nano_banana"}:
         fatal(f"--renderer 不支持：{renderer_backend!r}（仅支持 drawio / nano_banana）")
 
+    # Internal hint for downstream evaluators/measurements (do not persist to config.yaml).
+    config = deepcopy(config)
+    config.setdefault("renderer", {})["backend"] = renderer_backend
+    cfg_round_base = deepcopy(config)
+
     gemini_cfg = None
     if renderer_backend == "nano_banana":
         # Nano Banana (Gemini image model) only supports PNG output.
@@ -1370,6 +1376,10 @@ def main() -> None:
                 config["renderer"]["svg"]["enabled"] = False
                 config["renderer"]["pdf"]["enabled"] = False
                 config["renderer"]["png"]["enabled"] = True
+
+            # Re-attach internal backend hint after any config recomputation.
+            config = deepcopy(config)
+            config.setdefault("renderer", {})["backend"] = renderer_backend
             cfg_round_base = deepcopy(config)
 
     report_path = run_dir / _report_filename(config)

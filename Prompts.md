@@ -208,6 +208,12 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+nsfc-roadmap 和 nsfc-schematic 的 nano banana 模式 优化
+
+- 不管画布是什么尺寸，永远都要输出4k分辨率的图片，以满足出版需要
+
+---
+
 nsfc-roadmap 的 nano banana 模式 优化
 
 - 因为 nano banana 的图里的文字，有可能会出现扭曲，降低人类可读性。 为了减少这种情况，我希望 skill的prompt里应该加强图片字体的样式约束，以保证字体生成的规范性，就打打印出来的一样，符合标书的严格需求。 你可以联网找一下大家有哪些经验，一般是怎么写的prompt； 然后有机地融入目前的流程里。

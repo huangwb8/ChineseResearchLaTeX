@@ -50,7 +50,7 @@ metadata:
 - `schematic.pdf`：推荐用于 LaTeX/Word 嵌入（优先矢量；无 draw.io CLI 时降级为 PNG→PDF 栅格）
 - `schematic.svg`：矢量图（更适合网页/幻灯片；draw.io SVG 可能包含 foreignObject，部分工具链会丢字）
 - `schematic.png`：预览图
-- Nano Banana / Gemini PNG-only 模式：仅交付 `schematic.png`（不生成 `.drawio/.svg/.pdf`）
+- Nano Banana / Gemini PNG-only 模式：仅交付 **4K** `schematic.png`（长边>=3840px；按画布比例缩放，必要时白底补边；不生成 `.drawio/.svg/.pdf`）
 - `.nsfc-schematic/`：中间产物目录（默认开启隐藏；目录名可配置）
   - `optimization_report.md`：latest 优化记录（每次运行覆盖更新）
   - `spec_latest.yaml`：latest 使用的 spec（便于复现/追溯）

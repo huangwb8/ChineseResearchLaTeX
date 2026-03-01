@@ -12,6 +12,14 @@
 
 - （暂无）
 
+## [0.11.3] - 2026-03-01
+
+### Changed（变更）
+
+- Nano Banana（Gemini PNG-only）模式：无论 spec/画布尺寸，最终 `roadmap.png` 固定输出 4K 分辨率（长边>=3840px；按画布比例缩放，必要时白底补边以保留完整内容）
+- `scripts/nano_banana_client.py`：强制 `IMAGE_SIZE_4K` 请求 + 4K 输出尺寸对齐
+- 文档同步：`README.md`、`SKILL.md`
+
 ## [0.11.2] - 2026-03-01
 
 ### Changed（变更）

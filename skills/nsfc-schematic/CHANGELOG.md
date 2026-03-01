@@ -6,6 +6,15 @@
 
 （暂无）
 
+## [0.14.2] - 2026-03-01
+
+### Changed（变更）
+
+- Nano Banana / Gemini PNG-only 模式：无论 spec/画布尺寸，最终 `schematic.png` 固定输出 4K 分辨率（长边>=3840px；按画布比例缩放，必要时白底补边以保留完整内容）
+- `scripts/nano_banana_client.py`：强制 `IMAGE_SIZE_4K` 请求 + 4K 输出尺寸对齐
+- `scripts/evaluate_schematic.py`：nano_banana 下导出分辨率检查改为“长边>=3840px”，避免与 spec 画布尺寸口径不一致造成误报
+- 文档同步：`README.md`、`SKILL.md`
+
 ## [0.14.1] - 2026-03-01
 
 ### Changed（变更）

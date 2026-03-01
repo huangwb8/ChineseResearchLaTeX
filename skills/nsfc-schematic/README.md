@@ -43,7 +43,7 @@
 
 - **默认 draw.io**：优先输出可编辑的 `schematic.drawio` 与矢量交付（`svg/pdf`），适合标书嵌入。
 - **可追溯优化**：多轮评估 + 证据产出（`evaluation.json`/`measurements.json` 等）。
-- **PNG-only 备用通道**：当你明确要求 Nano Banana/Gemini 模式时，仅生成高分辨率 `schematic.png`。
+- **PNG-only 备用通道**：当你明确要求 Nano Banana/Gemini 模式时，仅生成 **4K** `schematic.png`（长边>=3840px；按画布比例缩放，必要时白底补边以保留完整内容）。
 
 ## 功能概述
 

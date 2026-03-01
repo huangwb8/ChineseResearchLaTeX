@@ -233,17 +233,37 @@ def _choose_aspect_ratio(w: int, h: int) -> str:
 
 
 def _choose_image_size(w: int, h: int) -> str:
-    m = max(int(w), int(h))
-    if m >= 2600:
-        return "IMAGE_SIZE_4K"
-    if m >= 1400:
-        return "IMAGE_SIZE_2K"
-    return "IMAGE_SIZE_1K"
+    # For publication-ready figures, always request 4K generation in Nano Banana mode.
+    # (Downstream we still fit/pad to a deterministic 4K output size.)
+    _ = (w, h)
+    return "IMAGE_SIZE_4K"
+
+
+_NANO_BANANA_LONG_SIDE_PX = 3840  # UHD 4K long edge lower bound (pixels)
+
+
+def _target_4k_dims(canvas_w: int, canvas_h: int) -> Tuple[int, int]:
+    """
+    Compute the deterministic "4K output size" for a given canvas aspect ratio.
+
+    Requirement: regardless of the spec canvas size, Nano Banana mode should always
+    deliver a 4K-resolution PNG for publication. We keep the canvas aspect ratio,
+    set the long edge to 3840px, and scale the short edge accordingly.
+    """
+    w = max(1, int(canvas_w))
+    h = max(1, int(canvas_h))
+    if w >= h:
+        tw = _NANO_BANANA_LONG_SIDE_PX
+        th = max(1, int(round(_NANO_BANANA_LONG_SIDE_PX * (h / w))))
+    else:
+        th = _NANO_BANANA_LONG_SIDE_PX
+        tw = max(1, int(round(_NANO_BANANA_LONG_SIDE_PX * (w / h))))
+    return int(tw), int(th)
 
 
 def _maybe_resize_to_canvas(png_path: Path, *, target_w: int, target_h: int) -> None:
     """
-    Ensure the exported PNG is high-resolution and matches the target canvas size.
+    Ensure the exported PNG is high-resolution and matches the target output size.
     Uses Pillow if available; otherwise keep original.
     """
     try:
@@ -364,4 +384,5 @@ def nano_banana_generate_png(
 
     output_png.parent.mkdir(parents=True, exist_ok=True)
     output_png.write_bytes(raw)
-    _maybe_resize_to_canvas(output_png, target_w=int(canvas_w), target_h=int(canvas_h))
+    tw, th = _target_4k_dims(int(canvas_w), int(canvas_h))
+    _maybe_resize_to_canvas(output_png, target_w=int(tw), target_h=int(th))

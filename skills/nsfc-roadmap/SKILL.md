@@ -52,7 +52,7 @@ metadata:
   - `roadmap.png`：高分辨率位图（用于预览与兜底）
   - `roadmap.pdf`：默认生成（无 draw.io CLI 时为 PNG→PDF 栅格降级）
   - `roadmap-plan.md`：规划阶段产出（可审阅/修改）
-- Nano Banana / Gemini PNG-only 模式：仅交付 `roadmap.png`（不生成 `.drawio/.svg/.pdf`）
+- Nano Banana / Gemini PNG-only 模式：仅交付 **4K** `roadmap.png`（长边>=3840px；按画布比例缩放，必要时白底补边；不生成 `.drawio/.svg/.pdf`）
 - **隐藏中间产物**：`output_dir/.nsfc-roadmap/`
   - `runs/run_YYYYMMDDHHMMSS/`：本次运行隔离目录（包含各轮 `round_XX/`）
     - `round_XX/measurements.json`：纯度量采集（密度/溢出/阶段平衡/连线/字体等；不含 P0/P1/P2 判定）

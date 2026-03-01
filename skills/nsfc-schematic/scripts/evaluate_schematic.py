@@ -284,6 +284,12 @@ def evaluate_schematic_heuristic(
     coverage_low = float(thresholds.get("content_coverage_low_ratio", 0.30))
     title_overlap_warn = int(thresholds.get("title_group_overlap_warn_px", 8))
 
+    renderer_cfg = config.get("renderer", {})
+    renderer_cfg = renderer_cfg if isinstance(renderer_cfg, dict) else {}
+    backend = str(renderer_cfg.get("backend", "drawio") or "drawio").strip().lower()
+    is_nano_banana = backend == "nano_banana"
+    metrics["renderer_backend"] = backend
+
     # Export resolution sanity check (helps keep scoring stable across draw.io CLI variations).
     if png_path is not None and png_path.exists() and png_path.is_file():
         try:
@@ -292,18 +298,30 @@ def evaluate_schematic_heuristic(
             with Image.open(png_path) as im:
                 pw, ph = im.size
             metrics["png_size"] = {"w": pw, "h": ph}
-            if (pw, ph) != (int(spec.canvas_width), int(spec.canvas_height)):
-                defects.append(
-                    Defect(
-                        severity="P1",
-                        where="global",
-                        message=(
-                            f"PNG 导出尺寸与 spec 不一致：png={pw}x{ph} vs spec={spec.canvas_width}x{spec.canvas_height}。"
-                            "建议检查 draw.io CLI 导出参数或启用内置尺寸修正。"
-                        ),
-                        dimension="export_resolution",
+            if is_nano_banana:
+                # Nano Banana mode: enforce 4K-class output (long edge >= 3840px).
+                if max(int(pw), int(ph)) < 3840:
+                    defects.append(
+                        Defect(
+                            severity="P1",
+                            where="global",
+                            message=f"Nano Banana PNG 分辨率未达 4K：{pw}x{ph}（期望长边>=3840px）",
+                            dimension="export_resolution",
+                        )
                     )
-                )
+            else:
+                if (pw, ph) != (int(spec.canvas_width), int(spec.canvas_height)):
+                    defects.append(
+                        Defect(
+                            severity="P1",
+                            where="global",
+                            message=(
+                                f"PNG 导出尺寸与 spec 不一致：png={pw}x{ph} vs spec={spec.canvas_width}x{spec.canvas_height}。"
+                                "建议检查 draw.io CLI 导出参数或启用内置尺寸修正。"
+                            ),
+                            dimension="export_resolution",
+                        )
+                    )
         except Exception:
             # Non-fatal: keep evaluation usable even without PIL or on corrupted images.
             pass
@@ -751,8 +769,9 @@ def evaluate_schematic_heuristic(
     # 6) overall aesthetics (limited local proxy)
     visual = _visual_score(
         png_path=png_path,
-        min_w=int(spec.canvas_width),
-        min_h=int(spec.canvas_height),
+        # Nano Banana mode always outputs 4K-class PNG; avoid binding this proxy to spec canvas size.
+        min_w=0 if is_nano_banana else int(spec.canvas_width),
+        min_h=0 if is_nano_banana else int(spec.canvas_height),
         expected_nodes=len(nodes),
         thresholds=thresholds if isinstance(thresholds, dict) else {},
         defects=defects,

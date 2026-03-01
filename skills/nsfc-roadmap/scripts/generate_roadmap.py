@@ -98,6 +98,7 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
     lines.append("")
     lines.append("硬性要求：")
     lines.append("- 输出 1 张 PNG 图片（白底），风格接近矢量图，线条清晰，适合打印/缩印。")
+    lines.append("- 输出分辨率为 4K 级（长边>=3840px；按画布比例缩放，必要时以白底补边保持内容完整）。")
     lines.append(f"- 画布比例接近 {canvas_w}:{canvas_h}，内容居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px（缩印后仍可读）。")
     lines.append("")
