@@ -129,7 +129,7 @@ edges:
 - `evaluation.spec_variants`：Spec 安全变体（默认关闭；只对 label 做 wrap/truncate/candidates，用于缓解长文案导致的拥挤/溢出）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
-- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke`、`layout.direction/font/auto_edges`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants`）
+- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke/drawio.cli_path`、`layout.direction/font/auto_edges`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants`）
 - `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
 - `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
 
@@ -313,6 +313,7 @@ AI 自主评估模式（离线协议）
 ## 失败处理
 
 - draw.io CLI 不可用时：
+  - 可在 `config.yaml:renderer.drawio.cli_path` 显式指定 draw.io CLI 可执行文件路径（或可被 PATH 解析的命令名）；
   - 默认使用内部渲染兜底并给出强提示（内部渲染可用，但最终交付质量通常不如 CLI 导出）；
   - 若 `config.yaml:renderer.allow_internal_fallback=false`，则直接失败并提示安装 draw.io。
 - spec 校验失败时：立即返回错误，指出字段路径。

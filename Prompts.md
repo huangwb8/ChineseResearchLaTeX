@@ -89,13 +89,24 @@
 
 ---
 
+nsfc-schematic 优化
+
+- 目前， nsfc-schematic 开不同的run不断优化图时， 应该像 nstc-roadmap 一样使用 parallel-vibe 的策略。 请你参考nstc-roadmap，优化一下nsfc-schematic 这方面的设计。
+
+---
+
+使用 auto-test-skill 对 nsfc-schematic 进行1次优化。
+
+---
+
 /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2 是  skills/nsfc-schematic 的1个实例，直接出品。目前，我感觉有一些缺陷：
 
 - 用户明明指定了出图的比例； 但是最终的结果没有严格遵守这个比例。 我希望，当用户指定了图的比例，要严格执行。
-- /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2/.nsfc-schematic/runs 里， 我发现只有 2个runs。 这应该是不对的。 要默认是5个runs； 并且要跑完。 
+- /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2026/roadmaps/SeqCCS原理图-v2/.nsfc-schematic/runs 里， 我发现只有 2个runs。 这应该是不对的。 默认的5个run应该全部跑完； 当然，用户可以随意
+- 我希望，skill目前的自动布局算法（网格排列、画布拟合）、正交路由算法（避障、waypoints） 、启发式评估（几何度量、阈值检查）  等硬编码执行层（确定性操作）全部转为ai自主规划，充分利用ai的智能
 - 其它可能存在的问题，你自己找找
 
-请你彻底地调查 skills/nsfc-schematic 的工作文件和工作代码，充分地理解上述实例暴露出来的问题，给出一个该skill的优化计划，保存在： skills/nsfc-schematic/plans/实例辅助优化-v202603011216.md 里
+请你彻底地调查 skills/nsfc-schematic 的工作文件和工作代码，充分地理解上述实例暴露出来的问题，给出一个该skill的优化计划，保存在： skills/nsfc-schematic/plans/实例辅助优化-v202603011601.md 里
 
 ---
 

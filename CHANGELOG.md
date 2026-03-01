@@ -43,6 +43,12 @@
   - `skills/nsfc-schematic/scripts/generate_schematic.py`：报告 Final 段落补齐 `schematic.pdf`；`config_local.color_scheme.name` 白名单对齐内置配色
   - `skills/nsfc-schematic/references/spec_examples/seqccs_min.yaml`：新增最小回归夹具
 
+- **nsfc-schematic v0.12.1 → v0.12.2**：健壮性修复与跨平台 draw.io CLI 路径支持
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：修复 ai_critic 响应版本校验分支的 `NameError` 风险；修复 wrap label 的空白检测正则；TEX 术语抽取数量改为读取 `planning.extraction.max_terms`
+  - `skills/nsfc-schematic/scripts/render_schematic.py`：新增 `renderer.drawio.cli_path` 支持，并在无效值时降级为 warn+自动检测；draw.io CLI 路径下的 PNG 尺寸校正缺少 Pillow 时降级跳过（不阻断主流程）
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：`config_local.yaml` 白名单放开 `renderer.drawio.cli_path`（便于单项目覆盖）
+  - 文档同步：`skills/nsfc-schematic/README.md`、`skills/nsfc-schematic/SKILL.md`、`skills/nsfc-schematic/CHANGELOG.md`、`skills/nsfc-schematic/config.yaml`
+
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`
 - **projects/NSFC_{General,Local,Young}/extraTex/1.1.立项依据.tex**：将正文中“括号序号罗列”自然改为 `enumerate` 列表，并用 `\ssssubtitle{}` 作为列表标签示例，避免用户不知道可用

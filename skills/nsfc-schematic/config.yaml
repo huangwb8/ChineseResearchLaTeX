@@ -3,7 +3,7 @@
 
 skill_info:
   name: nsfc-schematic
-  version: 0.12.1
+  version: 0.12.2
   description: "为 NSFC 标书生成原理图/机制图（drawio + SVG/PNG/PDF）"
   author: "Bensz Conan"
   category: 科研写作
@@ -20,6 +20,11 @@ renderer:
   allow_internal_fallback: true
   internal_routing: orthogonal  # straight|orthogonal
   drawio:
+    # Optional explicit draw.io CLI path (Windows/macOS/Linux).
+    # If set, it can be either:
+    # - a full executable path (recommended), or
+    # - a command name resolvable by PATH (e.g. "drawio").
+    cli_path: ""
     auto_install_macos: false  # 若缺失 draw.io CLI，是否尝试自动安装（默认关闭，避免意外改动系统）
     install_method_macos: brew # brew|manual（manual 仅输出指引）
   png:

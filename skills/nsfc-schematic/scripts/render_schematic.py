@@ -64,13 +64,35 @@ def ensure_drawio_cli(config: Dict[str, Any]) -> Optional[str]:
     if _DRAWIO_CLI_CHECKED:
         return _DRAWIO_CLI_CACHE
 
+    drawio_cfg = (config.get("renderer", {}) or {}).get("drawio", {})
+    cli_path = None
+    if isinstance(drawio_cfg, dict):
+        raw = str(drawio_cfg.get("cli_path", "") or "").strip()
+        if raw:
+            cli_path = raw
+
+    if cli_path:
+        p = Path(cli_path)
+        # Accept either direct executable path or a name resolvable by PATH.
+        if p.exists() and p.is_file():
+            _DRAWIO_CLI_CACHE = cli_path
+            _DRAWIO_CLI_CHECKED = True
+            return cli_path
+        if which(cli_path):
+            _DRAWIO_CLI_CACHE = cli_path
+            _DRAWIO_CLI_CHECKED = True
+            return cli_path
+        warn(
+            "config.yaml:renderer.drawio.cli_path 无法使用（不是可执行文件且不在 PATH），将忽略该设置并尝试自动检测："
+            f"{cli_path}"
+        )
+
     cmd = detect_drawio_cli()
     if cmd:
         _DRAWIO_CLI_CACHE = cmd
         _DRAWIO_CLI_CHECKED = True
         return cmd
 
-    drawio_cfg = (config.get("renderer", {}) or {}).get("drawio", {})
     auto_install = bool(drawio_cfg.get("auto_install_macos", False))
     method = str(drawio_cfg.get("install_method_macos", "brew"))
 
@@ -111,7 +133,7 @@ def drawio_install_hints() -> List[str]:
         lines.extend(
             [
                 "Windows:",
-                "  安装 draw.io Desktop（diagrams.net），并将其 CLI 加入 PATH（或在配置中写入完整路径）",
+                "  安装 draw.io Desktop（diagrams.net），并将其 CLI 加入 PATH；或在 config.yaml 设置 renderer.drawio.cli_path 指向可执行文件",
             ]
         )
     else:
@@ -244,7 +266,13 @@ def _ensure_png_canvas_size(
     draw.io CLI may occasionally export with an unexpected height when only width is constrained.
     We pad/crop (centered) to keep downstream evaluation stable and publish-ready.
     """
-    from PIL import Image  # type: ignore
+    # Pillow is optional when draw.io CLI is available.
+    # If it's missing, we skip this best-effort padding/cropping to avoid breaking the main pipeline.
+    try:
+        from PIL import Image  # type: ignore
+    except Exception as exc:  # pragma: no cover
+        warn(f"缺少 Pillow，跳过 PNG 画布尺寸校正（{exc}）")
+        return
 
     img = Image.open(png_path)
     try:

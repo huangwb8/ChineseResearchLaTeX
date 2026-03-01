@@ -82,7 +82,8 @@ def _wrap_label(s: str, *, max_chars: int) -> str:
     max_chars = max(4, int(max_chars))
 
     # Prefer whitespace boundaries for English-ish labels.
-    if re.search(r"\\s", t):
+    # NOTE: use r"\s" (not r"\\s") to detect actual whitespace.
+    if re.search(r"\s", t):
         words = t.split()
         lines: List[str] = []
         cur: List[str] = []
@@ -326,6 +327,12 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
                 c_out["height_px"] = as_int(canvas.get("height_px"), "renderer.canvas.height_px", 900, 12000)
             if c_out:
                 r_out["canvas"] = c_out
+        drawio = renderer.get("drawio")
+        if isinstance(drawio, dict) and ("cli_path" in drawio):
+            d_out: Dict[str, Any] = {}
+            # Allow per-output-dir overrides for CLI path (useful on Windows / non-standard installs).
+            d_out["cli_path"] = as_str(drawio.get("cli_path"), "renderer.drawio.cli_path")
+            r_out["drawio"] = d_out
         stroke = renderer.get("stroke")
         if isinstance(stroke, dict):
             s_out: Dict[str, Any] = {}
@@ -356,7 +363,7 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
         if "auto_edges" in layout:
             m = as_str(layout.get("auto_edges"), "layout.auto_edges").strip().lower()
             if m not in {"minimal", "off", "none"}:
-                fatal("config_local.layout.auto_edges 不合法（允许 minimal|off）")
+                fatal("config_local.layout.auto_edges 不合法（允许 minimal|off|none）")
             l_out["auto_edges"] = "off" if m in {"off", "none"} else "minimal"
         if l_out:
             out["layout"] = l_out
@@ -595,7 +602,15 @@ def _load_input_spec(args: argparse.Namespace, config: Dict[str, Any], request_d
             except Exception as exc:
                 warn(f"AI TEX 提取协议生成/消费失败，已降级为正则抽取（{exc}）")
 
-        terms = extract_research_terms(tex_path, max_terms=8)
+        # Keep the extraction budget configurable (single source of truth: config.yaml:planning.extraction.max_terms).
+        extraction_cfg = (config.get("planning", {}) or {}).get("extraction", {})
+        extraction_cfg = extraction_cfg if isinstance(extraction_cfg, dict) else {}
+        try:
+            max_terms = int(extraction_cfg.get("max_terms", 8) or 8)
+        except Exception:
+            max_terms = 8
+        max_terms = max(1, min(50, max_terms))
+        terms = extract_research_terms(tex_path, max_terms=max_terms)
         spec = apply_tex_hints(spec, terms)
         root = spec.get("schematic", spec)
         if isinstance(root, dict):
@@ -957,7 +972,7 @@ def _maybe_apply_ai_response(
 
     resp = load_yaml(resp_path)
     if int(resp.get("version", 1) or 1) != 1:
-        fatal(f"ai_critic_response.version 不支持：{resp.get(version)}")
+        fatal(f"ai_critic_response.version 不支持：{resp.get('version')}")
 
     action = str(resp.get("action", "") or "").strip()
     if action not in {"spec_only", "config_only", "both", "stop"}:

@@ -259,6 +259,8 @@ TEX 场景（未提供 `--spec-file` 且启用 AI 模式）：
 
 本技能优先使用 draw.io CLI 导出高质量 SVG/PNG。若未检测到 CLI，将退回内部渲染兜底（可用，但质量通常不如 CLI）。
 
+如 draw.io CLI 未加入 PATH，可在 `config.yaml:renderer.drawio.cli_path`（或 `output_dir/.nsfc-schematic/config_local.yaml`）显式指定可执行文件路径（或可被 PATH 解析的命令名）。
+
 **安装方式**：
 
 | 平台 | 命令/方法 |

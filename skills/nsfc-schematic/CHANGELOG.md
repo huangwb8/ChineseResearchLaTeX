@@ -6,6 +6,24 @@
 
 （暂无）
 
+## [0.12.2] - 2026-03-01
+
+### Added（新增）
+
+- `config.yaml`：新增 `renderer.drawio.cli_path`，允许显式指定 draw.io CLI 可执行文件路径（或可被 PATH 解析的命令名），降低跨平台安装/路径问题导致的“无法使用 CLI”概率。
+- `scripts/generate_schematic.py`：`config_local.yaml` 白名单放开 `renderer.drawio.cli_path`，支持单项目/单实例覆盖（无需修改全局配置）。
+
+### Changed（变更）
+
+- `scripts/generate_schematic.py`：从 TEX 抽取术语数量改为读取 `config.yaml:planning.extraction.max_terms`（并做范围钳制），避免与配置口径不一致。
+- `README.md` / `SKILL.md`：补齐 `renderer.drawio.cli_path` 的使用说明。
+
+### Fixed（修复）
+
+- `scripts/generate_schematic.py`：修复 `ai_critic_response.version` 非 1 时的异常处理分支（避免触发 `NameError`）。
+- `scripts/generate_schematic.py`：修复 label wrap 的空白检测正则（支持按单词边界换行）。
+- `scripts/render_schematic.py`：draw.io CLI 渲染路径下的 PNG 画布尺寸校正不再强依赖 Pillow（缺失时降级跳过并给出提示）。
+
 ## [0.12.1] - 2026-03-01
 
 ### Added（新增）
