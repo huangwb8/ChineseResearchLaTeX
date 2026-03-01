@@ -232,9 +232,10 @@ def _choose_aspect_ratio(w: int, h: int) -> str:
 
 def _choose_image_size(w: int, h: int) -> str:
     m = max(int(w), int(h))
-    if m >= 2600:
+    # Prefer 4K for print-friendly flowcharts: 2K often makes Chinese text blur/warp after downscaling.
+    if m >= 2000:
         return "IMAGE_SIZE_4K"
-    if m >= 1400:
+    if m >= 1200:
         return "IMAGE_SIZE_2K"
     return "IMAGE_SIZE_1K"
 
@@ -360,4 +361,3 @@ def nano_banana_generate_png(
     output_png.parent.mkdir(parents=True, exist_ok=True)
     output_png.write_bytes(raw)
     _maybe_resize_to_canvas(output_png, target_w=int(canvas_w), target_h=int(canvas_h))
-

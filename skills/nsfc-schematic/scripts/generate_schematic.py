@@ -658,6 +658,11 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
     lines.append("- 输出 1 张 PNG 图片（白底），视觉风格接近矢量图，线条清晰，适合打印/缩印。")
     lines.append(f"- 画布建议比例接近 {canvas_w}:{canvas_h}，内容需居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。")
+    lines.append("- 【重要：文字排版必须像“打印出来的一样”】【禁止】任何文字扭曲/弯曲/透视变形/拉伸压缩/笔画融化；禁止旋转文字、禁止斜体/手写/艺术字。")
+    lines.append("- 字体风格：标准无衬线印刷体（类似 思源黑体/微软雅黑/Arial），字重正常；文字颜色用纯黑或深灰。")
+    lines.append("- 文字承载方式：所有文字放在“水平的白色/浅色圆角标签框”里（有内边距），不要让文字直接压在线条/箭头/背景色块上。")
+    lines.append("- 若某个节点/连线标签过长：优先拆成 2 行内短句（仍保持水平），不要把字体缩到难以缩印阅读，也不要通过压缩字距/扭曲字形来塞进框里。")
+    lines.append("- 出图前请自检：每个标签内的汉字笔画清晰、无错位/断笔/粘连；若无法保证，宁可减少文字、扩大标签框或增加留白。")
     lines.append("- 不要水印/签名/LOGO/背景纹理；不要 3D、不要拟物、不要照片风。")
     lines.append("")
     lines.append("布局要求：")
@@ -669,6 +674,7 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
         lines.append("- 配色：学术蓝/灰为主（低饱和），保证文字与背景对比度。")
     lines.append("")
     lines.append("图内容（必须覆盖以下分组、节点与连接关系；文字尽量短）：")
+    lines.append("- 文字内容必须严格使用下文给出的分组/节点/连线标签原文，不要改写/翻译/增删前后缀。")
 
     id2label: Dict[str, str] = {}
     groups = getattr(spec, "groups", None)

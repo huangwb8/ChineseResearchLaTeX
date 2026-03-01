@@ -248,7 +248,7 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 说明：
 
 - Nano Banana 模式下脚本会自动关闭 SVG/PDF 导出，并在每轮只生成 1 个候选（避免成本乘法）；多方案对比请用 `parallel-vibe` 多线程并行。
-- 该模式的 prompt 会从 spec（分组/节点/edges）**确定性构建**；优化时优先改 spec 的标签长度、分组边界与边关系，保证“缩印可读”。
+- 该模式的 prompt 会从 spec（分组/节点/edges）**确定性构建**，并包含“打印级文字排版”硬约束（禁止文字扭曲/旋转/艺术字等）；优化时优先改 spec 的标签长度、分组边界与边关系，保证“缩印可读”。
 
 ### 评估-优化循环（默认：AI 闭环）
 

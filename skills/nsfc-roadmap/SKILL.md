@@ -170,6 +170,8 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 
 硬规则：**只有当用户明确提出要用 Nano Banana/Gemini 图片模型**（例如用户说“用 Nano Banana”“用 Gemini 出图”“不用 draw.io”）时，才允许启用该模式；否则必须保持默认 draw.io 流程。
 
+提示：图片模型生成图内中文文字可能出现扭曲/乱码/模糊。本 skill 的确定性 Nano Banana prompt 已加入“印刷体字体 + 水平排版 + 禁变形”的强约束来降低该风险；但仍建议控制节点文案长度（1-2 行为宜）。如需 100% 可控字体与排版，优先使用默认 draw.io 流程。
+
 环境变量（写入项目根目录 `.env` 或系统环境变量）：
 
 - `GEMINI_BASE_URL`（例如 `https://generativelanguage.googleapis.com/v1beta`）

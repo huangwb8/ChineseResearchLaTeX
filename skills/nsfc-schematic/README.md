@@ -49,7 +49,7 @@
 
 | 特性 | 说明 |
 |------|------|
-| 多轮优化 | 默认 5 轮，平台期自动收敛（`evaluation.stop_strategy=plateau`） |
+| 多轮优化 | 默认 5 轮，AI 离线闭环（`evaluation.stop_strategy=ai_critic`；可切换 `plateau` 无人值守收敛） |
 | 高质量导出 | draw.io CLI 优先；缺失时内部渲染兜底 |
 | PNG-only 模式 | `--renderer nano_banana`，仅当你主动提及时启用 |
 | 证据可追溯 | 每轮输出 `evaluation.json`/`measurements.json` 等 |
@@ -175,7 +175,7 @@ OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-pre
 | `renderer.canvas.height_px` | 2000 | 画布高度 |
 | `renderer.drawio.cli_path` | "" | draw.io CLI 路径（可选） |
 | `evaluation.max_rounds` | 5 | 最大优化轮次 |
-| `evaluation.stop_strategy` | `plateau` | 停止策略（`plateau`/`ai_critic`/`none`） |
+| `evaluation.stop_strategy` | `ai_critic` | 停止策略（`ai_critic`/`plateau`/`none`） |
 | `output.hide_intermediate` | true | 是否隐藏中间产物到 `.nsfc-schematic/` |
 | `layout.font.node_label_size` | 26 | 节点字号 |
 | `layout.font.edge_label_size` | 24 | 连线标签字号 |
@@ -229,6 +229,13 @@ A：**必须由你明确提出**（如“用 Nano Banana/Gemini 出图”）。�
 
 ### Q：为什么只输出 PNG？
 A：Nano Banana/Gemini 仅生成图片，不支持输出 `.drawio/.svg/.pdf`。如果需要可编辑/矢量，请使用默认 draw.io 模式。
+
+### Q：Nano Banana 图里文字容易扭曲/不规整，怎么缓解？
+A：该模式的 prompt 已内置“打印级文字排版”约束（禁止文字扭曲/旋转/艺术字；建议黑字+白底标签框）。如果仍不理想，通常按下面顺序调：
+
+1. **先缩短文字**：把节点/连线标签改成更短的短语（优先 4–10 字），避免长句。
+2. **再增大字号/画布**：提高 `layout.font.node_label_size` / `layout.font.edge_label_size`，必要时增大 `renderer.canvas.width_px/height_px`。
+3. **仍需“绝对可读 + 可控字体”**：回到默认 draw.io 模式（可编辑/矢量），或用 draw.io/Inkscape 后期统一替换文字。
 
 ### Q：并行优化怎么做？
 A：使用 `parallel-vibe` 开 5 个隔离线程，每个线程设置不同策略，并用 `--run-tag` 标记来源。

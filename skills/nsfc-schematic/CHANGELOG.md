@@ -6,6 +6,13 @@
 
 （暂无）
 
+## [0.14.1] - 2026-03-01
+
+### Changed（变更）
+
+- `scripts/generate_schematic.py`：增强 Nano Banana / Gemini PNG-only 模式的 prompt 文本排版约束（打印级字体风格 + 禁止扭曲/旋转/艺术字 + 建议“白底标签框”承载文字），降低图片中文字“扭曲/不可读”风险
+- `README.md` / `SKILL.md`：补充 Nano Banana 文字可读性调优建议与硬约束说明
+
 ## [0.14.0] - 2026-03-01
 
 ### Changed（变更）

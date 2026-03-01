@@ -100,6 +100,16 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
     lines.append("- 输出 1 张 PNG 图片（白底），风格接近矢量图，线条清晰，适合打印/缩印。")
     lines.append(f"- 画布比例接近 {canvas_w}:{canvas_h}，内容居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px（缩印后仍可读）。")
+    lines.append("")
+    lines.append("字体与文字排版（强约束，用于降低文字扭曲/乱码风险）：")
+    lines.append(
+        "- 字体风格必须是电脑排版的印刷体（无衬线优先，类似 Noto Sans CJK / 思源黑体 / 微软雅黑），"
+        "正文常规字重；阶段标题条可加粗。"
+    )
+    lines.append("- 所有文字必须水平排版（0°）；禁止旋转/倾斜/弯曲/透视/沿路径排版；禁止艺术字/手写/书法/喷涂。")
+    lines.append("- 禁止文字变形（拉伸/压缩/波浪/重影/笔画粘连/低对比/模糊/锯齿）；边缘锐利，黑字高对比。")
+    lines.append("- 文字必须完整落在对应框/标题条内部，四周留足 padding；长文本自动换行（最多 2 行），行距适中。")
+    lines.append("- 文字语言必须是简体中文（允许英文缩写/数字保留）；禁止乱码/错别字/拼写错误；不要生成任何多余文字。")
     lines.append("- 不要水印/签名/LOGO/背景纹理；不要 3D、不要拟物、不要照片风。")
     lines.append("")
     lines.append("布局要求：")
@@ -116,6 +126,7 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
             v = kind_color(k)
             if v:
                 lines.append(f"  - {k}: {v}")
+    lines.append("- 注意：下文节点后的方括号标签（如 [critical]）仅用于类型/配色提示，不要作为节点文字渲染到图中。")
     lines.append("")
     lines.append("图内容（必须覆盖以下阶段与节点；每个节点文字尽量短）：")
     lines.append(f"- 总标题：{spec.title}")

@@ -89,6 +89,13 @@
 
 ---
 
+nsfc-schematic 的 nano banana 模式 优化
+
+- 因为 nano banana 的图里的文字，有可能会出现扭曲，降低人类可读性。 为了减少这种情况，我希望 skill的prompt里应该加强图片字体的样式约束，以保证字体生成的规范性，就打打印出来的一样，符合标书的严格需求。 你可以联网找一下大家有哪些经验，一般是怎么写的prompt； 然后有机地融入目前的流程里。
+- 必要时要更新skill的readme
+
+---
+
 nsfc-schematic 使用 nano banana 模式时，是不是这样：
 
 - 先理解内容，了解用户的标书内容，制定一个计划
@@ -198,6 +205,13 @@ PlanName = 借鉴roadmap-优化-v202602191311
 按 skills/nsfc-schematic/plans/{PlanName}.md 的要求优化skill；有疑问的地方，你按最优方案决定，不要问我。在 skills/nsfc-schematic/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 
 # nsfc-roadmap
+
+---
+
+nsfc-roadmap 的 nano banana 模式 优化
+
+- 因为 nano banana 的图里的文字，有可能会出现扭曲，降低人类可读性。 为了减少这种情况，我希望 skill的prompt里应该加强图片字体的样式约束，以保证字体生成的规范性，就打打印出来的一样，符合标书的严格需求。 你可以联网找一下大家有哪些经验，一般是怎么写的prompt； 然后有机地融入目前的流程里。
+- 必要时要更新skill的readme
 
 ---
 
