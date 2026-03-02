@@ -20,6 +20,7 @@ from measure_roadmap import measure as measure_roadmap
 from extract_from_tex import extract_item_titles, extract_research_content_section, find_candidate_tex
 from render_roadmap import drawio_install_hints, ensure_drawio_cli, render
 from nano_banana_client import nano_banana_generate_png, nano_banana_health_check
+from png_compactor import compact_png, compacted_png_name
 from spec import RoadmapSpec, default_spec_for_nsfc_young_2026, load_spec
 from template_library import load_template_db, resolve_layout_template
 from utils import dump_yaml, fatal, info, load_yaml, skill_root, warn, write_text
@@ -1920,6 +1921,25 @@ def main() -> None:
             _copy_if_exists(best_round_dir / name, run_dir / name)
             _copy_if_exists(best_round_dir / name, work_dir / name)
 
+    compacted_png: Optional[str] = None
+    if renderer_backend == "nano_banana":
+        png_name = artifacts.get("png", "roadmap.png")
+        if isinstance(png_name, str):
+            compacted_png = compacted_png_name(png_name)
+            try:
+                src = work_dir / png_name
+                dst = work_dir / compacted_png
+                res = compact_png(src, dst, target_long_edge_px=2400)
+                _copy_if_exists(dst, run_dir / compacted_png)
+                info(
+                    "已生成 compacted PNG："
+                    f"{dst.name} ({res.src_bytes/1024/1024:.2f}MB -> {res.dst_bytes/1024/1024:.2f}MB, "
+                    f"{res.src_size[0]}x{res.src_size[1]} -> {res.dst_size[0]}x{res.dst_size[1]}, {res.used_mode})"
+                )
+            except Exception as exc:
+                compacted_png = None
+                warn(f"生成 compacted PNG 失败（已忽略）：{exc}")
+
     # Export meta for reproducibility (keep them in intermediate, not deliverables root).
     config_best_name = str(artifacts.get("config_best", "config_used_best.yaml"))
     evaluation_best_name = str(artifacts.get("evaluation_best", "evaluation_best.json"))
@@ -1937,6 +1957,8 @@ def main() -> None:
             ]
         )
     exported_files.append(str(artifacts.get("png", "roadmap.png")))
+    if compacted_png is not None:
+        exported_files.append(compacted_png)
     pdf_cfg = (
         ((cfg_round_base.get("renderer", {}) or {}).get("pdf", {}) if isinstance(cfg_round_base.get("renderer", {}), dict) else {})
         if isinstance(cfg_round_base, dict)

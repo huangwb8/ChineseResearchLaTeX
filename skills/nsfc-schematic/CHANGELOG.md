@@ -6,6 +6,18 @@
 
 （暂无）
 
+## [1.0.1] - 2026-03-02
+
+### Added（新增）
+
+- Nano Banana（Gemini PNG-only）模式：在 4K `schematic.png` 之外自动生成 `schematic_compacted.png`（下采样 + PNG 压缩/量化择优），显著降低嵌入标书 PDF 的体积
+- `scripts/png_compactor.py`：新增 PNG 压缩/下采样工具（确定性、无外部依赖）
+
+### Changed（变更）
+
+- `scripts/generate_schematic.py`：nano_banana 导出阶段自动生成 compacted PNG，并写入最终导出清单
+- 文档同步：`README.md`、`SKILL.md`
+
 ## [0.14.3] - 2026-03-02
 
 ### Added（新增）

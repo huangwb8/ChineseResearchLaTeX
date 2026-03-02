@@ -27,6 +27,7 @@ from render_schematic import drawio_install_hints, ensure_drawio_cli, render_art
 from schematic_writer import write_schematic_drawio
 from spec_parser import default_schematic_spec, load_schematic_spec
 from nano_banana_client import nano_banana_generate_png, nano_banana_health_check
+from png_compactor import compact_png, compacted_png_name
 from utils import dump_yaml, fatal, info, is_safe_relative_path, load_yaml, skill_root, warn, write_text
 
 
@@ -2090,6 +2091,25 @@ def main() -> None:
             _copy_if_exists(best_round_dir / name, run_dir / name)
             _copy_if_exists(best_round_dir / name, work_dir / name)
 
+    compacted_png: Optional[str] = None
+    if renderer_backend == "nano_banana":
+        png_name = artifacts.get("png", "schematic.png")
+        if isinstance(png_name, str):
+            compacted_png = compacted_png_name(png_name)
+            try:
+                src = work_dir / png_name
+                dst = work_dir / compacted_png
+                res = compact_png(src, dst, target_long_edge_px=2400)
+                _copy_if_exists(dst, run_dir / compacted_png)
+                info(
+                    "已生成 compacted PNG："
+                    f"{dst.name} ({res.src_bytes/1024/1024:.2f}MB -> {res.dst_bytes/1024/1024:.2f}MB, "
+                    f"{res.src_size[0]}x{res.src_size[1]} -> {res.dst_size[0]}x{res.dst_size[1]}, {res.used_mode})"
+                )
+            except Exception as exc:
+                compacted_png = None
+                warn(f"生成 compacted PNG 失败（已忽略）：{exc}")
+
     config_best_name = str(artifacts.get("config_best", "config_used_best.yaml"))
     evaluation_best_name = str(artifacts.get("evaluation_best", "evaluation_best.json"))
     _copy_if_exists(best_round_dir / "config_used.yaml", run_dir / config_best_name)
@@ -2106,7 +2126,7 @@ def main() -> None:
         pdf_enabled = bool(((config.get("renderer", {}) or {}).get("pdf", {}) or {}).get("enabled", False))
         pdf_name = str(artifacts.get("pdf", "schematic.pdf"))
         if renderer_backend == "nano_banana":
-            exported = [png_name]
+            exported = [png_name] + ([compacted_png] if compacted_png else [])
         else:
             exported = [drawio_name, svg_name, png_name] + ([pdf_name] if pdf_enabled else [])
         f.write("- exported: " + ", ".join(f"`{x}`" for x in exported) + "\n")

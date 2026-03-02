@@ -38,7 +38,7 @@
 
 | 对比维度 | draw.io 模式（默认） | Nano Banana 模式 |
 |---------|---------------------|-----------------|
-| **输出格式** | `.drawio` + `.svg` + `.png` + `.pdf` | 仅 `.png`（4K 高清） |
+| **输出格式** | `.drawio` + `.svg` + `.png` + `.pdf` | `schematic.png`（4K）+ `schematic_compacted.png`（更小体积） |
 | **矢量图** | ✅ SVG 矢量，可无损缩放 | ❌ 仅位图 |
 | **可编辑性** | ✅ 用 draw.io 打开可直接拖拽微调 | ❌ 不可后期编辑 |
 | **出图质量** | 取决于多轮优化轮次 | 高（Gemini 图片模型直接生成） |
@@ -56,7 +56,7 @@
 
 - **默认 draw.io**：优先输出可编辑的 `schematic.drawio` 与矢量交付（`svg/pdf`），适合标书嵌入。
 - **可追溯优化**：多轮评估 + 证据产出（`evaluation.json`/`measurements.json` 等）。
-- **PNG-only 备用通道**：当你明确要求 Nano Banana/Gemini 模式时，仅生成 **4K** `schematic.png`（长边>=3840px；按画布比例缩放，必要时白底补边以保留完整内容）。
+- **PNG-only 备用通道**：当你明确要求 Nano Banana/Gemini 模式时，生成 **4K** `schematic.png` + 更小体积的 `schematic_compacted.png`（适合嵌入标书 PDF）。
 
 ## 功能概述
 
@@ -205,7 +205,7 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 A：会自动回退到内部渲染兜底，仍能生成 PNG/PDF，但质量可能略低。建议安装并在 `renderer.drawio.cli_path` 指定。
 
 ### Q：如何触发 Nano Banana 模式？
-A：**必须由你明确提出**（如“用 Nano Banana/Gemini 出图”）。然后使用 `--renderer nano_banana`，该模式只交付 PNG。
+A：**必须由你明确提出**（如“用 Nano Banana/Gemini 出图”）。然后使用 `--renderer nano_banana`，该模式只交付 PNG（`schematic.png` + `schematic_compacted.png`）。
 
 ### Q：为什么只输出 PNG？
 A：Nano Banana/Gemini 仅生成图片，不支持输出 `.drawio/.svg/.pdf`。如果需要可编辑/矢量，请使用默认 draw.io 模式。

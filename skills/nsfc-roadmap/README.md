@@ -5,7 +5,7 @@
 
 ## 这是什么
 
-为 NSFC 标书生成可打印、A4 可读的技术路线图，默认输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果；当你明确提出使用 Nano Banana/Gemini 图片模型时，可切换为 **PNG-only**（仅交付 `roadmap.png`）。
+为 NSFC 标书生成可打印、A4 可读的技术路线图，默认输出 `.drawio` 可编辑源文件与 `.svg`/`.png`/`.pdf` 渲染结果；当你明确提出使用 Nano Banana/Gemini 图片模型时，可切换为 **PNG-only**（交付 `roadmap.png` + `roadmap_compacted.png`）。
 
 **核心价值**：
 - 从标书 `.tex` 自动抽取研究内容 → 生成结构化 spec
@@ -14,7 +14,7 @@
 - 输出 draw.io 源文件，可继续人工微调
 - 默认生成“主线箭头”（`Phase1 → Phase2 → …`），让成品更像路线图而不是贴纸盒子
 - A4 打印可读（字号、间距、配色均针对打印优化）
-- 可选 Nano Banana / Gemini PNG-only（仅当你明确要求；适合“不要 draw.io、只要一张 PNG”）
+- 可选 Nano Banana / Gemini PNG-only（仅当你明确要求；适合“不要 draw.io、只要 PNG 交付”）
 
 **重要声明**：本技能生成的技术路线图仅用于写作与展示优化，不代表任何官方评审口径或资助结论。
 
@@ -24,7 +24,7 @@
 
 | 对比维度 | draw.io 模式（默认） | Nano Banana 模式 |
 |---------|---------------------|-----------------|
-| **输出格式** | `.drawio` + `.svg` + `.png` + `.pdf` | 仅 `.png`（4K 高清） |
+| **输出格式** | `.drawio` + `.svg` + `.png` + `.pdf` | `roadmap.png`（4K）+ `roadmap_compacted.png`（更小体积） |
 | **矢量图** | ✅ SVG 矢量，可无损缩放 | ❌ 仅位图 |
 | **可编辑性** | ✅ 用 draw.io 打开可直接拖拽微调 | ❌ 不可后期编辑 |
 | **出图质量** | 取决于多轮优化轮次 | 高（Gemini 图片模型直接生成） |
@@ -146,6 +146,7 @@ roadmap_output/
 ├── roadmap.drawio           # 可编辑源文件（推荐用 draw.io 打开）
 ├── roadmap.svg              # 矢量图（优先用于 LaTeX/Word 嵌入）
 ├── roadmap.png              # 高分辨率位图（用于预览）
+├── roadmap_compacted.png     # Nano Banana 模式自动生成：体积显著更小的 PNG（适合嵌入标书 PDF）
 ├── roadmap.pdf              # 默认输出（无 CLI 时为 PNG→PDF 栅格降级）
 ├── roadmap-plan.md          # 规划草案（可审阅/修改）
 └── .nsfc-roadmap/           # 中间产物（默认隐藏）
@@ -181,7 +182,7 @@ roadmap_output/
             └── ai_critic_response.yaml
 ```
 
-**PNG-only 模式**：仅交付 `roadmap.png`（不会生成 `.drawio/.svg/.pdf`）。
+**PNG-only 模式**：交付 `roadmap.png`（4K）+ `roadmap_compacted.png`（更小体积；适合嵌入标书 PDF；不会生成 `.drawio/.svg/.pdf`）。
 
 ## Gemini API 配置（Nano Banana 模式）
 
