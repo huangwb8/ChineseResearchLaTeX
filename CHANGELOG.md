@@ -8,6 +8,11 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- **nsfc-roadmap v0.11.4 → v1.0.0**：升级为正式稳定版；description 更新为更清晰的功能说明（强调可编辑 + 可嵌入双格式输出）
+- **nsfc-schematic v0.14.3 → v1.0.0**：升级为正式稳定版；description 更新为更清晰的功能说明（强调可编辑 + 可嵌入双格式输出）
+
 ### Added（新增）
 
 - **scripts/pack_release.py**：新增 Release 打包脚本，自动为 `projects/` 下各子项目生成 zip 并可选上传到 GitHub Release（`--upload`）

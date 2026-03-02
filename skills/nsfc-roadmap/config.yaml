@@ -3,8 +3,8 @@
 
 skill_info:
   name: nsfc-roadmap
-  version: 0.11.4
-  description: "为 NSFC 标书生成可打印、A4 可读的技术路线图（默认 drawio + SVG/PNG/PDF；可选 Nano Banana PNG-only）"
+  version: 1.0.0
+  description: "为 NSFC 标书生成可打印、A4 可读的技术路线图，输出 drawio + SVG/PNG/PDF 可编辑与嵌入格式（可选 Nano Banana PNG-only 模式）"
   author: "Bensz Conan"
   category: 科研写作
 
