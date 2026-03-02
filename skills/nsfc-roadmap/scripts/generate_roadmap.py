@@ -811,6 +811,12 @@ def _write_ai_critic_request(
     else:
         lines.append("action: both  # spec_only|config_only|both|stop")
     lines.append("reason: \"一句话说明本轮行动与停止/继续依据\"")
+    if is_nano_banana:
+        lines.append("# 仅 nano_banana：是否从本轮开始“锁定风格/延续风格”（下一轮会把上一轮图片作为参考图传入）")
+        lines.append("# - TRUE：本轮整体风格（构图/线条/配色/质感）已足够好，后续只做内容与小修")
+        lines.append("# - FALSE：本轮风格仍需大改（先别锁风格，以免把坏风格固化）")
+        lines.append("# - 若用户明确表示“基于本 run/本结果继续优化”，通常应选择 TRUE（保持风格连续）。")
+        lines.append("style_continuity: false")
     lines.append("# 可选：提供完整 spec（推荐直接给全量，避免 patch 合并歧义）")
     lines.append("# spec:")
     lines.append("#   title: ...")
@@ -822,6 +828,11 @@ def _write_ai_critic_request(
     lines.append("#   color_scheme:")
     lines.append("#     name: tint-layered")
     if is_nano_banana:
+        lines.append("# 可选（仅 nano_banana）：配色建议（会自动拼到下一轮 prompt，建议写成可执行规则）")
+        lines.append("# nano_banana_color_advice: |")
+        lines.append("#   - 主色不超过 2-3 个；风险/对照用点缀色")
+        lines.append("#   - 保持同一色系的明度层次（同色不同深浅）来区分分区/层级")
+        lines.append("#   - 保证文本对比度（深色字 + 浅色填充）；避免低饱和灰底叠浅灰字")
         lines.append("# 可选（仅 nano_banana 模式）：提供下一轮传给 Gemini 的 prompt")
         lines.append("# nano_banana_prompt:")
         lines.append("#   mode: full    # full=全量替换（推荐）| patch=追加到确定性 prompt 末尾")
@@ -854,17 +865,49 @@ def _write_ai_critic_request(
     write_text(_ai_request_path(ai_run_root), "\n".join(lines) + "\n")
 
 
+def _ai_state_path(ai_run_root: Path) -> Path:
+    return ai_run_root / "ai_state.yaml"
+
+
+def _load_ai_state(ai_run_root: Path) -> Dict[str, Any]:
+    p = _ai_state_path(ai_run_root)
+    if not p.exists():
+        return {"version": 1, "nano_banana": {}}
+    try:
+        d = load_yaml(p)
+        if isinstance(d, dict):
+            return d
+    except Exception:
+        pass
+    return {"version": 1, "nano_banana": {}}
+
+
+def _save_ai_state(ai_run_root: Path, state: Dict[str, Any]) -> None:
+    try:
+        write_text(_ai_state_path(ai_run_root), dump_yaml(state))
+    except Exception:
+        # State is a convenience feature; never break the main pipeline.
+        pass
+
+
 def _maybe_apply_ai_response(
     ai_run_root: Path,
     spec_data: Dict[str, Any],
     spec_latest_path: Path,
-) -> tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str], Optional[str]]:
+) -> tuple[
+    Dict[str, Any],
+    Optional[Dict[str, Any]],
+    Optional[str],
+    Optional[str],
+    Optional[bool],
+    Optional[str],
+]:
     """
-    Returns: (updated_spec_data, config_local_patch, action, nano_banana_prompt_override)
+    Returns: (updated_spec_data, config_local_patch, action, nano_banana_prompt_override, style_continuity, nano_banana_color_advice)
     """
     resp_path = _ai_response_path(ai_run_root)
     if not resp_path.exists():
-        return spec_data, None, None, None
+        return spec_data, None, None, None, None, None
     resp = load_yaml(resp_path)
     if int(resp.get("version", 1) or 1) != 1:
         fatal(f"ai_critic_response.version 不支持：{resp.get('version')}")
@@ -887,6 +930,14 @@ def _maybe_apply_ai_response(
     except Exception:
         pass
 
+    style_continuity: Optional[bool] = None
+    if "style_continuity" in resp:
+        style_continuity = bool(resp.get("style_continuity", False))
+
+    nano_banana_color_advice: Optional[str] = None
+    if "nano_banana_color_advice" in resp:
+        nano_banana_color_advice = str(resp.get("nano_banana_color_advice", "") or "").strip()
+
     nano_banana_prompt_override: Optional[str] = None
     nb_prompt_cfg = resp.get("nano_banana_prompt")
     if isinstance(nb_prompt_cfg, dict):
@@ -899,6 +950,19 @@ def _maybe_apply_ai_response(
                 nano_banana_prompt_override = f"__PATCH__\n{nb_content}"
             else:
                 warn(f"nano_banana_prompt.mode 不支持：{nb_mode!r}，已忽略")
+
+    # Persist nano_banana "iteration state" for the next round (style continuity & color hints).
+    # This is intentionally separate from spec/config to keep the spec pure.
+    state = _load_ai_state(ai_run_root)
+    nb = state.get("nano_banana") if isinstance(state.get("nano_banana"), dict) else {}
+    nb_out: Dict[str, Any] = dict(nb)
+    if style_continuity is not None:
+        nb_out["style_continuity"] = bool(style_continuity)
+    if nano_banana_color_advice is not None:
+        nb_out["color_advice"] = nano_banana_color_advice
+    state["version"] = 1
+    state["nano_banana"] = nb_out
+    _save_ai_state(ai_run_root, state)
 
     new_spec = resp.get("spec")
     if action in {"spec_only", "both", "stop"} and new_spec is not None:
@@ -915,9 +979,9 @@ def _maybe_apply_ai_response(
     if action in {"config_only", "both"} and config_local_patch is not None:
         if not isinstance(config_local_patch, dict):
             fatal("ai_critic_response.config_local 必须是 mapping")
-        return spec_data, config_local_patch, action, nano_banana_prompt_override
+        return spec_data, config_local_patch, action, nano_banana_prompt_override, style_continuity, nano_banana_color_advice
 
-    return spec_data, None, action, nano_banana_prompt_override
+    return spec_data, None, action, nano_banana_prompt_override, style_continuity, nano_banana_color_advice
 
 
 def _apply_exploration(cfg: Dict[str, Any], round_idx: int, exploration: Dict[str, Any]) -> Dict[str, Any]:
@@ -1325,8 +1389,10 @@ def main() -> None:
     # ai_critic: apply response patches (spec/config_local) before rendering the next round.
     ai_action: Optional[str] = None
     ai_nano_banana_prompt: Optional[str] = None
+    ai_nb_style_continuity: Optional[bool] = None
+    ai_nb_color_advice: Optional[str] = None
     if ai_mode and ai_run_root is not None:
-        spec_data, config_local_patch, ai_action, ai_nano_banana_prompt = _maybe_apply_ai_response(
+        spec_data, config_local_patch, ai_action, ai_nano_banana_prompt, ai_nb_style_continuity, ai_nb_color_advice = _maybe_apply_ai_response(
             ai_run_root, spec_data, spec_latest
         )
         if config_local_patch is not None:
@@ -1354,6 +1420,15 @@ def main() -> None:
         if ai_action == "stop":
             info("ai_critic: 收到 stop 指令，将导出当前 best 并清理 ACTIVE_RUN。")
             _clear_active_run(_ai_root(intermediate_dir))
+
+    # ai_state: sticky knobs across ai_critic iterations (nano_banana style continuity, color hints, etc.)
+    ai_nb_style_continuity_effective = False
+    ai_nb_color_advice_effective = ""
+    if ai_mode and ai_run_root is not None:
+        st = _load_ai_state(ai_run_root)
+        nb = st.get("nano_banana") if isinstance(st.get("nano_banana"), dict) else {}
+        ai_nb_style_continuity_effective = bool((nb or {}).get("style_continuity", False))
+        ai_nb_color_advice_effective = str((nb or {}).get("color_advice", "") or "").strip()
 
     input_excerpt_path: Optional[Path] = None
     if ai_mode and ai_run_root is not None:
@@ -1618,14 +1693,37 @@ def main() -> None:
                     info("nano_banana: 使用 AI 提供的 full prompt")
             else:
                 prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
-            write_text(round_dir / "nano_banana_prompt.md", prompt)
             try:
+                reference_png: Optional[Path] = None
+                if ai_mode and ai_nb_style_continuity_effective and r >= 2:
+                    prev_png = run_dir / f"round_{(r - 1):02d}" / str(artifacts.get("png", "roadmap.png"))
+                    if prev_png.exists():
+                        reference_png = prev_png
+                        # Ask the model to preserve the look-and-feel of the provided reference image.
+                        prompt = (
+                            prompt.rstrip("\n")
+                            + "\n\n## 风格延续（参考图片已提供）\n"
+                            + "- 请尽量沿用参考图片中的整体视觉风格（配色、线条粗细、圆角/箭头风格、阴影/扁平质感）。\n"
+                            + "- 优先只改动布局与节点文字，不要在风格上做大幅改动。\n"
+                            + "\n"
+                        )
+
+                if ai_mode and ai_nb_color_advice_effective:
+                    prompt = (
+                        prompt.rstrip("\n")
+                        + "\n\n## 配色建议（来自宿主 AI）\n"
+                        + ai_nb_color_advice_effective.strip()
+                        + "\n\n"
+                    )
+
+                write_text(round_dir / "nano_banana_prompt.md", prompt)
                 nano_banana_generate_png(
                     cfg=gemini_cfg,
                     prompt=prompt,
                     output_png=out_png,
                     canvas_w=cw,
                     canvas_h=ch,
+                    reference_png=reference_png,
                     debug_dir=round_dir,
                 )
             except Exception as exc:

@@ -248,6 +248,10 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 - 宿主 AI 应以 **直接读图（`roadmap.png`）的视觉判断** 为主；`evaluation.json/critique_*.json` 仅作参考。
 - 证据包会携带 `nano_banana_prompt.md`（本轮传给 Gemini 的完整 prompt），便于你对照当前绘图指令。
 - 你可以在响应中提供 `nano_banana_prompt` 字段，用于控制下一轮传给 Gemini 的 prompt（见下方协议）。
+- 宿主 AI 需要判断当前“整体风格”（构图/线条/配色/质感）是否已经足够好：
+  - 若足够好：在响应里写 `style_continuity: true`；下一轮会把上一轮 `roadmap.png` 作为参考图一并传给 Gemini，以保证风格延续，避免“开盲盒式换风格”。
+  - 若仍需大改：写 `style_continuity: false`；下一轮不传参考图（让模型有空间重做风格）。
+- 若认为配色仍需优化，可在响应中提供 `nano_banana_color_advice`，脚本会自动拼到下一轮 prompt 里（建议写成可执行规则）。
 
 #### ai_critic_response.yaml 最小协议（version=1）
 
@@ -258,6 +262,9 @@ action: both  # spec_only|config_only|both|nano_banana_prompt_only|stop
 reason: "一句话说明本轮行动与停止/继续依据"
 # 说明：nano_banana_prompt_only = 只更新 prompt，不修改 spec/config_local
 
+# 仅 nano_banana：是否从本轮开始锁定风格（下一轮会把上一轮图片作为参考图传入）
+style_continuity: false
+
 # 推荐：直接给完整 spec（避免 patch 合并歧义）
 # spec:
 #   title: ...
@@ -267,6 +274,11 @@ reason: "一句话说明本轮行动与停止/继续依据"
 # config_local:
 #   color_scheme:
 #     name: tint-layered
+
+# 可选（仅 nano_banana）：配色建议（会自动拼到下一轮 prompt）
+# nano_banana_color_advice: |
+#   - 主色不超过 2-3 个；风险/对照用点缀色
+#   - 保证文本对比度（深色字 + 浅色填充）
 
 # 可选（仅 nano_banana 模式）：提供下一轮传给 Gemini 的 prompt
 # nano_banana_prompt:

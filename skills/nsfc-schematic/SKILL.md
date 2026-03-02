@@ -292,7 +292,7 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 
 - `output_dir/.nsfc-schematic/ai/ACTIVE_RUN.txt`：当前闭环 run（用于 resume）
 - `output_dir/.nsfc-schematic/ai/<run>/ai_critic_request.md`：宿主 AI 的指令
-- `output_dir/.nsfc-schematic/ai/<run>/ai_pack_round_XX/`：证据包（含 `schematic.png` + `evaluation.json` 等）
+- `output_dir/.nsfc-schematic/ai/<run>/ai_pack_round_XX/`：证据包（含 `schematic.png` + `evaluation.json` 等；若 `renderer=nano_banana` 还会包含 `nano_banana_prompt.md`）
 
 4) 宿主 AI 写回响应：
 
@@ -300,7 +300,15 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 
 - `output_dir/.nsfc-schematic/ai/<run>/ai_critic_response.yaml`
 
-最小示例：
+Nano Banana（Gemini PNG-only）+ ai_critic 额外约定：
+
+- 宿主 AI 应以 **直接读图（`schematic.png`）的视觉判断** 为主；`evaluation.json/*_debug.json` 仅作参考。
+- 宿主 AI 需要判断当前“整体风格”（构图/线条/配色/质感）是否已经足够好：
+  - 若足够好：写 `style_continuity: true`；下一轮会把上一轮 `schematic.png` 作为参考图传入 Gemini，保证风格延续。
+  - 若仍需大改：写 `style_continuity: false`；下一轮不传参考图（避免把坏风格固化）。
+- 若认为配色仍需优化，可写 `nano_banana_color_advice`；脚本会自动拼到下一轮 prompt 里。
+
+最小示例（通用）：
 
 ```yaml
 version: 1
@@ -311,6 +319,19 @@ config_local:
   layout:
     font:
       node_label_size: 28
+```
+
+最小示例（仅 Nano Banana，可选字段）：
+
+```yaml
+version: 1
+based_on_round: 1
+action: nano_banana_prompt_only  # spec_only|config_only|both|nano_banana_prompt_only|stop
+reason: "风格已满意，锁定风格并微调配色"
+style_continuity: true
+nano_banana_color_advice: |
+  - 主色不超过 2-3 个；风险/对照用点缀色
+  - 保证文本对比度（深色字 + 浅色填充）
 ```
 
 5) Resume：

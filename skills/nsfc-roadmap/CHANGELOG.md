@@ -12,6 +12,18 @@
 
 - （暂无）
 
+## [0.11.4] - 2026-03-02
+
+### Added（新增）
+
+- Nano Banana（Gemini PNG-only）+ `ai_critic`：支持“风格延续”开关 `style_continuity`（当为 true 时，下一轮将上一轮 PNG 作为参考图传入 Gemini，减少每轮风格漂移）
+- Nano Banana（Gemini PNG-only）+ `ai_critic`：支持 `nano_banana_color_advice`（宿主 AI 的配色建议会自动拼入下一轮 prompt）
+
+### Changed（变更）
+
+- `scripts/nano_banana_client.py`：`nano_banana_generate_png()` 新增可选 `reference_png` 输入，并在 debug request 中自动省略 base64（避免写入超大文件）
+- 文档同步：`README.md`、`SKILL.md`
+
 ## [0.11.3] - 2026-03-01
 
 ### Changed（变更）

@@ -20,6 +20,10 @@
 - **nsfc-schematic v0.13.1 → v0.14.0**：将 `evaluation.stop_strategy` 默认值从 `plateau` 改为 `ai_critic`，AI 闭环评价成为开箱即用的默认模式；如需无人值守自动收敛，可在 `config_local.yaml` 覆盖 `stop_strategy: plateau`
 - **nsfc-schematic v0.14.0 → v0.14.1**：增强 Nano Banana / Gemini PNG-only 模式的 prompt 字体与排版硬约束（禁止扭曲/旋转/艺术字；建议黑字+白底标签框），降低图片中文字“扭曲/不可读”风险
 - **nsfc-schematic v0.14.1 → v0.14.2**：Nano Banana / Gemini PNG-only 模式固定输出 4K 分辨率（长边>=3840px；按画布比例缩放并在必要时补白），并将导出分辨率检查口径改为“长边>=3840px”，避免与 spec 画布尺寸不一致造成误报
+- **nsfc-schematic v0.14.2 → v0.14.3**：Nano Banana + `ai_critic` 风格延续与配色建议增强
+  - `ai_critic_response.yaml`：新增 `style_continuity`（为 true 时下一轮把上一轮 PNG 作为参考图传入 Gemini，保证风格连续）与 `nano_banana_color_advice`（自动拼入下一轮 prompt）
+  - `skills/nsfc-schematic/scripts/nano_banana_client.py`：支持 `reference_png` 输入，并在 debug request 中省略 base64
+  - `skills/nsfc-schematic/scripts/generate_schematic.py`：证据包携带 `nano_banana_prompt.md`，并在风格延续时自动附加“风格延续”提示段落
 - **nsfc-schematic v0.9.0 → v0.10.0**：实例辅助优化（标题策略、标签可读性、空间利用率、形状统一）
   - `skills/nsfc-schematic/config.yaml`：默认关闭图内标题；新增 `layout.shape_policy`、`renderer.drawio_border_mode` 及空间利用/标签净距阈值
   - `skills/nsfc-schematic/scripts/routing.py` / `schematic_writer.py` / `render_schematic.py`：路由升级为双折线候选+代价函数，edge label 增加避障锚点与 offset，导出边框支持 adaptive
@@ -81,6 +85,10 @@
   - `skills/nsfc-roadmap/scripts/nano_banana_client.py`：图像尺寸选择更倾向 `IMAGE_SIZE_4K`（提升 A4 缩印可读性）
 - **nsfc-roadmap v0.11.2 → v0.11.3**：Nano Banana（Gemini PNG-only）模式固定输出 4K 分辨率（长边>=3840px；按画布比例缩放并在必要时补白），不再受 spec/画布尺寸影响
   - 文档同步：`skills/nsfc-roadmap/README.md`、`skills/nsfc-roadmap/SKILL.md`、`skills/nsfc-roadmap/CHANGELOG.md`、`skills/nsfc-roadmap/config.yaml`
+- **nsfc-roadmap v0.11.3 → v0.11.4**：Nano Banana + `ai_critic` 风格延续与配色建议增强
+  - `ai_critic_response.yaml`：新增 `style_continuity`（为 true 时下一轮把上一轮 PNG 作为参考图传入 Gemini，保证风格连续）与 `nano_banana_color_advice`（自动拼入下一轮 prompt）
+  - `skills/nsfc-roadmap/scripts/nano_banana_client.py`：支持 `reference_png` 输入，并在 debug request 中省略 base64
+  - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：在风格延续时自动附加“风格延续”提示段落，并将上一轮 PNG 作为参考图传入
 
 - **.gitignore**：新增忽略规则 `**/.nsfc-ref-alignment/`，避免运行 nsfc-ref-alignment 时产生的中间产物污染 `git status`
 - **projects/NSFC_{General,Local,Young}**：enumerate 列表换行后的续行增加 2 个中文字符缩进；中文字体伪粗体参数 `AutoFakeBold=3` 调整为 `AutoFakeBold=5`

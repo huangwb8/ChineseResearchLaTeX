@@ -266,7 +266,7 @@ critique_*.json / nano_banana_prompt.md 等）+ ai_critic_request.md
 
 2. **脚本协作暂停**：每轮脚本只渲染 1 轮后主动停止；整个循环靠”脚本 ↔ 宿主 AI”交替驱动，不是脚本内自动闭环。
 
-3. **Gemini 每轮从文本 prompt 重新生成**：传给 Gemini 的是文本绘图指令（`nano_banana_prompt`），而不是”上一轮 PNG + 修改指令”。每轮产出的是全新图，不是对旧图的局部修改。
+3. **默认“文本 prompt 重新生成”，可选“参考图延续风格”**：默认传给 Gemini 的是文本绘图指令（`nano_banana_prompt`），每轮都会生成一张新图；但当宿主 AI 在 `ai_critic_response.yaml` 里写 `style_continuity: true` 时，下一轮会把上一轮 PNG 一并作为参考图传入，以保持风格一致性（适合标书这种严肃场景）。
 
 ## 多维度自检
 

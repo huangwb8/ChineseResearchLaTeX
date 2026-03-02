@@ -296,6 +296,7 @@ def nano_banana_generate_png(
     output_png: Path,
     canvas_w: int,
     canvas_h: int,
+    reference_png: Optional[Path] = None,
     debug_dir: Optional[Path] = None,
     timeout_s: int = 180,
 ) -> None:
@@ -308,8 +309,22 @@ def nano_banana_generate_png(
     aspect = _choose_aspect_ratio(canvas_w, canvas_h)
     size = _choose_image_size(canvas_w, canvas_h)
 
+    def _image_part_from_path(p: Path) -> Dict[str, Any]:
+        raw = p.read_bytes()
+        # Gemini expects base64-encoded inlineData. We only support PNG here.
+        b64 = base64.b64encode(raw).decode("ascii")
+        return {"inlineData": {"mimeType": "image/png", "data": b64}}
+
+    parts: List[Dict[str, Any]] = []
+    if reference_png is not None:
+        rp = Path(reference_png)
+        if not rp.exists() or not rp.is_file():
+            raise RuntimeError(f"reference_png 不存在或不是文件：{rp}")
+        parts.append(_image_part_from_path(rp))
+    parts.append({"text": prompt})
+
     payload: Dict[str, Any] = {
-        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "contents": [{"role": "user", "parts": parts}],
         "generationConfig": {
             "responseModalities": ["IMAGE"],
             "temperature": 0.2,
@@ -318,12 +333,27 @@ def nano_banana_generate_png(
     }
     if debug_dir is not None:
         debug_dir.mkdir(parents=True, exist_ok=True)
+
+        # Avoid writing large base64 blobs to disk (reference images can be multi-MB).
+        payload_sanitized = json.loads(json.dumps(payload, ensure_ascii=False))
+        try:
+            parts0 = payload_sanitized.get("contents", [{}])[0].get("parts", [])
+            if isinstance(parts0, list):
+                for part in parts0:
+                    if not isinstance(part, dict):
+                        continue
+                    inline = part.get("inlineData")
+                    if isinstance(inline, dict) and isinstance(inline.get("data"), str):
+                        inline["data"] = "<omitted>"
+        except Exception:
+            payload_sanitized = {"note": "sanitize_failed"}
+
         (debug_dir / "nano_banana_request.json").write_text(
             json.dumps(
                 {
                     "base_url": cfg.base_url,
                     "model": cfg.model,
-                    "payload": payload,
+                    "payload": payload_sanitized,
                 },
                 ensure_ascii=False,
                 indent=2,

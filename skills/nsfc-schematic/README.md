@@ -143,10 +143,10 @@ OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-pre
 [Round N]
   1. 脚本从 spec 确定性构建纯文本 prompt
      （_build_nano_banana_prompt：硬编码拼接，不由宿主 AI 生成）
-  2. 调用 Gemini API（只传文本，无图片输入）→ 得到新 PNG
+  2. 调用 Gemini API（默认只传文本；当宿主 AI 写 `style_continuity: true` 时，会额外把上一轮 PNG 作为参考图一并传入以延续风格）→ 得到新 PNG
   3. 脚本对 PNG 做启发式评估，生成证据包（evaluation.json 等）
   4. 宿主 AI 读证据包（含 PNG），写回 ai_critic_response.yaml
-     → 修改的是 spec 或 config_local，而非 prompt 本身
+     → 默认修改 spec 或 config_local；也可选写 `nano_banana_color_advice` / `nano_banana_prompt` 来影响下一轮绘图
   5. 下一轮用更新后的 spec 重新构建 prompt，从头生成新 PNG
    ↓
 满足停止条件（达轮次上限，或宿主 AI 写 action: stop）→ 导出最终 PNG
@@ -156,8 +156,8 @@ OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-pre
 
 | 误解 | 实际行为 |
 |------|----------|
-| "宿主 AI 直接写 prompt 传给 Gemini" | Prompt 由脚本从 spec 确定性生成；宿主 AI 通过改 spec/config 间接影响 prompt |
-| "把上一轮 PNG 传回 Gemini 做图上修改" | 每轮只传纯文本；Gemini 每次从头独立生成新 PNG，上一轮图不作为输入 |
+| "宿主 AI 直接写 prompt 传给 Gemini" | 默认 prompt 由脚本从 spec 确定性生成；但在 `ai_critic_response.yaml` 中可选提供 `nano_banana_prompt`（full/patch）覆盖下一轮 prompt |
+| "把上一轮 PNG 传回 Gemini 做图上修改" | 默认每轮只传纯文本、从头生成新 PNG；但当宿主 AI 写 `style_continuity: true` 时，下一轮会把上一轮 PNG 作为参考图传入，用于**延续风格**（不是像素级局部编辑） |
 
 ### 优化思路
 
