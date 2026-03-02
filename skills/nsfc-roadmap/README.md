@@ -18,41 +18,55 @@
 
 **重要声明**：本技能生成的技术路线图仅用于写作与展示优化，不代表任何官方评审口径或资助结论。
 
+## 两种出图模式
+
+本技能支持两种出图模式，开始前建议先了解它们的区别：
+
+| 对比维度 | draw.io 模式（默认） | Nano Banana 模式 |
+|---------|---------------------|-----------------|
+| **输出格式** | `.drawio` + `.svg` + `.png` + `.pdf` | 仅 `.png`（4K 高清） |
+| **矢量图** | ✅ SVG 矢量，可无损缩放 | ❌ 仅位图 |
+| **可编辑性** | ✅ 用 draw.io 打开可直接拖拽微调 | ❌ 不可后期编辑 |
+| **出图质量** | 取决于多轮优化轮次 | 高（Gemini 图片模型直接生成） |
+| **出图速度** | 较慢（多轮评估-优化循环） | 快 |
+| **调整成本** | 高（多轮对话 + 理解 spec/yaml 结构） | 低（重跑即可） |
+| **中文渲染** | 稳定（受本机字体影响） | 偶有扭曲/模糊风险 |
+| **额外配置** | 无 | 需要配置 Gemini API（见下文） |
+| **触发方式** | 默认启用 | 需明确说"用 Nano Banana 出图" |
+
+**如何选择**：
+- 优先用 **draw.io 模式**：需要嵌入标书的矢量图、需要后期精修布局、对图面质量有严格要求。
+- 选 **Nano Banana 模式**：已配置 Gemini API、追求快速出图、接受仅 PNG 交付、不需要矢量格式。
+
 ## 快速开始
 
-### 最推荐：从标书直接生成
+### 最推荐用法
+
+- 默认 draw.io，高质量矢量交付）
 
 ```
-请为 /path/to/your/nsfc_proposal 生成技术路线图
+使用 nsfc-roadmap skill的 draw.io 模式，基于我的标书生成技术路线图。
+输入： ./projects/NSFC_General/
+输出： ./roadmap_output/
 ```
 
-### 先规划再生成（推荐用于评审）
+- nano banana 模式
 
 ```
-请先为 /path/to/your/nsfc_proposal 生成 roadmap-plan.md
+使用 nsfc-roadmap skill的 Nano Banana模式，基于我的标书生成技术路线图。
+输入： ./projects/NSFC_General/
+输出： ./roadmap_output/
 ```
 
-> 提示：规划阶段需要提供 `proposal_path` / `proposal_file` / `context` 其一。
-
-默认：本技能采用 `config.yaml:planning.planning_mode: ai`。此时脚本会先输出 `plan_request.json`，并等待宿主 AI 写入 `roadmap-plan.md + spec_draft.yaml`，再复跑脚本完成合法性校验。
-规划阶段会自动生成“模型画廊”（contact sheet），用于学习优秀结构与信息密度控制；**不要求也不建议**把复杂场景绑定到单一 `template_ref`（见下文“选择模板风格（可选）”）。
-
-### 指定输出目录
+### 更高级的参数定义
 
 ```
-请为 /path/to/your/nsfc_proposal 生成技术路线图，输出到 ./roadmap_output/
+{常规Prompt}
+此外:
+- 自优化的轮次上限是10，不允许早停。
+- 高宽比为1200:900
+- 风格： layered-pipeline
 ```
-
-### Nano Banana / Gemini PNG-only（仅当我明确要求）
-
-```
-我明确要用 Nano Banana（Gemini 图片模型）出图，接受仅 PNG 交付。
-请基于 /path/to/your/nsfc_proposal 生成技术路线图，输出到 ./roadmap_output/。
-```
-
-> 提示：图片模型对中文文字渲染可能出现扭曲/乱码/模糊。本 skill 的 Nano Banana prompt 已加入“印刷体字体 + 水平排版 + 禁变形”的强约束来提升可读性；但仍建议节点文案控制在 1-2 行、避免过长句子。若你对字体与排版有严格可控要求，优先使用默认 draw.io 流程。
->
-> 输出分辨率：Nano Banana 模式固定输出 **4K** PNG（长边>=3840px；按画布比例缩放，必要时白底补边以保留完整内容）。
 
 ### 选择模板风格（可选）
 
@@ -64,27 +78,6 @@
 - `convergence-divergence`：收敛-发散（漏斗/轮辐叙事；当前渲染会近似落到 layered-pipeline 骨架）
 - `dual-mainline`：双主线并行（当前渲染会近似落到 three-column 骨架）
 
-你可以直接说（高级选项；默认不建议固定模板）：
-
-```
-请按 three-column 风格生成技术路线图
-```
-
-或在“节点多/走线拥挤/中间空白大”的场景下：
-
-```
-请按 packed-three-column 风格生成技术路线图
-```
-
-或更具体地说：
-
-```
-请按模板 model-02 的风格生成技术路线图
-```
-
-> 说明：模板用于“参考而非照搬”，渲染器承诺的是“模板家族级别的稳定骨架”，不追求像素级复刻。
->
-> 提示：运行规划脚本后，会在 `output_dir/.nsfc-roadmap/planning/` 生成 `models_contact_sheet.png` 与 `models/`，用于视觉选型。
 
 ### 备选用法：脚本调用
 

@@ -208,6 +208,14 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+nsfc-roadmap 和 nsfc-schematic 的 readme 优化
+
+- 要写明有 draw.io 模式和 nano banana 模板； 要指出它们的优劣
+  - draw.io 可出svg矢量图，但调整需要多轮对话、对于使用者的要求较高
+  - nano banana 出图质量很高、很快，但需要配置额外的Gemini API，并且只有高清版png,没有矢量图
+
+---
+
 nsfc-roadmap 和 nsfc-schematic 的 nano banana 模式 优化
 
 - 在自优化的过程中，上一轮的图片是不会传到下一轮的 nano banana api 里的； 这会有个很大的问题：**每次生成的风格都不一样，就像开盲盒一样**。这对于写标书这种严肃的写作场景肯定是不合适的。 我希望可以这样优化：

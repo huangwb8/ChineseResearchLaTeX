@@ -5,39 +5,52 @@
 
 ## 快速开始
 
-### 最推荐用法（默认 draw.io，高质量矢量交付）
+### 最推荐用法
+
+- 默认 draw.io，高质量矢量交付）
 
 ```
-请基于我的 NSFC 标书生成原理图，优先用默认 draw.io 流程输出可直接嵌入的图。
-标书在 ./projects/NSFC_General/，输出到 ./schematic_output/，优化 5 轮。
+使用 nsfc-schematic skill的 draw.io 模式，基于我的标书生成xxx的原理图。
+输入： ./projects/NSFC_General/
+输出： ./schematic_output/
 ```
 
-### 其他常见场景
-
-#### 场景 1：已有 spec，直接生成
+- nano banana 模式
 
 ```
-用 nsfc-schematic 读取 ./schematic_plan/spec_draft.yaml 生成原理图，输出到 ./schematic_output/，轮次 5。
+使用 nsfc-schematic skill的 Nano Banana模式，基于我的标书生成xxx的原理图。
+输入： ./projects/NSFC_General/
+输出： ./schematic_output/
 ```
 
-#### 场景 2：从 TEX 自动抽取
+### 更高级的参数定义
 
 ```
-请从 /path/to/main.tex 自动抽取内容生成原理图，输出到 ./schematic_output/。
+{常规Prompt}
+此外:
+- 自优化的轮次上限是10，不允许早停。
+- 高宽比为1:1.2
 ```
 
-#### 场景 3：结构性改动（ai_critic 闭环）
+## 两种出图模式
 
-```
-我需要结构性优化，请启用 ai_critic 闭环生成原理图，并按协议输出请求文件。
-```
+本技能支持两种出图模式，开始前建议先了解它们的区别：
 
-#### 场景 4：Nano Banana / Gemini PNG-only（仅当我明确要求）
+| 对比维度 | draw.io 模式（默认） | Nano Banana 模式 |
+|---------|---------------------|-----------------|
+| **输出格式** | `.drawio` + `.svg` + `.png` + `.pdf` | 仅 `.png`（4K 高清） |
+| **矢量图** | ✅ SVG 矢量，可无损缩放 | ❌ 仅位图 |
+| **可编辑性** | ✅ 用 draw.io 打开可直接拖拽微调 | ❌ 不可后期编辑 |
+| **出图质量** | 取决于多轮优化轮次 | 高（Gemini 图片模型直接生成） |
+| **出图速度** | 较慢（多轮评估-优化循环） | 快 |
+| **调整成本** | 高（多轮对话 + 理解 spec/yaml 结构） | 低（重跑即可） |
+| **中文渲染** | 稳定（受本机字体影响） | 偶有扭曲/模糊风险 |
+| **额外配置** | 无 | 需要配置 Gemini API（见下文） |
+| **触发方式** | 默认启用 | 需明确说"用 Nano Banana 出图" |
 
-```
-我明确要用 Nano Banana（Gemini 图片模型）出图，接受仅 PNG 交付。
-请基于 ./schematic_plan/spec_draft.yaml 生成原理图，输出到 ./schematic_output/。
-```
+**如何选择**：
+- 优先用 **draw.io 模式**：需要嵌入标书的矢量图、需要后期精修布局、对图面质量有严格要求。
+- 选 **Nano Banana 模式**：已配置 Gemini API、追求快速出图、接受仅 PNG 交付、不需要矢量格式。
 
 ## 设计理念
 
@@ -54,39 +67,6 @@
 | PNG-only 模式 | `--renderer nano_banana`，仅当你主动提及时启用 |
 | 证据可追溯 | 每轮输出 `evaluation.json`/`measurements.json` 等 |
 | 并行对比 | 推荐 `parallel-vibe` 5 线程做多策略对比 |
-
-## 提示词示例
-
-### 示例 1：最小可用
-
-```
-你：生成 NSFC 原理图，输出到 ./schematic_output/。
-技能：读取默认模板或标书内容，输出 drawio/svg/png/pdf，并生成优化报告。
-```
-
-### 示例 2：指定 spec + 轮次
-
-```
-你：用 ./schematic_plan/spec_draft.yaml 生成原理图，输出到 ./schematic_output/，优化 5 轮。
-技能：按 spec 渲染并自动评估，导出最佳轮次。
-```
-
-### 示例 3：Nano Banana PNG-only（明确指定）
-
-```
-你：用 Nano Banana 生成原理图，仅输出 PNG，spec 在 ./schematic_plan/spec_draft.yaml。
-技能：进行连通性检查后出图，交付 `schematic.png`。
-```
-
-## 输出文件
-
-- `schematic.drawio` — 可编辑源文件（仅 draw.io 模式）
-- `schematic.svg` — 矢量图（仅 draw.io 模式）
-- `schematic.pdf` — 嵌入标书优先格式（仅 draw.io 模式）
-- `schematic.png` — 预览图 / PNG-only 交付
-- `.nsfc-schematic/` — 中间产物（默认隐藏）：评估证据、run 目录、最新报告
-
-**PNG-only 模式**：仅交付 `schematic.png`（不会生成 `.drawio/.svg/.pdf`）。
 
 ## Gemini API 配置（Nano Banana 模式）
 
