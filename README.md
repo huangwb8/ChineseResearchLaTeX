@@ -72,7 +72,7 @@ B站教学视频合集：
 - [国家自然科学基金的LaTeX模板](https://blognas.hwb0307.com/skill/5762)
 - [国家自然科学基金的LaTeX模板 第2期](https://blognas.hwb0307.com/skill/6930)
 
-欢迎加入项目微信群聊，与其他用户交流经验、分享心得！无论您是对以下哪个话题感兴趣，都欢迎扫码进群：
+欢迎加入项目 QQ 频道，与其他用户交流经验、分享心得！无论您是对以下哪个话题感兴趣，都欢迎扫码加入：
 
 - 📚 **科研写作**：LaTeX 使用、论文写作、标书撰写
 - 📝 **国自然标书**：申请经验、模板使用、格式优化
@@ -86,7 +86,7 @@ B站教学视频合集：
 
 </div>
 
-> 💡 **温馨提示**：原微信群已满。新来的小伙伴有经验交流和问题讨论的需要的，可以加入QQ频道，如需报告 Bug 或提交功能建议，请通过 [GitHub Issues](https://github.com/huangwb8/ChineseResearchLaTeX/issues) 提交，以便更好地跟踪和管理。
+> 💡 **温馨提示**：如需报告 Bug 或提交功能建议，请通过 [GitHub Issues](https://github.com/huangwb8/ChineseResearchLaTeX/issues) 提交，以便更好地跟踪和管理。
 
 ---
 
