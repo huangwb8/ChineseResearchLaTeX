@@ -82,11 +82,11 @@ B站教学视频合集：
 
 <div align="center">
 
-<img src="logo/wechat-group-01.JPG" alt="微信群二维码" width="300"/>
+<img src="logo/logo/qq-channel-01.JPG" alt="QQ频道二维码" width="300"/>
 
 </div>
 
-> 💡 **温馨提示**：微信群主要用于经验交流和问题讨论，如需报告 Bug 或提交功能建议，请通过 [GitHub Issues](https://github.com/huangwb8/ChineseResearchLaTeX/issues) 提交，以便更好地跟踪和管理。
+> 💡 **温馨提示**：原微信群已满。新来的小伙伴有经验交流和问题讨论的需要的，可以加入QQ频道，如需报告 Bug 或提交功能建议，请通过 [GitHub Issues](https://github.com/huangwb8/ChineseResearchLaTeX/issues) 提交，以便更好地跟踪和管理。
 
 ---
 

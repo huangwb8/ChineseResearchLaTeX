@@ -208,6 +208,10 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 ---
 
+
+
+---
+
 nsfc-roadmap 和 nsfc-schematic 的 readme 优化
 
 - 要写明有 draw.io 模式和 nano banana 模板； 要指出它们的优劣
