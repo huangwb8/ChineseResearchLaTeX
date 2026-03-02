@@ -82,7 +82,7 @@ B站教学视频合集：
 
 <div align="center">
 
-<img src="logo/logo/qq-channel-01.JPG" alt="QQ频道二维码" width="300"/>
+<img src="logo/qq-channel-01.JPG" alt="QQ频道二维码" width="300"/>
 
 </div>
 
