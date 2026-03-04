@@ -115,6 +115,11 @@
   - `skills/nsfc-humanization/config.yaml` / `skills/nsfc-humanization/CHANGELOG.md`：版本号更新至 0.4.0（单一真相来源）
 - **nsfc-code 0.1.6 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
 - **nsfc-abstract 0.3.1 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
+- **nsfc-abstract v1.0.0 → v1.0.1**：写入 `NSFC-ABSTRACTS.md` 时，中文与英文摘要分段之间不再插入空行（避免提交系统/表单里出现额外间距）
+- **nsfc-abstract v1.0.1 → v1.0.2**：`--strict` 校验/写入时，中文摘要不允许出现英文双引号 `"`（应使用中文引号 `“...”`）
+- **nsfc-abstract v1.0.2 → v1.0.3**：`--strict` 校验/写入时，中文摘要数字不允许出现千分位逗号（如 `1,000` / `1，000`，应写 `1000`）
+- **nsfc-abstract v1.0.3 → v2.0.0**：输出新增 `# 主要研究领域` 分段（英文摘要之后；默认 required，可用 `validate_abstract.py --no-field` 向后兼容旧输出）
+- **nsfc-abstract v2.0.0 → v2.0.1**：`write_abstracts_md.py` 限制 `--out` 仅允许单文件名（拒绝 `../` 等路径）避免越界写入；中文摘要含 `"` 或 `1,000/1，000` 时默认拒绝写入；`validate_abstract.py` 的 FIELD 修复提示与调试输出补齐
 - **nsfc-justification-writer 0.7.9 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）
 - **nsfc-research-content-writer 0.2.3 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新；新增 `CHANGELOG.md`）
 - **nsfc-qc 0.2.1 → 1.0.0**：标记为正式稳定版本（`config.yaml` 版本号更新）

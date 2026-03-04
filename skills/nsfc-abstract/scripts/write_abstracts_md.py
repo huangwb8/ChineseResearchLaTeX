@@ -69,6 +69,23 @@ def _normalize_for_count(text: str) -> str:
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
+def _is_safe_filename(name: str) -> bool:
+    """
+    Ensure output stays in current working directory.
+    Reject absolute paths, parent segments, or nested paths like "a/b.md".
+    """
+    s = (name or "").strip()
+    if not s or s in {".", ".."}:
+        return False
+    p = Path(s)
+    if p.is_absolute():
+        return False
+    if len(p.parts) != 1:
+        return False
+    if any(part in {".", ".."} for part in p.parts):
+        return False
+    return True
+
 def _parse_bool(v: Optional[str], default: bool) -> bool:
     if v is None:
         return default
@@ -96,6 +113,10 @@ class SkillConfig:
     title_begin: str
     title_end: str
     title_heading: str
+    field_required: bool
+    field_begin: str
+    field_end: str
+    field_heading: str
 
 
 def _load_config(skill_root: Path) -> SkillConfig:
@@ -161,6 +182,11 @@ def _load_config(skill_root: Path) -> SkillConfig:
     title_end = _str("title_end", "[/TITLE]")
     title_heading = _str("title_heading", "# 标题建议")
 
+    field_required = _parse_bool(_get_scalar("field_required"), False)
+    field_begin = _str("field_begin", "[FIELD]")
+    field_end = _str("field_end", "[/FIELD]")
+    field_heading = _str("field_heading", "# 主要研究领域")
+
     return SkillConfig(
         zh_max=zh_max,
         en_max=en_max,
@@ -176,7 +202,34 @@ def _load_config(skill_root: Path) -> SkillConfig:
         title_begin=title_begin,
         title_end=title_end,
         title_heading=title_heading,
+        field_required=field_required,
+        field_begin=field_begin,
+        field_end=field_end,
+        field_heading=field_heading,
     )
+
+
+def _extract_section_by_heading(text: str, heading: str) -> Optional[str]:
+    lines = text.splitlines()
+
+    def _is_heading(line: str, h: str) -> bool:
+        return line.strip() == h.strip()
+
+    start_i = None
+    for i, line in enumerate(lines):
+        if _is_heading(line, heading):
+            start_i = i
+            break
+    if start_i is None:
+        return None
+
+    body_lines = []
+    for line in lines[start_i + 1 :]:
+        if line.lstrip().startswith("#"):
+            break
+        body_lines.append(line)
+    body = "\n".join(body_lines).strip()
+    return body or None
 
 
 def _extract_title_by_headings(text: str, title_heading: str, zh_heading: str) -> Optional[str]:
@@ -214,33 +267,38 @@ def _parse_input(
     zh_end: str,
     en_begin: str,
     en_end: str,
+    field_begin: str,
+    field_end: str,
+    field_heading: str,
     zh_heading: str,
     en_heading: str,
-) -> Tuple[Optional[str], str, str]:
+) -> Tuple[Optional[str], str, str, Optional[str]]:
     title = _extract_block_by_markers(text, title_begin, title_end)
     zh = _extract_block_by_markers(text, zh_begin, zh_end)
     en = _extract_block_by_markers(text, en_begin, en_end)
+    field = _extract_block_by_markers(text, field_begin, field_end)
     if zh is not None and en is not None:
-        return title, zh, en
+        return title, zh, en, field
 
     by_h = _extract_block_by_headings(text, zh_heading, en_heading)
     if by_h is not None:
         zh_h, en_h = by_h
         title_h = _extract_title_by_headings(text, title_heading, zh_heading)
-        return title_h, zh_h, en_h
+        field_h = _extract_section_by_heading(text, field_heading)
+        return title_h, zh_h, en_h, field_h
 
     if title_required:
         raise ValueError(
-            "无法解析输入（标题+中英文摘要是必需的）。请使用以下任一格式：\n"
-            f"1) 标记格式：{title_begin}...{title_end} 与 {zh_begin}...{zh_end} 与 {en_begin}...{en_end}\n"
-            f"2) 标题格式：{title_heading} 与 {zh_heading} 与 {en_heading}\n"
+            "无法解析输入（标题+中英文摘要是必需的；“主要研究领域”是否必需取决于 config.yaml）。请使用以下任一格式：\n"
+            f"1) 标记格式：{title_begin}...{title_end} 与 {zh_begin}...{zh_end} 与 {en_begin}...{en_end}（可选：{field_begin}...{field_end}）\n"
+            f"2) 标题格式：{title_heading} 与 {zh_heading} 与 {en_heading}（可选：{field_heading}）\n"
             f"并确保标题候选不少于 {title_candidates_default} 个，且包含“推荐标题：...”一行。"
         )
 
     raise ValueError(
         "无法解析输入。请使用以下任一格式：\n"
-        f"1) 标记格式：{zh_begin}...{zh_end} 与 {en_begin}...{en_end}\n"
-        f"2) 标题格式：{zh_heading} 与 {en_heading}"
+        f"1) 标记格式：{zh_begin}...{zh_end} 与 {en_begin}...{en_end}（可选：{field_begin}...{field_end}）\n"
+        f"2) 标题格式：{zh_heading} 与 {en_heading}（可选：{field_heading}）"
     )
 
 
@@ -248,7 +306,7 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("input", help="包含摘要内容的输入文件路径（或 - 表示 stdin）")
     ap.add_argument("--out", default=None, help="输出 Markdown 文件名（默认取 config.yaml:output.filename）")
-    ap.add_argument("--strict", action="store_true", help="超限则返回非 0")
+    ap.add_argument("--strict", action="store_true", help="严格模式：超限等约束不满足则返回非 0")
     ap.add_argument(
         "--auto-compress",
         action="store_true",
@@ -265,7 +323,7 @@ def main(argv: list[str]) -> int:
     else:
         raw = _read_text(Path(args.input))
 
-    title_raw, zh_raw, en_raw = _parse_input(
+    title_raw, zh_raw, en_raw, field_raw = _parse_input(
         raw,
         title_begin=cfg.title_begin,
         title_end=cfg.title_end,
@@ -276,6 +334,9 @@ def main(argv: list[str]) -> int:
         zh_end=cfg.zh_end,
         en_begin=cfg.en_begin,
         en_end=cfg.en_end,
+        field_begin=cfg.field_begin,
+        field_end=cfg.field_end,
+        field_heading=cfg.field_heading,
         zh_heading=cfg.zh_heading,
         en_heading=cfg.en_heading,
     )
@@ -283,6 +344,7 @@ def main(argv: list[str]) -> int:
     zh = zh_raw.strip()
     en = en_raw.strip()
     title = (title_raw or "").strip()
+    field = (field_raw or "").strip()
 
     # Reuse validator's counting semantics for consistency.
     try:
@@ -294,13 +356,36 @@ def main(argv: list[str]) -> int:
             required=cfg.title_required,
             min_candidates=cfg.title_candidates_default,
         )
+        field_report = validate_abstract.build_field_report(field_raw, required=cfg.field_required)
     except Exception:
         # Fallback: keep behavior even if import fails for any reason.
         zh_len = len(_normalize_for_count(zh))
         en_len = len(_normalize_for_count(en))
+        zh_ascii_dq = zh.count("\"")
+        zh_numeric_commas = len(re.findall(r"(?<=\d)[,，](?=\d)", zh))
+        zh_punct_ok = zh_ascii_dq == 0
+        zh_num_ok = zh_numeric_commas == 0
+        zh_len_ok = zh_len <= cfg.zh_max
+        en_len_ok = en_len <= cfg.en_max
         report = {
-            "zh": {"len": zh_len, "max": cfg.zh_max, "exceeded": max(0, zh_len - cfg.zh_max), "ok": zh_len <= cfg.zh_max},
-            "en": {"len": en_len, "max": cfg.en_max, "exceeded": max(0, en_len - cfg.en_max), "ok": en_len <= cfg.en_max},
+            "zh": {
+                "len": zh_len,
+                "max": cfg.zh_max,
+                "exceeded": max(0, zh_len - cfg.zh_max),
+                "len_ok": zh_len_ok,
+                "ascii_double_quotes": zh_ascii_dq,
+                "numeric_commas": zh_numeric_commas,
+                "punct_ok": zh_punct_ok,
+                "num_ok": zh_num_ok,
+                "ok": zh_len_ok and zh_punct_ok and zh_num_ok,
+            },
+            "en": {
+                "len": en_len,
+                "max": cfg.en_max,
+                "exceeded": max(0, en_len - cfg.en_max),
+                "len_ok": en_len_ok,
+                "ok": en_len_ok,
+            },
         }
         title_report = {
             "present": bool(title),
@@ -315,13 +400,29 @@ def main(argv: list[str]) -> int:
                 and len(re.findall(r"(?m)^\s*(?:[-*]\s*)?\d+[\)\.、]\s+\S+", title)) >= int(cfg.title_candidates_default)
             ),
         }
+        field_report = {"present": bool(field), "required": bool(cfg.field_required), "ok": (not cfg.field_required) or bool(field)}
 
     zh_ok = bool(report["zh"]["ok"])
     en_ok = bool(report["en"]["ok"])
+    zh_len_ok = bool(report["zh"].get("len_ok", zh_ok))
+    en_len_ok = bool(report["en"].get("len_ok", en_ok))
+    zh_punct_ok = bool(report["zh"].get("punct_ok", True))
+    zh_ascii_dq = int(report["zh"].get("ascii_double_quotes", 0) or 0)
+    zh_num_ok = bool(report["zh"].get("num_ok", True))
+    zh_numeric_commas = int(report["zh"].get("numeric_commas", 0) or 0)
     title_ok = bool(title_report.get("ok"))
+    field_ok = bool(field_report.get("ok"))
     report["title"] = title_report
+    report["field"] = field_report
 
-    out_path = Path.cwd() / (args.out or cfg.out_name)
+    out_name = args.out or cfg.out_name
+    if not _is_safe_filename(out_name):
+        sys.stderr.write(f"[ERROR] 非法输出文件名：{out_name!r}（必须是当前目录下的单个文件名，不允许路径）。\n")
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 2
+    out_path = Path.cwd() / out_name
 
     if cfg.title_required and not title_ok:
         sys.stderr.write(
@@ -335,7 +436,33 @@ def main(argv: list[str]) -> int:
             sys.stdout.write("\n")
         return 2
 
-    if (args.strict or args.auto_compress) and (not zh_ok or not en_ok):
+    if cfg.field_required and not field_ok:
+        sys.stderr.write("[ERROR] 缺少或不合格的“主要研究领域”分段（不写入）。\n")
+        sys.stderr.write(f"- required: {cfg.field_required}\n")
+        sys.stderr.write(f"修复提示：在输入中加入 {cfg.field_begin}...{cfg.field_end} 或 \"{cfg.field_heading}\" 分段。\n")
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 2
+
+    # Hard constraints for CN abstract formatting: always refuse to write an invalid output file.
+    if not zh_punct_ok:
+        sys.stderr.write(f"[ERROR] 中文摘要包含英文双引号（\\\"）共 {zh_ascii_dq} 处（不写入）。\n")
+        sys.stderr.write("修复提示：将英文双引号替换为中文引号“...”，避免出现 \"...\"。\n")
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 1
+
+    if not zh_num_ok:
+        sys.stderr.write(f"[ERROR] 中文摘要数字格式包含“数字,数字”共 {zh_numeric_commas} 处（不写入）。\n")
+        sys.stderr.write("修复提示：将 1,000 / 1，000 改为 1000（中文摘要通常不写千分位逗号）。\n")
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 1
+
+    if (args.strict or args.auto_compress) and (not zh_len_ok or not en_len_ok):
         # In strict mode, do not write an invalid output file.
         mode = "strict" if args.strict else "auto-compress"
         msg = (
@@ -356,10 +483,14 @@ def main(argv: list[str]) -> int:
     title_text = ""
     if title:
         title_text = f"{cfg.title_heading}\n\n{title}\n\n"
+    field_text = ""
+    if field:
+        field_text = f"{cfg.field_heading}\n\n{field}\n"
     out_text = (
         title_text
-        + f"{cfg.zh_heading}\n\n{zh}\n\n"
-        + f"{cfg.en_heading}\n\n{en}\n\n"
+        + f"{cfg.zh_heading}\n\n{zh}\n"
+        + f"{cfg.en_heading}\n\n{en}\n"
+        + field_text
         + "## 长度自检\n"
         + f"- 中文摘要字符数：{report['zh']['len']}/{cfg.zh_max}\n"
         + f"- 英文摘要字符数：{report['en']['len']}/{cfg.en_max}\n"
@@ -374,8 +505,17 @@ def main(argv: list[str]) -> int:
     else:
         print(f"[OK] Wrote: {out_path}")
         print(f"- TITLE: {'OK' if title_ok else 'INVALID'}")
-        print(f"- ZH: {report['zh']['len']}/{cfg.zh_max} ({'OK' if zh_ok else 'EXCEEDED'})")
-        print(f"- EN: {report['en']['len']}/{cfg.en_max} ({'OK' if en_ok else 'EXCEEDED'})")
+        print(f"- FIELD: {'OK' if field_ok else 'INVALID'}")
+        zh_status = "OK"
+        if not zh_len_ok:
+            zh_status = "EXCEEDED"
+        elif not zh_punct_ok:
+            zh_status = "INVALID_PUNCT"
+        elif not zh_num_ok:
+            zh_status = "INVALID_NUM"
+        en_status = "OK" if en_len_ok else "EXCEEDED"
+        print(f"- ZH: {report['zh']['len']}/{cfg.zh_max} ({zh_status})")
+        print(f"- EN: {report['en']['len']}/{cfg.en_max} ({en_status})")
 
     if args.strict and (not zh_ok or not en_ok):
         return 1

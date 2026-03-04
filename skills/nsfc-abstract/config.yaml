@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-abstract
-  version: 1.0.0
+  version: 2.0.1
   description: NSFC 标书中英文摘要生成（英文为中文的忠实翻译）与长度校验
   author: "Bensz Conan"
   category: writing
@@ -18,11 +18,14 @@ format:
   zh_end: "[/ZH]"
   en_begin: "[EN]"
   en_end: "[/EN]"
+  field_begin: "[FIELD]"
+  field_end: "[/FIELD]"
 
 output:
   filename: "NSFC-ABSTRACTS.md"
   zh_heading: "# 中文摘要"
   en_heading: "# English Abstract"
+  field_heading: "# 主要研究领域"
 
 title:
   # Whether title suggestions are required in the final output.
@@ -34,3 +37,7 @@ title:
   title_end: "[/TITLE]"
   # Markdown heading for the title section in NSFC-ABSTRACTS.md
   title_heading: "# 标题建议"
+
+field:
+  # Whether "主要研究领域" is required in the final output.
+  field_required: true

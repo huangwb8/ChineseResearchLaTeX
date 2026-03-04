@@ -8,6 +8,7 @@
 - 标题建议：`推荐标题` + 默认 `5` 个候选标题（每条附理由；规则见 `skills/nsfc-abstract/references/title-rules.md`）
 - 中文摘要：默认 ≤ `400` 字符，推荐“五句式”（重要性→科学问题→可行性证据→研究内容→意义）
 - 英文摘要：默认 ≤ `4000` 字符；必须是中文的忠实翻译（不扩写、不新增信息/假设）
+- 主要研究领域：放在英文摘要之后，建议 `3–5` 个要点（每条尽量短）
 - 输出文件：写入**当前工作目录**下的 `NSFC-ABSTRACTS.md`（文件名与分段标题可在 `config.yaml` 调整）
 
 ## 什么时候用
@@ -86,9 +87,10 @@
 
 # 中文摘要
 （正文内容，≤400字符）
-
 # English Abstract
 (Translation, ≤4000 characters)
+# 主要研究领域
+- ...
 
 ## 长度自检
 - 中文摘要字符数：N/400
@@ -98,6 +100,10 @@
 ## 关键约束（必须遵守）
 
 - 英文必须是中文的忠实翻译：不扩写、不新增信息/假设、不引入新结果。
+- 中文摘要使用中文标点；如需引号，使用中文双引号“...”，不要使用英文双引号"..."。
+- 中文摘要数字不使用千分位逗号：写 `1000`，不要写 `1,000` 或 `1，000`。
+- 必须给出“主要研究领域”：放在英文摘要之后，建议 3–5 个要点（每条尽量短）。
+- 写入 `NSFC-ABSTRACTS.md` 时，中文摘要正文末尾与英文摘要分段标题之间不留空行。
 - 默认要求“标题建议”分段（是否必需由 `config.yaml:title.title_required` 决定）。
 - 中文默认 5 句、研究内容默认 3-4 点；可在 `config.yaml:limits` 调整。
 - 若你给的信息不完整：更稳妥的做法是让 AI 先追问缺口，而不是直接“补写事实”。
@@ -116,9 +122,11 @@
 | `output.filename` | `NSFC-ABSTRACTS.md` | 输出文件名（写到当前工作目录） |
 | `output.zh_heading` | `# 中文摘要` | 中文分段标题 |
 | `output.en_heading` | `# English Abstract` | 英文分段标题 |
+| `output.field_heading` | `# 主要研究领域` | “主要研究领域”分段标题 |
 | `title.title_required` | `true` | 是否要求输出标题建议分段 |
 | `title.title_candidates_default` | `5` | 默认标题候选数量 |
 | `title.title_heading` | `# 标题建议` | 标题建议分段的 Markdown 标题 |
+| `field.field_required` | `true` | 是否要求输出“主要研究领域”分段 |
 
 ## 备选用法（脚本：确定性校验/写入）
 
@@ -234,4 +242,3 @@ A：本技能默认输出 Markdown，通常用于你在系统/表单里直接粘
 - `skills/nsfc-abstract/references/title-rules.md` — 中标题目写作规则
 - `skills/nsfc-abstract/scripts/README.md` — 脚本使用说明
 - `skills/nsfc-abstract/examples/demo_output.txt` — 输出示例
-

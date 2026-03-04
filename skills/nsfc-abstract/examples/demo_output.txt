@@ -20,3 +20,10 @@ English Abstract:
 [EN]
 Immunotherapy has improved outcomes for some patients, yet most solid tumors still suffer from low response rates and drug resistance. A major limitation is the lack of interpretable metrics that jointly capture the spatiotemporal heterogeneity of the tumor microenvironment and treatment responses, which hampers mechanistic understanding and personalized decision-making. In our multicenter pilot cohorts, we found that combined features from multimodal imaging and circulating molecular biomarkers can robustly distinguish responders from non-responders and indicate dynamic changes in key immunosuppressive pathways; therefore, we hypothesize that cross-scale interpretable features can drive response prediction and mechanism tracing. This project will (1) build cross-center standards and quality control for multimodal data, (2) develop interpretable representation models to identify key features associated with immune responses, (3) validate critical pathways and prediction criteria in animal models and prospective cohorts, and (4) deliver reusable assessment tools and actionable clues for intervention targets. We expect to elucidate key mechanisms underlying immunotherapy responses and provide practical stratification strategies to improve clinical benefits for solid tumors.
 [/EN]
+
+主要研究领域：
+[FIELD]
+- 肿瘤免疫治疗与肿瘤微环境机制
+- 多模态影像组学与生物标志物
+- 可解释机器学习与临床分层评估
+[/FIELD]

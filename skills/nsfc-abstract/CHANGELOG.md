@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-03-04
+
+### Fixed
+
+- `write_abstracts_md.py`：输出文件名安全校验，`--out` 仅允许当前目录下的单文件名（拒绝 `../` 等路径），避免越界写入
+- `write_abstracts_md.py`：中文摘要出现英文双引号 `"` 或数字千分位逗号 `1,000/1，000` 时，无论是否 `--strict` 均拒绝写入（避免写出不可提交文件）
+- `validate_abstract.py`：CLI 文案/修复提示补齐 FIELD 分段，并在输出中显示 FIELD markers/headings，便于排障
+
+### Added
+
+- 回归测试：新增 `--out` 非法路径拒绝的 unittest 覆盖
+
+## [2.0.0] - 2026-03-04
+
+### Added
+
+- 输出新增 `# 主要研究领域` 分段（位于英文摘要之后；也支持标记格式 `[FIELD]...[/FIELD]`）
+- 信息表 `references/info_form.md`：新增“主要研究领域”采集项（3–5 个关键词/要点）
+
+### Changed
+
+- **Breaking**：默认要求“主要研究领域”分段（由 `config.yaml:field.field_required` 控制，默认 `true`）
+- `validate_abstract.py`：新增 `--no-field`（向后兼容旧输出）；并在需要时强制校验该分段存在
+- `write_abstracts_md.py`：写入 `NSFC-ABSTRACTS.md` 时加入“主要研究领域”分段；缺失且 required 时拒绝写入
+
+## [1.0.3] - 2026-03-04
+
+### Fixed
+
+- `validate_abstract.py` / `write_abstracts_md.py`：`--strict` 下增加“中文摘要数字不允许出现 `数字,数字` / `数字，数字`”的确定性检查（避免 `1,000`，建议写 `1000`）
+
+## [1.0.2] - 2026-03-04
+
+### Fixed
+
+- `validate_abstract.py` / `write_abstracts_md.py`：`--strict` 下增加“中文摘要不允许英文双引号 `\"`”的确定性检查（避免出现 "..."，应使用 “...”）
+
+## [1.0.1] - 2026-03-04
+
+### Fixed
+
+- `write_abstracts_md.py`：写入 `NSFC-ABSTRACTS.md` 时，中文摘要与英文摘要分段之间不再插入空行（避免提交系统/表单里出现额外间距）
+
+### Changed
+
+- `SKILL.md` / `README.md`：输出格式示例同步更新（中英之间无空行）
+- 回归测试：新增断言确保中文与英文分段之间无空行
+
 ## [1.0.0] - 2026-02-24
 
 ### Changed
