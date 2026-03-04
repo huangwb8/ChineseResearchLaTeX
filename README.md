@@ -15,7 +15,12 @@
 
 <div align="center">
 
-让天下没有难写的国自然标书！ 💡 创作不易，如果这个项目对您有帮助，请给个 ⭐ Star 持续关注！
+让天下没有难写的国自然标书！ 💡 创作不易，如果这个项目对您有帮助，请给个 ⭐ Star 持续关注！群众的眼睛是雪亮哒：
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date&theme=dark" />
+  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date" />
+</picture>
 
 </div>
 
@@ -276,10 +281,3 @@ git clone https://github.com/huangwb8/skills.git &&
 - [MCG-NKU/NSFC-LaTex](https://github.com/MCG-NKU/NSFC-LaTex)
 - [fylimas/nsfc](https://github.com/fylimas/nsfc)：活跃更新的国自然模板
 - [YimianDai/iNSFC](https://github.com/YimianDai/iNSFC)：MacTeX 和 Overleaf 通用模板
-
-## 活跃程度
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date&theme=dark" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date" />
-</picture>
