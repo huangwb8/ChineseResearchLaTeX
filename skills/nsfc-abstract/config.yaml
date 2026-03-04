@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-abstract
-  version: 2.0.1
+  version: 2.1.0
   description: NSFC 标书中英文摘要生成（英文为中文的忠实翻译）与长度校验
   author: "Bensz Conan"
   category: writing
@@ -41,3 +41,5 @@ title:
 field:
   # Whether "主要研究领域" is required in the final output.
   field_required: true
+  # Max Chinese characters (汉字) for the field sentence; 0 = no limit.
+  field_max_chars: 25

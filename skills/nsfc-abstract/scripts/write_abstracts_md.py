@@ -114,6 +114,7 @@ class SkillConfig:
     title_end: str
     title_heading: str
     field_required: bool
+    field_max_chars: int
     field_begin: str
     field_end: str
     field_heading: str
@@ -183,6 +184,7 @@ def _load_config(skill_root: Path) -> SkillConfig:
     title_heading = _str("title_heading", "# 标题建议")
 
     field_required = _parse_bool(_get_scalar("field_required"), False)
+    field_max_chars = _int("field_max_chars", 25)
     field_begin = _str("field_begin", "[FIELD]")
     field_end = _str("field_end", "[/FIELD]")
     field_heading = _str("field_heading", "# 主要研究领域")
@@ -203,6 +205,7 @@ def _load_config(skill_root: Path) -> SkillConfig:
         title_end=title_end,
         title_heading=title_heading,
         field_required=field_required,
+        field_max_chars=field_max_chars,
         field_begin=field_begin,
         field_end=field_end,
         field_heading=field_heading,
@@ -356,7 +359,7 @@ def main(argv: list[str]) -> int:
             required=cfg.title_required,
             min_candidates=cfg.title_candidates_default,
         )
-        field_report = validate_abstract.build_field_report(field_raw, required=cfg.field_required)
+        field_report = validate_abstract.build_field_report(field_raw, required=cfg.field_required, max_chars=cfg.field_max_chars)
     except Exception:
         # Fallback: keep behavior even if import fails for any reason.
         zh_len = len(_normalize_for_count(zh))
@@ -400,7 +403,22 @@ def main(argv: list[str]) -> int:
                 and len(re.findall(r"(?m)^\s*(?:[-*]\s*)?\d+[\)\.、]\s+\S+", title)) >= int(cfg.title_candidates_default)
             ),
         }
-        field_report = {"present": bool(field), "required": bool(cfg.field_required), "ok": (not cfg.field_required) or bool(field)}
+        def _count_cjk(t: str) -> int:
+            return sum(
+                1 for ch in t
+                if '\u4e00' <= ch <= '\u9fff'
+                or '\u3400' <= ch <= '\u4dbf'
+            )
+        field_cjk = _count_cjk(field)
+        field_len_ok = (cfg.field_max_chars <= 0) or (field_cjk <= cfg.field_max_chars)
+        field_report = {
+            "present": bool(field),
+            "required": bool(cfg.field_required),
+            "cjk_chars": field_cjk,
+            "max_chars": cfg.field_max_chars,
+            "len_ok": field_len_ok,
+            "ok": ((not cfg.field_required) or bool(field)) and field_len_ok,
+        }
 
     zh_ok = bool(report["zh"]["ok"])
     en_ok = bool(report["en"]["ok"])
@@ -436,8 +454,8 @@ def main(argv: list[str]) -> int:
             sys.stdout.write("\n")
         return 2
 
-    if cfg.field_required and not field_ok:
-        sys.stderr.write("[ERROR] 缺少或不合格的“主要研究领域”分段（不写入）。\n")
+    if cfg.field_required and not field_report.get("present"):
+        sys.stderr.write("[ERROR] 缺少“主要研究领域”分段（不写入）。\n")
         sys.stderr.write(f"- required: {cfg.field_required}\n")
         sys.stderr.write(f"修复提示：在输入中加入 {cfg.field_begin}...{cfg.field_end} 或 \"{cfg.field_heading}\" 分段。\n")
         if args.json:
@@ -446,6 +464,16 @@ def main(argv: list[str]) -> int:
         return 2
 
     # Hard constraints for CN abstract formatting: always refuse to write an invalid output file.
+    # Field length is always enforced (regardless of field_required) when field is present.
+    if field and not field_report.get("len_ok", True):
+        cjk_n = field_report.get("cjk_chars", 0)
+        max_n = field_report.get("max_chars", cfg.field_max_chars)
+        sys.stderr.write(f"[ERROR] “主要研究领域”超限：{cjk_n}/{max_n} 个汉字（不写入）。\n")
+        sys.stderr.write(f"修复提示：压缩至 {max_n} 个汉字以内的一句话。\n")
+        if args.json:
+            sys.stdout.write(json.dumps(report, ensure_ascii=False))
+            sys.stdout.write("\n")
+        return 1
     if not zh_punct_ok:
         sys.stderr.write(f"[ERROR] 中文摘要包含英文双引号（\\\"）共 {zh_ascii_dq} 处（不写入）。\n")
         sys.stderr.write("修复提示：将英文双引号替换为中文引号“...”，避免出现 \"...\"。\n")

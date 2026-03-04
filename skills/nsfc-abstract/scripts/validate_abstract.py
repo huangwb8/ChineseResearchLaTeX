@@ -73,13 +73,28 @@ def _normalize_for_count(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 def _count_ascii_double_quotes(text: str) -> int:
-    # In Chinese abstracts, avoid ASCII double quotes ("). Prefer “ ... ” instead.
-    return text.count("\"")
+    # In Chinese abstracts, avoid ASCII double quotes. Prefer the Chinese form instead.
+    return text.count('"')  # ASCII double-quote U+0022
+
+def _count_other_nonstandard_quotes(text: str) -> int:
+    # Detect non-standard double-quote-like chars other than ASCII “ and the allowed “...” (U+201C/U+201D).
+    # Includes: fullwidth ＂ (U+FF02), decorative 〝〞, corner brackets 「」『』.
+    bad = '\uff02\u301d\u301e\u300c\u300d\u300e\u300f'
+    return sum(text.count(c) for c in bad)
 
 def _count_numeric_commas(text: str) -> int:
     # In Chinese abstracts, avoid comma as number separator, e.g. "1,000" / "1，000".
     # Only count commas that appear *between* digits to avoid false positives.
     return len(re.findall(r"(?<=\d)[,，](?=\d)", text))
+
+def _count_cjk_chars(text: str) -> int:
+    """Count Chinese/CJK unified ideograph characters only (汉字)."""
+    return sum(
+        1 for ch in text
+        if '\u4e00' <= ch <= '\u9fff'
+        or '\u3400' <= ch <= '\u4dbf'
+        or '\U00020000' <= ch <= '\U0002a6df'
+    )
 
 def _parse_bool(v: Optional[str], default: bool) -> bool:
     if v is None:
@@ -109,6 +124,7 @@ class SkillConfig:
     title_end: str
     title_heading: str
     field_required: bool
+    field_max_chars: int
     field_begin: str
     field_end: str
     field_heading: str
@@ -136,6 +152,7 @@ def _load_limits_from_config(skill_root: Path) -> SkillConfig:
             title_end="[/TITLE]",
             title_heading="# 标题建议",
             field_required=False,
+            field_max_chars=25,
             field_begin="[FIELD]",
             field_end="[/FIELD]",
             field_heading="# 主要研究领域",
@@ -199,6 +216,7 @@ def _load_limits_from_config(skill_root: Path) -> SkillConfig:
     title_heading = _str("title_heading", "# 标题建议")
 
     field_required = _parse_bool(_get_scalar("field_required"), False)
+    field_max_chars = _int("field_max_chars", 25)
     field_begin = _str("field_begin", "[FIELD]")
     field_end = _str("field_end", "[/FIELD]")
     field_heading = _str("field_heading", "# 主要研究领域")
@@ -219,6 +237,7 @@ def _load_limits_from_config(skill_root: Path) -> SkillConfig:
         title_end=title_end,
         title_heading=title_heading,
         field_required=field_required,
+        field_max_chars=field_max_chars,
         field_begin=field_begin,
         field_end=field_end,
         field_heading=field_heading,
@@ -287,11 +306,20 @@ def build_title_report(title_raw: Optional[str], *, required: bool, min_candidat
         "ok": ok,
     }
 
-def build_field_report(field_raw: Optional[str], *, required: bool) -> dict:
+def build_field_report(field_raw: Optional[str], *, required: bool, max_chars: int = 25) -> dict:
     field = (field_raw or "").strip()
     present = bool(field)
-    ok = (not required) or present
-    return {"present": present, "required": bool(required), "ok": ok}
+    cjk_count = _count_cjk_chars(field) if field else 0
+    len_ok = (max_chars <= 0) or (cjk_count <= max_chars)
+    ok = ((not required) or present) and len_ok
+    return {
+        "present": present,
+        "required": bool(required),
+        "cjk_chars": cjk_count,
+        "max_chars": max_chars,
+        "len_ok": len_ok,
+        "ok": ok,
+    }
 
 
 def _build_report(zh_raw: str, en_raw: str, *, zh_max: int, en_max: int) -> dict:
@@ -452,7 +480,7 @@ def main(argv: list[str]) -> int:
             field_raw = _extract_block(text, cfg.field_begin, cfg.field_end)
         except ValueError:
             field_raw = _extract_section_by_heading(text, cfg.field_heading)
-    field_report = build_field_report(field_raw, required=field_required)
+    field_report = build_field_report(field_raw, required=field_required, max_chars=cfg.field_max_chars)
     report["field"] = field_report
 
     if title_required and not title_report["present"]:
@@ -528,7 +556,10 @@ def main(argv: list[str]) -> int:
             f"recommended={title_report['has_recommended']}]"
         )
     if not args.no_field:
-        print(f"- FIELD: {'OK' if field_report['ok'] else 'INVALID'} [required={field_required}]")
+        print(
+            f"- FIELD: {'OK' if field_report['ok'] else 'INVALID'} "
+            f"[required={field_required}, cjk={field_report.get('cjk_chars', 0)}/{cfg.field_max_chars}]"
+        )
 
     if args.strict and (not zh_ok or not en_ok or not title_report["ok"] or not field_report["ok"]):
         return 1

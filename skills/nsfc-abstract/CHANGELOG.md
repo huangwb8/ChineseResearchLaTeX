@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-03-04
+
+### Changed
+
+- `SKILL.md`：`主要研究领域` 从"3–5 个要点"改为**一句话（汉字数 ≤ 25）**，输出格式示例同步更新
+- `SKILL.md`：中文摘要引号规范加强——只允许 `"..."` (U+201C/U+201D)，明确列出其他禁用形式（ASCII `"`、全角 `＂`、`「」`、`『』`）
+- `SKILL.md`：新增"中文摘要正文为纯文本"约束（禁止 Markdown 标记），因输出将直接被用户 copy 到纯文本系统
+- `references/info_form.md`：研究领域采集项描述更新，说明一句话且不超过 25 个汉字
+- `config.yaml`：`field` 节新增 `field_max_chars: 25`
+- `validate_abstract.py`：`build_field_report` 新增 `max_chars` 参数，加入 CJK 字数校验，结果字段增加 `cjk_chars`/`len_ok`；新增辅助函数 `_count_cjk_chars` 与 `_count_other_nonstandard_quotes`；FIELD 打印行显示 `cjk/max` 计数
+- `write_abstracts_md.py`：`SkillConfig` 与 `_load_config` 新增 `field_max_chars`；将"缺失"与"超限"拆分为独立错误路径；超限时作为**硬约束**（与引号检查同级）拒绝写入
+
 ## [2.0.1] - 2026-03-04
 
 ### Fixed
