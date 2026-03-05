@@ -12,6 +12,38 @@
 
 - （暂无）
 
+## [1.0.4] - 2026-03-05
+
+### Changed（变更）
+
+- `scripts/nano_banana_client.py`：导出常量 `MAX_REFERENCE_IMAGES`，并在生成脚本中复用，避免“参考图上限=4”在多处重复硬编码导致潜在漂移
+
+## [1.0.3] - 2026-03-05
+
+### Fixed（修复）
+
+- Nano Banana（Gemini PNG-only）风格参考图：优先按文件头（magic bytes）识别参考图片格式，避免“扩展名与真实格式不一致”导致的 mimeType 错误
+
+### Changed（变更）
+
+- `scripts/generate_roadmap.py`：`--style-ref` 在非 nano_banana 模式下会提示并忽略；在 nano_banana 模式下会提前校验输入是否为文件
+- `scripts/generate_roadmap.py`：`nano_banana_reference_images.txt` 改为记录 basename + size + sha256，避免写入绝对路径泄露本机目录信息
+- `scripts/generate_roadmap.py`：参考图片去重并限制最多 4 张，确保“落盘证据”与实际传入模型的参考图一致
+- `scripts/nano_banana_generate_png.py`：默认画布高度对齐 `config.yaml:renderer.canvas.height_px`
+- `scripts/generate_roadmap.py`：Nano Banana 渲染时的画布高度 fallback 默认值对齐到 2263，避免缺省配置下比例漂移
+
+## [1.0.2] - 2026-03-05
+
+### Added（新增）
+
+- Nano Banana（Gemini PNG-only）模式支持多张“风格参考图”：`generate_roadmap.py --style-ref ...`（可多次提供），用于让生成图在配色/线条/质感上贴近参考风格（不照抄内容结构）
+
+### Changed（变更）
+
+- `scripts/nano_banana_client.py`：`nano_banana_generate_png()` 支持 `reference_images`（多图）并兼容 png/jpg/jpeg/webp
+- `scripts/generate_roadmap.py`：Nano Banana 渲染阶段支持 `--style-ref`，并在每轮输出 `nano_banana_reference_images.txt` 记录本轮使用的参考图清单
+- 文档同步：`README.md`、`SKILL.md`
+
 ## [1.0.1] - 2026-03-02
 
 ### Added（新增）

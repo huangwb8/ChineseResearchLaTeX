@@ -14,6 +14,9 @@
 - **nsfc-roadmap v0.11.4 → v1.0.0**：升级为正式稳定版；description 更新为更清晰的功能说明（强调可编辑 + 可嵌入双格式输出）
 - **nsfc-schematic v0.14.3 → v1.0.0**：升级为正式稳定版；description 更新为更清晰的功能说明（强调可编辑 + 可嵌入双格式输出）
 - **nsfc-roadmap / nsfc-schematic v1.0.0 → v1.0.1**：Nano Banana/Gemini PNG-only 模式在 4K PNG 之外自动生成 `*_compacted.png`（下采样 + PNG 压缩/量化择优），显著降低嵌入标书 PDF 的体积
+- **nsfc-roadmap / nsfc-schematic v1.0.1 → v1.0.2**：Nano Banana/Gemini PNG-only 模式支持多张“风格参考图”（`--style-ref` 可多次提供），用于生成与参考图相近的配色/线条/质感（不照抄内容结构；支持 png/jpg/jpeg/webp）
+- **nsfc-roadmap / nsfc-schematic v1.0.2 → v1.0.3**：风格参考图输入校验与格式识别增强（优先按文件头识别格式，避免扩展名误导）；参考图落盘证据改为 `basename + size + sha256`，避免绝对路径泄露本机目录信息
+- **nsfc-roadmap / nsfc-schematic v1.0.3 → v1.0.4**：导出并统一复用 `MAX_REFERENCE_IMAGES` 常量，避免“参考图上限=4”在多处重复硬编码导致潜在漂移
 
 ### Added（新增）
 

@@ -39,6 +39,7 @@ metadata:
 - `output_dir`：输出目录（默认在当前工作目录下创建 `roadmap_output/`）
 - `renderer`：渲染后端（默认 `drawio`；仅当用户主动提及 Nano Banana/Gemini 图片模型时才允许使用 `nano_banana`，该模式仅输出 PNG）
 - `dotenv`：可选：显式指定 `.env` 路径（仅 `renderer=nano_banana` 使用；默认从当前工作目录向上搜索）
+- `style_ref_images`：可选：风格参考图片（可多张；仅 `renderer=nano_banana` 生效；脚本参数为 `--style-ref` 可多次提供；支持 png/jpg/jpeg/webp；最多使用前 4 张；用于让生成图的配色/线条/质感尽量贴近参考图，但不照抄其内容结构）
 - `layout`：布局模板名（默认 `auto`，见 `config.yaml:layout`；支持 `classic/three-column/packed-three-column/layered-pipeline`）
 - `template_ref`：具体模板 id（如 `model-02`；高级选项；默认“纯 AI 规划”不需要也不建议设置）
 
@@ -191,7 +192,9 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
   --spec-file ./roadmap_output/spec.yaml \
   --output-dir ./roadmap_output \
   --rounds 1 \
-  --renderer nano_banana
+  --renderer nano_banana \
+  --style-ref ./path/to/style_ref_1.png \
+  --style-ref ./path/to/style_ref_2.jpg
 ```
 
 ### 阶段四：评估-优化循环（默认 5 轮）

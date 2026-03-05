@@ -39,6 +39,7 @@ metadata:
 - `renderer`：渲染后端（默认 `drawio`；仅当用户主动提及 Nano Banana/Gemini 图片模型时才允许使用 `nano_banana`，该模式仅输出 PNG）
 - `output_dir`：输出目录（可选；默认使用 `config.yaml:output.dirname`，相对当前工作目录）
 - `config`：配置文件路径（可选；默认使用技能自带 `nsfc-schematic/config.yaml`；用于为某个项目单独覆盖 `output.hide_intermediate` 等参数）
+- `style_ref_images`：可选：风格参考图片（可多张；仅 `renderer=nano_banana` 生效；脚本参数为 `--style-ref` 可多次提供；支持 png/jpg/jpeg/webp；最多使用前 4 张；用于让生成图的配色/线条/质感尽量贴近参考图，但不照抄其内容结构）
 - `context`：自然语言机制描述（仅用于“规划模式”；由 `plan_schematic.py` 生成规划草案与 spec 草案）
 - `template_ref`：图类型模板 id/family（高级选项；默认“纯 AI 规划”不需要也不建议设置）
 
@@ -242,7 +243,9 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
   --dotenv /path/to/.env \
   --spec-file ./schematic_plan/spec_draft.yaml \
   --output-dir ./schematic_output/ \
-  --rounds 5
+  --rounds 5 \
+  --style-ref ./path/to/style_ref_1.png \
+  --style-ref ./path/to/style_ref_2.jpg
 ```
 
 说明：

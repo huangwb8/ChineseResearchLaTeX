@@ -99,7 +99,9 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
   --renderer nano_banana \
   --proposal-file /path/to/extraTex/2.1.研究内容.tex \
   --output-dir ./roadmap_output \
-  --rounds 1
+  --rounds 1 \
+  --style-ref /path/to/style_ref_1.png \
+  --style-ref /path/to/style_ref_2.jpg
 ```
 
 ## 适用场景

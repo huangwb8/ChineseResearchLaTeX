@@ -14,6 +14,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from env_utils import find_dotenv, mask_secret, merged_env
 from utils import fatal, info, warn
 
+MAX_REFERENCE_IMAGES = 4
+_MAX_REFERENCE_IMAGES = MAX_REFERENCE_IMAGES
+
 
 @dataclass(frozen=True)
 class GeminiConfig:
@@ -240,6 +243,32 @@ def _choose_image_size(w: int, h: int) -> str:
 _NANO_BANANA_LONG_SIDE_PX = 3840  # UHD 4K long edge lower bound (pixels)
 
 
+def _infer_image_mime(path: Path, raw: bytes) -> str:
+    # Prefer magic bytes over file suffix (users may pass misnamed files).
+    if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        if path.suffix and path.suffix.lower() not in {".png"}:
+            warn(f"参考图片扩展名与文件头不一致：{path.name}，将按 PNG 解析。")
+        return "image/png"
+    if raw.startswith(b"\xff\xd8\xff"):
+        if path.suffix and path.suffix.lower() not in {".jpg", ".jpeg"}:
+            warn(f"参考图片扩展名与文件头不一致：{path.name}，将按 JPEG 解析。")
+        return "image/jpeg"
+    if len(raw) >= 12 and raw[0:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        if path.suffix and path.suffix.lower() not in {".webp"}:
+            warn(f"参考图片扩展名与文件头不一致：{path.name}，将按 WEBP 解析。")
+        return "image/webp"
+
+    s = path.suffix.lower().lstrip(".")
+    if s in {"png"}:
+        return "image/png"
+    if s in {"jpg", "jpeg"}:
+        return "image/jpeg"
+    if s in {"webp"}:
+        return "image/webp"
+
+    raise RuntimeError(f"不支持的参考图片格式：{path}（仅支持 png/jpg/jpeg/webp）")
+
+
 def _target_4k_dims(canvas_w: int, canvas_h: int) -> Tuple[int, int]:
     """
     Compute the deterministic "4K output size" for a given canvas aspect ratio.
@@ -296,6 +325,7 @@ def nano_banana_generate_png(
     output_png: Path,
     canvas_w: int,
     canvas_h: int,
+    reference_images: Optional[List[Path]] = None,
     reference_png: Optional[Path] = None,
     debug_dir: Optional[Path] = None,
     timeout_s: int = 180,
@@ -305,22 +335,52 @@ def nano_banana_generate_png(
     Writes:
     - output_png: final PNG (best-effort resized to canvas_w/canvas_h)
     - debug_dir/nano_banana_response.json: response (no API key)
+
+    Reference images:
+    - reference_images: optional list of 1..N images (preferred)
+    - reference_png: legacy single-image alias (kept for backward compatibility)
     """
     aspect = _choose_aspect_ratio(canvas_w, canvas_h)
     size = _choose_image_size(canvas_w, canvas_h)
 
     def _image_part_from_path(p: Path) -> Dict[str, Any]:
         raw = p.read_bytes()
-        # Gemini expects base64-encoded inlineData. We only support PNG here.
+        mime = _infer_image_mime(p, raw)
+        # Gemini expects base64-encoded inlineData.
         b64 = base64.b64encode(raw).decode("ascii")
-        return {"inlineData": {"mimeType": "image/png", "data": b64}}
+        return {"inlineData": {"mimeType": mime, "data": b64}}
 
     parts: List[Dict[str, Any]] = []
+
+    refs: List[Path] = []
     if reference_png is not None:
-        rp = Path(reference_png)
+        refs.append(Path(reference_png))
+    if reference_images:
+        refs.extend([Path(p) for p in reference_images if p is not None])
+
+    # De-dup while keeping order.
+    seen: set[str] = set()
+    refs2: List[Path] = []
+    for p in refs:
+        try:
+            key = str(p.resolve())
+        except Exception:
+            key = str(p)
+        if key in seen:
+            continue
+        seen.add(key)
+        refs2.append(p)
+    refs = refs2
+
+    if len(refs) > MAX_REFERENCE_IMAGES:
+        warn(f"参考图片数量过多（{len(refs)}），仅取前 {MAX_REFERENCE_IMAGES} 张。")
+        refs = refs[:MAX_REFERENCE_IMAGES]
+
+    for rp in refs:
         if not rp.exists() or not rp.is_file():
-            raise RuntimeError(f"reference_png 不存在或不是文件：{rp}")
+            raise RuntimeError(f"参考图片不存在或不是文件：{rp}")
         parts.append(_image_part_from_path(rp))
+
     parts.append({"text": prompt})
 
     payload: Dict[str, Any] = {

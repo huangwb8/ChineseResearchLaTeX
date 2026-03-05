@@ -19,7 +19,7 @@ from measure_dimension import measure_all as measure_dimensions
 from measure_roadmap import measure as measure_roadmap
 from extract_from_tex import extract_item_titles, extract_research_content_section, find_candidate_tex
 from render_roadmap import drawio_install_hints, ensure_drawio_cli, render
-from nano_banana_client import nano_banana_generate_png, nano_banana_health_check
+from nano_banana_client import MAX_REFERENCE_IMAGES, nano_banana_generate_png, nano_banana_health_check
 from png_compactor import compact_png, compacted_png_name
 from spec import RoadmapSpec, default_spec_for_nsfc_young_2026, load_spec
 from template_library import load_template_db, resolve_layout_template
@@ -401,6 +401,21 @@ def _sha256_file(path: Path) -> Optional[str]:
                 break
             h.update(chunk)
     return h.hexdigest()
+
+
+def _dedup_paths(paths: List[Path]) -> List[Path]:
+    seen: set[str] = set()
+    out: List[Path] = []
+    for p in paths:
+        try:
+            key = str(p.resolve())
+        except Exception:
+            key = str(p)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(p)
+    return out
 
 
 def _deep_merge_dict(base: Dict[str, Any], patch: Dict[str, Any]) -> Dict[str, Any]:
@@ -1256,7 +1271,16 @@ def main() -> None:
         default=None,
         help="可选：显式指定 .env 路径（仅 nano_banana 模式使用；默认从 CWD 向上搜索）",
     )
+    p.add_argument(
+        "--style-ref",
+        type=Path,
+        action="append",
+        default=[],
+        help="可选：风格参考图片（可多次提供；仅 nano_banana 模式生效；支持 png/jpg/jpeg/webp）",
+    )
     args = p.parse_args()
+
+    style_ref_images = [Path(p) for p in (args.style_ref or []) if p is not None]
 
     root = skill_root()
     config_path = args.config if args.config is not None else (root / "config.yaml")
@@ -1299,6 +1323,14 @@ def main() -> None:
     renderer_backend = str(args.renderer or "drawio").strip().lower()
     if renderer_backend not in {"drawio", "nano_banana"}:
         fatal(f"--renderer 不支持：{renderer_backend!r}（仅支持 drawio / nano_banana）")
+
+    if style_ref_images and renderer_backend != "nano_banana":
+        warn("检测到 --style-ref，但当前 renderer 不是 nano_banana；该参数仅在 nano_banana 模式生效，已忽略。")
+        style_ref_images = []
+    if renderer_backend == "nano_banana" and style_ref_images:
+        for p in style_ref_images:
+            if not p.exists() or not p.is_file():
+                fatal(f"--style-ref 参考图片不存在或不是文件：{p}")
 
     gemini_cfg = None
     if renderer_backend == "nano_banana":
@@ -1680,7 +1712,7 @@ def main() -> None:
             renderer_cfg = cfg_used.get("renderer", {}) if isinstance(cfg_used.get("renderer", {}), dict) else {}
             canvas_cfg = renderer_cfg.get("canvas", {}) if isinstance(renderer_cfg.get("canvas", {}), dict) else {}
             cw = int(canvas_cfg.get("width_px", 2400) or 2400)
-            ch = int(canvas_cfg.get("height_px", 1800) or 1800)
+            ch = int(canvas_cfg.get("height_px", 2263) or 2263)
 
             out_png = round_dir / str(artifacts.get("png", "roadmap.png"))
             if renderer_backend == "nano_banana" and ai_nano_banana_prompt is not None:
@@ -1695,11 +1727,13 @@ def main() -> None:
             else:
                 prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
             try:
-                reference_png: Optional[Path] = None
+                reference_images: List[Path] = []
+                previous_ref: Optional[Path] = None
                 if ai_mode and ai_nb_style_continuity_effective and r >= 2:
                     prev_png = run_dir / f"round_{(r - 1):02d}" / str(artifacts.get("png", "roadmap.png"))
                     if prev_png.exists():
-                        reference_png = prev_png
+                        previous_ref = prev_png
+                        reference_images.append(prev_png)
                         # Ask the model to preserve the look-and-feel of the provided reference image.
                         prompt = (
                             prompt.rstrip("\n")
@@ -1708,6 +1742,21 @@ def main() -> None:
                             + "- 优先只改动布局与节点文字，不要在风格上做大幅改动。\n"
                             + "\n"
                         )
+
+                if style_ref_images:
+                    reference_images.extend(style_ref_images)
+                    prompt = (
+                        prompt.rstrip("\n")
+                        + "\n\n## 风格参考（用户提供图片已提供）\n"
+                        + "- 参考图片用于对齐整体视觉风格（配色、线条粗细、圆角/箭头风格、阴影/扁平质感）。\n"
+                        + "- 不要照抄内容结构；请用本次 spec 的内容与结构，仅复用其风格语言。\n"
+                        + "\n"
+                    )
+
+                reference_images = _dedup_paths(reference_images)
+                if len(reference_images) > MAX_REFERENCE_IMAGES:
+                    warn(f"参考图片数量过多（{len(reference_images)}），仅取前 {MAX_REFERENCE_IMAGES} 张。")
+                    reference_images = reference_images[:MAX_REFERENCE_IMAGES]
 
                 if ai_mode and ai_nb_color_advice_effective:
                     prompt = (
@@ -1718,13 +1767,23 @@ def main() -> None:
                     )
 
                 write_text(round_dir / "nano_banana_prompt.md", prompt)
+                if reference_images:
+                    lines: List[str] = []
+                    lines.append(f"# reference_images: {len(reference_images)}")
+                    lines.append("# format: kind<TAB>basename<TAB>bytes=<n><TAB>sha256=<hex>")
+                    for p in reference_images:
+                        kind = "previous" if (previous_ref is not None and p == previous_ref) else "style_ref"
+                        size_b = int(p.stat().st_size) if p.exists() else 0
+                        h = _sha256_file(p) or ""
+                        lines.append(f"{kind}\t{p.name}\tbytes={size_b}\tsha256={h}")
+                    write_text(round_dir / "nano_banana_reference_images.txt", "\n".join(lines) + "\n")
                 nano_banana_generate_png(
                     cfg=gemini_cfg,
                     prompt=prompt,
                     output_png=out_png,
                     canvas_w=cw,
                     canvas_h=ch,
-                    reference_png=reference_png,
+                    reference_images=reference_images if reference_images else None,
                     debug_dir=round_dir,
                 )
             except Exception as exc:

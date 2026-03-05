@@ -196,7 +196,9 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
   --renderer nano_banana \
   --spec-file ./schematic_plan/spec_draft.yaml \
   --output-dir ./schematic_output/ \
-  --rounds 5
+  --rounds 5 \
+  --style-ref /path/to/style_ref_1.png \
+  --style-ref /path/to/style_ref_2.jpg
 ```
 
 ## 常见问题（FAQ）

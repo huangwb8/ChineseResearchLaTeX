@@ -13,6 +13,13 @@ def main() -> None:
     p.add_argument("--output-png", type=Path, required=True)
     p.add_argument("--canvas-w", type=int, default=3200)
     p.add_argument("--canvas-h", type=int, default=2000)
+    p.add_argument(
+        "--reference-image",
+        type=Path,
+        action="append",
+        default=[],
+        help="可选：参考图片（可多次提供；支持 png/jpg/jpeg/webp）",
+    )
     p.add_argument("--dotenv", type=Path, default=None, help="可选：显式指定 .env 路径（默认从 CWD 向上搜索）")
     p.add_argument("--debug-dir", type=Path, default=None)
     args = p.parse_args()
@@ -30,6 +37,7 @@ def main() -> None:
             output_png=args.output_png,
             canvas_w=int(args.canvas_w),
             canvas_h=int(args.canvas_h),
+            reference_images=[Path(p) for p in (args.reference_image or []) if p is not None] or None,
             debug_dir=args.debug_dir,
         )
     except Exception as exc:
@@ -40,4 +48,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
