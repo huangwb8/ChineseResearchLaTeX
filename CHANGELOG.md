@@ -14,6 +14,8 @@
 
 ### Changed（变更）
 
+- **Budget_Justification 模板**：将预算说明外框顶部至首个一级标题之间的留白抽为单独参数 `\BudgetBoxTopGapAdjust`，定义于 `skills/nsfc-budget/models/01/extraTex/@config.tex`；默认设为 `-2pt`，便于后续独立微调 `\begin{BudgetBox}` 与 `\BudgetSectionLine{...}` 之间的间隙
+- **Budget_Justification 模板**：微调标题与预算说明外框之间的垂直间距；将 `skills/nsfc-budget/models/01/main.tex` 中标题下方留白从 `0.18cm` 缩小到 `0.08cm`，使外框整体轻微上移
 - **Budget_Justification 模板**：统一一级标题行与正文首行的水平定位模型；`1.科学基金资助项目直接费用`、`2.直接费用中合作研究转拨资金`、`3.其他来源资金` 等标题改为与正文共用相同左移基准，仅在标题内容前保留 `2\ccwd` 缩进，减少标题与正文“看起来差一点”的错位感
 - **Budget_Justification 模板**：修正 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的正文首行缩进计算时机；将 `2\ccwd` 改为按当前正文字号动态求值，并调整 `\justifying` 与 `\parindent` 的设置顺序，避免首行缩进意外大于 2 个中文字符
 - **Budget_Justification 模板**：微调预算说明书版式，新增正文首行缩进两字、加粗框线、收紧标题与外框间距，并关闭 `xeCJK` 中西文自动胶以改善 `1.1/1.2/1.3` 各段落的逐行断行对齐；同时将“设备费/业务费/劳务费”改为仅词语加粗

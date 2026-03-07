@@ -70,6 +70,7 @@
 \newcommand{\BudgetPlaceholder}[1]{\vspace*{#1}}
 \newcommand{\BudgetLeftShift}{-7pt}
 \newcommand{\BudgetIndent}{2\ccwd}
+\newcommand{\BudgetBoxTopGapAdjust}{-2pt}
 \newcommand{\BudgetSectionLine}[1]{%
   {\budgetboldfont\bfseries\BudgetBodyFont\noindent\hspace*{\BudgetIndent}#1\par}%
 }
@@ -94,6 +95,7 @@
     linecolor=black
   ]
     \begin{minipage}[t][22.35cm][t]{\linewidth}
+    \vspace*{\BudgetBoxTopGapAdjust}
     \BudgetBodyFont
     \justifying
     \setlength{\parindent}{\BudgetIndent}%
