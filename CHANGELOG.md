@@ -14,6 +14,8 @@
 
 ### Changed（变更）
 
+- **Budget_Justification 模板**：将页面标题“预算说明书”恢复为黑体四号加粗；`skills/nsfc-budget/models/01/extraTex/@config.tex` 中 `\budgettitlefont` 改回黑体族，`\BudgetTitleFont` 调整为 `14pt` 四号标题，而正文强调文字仍保持与正文同字体
+- **Budget_Justification 模板**：调整 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的中文加粗策略；标题与强调文字不再切换到黑体，改为继续使用与正文相同的中文字体并仅施加假粗体，减少“加粗即变黑体”的风格跳变
 - **Budget_Justification 模板**：优化 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的注释排版；在注释块与对应命令之间补充空行，提升参数说明的可读性
 - **Budget_Justification 模板**：为 `skills/nsfc-budget/models/01/extraTex/@config.tex` 补充面向用户的中文注释，重点解释 `\BudgetCJKFakeBold`、`\BudgetLeftShift`、`\BudgetIndent`、`\BudgetBoxTopGapAdjust` 等可调参数的用途与调参参考，降低手工微调门槛
 - **Budget_Justification 模板**：将加粗程度参数迁移到 `skills/nsfc-budget/models/01/extraTex/@config.tex`；新增 `\BudgetCJKFakeBold`（默认 `1.8`）并直接作用于 `\budgettitlefont` / `\budgetboldfont`，以后可在样式配置文件里统一调节中文加粗程度

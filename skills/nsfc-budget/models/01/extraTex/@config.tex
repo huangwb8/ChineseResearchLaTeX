@@ -20,7 +20,7 @@
 % 用途：控制标题、提示语等中文加粗文字的“粗细程度”。
 % 调参参考：1.2=很轻，1.5=偏轻，1.8=当前默认，2.0=偏明显，2.5=较重。
 
-\newcommand{\BudgetCJKFakeBold}{1.8}
+\newcommand{\BudgetCJKFakeBold}{0.1}
 
 \IfFileExists{./fonts/TimesNewRoman.ttf}{
   \setmainfont{TimesNewRoman}[Path=./fonts/,Extension=.ttf]
@@ -38,8 +38,8 @@
   \setCJKmainfont{STSong}
 }
 
-% 标题与正文中的“中文加粗字体”族。
-% 这里统一复用 \BudgetCJKFakeBold，用户通常不需要改下面两段，只改参数即可。
+% 页面标题“预算说明书”专用中文字体族。
+% 按官方样式要求，封面标题使用黑体。
 
 \IfFileExists{./fonts/FandolHei-Regular.otf}{
   \newCJKfontfamily\budgettitlefont{FandolHei-Regular}[Path=./fonts/,Extension=.otf,AutoFakeBold=\BudgetCJKFakeBold]
@@ -47,10 +47,14 @@
   \newCJKfontfamily\budgettitlefont{Heiti SC}[AutoFakeBold=\BudgetCJKFakeBold]
 }
 
-\IfFileExists{./fonts/FandolHei-Regular.otf}{
-  \newCJKfontfamily\budgetboldfont{FandolHei-Regular}[Path=./fonts/,Extension=.otf,AutoFakeBold=\BudgetCJKFakeBold]
+% 正文中的中文加粗字体族。
+% 当前策略：正文里的强调文字不切换到黑体，继续使用与正文相同的中文字体，只额外施加假粗体。
+% 这样可以避免“加粗后字体风格突变”，更贴近正文原始字形。
+
+\IfFileExists{./fonts/FandolFang-Regular.otf}{
+  \newCJKfontfamily\budgetboldfont{FandolFang-Regular}[Path=./fonts/,Extension=.otf,AutoFakeBold=\BudgetCJKFakeBold]
 }{
-  \newCJKfontfamily\budgetboldfont{Heiti SC}[AutoFakeBold=\BudgetCJKFakeBold]
+  \newCJKfontfamily\budgetboldfont{STSong}[AutoFakeBold=\BudgetCJKFakeBold]
 }
 
 \xeCJKsetup{CJKecglue={}}
@@ -83,8 +87,9 @@
 \newcommand{\BudgetBodyFont}{\fontsize{9.03bp}{12.17bp}\selectfont}
 
 % 页面标题“预算说明书”的字号与字体。
+% 按官方样式使用“黑体四号加粗”；这里用 14pt 对应四号。
 
-\newcommand{\BudgetTitleFont}{\budgettitlefont\bfseries\fontsize{13.78bp}{16bp}\selectfont}
+\newcommand{\BudgetTitleFont}{\budgettitlefont\bfseries\fontsize{14pt}{16pt}\selectfont}
 
 % 行内手动加粗工具。
 
