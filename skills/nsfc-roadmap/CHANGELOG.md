@@ -6,11 +6,15 @@
 
 ### Added（新增）
 
-- （暂无）
+- 新增比例锁定回归测试：`tests/比例锁定-v20260307/test_aspect_ratio_lock.py`
 
 ### Changed（变更）
 
-- （暂无）
+- `config.yaml`：新增 `renderer.canvas.lock_aspect_ratio=true`，将用户指定的画布宽高比视为硬约束
+- `scripts/generate_roadmap.py`：实例级 `config_local` 若只改画布宽或高，会自动补全另一边以保持当前比例；`ai_critic` 请求新增“当前画布锁定”说明，禁止无故改比例
+- `scripts/generate_roadmap.py`：Nano Banana + `ai_critic` 的 `nano_banana_prompt` 改为持久化到 `ai_state.yaml`，避免下一轮回退到默认比例提示词
+- `scripts/generate_roadmap.py`：探索阶段若开启画布抖动，将自动回写宽高以维持锁定比例
+- 文档同步：`README.md`、`SKILL.md`
 
 ## [1.0.4] - 2026-03-05
 

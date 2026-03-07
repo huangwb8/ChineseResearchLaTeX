@@ -32,6 +32,8 @@
 - 高宽比为1:1.2
 ```
 
+**比例锁定说明**：当你在 spec 中显式写入 `schematic.canvas.width/height`，或在 `config_local.yaml` 中设置 `renderer.canvas.width_px/height_px` 后，skill 会将该宽高比视为硬约束；draw.io 模式不会再被 `canvas_fit` 偷偷改比例，Nano Banana + `ai_critic` 也会持续沿用这一比例。
+
 ## 两种出图模式
 
 本技能支持两种出图模式，开始前建议先了解它们的区别：
@@ -153,6 +155,7 @@ OK: dotenv=/path/to/.env, base_url=https://..., model=gemini-3.1-flash-image-pre
 |------|--------|------|
 | `renderer.canvas.width_px` | 3200 | 画布宽度 |
 | `renderer.canvas.height_px` | 2000 | 画布高度 |
+| `renderer.canvas.lock_aspect_ratio` | true | 锁定当前宽高比；显式 canvas / config_local 指定比例后，多轮优化持续保持 |
 | `renderer.drawio.cli_path` | "" | draw.io CLI 路径（可选） |
 | `evaluation.max_rounds` | 5 | 最大优化轮次 |
 | `evaluation.stop_strategy` | `ai_critic` | 停止策略（`ai_critic`/`plateau`/`none`） |

@@ -75,6 +75,133 @@ def _cfg_delta(before: Dict[str, Any], after: Dict[str, Any]) -> List[str]:
     return out
 
 
+def _canvas_lock_enabled(canvas: Dict[str, Any]) -> bool:
+    raw = canvas.get("lock_aspect_ratio", True)
+    if isinstance(raw, bool):
+        return raw
+    if raw is None:
+        return True
+    return str(raw).strip().lower() not in {"0", "false", "off", "no"}
+
+
+def _canvas_ratio_from_canvas(canvas: Dict[str, Any]) -> Optional[float]:
+    try:
+        width = int(canvas.get("width_px"))
+        height = int(canvas.get("height_px"))
+    except Exception:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return float(width) / float(height)
+
+
+def _round_ratio_dim(value: float) -> int:
+    return max(1, int(round(float(value))))
+
+
+def _lock_canvas_request(width_px: int, height_px: int, ratio: float) -> Tuple[int, int]:
+    width = max(1, int(width_px))
+    height = max(1, int(height_px))
+    if ratio <= 0:
+        return width, height
+
+    keep_width_h = max(height, int(math.ceil(width / ratio)))
+    keep_width = (int(math.ceil(keep_width_h * ratio)), keep_width_h)
+
+    keep_height_w = max(width, int(math.ceil(height * ratio)))
+    keep_height = (keep_height_w, int(math.ceil(keep_height_w / ratio)))
+
+    return min((keep_width, keep_height), key=lambda item: (item[0] * item[1], item[0] + item[1]))
+
+
+def _apply_canvas_ratio_lock_to_patch(
+    base_cfg: Dict[str, Any],
+    local_cfg: Dict[str, Any],
+    *,
+    locked_ratio: Optional[float] = None,
+) -> Dict[str, Any]:
+    out = deepcopy(local_cfg)
+    renderer = out.get("renderer") if isinstance(out.get("renderer"), dict) else None
+    canvas_patch = renderer.get("canvas") if isinstance(renderer, dict) and isinstance(renderer.get("canvas"), dict) else None
+    if not isinstance(canvas_patch, dict):
+        return out
+
+    base_renderer = base_cfg.get("renderer") if isinstance(base_cfg.get("renderer"), dict) else {}
+    base_canvas = base_renderer.get("canvas") if isinstance(base_renderer.get("canvas"), dict) else {}
+
+    lock_enabled = _canvas_lock_enabled({**base_canvas, **canvas_patch})
+    if not lock_enabled:
+        return out
+
+    ratio = locked_ratio if locked_ratio and locked_ratio > 0 else _canvas_ratio_from_canvas(base_canvas)
+    if ratio is None or ratio <= 0:
+        return out
+
+    has_width = "width_px" in canvas_patch
+    has_height = "height_px" in canvas_patch
+    if has_width and not has_height:
+        canvas_patch["height_px"] = _round_ratio_dim(int(canvas_patch["width_px"]) / ratio)
+    elif has_height and not has_width:
+        canvas_patch["width_px"] = _round_ratio_dim(int(canvas_patch["height_px"]) * ratio)
+    elif has_width and has_height and locked_ratio is not None:
+        width, height = _lock_canvas_request(int(canvas_patch["width_px"]), int(canvas_patch["height_px"]), ratio)
+        canvas_patch["width_px"] = width
+        canvas_patch["height_px"] = height
+    return out
+
+
+def _get_spec_canvas(spec_data: Dict[str, Any]) -> Optional[Tuple[int, int]]:
+    root = spec_data.get("schematic", spec_data)
+    if not isinstance(root, dict):
+        return None
+    canvas = root.get("canvas")
+    if not isinstance(canvas, dict):
+        return None
+    try:
+        width = int(canvas.get("width"))
+        height = int(canvas.get("height"))
+    except Exception:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return width, height
+
+
+def _set_spec_canvas(spec_data: Dict[str, Any], width: int, height: int) -> Dict[str, Any]:
+    out = deepcopy(spec_data)
+    root = out.setdefault("schematic", {}) if "schematic" in out or not {"title", "groups", "edges", "canvas"} & set(out.keys()) else out
+    if not isinstance(root, dict):
+        return out
+    root["canvas"] = {"width": int(width), "height": int(height)}
+    return out
+
+
+def _preserve_locked_spec_canvas(previous_spec: Dict[str, Any], next_spec: Dict[str, Any]) -> Dict[str, Any]:
+    prev_canvas = _get_spec_canvas(previous_spec)
+    if prev_canvas is None:
+        return next_spec
+    prev_ratio = float(prev_canvas[0]) / float(prev_canvas[1])
+    next_canvas = _get_spec_canvas(next_spec)
+    if next_canvas is None:
+        return _set_spec_canvas(next_spec, prev_canvas[0], prev_canvas[1])
+    next_ratio = float(next_canvas[0]) / float(next_canvas[1]) if next_canvas[1] else 0.0
+    if abs(next_ratio - prev_ratio) <= 1e-6:
+        return next_spec
+    width, height = _lock_canvas_request(next_canvas[0], next_canvas[1], prev_ratio)
+    return _set_spec_canvas(next_spec, width, height)
+
+
+def _locked_ratio_for_schematic(spec_data: Dict[str, Any], config: Dict[str, Any]) -> Optional[float]:
+    spec_canvas = _get_spec_canvas(spec_data)
+    if spec_canvas is not None and spec_canvas[1] > 0:
+        return float(spec_canvas[0]) / float(spec_canvas[1])
+    renderer = config.get("renderer") if isinstance(config.get("renderer"), dict) else {}
+    canvas = renderer.get("canvas") if isinstance(renderer.get("canvas"), dict) else {}
+    if not _canvas_lock_enabled(canvas):
+        return None
+    return _canvas_ratio_from_canvas(canvas)
+
+
 def _wrap_label(s: str, *, max_chars: int) -> str:
     t = (s or "").strip()
     if not t:
@@ -347,6 +474,8 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
                 c_out["width_px"] = as_int(canvas.get("width_px"), "renderer.canvas.width_px", 1200, 12000)
             if "height_px" in canvas:
                 c_out["height_px"] = as_int(canvas.get("height_px"), "renderer.canvas.height_px", 900, 12000)
+            if "lock_aspect_ratio" in canvas:
+                c_out["lock_aspect_ratio"] = as_bool(canvas.get("lock_aspect_ratio"), "renderer.canvas.lock_aspect_ratio")
             if c_out:
                 r_out["canvas"] = c_out
         drawio = renderer.get("drawio")
@@ -482,6 +611,7 @@ def _apply_config_local(base_cfg: Dict[str, Any], local_cfg: Optional[Dict[str, 
     if not local_cfg:
         return deepcopy(base_cfg)
     sanitized = _sanitize_config_local(local_cfg)
+    sanitized = _apply_canvas_ratio_lock_to_patch(base_cfg, sanitized)
     return _deep_merge_dict(base_cfg, sanitized)
 
 
@@ -658,7 +788,7 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
     lines.append("硬性要求：")
     lines.append("- 输出 1 张 PNG 图片（白底），视觉风格接近矢量图，线条清晰，适合打印/缩印。")
     lines.append("- 输出分辨率为 4K 级（长边>=3840px；按画布比例缩放，必要时以白底补边保持内容完整）。")
-    lines.append(f"- 画布建议比例接近 {canvas_w}:{canvas_h}，内容需居中且四周留白均衡。")
+    lines.append(f"- 画布比例必须严格匹配 {canvas_w}:{canvas_h}，内容需居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。")
     lines.append("- 【重要：文字排版必须像“打印出来的一样”】【禁止】任何文字扭曲/弯曲/透视变形/拉伸压缩/笔画融化；禁止旋转文字、禁止斜体/手写/艺术字。")
     lines.append("- 字体风格：标准无衬线印刷体（类似 思源黑体/微软雅黑/Arial），字重正常；文字颜色用纯黑或深灰。")
@@ -781,6 +911,7 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
     canvas = out["renderer"]["canvas"]
     layout_font = out["layout"]["font"]
     auto = out["layout"]["auto"]
+    locked_ratio = _canvas_ratio_from_canvas(canvas) if _canvas_lock_enabled(canvas) else None
 
     defects = evaluation.get("defects", [])
     if not isinstance(defects, list):
@@ -833,6 +964,10 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
                     canvas["height_px"] = int(canvas["height_px"]) + dh
                     changed = True
                     applied += 1
+                if changed and locked_ratio is not None and locked_ratio > 0:
+                    width, height = _lock_canvas_request(int(canvas["width_px"]), int(canvas["height_px"]), locked_ratio)
+                    canvas["width_px"] = width
+                    canvas["height_px"] = height
                 continue
 
             if action == "increase_gap":
@@ -912,12 +1047,22 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
     if bool(hard_layout_dims & (dims_p0 | dims_p1)) or p0 > 0:
         # 显式布局下保守处理，优先微调而不是大幅放大。
         if semi_explicit:
-            canvas["width_px"] = int(canvas["width_px"]) + 60
-            canvas["height_px"] = int(canvas["height_px"]) + 60
+            if locked_ratio is not None and locked_ratio > 0:
+                width, height = _lock_canvas_request(int(canvas["width_px"]) + 60, int(canvas["height_px"]) + 60, locked_ratio)
+                canvas["width_px"] = width
+                canvas["height_px"] = height
+            else:
+                canvas["width_px"] = int(canvas["width_px"]) + 60
+                canvas["height_px"] = int(canvas["height_px"]) + 60
             auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 4
         else:
-            canvas["width_px"] = int(canvas["width_px"]) + 140
-            canvas["height_px"] = int(canvas["height_px"]) + 140
+            if locked_ratio is not None and locked_ratio > 0:
+                width, height = _lock_canvas_request(int(canvas["width_px"]) + 140, int(canvas["height_px"]) + 140, locked_ratio)
+                canvas["width_px"] = width
+                canvas["height_px"] = height
+            else:
+                canvas["width_px"] = int(canvas["width_px"]) + 140
+                canvas["height_px"] = int(canvas["height_px"]) + 140
             auto["node_gap_x"] = int(auto.get("node_gap_x", 40)) + 8
             auto["node_gap_y"] = int(auto.get("node_gap_y", 28)) + 8
             auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 8
@@ -946,7 +1091,12 @@ def _apply_auto_fixes(cfg: Dict[str, Any], evaluation: Dict[str, Any]) -> Dict[s
         return out
 
     if p1 > 0 and {"visual_balance", "overall_aesthetics", "text_overflow"} & dims_p1:
-        canvas["height_px"] = int(canvas["height_px"]) + 100
+        if locked_ratio is not None and locked_ratio > 0:
+            width, height = _lock_canvas_request(int(canvas["width_px"]), int(canvas["height_px"]) + 100, locked_ratio)
+            canvas["width_px"] = width
+            canvas["height_px"] = height
+        else:
+            canvas["height_px"] = int(canvas["height_px"]) + 100
         auto["group_gap_y"] = int(auto.get("group_gap_y", 80)) + 8
         return out
 
@@ -1093,6 +1243,23 @@ def _write_ai_critic_request(
     lines.append("")
     lines.append("## 输出约束（必须满足）")
     lines.append("")
+    cfg_used_path = pack_dir / "config_used.yaml"
+    if cfg_used_path.exists():
+        try:
+            cfg_used = load_yaml(cfg_used_path)
+            renderer = cfg_used.get("renderer", {}) if isinstance(cfg_used.get("renderer", {}), dict) else {}
+            canvas = renderer.get("canvas", {}) if isinstance(renderer.get("canvas", {}), dict) else {}
+            ratio = _canvas_ratio_from_canvas(canvas)
+            if ratio is not None and ratio > 0:
+                lines.append("## 当前画布锁定")
+                lines.append("")
+                lines.append(
+                    f"- 当前画布：{int(canvas.get('width_px', 0) or 0)}x{int(canvas.get('height_px', 0) or 0)} px，比例锁定为 {ratio:.6f}。"
+                )
+                lines.append("- 除非用户明确要求改变比例，否则不得改变宽高比；如需放大画布，只能按同一比例同步放大宽和高。")
+                lines.append("")
+        except Exception:
+            pass
     lines.append("请写入 YAML 到 `ai_critic_response.yaml`，结构如下：")
     lines.append("")
     lines.append("```yaml")
@@ -1143,6 +1310,7 @@ def _write_ai_critic_request(
     lines.append("- 只有 overflow 风险时才减字号；若字号偏小且无 overflow，应增字号。")
     lines.append("- 配色干扰优先改 kind 分配；不要靠黑白方案掩盖结构问题。")
     lines.append("- config_local.color_scheme.name 仅允许 {academic-blue, transformer-style, nature-biomedical}。")
+    lines.append("- 若当前 run 已锁定用户指定比例，任何 `renderer.canvas.width_px/height_px` 或 `spec.schematic.canvas.width/height` 调整都必须保持相同宽高比；禁止只改一边。")
     lines.append("")
     write_text(_ai_request_path(ai_run_root), "\n".join(lines) + "\n")
 
@@ -1249,6 +1417,8 @@ def _maybe_apply_ai_response(
         nb_out["style_continuity"] = bool(style_continuity)
     if nano_banana_color_advice is not None:
         nb_out["color_advice"] = nano_banana_color_advice
+    if nano_banana_prompt_override is not None:
+        nb_out["prompt_override"] = nano_banana_prompt_override
     state["version"] = 1
     state["nano_banana"] = nb_out
     _save_ai_state(ai_run_root, state)
@@ -1257,6 +1427,7 @@ def _maybe_apply_ai_response(
     if action in {"spec_only", "both", "stop"} and new_spec is not None:
         if not isinstance(new_spec, dict):
             fatal("ai_critic_response.spec 必须是 mapping（完整 spec）")
+        new_spec = _preserve_locked_spec_canvas(spec_data, new_spec)
         load_schematic_spec(new_spec, base_config)
         spec_data = new_spec
         write_text(spec_latest_path, dump_yaml(spec_data))
@@ -1459,6 +1630,7 @@ def main() -> None:
     # Keep per-run rounds isolated to avoid mixing historical round_* residues.
     run_base = (intermediate_dir / "runs") if hide_intermediate else intermediate_dir
     ai_run_root: Optional[Path] = None
+    ai_locked_ratio: Optional[float] = None
     if ai_mode:
         ai_root = _ai_root(intermediate_dir)
         active = _read_active_run(ai_root)
@@ -1482,6 +1654,7 @@ def main() -> None:
 
     write_text(spec_latest, dump_yaml(input_spec_data))
     write_text(run_dir / str(artifacts.get("spec", "spec.yaml")), dump_yaml(input_spec_data))
+    ai_locked_ratio = _locked_ratio_for_schematic(input_spec_data, cfg_round_base) if ai_mode else None
 
     ai_action: Optional[str] = None
     ai_nb_prompt_override: Optional[str] = None
@@ -1496,6 +1669,12 @@ def main() -> None:
         )
         if config_local_patch is not None:
             base_local = local_cfg if isinstance(local_cfg, dict) else {}
+            if ai_locked_ratio is not None and ai_locked_ratio > 0:
+                config_local_patch = _apply_canvas_ratio_lock_to_patch(
+                    cfg_round_base,
+                    config_local_patch,
+                    locked_ratio=ai_locked_ratio,
+                )
             merged_local = _deep_merge_dict(base_local, config_local_patch)
             write_text(config_local_path, dump_yaml(merged_local))
             local_cfg = _load_config_local(config_local_path)
@@ -1523,6 +1702,9 @@ def main() -> None:
         nb = st.get("nano_banana") if isinstance(st.get("nano_banana"), dict) else {}
         ai_nb_style_continuity_effective = bool((nb or {}).get("style_continuity", False))
         ai_nb_color_advice_effective = str((nb or {}).get("color_advice", "") or "").strip()
+        if not ai_nb_prompt_override_effective:
+            prompt_override = str((nb or {}).get("prompt_override", "") or "").strip()
+            ai_nb_prompt_override_effective = prompt_override or None
 
     report_path = run_dir / _report_filename(config)
     if renderer_backend == "drawio":

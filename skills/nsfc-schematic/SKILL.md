@@ -122,7 +122,7 @@ edges:
 - `layout.title`：图内标题开关与顶部预留（默认关闭图内标题，推荐外部图注）
 - `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
 - `layout.auto_expand_canvas`：当节点/分组被自动扩容后，是否自动扩展画布以避免越界
-- `layout.canvas_fit`：画布拟合策略（可选按内容边界收缩；并可将内容 bbox 居中以减少单侧留白）
+- `layout.canvas_fit`：画布拟合策略（可选按内容边界收缩；并可将内容 bbox 居中以减少单侧留白；当用户显式指定 canvas 且 `renderer.canvas.lock_aspect_ratio=true` 时，不再独立收缩宽/高破坏比例）
 - `layout.routing`：路由避让参数（更保守的障碍 padding、避让分组标题栏）
 - `layout.font.edge_label_size`：连线标签字号（edge label 不会自动跟随 `node_label_size`，需单独配置）
 - `color_scheme`：配色方案
@@ -132,7 +132,7 @@ edges:
 - `evaluation.spec_variants`：Spec 安全变体（默认关闭；只对 label 做 wrap/truncate/candidates，用于缓解长文案导致的拥挤/溢出）
 - `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
 - `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
-- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke/drawio.cli_path/internal_routing`、`layout.direction/font/auto_edges/canvas_fit.center_content/auto{margin,gap,max_cols}`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants/exploration{seed,candidates_per_round,enabled}`）
+- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke/drawio.cli_path/internal_routing`、`layout.direction/font/auto_edges/canvas_fit.center_content/auto{margin,gap,max_cols}`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants/exploration{seed,candidates_per_round,enabled}`；当设置 `renderer.canvas.width_px/height_px` 时，当前宽高比会在后续多轮优化中保持锁定）
 - `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
 - `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
 

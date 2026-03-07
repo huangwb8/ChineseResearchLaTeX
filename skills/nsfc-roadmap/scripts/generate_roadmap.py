@@ -5,6 +5,7 @@ from copy import deepcopy
 from datetime import datetime
 import hashlib
 import json
+import math
 from pathlib import Path
 from pathlib import PureWindowsPath
 import random
@@ -62,6 +63,110 @@ def _is_safe_relative_path(p: str) -> bool:
     return all(part != ".." for part in parts)
 
 
+def _canvas_lock_enabled(canvas: Dict[str, Any]) -> bool:
+    raw = canvas.get("lock_aspect_ratio", True)
+    if isinstance(raw, bool):
+        return raw
+    if raw is None:
+        return True
+    return str(raw).strip().lower() not in {"0", "false", "off", "no"}
+
+
+def _canvas_ratio_from_canvas(canvas: Dict[str, Any]) -> Optional[float]:
+    try:
+        width = int(canvas.get("width_px"))
+        height = int(canvas.get("height_px"))
+    except Exception:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return float(width) / float(height)
+
+
+def _round_ratio_dim(value: float) -> int:
+    return max(1, int(round(float(value))))
+
+
+def _lock_canvas_request(width_px: int, height_px: int, ratio: float) -> tuple[int, int]:
+    width = max(1, int(width_px))
+    height = max(1, int(height_px))
+    if ratio <= 0:
+        return width, height
+
+    keep_width_h = max(height, int(math.ceil(width / ratio)))
+    keep_width = (int(math.ceil(keep_width_h * ratio)), keep_width_h)
+
+    keep_height_w = max(width, int(math.ceil(height * ratio)))
+    keep_height = (keep_height_w, int(math.ceil(keep_height_w / ratio)))
+
+    return min((keep_width, keep_height), key=lambda item: (item[0] * item[1], item[0] + item[1]))
+
+
+def _apply_canvas_ratio_lock_to_patch(
+    base_cfg: Dict[str, Any],
+    local_cfg: Dict[str, Any],
+    *,
+    locked_ratio: Optional[float] = None,
+) -> Dict[str, Any]:
+    out = deepcopy(local_cfg)
+    renderer = out.get("renderer") if isinstance(out.get("renderer"), dict) else None
+    canvas_patch = renderer.get("canvas") if isinstance(renderer, dict) and isinstance(renderer.get("canvas"), dict) else None
+    if not isinstance(canvas_patch, dict):
+        return out
+
+    base_renderer = base_cfg.get("renderer") if isinstance(base_cfg.get("renderer"), dict) else {}
+    base_canvas = base_renderer.get("canvas") if isinstance(base_renderer.get("canvas"), dict) else {}
+
+    lock_enabled = _canvas_lock_enabled({**base_canvas, **canvas_patch})
+    if not lock_enabled:
+        return out
+
+    ratio = locked_ratio if locked_ratio and locked_ratio > 0 else _canvas_ratio_from_canvas(base_canvas)
+    if ratio is None or ratio <= 0:
+        return out
+
+    has_width = "width_px" in canvas_patch
+    has_height = "height_px" in canvas_patch
+    if has_width and not has_height:
+        canvas_patch["height_px"] = _round_ratio_dim(int(canvas_patch["width_px"]) / ratio)
+    elif has_height and not has_width:
+        canvas_patch["width_px"] = _round_ratio_dim(int(canvas_patch["height_px"]) * ratio)
+    elif has_width and has_height and locked_ratio is not None:
+        width, height = _lock_canvas_request(int(canvas_patch["width_px"]), int(canvas_patch["height_px"]), ratio)
+        canvas_patch["width_px"] = width
+        canvas_patch["height_px"] = height
+    return out
+
+
+def _load_canvas_lock_ratio_from_ai_state(ai_run_root: Path, cfg: Dict[str, Any]) -> Optional[float]:
+    state = _load_ai_state(ai_run_root)
+    canvas_state = state.get("canvas_lock") if isinstance(state.get("canvas_lock"), dict) else {}
+    try:
+        ratio = float(canvas_state.get("ratio", 0.0) or 0.0)
+    except Exception:
+        ratio = 0.0
+    if ratio > 0:
+        return ratio
+
+    renderer = cfg.get("renderer") if isinstance(cfg.get("renderer"), dict) else {}
+    canvas = renderer.get("canvas") if isinstance(renderer.get("canvas"), dict) else {}
+    if not _canvas_lock_enabled(canvas):
+        return None
+    ratio = _canvas_ratio_from_canvas(canvas)
+    if ratio is None or ratio <= 0:
+        return None
+
+    state["version"] = 1
+    state["canvas_lock"] = {
+        "enabled": True,
+        "ratio": ratio,
+        "width_px": int(canvas.get("width_px", 0) or 0),
+        "height_px": int(canvas.get("height_px", 0) or 0),
+    }
+    _save_ai_state(ai_run_root, state)
+    return ratio
+
+
 def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> str:
     """
     Deterministic prompt builder for Nano Banana (Gemini image model).
@@ -100,7 +205,7 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
     lines.append("硬性要求：")
     lines.append("- 输出 1 张 PNG 图片（白底），风格接近矢量图，线条清晰，适合打印/缩印。")
     lines.append("- 输出分辨率为 4K 级（长边>=3840px；按画布比例缩放，必要时以白底补边保持内容完整）。")
-    lines.append(f"- 画布比例接近 {canvas_w}:{canvas_h}，内容居中且四周留白均衡。")
+    lines.append(f"- 画布比例必须严格匹配 {canvas_w}:{canvas_h}，内容居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px（缩印后仍可读）。")
     lines.append("")
     lines.append("字体与文字排版（强约束，用于降低文字扭曲/乱码风险）：")
@@ -516,6 +621,8 @@ def _sanitize_config_local(local_cfg: Dict[str, Any]) -> Dict[str, Any]:
                 c_out["height_px"] = as_int(canvas.get("height_px"), "renderer.canvas.height_px", 900, 20000)
             if "margin_px" in canvas:
                 c_out["margin_px"] = as_int(canvas.get("margin_px"), "renderer.canvas.margin_px", 0, 600)
+            if "lock_aspect_ratio" in canvas:
+                c_out["lock_aspect_ratio"] = as_bool(canvas.get("lock_aspect_ratio"), "renderer.canvas.lock_aspect_ratio")
             if c_out:
                 r_out["canvas"] = c_out
 
@@ -622,6 +729,7 @@ def _apply_config_local(base_cfg: Dict[str, Any], local_cfg: Optional[Dict[str, 
     if not local_cfg:
         return deepcopy(base_cfg)
     sanitized = _sanitize_config_local(local_cfg)
+    sanitized = _apply_canvas_ratio_lock_to_patch(base_cfg, sanitized)
     merged = _deep_merge_dict(base_cfg, sanitized)
 
     # Post-merge invariants (clamp with warnings instead of silently breaking rendering).
@@ -817,6 +925,23 @@ def _write_ai_critic_request(
     lines.append("")
     lines.append("## 输出约束（必须满足）")
     lines.append("")
+    cfg_used_path = pack_dir / "config_used.yaml"
+    if cfg_used_path.exists():
+        try:
+            cfg_used = load_yaml(cfg_used_path)
+            renderer = cfg_used.get("renderer", {}) if isinstance(cfg_used.get("renderer", {}), dict) else {}
+            canvas = renderer.get("canvas", {}) if isinstance(renderer.get("canvas", {}), dict) else {}
+            ratio = _canvas_ratio_from_canvas(canvas)
+            if ratio is not None and ratio > 0:
+                lines.append("## 当前画布锁定")
+                lines.append("")
+                lines.append(
+                    f"- 当前画布：{int(canvas.get('width_px', 0) or 0)}x{int(canvas.get('height_px', 0) or 0)} px，比例锁定为 {ratio:.6f}。"
+                )
+                lines.append("- 除非用户明确要求改变比例，否则不得改变宽高比；如需加大画布，只能按同一比例同步放大宽和高。")
+                lines.append("")
+        except Exception:
+            pass
     lines.append("你的输出必须是一个 YAML 文件（写到上面的 `ai_critic_response.yaml`），格式如下：")
     lines.append("")
     lines.append("```yaml")
@@ -867,6 +992,7 @@ def _write_ai_critic_request(
     lines.append("  - 评估为“字号偏小/过小”且无 overflow 风险 → 增大字号。")
     lines.append("- 配色干扰是 spec 层面的 kind 分配问题：优先减少 kind 种类/修正 kind 语义；禁止通过切换到 outline-print 来“减少干扰”。")
     lines.append("- 若需要调整配色，config_local.color_scheme.name 仅允许 {academic-blue, tint-layered}。")
+    lines.append("- 若当前 run 已锁定用户指定比例，任何 `renderer.canvas.width_px/height_px` 调整都必须保持相同宽高比；禁止只改一边。")
     lines.append("")
     lines.append("### 缺陷分级口径")
     lines.append("")
@@ -976,6 +1102,8 @@ def _maybe_apply_ai_response(
         nb_out["style_continuity"] = bool(style_continuity)
     if nano_banana_color_advice is not None:
         nb_out["color_advice"] = nano_banana_color_advice
+    if nano_banana_prompt_override is not None:
+        nb_out["prompt_override"] = nano_banana_prompt_override
     state["version"] = 1
     state["nano_banana"] = nb_out
     _save_ai_state(ai_run_root, state)
@@ -1011,6 +1139,9 @@ def _apply_exploration(cfg: Dict[str, Any], round_idx: int, exploration: Dict[st
     seed = int(exploration.get("seed", 1337))
     rng = random.Random(seed + round_idx)
     out = deepcopy(cfg)
+    renderer = out.get("renderer") if isinstance(out.get("renderer"), dict) else {}
+    canvas = renderer.get("canvas") if isinstance(renderer.get("canvas"), dict) else {}
+    locked_ratio = _canvas_ratio_from_canvas(canvas) if _canvas_lock_enabled(canvas) else None
 
     jitter_px = exploration.get("jitter_px", {})
     if not isinstance(jitter_px, dict):
@@ -1065,6 +1196,14 @@ def _apply_exploration(cfg: Dict[str, Any], round_idx: int, exploration: Dict[st
         new_v = base + rng.randint(-d, d)
         new_v = max(int(mins.get(path, 0)), new_v)
         set_path(out, path, new_v)
+
+    if locked_ratio is not None and locked_ratio > 0:
+        renderer2 = out.get("renderer") if isinstance(out.get("renderer"), dict) else {}
+        canvas2 = renderer2.get("canvas") if isinstance(renderer2.get("canvas"), dict) else {}
+        if isinstance(canvas2, dict) and "width_px" in canvas2 and "height_px" in canvas2:
+            width, height = _lock_canvas_request(int(canvas2["width_px"]), int(canvas2["height_px"]), locked_ratio)
+            canvas2["width_px"] = width
+            canvas2["height_px"] = height
 
     return out
 
@@ -1360,6 +1499,7 @@ def main() -> None:
 
     ai_root: Optional[Path] = None
     ai_run_root: Optional[Path] = None
+    ai_locked_ratio: Optional[float] = None
 
     if ai_mode:
         ai_root = _ai_root(intermediate_dir)
@@ -1370,6 +1510,7 @@ def main() -> None:
         else:
             run_dir = active
         ai_run_root = _ai_run_root(ai_root, run_dir)
+        ai_locked_ratio = _load_canvas_lock_ratio_from_ai_state(ai_run_root, cfg_round_base)
     else:
         run_dir = _make_run_dir(run_base)
 
@@ -1430,6 +1571,12 @@ def main() -> None:
         )
         if config_local_patch is not None:
             base_local = local_cfg if isinstance(local_cfg, dict) else {}
+            if ai_locked_ratio is not None and ai_locked_ratio > 0:
+                config_local_patch = _apply_canvas_ratio_lock_to_patch(
+                    cfg_round_base,
+                    config_local_patch,
+                    locked_ratio=ai_locked_ratio,
+                )
             merged_local = _deep_merge_dict(base_local, config_local_patch)
             write_text(config_local_path, dump_yaml(merged_local))
             local_cfg = merged_local
@@ -1457,11 +1604,15 @@ def main() -> None:
     # ai_state: sticky knobs across ai_critic iterations (nano_banana style continuity, color hints, etc.)
     ai_nb_style_continuity_effective = False
     ai_nb_color_advice_effective = ""
+    ai_nano_banana_prompt_effective: Optional[str] = str(ai_nano_banana_prompt).strip() if ai_nano_banana_prompt else None
     if ai_mode and ai_run_root is not None:
         st = _load_ai_state(ai_run_root)
         nb = st.get("nano_banana") if isinstance(st.get("nano_banana"), dict) else {}
         ai_nb_style_continuity_effective = bool((nb or {}).get("style_continuity", False))
         ai_nb_color_advice_effective = str((nb or {}).get("color_advice", "") or "").strip()
+        if not ai_nano_banana_prompt_effective:
+            prompt_override = str((nb or {}).get("prompt_override", "") or "").strip()
+            ai_nano_banana_prompt_effective = prompt_override or None
 
     input_excerpt_path: Optional[Path] = None
     if ai_mode and ai_run_root is not None:
@@ -1715,14 +1866,14 @@ def main() -> None:
             ch = int(canvas_cfg.get("height_px", 2263) or 2263)
 
             out_png = round_dir / str(artifacts.get("png", "roadmap.png"))
-            if renderer_backend == "nano_banana" and ai_nano_banana_prompt is not None:
-                if ai_nano_banana_prompt.startswith("__PATCH__\n"):
+            if renderer_backend == "nano_banana" and ai_nano_banana_prompt_effective is not None:
+                if ai_nano_banana_prompt_effective.startswith("__PATCH__\n"):
                     base_prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
-                    patch_content = ai_nano_banana_prompt[len("__PATCH__\n") :]
+                    patch_content = ai_nano_banana_prompt_effective[len("__PATCH__\n") :]
                     prompt = base_prompt.rstrip("\n") + "\n\n## AI 补充指令\n\n" + patch_content + "\n"
                     info("nano_banana: 使用 patch 模式 prompt（确定性 prompt + AI 补充指令）")
                 else:
-                    prompt = ai_nano_banana_prompt
+                    prompt = ai_nano_banana_prompt_effective
                     info("nano_banana: 使用 AI 提供的 full prompt")
             else:
                 prompt = _build_nano_banana_prompt(spec_obj, cfg_used)

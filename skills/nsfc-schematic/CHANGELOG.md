@@ -4,7 +4,17 @@
 
 ## [Unreleased]
 
-（暂无）
+### Added（新增）
+
+- 新增比例锁定回归测试：`tests/比例锁定-v20260307/test_aspect_ratio_lock.py`
+
+### Changed（变更）
+
+- `config.yaml`：新增 `renderer.canvas.lock_aspect_ratio=true`，将用户指定的画布宽高比视为硬约束
+- `scripts/spec_parser.py`：当用户显式提供 `schematic.canvas.width/height` 且启用比例锁时，不再由 `canvas_fit` 独立收缩宽/高破坏比例
+- `scripts/generate_schematic.py`：实例级 `config_local` 若只改画布宽或高，会自动补全另一边以保持当前比例；`ai_critic` 重写 spec 时会继承并守住原有显式 canvas 比例
+- `scripts/generate_schematic.py`：auto-fix / AI 建议导致的画布放大改为按锁定比例同步放大宽和高；Nano Banana prompt override 持久化到 `ai_state.yaml`
+- 文档同步：`README.md`、`SKILL.md`
 
 ## [1.0.4] - 2026-03-05
 

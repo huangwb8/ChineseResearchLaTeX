@@ -68,6 +68,8 @@
 - 风格： layered-pipeline
 ```
 
+**比例锁定说明**：当你明确给出高宽比或在 `output_dir/.nsfc-roadmap/config_local.yaml` 中设置 `renderer.canvas.width_px/height_px` 后，skill 会把该比例视为硬约束；后续 draw.io 优化与 Nano Banana 多轮 `ai_critic` 都会保持同一宽高比，不再回退到默认 A4 比例。
+
 ### 选择模板风格（可选）
 
 本技能内置了 10 个“模板参考图”（见 `references/models/`），并提供模板家族（family）供规划阶段参考：

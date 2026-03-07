@@ -66,7 +66,7 @@ metadata:
   - `spec_latest.yaml`：最新 spec 快照（可复现）
   - `optimization_report.md`：迭代记录（每轮缺陷与修改点）
   - `config_used_best.yaml` / `evaluation_best.json`：best round 复现证据
-  - `config_local.yaml`：实例级局部配置覆盖（白名单字段；用于“只覆盖本次图参数/停止策略”，不改全局 `config.yaml`；其中 `color_scheme.name` 仅允许 `{academic-blue, tint-layered}`）
+  - `config_local.yaml`：实例级局部配置覆盖（白名单字段；用于“只覆盖本次图参数/停止策略”，不改全局 `config.yaml`；其中 `color_scheme.name` 仅允许 `{academic-blue, tint-layered}`；当设置 `renderer.canvas.width_px/height_px` 时，该宽高比会被锁定并在多轮优化中持续保持）
   - `ai/`：AI 证据包与 request/response 协议（仅在 `stop_strategy=ai_critic` 工作流中使用）
     - `ai/ACTIVE_RUN.txt`：当前 ai_critic 活跃 run（用于 resume）
     - `ai/{run_dir}/ai_pack_round_XX/`：本轮 AI 证据包（供宿主 AI 读图批判）

@@ -821,11 +821,14 @@ def load_schematic_spec(data: Dict[str, Any], config: Dict[str, Any]) -> Schemat
             need_w = max(need_w, int(config.get("renderer", {}).get("canvas", {}).get("width_px", need_w)))
             need_h = max(need_h, int(config.get("renderer", {}).get("canvas", {}).get("height_px", need_h)))
 
+        lock_aspect_ratio = bool((config.get("renderer", {}) or {}).get("canvas", {}).get("lock_aspect_ratio", True))
         if canvas_explicit:
-            # Respect explicit canvas as a hard constraint: allow shrink, but do NOT auto-expand.
-            if shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
+            # Respect explicit canvas as a hard constraint.
+            # When ratio lock is enabled, keep the user-specified explicit canvas untouched;
+            # only center content later instead of silently shrinking width/height independently.
+            if (not lock_aspect_ratio) and shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
                 canvas_w = need_w
-            if shrink and need_h > 0 and canvas_h > need_h and (canvas_h / max(1, need_h)) >= trigger:
+            if (not lock_aspect_ratio) and shrink and need_h > 0 and canvas_h > need_h and (canvas_h / max(1, need_h)) >= trigger:
                 canvas_h = need_h
         else:
             if shrink and need_w > 0 and canvas_w > need_w and (canvas_w / max(1, need_w)) >= trigger:
