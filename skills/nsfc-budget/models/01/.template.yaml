@@ -1,0 +1,38 @@
+template:
+  name: "budget/justification"
+  display_name: "国家自然科学基金项目预算说明书"
+  version: "2026"
+  category: "research_funding"
+
+style_reference:
+  heading_texts:
+    section_1: "1.科学基金资助项目直接费用"
+    section_2: "2.直接费用中合作研究转拨资金"
+    section_3: "3.其他来源资金"
+    subsection_1_1: "1.1 设备费（是指在项目实施过程中购置或试制专用仪器设备，对现有仪器设备进行升级改造，以及租赁外单位仪器设备而发生的费用。计算类仪器设备和软件工具可在设备费科目列支。填报时，应按照设备购置费、试制改造费和租赁使用费的分类，提供设备支出的必要性及基本测算说明。单价大于50万元（含50万元）的设备需补充说明设备的主要性能指标、主要技术参数等内容。）"
+    subsection_1_2: "1.2 业务费（是指项目实施过程中消耗的各种材料、辅助材料等低值易耗品的采购、运输、装卸、整理等费用，发生的测试化验加工、燃料动力、出版/文献/信息传播/知识产权事务、会议/差旅/国际合作交流等费用，以及其他相关支出。填报时，应按照支出大类进行基本测算说明。）"
+    subsection_1_3: "1.3 劳务费（是指在项目实施过程中支付给参与项目研究的研究生、博士后、访问学者以及项目聘用的研究人员、科研辅助人员等的劳务性费用，以及支付给临时聘请的咨询专家的费用等。填报时，应综合考量劳务费支出对象所承担研究任务的必要性、投入本项目的工作时长、费用标准的合理性等因素，按照人员类别进行基本测算说明。专家咨询费应按照国家有关规定执行。）"
+
+validation:
+  tolerance:
+    color_diff: 2
+    margin_diff: 1.0
+    line_height_diff: 1.35
+
+heading_structure:
+  sections:
+    - id: "section_1"
+      level: 1
+      latex_command: "section"
+      max_subsections: 3
+      required: true
+    - id: "section_2"
+      level: 1
+      latex_command: "section"
+      max_subsections: 0
+      required: true
+    - id: "section_3"
+      level: 1
+      latex_command: "section"
+      max_subsections: 0
+      required: true

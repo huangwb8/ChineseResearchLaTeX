@@ -1,0 +1,104 @@
+\usepackage[english]{babel}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{titlesec}
+\usepackage{calc}
+\usepackage{mdframed}
+\usepackage{ragged2e}
+
+\geometry{left=2.51cm,right=2.34cm,top=2.85cm,bottom=1.75cm}
+
+\definecolor{MsBlue}{RGB}{0,112,192}
+
+\IfFileExists{./fonts/TimesNewRoman.ttf}{
+  \setmainfont{TimesNewRoman}[Path=./fonts/,Extension=.ttf]
+}{
+  \IfFontExistsTF{Times New Roman}{
+    \setmainfont{Times New Roman}
+  }{
+    \setmainfont{TeX Gyre Termes}
+  }
+}
+
+\IfFileExists{./fonts/FandolFang-Regular.otf}{
+  \setCJKmainfont{FandolFang-Regular}[Path=./fonts/,Extension=.otf]
+}{
+  \setCJKmainfont{STSong}
+}
+
+\IfFileExists{./fonts/FandolHei-Regular.otf}{
+  \newCJKfontfamily\budgettitlefont{FandolHei-Regular}[Path=./fonts/,Extension=.otf]
+}{
+  \newCJKfontfamily\budgettitlefont{Heiti SC}
+}
+
+\IfFileExists{./fonts/FandolHei-Regular.otf}{
+  \newCJKfontfamily\budgetboldfont{FandolHei-Regular}[Path=./fonts/,Extension=.otf]
+}{
+  \newCJKfontfamily\budgetboldfont{Heiti SC}
+}
+
+\xeCJKsetup{CJKecglue={}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\renewcommand{\baselinestretch}{1.35}
+
+\setcounter{secnumdepth}{0}
+
+\titleformat{\section}[block]
+  {\normalfont\budgetboldfont\bfseries\fontsize{9.03bp}{12.17bp}\selectfont}
+  {}
+  {0pt}
+  {}
+
+\titlespacing*{\section}{0pt}{0.45\baselineskip}{0.10\baselineskip}
+
+\titleformat{\subsection}[block]
+  {\normalfont\fontsize{9.03bp}{12.17bp}\selectfont}
+  {}
+  {0pt}
+  {}
+
+\titlespacing*{\subsection}{0pt}{0.28\baselineskip}{0pt}
+
+\newcommand{\BudgetBodyFont}{\fontsize{9.03bp}{12.17bp}\selectfont}
+\newcommand{\BudgetTitleFont}{\budgettitlefont\bfseries\fontsize{13.78bp}{16bp}\selectfont}
+\newcommand{\BudgetBold}[1]{{\budgetboldfont\bfseries #1}}
+\newcommand{\BudgetPlaceholder}[1]{\vspace*{#1}}
+\newcommand{\BudgetLeftShift}{-7pt}
+\newcommand{\BudgetIndent}{2\ccwd}
+\newcommand{\BudgetSectionLine}[1]{%
+  {\budgetboldfont\bfseries\BudgetBodyFont\noindent\hspace*{\BudgetIndent}#1\par}%
+}
+\newcommand{\BudgetParagraph}[1]{%
+  {\BudgetBodyFont\leftskip=\BudgetLeftShift\relax\justifying\parindent=\BudgetIndent #1\par}%
+}
+\newcommand{\BudgetBoldParagraph}[1]{%
+  {\budgetboldfont\bfseries\BudgetBodyFont\leftskip=\BudgetLeftShift\relax\justifying\parindent=\BudgetIndent #1\par}%
+}
+
+\newenvironment{BudgetBox}{%
+  \begin{mdframed}[
+    skipabove=0pt,
+    skipbelow=0pt,
+    leftmargin=2pt,
+    rightmargin=2pt,
+    innertopmargin=7pt,
+    innerbottommargin=7pt,
+    innerleftmargin=3pt,
+    innerrightmargin=3pt,
+    linewidth=0.8pt,
+    linecolor=black
+  ]
+    \begin{minipage}[t][22.35cm][t]{\linewidth}
+    \BudgetBodyFont
+    \justifying
+    \setlength{\parindent}{\BudgetIndent}%
+    \setlength{\parskip}{0pt}%
+}{%
+    \end{minipage}
+  \end{mdframed}
+}

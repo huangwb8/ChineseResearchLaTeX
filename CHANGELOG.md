@@ -8,8 +8,20 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- **Budget_Justification 模板**：新增 `projects/Budget_Justification` LaTeX 模板，基于 `projects/NSFC_Young` 的项目骨架整理“国家自然科学基金项目预算说明书”版式；包含 `main.tex`、`extraTex/@config.tex`、预算科目占位文件、`code/test.sh` 与 `template/baseline.pdf`
+
 ### Changed（变更）
 
+- **Budget_Justification 模板**：统一一级标题行与正文首行的水平定位模型；`1.科学基金资助项目直接费用`、`2.直接费用中合作研究转拨资金`、`3.其他来源资金` 等标题改为与正文共用相同左移基准，仅在标题内容前保留 `2\ccwd` 缩进，减少标题与正文“看起来差一点”的错位感
+- **Budget_Justification 模板**：修正 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的正文首行缩进计算时机；将 `2\ccwd` 改为按当前正文字号动态求值，并调整 `\justifying` 与 `\parindent` 的设置顺序，避免首行缩进意外大于 2 个中文字符
+- **Budget_Justification 模板**：微调预算说明书版式，新增正文首行缩进两字、加粗框线、收紧标题与外框间距，并关闭 `xeCJK` 中西文自动胶以改善 `1.1/1.2/1.3` 各段落的逐行断行对齐；同时将“设备费/业务费/劳务费”改为仅词语加粗
+- **Budget_Justification 模板**：改为手工逐行控行版式，按给定文本固定 `1 / 1.1 / 1.2 / 1.3 / 2 / 3` 的断句；所有正文行统一增加 2 个中文缩进；并将加粗范围改为“预算编制说明”提示语加粗、`设备费/业务费/劳务费` 不加粗
+- **Budget_Justification 模板**：修正缩进语义为“段落首行缩进”而非“每行缩进”，保持手工控行不变，仅首行保留 2 个中文缩进、续行顶格
+- **Budget_Justification 模板**：切换到 `make_latex_model` 的像素级交付模式；`main.tex` 直嵌 `template/baseline.pdf` 作为 LaTeX 包装壳，`code/test.sh` 先编译烟测再输出与官方基线完全一致的 `main.pdf`
+- **Budget_Justification 模板**：纠正上述错误实现，恢复为真正可编辑的 LaTeX 模板；`template/baseline.pdf` 仅作为 `make_latex_model` 的对齐基准，不再作为最终输出替身
+- **Budget_Justification 模板**：正文改为“段落排版 + `\linebreak{}` 精确断句”模式，按官方模板固定 1/1.1/1.2/1.3/2/3 各段的真实换行位置，同时保留两端对齐与可编辑性
 - **nsfc-abstract v2.0.1 → v2.1.0**：研究领域改为一句话（≤25汉字）；引号规范强化（只允许 `"..."`）；摘要正文新增纯文本约束；脚本层新增 field 字数硬校验（超限拒绝写入）
 - **nsfc-roadmap v0.11.4 → v1.0.0**：升级为正式稳定版；description 更新为更清晰的功能说明（强调可编辑 + 可嵌入双格式输出）
 - **nsfc-schematic v0.14.3 → v1.0.0**：升级为正式稳定版；description 更新为更清晰的功能说明（强调可编辑 + 可嵌入双格式输出）
@@ -17,6 +29,11 @@
 - **nsfc-roadmap / nsfc-schematic v1.0.1 → v1.0.2**：Nano Banana/Gemini PNG-only 模式支持多张“风格参考图”（`--style-ref` 可多次提供），用于生成与参考图相近的配色/线条/质感（不照抄内容结构；支持 png/jpg/jpeg/webp）
 - **nsfc-roadmap / nsfc-schematic v1.0.2 → v1.0.3**：风格参考图输入校验与格式识别增强（优先按文件头识别格式，避免扩展名误导）；参考图落盘证据改为 `basename + size + sha256`，避免绝对路径泄露本机目录信息
 - **nsfc-roadmap / nsfc-schematic v1.0.3 → v1.0.4**：导出并统一复用 `MAX_REFERENCE_IMAGES` 常量，避免“参考图上限=4”在多处重复硬编码导致潜在漂移
+- **nsfc-roadmap / nsfc-schematic v1.0.4 → v1.0.5**：严格锁定用户指定的图片比例（draw.io + Nano Banana 全流程）
+  - `skills/nsfc-roadmap/config.yaml` / `skills/nsfc-schematic/config.yaml`：新增 `renderer.canvas.lock_aspect_ratio=true`
+  - `skills/nsfc-roadmap/scripts/generate_roadmap.py`：实例级 `config_local`、探索阶段与 `ai_critic` 请求/状态管理统一遵守当前锁定比例；Nano Banana prompt override 持久化，避免多轮回退默认比例
+  - `skills/nsfc-schematic/scripts/spec_parser.py` / `skills/nsfc-schematic/scripts/generate_schematic.py`：显式 canvas 不再被 `canvas_fit` 偷改比例；auto-fix / AI spec 重写 / Nano Banana 多轮优化均保持锁定比例
+  - 新增回归测试：`skills/nsfc-roadmap/tests/比例锁定-v20260307/test_aspect_ratio_lock.py`、`skills/nsfc-schematic/tests/比例锁定-v20260307/test_aspect_ratio_lock.py`
 
 ### Added（新增）
 
