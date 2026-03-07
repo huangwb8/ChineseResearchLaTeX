@@ -9,19 +9,18 @@
 
 ## 目录说明
 
-- `main.tex`：主模板文件
+- `budget.tex`：主模板文件
 - `extraTex/@config.tex`：页面、字体、标题等样式配置
 - `extraTex/*.tex`：各预算科目的可编辑内容区
-- `code/test.sh`：快速编译脚本
 
 ## 编译
 
 ```bash
-cd projects/Budget_Justification
-bash code/test.sh
+cd skills/nsfc-budget/models/01
+xelatex budget.tex
 ```
 
-当前 `template/baseline.pdf` 仅作为 `make_latex_model` 的样式对齐基准；最终交付仍为可编辑的 LaTeX 模板与其编译得到的 `main.pdf`。
+当前 `template/baseline.pdf` 仅作为 `make_latex_model` 的样式对齐基准；最终交付仍为可编辑的 LaTeX 模板与其编译得到的 `budget.pdf`。
 
 ## 使用方式
 
