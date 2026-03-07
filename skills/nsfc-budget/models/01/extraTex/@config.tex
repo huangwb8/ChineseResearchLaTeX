@@ -12,6 +12,16 @@
 
 \definecolor{MsBlue}{RGB}{0,112,192}
 
+% =========================
+% 可调参数（建议优先改这里）
+% =========================
+
+% 中文假粗体强度。
+% 用途：控制标题、提示语等中文加粗文字的“粗细程度”。
+% 调参参考：1.2=很轻，1.5=偏轻，1.8=当前默认，2.0=偏明显，2.5=较重。
+
+\newcommand{\BudgetCJKFakeBold}{1.8}
+
 \IfFileExists{./fonts/TimesNewRoman.ttf}{
   \setmainfont{TimesNewRoman}[Path=./fonts/,Extension=.ttf]
 }{
@@ -28,16 +38,19 @@
   \setCJKmainfont{STSong}
 }
 
+% 标题与正文中的“中文加粗字体”族。
+% 这里统一复用 \BudgetCJKFakeBold，用户通常不需要改下面两段，只改参数即可。
+
 \IfFileExists{./fonts/FandolHei-Regular.otf}{
-  \newCJKfontfamily\budgettitlefont{FandolHei-Regular}[Path=./fonts/,Extension=.otf]
+  \newCJKfontfamily\budgettitlefont{FandolHei-Regular}[Path=./fonts/,Extension=.otf,AutoFakeBold=\BudgetCJKFakeBold]
 }{
-  \newCJKfontfamily\budgettitlefont{Heiti SC}
+  \newCJKfontfamily\budgettitlefont{Heiti SC}[AutoFakeBold=\BudgetCJKFakeBold]
 }
 
 \IfFileExists{./fonts/FandolHei-Regular.otf}{
-  \newCJKfontfamily\budgetboldfont{FandolHei-Regular}[Path=./fonts/,Extension=.otf]
+  \newCJKfontfamily\budgetboldfont{FandolHei-Regular}[Path=./fonts/,Extension=.otf,AutoFakeBold=\BudgetCJKFakeBold]
 }{
-  \newCJKfontfamily\budgetboldfont{Heiti SC}
+  \newCJKfontfamily\budgetboldfont{Heiti SC}[AutoFakeBold=\BudgetCJKFakeBold]
 }
 
 \xeCJKsetup{CJKecglue={}}
@@ -64,22 +77,63 @@
 
 \titlespacing*{\subsection}{0pt}{0.28\baselineskip}{0pt}
 
+% 正文基础字号。
+% 说明：预算说明书正文及多数段落宏都会复用这一字号设置。
+
 \newcommand{\BudgetBodyFont}{\fontsize{9.03bp}{12.17bp}\selectfont}
+
+% 页面标题“预算说明书”的字号与字体。
+
 \newcommand{\BudgetTitleFont}{\budgettitlefont\bfseries\fontsize{13.78bp}{16bp}\selectfont}
+
+% 行内手动加粗工具。
+
 \newcommand{\BudgetBold}[1]{{\budgetboldfont\bfseries #1}}
+
+% 占位空白：用于保持模板空白区域高度。
+
 \newcommand{\BudgetPlaceholder}[1]{\vspace*{#1}}
+
+% 正文整体左移补偿。
+% 用途：微调整个段落块的视觉起点；一般不建议频繁改。
+% 调参参考：数值更负=整体更靠左；更接近 0=整体更靠右。
+
 \newcommand{\BudgetLeftShift}{-7pt}
+
+% 段落首行缩进。
+% 当前语义：严格按“2 个中文字符宽度”计算，缩进发生在序号前面。
+% 若想改成 1.5 个或 3 个中文字符，可写成 1.5\ccwd 或 3\ccwd。
+
 \newcommand{\BudgetIndent}{2\ccwd}
+
+% 外框内部顶部到首个一级标题之间的微调量。
+% 用途：单独控制 \begin{BudgetBox} 与首个 \BudgetSectionLine 之间的间隙。
+% 调参参考：更负=间隙更小、内容更靠上；更接近 0=间隙更大。
+
 \newcommand{\BudgetBoxTopGapAdjust}{-2pt}
+
+% 一级标题行（如“1.科学基金资助项目直接费用”）。
+
 \newcommand{\BudgetSectionLine}[1]{%
   {\budgetboldfont\bfseries\BudgetBodyFont\noindent\hspace*{\BudgetIndent}#1\par}%
 }
+
+% 普通正文段落。
+% 特点：首行缩进，续行顶格，两端对齐。
+
 \newcommand{\BudgetParagraph}[1]{%
   {\BudgetBodyFont\leftskip=\BudgetLeftShift\relax\justifying\parindent=\BudgetIndent #1\par}%
 }
+
+% 加粗正文段落。
+% 用于顶部“请按照……”这类强调说明。
+
 \newcommand{\BudgetBoldParagraph}[1]{%
   {\budgetboldfont\bfseries\BudgetBodyFont\leftskip=\BudgetLeftShift\relax\justifying\parindent=\BudgetIndent #1\par}%
 }
+
+% 外框环境：控制边框、内边距、固定高度等。
+% 若想调“框本身”的粗细或上下内边距，可优先查看这里的 mdframed 参数。
 
 \newenvironment{BudgetBox}{%
   \begin{mdframed}[

@@ -14,6 +14,9 @@
 
 ### Changed（变更）
 
+- **Budget_Justification 模板**：优化 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的注释排版；在注释块与对应命令之间补充空行，提升参数说明的可读性
+- **Budget_Justification 模板**：为 `skills/nsfc-budget/models/01/extraTex/@config.tex` 补充面向用户的中文注释，重点解释 `\BudgetCJKFakeBold`、`\BudgetLeftShift`、`\BudgetIndent`、`\BudgetBoxTopGapAdjust` 等可调参数的用途与调参参考，降低手工微调门槛
+- **Budget_Justification 模板**：将加粗程度参数迁移到 `skills/nsfc-budget/models/01/extraTex/@config.tex`；新增 `\BudgetCJKFakeBold`（默认 `1.8`）并直接作用于 `\budgettitlefont` / `\budgetboldfont`，以后可在样式配置文件里统一调节中文加粗程度
 - **Budget_Justification 模板**：将预算说明外框顶部至首个一级标题之间的留白抽为单独参数 `\BudgetBoxTopGapAdjust`，定义于 `skills/nsfc-budget/models/01/extraTex/@config.tex`；默认设为 `-2pt`，便于后续独立微调 `\begin{BudgetBox}` 与 `\BudgetSectionLine{...}` 之间的间隙
 - **Budget_Justification 模板**：微调标题与预算说明外框之间的垂直间距；将 `skills/nsfc-budget/models/01/main.tex` 中标题下方留白从 `0.18cm` 缩小到 `0.08cm`，使外框整体轻微上移
 - **Budget_Justification 模板**：统一一级标题行与正文首行的水平定位模型；`1.科学基金资助项目直接费用`、`2.直接费用中合作研究转拨资金`、`3.其他来源资金` 等标题改为与正文共用相同左移基准，仅在标题内容前保留 `2\ccwd` 缩进，减少标题与正文“看起来差一点”的错位感
