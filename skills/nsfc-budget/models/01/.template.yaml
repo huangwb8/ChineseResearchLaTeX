@@ -1,0 +1,8 @@
+template_id: "01"
+name: "NSFC 预算说明书通用模板"
+description: "适配设备费/业务费/劳务费/合作研究转拨资金/其他来源资金五段结构的预算说明书 LaTeX 模板"
+default: true
+latex_entry: "budget.tex"
+pdf_name: "budget.pdf"
+project_types: ["general", "local", "youth"]
+section_files: {"equipment": "extraTex/1.1.设备费.tex", "business": "extraTex/1.2.业务费.tex", "labor": "extraTex/1.3.劳务费.tex", "transfer": "extraTex/2.1.合作研究转拨资金.tex", "other_source": "extraTex/3.1.其他来源资金.tex"}

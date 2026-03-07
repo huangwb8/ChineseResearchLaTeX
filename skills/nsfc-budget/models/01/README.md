@@ -10,6 +10,7 @@
 ## 目录说明
 
 - `budget.tex`：主模板文件
+- `.template.yaml`：模板元数据（供 `nsfc-budget` 脚本选择模板与 section 文件映射）
 - `extraTex/@config.tex`：页面、字体、标题等样式配置
 - `extraTex/*.tex`：各预算科目的可编辑内容区
 
@@ -17,7 +18,7 @@
 
 ```bash
 cd skills/nsfc-budget/models/01
-xelatex budget.tex
+xelatex -interaction=nonstopmode budget.tex
 ```
 
 当前 `template/baseline.pdf` 仅作为 `make_latex_model` 的样式对齐基准；最终交付仍为可编辑的 LaTeX 模板与其编译得到的 `budget.pdf`。

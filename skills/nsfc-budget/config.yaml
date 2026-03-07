@@ -1,0 +1,58 @@
+skill_info:
+  name: nsfc-budget
+  version: 0.1.0
+  description: "基于 NSFC 标书正文或补充材料生成预算说明书 LaTeX 项目并渲染 budget.pdf（不适用：仅想了解预算原则、或 2026 青年 A/B/C 默认包干制且无需预算说明书的场景）"
+  author: "Bensz Conan"
+  category: writing
+
+defaults:
+  template_id: "01"
+  output_dirname: "budget_output"
+  intermediate_dirname: ".nsfc-budget"
+  project_type: general
+  total_budget_wan:
+    general: 50
+    local: 50
+    youth: 30
+  target_chars:
+    recommended_min: 800
+    recommended_max: 1000
+    recommended_default: 900
+  per_section_max_chars: 500
+  indirect_rate_hint:
+    general: 0.30
+    local: 0.30
+    youth: 0.30
+  requested_total_tolerance_wan: 1.0
+  compile_runs: 2
+
+rules:
+  require_workdir: true
+  budget_mode_default: budget_based
+  package_based_2026_project_types:
+    - youth_a
+    - youth_b
+    - youth_c
+  allowed_latex_commands:
+    - linebreak
+    - BudgetBold
+  zero_text:
+    equipment: "本项目不列支设备费。"
+    business: "本项目不列支业务费。"
+    labor: "本项目不列支劳务费。"
+    transfer: "本项目无合作研究转拨资金。"
+    other_source: "本项目无其他来源资金。"
+
+validation:
+  equipment_ratio_warning: 0.50
+  require_section_text_when_amount_positive: true
+
+output:
+  latex_entry: budget.tex
+  pdf_name: budget.pdf
+  section_files:
+    equipment: extraTex/1.1.设备费.tex
+    business: extraTex/1.2.业务费.tex
+    labor: extraTex/1.3.劳务费.tex
+    transfer: extraTex/2.1.合作研究转拨资金.tex
+    other_source: extraTex/3.1.其他来源资金.tex
