@@ -257,9 +257,9 @@ def main() -> int:
     ap.add_argument("--plan-only", action="store_true", help="only write plan + snapshot; do not run threads")
     ap.add_argument("--precheck", dest="precheck", action="store_true", default=True, help="run deterministic precheck before threads")
     ap.add_argument("--no-precheck", dest="precheck", action="store_false", help="skip deterministic precheck")
-    ap.add_argument("--resolve-refs", dest="resolve_refs", action="store_true", default=True, help="fetch reference evidence (title/abstract/optional pdf) during precheck")
-    ap.add_argument("--no-resolve-refs", dest="resolve_refs", action="store_false", help="disable reference evidence fetching")
+    # resolve_refs is now mandatory (always enabled; no --no-resolve-refs option)
     ap.add_argument("--fetch-pdf", action="store_true", help="when resolving refs, attempt to download OA PDFs and extract a short text excerpt")
+    ap.add_argument("--max-concurrent", type=int, default=5, help="max concurrent network requests for reference resolution (default: 5)")
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""), help="optional; required by Unpaywall API (or set env UNPAYWALL_EMAIL)")
     ap.add_argument("--timeout-s", type=int, default=20, help="network timeout seconds for reference resolution")
     args = ap.parse_args()
@@ -324,13 +324,15 @@ def main() -> int:
             str(artifacts),
             "--timeout-s",
             str(int(args.timeout_s)),
+            "--max-concurrent",
+            str(int(args.max_concurrent)),
         ]
-        if bool(args.resolve_refs):
-            cmd.append("--resolve-refs")
-            if str(args.unpaywall_email or "").strip():
-                cmd += ["--unpaywall-email", str(args.unpaywall_email).strip()]
-            if bool(args.fetch_pdf):
-                cmd.append("--fetch-pdf")
+        # resolve_refs is now mandatory (always enabled)
+        cmd.append("--resolve-refs")
+        if str(args.unpaywall_email or "").strip():
+            cmd += ["--unpaywall-email", str(args.unpaywall_email).strip()]
+        if bool(args.fetch_pdf):
+            cmd.append("--fetch-pdf")
         log_path = artifacts / "precheck_runner.log"
         with log_path.open("w", encoding="utf-8") as f:
             f.write("$ " + " ".join(cmd) + "\n\n")

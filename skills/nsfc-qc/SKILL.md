@@ -59,8 +59,9 @@ references: skills/nsfc-qc/references/
 ## 硬约束（必须遵守）
 
 - **禁止写入标书源文件**：包括但不限于 `*.tex/*.bib/*.cls/*.sty`。
-- **禁止“为了优化而直接改文”**：本技能只产出 QC 报告与可执行建议；后续是否修改由人工复核或其它写作类 skill 执行。
-- **不编造引用**：任何“引用真伪/是否错引”的结论，必须给出证据链（bib 条目、论文题目/DOI、来源链接或检索失败说明）；不确定时标记为“需人工复核（uncertain）”。
+- **禁止”为了优化而直接改文”**：本技能只产出 QC 报告与可执行建议；后续是否修改由人工复核或其它写作类 skill 执行。
+- **不编造引用**：任何”引用真伪/是否错引”的结论，必须给出证据链（bib 条目、论文题目/DOI、来源链接或检索失败说明）；不确定时标记为”需人工复核（uncertain）”。
+- **元数据获取为必选项**：文献真实性检查是 QC 的核心功能，必须通过联网获取并比对元数据（title/abstract/URL 可访问性）；预检脚本会自动执行，无需手动启用。
 
 ## 工作流（强制）
 
@@ -78,14 +79,19 @@ references: skills/nsfc-qc/references/
 
 ### 1) 只读预检（确定性）
 
-目标：先用脚本完成“不会错”的检查，减少 AI 幻觉与漏检。
+目标：先用脚本完成”不会错”的检查，减少 AI 幻觉与漏检。
 
 最小预检清单：
 - 引用 key 是否都能在 `.bib` 中找到（缺失即 P0）
 - `.bib` 条目是否明显不完整（缺 title/author/year 等，或占位符，标 P1）
-- 引用真伪/错引的“证据包”（硬编码抓取）：对每个被引用的 bibkey，尽最大努力获取论文标题/摘要（可选获取 OA PDF 并抽取正文片段），并同时提取标书内的引用上下文；供后续 AI 做语义判断（不确定就标 uncertain）
+- **引用真伪/错引的”证据包”（硬编码抓取，必选项）**：
+  - 对每个被引用的 bibkey，通过 Crossref/arXiv/Unpaywall API 获取论文真实 metadata（title/abstract）
+  - 检查 `.bib` 中 `url` 字段的可访问性（HTTP HEAD 请求）
+  - 自动比对 bib title 与 API title（exact/fuzzy/mismatch）
+  - 提取标书内的引用上下文，供后续 AI 做语义判断
+  - 并发控制：每批次最多 `max_concurrent` 个并发请求（默认 5，可在 config.yaml 配置）
 - 章节/文件级篇幅分布（字符数/粗略字数）
-- 中文排版易错项（确定性）：检测直引号 `"免疫景观"` 这类写法，并给出替换建议（推荐 TeX 引号 ``免疫景观''）
+- 中文排版易错项（确定性）：检测直引号 `”免疫景观”` 这类写法，并给出替换建议（推荐 TeX 引号 ``免疫景观''）
 
 产物落点（示例）：
 - `.../artifacts/precheck.json`
@@ -96,8 +102,8 @@ references: skills/nsfc-qc/references/
 - `.../artifacts/abbreviation_issues_summary.json`
 - `.../artifacts/terminology_issues.csv`
 - `.../artifacts/terminology_issues_summary.json`
-- `.../artifacts/reference_evidence.jsonl`
-- `.../artifacts/reference_evidence_summary.json`
+- `.../artifacts/reference_evidence.jsonl`（包含 url_check 和 title_comparison 字段）
+- `.../artifacts/reference_evidence_summary.json`（包含 url_checked/url_accessible/title_match_exact/title_match_fuzzy/title_mismatch 统计）
 
 ### 2) 多线程独立 QC（parallel-vibe；默认 5 threads；默认串联）
 
@@ -115,11 +121,12 @@ references: skills/nsfc-qc/references/
 #### Thread 统一任务（每个 thread 做同样的 QC）
 
 每个 thread 的 `RESULT.md` 必须覆盖同一份检查清单（允许发现点不同），至少包括：
-1. **文风与可读性**：生硬句、口语/堆砌、AI 味/模板味、冗长句；给“最小改写建议”（只写建议，不改文件）。
+1. **文风与可读性**：生硬句、口语/堆砌、AI 味/模板味、冗长句；给”最小改写建议”（只写建议，不改文件）。
 2. **引用真伪与错引风险**：
-   - P0：引用 key 缺失、明显虚构条目（无法检索且 bib 信息异常）
-   - P1：可能错引（正文断言与论文题目/摘要方向明显不符）、元信息疑点（年份/期刊/作者异常）
-   - 逐条给出证据锚点：`bibkey`、所在句子（原文片段 ≤ 50 字）、bib 条目、可核验链接/检索关键词
+   - P0：引用 key 缺失、明显虚构条目（无法检索且 bib 信息异常）、bib URL 不可访问（HTTP 4xx/5xx）
+   - P1：可能错引（正文断言与论文题目/摘要方向明显不符）、元信息疑点（年份/期刊/作者异常）、title 不匹配（bib title 与 API title 相似度低）
+   - 逐条给出证据锚点：`bibkey`、所在句子（原文片段 ≤ 50 字）、bib 条目、API 返回的 title/abstract、URL 检查结果、title 比对结果、可核验链接/检索关键词
+   - 必须使用预检产物 `reference_evidence.jsonl` 中的 `url_check` 和 `title_comparison` 字段作为判断依据
 3. **篇幅与结构分布**：
    - 总体是否过短/过长（用字符数与章节分布做近似判断）
    - 各章节比例是否合理（例如：立项依据/研究内容/研究基础的分配是否失衡）

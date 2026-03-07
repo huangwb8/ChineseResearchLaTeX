@@ -6,6 +6,25 @@
 
 （暂无）
 
+## [1.1.0] - 2026-03-07
+
+### Changed（变更）
+- **元数据获取强制启用**：文献真实性检查现为 QC 核心功能，必须通过联网验证；移除 `--no-resolve-refs` 选项，`--resolve-refs` 默认启用且不可关闭。
+- `scripts/nsfc_qc_precheck.py`：增强 `_resolve_reference_evidence()` 函数：
+  - 新增 URL 可访问性检查（HTTP HEAD 请求检查 `.bib` 中 `url` 字段）
+  - 新增 metadata 自动比对（bib title vs API title，支持 exact/fuzzy/mismatch 三级判断）
+  - 新增并发控制参数 `max_concurrent`（默认 5，避免 API 速率限制）
+  - 输出增强：`reference_evidence.jsonl` 新增 `url_check` 和 `title_comparison` 字段；`reference_evidence_summary.json` 新增 `url_checked`/`url_accessible`/`title_match_exact`/`title_match_fuzzy`/`title_mismatch` 统计
+- `scripts/nsfc_qc_run.py`、`scripts/run_parallel_qc.py`：移除 `--no-resolve-refs` 参数，新增 `--max-concurrent` 参数（默认 5）。
+- `config.yaml`：版本号 `1.0.0 → 1.1.0`；新增 `max_concurrent`/`unpaywall_email`/`fetch_pdf`/`timeout_s` 参数配置；更新 description 明确"元数据获取为必选项"。
+- `SKILL.md`：
+  - 硬约束新增"元数据获取为必选项"说明
+  - 预检清单更新：明确引用真伪检查为必选项，详细说明 URL 检查、title 比对、并发控制
+  - Thread 统一任务更新：引用真伪检查新增 URL 不可访问、title 不匹配等 P0/P1 问题类型，要求使用 `url_check` 和 `title_comparison` 字段作为判断依据
+
+### Added（新增）
+- `scripts/nsfc_qc_precheck.py`：新增辅助函数 `_check_url_accessible()`（URL 可访问性检查）、`_normalize_title_for_comparison()`（标题归一化）、`_compare_titles()`（标题相似度比对）。
+
 ## [1.0.0] - 2026-02-24
 
 ### Changed（变更）

@@ -4,10 +4,10 @@
 
 skill_info:
   name: nsfc-qc
-  version: 1.0.0
-  description: "NSFC 标书质量控制（只读）：多线程检查文风生硬/引用真伪与一致性/篇幅与结构分布/逻辑清晰度等，输出标准化 QC 报告；支持“交付目录 + 隐藏工作区（.nsfc-qc/）”隔离中间产物（默认不污染标书根目录）"
+  version: 1.1.0
+  description: “NSFC 标书质量控制（只读）：多线程检查文风生硬/引用真伪与一致性/篇幅与结构分布/逻辑清晰度等，输出标准化 QC 报告；元数据获取为必选项（自动联网验证文献真实性、URL 可访问性、title 比对）；支持”交付目录 + 隐藏工作区（.nsfc-qc/）”隔离中间产物（默认不污染标书根目录）”
   category: writing
-  author: "Bensz Conan"
+  author: “Bensz Conan”
 
 parameters:
   project_root:
@@ -57,6 +57,26 @@ parameters:
     required: false
     default: .nsfc-qc/runs
     description: 运行目录根：未启用 workspace_dir 时相对 project_root（默认 .nsfc-qc/runs）；启用 workspace_dir 时相对 workspace_dir（建议 runs）
+  max_concurrent:
+    type: integer
+    required: false
+    default: 5
+    description: 元数据获取时的最大并发请求数（默认 5，范围 1-10）；用于避免 API 速率限制和 IP 封锁
+  unpaywall_email:
+    type: string
+    required: false
+    default: ""
+    description: Unpaywall API 所需的邮箱（可选，或通过环境变量 UNPAYWALL_EMAIL 设置）
+  fetch_pdf:
+    type: boolean
+    required: false
+    default: false
+    description: 是否尝试下载 OA PDF 并提取文本片段（默认 false）
+  timeout_s:
+    type: integer
+    required: false
+    default: 20
+    description: 网络请求超时时间（秒，默认 20）
 
 guardrails:
   # 只读：不允许修改标书内容（tex/bib 等）。所有写入必须在 .nsfc-qc/ 下。

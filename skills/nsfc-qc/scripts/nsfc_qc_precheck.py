@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -705,6 +706,88 @@ def _http_get_text(url: str, *, timeout_s: int, user_agent: str) -> Optional[str
         return None
 
 
+def _check_url_accessible(url: str, *, timeout_s: int, user_agent: str) -> dict:
+    """
+    Check if a URL is accessible (HTTP HEAD request).
+    Returns: {"ok": bool, "status_code": int, "error": str}
+    """
+    if not url or not url.strip():
+        return {"ok": False, "status_code": 0, "error": "empty_url"}
+
+    url = url.strip()
+    # Basic URL validation
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return {"ok": False, "status_code": 0, "error": "invalid_scheme"}
+
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": user_agent}, method="HEAD")
+        with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+            return {"ok": True, "status_code": resp.status, "error": ""}
+    except urllib.error.HTTPError as e:
+        return {"ok": False, "status_code": e.code, "error": f"http_{e.code}"}
+    except urllib.error.URLError as e:
+        return {"ok": False, "status_code": 0, "error": f"url_error: {type(e.reason).__name__}"}
+    except Exception as e:
+        return {"ok": False, "status_code": 0, "error": f"exception: {type(e).__name__}"}
+
+
+def _normalize_title_for_comparison(title: str) -> str:
+    """
+    Normalize title for fuzzy comparison: lowercase, remove punctuation, collapse whitespace.
+    """
+    if not title:
+        return ""
+    # Lowercase
+    t = title.lower()
+    # Remove common punctuation
+    t = re.sub(r"[^\w\s]", " ", t)
+    # Collapse whitespace
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def _compare_titles(bib_title: str, api_title: str) -> dict:
+    """
+    Compare bib title with API-resolved title.
+    Returns: {"match": str, "similarity": float, "note": str}
+    match: "exact" | "fuzzy" | "mismatch" | "missing"
+    """
+    if not bib_title and not api_title:
+        return {"match": "missing", "similarity": 0.0, "note": "both titles missing"}
+    if not bib_title:
+        return {"match": "missing", "similarity": 0.0, "note": "bib title missing"}
+    if not api_title:
+        return {"match": "missing", "similarity": 0.0, "note": "api title missing"}
+
+    # Exact match (case-insensitive)
+    if bib_title.strip().lower() == api_title.strip().lower():
+        return {"match": "exact", "similarity": 1.0, "note": ""}
+
+    # Fuzzy match (normalized)
+    norm_bib = _normalize_title_for_comparison(bib_title)
+    norm_api = _normalize_title_for_comparison(api_title)
+
+    if norm_bib == norm_api:
+        return {"match": "fuzzy", "similarity": 0.95, "note": "normalized match"}
+
+    # Simple word-based similarity (Jaccard)
+    words_bib = set(norm_bib.split())
+    words_api = set(norm_api.split())
+    if not words_bib or not words_api:
+        return {"match": "mismatch", "similarity": 0.0, "note": "empty after normalization"}
+
+    intersection = len(words_bib & words_api)
+    union = len(words_bib | words_api)
+    similarity = intersection / union if union > 0 else 0.0
+
+    if similarity >= 0.8:
+        return {"match": "fuzzy", "similarity": similarity, "note": "high word overlap"}
+    elif similarity >= 0.5:
+        return {"match": "fuzzy", "similarity": similarity, "note": "moderate word overlap"}
+    else:
+        return {"match": "mismatch", "similarity": similarity, "note": "low word overlap"}
+
+
 def _normalize_doi(raw: str) -> str:
     d = (raw or "").strip()
     d = d.replace("https://doi.org/", "").replace("http://doi.org/", "")
@@ -868,12 +951,18 @@ def _resolve_reference_evidence(
     unpaywall_email: str,
     fetch_pdf: bool,
     max_pdf_mb: int,
+    max_concurrent: int,
 ) -> dict:
     """
     Deterministically gather reference-side evidence (title/abstract/pdf excerpt when possible),
     plus proposal-side citation contexts, to enable later AI semantic judgment.
+
+    Now includes:
+    - URL accessibility check for bib url field
+    - Automatic metadata comparison (bib title vs API title)
+    - Concurrency control (max_concurrent requests at a time)
     """
-    user_agent = "nsfc-qc/0.1.5 (reference-evidence)"
+    user_agent = "nsfc-qc/1.0.0 (reference-evidence)"
     evidence_path = out_dir / "reference_evidence.jsonl"
     summary_path = out_dir / "reference_evidence_summary.json"
 
@@ -883,87 +972,127 @@ def _resolve_reference_evidence(
     pdf_downloaded = 0
     pdf_text = 0
     failures = 0
+    url_checked = 0
+    url_accessible = 0
+    title_match_exact = 0
+    title_match_fuzzy = 0
+    title_mismatch = 0
 
     items: List[dict] = []
-    for k in cited_keys:
-        total += 1
-        fields = bib_entries.get(k) or {}
-        doi = _guess_doi(fields)
-        arxiv_id = _guess_arxiv_id(fields)
-        ctxs = citation_contexts.get(k) or []
 
-        cross = _fetch_crossref(doi, timeout_s=timeout_s, user_agent=user_agent) if doi else {"ok": False, "error": "no_doi"}
-        ax = _fetch_arxiv(arxiv_id, timeout_s=timeout_s, user_agent=user_agent) if arxiv_id else {"ok": False, "error": "no_arxiv_id"}
+    # Process in batches to control concurrency
+    batch_size = max(1, min(max_concurrent, 10))  # Clamp to [1, 10]
 
-        title = (cross.get("title") or "") if cross.get("ok") else ""
-        abstract = (cross.get("abstract") or "") if cross.get("ok") else ""
-        if not title and ax.get("ok"):
-            title = str(ax.get("title") or "").strip()
-        if not abstract and ax.get("ok"):
-            abstract = str(ax.get("abstract") or "").strip()
+    for batch_start in range(0, len(cited_keys), batch_size):
+        batch_keys = cited_keys[batch_start:batch_start + batch_size]
 
-        if title:
-            resolved_title += 1
-        if abstract:
-            resolved_abstract += 1
+        for k in batch_keys:
+            total += 1
+            fields = bib_entries.get(k) or {}
+            doi = _guess_doi(fields)
+            arxiv_id = _guess_arxiv_id(fields)
+            ctxs = citation_contexts.get(k) or []
 
-        unpay = _fetch_unpaywall_pdf(doi, email=unpaywall_email, timeout_s=timeout_s, user_agent=user_agent) if doi else {"ok": False, "error": "no_doi"}
-        pdf_url = ""
-        if ax.get("ok"):
-            pdf_url = str(ax.get("pdf_url") or "")
-        if not pdf_url and unpay.get("ok"):
-            pdf_url = str(unpay.get("pdf_url") or "")
-        if not pdf_url:
-            # As a last resort, trust bib url if it looks like a PDF.
-            u = (fields.get("url") or "").strip()
-            if u.lower().endswith(".pdf"):
-                pdf_url = u
+            # Fetch metadata from APIs
+            cross = _fetch_crossref(doi, timeout_s=timeout_s, user_agent=user_agent) if doi else {"ok": False, "error": "no_doi"}
+            ax = _fetch_arxiv(arxiv_id, timeout_s=timeout_s, user_agent=user_agent) if arxiv_id else {"ok": False, "error": "no_arxiv_id"}
 
-        pdf_info = {"enabled": bool(fetch_pdf), "ok": False}
-        pdf_text_info = {"ok": False, "excerpt": "", "tool": ""}
-        if fetch_pdf and pdf_url:
-            pdf_dir = out_dir / "refs_pdf"
-            pdf_path = pdf_dir / f"{k}.pdf"
-            dl = _download_file(
-                pdf_url,
-                dst=pdf_path,
-                timeout_s=timeout_s,
-                user_agent=user_agent,
-                max_bytes=int(max_pdf_mb) * 1024 * 1024,
-            )
-            pdf_info = {"enabled": True, "url": pdf_url, "download": dl, "path": str(pdf_path) if dl.get("ok") else ""}
-            if dl.get("ok"):
-                pdf_downloaded += 1
-                pdf_text_info = _extract_pdf_text_excerpt(pdf_path, max_chars=2000)
-                if pdf_text_info.get("ok") and pdf_text_info.get("excerpt"):
-                    pdf_text += 1
+            title = (cross.get("title") or "") if cross.get("ok") else ""
+            abstract = (cross.get("abstract") or "") if cross.get("ok") else ""
+            if not title and ax.get("ok"):
+                title = str(ax.get("title") or "").strip()
+            if not abstract and ax.get("ok"):
+                abstract = str(ax.get("abstract") or "").strip()
 
-        item = {
-            "bibkey": k,
-            "proposal_contexts": ctxs[:50],
-            "bib_entry": {kk: vv for kk, vv in fields.items() if kk != "__file__"},
-            "identifiers": {"doi": doi, "arxiv_id": arxiv_id},
-            "resolved": {
-                "title": title,
-                "abstract": abstract,
-                "sources": {
-                    "crossref": cross,
-                    "arxiv": ax,
-                    "unpaywall": unpay,
+            if title:
+                resolved_title += 1
+            if abstract:
+                resolved_abstract += 1
+
+            # Check bib URL accessibility
+            bib_url = (fields.get("url") or "").strip()
+            url_check_result = {"checked": False, "ok": False, "status_code": 0, "error": ""}
+            if bib_url:
+                url_checked += 1
+                url_check_result = _check_url_accessible(bib_url, timeout_s=timeout_s, user_agent=user_agent)
+                url_check_result["checked"] = True
+                if url_check_result.get("ok"):
+                    url_accessible += 1
+
+            # Compare bib title with API title
+            bib_title = (fields.get("title") or "").strip()
+            title_comparison = _compare_titles(bib_title, title)
+            match_type = title_comparison.get("match", "missing")
+            if match_type == "exact":
+                title_match_exact += 1
+            elif match_type == "fuzzy":
+                title_match_fuzzy += 1
+            elif match_type == "mismatch":
+                title_mismatch += 1
+
+            unpay = _fetch_unpaywall_pdf(doi, email=unpaywall_email, timeout_s=timeout_s, user_agent=user_agent) if doi else {"ok": False, "error": "no_doi"}
+            pdf_url = ""
+            if ax.get("ok"):
+                pdf_url = str(ax.get("pdf_url") or "")
+            if not pdf_url and unpay.get("ok"):
+                pdf_url = str(unpay.get("pdf_url") or "")
+            if not pdf_url:
+                # As a last resort, trust bib url if it looks like a PDF.
+                u = (fields.get("url") or "").strip()
+                if u.lower().endswith(".pdf"):
+                    pdf_url = u
+
+            pdf_info = {"enabled": bool(fetch_pdf), "ok": False}
+            pdf_text_info = {"ok": False, "excerpt": "", "tool": ""}
+            if fetch_pdf and pdf_url:
+                pdf_dir = out_dir / "refs_pdf"
+                pdf_path = pdf_dir / f"{k}.pdf"
+                dl = _download_file(
+                    pdf_url,
+                    dst=pdf_path,
+                    timeout_s=timeout_s,
+                    user_agent=user_agent,
+                    max_bytes=int(max_pdf_mb) * 1024 * 1024,
+                )
+                pdf_info = {"enabled": True, "url": pdf_url, "download": dl, "path": str(pdf_path) if dl.get("ok") else ""}
+                if dl.get("ok"):
+                    pdf_downloaded += 1
+                    pdf_text_info = _extract_pdf_text_excerpt(pdf_path, max_chars=2000)
+                    if pdf_text_info.get("ok") and pdf_text_info.get("excerpt"):
+                        pdf_text += 1
+
+            item = {
+                "bibkey": k,
+                "proposal_contexts": ctxs[:50],
+                "bib_entry": {kk: vv for kk, vv in fields.items() if kk != "__file__"},
+                "identifiers": {"doi": doi, "arxiv_id": arxiv_id},
+                "resolved": {
+                    "title": title,
+                    "abstract": abstract,
+                    "sources": {
+                        "crossref": cross,
+                        "arxiv": ax,
+                        "unpaywall": unpay,
+                    },
                 },
-            },
-            "pdf": {
-                "url": pdf_url,
-                "downloaded": bool(pdf_info.get("download", {}).get("ok")) if isinstance(pdf_info, dict) else False,
-                "download_info": pdf_info,
-                "text_excerpt": pdf_text_info,
-            },
-        }
+                "url_check": url_check_result,
+                "title_comparison": title_comparison,
+                "pdf": {
+                    "url": pdf_url,
+                    "downloaded": bool(pdf_info.get("download", {}).get("ok")) if isinstance(pdf_info, dict) else False,
+                    "download_info": pdf_info,
+                    "text_excerpt": pdf_text_info,
+                },
+            }
 
-        # Track failures loosely: neither title nor abstract resolved.
-        if not title and not abstract:
-            failures += 1
-        items.append(item)
+            # Track failures loosely: neither title nor abstract resolved.
+            if not title and not abstract:
+                failures += 1
+            items.append(item)
+
+        # Sleep between batches to avoid rate limiting (except for the last batch)
+        if batch_start + batch_size < len(cited_keys):
+            time.sleep(0.5)
 
     evidence_path.write_text(
         "\n".join(json.dumps(it, ensure_ascii=False) for it in items) + ("\n" if items else ""),
@@ -978,6 +1107,11 @@ def _resolve_reference_evidence(
             "pdf_downloaded": pdf_downloaded,
             "pdf_text_excerpt_available": pdf_text,
             "no_title_or_abstract": failures,
+            "url_checked": url_checked,
+            "url_accessible": url_accessible,
+            "title_match_exact": title_match_exact,
+            "title_match_fuzzy": title_match_fuzzy,
+            "title_mismatch": title_mismatch,
         },
         "outputs": {
             "reference_evidence_jsonl": str(evidence_path.name),
@@ -986,6 +1120,9 @@ def _resolve_reference_evidence(
         "notes": [
             "This is best-effort evidence collection for later AI semantic checks.",
             "PDF fetching is optional and only attempts arXiv/Unpaywall OA links or bib url ending with .pdf.",
+            "URL accessibility check uses HTTP HEAD request on bib url field.",
+            "Title comparison: exact (case-insensitive match), fuzzy (normalized/word overlap), mismatch (low similarity).",
+            f"Concurrency control: max {batch_size} concurrent requests per batch.",
         ],
     }
     _write_json = lambda p, o: p.write_text(json.dumps(o, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -1002,6 +1139,7 @@ def main() -> int:
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""), help="required by Unpaywall API (or set env UNPAYWALL_EMAIL)")
     ap.add_argument("--fetch-pdf", action="store_true", help="attempt to download OA PDFs (arXiv/Unpaywall/bib url) and extract a short text excerpt")
     ap.add_argument("--max-pdf-mb", type=int, default=5, help="max PDF size to download per reference when --fetch-pdf is enabled")
+    ap.add_argument("--max-concurrent", type=int, default=5, help="max concurrent network requests for reference resolution (default: 5, to avoid rate limiting)")
     ap.add_argument("--timeout-s", type=int, default=20, help="network timeout seconds for reference resolution")
     args = ap.parse_args()
 
@@ -1045,6 +1183,7 @@ def main() -> int:
             unpaywall_email=str(args.unpaywall_email or "").strip(),
             fetch_pdf=bool(args.fetch_pdf),
             max_pdf_mb=int(args.max_pdf_mb),
+            max_concurrent=int(args.max_concurrent),
         )
         reference_evidence["enabled"] = True
 

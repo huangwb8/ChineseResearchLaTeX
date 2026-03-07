@@ -80,8 +80,9 @@ def main() -> int:
     ap.add_argument("--runner-profile", choices=["fast", "default", "deep"], default="deep")
     ap.add_argument("--plan-only", action="store_true")
     ap.add_argument("--no-precheck", dest="precheck", action="store_false", default=True)
-    ap.add_argument("--no-resolve-refs", dest="resolve_refs", action="store_false", default=True)
+    # resolve_refs is now mandatory (no --no-resolve-refs option)
     ap.add_argument("--fetch-pdf", action="store_true")
+    ap.add_argument("--max-concurrent", type=int, default=5, help="max concurrent network requests for reference resolution (default: 5)")
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""))
     ap.add_argument("--timeout-s", type=int, default=20)
     args = ap.parse_args()
@@ -146,13 +147,14 @@ def main() -> int:
         str(args.runner_profile),
         "--timeout-s",
         str(int(args.timeout_s)),
+        "--max-concurrent",
+        str(int(args.max_concurrent)),
     ]
     if bool(args.plan_only):
         cmd.append("--plan-only")
     if not bool(args.precheck):
         cmd.append("--no-precheck")
-    if not bool(args.resolve_refs):
-        cmd.append("--no-resolve-refs")
+    # resolve_refs is now mandatory (always enabled)
     if bool(args.fetch_pdf):
         cmd.append("--fetch-pdf")
     if str(args.unpaywall_email or "").strip():
