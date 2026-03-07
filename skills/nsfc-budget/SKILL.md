@@ -44,12 +44,15 @@ config: skills/nsfc-budget/config.yaml
 - **正文目标字数未给**：按 `800–1000` 字推荐区间执行。
 - **每节上限**：默认 `500` 字，见 `config.yaml:defaults.per_section_max_chars`。
 - **模板未给**：默认 `skills/nsfc-budget/models/01`。
+- **预算模式合法值**：`budget_based | package_based | historical_budget_based`。
+- **预算口径合法值**：`direct | total | to_be_confirmed`。
 
 ## 中间产物边界
 
 - 所有中间文件只能放在 `<workdir>/.nsfc-budget/`。
 - 不要把草稿、日志、计划、截图、临时 JSON、编译中间文件散落到工作目录其它位置。
 - 最终可见交付物只放在 `<workdir>/<output_dirname>/`（默认 `budget_output/`）。
+- `template_id`、`output_dirname`、`.template.yaml` 里的 `section_files/latex_entry/pdf_name` 都必须是**相对安全路径**；不得包含绝对路径或 `..` 越界段。
 
 ## 工作流
 
@@ -89,6 +92,7 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 要求：
 
 - `设备费 + 业务费 + 劳务费 = 直接费用总额`（若你已明确直接费用口径）
+- `budget.*_wan` 与 `sections.*.amount_wan` 必须保持一致，避免出现两份金额源漂移。
 - `合作研究转拨资金` 不能与前三项形成逻辑冲突
 - `其他来源资金` 必须写明来源与用途；若无，则显式写“无”
 
@@ -106,6 +110,7 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 - 复制模板到 `<workdir>/<output_dirname>/`
 - 将五个 section 写入对应 `extraTex/*.tex`
 - 校验金额关系、段落长度、可见字符数与模板/路径约束
+- 校验 `budget_spec.json` 是否仍位于 `<workdir>/.nsfc-budget/`，保证隐藏工作区承诺不被破坏
 - 在隐藏目录保存 `validation_report.md/json`
 - 编译输出 `budget.pdf`
 

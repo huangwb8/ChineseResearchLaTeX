@@ -20,6 +20,7 @@
 - **2026 青年 A/B/C** 通常是**包干制**，往往**不需要预算说明书**；如果你是这类场景，请先确认单位是否仍要求你写预算说明。
 - 所有中间文件默认进入 `<workdir>/.nsfc-budget/`。
 - 最终交付默认输出到 `<workdir>/budget_output/`。
+- `template_id`、`output_dirname` 与模板元数据中的输出路径都只接受**相对安全路径**，不能写绝对路径或 `..`。
 
 ## 你需要准备什么
 
@@ -37,6 +38,11 @@
 - 合作单位、其他来源资金、关键价格依据
 
 可直接按 `skills/nsfc-budget/references/info_form.md` 填。
+
+另外建议同时明确：
+
+- 预算模式：`budget_based / package_based / historical_budget_based`
+- 预算口径：`direct / total / to_be_confirmed`
 
 ## 快速开始
 
@@ -121,6 +127,12 @@ skill 会把预算说明书拆成 5 段：
 - `<workdir>/.nsfc-budget/run_xxx/validation_report.md`
 - `<workdir>/.nsfc-budget/run_xxx/validation_report.json`
 
+并额外强制检查：
+
+- `budget_spec.json` 仍位于 `<workdir>/.nsfc-budget/`
+- `budget.*_wan` 与 `sections.*.amount_wan` 一致
+- 输出目录和模板路径不存在越界写入风险
+
 ## 目录结构
 
 典型输出如下：
@@ -170,6 +182,10 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 ### 为什么还要我确认“预算口径”？
 
 因为“申请总额”和“需要解释的直接费用”不是一回事。预算说明书主要解释直接费用，若口径不清，很容易导致金额能对上、逻辑却对不上。
+
+### 为什么要同时填 `budget.*_wan` 和 `sections.*.amount_wan`？
+
+前者便于结构化校验，后者直接驱动正文段落；现在脚本会强制两者一致，避免“数字改了一处、另一处忘了改”。
 
 ### 如果没有合作研究或其他来源资金怎么办？
 

@@ -217,7 +217,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
 | [nsfc-code](skills/nsfc-code/) | v1.0.0 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | ✅ 稳定 |
 | [nsfc-abstract](skills/nsfc-abstract/) | v1.0.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
-| [nsfc-budget](skills/nsfc-budget/) | v0.1.0 | 📝 日常 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |
+| [nsfc-budget](skills/nsfc-budget/) | v0.1.1 | 📝 日常 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v1.0.0 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v1.0.0 | 📝 日常 | NSFC 研究内容编排写作 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |

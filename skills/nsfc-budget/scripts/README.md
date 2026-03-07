@@ -23,6 +23,11 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 - `--output-dirname`：结果目录名（默认 `budget_output`）
 - `--material`：可重复传入，用于复制材料快照到隐藏目录
 
+约束：
+
+- `--output-dirname` 只能是工作目录下的相对安全路径
+- `--template-id` 只能指向 `skills/nsfc-budget/models/` 下的模板目录
+
 ## `render_budget_project.py`
 
 用途：读取 `budget_spec.json`，校验预算结构与文本长度，写入 LaTeX 项目并编译 `budget.pdf`。
@@ -45,3 +50,9 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 - `<workdir>/budget_output/`：LaTeX 项目
 - `<workdir>/budget_output/budget.pdf`：最终 PDF（若未 `--skip-compile`）
 - `<run_dir>/validation_report.md` / `validation_report.json`：校验报告
+
+额外说明：
+
+- `--spec` 必须位于 `<workdir>/.nsfc-budget/` 内，否则会被拒绝
+- `deliverables_manifest.json` 在 `--skip-compile` 时会返回 `"pdf": null` 与 `"pdf_generated": false`
+- 运行时公共工具位于 `skills/nsfc-budget/scripts/runtime_utils.py`

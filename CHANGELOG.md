@@ -22,6 +22,7 @@
 
 - **Budget_Justification 模板**：新增 `projects/Budget_Justification` LaTeX 模板，基于 `projects/NSFC_Young` 的项目骨架整理“国家自然科学基金项目预算说明书”版式；包含 `main.tex`、`extraTex/@config.tex`、预算科目占位文件、`code/test.sh` 与 `template/baseline.pdf`
 - **nsfc-budget skill**：新增 `skills/nsfc-budget`，用于基于 NSFC 标书正文或补充材料生成预算说明书 LaTeX 项目并渲染 `budget.pdf`；包含 `SKILL.md`、`config.yaml`、`README.md`、`CHANGELOG.md`、参考文档、初始化/渲染脚本与回归测试
+- **nsfc-budget v0.1.0 → v0.1.1**：补齐 `output_dirname` / `template_id` / `--spec` / 模板元数据路径的安全校验；渲染脚本改为从 `config.yaml` 与 `.template.yaml` 读取关键配置；新增金额一致性与 `--skip-compile` manifest 回归测试
 
 ### Changed（变更）
 

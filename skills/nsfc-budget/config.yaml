@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-budget
-  version: 0.1.0
+  version: 0.1.1
   description: "基于 NSFC 标书正文或补充材料生成预算说明书 LaTeX 项目并渲染 budget.pdf（不适用：仅想了解预算原则、或 2026 青年 A/B/C 默认包干制且无需预算说明书的场景）"
   author: "Bensz Conan"
   category: writing
