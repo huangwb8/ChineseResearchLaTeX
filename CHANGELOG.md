@@ -8,12 +8,24 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- **nsfc-qc v1.0.0 → v1.1.0**：元数据获取强制启用，文献真实性检查现为 QC 核心功能
+  - 移除 `--no-resolve-refs` 选项，`--resolve-refs` 默认启用且不可关闭
+  - 新增 URL 可访问性检查（HTTP HEAD 请求检查 `.bib` 中 `url` 字段）
+  - 新增 metadata 自动比对（bib title vs API title，支持 exact/fuzzy/mismatch 三级判断）
+  - 新增并发控制参数 `max_concurrent`（默认 5，可在 `config.yaml` 配置，避免 API 速率限制）
+  - 输出增强：`reference_evidence.jsonl` 新增 `url_check` 和 `title_comparison` 字段；`reference_evidence_summary.json` 新增 URL 检查与 title 比对统计
+  - 详见 [skills/nsfc-qc/CHANGELOG.md](skills/nsfc-qc/CHANGELOG.md#110---2026-03-07)
+
 ### Added（新增）
 
 - **Budget_Justification 模板**：新增 `projects/Budget_Justification` LaTeX 模板，基于 `projects/NSFC_Young` 的项目骨架整理“国家自然科学基金项目预算说明书”版式；包含 `main.tex`、`extraTex/@config.tex`、预算科目占位文件、`code/test.sh` 与 `template/baseline.pdf`
+- **nsfc-budget skill**：新增 `skills/nsfc-budget`，用于基于 NSFC 标书正文或补充材料生成预算说明书 LaTeX 项目并渲染 `budget.pdf`；包含 `SKILL.md`、`config.yaml`、`README.md`、`CHANGELOG.md`、参考文档、初始化/渲染脚本与回归测试
 
 ### Changed（变更）
 
+- **项目 README / skills README**：补充 `nsfc-budget` 的功能说明、使用场景与技能索引，保持文档与 `skills/` 新增能力同步
 - **Budget_Justification 模板**：将页面标题“预算说明书”恢复为黑体四号加粗；`skills/nsfc-budget/models/01/extraTex/@config.tex` 中 `\budgettitlefont` 改回黑体族，`\BudgetTitleFont` 调整为 `14pt` 四号标题，而正文强调文字仍保持与正文同字体
 - **Budget_Justification 模板**：调整 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的中文加粗策略；标题与强调文字不再切换到黑体，改为继续使用与正文相同的中文字体并仅施加假粗体，减少“加粗即变黑体”的风格跳变
 - **Budget_Justification 模板**：优化 `skills/nsfc-budget/models/01/extraTex/@config.tex` 的注释排版；在注释块与对应命令之间补充空行，提升参数说明的可读性

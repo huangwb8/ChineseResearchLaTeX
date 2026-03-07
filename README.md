@@ -193,6 +193,7 @@ git clone https://github.com/huangwb8/skills.git &&
 - **nsfc-schematic**：将标书中的研究机制、算法架构、模块关系转成原理图/机制图，输出 `.drawio` 源文件与 `.svg`/`.png` 渲染结果，支持分组结构、正交路由与多轮自检优化
 - **nsfc-abstract**：标题建议 + 中英文摘要生成（默认 1 个推荐标题 + 5 个候选标题及理由；中文≤400字含标点；英文≤4000字符含标点；英文为中文的忠实翻译，不新增信息；输出写入工作目录 `NSFC-ABSTRACTS.md`）
 - **nsfc-code**：申请代码推荐（只读读取标书正文 + 2026 申请代码推荐库，输出 5 组主/次代码与理由，写入 `NSFC-CODE-vYYYYMMDDHHmm.md`）。写完标书时再用。 
+- **nsfc-budget**：根据标书正文与补充材料生成预算说明书 LaTeX 项目与 `budget.pdf`，默认将所有中间过程隔离在工作目录 `.nsfc-budget/` 下
 
 #### 🎯 质量保障
 - **nsfc-qc**：标书只读质量控制（多线程并行检查文风生硬、引用真伪与一致性、篇幅与结构分布、逻辑清晰度等，输出标准化 QC 报告）
@@ -216,6 +217,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [guide-updater](skills/guide-updater/) | v1.0.0 | 📝 日常 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
 | [nsfc-code](skills/nsfc-code/) | v1.0.0 | 📝 日常 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | ✅ 稳定 |
 | [nsfc-abstract](skills/nsfc-abstract/) | v1.0.0 | 📝 日常 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
+| [nsfc-budget](skills/nsfc-budget/) | v0.1.0 | 📝 日常 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | v1.0.0 | 📝 日常 | 理论创新导向的立项依据写作 | ✅ 稳定 |
 | [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | v1.0.0 | 📝 日常 | NSFC 研究内容编排写作 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |

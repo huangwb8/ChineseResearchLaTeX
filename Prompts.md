@@ -48,9 +48,10 @@
 
 ---
 
-创建一个skill，叫 nsfc-budget 。 源代码/工作文件保存在 skills/nsfc-budget 。 工作流程大致如下：
+创建一个skill，叫 nsfc-budget 。 源代码/工作文件保存在 skills/nsfc-budget 。开发的skill要符合这个规范： https://github.com/huangwb8/skills/blob/main/AGENTS.md 。 该skill的工作流程大致如下：
 
 - 输入：
+  - 工作目录： 用户会指定。 如果用户没有指定，你必要暂停工作，要求用户指定一个工作目录。
   - 用户的标书正文； 或者是其它用户指定的材料
   - 总预算：用户提供。 如果用户不提供，就按这个标准： 面上基金50w，地区基金50w，青年基金30w
   - 正文总字数（不包含latex模板文字/代码）：用户提供。如果用户不提供，以800-1000字为宜。一般来说
@@ -62,12 +63,15 @@
   - 默认是 skills/nsfc-budget/models/01 
   - 后续我会放更多模板； 但暂时就1个。 你设计的时候，要为多模板可选做准备
 - 彻底理解用户标书的内容，综合latex模板里的预算的要求写标书的预算。
+  - 这是一个调研报告，对于如何写预算说明书很有启发，你学习一下 ： /Volumes/2T01/winE/PythonCloud/Agents/pipelines/deep_research_plus/reports/国自然面上基金预算说明书撰写规范 
+  - 学习完后将相关策略融入到你开发的skill里
+  - 不能硬引用这个目录，因为 /Volumes/2T01/winE/PythonCloud/Agents/pipelines/deep_research_plus/reports/国自然面上基金预算说明书撰写规范 只是一个临时目录，我之后会删除
 - 要有理有据、详略得当、逻辑严密，要写出真需求，不要捏造需求。
 - 其它你觉得有必要完善的点
 - 输出
   - 实际预算说明书的latex项目文件
   - 渲染出budget.pdf
-- 目标：一份完美的预算说明书，人类评审专家不可能从中找到任何逻辑漏洞； 并且心甘情愿地把基金批给用户。
+- 目标：一份完美的预算说明书，人类评审专家不可能从中找到任何逻辑漏洞，从而心甘情愿地把基金批给用户。
 
 ---
 

@@ -515,6 +515,34 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
+### 17. nsfc-budget - NSFC 预算说明书生成
+
+**状态**：🚧 开发中（版本见 `skills/nsfc-budget/config.yaml`）
+
+**类型**：📝 日常
+
+**功能**：基于 NSFC 标书正文或其它材料，生成预算说明书 LaTeX 项目并渲染 `budget.pdf`；所有中间过程默认隔离到工作目录 `.nsfc-budget/` 下。
+
+**使用场景**：
+- 你已经写好或基本写好正文，需要补预算说明书
+- 你希望把预算说明书交付为可编辑 LaTeX 项目，而不是一次性文本
+- 你希望所有计划、日志、JSON、编译中间文件都隐藏在工作目录下，不污染根目录
+
+**推荐 Prompt 模板**：
+
+```text
+请使用 nsfc-budget 为我的标书生成预算说明书：
+工作目录：projects/NSFC_General
+项目类型：general
+材料：projects/NSFC_General/main.tex
+总预算：50w
+要求：输出 LaTeX 项目与 budget.pdf；中间文件全部进入 .nsfc-budget
+```
+
+[详细文档 →](nsfc-budget/SKILL.md)
+
+---
+
 ## 技能依赖关系
 
 某些技能依赖其他技能的输出，形成完整的工作流：
@@ -525,6 +553,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - **systematic-literature-review**：核心文献综述（可选依赖 get-review-theme 的输出）
 - **guide-updater**：中间优化，基于综述结果沉淀写作规范（依赖 systematic-literature-review 的输出）
 - **nsfc系列写作skills**：最终撰写标书各模块（可选依赖 guide-updater 优化的指南）
+- **nsfc-budget**：基于完整正文与补充材料生成预算说明书（通常放在正文接近完成后）
 - **nsfc-roadmap / nsfc-schematic**：基于写作内容生成技术路线图与原理图
 - **nsfc-reviewers**：标书完成后模拟专家评审（依赖标书完整正文）
 
