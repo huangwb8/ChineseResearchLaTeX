@@ -4,6 +4,22 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.1.2] - 2026-03-07
+
+### Fixed
+
+- `init_budget_run.py` / `render_budget_project.py`：拒绝将 `output_dirname` 设为工作目录根路径或与 `.nsfc-budget/` 隐藏工作区重叠，修复 `--force` 可能误删工作目录/活动 run 的高风险边界
+- `init_budget_run.py`：重复初始化同秒 run 时自动避让目录名冲突，修复隐藏工作区会话互相覆盖的问题
+- `render_budget_project.py`：允许写入已存在但为空的输出目录，避免“空目录也报 File exists”导致的伪失败
+- `render_budget_project.py`：校验失败时在终端直接输出首批错误摘要和 `validation_report.md` 路径，降低排障成本
+- `render_budget_project.py`：新增 `meta.project_type` / 金额 / 字数 / 容差等非负与枚举校验，拒绝非法 spec 漏网通过
+- `render_budget_project.py`：写入段落时自动转义 `%`、`#`、`&`、`_`、`{`、`}` 等常见 LaTeX 特殊字符，修复自然语言正文导致的编译失败
+
+### Changed
+
+- `config.yaml`：将项目类型、预算模式、预算口径集中到配置中，减少 `SKILL.md` / README / 脚本的枚举分叉
+- `SKILL.md` / `README.md` / `scripts/README.md`：同步安全约束、目录覆盖规则、特殊字符转义行为与配置引用口径
+
 ## [0.1.0] - 2026-03-07
 
 ### Added

@@ -40,19 +40,20 @@ config: skills/nsfc-budget/config.yaml
 
 若用户没给全，按下面规则处理：
 
-- **总预算未给**：按 `config.yaml:defaults.total_budget_wan` 取默认值（面上 50w、地区 50w、青年 30w）。
-- **正文目标字数未给**：按 `800–1000` 字推荐区间执行。
-- **每节上限**：默认 `500` 字，见 `config.yaml:defaults.per_section_max_chars`。
-- **模板未给**：默认 `skills/nsfc-budget/models/01`。
-- **预算模式合法值**：`budget_based | package_based | historical_budget_based`。
-- **预算口径合法值**：`direct | total | to_be_confirmed`。
+- **总预算未给**：按 `config.yaml:defaults.total_budget_wan` 取默认值。
+- **正文目标字数未给**：按 `config.yaml:defaults.target_chars` 推荐区间执行。
+- **每节上限**：按 `config.yaml:defaults.per_section_max_chars`。
+- **模板未给**：按 `config.yaml:defaults.template_id`。
+- **预算模式合法值**：见 `config.yaml:rules.budget_modes`。
+- **预算口径合法值**：见 `config.yaml:rules.budget_scopes`。
 
 ## 中间产物边界
 
 - 所有中间文件只能放在 `<workdir>/.nsfc-budget/`。
 - 不要把草稿、日志、计划、截图、临时 JSON、编译中间文件散落到工作目录其它位置。
-- 最终可见交付物只放在 `<workdir>/<output_dirname>/`（默认 `budget_output/`）。
-- `template_id`、`output_dirname`、`.template.yaml` 里的 `section_files/latex_entry/pdf_name` 都必须是**相对安全路径**；不得包含绝对路径或 `..` 越界段。
+- 最终可见交付物只放在 `<workdir>/<output_dirname>/`（默认值见 `config.yaml:defaults.output_dirname`）。
+- `template_id`、`output_dirname`、`.template.yaml` 里的 `section_files/latex_entry/pdf_name` 都必须是**相对安全路径**；不得包含绝对路径、`.` / `..` 越界段。
+- `output_dirname` 不得指向工作目录根路径，也不得与隐藏工作区 `<workdir>/.nsfc-budget/` 重叠。
 
 ## 工作流
 
@@ -68,6 +69,7 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 ```
 
 如用户已给材料路径，可追加多个 `--material <path>`。脚本会把材料快照复制到 `.nsfc-budget/run_xxx/materials/`。
+若同秒重复初始化，脚本会自动避让目录名冲突，避免 run 目录互相污染。
 
 ### 2. 吃透材料，形成“任务-需求-金额-依据”链
 
@@ -95,6 +97,7 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 - `budget.*_wan` 与 `sections.*.amount_wan` 必须保持一致，避免出现两份金额源漂移。
 - `合作研究转拨资金` 不能与前三项形成逻辑冲突
 - `其他来源资金` 必须写明来源与用途；若无，则显式写“无”
+- 金额、字数上限、容差等数值不得为负数；不合法时优先修正 JSON，而不是带病渲染。
 
 ### 4. 渲染、校验、迭代
 
@@ -111,7 +114,9 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 - 将五个 section 写入对应 `extraTex/*.tex`
 - 校验金额关系、段落长度、可见字符数与模板/路径约束
 - 校验 `budget_spec.json` 是否仍位于 `<workdir>/.nsfc-budget/`，保证隐藏工作区承诺不被破坏
+- 自动转义常见 LaTeX 特殊字符（如 `%`、`#`、`&`、`_`），减少自然语言正文导致的编译失败
 - 在隐藏目录保存 `validation_report.md/json`
+- 若校验失败，终端会直接给出首批错误摘要与 `validation_report.md` 路径
 - 编译输出 `budget.pdf`
 
 如校验失败，先修 `budget_spec.json` 再重新运行脚本，直到通过。

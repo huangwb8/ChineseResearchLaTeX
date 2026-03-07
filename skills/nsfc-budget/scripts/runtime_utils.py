@@ -22,7 +22,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "rules": {
         "require_workdir": True,
+        "project_types": ["general", "local", "youth"],
         "budget_mode_default": "budget_based",
+        "budget_modes": ["budget_based", "package_based", "historical_budget_based"],
+        "budget_scopes": ["direct", "total", "to_be_confirmed"],
         "allowed_latex_commands": ["linebreak", "BudgetBold"],
         "zero_text": {
             "equipment": "本项目不列支设备费。",
@@ -94,7 +97,7 @@ def safe_rel_path(raw: str, *, label: str) -> Path:
         raise ValueError(f"{label} 不能为空")
     if path.is_absolute():
         raise ValueError(f"{label} 不能是绝对路径：{raw}")
-    if any(part in {"..", ""} for part in path.parts):
+    if any(part in {"..", "", "."} for part in path.parts):
         raise ValueError(f"{label} 不能包含越界路径段：{raw}")
     return path
 
@@ -107,6 +110,35 @@ def resolve_under(base: Path, relative: str, *, label: str) -> Path:
     except ValueError as exc:
         raise ValueError(f"{label} 解析后越界：{relative} -> {resolved}") from exc
     return resolved
+
+
+def paths_overlap(first: Path, second: Path) -> bool:
+    first_resolved = first.resolve()
+    second_resolved = second.resolve()
+    try:
+        first_resolved.relative_to(second_resolved)
+        return True
+    except ValueError:
+        pass
+    try:
+        second_resolved.relative_to(first_resolved)
+        return True
+    except ValueError:
+        return False
+
+
+def resolve_output_dir(workdir: Path, output_dirname: str, intermediate_dirname: str, *, label: str = "output_dirname") -> Path:
+    output_dir = resolve_under(workdir, output_dirname, label=label)
+    workdir_resolved = workdir.resolve()
+    if output_dir == workdir_resolved:
+        raise ValueError(f"{label} 不能指向工作目录根路径：{output_dirname}")
+
+    intermediate_root = resolve_under(workdir, intermediate_dirname, label="intermediate_dirname")
+    if paths_overlap(output_dir, intermediate_root):
+        raise ValueError(
+            f"{label} 不能与隐藏工作区 {intermediate_dirname} 重叠：{output_dirname}"
+        )
+    return output_dir
 
 
 def ensure_parent(path: Path) -> None:

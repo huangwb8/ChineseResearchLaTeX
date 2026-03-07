@@ -8,6 +8,15 @@
 
 ## [Unreleased]
 
+### Fixed（修复）
+
+- **nsfc-budget v0.1.1 → v0.1.2**：修复输出目录根路径/隐藏工作区重叠风险、run 目录同秒冲突、空输出目录伪失败与 LaTeX 特殊字符未转义等问题
+  - `skills/nsfc-budget/scripts/init_budget_run.py` / `skills/nsfc-budget/scripts/render_budget_project.py`：拒绝 `output_dirname=.` 或与 `.nsfc-budget/` 重叠，避免 `--force` 误删工作目录或活动 run
+  - `skills/nsfc-budget/scripts/init_budget_run.py`：重复初始化同秒 run 时自动避让目录名冲突
+  - `skills/nsfc-budget/scripts/render_budget_project.py`：空输出目录可直接渲染；校验失败时终端报错附带首批错误摘要与 `validation_report.md` 路径
+  - `skills/nsfc-budget/scripts/render_budget_project.py`：补齐 `meta.project_type` / 金额 / 字数 / 容差等非法值校验，并自动转义 `%` / `#` / `&` / `_` 等常见 LaTeX 特殊字符
+  - `skills/nsfc-budget/SKILL.md` / `skills/nsfc-budget/README.md` / `skills/nsfc-budget/scripts/README.md`：同步配置引用与安全约束说明
+
 ### Changed（变更）
 
 - **nsfc-qc v1.0.0 → v1.1.0**：元数据获取强制启用，文献真实性检查现为 QC 核心功能

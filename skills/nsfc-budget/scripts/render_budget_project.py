@@ -15,7 +15,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from runtime_utils import dump_json, load_config, load_template_meta, resolve_under, safe_rel_path
+from runtime_utils import dump_json, load_config, load_template_meta, resolve_output_dir, resolve_under, safe_rel_path
 
 
 SECTION_KEYS = ["equipment", "business", "labor", "transfer", "other_source"]
@@ -46,6 +46,43 @@ def save_json(path: Path, data: dict[str, Any]) -> None:
 
 def collapse_whitespace(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def escape_latex_text(text: str) -> str:
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+    }
+    return "".join(replacements.get(char, char) for char in text)
+
+
+def sanitize_paragraph_latex(text: str) -> str:
+    tokens: dict[str, str] = {}
+
+    def reserve(value: str) -> str:
+        token = f"@@NSFCBUDGETTOKEN{len(tokens)}@@"
+        tokens[token] = value
+        return token
+
+    text = re.sub(r"\\linebreak\{\}", lambda _: reserve(r"\linebreak{}"), text)
+
+    def replace_bold(match: re.Match[str]) -> str:
+        inner = escape_latex_text(match.group(1))
+        return reserve(rf"\BudgetBold{{{inner}}}")
+
+    text = re.sub(r"\\BudgetBold\{([^{}]*)\}", replace_bold, text)
+    escaped = escape_latex_text(text)
+    for token, value in tokens.items():
+        escaped = escaped.replace(token, value)
+    return escaped
 
 
 def strip_allowed_latex(text: str) -> str:
@@ -84,7 +121,7 @@ def render_paragraphs(paragraphs: list[str], fallback: str) -> str:
     effective = [collapse_whitespace(item) for item in paragraphs if collapse_whitespace(item)]
     if not effective:
         effective = [fallback]
-    return "\n\n".join(f"\\BudgetParagraph{{{item}}}" for item in effective) + "\n"
+    return "\n\n".join(f"\\BudgetParagraph{{{sanitize_paragraph_latex(item)}}}" for item in effective) + "\n"
 
 
 def resolve_template(skill_root: Path, template_id: str) -> tuple[Path, dict[str, Any], list[str]]:
@@ -98,10 +135,13 @@ def resolve_template(skill_root: Path, template_id: str) -> tuple[Path, dict[str
 
 
 def prepare_output_dir(output_dir: Path, template_dir: Path, force: bool) -> None:
-    if output_dir.exists() and any(output_dir.iterdir()):
-        if not force:
-            raise FileExistsError(f"output directory already exists and is not empty: {output_dir}")
-        shutil.rmtree(output_dir)
+    if output_dir.exists():
+        if any(output_dir.iterdir()):
+            if not force:
+                raise FileExistsError(f"output directory already exists and is not empty: {output_dir}")
+            shutil.rmtree(output_dir)
+        else:
+            output_dir.rmdir()
     shutil.copytree(template_dir, output_dir, ignore=TEMPLATE_IGNORE, dirs_exist_ok=False)
 
 
@@ -117,8 +157,16 @@ def validate_spec(spec_path: Path, spec: dict[str, Any], config: dict[str, Any],
     validation_cfg = config.get("validation") or {}
 
     allowed_commands = set(rules.get("allowed_latex_commands") or [])
+    project_types = set(rules.get("project_types") or (defaults.get("total_budget_wan") or {}).keys())
+    budget_modes = set(rules.get("budget_modes") or {"budget_based", "package_based", "historical_budget_based"})
+    budget_scopes = set(rules.get("budget_scopes") or {"direct", "total", "to_be_confirmed"})
+
+    project_type = str(meta.get("project_type") or defaults.get("project_type") or "general")
+    if project_types and project_type not in project_types:
+        errors.append(f"meta.project_type 非法：{project_type}")
+
     budget_mode = str(meta.get("budget_mode") or rules.get("budget_mode_default") or "budget_based")
-    if budget_mode not in {"budget_based", "package_based", "historical_budget_based"}:
+    if budget_mode not in budget_modes:
         errors.append(f"meta.budget_mode 非法：{budget_mode}")
 
     workdir_raw = meta.get("workdir")
@@ -131,14 +179,19 @@ def validate_spec(spec_path: Path, spec: dict[str, Any], config: dict[str, Any],
             errors.append(f"meta.workdir 不存在或不是目录：{workdir}")
 
     budget_scope = str(meta.get("budget_scope") or "to_be_confirmed")
-    if budget_scope not in {"direct", "total", "to_be_confirmed"}:
+    if budget_scope not in budget_scopes:
         errors.append(f"meta.budget_scope 非法：{budget_scope}")
 
     output_dirname = str(meta.get("output_dirname") or defaults.get("output_dirname") or "budget_output")
     template_id = str(meta.get("template_id") or defaults.get("template_id") or "01")
     if workdir is not None:
         try:
-            resolve_under(workdir, output_dirname, label="output_dirname")
+            resolve_output_dir(
+                workdir,
+                output_dirname,
+                str(defaults.get("intermediate_dirname") or ".nsfc-budget"),
+                label="output_dirname",
+            )
         except ValueError as exc:
             errors.append(str(exc))
         intermediate_dir = workdir / str(defaults.get("intermediate_dirname") or ".nsfc-budget")
@@ -157,6 +210,14 @@ def validate_spec(spec_path: Path, spec: dict[str, Any], config: dict[str, Any],
     target_min = int(meta.get("target_chars_min", target_chars.get("recommended_min") or 800) or 800)
     target_max = int(meta.get("target_chars_max", target_chars.get("recommended_max") or 1000) or 1000)
     per_section_max = int(meta.get("per_section_max_chars", defaults.get("per_section_max_chars") or 500) or 500)
+    if target_min < 0:
+        errors.append(f"meta.target_chars_min 不能为负数：{target_min}")
+    if target_max <= 0:
+        errors.append(f"meta.target_chars_max 必须大于 0：{target_max}")
+    if target_max < target_min:
+        errors.append(f"meta.target_chars_max 不能小于 target_chars_min：{target_min} > {target_max}")
+    if per_section_max <= 0:
+        errors.append(f"meta.per_section_max_chars 必须大于 0：{per_section_max}")
 
     budget_amount_keys = {
         "equipment": "equipment_wan",
@@ -180,8 +241,12 @@ def validate_spec(spec_path: Path, spec: dict[str, Any], config: dict[str, Any],
         if amount is None:
             warnings.append(f"sections.{key}.amount_wan 未填写，按 0 处理")
             amount = 0.0
+        if amount < 0:
+            errors.append(f"sections.{key}.amount_wan 不能为负数：{amount:.2f}w")
 
         budget_amount = as_float(budget.get(budget_amount_keys[key]))
+        if budget_amount is not None and budget_amount < 0:
+            errors.append(f"budget.{budget_amount_keys[key]} 不能为负数：{budget_amount:.2f}w")
         if budget_amount is not None and abs(budget_amount - amount) > 1e-6:
             errors.append(f"budget.{budget_amount_keys[key]}={budget_amount:.2f}w 与 sections.{key}.amount_wan={amount:.2f}w 不一致")
 
@@ -203,6 +268,12 @@ def validate_spec(spec_path: Path, spec: dict[str, Any], config: dict[str, Any],
     direct_costs_total = as_float(meta.get("direct_costs_total_wan"))
     requested_total = as_float(meta.get("requested_total_wan"))
     tolerance = as_float(budget.get("requested_total_tolerance_wan")) or float(defaults.get("requested_total_tolerance_wan") or 1.0)
+    if direct_costs_total is not None and direct_costs_total < 0:
+        errors.append(f"meta.direct_costs_total_wan 不能为负数：{direct_costs_total:.2f}w")
+    if requested_total is not None and requested_total < 0:
+        errors.append(f"meta.requested_total_wan 不能为负数：{requested_total:.2f}w")
+    if tolerance < 0:
+        errors.append(f"budget.requested_total_tolerance_wan 不能为负数：{tolerance:.2f}w")
 
     if direct_costs_total is not None and abs(direct_sum - direct_costs_total) > 1e-6:
         errors.append(f"设备/业务/劳务之和为 {direct_sum:.2f}w，与 meta.direct_costs_total_wan={direct_costs_total:.2f}w 不一致")
@@ -323,10 +394,17 @@ def render_from_spec(spec_path: Path, force: bool = False, skip_compile: bool = 
             errors.append(str(exc))
     write_report(run_dir, spec, normalized, errors, warnings)
     if errors:
-        raise ValueError("spec validation failed")
+        preview = "；".join(errors[:3])
+        suffix = "；…" if len(errors) > 3 else ""
+        raise ValueError(f"spec 校验失败：{preview}{suffix}；详见 {run_dir / 'validation_report.md'}")
 
     workdir = Path(normalized["workdir"])
-    output_dir = resolve_under(workdir, normalized["output_dirname"], label="output_dirname")
+    output_dir = resolve_output_dir(
+        workdir,
+        normalized["output_dirname"],
+        str((config.get("defaults") or {}).get("intermediate_dirname") or ".nsfc-budget"),
+        label="output_dirname",
+    )
     assert template_dir is not None
     prepare_output_dir(output_dir, template_dir, force=force)
 
@@ -350,7 +428,10 @@ def render_from_spec(spec_path: Path, force: bool = False, skip_compile: bool = 
         safe_rel_path(pdf_name, label="pdf_name")
         build_dir = run_dir / "build"
         build_dir.mkdir(parents=True, exist_ok=True)
-        compile_project(output_dir, latex_entry, build_dir, runs=int((config.get("defaults") or {}).get("compile_runs") or 2))
+        compile_runs = int((config.get("defaults") or {}).get("compile_runs") or 2)
+        if compile_runs <= 0:
+            raise ValueError(f"compile_runs 必须大于 0：{compile_runs}")
+        compile_project(output_dir, latex_entry, build_dir, runs=compile_runs)
         compiled_pdf = build_dir / pdf_name
         if not compiled_pdf.exists():
             raise FileNotFoundError(f"compiled pdf not found: {compiled_pdf}")

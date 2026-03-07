@@ -19,8 +19,9 @@
 - **必须提供工作目录**。如果你没给，skill 会先停下来问你。
 - **2026 青年 A/B/C** 通常是**包干制**，往往**不需要预算说明书**；如果你是这类场景，请先确认单位是否仍要求你写预算说明。
 - 所有中间文件默认进入 `<workdir>/.nsfc-budget/`。
-- 最终交付默认输出到 `<workdir>/budget_output/`。
-- `template_id`、`output_dirname` 与模板元数据中的输出路径都只接受**相对安全路径**，不能写绝对路径或 `..`。
+- 最终交付默认输出到 `<workdir>/<output_dirname>/`，当前默认值以 `skills/nsfc-budget/config.yaml` 为准。
+- `template_id`、`output_dirname` 与模板元数据中的输出路径都只接受**相对安全路径**，不能写绝对路径、`.` 或 `..`。
+- 输出目录不能写成工作目录根路径，也不能与 `.nsfc-budget/` 重叠。
 
 ## 你需要准备什么
 
@@ -34,15 +35,15 @@
 
 - 预算口径：这是“申请总额”还是“需要解释的直接费用”
 - 总预算
-- 目标字数（若不提供，默认推荐 800–1000 字）
+- 目标字数（若不提供，默认推荐区间见 `skills/nsfc-budget/config.yaml`）
 - 合作单位、其他来源资金、关键价格依据
 
 可直接按 `skills/nsfc-budget/references/info_form.md` 填。
 
 另外建议同时明确：
 
-- 预算模式：`budget_based / package_based / historical_budget_based`
-- 预算口径：`direct / total / to_be_confirmed`
+- 预算模式：合法值见 `skills/nsfc-budget/config.yaml`
+- 预算口径：合法值见 `skills/nsfc-budget/config.yaml`
 
 ## 快速开始
 
@@ -76,16 +77,13 @@
 
 ## 默认行为
 
-如果你没有给全参数，skill 会按以下默认值启动：
+如果你没有给全参数，skill 会按 `skills/nsfc-budget/config.yaml` 中的默认值启动；重点包括：
 
-- 模板：`skills/nsfc-budget/models/01`
-- 面上：`50w`
-- 地区：`50w`
-- 青年：`30w`
-- 推荐总字数：`800–1000`
-- 每部分上限：`500`
-- 输出目录：`budget_output/`
-- 隐藏中间目录：`.nsfc-budget/`
+- 模板 ID
+- 面上 / 地区 / 青年默认预算额
+- 推荐总字数区间与默认中心值
+- 每部分上限
+- 输出目录名与隐藏中间目录名
 
 ## 工作流会做什么
 
@@ -122,8 +120,8 @@ skill 会把预算说明书拆成 5 段：
 
 会输出：
 
-- `<workdir>/budget_output/`：最终 LaTeX 项目
-- `<workdir>/budget_output/budget.pdf`
+- `<workdir>/<output_dirname>/`：最终 LaTeX 项目
+- `<workdir>/<output_dirname>/budget.pdf`
 - `<workdir>/.nsfc-budget/run_xxx/validation_report.md`
 - `<workdir>/.nsfc-budget/run_xxx/validation_report.json`
 
@@ -132,6 +130,8 @@ skill 会把预算说明书拆成 5 段：
 - `budget_spec.json` 仍位于 `<workdir>/.nsfc-budget/`
 - `budget.*_wan` 与 `sections.*.amount_wan` 一致
 - 输出目录和模板路径不存在越界写入风险
+- 输出目录不会落到工作目录根路径，也不会与隐藏工作区重叠
+- 常见特殊字符（如 `%`、`#`、`&`、`_`）会在写入 LaTeX 前自动转义
 
 ## 目录结构
 
@@ -147,7 +147,7 @@ skill 会把预算说明书拆成 5 段：
 │       ├── logs/
 │       ├── validation_report.md
 │       └── validation_report.json
-└── budget_output/
+└── <output_dirname>/
     ├── budget.tex
     ├── budget.pdf
     ├── extraTex/
@@ -194,6 +194,15 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 ### 能不能只生成 LaTeX，不编译 PDF？
 
 可以，脚本支持 `--skip-compile`。但正式交付前建议至少编译一次，确保 `budget.pdf` 可用。
+
+### 如果输出目录已存在怎么办？
+
+- 若目录非空，渲染时加 `--force` 才会覆盖。
+- 若目录为空，脚本现在会直接复用，不再因为“目录已存在”而失败。
+
+### 正文里有 `%`、`#`、`&`、`_` 这类符号怎么办？
+
+可以直接写。脚本会在渲染阶段自动转义这些常见 LaTeX 特殊字符；若你主动写了允许的 `\linebreak{}` 或 `\BudgetBold{}`，也会保留。
 
 ## 相关文件
 

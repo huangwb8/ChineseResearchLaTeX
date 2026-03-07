@@ -13,17 +13,22 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from runtime_utils import dump_json, load_config, resolve_under
+from runtime_utils import dump_json, load_config, resolve_output_dir, resolve_under
 
 
 def parse_args() -> argparse.Namespace:
     skill_root = Path(__file__).resolve().parents[1]
     config, _warnings = load_config(skill_root)
     defaults = config.get("defaults") or {}
+    rules = config.get("rules") or {}
     target_chars = defaults.get("target_chars") or {}
     parser = argparse.ArgumentParser(description="Initialize a hidden nsfc-budget run directory.")
     parser.add_argument("--workdir", required=True, help="User work directory.")
-    parser.add_argument("--project-type", choices=sorted((defaults.get("total_budget_wan") or {}).keys()), default=str(defaults.get("project_type") or "general"))
+    parser.add_argument(
+        "--project-type",
+        choices=sorted((rules.get("project_types") or (defaults.get("total_budget_wan") or {}).keys())),
+        default=str(defaults.get("project_type") or "general"),
+    )
     parser.add_argument("--total-budget-wan", type=float)
     parser.add_argument("--target-chars", type=int, default=int(target_chars.get("recommended_default") or 900))
     parser.add_argument("--template-id", default=str(defaults.get("template_id") or "01"))
@@ -48,6 +53,13 @@ def unique_path(path: Path) -> Path:
         if not candidate.exists():
             return candidate
         counter += 1
+
+
+def validate_args(args: argparse.Namespace) -> None:
+    if args.target_chars <= 0:
+        raise ValueError("target_chars 必须大于 0")
+    if args.total_budget_wan is not None and args.total_budget_wan < 0:
+        raise ValueError("total_budget_wan 不能为负数")
 
 
 def copy_material(source: Path, destination_dir: Path) -> str:
@@ -112,13 +124,20 @@ def main() -> int:
     args = parse_args()
     skill_root = Path(__file__).resolve().parents[1]
     config, config_warnings = load_config(skill_root)
+    defaults = config.get("defaults") or {}
     workdir = Path(args.workdir).expanduser().resolve()
     if not workdir.exists() or not workdir.is_dir():
         print(f"[nsfc-budget] workdir does not exist or is not a directory: {workdir}", file=sys.stderr)
         return 2
 
     try:
-        resolve_under(workdir, args.output_dirname, label="output_dirname")
+        validate_args(args)
+        resolve_output_dir(
+            workdir,
+            args.output_dirname,
+            str(defaults.get("intermediate_dirname") or ".nsfc-budget"),
+            label="output_dirname",
+        )
         template_dir = resolve_under(skill_root / "models", args.template_id, label="template_id")
         if not template_dir.exists() or not template_dir.is_dir():
             raise ValueError(f"template_id 对应模板不存在：{args.template_id}")
@@ -126,8 +145,8 @@ def main() -> int:
         print(f"[nsfc-budget] {exc}", file=sys.stderr)
         return 2
 
-    intermediate_root = ensure_directory(workdir / str((config.get("defaults") or {}).get("intermediate_dirname") or ".nsfc-budget"))
-    run_dir = intermediate_root / f"run_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    intermediate_root = ensure_directory(workdir / str(defaults.get("intermediate_dirname") or ".nsfc-budget"))
+    run_dir = unique_path(intermediate_root / f"run_{datetime.now().strftime('%Y%m%d%H%M%S')}")
     ensure_directory(run_dir)
     materials_dir = ensure_directory(run_dir / "materials")
     ensure_directory(run_dir / "logs")
