@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- `config.yaml`：版本号 `1.2.0 → 1.2.1`；将 `parallel_review.default_panel_count` 与 `parallel_review.max_panel_count` 同步调整为 `7`，使默认评审团数量为 7 组。
+- `README.md` / `skills/README.md` / 根级 `README.md`：同步默认评审组数、最大组数与版本口径，避免文档仍显示“默认 2 组、最多 5 组”。
+- `config.yaml`：版本号 `1.1.0 → 1.2.0`；每个评审组固定专家数从 5 位扩展为 7 位，更贴近现实函评常见的 5–7 位同行评审口径。
+- `references/expert_06_significance.md` / `references/expert_07_clarity.md`：新增“科学意义与领域影响专家”“可读性与论证清晰度专家”，补足现实评审中对项目价值与可读性的审视维度。
+- `SKILL.md` / `README.md` / `references/master_prompt_template.md` / `references/aggregation_rules.md`：统一改为 7 位专家口径；组内共识阈值相应从“至少 3 位”提高为“至少 4 位”。
+- `scripts/validate_skill.py`：校验规则同步升级为要求 7 个专家画像文件，避免后续回退到 5 人配置。
+- `config.yaml`：新增 `stage_assessment` 配置节，并将版本号 `1.0.0 → 1.1.0`；默认要求在报告中输出“基于当前版本直接送审”的函评/会评二元判断。
+- `SKILL.md`：将“阶段判断”升级为默认输出，要求 AI 必须明确写出“函评给过/不给过”“会评给过/不给过”，并补充把握度、主要依据与翻盘关键。
+- `references/master_prompt_template.md` / `references/aggregation_rules.md`：补齐组内与跨组的函评/会评聚合格式，确保最终报告先给用户一个明确底判断。
+- `references/expert_*.md`：要求每位专家原始意见结尾单独给出函评/会评二元结论，避免只有汇总判断没有专家立场。
+- `README.md`：同步用户文档与报告结构示例，解释为什么默认给出“函评/会评给不过”判断。
+
 ## [1.0.0] - 2026-02-24
 
 ### Changed（变更）

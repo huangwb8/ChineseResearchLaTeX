@@ -84,6 +84,7 @@ def main() -> int:
                 errors.append(f"{p.name}: hardcodes version {cfg_ver} (should only live in config.yaml)")
 
     _validate_output_settings(cfg, errors)
+    _validate_stage_assessment(cfg, errors)
     _validate_parallel_review(cfg, skill_root, errors)
     _validate_scripts(skill_root, errors)
     _validate_references(skill_root, errors)
@@ -118,8 +119,8 @@ def _validate_parallel_review(cfg: dict, skill_root: Path, errors: list[str]) ->
             errors.append("config.yaml: parallel_review.aggregation.consensus_threshold must be in (0, 1]")
 
     personas = pr.get("reviewer_personas")
-    if not isinstance(personas, list) or len(personas) != 5:
-        errors.append("config.yaml: parallel_review.reviewer_personas must be a list of 5 personas")
+    if not isinstance(personas, list) or len(personas) != 7:
+        errors.append("config.yaml: parallel_review.reviewer_personas must be a list of 7 personas")
         return
 
     for i, persona in enumerate(personas):
@@ -184,6 +185,44 @@ def _validate_output_settings(cfg: dict, errors: list[str]) -> None:
             errors.append("config.yaml: output_settings.validation_level must be warn|error")
 
 
+def _validate_stage_assessment(cfg: dict, errors: list[str]) -> None:
+    sa = cfg.get("stage_assessment") if isinstance(cfg, dict) else None
+    if not isinstance(sa, dict):
+        errors.append("config.yaml: missing stage_assessment (dict)")
+        return
+
+    for k in ["enabled", "include_in_report", "judge_current_draft_only", "require_binary_verdict", "confidence_levels", "stages"]:
+        if k not in sa:
+            errors.append(f"config.yaml: stage_assessment missing {k}")
+
+    for k in ["enabled", "include_in_report", "judge_current_draft_only", "require_binary_verdict"]:
+        if k in sa and not isinstance(sa.get(k), bool):
+            errors.append(f"config.yaml: stage_assessment.{k} must be a bool")
+
+    cls = sa.get("confidence_levels")
+    if not isinstance(cls, list) or [str(x) for x in cls] != ["高", "中", "低"]:
+        errors.append("config.yaml: stage_assessment.confidence_levels must be ['高', '中', '低']")
+
+    stages = sa.get("stages")
+    if not isinstance(stages, dict):
+        errors.append("config.yaml: stage_assessment.stages must be a dict")
+        return
+
+    for stage_id in ["letter_review", "panel_review"]:
+        stage = stages.get(stage_id)
+        if not isinstance(stage, dict):
+            errors.append(f"config.yaml: stage_assessment.stages.{stage_id} must be a dict")
+            continue
+        for k in ["name", "pass_label", "fail_label", "key_checks"]:
+            if k not in stage:
+                errors.append(f"config.yaml: stage_assessment.stages.{stage_id} missing {k}")
+        if stage.get("pass_label") != "给过" or stage.get("fail_label") != "不给过":
+            errors.append(f"config.yaml: stage_assessment.stages.{stage_id} must use pass_label=给过 and fail_label=不给过")
+        kc = stage.get("key_checks")
+        if not isinstance(kc, list) or len(kc) < 2:
+            errors.append(f"config.yaml: stage_assessment.stages.{stage_id}.key_checks must be a list with at least 2 items")
+
+
 def _validate_scripts(skill_root: Path, errors: list[str]) -> None:
     required = [
         "scripts/build_parallel_vibe_plan.py",
@@ -205,6 +244,8 @@ def _validate_references(skill_root: Path, errors: list[str]) -> None:
         "expert_03_foundation.md",
         "expert_04_critical.md",
         "expert_05_constructive.md",
+        "expert_06_significance.md",
+        "expert_07_clarity.md",
         "master_prompt_template.md",
         "aggregation_rules.md",
     ]
@@ -238,6 +279,12 @@ def _validate_docs_consistency(skill_md_text: str, readme_text: str, errors: lis
     # parallel-vibe major updates: ensure SKILL.md documents the plan-file workflow.
     if "--plan-file" not in skill_md_text:
         errors.append("SKILL.md: missing parallel-vibe --plan-file workflow (required for parallel panels)")
+
+    for label, t in [("SKILL.md", skill_md_text), ("README.md", readme_text)]:
+        if "## 阶段判断（基于当前版本直接送审）" not in t:
+            errors.append(f"{label}: missing default 函评/会评 stage assessment section")
+        if "给过 / 不给过" not in t:
+            errors.append(f"{label}: missing explicit binary verdict wording '给过 / 不给过'")
 
 
 def _finish(errors: list[str]) -> int:

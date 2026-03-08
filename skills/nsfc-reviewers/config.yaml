@@ -4,10 +4,38 @@
 # 技能基本信息
 skill_info:
   name: nsfc-reviewers
-  version: 1.0.0
+  version: 1.2.1
   description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议"
   author: "Bensz Conan"
   category: 科研写作
+
+# 阶段性过会判断（默认写入报告）
+stage_assessment:
+  enabled: true
+  include_in_report: true
+  # 必须基于“当前版本若直接送审”进行判断，不允许假设后续还能修改
+  judge_current_draft_only: true
+  # 必须给出二元结论；如不确定，用 confidence 表达把握，不允许只写“边缘/不好说”
+  require_binary_verdict: true
+  confidence_levels: [高, 中, 低]
+  stages:
+    letter_review:
+      name: 函评
+      pass_label: 给过
+      fail_label: 不给过
+      key_checks:
+        - 邻近领域专家能否在独立阅读中快速理解项目价值
+        - 创新点、科学问题与技术路线是否能在首次通读时成立
+        - 研究基础与申请人能力是否足以支撑“建议资助”判断
+    panel_review:
+      name: 会评
+      pass_label: 给过
+      fail_label: 不给过
+      stricter_than_letter_review: true
+      key_checks:
+        - 项目是否具备相对竞争力，能在同场比较中进入前列
+        - 核心亮点是否足够鲜明，能支撑专家讨论与投票
+        - 现有短板是否会在会评讨论中被放大
 
 # 评审维度配置
 review_dimensions:
@@ -128,10 +156,10 @@ review_grades:
 parallel_review:
   # 是否启用并行评审模式
   enabled: true
-  # 默认评审组数量（每组固定 5 位专家）
-  default_panel_count: 2
+  # 默认评审组数量（每组固定 7 位专家）
+  default_panel_count: 7
   # 最大评审组数量
-  max_panel_count: 5
+  max_panel_count: 7
   # parallel-vibe plan.threads[*].runner.type（评审任务推荐 claude）
   runner: claude
   # parallel-vibe plan.threads[*].runner.profile（default|fast|deep）
@@ -172,6 +200,18 @@ parallel_review:
       primary_dimensions: [methodology, foundation, outcomes]
       secondary_dimensions: [innovation, hypothesis, team]
 
+    - id: significance_reviewer
+      name: 科学意义与领域影响专家
+      prompt_file: references/expert_06_significance.md
+      primary_dimensions: [innovation, outcomes]
+      secondary_dimensions: [hypothesis, foundation]
+
+    - id: clarity_reviewer
+      name: 可读性与论证清晰度专家
+      prompt_file: references/expert_07_clarity.md
+      primary_dimensions: [hypothesis, methodology, team]
+      secondary_dimensions: [innovation, outcomes, foundation]
+
   # 聚合策略
   aggregation:
     # 跨组共识阈值（0.0-1.0），默认 60% 以上组一致
@@ -196,6 +236,7 @@ output_settings:
   validation_level: warn
   include_sections:
     - basic_info
+    - stage_assessment
     - overall_evaluation
     - dimension_reviews
     - suggestions_summary
