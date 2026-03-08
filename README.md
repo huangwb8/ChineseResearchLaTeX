@@ -226,7 +226,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-qc](skills/nsfc-qc/) | v1.2.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑 + 全文级缩写注册表 QC） | ✅ 稳定 |
 | [nsfc-ref-alignment](skills/nsfc-ref-alignment/) | v0.1.1 | 📝 日常 | NSFC 参考文献与正文引用一致性核查（只读） | 🚧 开发中 |
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v1.4.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟（默认 3 组、最多 5 组，含函评/会评给不过判断与资助约束识别） | ✅ 稳定 |
-| [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.0 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |
+| [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.1 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |
 | [nsfc-humanization](skills/nsfc-humanization/) | v1.0.0 | 📝 日常 | 去 AI 机器味，使标书读起来像专家亲笔撰写 | ✅ 稳定 |
 
 ---

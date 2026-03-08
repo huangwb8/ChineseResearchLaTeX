@@ -30,6 +30,11 @@
 
 ### Fixed（修复）
 
+- **nsfc-length-aligner v0.3.0 → v0.3.1**：修复篇幅检查中间文件落点不稳定的问题，默认与推荐输出现统一收敛到工作目录 `.nsfc-length-aligner/`
+  - `skills/nsfc-length-aligner/scripts/check_length.py`：默认输出目录从 `<input>/_artifacts/nsfc-length-aligner/` 改为 `<input>/.nsfc-length-aligner/`；相对 `--out-dir` 改为相对 `--input` 工作目录解析，避免从仓库根目录启动时把报告误写到错误位置
+  - `skills/nsfc-length-aligner/config.yaml`：新增 `output_settings.intermediate_dir=.nsfc-length-aligner`，并默认排除 `.nsfc-length-aligner/`，避免复检误扫隐藏工作区
+  - `skills/nsfc-length-aligner/SKILL.md` / `skills/nsfc-length-aligner/README.md` / `README.md`：同步更新隐藏工作区约定与版本索引
+
 - **nsfc-budget v0.1.1 → v0.1.2**：修复输出目录根路径/隐藏工作区重叠风险、run 目录同秒冲突、空输出目录伪失败与 LaTeX 特殊字符未转义等问题
   - `skills/nsfc-budget/scripts/init_budget_run.py` / `skills/nsfc-budget/scripts/render_budget_project.py`：拒绝 `output_dirname=.` 或与 `.nsfc-budget/` 重叠，避免 `--force` 误删工作目录或活动 run
   - `skills/nsfc-budget/scripts/init_budget_run.py`：重复初始化同秒 run 时自动避让目录名冲突

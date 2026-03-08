@@ -15,6 +15,16 @@ The format is based on Keep a Changelog, and this skill adheres to Semantic Vers
 - `SKILL.md`：在改写步骤末尾增加强制复检提示，强化闭环。
 - `SKILL.md`：为“三部分该瘦/该厚清单”增加按 `delta` 触发的使用方式，降低泛化建议风险。
 
+## [0.3.1] - 2026-03-08
+
+### Changed
+- `config.yaml`：新增 `output_settings.intermediate_dir=.nsfc-length-aligner`，将隐藏工作区目录名收敛为配置项；`checker.exclude_globs` 同步排除 `.nsfc-length-aligner/`，避免复检时误扫中间产物。
+- `SKILL.md` / `README.md`：明确“所有中间文件严格托管到工作目录 `.nsfc-length-aligner/`”的运行约定，并补充相对 `--out-dir` 的安全用法说明。
+
+### Fixed
+- `scripts/check_length.py`：默认输出目录从 `<input>/_artifacts/nsfc-length-aligner/` 改为 `<input>/.nsfc-length-aligner/`，减少项目根层噪声。
+- `scripts/check_length.py`：相对 `--out-dir` 现改为相对 `--input` 工作目录解析，而非 shell 当前目录，修复从仓库根目录运行时报告泄露到错误位置的问题。
+
 ## [0.3.0] - 2026-02-21
 
 ### Added

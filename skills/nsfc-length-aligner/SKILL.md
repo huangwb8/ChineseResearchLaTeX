@@ -30,6 +30,13 @@ metadata:
 
 ## 工作流（强烈建议按顺序执行）
 
+### 0) 锁定隐藏工作区（先做）
+
+- 以标书工作目录为根，统一使用 `<workdir>/.nsfc-length-aligner/` 托管所有中间文件与报告
+- 不要把 `length_report.*`、临时分析稿、计划文件写到工作目录根层或仓库其他位置
+- 若显式传入 `--out-dir`，优先使用相对路径 `.nsfc-length-aligner`；脚本会将**相对** `--out-dir` 解析到 `--input` 对应的工作目录，而不是 shell 当前目录
+- 若工作目录本身不可写，应先切换到可写副本后再运行；不要为了省事把中间文件散落到项目外部
+
 ### 1) 需求确认（预算口径）
 
 先确认你要对齐的“硬标准”是什么：
@@ -49,6 +56,12 @@ metadata:
 python3 scripts/check_length.py --input <目标标书路径> --config config.yaml
 ```
 
+如需显式声明输出目录，请使用：
+
+```bash
+python3 scripts/check_length.py --input <目标标书路径> --config config.yaml --out-dir .nsfc-length-aligner
+```
+
 如果你的标书基于 `NSFC_Young` / `NSFC_General` 模板（项目根目录包含 `main.tex`），建议把 `--input` 指向项目根目录：脚本会自动沿 `main.tex` 的 `\input/\include` 依赖树收集“实际会编译进 PDF 的文件”，并忽略被注释掉的 `\input{...}`（避免把可选章节误计入篇幅）。
 
 如果你已编译出最终 PDF（推荐；页数是硬约束），把 PDF 一并传入做页数统计：
@@ -59,10 +72,10 @@ python3 scripts/check_length.py --input <目标标书路径> --config config.yam
 
 输出：
 - 控制台摘要（总篇幅、超/欠预算项）
-- `<input>/_artifacts/nsfc-length-aligner/length_report.md`（默认输出目录；可用 `--out-dir` 自定义）
-- `<input>/_artifacts/nsfc-length-aligner/length_report.json`（默认输出目录；可用 `--out-dir` 自定义）
+- `<input>/.nsfc-length-aligner/length_report.md`（默认输出目录；可用 `--out-dir` 自定义）
+- `<input>/.nsfc-length-aligner/length_report.json`（默认输出目录；可用 `--out-dir` 自定义）
 
-注意：如果你的 `<input>` 目录不可写（例如你把模板仓库设为只读），请务必用 `--out-dir` 指向可写位置。
+注意：`--out-dir` 若使用相对路径，会被解析到 `<input>` 对应的工作目录下；这能避免从其他目录启动命令时把报告误写到 shell 当前目录。
 
 运行完成后，**必须**读取 `length_report.md`（必要时辅助读取 `length_report.json`），将“文件级偏差表 +（可选）章节级统计”作为步骤 3 的输入。
 
@@ -135,4 +148,5 @@ python3 scripts/check_length.py --input <目标标书路径> --config config.yam
 
 - 报告以“文件级 +（可选）章节级”呈现
 - 预算以 `config.yaml:length_standard` 为唯一真相来源
+- 中间文件统一托管到 `config.yaml:output_settings.intermediate_dir`（默认 `.nsfc-length-aligner`）
 - 所有改写应遵循“最小改动、保持原意”的准则（见 references）

@@ -25,6 +25,25 @@ def _ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+def _resolve_report_out_dir(input_path: Path, out_dir_arg: str, cfg: dict[str, Any]) -> Path:
+    output_settings = cfg.get("output_settings") or {}
+    if not isinstance(output_settings, dict):
+        output_settings = {}
+
+    default_dirname = str(output_settings.get("intermediate_dir") or ".nsfc-length-aligner").strip()
+    if not default_dirname:
+        default_dirname = ".nsfc-length-aligner"
+
+    base = input_path if input_path.is_dir() else input_path.parent
+    if not out_dir_arg:
+        return (base / default_dirname).resolve()
+
+    candidate = Path(out_dir_arg).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return (base / candidate).resolve()
+
+
 def _load_yaml(path: Path) -> dict[str, Any]:
     text = _read_text(path)
     try:
@@ -507,7 +526,10 @@ def main(argv: list[str]) -> int:
     parser.add_argument(
         "--out-dir",
         default="",
-        help="Output directory for reports (default: <input>/_artifacts/nsfc-length-aligner)",
+        help=(
+            "Output directory for reports "
+            "(default: <input>/.nsfc-length-aligner; relative paths are resolved from --input)"
+        ),
     )
     parser.add_argument(
         "--fail-if-exists",
@@ -757,16 +779,15 @@ def main(argv: list[str]) -> int:
         "sections": section_results,
     }
 
-    if args.out_dir:
-        out_dir = Path(args.out_dir).expanduser()
-    else:
-        base = input_path if input_path.is_dir() else input_path.parent
-        out_dir = base / "_artifacts" / "nsfc-length-aligner"
+    out_dir = _resolve_report_out_dir(input_path, args.out_dir, cfg)
     try:
         _ensure_dir(out_dir)
     except OSError as e:
         print(f"error: cannot create out dir: {out_dir} ({e})", file=sys.stderr)
-        print("hint: your --input may be read-only; use --out-dir to write reports elsewhere", file=sys.stderr)
+        print(
+            "hint: ensure the proposal workdir is writable, or pass an explicit absolute --out-dir",
+            file=sys.stderr,
+        )
         return 2
     json_path = out_dir / "length_report.json"
     md_path = out_dir / "length_report.md"
@@ -779,7 +800,10 @@ def main(argv: list[str]) -> int:
         json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     except OSError as e:
         print(f"error: cannot write json report: {json_path} ({e})", file=sys.stderr)
-        print("hint: use --out-dir to write reports to a writable directory", file=sys.stderr)
+        print(
+            "hint: ensure the proposal workdir is writable, or pass an explicit absolute --out-dir",
+            file=sys.stderr,
+        )
         return 2
 
     table_rows: list[list[str]] = [["文件", unit, "预算(min~max)", "偏差"]]
@@ -844,7 +868,10 @@ def main(argv: list[str]) -> int:
         md_path.write_text(md, encoding="utf-8")
     except OSError as e:
         print(f"error: cannot write md report: {md_path} ({e})", file=sys.stderr)
-        print("hint: use --out-dir to write reports to a writable directory", file=sys.stderr)
+        print(
+            "hint: ensure the proposal workdir is writable, or pass an explicit absolute --out-dir",
+            file=sys.stderr,
+        )
         return 2
 
     print(f"OK: total {unit}={total_value} files={len(file_results)}")
