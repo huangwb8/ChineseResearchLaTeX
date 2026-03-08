@@ -10,6 +10,10 @@
 
 ### Changed（变更）
 
+- **v1.0.6 → v1.0.7**：Nano Banana 模式新增“严禁图内总标题”硬约束；无论默认 prompt、`patch` 还是 `full` 覆盖，都不会再要求生成图的总标题
+- `scripts/generate_roadmap.py`：移除 Nano Banana 默认 prompt 中的“总标题”注入，并把“禁总标题”加入每轮强制护栏
+- `tests/Gemini画图-优化-v202603012236/test_smoke.py`：新增“prompt 不含总标题且显式禁止总标题”的回归断言
+- 文档同步：`SKILL.md`、`README.md`
 - **v1.0.5 → v1.0.6**：Nano Banana 多轮自优化时，`full prompt override` 也会自动补齐“字体与文字排版”硬约束，避免后续轮次丢失防扭曲规则
 - `scripts/generate_roadmap.py`：新增字体护栏注入函数；无论默认 prompt、`patch` 还是 `full` 覆盖，真正传给 Gemini 的 prompt 都强制包含字体/文字排版约束
 - `scripts/generate_roadmap.py`：`ai_critic_request.md` 与协议注释补充“字体约束自动保留”说明，并把 `patch` 标记为更稳的建议模式

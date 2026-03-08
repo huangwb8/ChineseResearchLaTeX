@@ -311,6 +311,12 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 nsfc-roadmap 和 nsfc-schematic 的 nano banana 模式 优化
 
+- 严禁生成的图片里带有图的总标题。 因为放入标书时这个总标题会被删除，所以没有意义。 
+
+---
+
+nsfc-roadmap 和 nsfc-schematic 的 nano banana 模式 优化
+
 - 多轮自优化时，有时候字体会慢慢变形。 是不是每次优化时，关于字体的约束没有加入prompt里？必须保证每一次与 nano banana 的交互prompt中包含字体相关约束； 否则生成的图片的字体可能会扭曲。
 
 ---

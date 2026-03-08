@@ -10,6 +10,8 @@
 
 ### Changed（变更）
 
+- **nsfc-roadmap v1.0.6 → v1.0.7**：Nano Banana 模式新增“严禁图内总标题”硬约束；默认 prompt 不再注入总标题，且 `full/patch` 覆盖后仍会自动保留禁标题规则
+- **nsfc-schematic v1.0.6 → v1.0.7**：Nano Banana 模式新增“严禁图内总标题”硬约束；`full/patch` 覆盖后仍会自动保留禁标题规则
 - **nsfc-roadmap v1.0.5 → v1.0.6**：修复 Nano Banana 多轮自优化时 `full prompt override` 可能丢失字体/文字排版约束的问题；现在每轮真正发给 Gemini 的 prompt 都会自动补齐防扭曲字体护栏，并同步更新协议说明与回归测试
 - **nsfc-schematic v1.0.5 → v1.0.6**：修复 Nano Banana 多轮自优化时 `full prompt override` 可能丢失字体/文字排版约束的问题；现在每轮真正发给 Gemini 的 prompt 都会自动补齐防扭曲字体护栏，并同步更新协议说明与回归测试
 - **nsfc-reviewers v1.3.0 → v1.4.0**：评审新增“资助额度约束识别”规则；当研究内容/研究方法的短板明显来自青年基金常见 `30–40w`、面上项目常见 `50–60w` 的资助边界时，报告会明确说明“受基金所限”的缺陷归因，并同步给出“若资助不受限时的完整设计参考”

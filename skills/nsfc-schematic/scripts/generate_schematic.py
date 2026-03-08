@@ -122,6 +122,7 @@ def _nano_banana_font_guard_lines(node_font: int, edge_font: int) -> List[str]:
         _NANO_BANANA_FONT_GUARD_MARKER,
         "",
         f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。",
+        "- 严禁在图内生成总标题/图题/caption；申请书中的图题会在版面阶段单独处理，这张图本身不需要也不允许顶部总标题。",
         "- 【重要】文字排版必须像打印稿：禁止任何文字扭曲/弯曲/透视变形/拉伸压缩/笔画融化；禁止旋转文字、禁止斜体/手写/艺术字。",
         "- 字体风格必须是标准无衬线印刷体（类似 思源黑体 / 微软雅黑 / Arial），字重正常；文字颜色用纯黑或深灰。",
         "- 所有文字放在水平的白色/浅色圆角标签框内，保留内边距；不要让文字直接压在线条/箭头/背景色块上。",
@@ -833,6 +834,7 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
         lines.append(f"- 配色：{color_name}（学术风、低饱和，保证对比度）。")
     else:
         lines.append("- 配色：学术蓝/灰为主（低饱和），保证文字与背景对比度。")
+    lines.append("- 严禁在图内绘制总标题/图题/caption；若需要图题，请留给标书正文或图注系统处理。")
     lines.append("")
     lines.append("图内容（必须覆盖以下分组、节点与连接关系；文字尽量短）：")
     lines.append("- 文字内容必须严格使用下文给出的分组/节点/连线标签原文，不要改写/翻译/增删前后缀。")

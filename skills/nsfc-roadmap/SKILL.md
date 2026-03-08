@@ -252,6 +252,7 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 - 证据包会携带 `nano_banana_prompt.md`（本轮传给 Gemini 的完整 prompt），便于你对照当前绘图指令。
 - 你可以在响应中提供 `nano_banana_prompt` 字段，用于控制下一轮传给 Gemini 的 prompt（见下方协议）。
 - 无论 `nano_banana_prompt.mode` 使用 `full` 还是 `patch`，脚本都会在真正发给 Gemini 的 prompt 中自动补齐“字体与文字排版”硬约束，避免多轮优化时把防扭曲规则丢掉。
+- Nano Banana 模式严禁在图内生成总标题/图题；若标书需要图题，应由正文图注承担，而不是画进 PNG。
 - 宿主 AI 需要判断当前“整体风格”（构图/线条/配色/质感）是否已经足够好：
   - 若足够好：在响应里写 `style_continuity: true`；下一轮会把上一轮 `roadmap.png` 作为参考图一并传给 Gemini，以保证风格延续，避免“开盲盒式换风格”。
   - 若仍需大改：写 `style_continuity: false`；下一轮不传参考图（让模型有空间重做风格）。

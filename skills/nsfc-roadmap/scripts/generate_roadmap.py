@@ -110,6 +110,7 @@ def _nano_banana_font_guard_lines(node_font: int) -> List[str]:
         _NANO_BANANA_FONT_GUARD_MARKER,
         "",
         f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px（缩印后仍可读）。",
+        "- 严禁在图内生成总标题/图题/caption；申请书中的图题会在版面阶段单独处理，这张图本身不需要也不允许顶部总标题。",
         "- 字体风格必须是电脑排版的印刷体（无衬线优先，类似 Noto Sans CJK / 思源黑体 / 微软雅黑），正文常规字重；阶段标题条可加粗。",
         "- 所有文字必须水平排版（0°）；禁止旋转/倾斜/弯曲/透视/沿路径排版；禁止艺术字/手写/书法/喷涂。",
         "- 禁止文字变形（拉伸/压缩/波浪/重影/笔画粘连/低对比/模糊/锯齿）；边缘锐利，黑字高对比。",
@@ -259,9 +260,9 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
             if v:
                 lines.append(f"  - {k}: {v}")
     lines.append("- 注意：下文节点后的方括号标签（如 [critical]）仅用于类型/配色提示，不要作为节点文字渲染到图中。")
+    lines.append("- 严禁在图内绘制总标题/图题/caption；若需要图题，请留给标书正文或图注系统处理。")
     lines.append("")
     lines.append("图内容（必须覆盖以下阶段与节点；每个节点文字尽量短）：")
-    lines.append(f"- 总标题：{spec.title}")
 
     id2text: Dict[str, str] = {}
     for ph in spec.phases:

@@ -225,7 +225,7 @@ python3 nsfc-roadmap/scripts/nano_banana_check.py
 
 - 脚本每次只渲染/评估 1 轮，并在 `output_dir/.nsfc-roadmap/ai/{run_dir}/` 生成证据包与 `ai_critic_request.md`
 - 你（宿主 AI）阅读证据包后，把结构化响应写入 `ai_critic_response.yaml`（spec/config_local patch + stop/continue）
-- 若 `--renderer nano_banana`（Gemini PNG-only），证据包还会包含 `nano_banana_prompt.md`；你也可在响应中提供 `nano_banana_prompt` 字段来控制下一轮传给 Gemini 的 prompt（含 `nano_banana_prompt_only` action）；脚本会在每一轮真正发送前自动补齐字体/文字排版硬约束，避免多轮自优化时字体约束漂移
+- 若 `--renderer nano_banana`（Gemini PNG-only），证据包还会包含 `nano_banana_prompt.md`；你也可在响应中提供 `nano_banana_prompt` 字段来控制下一轮传给 Gemini 的 prompt（含 `nano_banana_prompt_only` action）；脚本会在每一轮真正发送前自动补齐字体/文字排版硬约束，避免多轮自优化时字体约束漂移，并强制禁止图内总标题
 - 再次运行脚本即可自动应用 patch 并进入下一轮（不在脚本内调用外部模型 API）
 
 > 推荐做法：把 `evaluation.stop_strategy: ai_critic` 写到 `output_dir/.nsfc-roadmap/config_local.yaml`，作为”仅本次实例生效”的开关。
