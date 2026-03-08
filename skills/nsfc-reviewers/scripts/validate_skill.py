@@ -87,6 +87,7 @@ def main() -> int:
 
     _validate_output_settings(cfg, errors)
     _validate_stage_assessment(cfg, errors)
+    _validate_funding_context(cfg, errors)
     _validate_parallel_review(cfg, skill_root, errors)
     _validate_scripts(skill_root, errors)
     _validate_references(skill_root, errors)
@@ -249,6 +250,55 @@ def _validate_stage_assessment(cfg: dict, errors: list[str]) -> None:
             errors.append(f"config.yaml: stage_assessment.stages.{stage_id}.key_checks must be a list with at least 2 items")
 
 
+def _validate_funding_context(cfg: dict, errors: list[str]) -> None:
+    fc = cfg.get("funding_context") if isinstance(cfg, dict) else None
+    if not isinstance(fc, dict):
+        errors.append("config.yaml: missing funding_context (dict)")
+        return
+
+    for k in ["enabled", "require_contextualized_judgement", "unknown_policy", "project_types", "report_requirements"]:
+        if k not in fc:
+            errors.append(f"config.yaml: funding_context missing {k}")
+
+    for k in ["enabled", "require_contextualized_judgement"]:
+        if k in fc and not isinstance(fc.get(k), bool):
+            errors.append(f"config.yaml: funding_context.{k} must be a bool")
+
+    unknown_policy = str(fc.get("unknown_policy") or "").strip().lower()
+    if unknown_policy and unknown_policy not in {"conservative"}:
+        errors.append("config.yaml: funding_context.unknown_policy must be conservative")
+
+    project_types = fc.get("project_types")
+    if not isinstance(project_types, dict):
+        errors.append("config.yaml: funding_context.project_types must be a dict")
+        return
+
+    for project_type in ["youth", "general"]:
+        item = project_types.get(project_type)
+        if not isinstance(item, dict):
+            errors.append(f"config.yaml: funding_context.project_types.{project_type} must be a dict")
+            continue
+        labels = item.get("labels")
+        budget_range = item.get("typical_budget_wan_range")
+        interpretation = str(item.get("interpretation") or "").strip()
+        if not isinstance(labels, list) or not labels:
+            errors.append(f"config.yaml: funding_context.project_types.{project_type}.labels must be a non-empty list")
+        if not isinstance(budget_range, list) or len(budget_range) != 2:
+            errors.append(
+                f"config.yaml: funding_context.project_types.{project_type}.typical_budget_wan_range must be a 2-item list"
+            )
+        elif not all(isinstance(x, (int, float)) for x in budget_range) or float(budget_range[0]) > float(budget_range[1]):
+            errors.append(
+                f"config.yaml: funding_context.project_types.{project_type}.typical_budget_wan_range must be ascending numbers"
+            )
+        if not interpretation:
+            errors.append(f"config.yaml: funding_context.project_types.{project_type}.interpretation is empty")
+
+    report_requirements = fc.get("report_requirements")
+    if not isinstance(report_requirements, list) or len(report_requirements) < 3:
+        errors.append("config.yaml: funding_context.report_requirements must be a list with at least 3 items")
+
+
 def _validate_scripts(skill_root: Path, errors: list[str]) -> None:
     required = [
         "scripts/build_parallel_vibe_plan.py",
@@ -321,6 +371,8 @@ def _validate_docs_consistency(cfg: dict, skill_md_text: str, readme_text: str, 
             errors.append(f"{label}: missing default 函评/会评 stage assessment section")
         if "给过 / 不给过" not in t:
             errors.append(f"{label}: missing explicit binary verdict wording '给过 / 不给过'")
+        if "资助额度" not in t:
+            errors.append(f"{label}: missing funding-constraint guidance")
 
     pr = cfg.get("parallel_review") if isinstance(cfg, dict) else None
     pr = pr if isinstance(pr, dict) else {}

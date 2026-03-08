@@ -4,8 +4,8 @@
 # 技能基本信息
 skill_info:
   name: nsfc-reviewers
-  version: 1.3.0
-  description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议"
+  version: 1.4.0
+  description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议，并识别受资助额度限制的设计妥协"
   author: "Bensz Conan"
   category: writing
 
@@ -36,6 +36,27 @@ stage_assessment:
         - 项目是否具备相对竞争力，能在同场比较中进入前列
         - 核心亮点是否足够鲜明，能支撑专家讨论与投票
         - 现有短板是否会在会评讨论中被放大
+
+# 资助额度约束识别（默认写入相关问题）
+funding_context:
+  enabled: true
+  require_contextualized_judgement: true
+  # 若无法识别项目类型/金额，默认保守处理：不硬套额度区间
+  unknown_policy: conservative
+  project_types:
+    youth:
+      labels: [青年基金, 青年项目, NSFC_Young, Young]
+      typical_budget_wan_range: [30, 40]
+      interpretation: 优先支持单一主问题与最小可行验证闭环，不宜按“大课题/平台型项目”标准苛责完整度
+    general:
+      labels: [面上项目, 面上, NSFC_General, General]
+      typical_budget_wan_range: [50, 60]
+      interpretation: 可支持较完整研究链条，但通常不足以覆盖大队列、多中心、全机制打通或重资产平台化设计
+  report_requirements:
+    - 当某项短板明显与资助额度约束有关时，必须显式标注“受资助额度限制”
+    - 不得将受限妥协简单归因为申请人能力不足、视野不足或设计偷懒
+    - 必须同时说明该受限设计在当前基金框架下的合理性边界
+    - 必须补充“若资助不受限时的完整设计”作为对照，提醒用户理想完整版应包含什么
 
 # 评审维度配置
 review_dimensions:

@@ -153,6 +153,18 @@ nsfc-abstract优化
 
 目前， projects 里项目的 .vscode/settings.json 里， xelatex 之类的路径是绝对路径； 或者说是一个确定性的路径。 然而，用户的配置环境可能是很多样的。 不一定是这个路径。 在这方面，有没有办法让 settings.json  变得更加通用，即可以智能识别用户当前环境下的这些编译器的路径？
 
+# nsfc-length-aligner
+
+skills/nsfc-length-aligner 优化
+
+- 目前， 该skill工作时的中间文件可能会泄露，不是严格在工作目录里的 .nsfc-length-aligner 里。我希望可以严格在 .nsfc-length-aligner 里，不要污染项目
+
+# nsfc-reviewers
+
+nsfc-reviewers skill 优化
+
+- 标书的某些部分好坏还受到项目资助力度的限制。一般来说，青年基金只有30-40w，面上项目只有50-60w。因此，用户在设计研究内容/研究方法时，可能会因为这个基金限制而有所妥协（比如，实验设计只能达成一个比较弱的目标）。 但这并不是缺陷，反而是优点，因为国自然的资助额是有限的；如果你觉得用户的研究内容设计的缺陷和这个资助额度有关，你应该在report里说明受基金所限这里的设计有缺陷。并且提醒用户一个完全的设计是怎么样的（假设资助金额没有限制）
+
 # nsfc-code
 
 ---

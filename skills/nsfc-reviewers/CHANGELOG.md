@@ -6,6 +6,11 @@
 
 ### Changed（变更）
 
+- `config.yaml`：版本号 `1.3.0 → 1.4.0`；新增 `funding_context` 配置节，要求评审时识别“受资助额度限制的设计妥协”，并内置青年基金常见 `30–40w`、面上项目常见 `50–60w` 的解释口径。
+- `SKILL.md`：新增“资助额度约束识别（硬规则）”，要求将“设计错误”与“受限妥协”区分开；凡是因基金资助额度受限导致的方案偏弱，必须在报告中说明根因，并补充“若资助不受限时的完整设计参考”。
+- `README.md` / `references/master_prompt_template.md` / `references/aggregation_rules.md` / `references/expert_*.md`：同步用户文档、聚合模板与专家原始评审口径，确保该规则不仅写在说明文档里，也会真正下沉到各专家与最终报告。
+- `scripts/validate_skill.py`：新增 `funding_context` 结构校验，以及 `SKILL.md` / `README.md` 是否包含“资助额度约束”说明的一致性检查。
+
 - `config.yaml`：版本号 `1.2.1 → 1.3.0`；将 `parallel_review.default_panel_count` 从 `7` 调整为 `3`，并将 `parallel_review.max_panel_count` 从 `7` 调整为 `5`，降低默认调用成本，同时保留多组交叉评审能力。
 - `config.yaml`：`skill_info.category` 规范化为 `writing`，与项目统一的技能元数据枚举保持一致。
 - `scripts/validate_skill.py`：新增 `skill_info.category` 与 `parallel_review.default_panel_count/max_panel_count` 的结构校验，并补充 README 中“默认组数 / 最大组数 / 每组专家 / 总专家人次”与配置一致性的自动检查，防止文档再次漂移。
