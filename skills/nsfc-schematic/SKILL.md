@@ -310,6 +310,7 @@ Nano Banana（Gemini PNG-only）+ ai_critic 额外约定：
   - 若足够好：写 `style_continuity: true`；下一轮会把上一轮 `schematic.png` 作为参考图传入 Gemini，保证风格延续。
   - 若仍需大改：写 `style_continuity: false`；下一轮不传参考图（避免把坏风格固化）。
 - 若认为配色仍需优化，可写 `nano_banana_color_advice`；脚本会自动拼到下一轮 prompt 里。
+- 无论 `nano_banana_prompt.mode` 使用 `full` 还是 `patch`，脚本都会在真正发给 Gemini 的 prompt 中自动补齐“字体与文字排版”硬约束，避免多轮优化时字体规则丢失。
 
 最小示例（通用）：
 

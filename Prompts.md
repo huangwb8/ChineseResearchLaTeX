@@ -311,6 +311,12 @@ PlanName = 借鉴roadmap-优化-v202602191311
 
 nsfc-roadmap 和 nsfc-schematic 的 nano banana 模式 优化
 
+- 多轮自优化时，有时候字体会慢慢变形。 是不是每次优化时，关于字体的约束没有加入prompt里？必须保证每一次与 nano banana 的交互prompt中包含字体相关约束； 否则生成的图片的字体可能会扭曲。
+
+---
+
+nsfc-roadmap 和 nsfc-schematic 的 nano banana 模式 优化
+
 - 目前出png的时候，由于是4k级别的，一般是比较大的。 但是，国自然标书对最终的PDF的文件大小是有要求的。 因此，我希望在原来4k png的基础上，转一个体积变小很多，但质量损耗很小（至少在标书的A4纸打印出来后）的png，命名为 xxx_compacted.png
 
 ---

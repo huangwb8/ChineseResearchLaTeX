@@ -10,6 +10,11 @@
 
 ### Changed（变更）
 
+- **v1.0.5 → v1.0.6**：Nano Banana 多轮自优化时，`full prompt override` 也会自动补齐“字体与文字排版”硬约束，避免后续轮次丢失防扭曲规则
+- `scripts/generate_roadmap.py`：新增字体护栏注入函数；无论默认 prompt、`patch` 还是 `full` 覆盖，真正传给 Gemini 的 prompt 都强制包含字体/文字排版约束
+- `scripts/generate_roadmap.py`：`ai_critic_request.md` 与协议注释补充“字体约束自动保留”说明，并把 `patch` 标记为更稳的建议模式
+- `tests/Gemini画图-优化-v202603012236/test_smoke.py`：新增 full prompt 护栏注入回归断言
+- 文档同步：`SKILL.md`、`README.md`
 - `config.yaml`：新增 `renderer.canvas.lock_aspect_ratio=true`，将用户指定的画布宽高比视为硬约束
 - `scripts/generate_roadmap.py`：实例级 `config_local` 若只改画布宽或高，会自动补全另一边以保持当前比例；`ai_critic` 请求新增“当前画布锁定”说明，禁止无故改比例
 - `scripts/generate_roadmap.py`：Nano Banana + `ai_critic` 的 `nano_banana_prompt` 改为持久化到 `ai_state.yaml`，避免下一轮回退到默认比例提示词

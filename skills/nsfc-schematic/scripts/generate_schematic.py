@@ -114,6 +114,40 @@ def _lock_canvas_request(width_px: int, height_px: int, ratio: float) -> Tuple[i
     return min((keep_width, keep_height), key=lambda item: (item[0] * item[1], item[0] + item[1]))
 
 
+_NANO_BANANA_FONT_GUARD_MARKER = "## 字体与文字排版（系统强制保留）"
+
+
+def _nano_banana_font_guard_lines(node_font: int, edge_font: int) -> List[str]:
+    return [
+        _NANO_BANANA_FONT_GUARD_MARKER,
+        "",
+        f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。",
+        "- 【重要】文字排版必须像打印稿：禁止任何文字扭曲/弯曲/透视变形/拉伸压缩/笔画融化；禁止旋转文字、禁止斜体/手写/艺术字。",
+        "- 字体风格必须是标准无衬线印刷体（类似 思源黑体 / 微软雅黑 / Arial），字重正常；文字颜色用纯黑或深灰。",
+        "- 所有文字放在水平的白色/浅色圆角标签框内，保留内边距；不要让文字直接压在线条/箭头/背景色块上。",
+        "- 若节点/连线标签过长：优先拆成 2 行内短句（仍保持水平），不要通过缩到极小字号、压缩字距或扭曲字形来塞进框里。",
+        "- 出图前请自检：每个标签内的汉字笔画清晰、无错位/断笔/粘连；若无法保证，宁可减少文字、扩大标签框或增加留白。",
+        "- 若自定义 full prompt 与上述规则冲突，以本节规则为准；每一轮都必须保留本节全部约束。",
+    ]
+
+
+def _ensure_nano_banana_typography_guardrails(prompt: str, *, node_font: int, edge_font: int) -> str:
+    text = str(prompt or "").strip()
+    if _NANO_BANANA_FONT_GUARD_MARKER in text:
+        return text.rstrip() + "\n"
+
+    guard = "\n".join(_nano_banana_font_guard_lines(node_font, edge_font))
+    output_anchor = "输出要求：只输出图片本身（不要输出解释文本）。"
+    if output_anchor in text:
+        head, tail = text.rsplit(output_anchor, 1)
+        text = head.rstrip() + "\n\n" + guard + "\n\n" + output_anchor + tail
+    elif text:
+        text = text.rstrip() + "\n\n" + guard
+    else:
+        text = guard
+    return text.rstrip() + "\n"
+
+
 def _apply_canvas_ratio_lock_to_patch(
     base_cfg: Dict[str, Any],
     local_cfg: Dict[str, Any],
@@ -790,11 +824,6 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
     lines.append("- 输出分辨率为 4K 级（长边>=3840px；按画布比例缩放，必要时以白底补边保持内容完整）。")
     lines.append(f"- 画布比例必须严格匹配 {canvas_w}:{canvas_h}，内容需居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px，连线标签≈{edge_font}px（缩印后仍可读）。")
-    lines.append("- 【重要：文字排版必须像“打印出来的一样”】【禁止】任何文字扭曲/弯曲/透视变形/拉伸压缩/笔画融化；禁止旋转文字、禁止斜体/手写/艺术字。")
-    lines.append("- 字体风格：标准无衬线印刷体（类似 思源黑体/微软雅黑/Arial），字重正常；文字颜色用纯黑或深灰。")
-    lines.append("- 文字承载方式：所有文字放在“水平的白色/浅色圆角标签框”里（有内边距），不要让文字直接压在线条/箭头/背景色块上。")
-    lines.append("- 若某个节点/连线标签过长：优先拆成 2 行内短句（仍保持水平），不要把字体缩到难以缩印阅读，也不要通过压缩字距/扭曲字形来塞进框里。")
-    lines.append("- 出图前请自检：每个标签内的汉字笔画清晰、无错位/断笔/粘连；若无法保证，宁可减少文字、扩大标签框或增加留白。")
     lines.append("- 不要水印/签名/LOGO/背景纹理；不要 3D、不要拟物、不要照片风。")
     lines.append("")
     lines.append("布局要求：")
@@ -845,7 +874,7 @@ def _build_nano_banana_prompt(spec: Any, cfg_used: Dict[str, Any]) -> str:
 
     lines.append("")
     lines.append("输出要求：只输出图片本身（不要输出解释文本）。")
-    return "\n".join(lines) + "\n"
+    return _ensure_nano_banana_typography_guardrails("\n".join(lines), node_font=node_font, edge_font=edge_font)
 
 
 def _load_input_spec(args: argparse.Namespace, config: Dict[str, Any], request_dir: Path) -> Dict[str, Any]:
@@ -1233,6 +1262,7 @@ def _write_ai_critic_request(
                 "",
                 "当前使用的 prompt：`nano_banana_prompt.md`（本轮传给 Gemini 的完整文本）。",
                 "如需调整 Gemini 的绘图行为，可在响应中提供 `nano_banana_prompt` 字段。",
+                "注意：无论使用 `full` 还是 `patch`，脚本都会自动补齐字体/文字排版硬约束；不要删除这类约束。",
                 "",
             ]
         )
@@ -1296,7 +1326,7 @@ def _write_ai_critic_request(
         lines.append("#   - 保证文本对比度（深色字 + 浅色填充）")
         lines.append("# 可选（仅 nano_banana）：提供下一轮传给 Gemini 的 prompt")
         lines.append("# nano_banana_prompt:")
-        lines.append("#   mode: full    # full=全量替换（推荐）| patch=追加到确定性 prompt 末尾")
+        lines.append("#   mode: full    # patch=更稳（推荐）| full=全量替换（脚本仍会自动补齐字体硬约束）")
         lines.append("#   content: |")
         lines.append("#     你是一名科研申请书插图设计师...")
         lines.append("")
@@ -1932,6 +1962,12 @@ def main() -> None:
                             info("nano_banana: 使用 AI 提供的 full prompt")
                     else:
                         prompt = _build_nano_banana_prompt(spec, cfg_used)
+                    font_cfg = (cfg_used.get("layout", {}) or {}).get("font", {}) or {}
+                    prompt = _ensure_nano_banana_typography_guardrails(
+                        prompt,
+                        node_font=int(font_cfg.get("node_label_size", 26) or 26),
+                        edge_font=int(font_cfg.get("edge_label_size", 22) or 22),
+                    )
 
                     reference_images: List[Path] = []
                     previous_ref: Optional[Path] = None

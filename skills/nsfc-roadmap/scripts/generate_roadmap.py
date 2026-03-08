@@ -102,6 +102,40 @@ def _lock_canvas_request(width_px: int, height_px: int, ratio: float) -> tuple[i
     return min((keep_width, keep_height), key=lambda item: (item[0] * item[1], item[0] + item[1]))
 
 
+_NANO_BANANA_FONT_GUARD_MARKER = "## 字体与文字排版（系统强制保留）"
+
+
+def _nano_banana_font_guard_lines(node_font: int) -> List[str]:
+    return [
+        _NANO_BANANA_FONT_GUARD_MARKER,
+        "",
+        f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px（缩印后仍可读）。",
+        "- 字体风格必须是电脑排版的印刷体（无衬线优先，类似 Noto Sans CJK / 思源黑体 / 微软雅黑），正文常规字重；阶段标题条可加粗。",
+        "- 所有文字必须水平排版（0°）；禁止旋转/倾斜/弯曲/透视/沿路径排版；禁止艺术字/手写/书法/喷涂。",
+        "- 禁止文字变形（拉伸/压缩/波浪/重影/笔画粘连/低对比/模糊/锯齿）；边缘锐利，黑字高对比。",
+        "- 文字必须完整落在对应框/标题条内部，四周留足 padding；长文本自动换行（最多 2 行），行距适中。",
+        "- 文字语言必须是简体中文（允许英文缩写/数字保留）；禁止乱码/错别字/拼写错误；不要生成任何多余文字。",
+        "- 若自定义 full prompt 与上述规则冲突，以本节规则为准；每一轮都必须保留本节全部约束。",
+    ]
+
+
+def _ensure_nano_banana_typography_guardrails(prompt: str, *, node_font: int) -> str:
+    text = str(prompt or "").strip()
+    if _NANO_BANANA_FONT_GUARD_MARKER in text:
+        return text.rstrip() + "\n"
+
+    guard = "\n".join(_nano_banana_font_guard_lines(node_font))
+    output_anchor = "输出要求：只输出图片本身（不要输出解释文本）。"
+    if output_anchor in text:
+        head, tail = text.rsplit(output_anchor, 1)
+        text = head.rstrip() + "\n\n" + guard + "\n\n" + output_anchor + tail
+    elif text:
+        text = text.rstrip() + "\n\n" + guard
+    else:
+        text = guard
+    return text.rstrip() + "\n"
+
+
 def _apply_canvas_ratio_lock_to_patch(
     base_cfg: Dict[str, Any],
     local_cfg: Dict[str, Any],
@@ -208,15 +242,6 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
     lines.append(f"- 画布比例必须严格匹配 {canvas_w}:{canvas_h}，内容居中且四周留白均衡。")
     lines.append(f"- 所有文字必须清晰可读，不溢出；节点文字建议字号≈{node_font}px（缩印后仍可读）。")
     lines.append("")
-    lines.append("字体与文字排版（强约束，用于降低文字扭曲/乱码风险）：")
-    lines.append(
-        "- 字体风格必须是电脑排版的印刷体（无衬线优先，类似 Noto Sans CJK / 思源黑体 / 微软雅黑），"
-        "正文常规字重；阶段标题条可加粗。"
-    )
-    lines.append("- 所有文字必须水平排版（0°）；禁止旋转/倾斜/弯曲/透视/沿路径排版；禁止艺术字/手写/书法/喷涂。")
-    lines.append("- 禁止文字变形（拉伸/压缩/波浪/重影/笔画粘连/低对比/模糊/锯齿）；边缘锐利，黑字高对比。")
-    lines.append("- 文字必须完整落在对应框/标题条内部，四周留足 padding；长文本自动换行（最多 2 行），行距适中。")
-    lines.append("- 文字语言必须是简体中文（允许英文缩写/数字保留）；禁止乱码/错别字/拼写错误；不要生成任何多余文字。")
     lines.append("- 不要水印/签名/LOGO/背景纹理；不要 3D、不要拟物、不要照片风。")
     lines.append("")
     lines.append("布局要求：")
@@ -271,7 +296,7 @@ def _build_nano_banana_prompt(spec: RoadmapSpec, cfg_used: Dict[str, Any]) -> st
 
     lines.append("")
     lines.append("输出要求：只输出图片本身（不要输出解释文本）。")
-    return "\n".join(lines) + "\n"
+    return _ensure_nano_banana_typography_guardrails("\n".join(lines), node_font=node_font)
 
 
 def _ensure_intermediate_gitignore(intermediate_dir: Path) -> None:
@@ -913,6 +938,7 @@ def _write_ai_critic_request(
                 "",
                 "当前使用的 prompt：`nano_banana_prompt.md`（本轮传给 Gemini 的完整文本）。",
                 "如需调整 Gemini 的绘图行为，可在响应中提供 `nano_banana_prompt` 字段。",
+                "注意：无论使用 `full` 还是 `patch`，脚本都会自动补齐字体/文字排版硬约束；不要删除这类约束。",
                 "",
             ]
         )
@@ -976,7 +1002,7 @@ def _write_ai_critic_request(
         lines.append("#   - 保证文本对比度（深色字 + 浅色填充）；避免低饱和灰底叠浅灰字")
         lines.append("# 可选（仅 nano_banana 模式）：提供下一轮传给 Gemini 的 prompt")
         lines.append("# nano_banana_prompt:")
-        lines.append("#   mode: full    # full=全量替换（推荐）| patch=追加到确定性 prompt 末尾")
+        lines.append("#   mode: full    # patch=更稳（推荐）| full=全量替换（脚本仍会自动补齐字体硬约束）")
         lines.append("#   content: |")
         lines.append("#     你是一名科研申请书插图设计师...")
         lines.append("")
@@ -1877,6 +1903,7 @@ def main() -> None:
                     info("nano_banana: 使用 AI 提供的 full prompt")
             else:
                 prompt = _build_nano_banana_prompt(spec_obj, cfg_used)
+            prompt = _ensure_nano_banana_typography_guardrails(prompt, node_font=int(((renderer_cfg.get("fonts", {}) or {}).get("default_size", 28)) or 28))
             try:
                 reference_images: List[Path] = []
                 previous_ref: Optional[Path] = None
