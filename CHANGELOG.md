@@ -8,29 +8,28 @@
 
 ## [Unreleased]
 
+## [v3.5.1] - 2026-03-08
+
 ### Changed（变更）
 
-- **nsfc-roadmap v1.0.6 → v1.0.7**：Nano Banana 模式新增“严禁图内总标题”硬约束；默认 prompt 不再注入总标题，且 `full/patch` 覆盖后仍会自动保留禁标题规则
-- **nsfc-schematic v1.0.6 → v1.0.7**：Nano Banana 模式新增“严禁图内总标题”硬约束；`full/patch` 覆盖后仍会自动保留禁标题规则
+- **nsfc-roadmap v1.0.6 → v1.0.7**：Nano Banana 模式新增”严禁图内总标题”硬约束；默认 prompt 不再注入总标题，且 `full/patch` 覆盖后仍会自动保留禁标题规则
+- **nsfc-schematic v1.0.6 → v1.0.7**：Nano Banana 模式新增”严禁图内总标题”硬约束；`full/patch` 覆盖后仍会自动保留禁标题规则
 - **nsfc-roadmap v1.0.5 → v1.0.6**：修复 Nano Banana 多轮自优化时 `full prompt override` 可能丢失字体/文字排版约束的问题；现在每轮真正发给 Gemini 的 prompt 都会自动补齐防扭曲字体护栏，并同步更新协议说明与回归测试
 - **nsfc-schematic v1.0.5 → v1.0.6**：修复 Nano Banana 多轮自优化时 `full prompt override` 可能丢失字体/文字排版约束的问题；现在每轮真正发给 Gemini 的 prompt 都会自动补齐防扭曲字体护栏，并同步更新协议说明与回归测试
-- **nsfc-reviewers v1.3.0 → v1.4.0**：评审新增“资助额度约束识别”规则；当研究内容/研究方法的短板明显来自青年基金常见 `30–40w`、面上项目常见 `50–60w` 的资助边界时，报告会明确说明“受基金所限”的缺陷归因，并同步给出“若资助不受限时的完整设计参考”
+- **nsfc-reviewers v1.3.0 → v1.4.0**：评审新增”资助额度约束识别”规则；当研究内容/研究方法的短板明显来自青年基金常见 `30–40w`、面上项目常见 `50–60w` 的资助边界时，报告会明确说明”受基金所限”的缺陷归因，并同步给出”若资助不受限时的完整设计参考”
 - **nsfc-reviewers v1.2.1 → v1.3.0**：将默认评审组数从 `7` 调整为 `3`、最大组数从 `7` 调整为 `5`，避免默认触发 `49` 人次评审造成成本与等待时间过高；同时补齐技能元数据枚举与文档一致性校验
 - **nsfc-reviewers v1.2.0 → v1.2.1**：将默认评审团数量从 `2` 组调整为 `7` 组，并同步把最大组数调整为 `7`，使技能默认配置更贴近高仿真评审预演场景
-- **nsfc-reviewers v1.1.0 → v1.2.0**：每个评审组固定专家数从 5 位扩展为 7 位，并新增“科学意义与领域影响”“可读性与论证清晰度”两类专家画像；组内共识阈值同步从至少 3 位提高到至少 4 位，更贴近现实函评的 5–7 位专家场景
-- **nsfc-reviewers v1.0.0 → v1.1.0**：评审报告默认新增“基于当前版本直接送审”的函评/会评判断，明确给出 `给过 / 不给过` 二元结论，并补充把握度、主要依据与翻盘关键，帮助用户更直观判断送审风险
+- **nsfc-reviewers v1.1.0 → v1.2.0**：每个评审组固定专家数从 5 位扩展为 7 位，并新增”科学意义与领域影响””可读性与论证清晰度”两类专家画像；组内共识阈值同步从至少 3 位提高到至少 4 位，更贴近现实函评的 5–7 位专家场景
+- **nsfc-reviewers v1.0.0 → v1.1.0**：评审报告默认新增”基于当前版本直接送审”的函评/会评判断，明确给出 `给过 / 不给过` 二元结论，并补充把握度、主要依据与翻盘关键，帮助用户更直观判断送审风险
+- **nsfc-qc v1.1.0 → v1.2.0**：英文缩写预检升级为”按 main.tex 实际渲染顺序 + 全文级缩写注册表”模型
+  - `skills/nsfc-qc/scripts/nsfc_qc_precheck.py`：新增 render stream / abbreviation registry，支持 `late_definition`、`conflicting_english_full_name`、`conflicting_chinese_full`、`repeated_same_definition`
+  - 新增工件：`abbreviation_registry.json`、`abbreviation_render_stream.jsonl`
+  - `skills/nsfc-qc/scripts/materialize_final_outputs.py` / `skills/nsfc-qc/scripts/run_parallel_qc.py`：final findings 与 thread prompt 同步到新 issue model
+  - `skills/nsfc-qc/SKILL.md` / `skills/nsfc-qc/README.md` / `skills/nsfc-qc/references/qc_checklist.md`：文档口径同步到”真实渲染顺序 + 全文唯一性”
 
 ### Added（新增）
 
 - **nsfc-qc**：新增英文缩写检查优化计划文档 `skills/nsfc-qc/plans/英文缩写检查-v202603080812.md`，并显式放行该文件的版本控制；明确后续需按实际渲染顺序与全文级唯一性重构缩写检查
-
-### Changed（变更）
-
-- **nsfc-qc v1.1.0 → v1.2.0**：英文缩写预检升级为“按 main.tex 实际渲染顺序 + 全文级缩写注册表”模型
-  - `skills/nsfc-qc/scripts/nsfc_qc_precheck.py`：新增 render stream / abbreviation registry，支持 `late_definition`、`conflicting_english_full_name`、`conflicting_chinese_full`、`repeated_same_definition`
-  - 新增工件：`abbreviation_registry.json`、`abbreviation_render_stream.jsonl`
-  - `skills/nsfc-qc/scripts/materialize_final_outputs.py` / `skills/nsfc-qc/scripts/run_parallel_qc.py`：final findings 与 thread prompt 同步到新 issue model
-  - `skills/nsfc-qc/SKILL.md` / `skills/nsfc-qc/README.md` / `skills/nsfc-qc/references/qc_checklist.md`：文档口径同步到“真实渲染顺序 + 全文唯一性”
 
 ### Fixed（修复）
 
