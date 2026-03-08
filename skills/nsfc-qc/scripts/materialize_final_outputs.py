@@ -177,13 +177,26 @@ def _deterministic_findings(*, precheck: dict, artifacts: dict) -> List[dict]:
             )
         )
 
-    # P1/P2: abbreviation conventions (best-effort)
+    # P1/P2: abbreviation conventions (render-order + whole-document registry)
     abbr = precheck.get("abbreviation_conventions") or {}
     abbr_sum = (abbr.get("summary") or {}) if isinstance(abbr, dict) else {}
     by_sev = (abbr_sum.get("issues_by_severity") or {}) if isinstance(abbr_sum, dict) else {}
+    by_kind = (abbr_sum.get("issues_by_kind") or {}) if isinstance(abbr_sum, dict) else {}
     abbr_p1 = int(by_sev.get("P1") or 0)
     abbr_p2 = int(by_sev.get("P2") or 0)
-    if abbr_p1 > 0:
+
+    first_use_p1 = sum(
+        int(by_kind.get(key) or 0)
+        for key in ("bare_first_use", "late_definition", "missing_english_full")
+    )
+    conflicts_p1 = sum(
+        int(by_kind.get(key) or 0)
+        for key in ("conflicting_english_full_name", "conflicting_chinese_full")
+    )
+    missing_chinese_p2 = int(by_kind.get("missing_chinese_full") or 0)
+    repeated_same_p2 = int(by_kind.get("repeated_same_definition") or by_kind.get("repeated_expansion") or 0)
+
+    if first_use_p1 > 0:
         out.append(
             _mk_finding(
                 fid="P1-003",
@@ -191,16 +204,39 @@ def _deterministic_findings(*, precheck: dict, artifacts: dict) -> List[dict]:
                 category="style",
                 path="",
                 anchor="precheck.abbreviation_conventions",
-                problem=f"检测到“全称+缩写”首次引入可能不规范的情况：P1 级 {abbr_p1} 项（启发式，需人工复核）。",
+                problem=(
+                    f"检测到缩写首次引入/定义时机问题：P1 级 {first_use_p1} 项"
+                    "（按 main.tex 实际渲染顺序判定，需人工复核）。"
+                ),
                 evidence=[
                     {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_summary_json','')}` for quick summary"},
                     {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for line-level preview"},
                 ],
-                recommendation="一般建议：重要概念首次出现写为“中文全称（English Full Name, ABBR）”，后文尽量仅用 ABBR；按 CSV 逐条核对并做最小修改。",
+                recommendation=(
+                    "一般建议：重要概念首次出现写为“中文全称（English Full Name, ABBR）”；"
+                    "若存在 late_definition，应把定义前移到第一次出现处。"
+                ),
                 status="needs_human_review",
             )
         )
-    if abbr_p2 > 0:
+    if conflicts_p1 > 0:
+        out.append(
+            _mk_finding(
+                fid="P1-004",
+                severity="P1",
+                category="consistency",
+                path="",
+                anchor="precheck.abbreviation_conventions",
+                problem=f"检测到同一缩写在全文中出现冲突定义：P1 级 {conflicts_p1} 项。",
+                evidence=[
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_registry_json','')}` for whole-document registry"},
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for conflicting locations"},
+                ],
+                recommendation="同一缩写应统一对应唯一的英文全称/中文解释；建议以首次定义为准，最小化修订冲突位置。",
+                status="needs_human_review",
+            )
+        )
+    if missing_chinese_p2 > 0:
         out.append(
             _mk_finding(
                 fid="P2-003",
@@ -208,12 +244,29 @@ def _deterministic_findings(*, precheck: dict, artifacts: dict) -> List[dict]:
                 category="style",
                 path="",
                 anchor="precheck.abbreviation_conventions",
-                problem=f"检测到缩写规范的可选优化项（如缺中文全称/重复展开）：P2 级 {abbr_p2} 项（启发式）。",
+                problem=f"检测到首次定义缺中文全称的可选优化项：P2 级 {missing_chinese_p2} 项。",
                 evidence=[
                     {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_summary_json','')}` for quick summary"},
                     {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for line-level preview"},
                 ],
-                recommendation="按重要性逐条处理：首次定义尽量完整；后文避免重复“Full Name (ABBR)”展开，保持一致性与节省篇幅。",
+                recommendation="按重要性逐条处理：若该缩写为评审不一定熟悉的关键术语，首次定义建议同时补上中文全称。",
+                status="open",
+            )
+        )
+    if repeated_same_p2 > 0:
+        out.append(
+            _mk_finding(
+                fid="P2-004",
+                severity="P2",
+                category="style",
+                path="",
+                anchor="precheck.abbreviation_conventions",
+                problem=f"检测到同一定义的重复展开：P2 级 {repeated_same_p2} 项。",
+                evidence=[
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_registry_json','')}` for repeated-definition chains"},
+                    {"type": "note", "detail": f"see `{artifacts.get('abbreviation_issues_csv','')}` for line-level preview"},
+                ],
+                recommendation="保留首次完整定义，后文尽量直接使用缩写，避免重复展开影响篇幅与一致性。",
                 status="open",
             )
         )
@@ -407,6 +460,8 @@ def main() -> int:
         "quote_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "quote_issues.csv") if (artifacts_dir / "quote_issues.csv").exists() else "",
         "abbreviation_issues_csv": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_issues.csv") if (artifacts_dir / "abbreviation_issues.csv").exists() else "",
         "abbreviation_issues_summary_json": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_issues_summary.json") if (artifacts_dir / "abbreviation_issues_summary.json").exists() else "",
+        "abbreviation_registry_json": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_registry.json") if (artifacts_dir / "abbreviation_registry.json").exists() else "",
+        "abbreviation_render_stream_jsonl": _safe_rel_from(run_dir, artifacts_dir / "abbreviation_render_stream.jsonl") if (artifacts_dir / "abbreviation_render_stream.jsonl").exists() else "",
         "reference_evidence_jsonl": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence.jsonl") if (artifacts_dir / "reference_evidence.jsonl").exists() else "",
         "reference_evidence_summary_json": _safe_rel_from(run_dir, artifacts_dir / "reference_evidence_summary.json") if (artifacts_dir / "reference_evidence_summary.json").exists() else "",
         "parallel_vibe_summary": pv_main_summary,

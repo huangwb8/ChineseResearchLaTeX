@@ -62,6 +62,44 @@ def _copy_if_exists(src: Path, dst: Path) -> None:
     shutil.copy2(src, dst)
 
 
+def _resolve_main_tex(project_root: Path, requested: str) -> Optional[Path]:
+    direct = (project_root / requested).resolve()
+    if direct.exists() and direct.is_file():
+        return direct
+
+    candidates = sorted(project_root.rglob("*.tex"))
+    if not candidates:
+        return None
+
+    def _score(path: Path) -> int:
+        score = 0
+        rel_parts = path.relative_to(project_root).parts
+        name = path.name.lower()
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            text = ""
+        if "\\documentclass" in text:
+            score += 6
+        if "\\begin{document}" in text:
+            score += 4
+        if path.parent == project_root:
+            score += 2
+        if name in {"main.tex", "proposal.tex", "application.tex"}:
+            score += 2
+        if any(part in {"extratex", "template", "figures", "qc"} for part in map(str.lower, rel_parts[:-1])):
+            score -= 3
+        if name.startswith("@"):
+            score -= 2
+        return score
+
+    scored = sorted(((_score(path), path) for path in candidates), key=lambda item: (item[0], str(item[1])), reverse=True)
+    best_score, best_path = scored[0]
+    if best_score < 1:
+        return None
+    return best_path
+
+
 def _run_cmd(cmd: list[str]) -> Tuple[int, str]:
     p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
     return int(p.returncode), (p.stdout or "")
@@ -91,10 +129,14 @@ def main() -> int:
     if not project_root.exists():
         print(f"error: project_root not found: {project_root}", file=sys.stderr)
         return 2
-    main_tex = project_root / args.main_tex
-    if not main_tex.exists():
-        print(f"error: main_tex not found: {main_tex}", file=sys.stderr)
+    main_tex = _resolve_main_tex(project_root, str(args.main_tex))
+    if not main_tex:
+        print(f"error: main_tex not found (or auto-detect failed): {project_root / args.main_tex}", file=sys.stderr)
         return 2
+    try:
+        main_tex_rel = str(main_tex.relative_to(project_root))
+    except Exception:
+        main_tex_rel = str(main_tex)
 
     skill_root = Path(__file__).resolve().parents[1]
     run_parallel_py = skill_root / "scripts" / "run_parallel_qc.py"
@@ -128,7 +170,7 @@ def main() -> int:
         "--project-root",
         str(project_root),
         "--main-tex",
-        str(Path(args.main_tex)),
+        main_tex_rel,
         "--workspace-dir",
         str(workspace_dir),
         "--runs-root",

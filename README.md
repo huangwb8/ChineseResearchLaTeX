@@ -196,7 +196,7 @@ git clone https://github.com/huangwb8/skills.git &&
 - **nsfc-budget**：根据标书正文与补充材料生成预算说明书 LaTeX 项目与 `budget.pdf`，默认将所有中间过程隔离在工作目录 `.nsfc-budget/` 下
 
 #### 🎯 质量保障
-- **nsfc-qc**：标书只读质量控制（多线程并行检查文风生硬、引用真伪与一致性、篇幅与结构分布、逻辑清晰度等，输出标准化 QC 报告）
+- **nsfc-qc**：标书只读质量控制（多线程并行检查文风生硬、引用真伪与一致性、篇幅与结构分布、逻辑清晰度等；缩写预检按实际渲染顺序做全文级注册表检查，输出标准化 QC 报告）
 - **nsfc-ref-alignment**：参考文献与正文引用一致性核查（只读），检查 bibkey 是否存在、BibTeX 字段完备性与格式，并生成结构化输入供 AI 逐条评估"引用-语义"是否匹配
 - **nsfc-reviewers**：模拟领域专家视角对 NSFC 标书进行多维度评审（创新性/可行性/基础与团队等），输出分级问题（P0/P1/P2）与可执行修改建议，支持并行多组评审与跨组共识聚合
 - **nsfc-length-aligner**：篇幅对齐（基于国自然标书篇幅预算标准，检查目标标书篇幅并总结差距，给出针对性优化建议，在尽量不改变原意的前提下扩写/压缩到达标）
@@ -223,7 +223,7 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | v0.1.1 | 📝 日常 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-roadmap](skills/nsfc-roadmap/) | v1.0.5 | 📝 日常 | NSFC 技术路线图生成（.drawio → .svg/.png/.pdf） | ✅ 稳定 |
 | [nsfc-schematic](skills/nsfc-schematic/) | v1.0.5 | 📝 日常 | NSFC 原理图/机制图生成（.drawio → .svg/.png/.pdf） | ✅ 稳定 |
-| [nsfc-qc](skills/nsfc-qc/) | v1.0.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑） | ✅ 稳定 |
+| [nsfc-qc](skills/nsfc-qc/) | v1.2.0 | 📝 日常 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑 + 全文级缩写注册表 QC） | ✅ 稳定 |
 | [nsfc-ref-alignment](skills/nsfc-ref-alignment/) | v0.1.1 | 📝 日常 | NSFC 参考文献与正文引用一致性核查（只读） | 🚧 开发中 |
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v1.0.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟 | ✅ 稳定 |
 | [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.0 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |

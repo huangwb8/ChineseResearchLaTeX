@@ -64,6 +64,44 @@ def _is_safe_rel_path(p: Path) -> bool:
     return (not p.is_absolute()) and (".." not in p.parts)
 
 
+def _resolve_main_tex(project_root: Path, requested: str) -> Optional[Path]:
+    direct = (project_root / requested).resolve()
+    if direct.exists() and direct.is_file():
+        return direct
+
+    candidates = sorted(project_root.rglob("*.tex"))
+    if not candidates:
+        return None
+
+    def _score(path: Path) -> int:
+        score = 0
+        rel_parts = path.relative_to(project_root).parts
+        name = path.name.lower()
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            text = ""
+        if "\\documentclass" in text:
+            score += 6
+        if "\\begin{document}" in text:
+            score += 4
+        if path.parent == project_root:
+            score += 2
+        if name in {"main.tex", "proposal.tex", "application.tex"}:
+            score += 2
+        if any(part in {"extratex", "template", "figures", "qc"} for part in map(str.lower, rel_parts[:-1])):
+            score -= 3
+        if name.startswith("@"):
+            score -= 2
+        return score
+
+    scored = sorted(((_score(path), path) for path in candidates), key=lambda item: (item[0], str(item[1])), reverse=True)
+    best_score, best_path = scored[0]
+    if best_score < 1:
+        return None
+    return best_path
+
+
 def _resolve_unique_run_dir(*, base_dir: Path, runs_root: Path, run_id: str) -> tuple[Path, str]:
     """
     Resolve <base_dir>/<runs_root>/<run_id> while preventing directory traversal.
@@ -167,22 +205,26 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "- `./.nsfc-qc/input/citations_index.csv`\n"
         "- `./.nsfc-qc/input/abbreviation_issues_summary.json`（缩写规范预检摘要：建议先读，快速定位高优先级项）\n"
         "- `./.nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检明细：按行定位；注意过滤 LaTeX 标签/数学变量等误报）\n"
+        "- `./.nsfc-qc/input/abbreviation_registry.json`（全文级缩写注册表：首次出现、全部出现、定义候选、唯一性状态）\n"
+        "- `./.nsfc-qc/input/abbreviation_render_stream.jsonl`（按 main.tex 实际渲染顺序展开的调试流；仅在需要时抽查）\n"
         "- `./.nsfc-qc/input/terminology_issues_summary.json`（术语一致性预检摘要：英文术语大小写/连字符变体）\n"
         "- `./.nsfc-qc/input/terminology_issues.csv`（术语一致性预检明细：按 normalized_key 分组，列出所有变体）\n"
         "- `./.nsfc-qc/input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
-        “缩略语规范（必检，独立小节输出）：\n”
-        “- 以 `abbreviation_issues_summary.json`/`abbreviation_issues.csv` 为起点，逐条核对。\n”
-        “- 对 P1（`bare_first_use`/`missing_english_full`）：确认是否为重要专业术语；首次出现建议采用”中文全称（English Full Name, ABBR）”。\n”
-        “- 对 P2（`missing_chinese_full`/`repeated_expansion`）：确认是否确实缺中文全称/是否确实重复展开。\n”
-        “- 过滤误报：LaTeX 标签（如 `fig:ABC`）、图表编号、数学变量、bibkey/label 不是缩写。\n”
-        “- 你必须在 RESULT.md 的「3) 重要建议（P1）」中写一个二级标题：`### 缩略语规范`，并按 `文件:行号` 给出可执行建议（只写建议，不改文件）。\n\n”
-        “术语一致性（必检，独立小节输出）：\n”
-        “- 以 `terminology_issues_summary.json`/`terminology_issues.csv` 为起点，逐条核对。\n”
-        “- 每条 `term_variant` 问题列出了同一概念的多种英文写法（大小写/连字符差异），请判断：\n”
-        “  - 是否为真正的不一致（而非专有名词的合理变体，如 “T cell” vs “T-cell” 在不同语境下均可接受）。\n”
-        “  - 建议统一使用哪种形式（通常选出现次数最多的）。\n”
-        “- 过滤误报：不同语境下合理的大小写差异（如句首大写）不算不一致。\n”
-        “- 你必须在 RESULT.md 的「4) 可选优化（P2）」中写一个二级标题：`### 术语一致性`，并给出可执行建议（只写建议，不改文件）。\n\n”
+        "缩略语规范（必检，独立小节输出）：\n"
+        "- 以 `abbreviation_issues_summary.json` / `abbreviation_issues.csv` / `abbreviation_registry.json` 为起点，逐条核对。\n"
+        "- 首次出现必须按 `abbreviation_render_stream.jsonl` 对应的真实渲染顺序理解，不得按文件名或目录扫描顺序自行重排。\n"
+        "- 重点检查 3 类问题：冲突定义（`conflicting_english_full_name` / `conflicting_chinese_full`）、定义滞后（`late_definition`）、重复同一定义（`repeated_same_definition`）。\n"
+        "- 对 P1（`bare_first_use` / `late_definition` / `missing_english_full` / `conflicting_*`）：确认是否为真正的重要专业术语，给出最小修改建议。\n"
+        "- 对 P2（`missing_chinese_full` / `repeated_same_definition`）：确认是否确实缺中文全称或重复展开。\n"
+        "- 过滤误报：LaTeX 标签（如 `fig:ABC`）、图表编号、数学变量、bibkey/label 不是缩写。\n"
+        "- 你必须在 RESULT.md 的「3) 重要建议（P1）」中写一个二级标题：`### 缩略语规范`；若存在 P2 级缩写问题，在「4) 可选优化（P2）」里继续补充。\n\n"
+        "术语一致性（必检，独立小节输出）：\n"
+        "- 以 `terminology_issues_summary.json` / `terminology_issues.csv` 为起点，逐条核对。\n"
+        "- 每条 `term_variant` 问题列出了同一概念的多种英文写法（大小写/连字符差异），请判断：\n"
+        "  - 是否为真正的不一致（而非专有名词的合理变体，如 `T cell` vs `T-cell` 在不同语境下均可接受）。\n"
+        "  - 建议统一使用哪种形式（通常选出现次数最多的）。\n"
+        "- 过滤误报：不同语境下合理的大小写差异（如句首大写）不算不一致。\n"
+        "- 你必须在 RESULT.md 的「4) 可选优化（P2）」中写一个二级标题：`### 术语一致性`，并给出可执行建议（只写建议，不改文件）。\n\n"
         f"输入：\n- project_root: .\n- main_tex: {main_tex}\n\n"
         "请在 RESULT.md 中按以下结构输出（标题必须一致）：\n"
         "1) 执行摘要\n"
@@ -273,10 +315,14 @@ def main() -> int:
         print(f"error: project_root not found: {project_root}", file=sys.stderr)
         return 2
 
-    main_tex = project_root / args.main_tex
-    if not main_tex.exists():
-        print(f"error: main_tex not found: {main_tex}", file=sys.stderr)
+    main_tex = _resolve_main_tex(project_root, str(args.main_tex))
+    if not main_tex:
+        print(f"error: main_tex not found (or auto-detect failed): {project_root / args.main_tex}", file=sys.stderr)
         return 2
+    try:
+        main_tex_rel = str(main_tex.relative_to(project_root))
+    except Exception:
+        main_tex_rel = str(main_tex)
 
     requested_run_id = args.run_id.strip() or _now_run_id()
 
@@ -319,7 +365,7 @@ def main() -> int:
             "--project-root",
             str(project_root),
             "--main-tex",
-            str(Path(args.main_tex)),
+            main_tex_rel,
             "--out",
             str(artifacts),
             "--timeout-s",
@@ -351,6 +397,8 @@ def main() -> int:
         "quote_issues.csv",
         "abbreviation_issues.csv",
         "abbreviation_issues_summary.json",
+        "abbreviation_registry.json",
+        "abbreviation_render_stream.jsonl",
         "terminology_issues.csv",
         "terminology_issues_summary.json",
         "reference_evidence.jsonl",
@@ -367,7 +415,7 @@ def main() -> int:
             except Exception:
                 continue
 
-    base_prompt = _mk_thread_prompt(main_tex=str(Path(args.main_tex)))
+    base_prompt = _mk_thread_prompt(main_tex=main_tex_rel)
     plan = _build_plan(
         prompt=base_prompt,
         n_threads=int(args.threads),
@@ -381,7 +429,7 @@ def main() -> int:
         "run_id": run_id,
         "requested_run_id": requested_run_id,
         "project_root": str(project_root),
-        "main_tex": str(Path(args.main_tex)),
+        "main_tex": main_tex_rel,
         "threads": int(args.threads),
         "execution": args.execution,
         "runner_type": args.runner_type,

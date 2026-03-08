@@ -1,6 +1,6 @@
 ---
 name: nsfc-qc
-version: 0.2.0
+version: 1.2.0
 description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到“交付目录内的隐藏工作区（.nsfc-qc/）”，并兼容 legacy `.nsfc-qc/`。
 author: Bensz Conan
 metadata:
@@ -67,7 +67,7 @@ references: skills/nsfc-qc/references/
 
 ### 0) 定位输入与 run 目录
 
-1. 校验 `project_root` 存在；`main_tex` 默认 `main.tex`，若不存在则在 `project_root` 下优先探测 `main.tex`，否则列出候选 `*.tex` 并让用户确认。
+1. 校验 `project_root` 存在；`main_tex` 默认 `main.tex`。若该文件不存在，应优先在项目根目录自动探测主 tex（优先含 `\documentclass` / `\begin{document}` 的根目录文件，避免误选 `extraTex/` 子文件）。
 2. 生成 `run_id = vYYYYMMDDHHMMSS`（本地时间），并优先采用“实例隔离”布局：
    - `deliver_dir = project_root/QC/{run_id}/`（可由用户显式提供）
    - `workspace_dir = {deliver_dir}/.nsfc-qc/`
@@ -100,6 +100,8 @@ references: skills/nsfc-qc/references/
 - `.../artifacts/quote_issues.csv`
 - `.../artifacts/abbreviation_issues.csv`
 - `.../artifacts/abbreviation_issues_summary.json`
+- `.../artifacts/abbreviation_registry.json`
+- `.../artifacts/abbreviation_render_stream.jsonl`
 - `.../artifacts/terminology_issues.csv`
 - `.../artifacts/terminology_issues_summary.json`
 - `.../artifacts/reference_evidence.jsonl`（包含 url_check 和 title_comparison 字段）
@@ -132,11 +134,14 @@ references: skills/nsfc-qc/references/
    - 各章节比例是否合理（例如：立项依据/研究内容/研究基础的分配是否失衡）
 4. **逻辑与论证**：论证链是否闭合（科学问题→假说→目标→方法→验证→预期），是否存在跳步、歧义、概念偷换、缺对照/缺指标。
 5. **缩略语规范**：
-   - 读取预检产物 `abbreviation_issues.csv`（或 `abbreviation_issues_summary.json`）作为起点
-   - 对每条 P1 问题（`bare_first_use` / `missing_english_full`）做语义判断：
+   - 读取预检产物 `abbreviation_issues.csv` / `abbreviation_issues_summary.json` / `abbreviation_registry.json` 作为起点
+   - 首次出现必须按 `abbreviation_render_stream.jsonl` 的真实渲染顺序理解，不得自行按文件名/目录顺序重排
+   - 对每条 P1 问题（`bare_first_use` / `late_definition` / `missing_english_full` / `conflicting_english_full_name` / `conflicting_chinese_full`）做语义判断：
      - 确认是否为真正的”重要专业术语”（领域常识词如 DNA/RNA 可豁免）
      - 确认首次出现位置是否确实缺少”中文全称（English Full Name, ABBR）”格式
-   - 对 P2 问题（`missing_chinese_full` / `repeated_expansion`）：确认是否确实缺中文全称/是否真的多次重复展开
+     - 若为 `late_definition`：确认定义是否确实晚于首次出现
+     - 若为 `conflicting_*`：确认全文是否真的存在不同英文全称/中文解释
+   - 对 P2 问题（`missing_chinese_full` / `repeated_same_definition`）：确认是否确实缺中文全称/是否真的重复同一定义
    - 过滤误报：LaTeX 标签、图表编号、数学变量等不是缩写
    - 输出：按文件/行号定位的可执行建议（只写建议，不改文件）
 6. **术语一致性**：

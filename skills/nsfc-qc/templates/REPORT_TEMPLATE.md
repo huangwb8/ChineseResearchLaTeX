@@ -74,3 +74,5 @@
 - run 目录：
 - 若启用 parallel-vibe：`.parallel_vibe/<project_id>/@main/summary.md`
 - 预检脚本（如有）：
+- 缩写注册表（如有）：`artifacts/abbreviation_registry.json`
+- 缩写渲染顺序调试（如有）：`artifacts/abbreviation_render_stream.jsonl`

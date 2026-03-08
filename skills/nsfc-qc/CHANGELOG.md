@@ -4,7 +4,17 @@
 
 ## [Unreleased]
 
-（暂无）
+### Added（新增）
+- 新增计划文档 `plans/英文缩写检查-v202603080812.md`：梳理 `nsfc-qc` 英文缩写检查的渲染顺序、全文唯一性与产物/文档同步优化方案，供后续实施参考。
+
+### Changed（变更）
+- **nsfc-qc v1.1.0 → v1.2.0**：英文缩写预检升级为“按 main.tex 实际渲染顺序 + 全文级缩写注册表”模型
+  - `scripts/nsfc_qc_precheck.py`：新增 render stream / abbreviation registry 机制；首次出现按真实渲染顺序判断，不再按单文件整文件扫描；同一行缩写按实际列号顺序识别；新增 `late_definition`、`conflicting_english_full_name`、`conflicting_chinese_full`、`repeated_same_definition` 等 issue model
+  - 新增工件：`abbreviation_registry.json`、`abbreviation_render_stream.jsonl`
+  - `scripts/materialize_final_outputs.py`：final findings 改为分别聚合“首次引入问题 / 冲突定义 / 缺中文全称 / 重复同一定义”，不再只按旧的 P1/P2 粗分类汇总
+  - `scripts/run_parallel_qc.py`：thread prompt 改为消费 registry/render stream，并显式要求检查“冲突定义 / 定义滞后 / 重复同一定义”
+  - `SKILL.md` / `README.md` / `references/qc_checklist.md` / `templates/REPORT_TEMPLATE.md`：文档口径同步到新问题模型
+  - `config.yaml`：版本号更新至 `1.2.0`
 
 ## [1.1.0] - 2026-03-07
 

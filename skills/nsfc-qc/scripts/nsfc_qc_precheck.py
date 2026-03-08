@@ -52,6 +52,7 @@ DOI_IN_TEXT_RE = re.compile(r"\b10\.\d{4,9}/[^\s\"<>{}]+", flags=re.I)
 # - Later, recommend using ABBR only (avoid repeating "Full Name (ABBR)" multiple times).
 ABBR_TOKEN_RE = re.compile(r"\b[A-Z][A-Z0-9]{1,11}\b")
 ABBR_HYPHEN_RE = re.compile(r"\b[A-Z]{2,}(?:-[A-Z0-9]{1,})+\b")
+ABBR_CANDIDATE_RE = re.compile(r"\b[A-Za-z][A-Za-z0-9-]{1,24}\b")
 
 # Keep the stoplist conservative to avoid overwhelming false positives.
 ABBR_STOPLIST = {
@@ -116,6 +117,44 @@ def _resolve_tex_path(base_dir: Path, raw: str) -> Optional[Path]:
         if c.exists() and c.is_file():
             return c
     return None
+
+
+def _resolve_main_tex(project_root: Path, requested: str) -> Optional[Path]:
+    requested_path = (project_root / requested).resolve()
+    if requested_path.exists() and requested_path.is_file():
+        return requested_path
+
+    candidates = sorted(project_root.rglob("*.tex"))
+    if not candidates:
+        return None
+
+    def _score(path: Path) -> int:
+        score = 0
+        rel_parts = path.relative_to(project_root).parts
+        name = path.name.lower()
+        try:
+            text = _read_text(path)
+        except Exception:
+            text = ""
+        if "\\documentclass" in text:
+            score += 6
+        if "\\begin{document}" in text:
+            score += 4
+        if path.parent == project_root:
+            score += 2
+        if name in {"main.tex", "proposal.tex", "application.tex"}:
+            score += 2
+        if any(part in {"extratex", "template", "figures", "qc"} for part in map(str.lower, rel_parts[:-1])):
+            score -= 3
+        if name.startswith("@"):
+            score -= 2
+        return score
+
+    scored = sorted((( _score(path), path) for path in candidates), key=lambda item: (item[0], str(item[1])), reverse=True)
+    best_score, best_path = scored[0]
+    if best_score < 1:
+        return None
+    return best_path
 
 
 def _find_included_tex_files(main_tex: Path) -> List[Path]:
@@ -355,214 +394,563 @@ def _simplify_latex_for_abbrev_scan(line: str) -> str:
     Best-effort conversion from a LaTeX source line to a plain-ish string for abbreviation scanning.
     We intentionally keep this lightweight and dependency-free (false positives are acceptable).
     """
-    s = line
-    # Remove common math segments to avoid capturing variable names as abbreviations.
-    s = re.sub(r"\$[^$]*\$", " ", s)
-    s = re.sub(r"\\\([^)]*\\\)", " ", s)
-    s = re.sub(r"\\\[[^\]]*\\\]", " ", s)
-    # Remove label/ref/cite arguments (bibkey/label often contain ALLCAPS tokens; not abbreviations).
-    s = re.sub(
-        r"\\(?:label|ref|eqref|pageref)\s*(?:\[[^\]]*\]\s*)?\{[^}]*\}",
-        " ",
-        s,
-    )
-    s = re.sub(
-        r"\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*\{[^}]*\}",
-        " ",
-        s,
-    )
-    # Remove environment names (\begin{...}/\end{...}) to avoid capturing env IDs as abbreviations.
-    s = re.sub(r"\\(?:begin|end)\s*\{[^}]*\}\s*(?:\[[^\]]*\])?", " ", s)
-    # Remove TeX commands (keep arguments content untouched).
-    s = re.sub(r"\\[a-zA-Z@]+\*?", " ", s)
-    # Normalize separators
-    s = s.replace("{", " ").replace("}", " ")
+    s = _mask_latex_for_abbrev_scan(line)
     s = re.sub(r"\s+", " ", s)
     return s.strip()
 
 
-def _detect_abbreviation_conventions(tex_files: List[Path], *, project_root: Path) -> dict:
+def _mask_latex_for_abbrev_scan(line: str) -> str:
     """
-    Detect a common writing convention in NSFC proposals:
-    - First occurrence of an important concept: Chinese full name + English full name + English abbreviation.
-    - Later occurrences: use the abbreviation only.
-
-    This is heuristic and line-level; it provides "actionable hints" rather than strict enforcement.
+    Replace LaTeX-only regions with spaces while preserving the original string length.
+    This lets us keep token column order roughly aligned with the source line.
     """
-    @dataclass(frozen=True)
-    class _Occ:
-        abbr: str
-        seq: int
-        path: str
-        line: int
-        excerpt: str
 
-    occurrences: List[_Occ] = []
-    seq = 0
-    for p in tex_files:
+    def _mask(pattern: str, text: str) -> str:
+        return re.sub(pattern, lambda m: " " * (m.end() - m.start()), text)
+
+    s = line
+    s = _mask(r"\$[^$]*\$", s)
+    s = _mask(r"\\\([^)]*\\\)", s)
+    s = _mask(r"\\\[[^\]]*\\\]", s)
+    s = _mask(r"\\(?:label|ref|eqref|pageref)\s*(?:\[[^\]]*\]\s*)?\{[^}]*\}", s)
+    s = _mask(r"\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*\{[^}]*\}", s)
+    s = _mask(r"\\(?:begin|end)\s*\{[^}]*\}\s*(?:\[[^\]]*\])?", s)
+    s = _mask(r"\\[a-zA-Z@]+\*?", s)
+    s = s.replace("{", " ").replace("}", " ")
+    return s
+
+
+@dataclass(frozen=True)
+class _RenderEvent:
+    seq: int
+    path: str
+    line: int
+    column: int
+    text: str
+    source_stack: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _AbbrOccurrence:
+    abbr: str
+    seq: int
+    path: str
+    line: int
+    column: int
+    excerpt: str
+    event_index: int
+
+
+@dataclass(frozen=True)
+class _AbbrDefinition:
+    abbr: str
+    seq: int
+    path: str
+    line: int
+    column: int
+    english_full: str
+    chinese_full: str
+    matched_text: str
+    context: str
+
+
+def _event_excerpt(text: str, *, limit: int = 140) -> str:
+    excerpt = text.strip()
+    if len(excerpt) > limit:
+        return excerpt[: limit - 3] + "..."
+    return excerpt
+
+
+def _iter_render_events(main_tex: Path, *, project_root: Path) -> List[_RenderEvent]:
+    events: List[_RenderEvent] = []
+    seq = 1
+
+    def _rel_path(p: Path) -> str:
         try:
-            raw = _strip_comments(_read_text(p))
+            return str(p.relative_to(project_root))
         except Exception:
+            return str(p)
+
+    def _emit(text: str, *, path: Path, line: int, column: int, stack: Tuple[str, ...]) -> None:
+        nonlocal seq
+        if not text.strip():
+            return
+        events.append(
+            _RenderEvent(
+                seq=seq,
+                path=_rel_path(path),
+                line=line,
+                column=max(1, column),
+                text=text,
+                source_stack=stack,
+            )
+        )
+        seq += 1
+
+    def _walk(path: Path, *, stack: Tuple[str, ...], active: Tuple[Path, ...]) -> None:
+        rel = _rel_path(path)
+        try:
+            lines = _read_text(path).splitlines()
+        except Exception:
+            return
+
+        current_stack = stack + (rel,)
+        for line_no, raw_line in enumerate(lines, start=1):
+            line = _strip_comments(raw_line)
+            if not line.strip():
+                continue
+
+            cursor = 0
+            for match in TEX_INPUT_RE.finditer(line):
+                prefix = line[cursor: match.start()]
+                if prefix.strip():
+                    _emit(prefix, path=path, line=line_no, column=cursor + 1, stack=current_stack)
+
+                inc = (match.group(2) or "").strip()
+                inc_path = _resolve_tex_path(path.parent, inc) or _resolve_tex_path(main_tex.parent, inc)
+                if inc_path and inc_path.resolve() not in active:
+                    _walk(inc_path, stack=current_stack, active=active + (inc_path.resolve(),))
+                cursor = match.end()
+
+            suffix = line[cursor:]
+            if suffix.strip():
+                _emit(suffix, path=path, line=line_no, column=cursor + 1, stack=current_stack)
+
+    _walk(main_tex, stack=(), active=(main_tex.resolve(),))
+    return events
+
+
+def _looks_like_abbreviation(token: str) -> bool:
+    token = token.strip()
+    if len(token) < 2 or len(token) > 24:
+        return False
+    if token.upper() in ABBR_STOPLIST:
+        return False
+    if re.fullmatch(r"[IVXivx]{2,}", token):
+        return False
+    if re.fullmatch(r"[A-Z]\d{1,4}", token):
+        return False
+    if re.fullmatch(r"[A-Z][a-z]+(?:-[A-Z][a-z]+)+", token):
+        return False
+
+    upper_count = sum(1 for ch in token if ch.isupper())
+    lower_count = sum(1 for ch in token if ch.islower())
+    digit_count = sum(1 for ch in token if ch.isdigit())
+    if token.isupper() and upper_count >= 2:
+        return True
+    if upper_count >= 2 and (lower_count > 0 or digit_count > 0 or "-" in token):
+        return True
+    return False
+
+
+def _extract_abbreviation_tokens(text: str) -> List[Tuple[str, int]]:
+    tokens: List[Tuple[str, int]] = []
+    seen: Set[Tuple[str, int]] = set()
+    for match in ABBR_CANDIDATE_RE.finditer(text):
+        token = match.group(0)
+        if not _looks_like_abbreviation(token):
             continue
-        lines = raw.splitlines()
-        for i, line in enumerate(lines, start=1):
-            scan = _simplify_latex_for_abbrev_scan(line)
-            if not scan:
-                continue
-            tokens = set()
-            for m in ABBR_TOKEN_RE.finditer(scan):
-                tokens.add(m.group(0))
-            for m in ABBR_HYPHEN_RE.finditer(scan):
-                tokens.add(m.group(0))
-            if not tokens:
-                continue
+        item = (token, match.start())
+        if item in seen:
+            continue
+        seen.add(item)
+        tokens.append(item)
+    return tokens
 
-            excerpt = line.strip()
-            if len(excerpt) > 140:
-                excerpt = excerpt[:137] + "..."
-            try:
-                rel = str(p.relative_to(project_root))
-            except Exception:
-                rel = str(p)
 
-            for t in sorted(tokens):
-                t2 = t.strip()
-                if not t2:
-                    continue
-                if len(t2) < 2 or len(t2) > 20:
-                    continue
-                if t2.upper() in ABBR_STOPLIST:
-                    continue
-                # Filter obvious false positives: pure digits / single-letter / roman numerals-ish.
-                if re.fullmatch(r"[IVX]{2,}", t2):
-                    continue
-                # Filter simple version tokens like "V2" (but keep mixed tokens like "COVID19").
-                if re.fullmatch(r"[A-Z]\d{1,4}", t2):
-                    continue
-                occurrences.append(_Occ(abbr=t2, seq=seq, path=rel, line=i, excerpt=excerpt))
-                seq += 1
+def _normalize_english_full(text: str) -> str:
+    text = re.sub(r"[^A-Za-z0-9]+", " ", str(text or "").lower()).strip()
+    return re.sub(r"\s+", " ", text)
 
-    # Group by abbreviation.
-    by_abbr: Dict[str, List[_Occ]] = {}
-    for oc in occurrences:
-        by_abbr.setdefault(oc.abbr, []).append(oc)
 
-    # Analyze each abbreviation and create issue items.
+def _normalize_chinese_full(text: str) -> str:
+    return re.sub(r"[\s，,。；;：:“”‘’'\-()（）/]+", "", str(text or "").strip())
+
+
+def _extract_definition_components(prefix: str, paren_content: str, abbr: str) -> Tuple[str, str]:
+    english_full = ""
+    chinese_full = ""
+
+    inner = _simplify_latex_for_abbrev_scan(paren_content).strip()
+    inner = re.sub(r"\b" + re.escape(abbr) + r"\b", " ", inner)
+    inner = re.sub(r"[，,;；:：\s]+", " ", inner).strip()
+    eng_match = re.search(r"([A-Za-z][A-Za-z0-9/+-]*(?:\s+[A-Za-z][A-Za-z0-9/+-]*){1,7})$", inner)
+    if eng_match:
+        english_full = eng_match.group(1).strip(" ,;:：，；")
+
+    tail = _simplify_latex_for_abbrev_scan(prefix)[-120:].strip()
+    tail = re.sub(r"[，,。；;：:、\s]+$", "", tail)
+    if tail:
+        parts = re.split(r"[，,。；;：:]", tail)
+        tail = parts[-1].strip() if parts else tail
+    tail = re.sub(r"^(?:为保持记号统一，?)", "", tail)
+    tail = re.sub(r".*?(?:写作|称为|称作|定义为|记作|表示为|简称为|简称|即)", "", tail)
+    zh_match = re.search(r"([\u4e00-\u9fff][\u4e00-\u9fff0-9·\-]{1,24})$", tail)
+    if zh_match:
+        chinese_full = zh_match.group(1).strip()
+
+    return english_full, chinese_full
+
+
+def _build_occurrence_context(events: List[_RenderEvent], event_index: int) -> Tuple[str, int]:
+    start = max(0, event_index - 1)
+    end = min(len(events), event_index + 2)
+    parts: List[str] = []
+    current_offset = 0
+    for idx in range(start, end):
+        if parts:
+            parts.append("\n")
+        if idx == event_index:
+            current_offset = sum(len(part) for part in parts)
+        parts.append(events[idx].text)
+    context = "".join(parts).strip()
+    if len(context) > 320:
+        context = context[:317] + "..."
+    return context, current_offset
+
+
+def _extract_definition_for_occurrence(
+    *,
+    events: List[_RenderEvent],
+    occurrence: _AbbrOccurrence,
+) -> Optional[_AbbrDefinition]:
+    context, current_offset = _build_occurrence_context(events, occurrence.event_index)
+    if not context:
+        return None
+
+    occurrence_abs = current_offset + max(0, occurrence.column - 1)
+    paren_re = re.compile(r"[(（][^()（）\n]{0,180}" + re.escape(occurrence.abbr) + r"[^()（）\n]{0,60}[)）]")
+
+    best_match = None
+    best_distance = None
+    best_abbr_abs = None
+    for match in paren_re.finditer(context):
+        rel_pos = match.group(0).find(occurrence.abbr)
+        if rel_pos < 0:
+            continue
+        abbr_abs = match.start() + rel_pos
+        distance = abs(abbr_abs - occurrence_abs)
+        if best_distance is None or distance < best_distance:
+            best_match = match
+            best_distance = distance
+            best_abbr_abs = abbr_abs
+
+    if best_match is None or best_distance is None or best_abbr_abs is None or best_distance > 6:
+        return None
+
+    prefix = context[max(0, best_match.start() - 160): best_match.start()]
+    inner = best_match.group(0)[1:-1].strip()
+    english_full, chinese_full = _extract_definition_components(prefix, inner, occurrence.abbr)
+    return _AbbrDefinition(
+        abbr=occurrence.abbr,
+        seq=occurrence.seq,
+        path=occurrence.path,
+        line=occurrence.line,
+        column=occurrence.column,
+        english_full=english_full,
+        chinese_full=chinese_full,
+        matched_text=best_match.group(0),
+        context=context,
+    )
+
+
+def _definition_to_dict(item: _AbbrDefinition) -> dict:
+    return {
+        "abbr": item.abbr,
+        "seq": item.seq,
+        "path": item.path,
+        "line": item.line,
+        "column": item.column,
+        "english_full": item.english_full,
+        "chinese_full": item.chinese_full,
+        "english_full_normalized": _normalize_english_full(item.english_full),
+        "chinese_full_normalized": _normalize_chinese_full(item.chinese_full),
+        "matched_text": item.matched_text,
+        "context": item.context,
+    }
+
+
+def _occurrence_to_dict(item: _AbbrOccurrence) -> dict:
+    return {
+        "abbr": item.abbr,
+        "seq": item.seq,
+        "path": item.path,
+        "line": item.line,
+        "column": item.column,
+        "excerpt": item.excerpt,
+    }
+
+
+def _detect_abbreviation_conventions(*, main_tex: Path, project_root: Path) -> dict:
+    """
+    Build an abbreviation registry from the actual render order of the LaTeX project.
+
+    Goals:
+    - first occurrence follows main.tex render order instead of per-file scan order;
+    - same-line tokens preserve source order instead of set/sorted order;
+    - definition uniqueness is judged globally (English full name / Chinese explanation);
+    - repeated same definition and late definition are separated from outright conflicts.
+    """
+    render_events = _iter_render_events(main_tex, project_root=project_root)
+
+    occurrences: List[_AbbrOccurrence] = []
+    by_abbr: Dict[str, List[_AbbrOccurrence]] = {}
+    for event_index, event in enumerate(render_events):
+        masked = _mask_latex_for_abbrev_scan(event.text)
+        for token, offset in _extract_abbreviation_tokens(masked):
+            occ = _AbbrOccurrence(
+                abbr=token,
+                seq=event.seq,
+                path=event.path,
+                line=event.line,
+                column=event.column + offset,
+                excerpt=_event_excerpt(event.text),
+                event_index=event_index,
+            )
+            occurrences.append(occ)
+            by_abbr.setdefault(token, []).append(occ)
+
+    definition_map: Dict[str, List[_AbbrDefinition]] = {}
+    for occ in occurrences:
+        definition = _extract_definition_for_occurrence(events=render_events, occurrence=occ)
+        if not definition:
+            continue
+        items = definition_map.setdefault(occ.abbr, [])
+        dedupe_key = (
+            definition.seq,
+            definition.path,
+            definition.line,
+            definition.column,
+            _normalize_english_full(definition.english_full),
+            _normalize_chinese_full(definition.chinese_full),
+        )
+        if any(
+            (
+                item.seq,
+                item.path,
+                item.line,
+                item.column,
+                _normalize_english_full(item.english_full),
+                _normalize_chinese_full(item.chinese_full),
+            )
+            == dedupe_key
+            for item in items
+        ):
+            continue
+        items.append(definition)
+
     issues: List[dict] = []
-    total_abbr = len(by_abbr)
+    registry: List[dict] = []
 
-    def _load_context(path_rel: str, line_no: int) -> str:
-        # Load 3-line context from the file for better pattern detection.
-        try:
-            fp = (project_root / path_rel).resolve()
-            if not fp.exists():
-                return ""
-            raw2 = _strip_comments(_read_text(fp))
-            ls = raw2.splitlines()
-            idx = max(1, min(line_no, len(ls))) - 1
-            prev_ln = ls[idx - 1].strip() if idx - 1 >= 0 else ""
-            cur_ln = ls[idx].strip() if 0 <= idx < len(ls) else ""
-            next_ln = ls[idx + 1].strip() if idx + 1 < len(ls) else ""
-            snip = " ".join([x for x in (prev_ln, cur_ln, next_ln) if x]).strip()
-            if len(snip) > 260:
-                snip = snip[:257] + "..."
-            return snip
-        except Exception:
-            return ""
+    def _add_issue(
+        *,
+        abbr: str,
+        issue_kind: str,
+        severity: str,
+        occurrence: _AbbrOccurrence,
+        recommendation: str,
+        context: str,
+        english_full: str = "",
+        chinese_full: str = "",
+        details: str = "",
+    ) -> None:
+        issues.append(
+            {
+                "abbr": abbr,
+                "issue_kind": issue_kind,
+                "severity": severity,
+                "path": occurrence.path,
+                "line": occurrence.line,
+                "column": occurrence.column,
+                "excerpt": occurrence.excerpt,
+                "context": context,
+                "english_full": english_full,
+                "chinese_full": chinese_full,
+                "details": details,
+                "recommendation": recommendation,
+            }
+        )
 
-    for abbr, occs in sorted(by_abbr.items(), key=lambda kv: kv[0]):
-        # First occurrence (deterministic by LaTeX include order + file scan order).
-        first = min(occs, key=lambda o: o.seq)
-        ctx = _load_context(first.path, first.line) or first.excerpt
+    for abbr, occs in sorted(by_abbr.items(), key=lambda kv: min(item.seq for item in kv[1])):
+        ordered_occs = sorted(occs, key=lambda item: (item.seq, item.column))
+        ordered_defs = sorted(definition_map.get(abbr, []), key=lambda item: (item.seq, item.column))
+        first_occ = ordered_occs[0]
+        first_context, _ = _build_occurrence_context(render_events, first_occ.event_index)
+        first_def = next((item for item in ordered_defs if item.seq == first_occ.seq), None)
 
-        paren_re = re.compile(r"[(（]\s*" + re.escape(abbr) + r"\s*[)）]")
-        m_paren = paren_re.search(ctx)
+        english_variants: Dict[str, _AbbrDefinition] = {}
+        chinese_variants: Dict[str, _AbbrDefinition] = {}
+        pair_occurrences: Dict[Tuple[str, str], List[_AbbrDefinition]] = {}
+        for item in ordered_defs:
+            eng_norm = _normalize_english_full(item.english_full)
+            zh_norm = _normalize_chinese_full(item.chinese_full)
+            if eng_norm:
+                english_variants.setdefault(eng_norm, item)
+            if zh_norm:
+                chinese_variants.setdefault(zh_norm, item)
+            pair_occurrences.setdefault((eng_norm, zh_norm), []).append(item)
 
-        # Count repeated "definition-like" uses across all occurrences (line-level).
-        def_total = 0
-        for oc in occs:
-            sn = _load_context(oc.path, oc.line) or oc.excerpt
-            if paren_re.search(sn):
-                def_total += 1
-
-        if not m_paren:
-            issues.append(
-                {
-                    "abbr": abbr,
-                    "issue_kind": "bare_first_use",
-                    "severity": "P1",
-                    "path": first.path,
-                    "line": first.line,
-                    "excerpt": first.excerpt,
-                    "context": ctx,
-                    "recommendation": f"首次出现建议写成：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
-                }
-            )
+        first_use_status = "defined"
+        if first_def is None:
+            if ordered_defs:
+                first_use_status = "late_definition"
+                later = ordered_defs[0]
+                _add_issue(
+                    abbr=abbr,
+                    issue_kind="late_definition",
+                    severity="P1",
+                    occurrence=first_occ,
+                    context=first_context or first_occ.excerpt,
+                    english_full=later.english_full,
+                    chinese_full=later.chinese_full,
+                    details=f"首次定义滞后；首次检测到定义位于 {later.path}:{later.line}",
+                    recommendation=(
+                        f"{abbr} 首次出现早于定义。建议把首次定义提前到第一次出现处，写成“中文全称（English Full Name, {abbr}）”。"
+                    ),
+                )
+            else:
+                first_use_status = "bare_first_use"
+                _add_issue(
+                    abbr=abbr,
+                    issue_kind="bare_first_use",
+                    severity="P1",
+                    occurrence=first_occ,
+                    context=first_context or first_occ.excerpt,
+                    recommendation=f"首次出现建议写成：中文全称（English Full Name, {abbr}）；后文再仅用 {abbr}。",
+                )
         else:
-            before = ctx[: m_paren.start()]
-            # Heuristic: English full name exists if we see >=2 English-like words before (ABBR).
-            eng_words = re.findall(r"[A-Za-z]{2,}(?:[-/][A-Za-z]{2,})?", before)
-            has_english_full = len(eng_words) >= 2
-            has_chinese_full = bool(re.search(r"[\u4e00-\u9fff]", before))
-
-            if not has_english_full:
-                issues.append(
-                    {
-                        "abbr": abbr,
-                        "issue_kind": "missing_english_full",
-                        "severity": "P1",
-                        "path": first.path,
-                        "line": first.line,
-                        "excerpt": first.excerpt,
-                        "context": ctx,
-                        "recommendation": f"首次出现建议补全英文全称：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
-                    }
+            if not first_def.english_full:
+                _add_issue(
+                    abbr=abbr,
+                    issue_kind="missing_english_full",
+                    severity="P1",
+                    occurrence=first_occ,
+                    context=first_def.context or first_occ.excerpt,
+                    chinese_full=first_def.chinese_full,
+                    recommendation=f"首次定义建议补全英文全称：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
                 )
-            elif not has_chinese_full:
-                issues.append(
-                    {
-                        "abbr": abbr,
-                        "issue_kind": "missing_chinese_full",
-                        "severity": "P2",
-                        "path": first.path,
-                        "line": first.line,
-                        "excerpt": first.excerpt,
-                        "context": ctx,
-                        "recommendation": f"首次出现建议同时给出中文全称：中文全称（English Full Name, {abbr}）；后文仅用 {abbr}。",
-                    }
+            elif not first_def.chinese_full:
+                _add_issue(
+                    abbr=abbr,
+                    issue_kind="missing_chinese_full",
+                    severity="P2",
+                    occurrence=first_occ,
+                    context=first_def.context or first_occ.excerpt,
+                    english_full=first_def.english_full,
+                    recommendation=f"首次定义建议同时给出中文全称：中文全称（{first_def.english_full}, {abbr}）。",
                 )
 
-        # Repeated definition-like patterns are often unnecessary after the first definition.
-        if def_total >= 2:
-            issues.append(
-                {
-                    "abbr": abbr,
-                    "issue_kind": "repeated_expansion",
-                    "severity": "P2",
-                    "path": first.path,
-                    "line": first.line,
-                    "excerpt": first.excerpt,
-                    "context": ctx,
-                    "recommendation": f"已检测到多次出现类似“...({abbr})”的定义式写法（>=2 次）。建议首次定义后，后文尽量只用 {abbr}，避免重复展开。",
-                }
+        if len(english_variants) > 1:
+            conflict = list(english_variants.values())[1]
+            variants_preview = " / ".join(sorted(item.english_full for item in english_variants.values() if item.english_full))
+            target_occ = next((item for item in ordered_occs if item.seq == conflict.seq), first_occ)
+            _add_issue(
+                abbr=abbr,
+                issue_kind="conflicting_english_full_name",
+                severity="P1",
+                occurrence=target_occ,
+                context=conflict.context or target_occ.excerpt,
+                english_full=conflict.english_full,
+                details=f"全文出现多个英文全称：{variants_preview}",
+                recommendation=f"同一缩写 {abbr} 在全文中应统一对应一个英文全称；建议保留首次定义并统一后文写法。",
             )
 
-    # Keep preview bounded.
-    preview = issues[:200]
+        if len(chinese_variants) > 1:
+            conflict = list(chinese_variants.values())[1]
+            variants_preview = " / ".join(sorted(item.chinese_full for item in chinese_variants.values() if item.chinese_full))
+            target_occ = next((item for item in ordered_occs if item.seq == conflict.seq), first_occ)
+            _add_issue(
+                abbr=abbr,
+                issue_kind="conflicting_chinese_full",
+                severity="P1",
+                occurrence=target_occ,
+                context=conflict.context or target_occ.excerpt,
+                chinese_full=conflict.chinese_full,
+                details=f"全文出现多个中文解释：{variants_preview}",
+                recommendation=f"同一缩写 {abbr} 在全文中应统一对应一个中文解释；建议以首次定义为准统一修订。",
+            )
+
+        repeated_defs = [items for pair, items in pair_occurrences.items() if (pair[0] or pair[1]) and len(items) >= 2]
+        if repeated_defs:
+            second_def = repeated_defs[0][1]
+            target_occ = next((item for item in ordered_occs if item.seq == second_def.seq), first_occ)
+            _add_issue(
+                abbr=abbr,
+                issue_kind="repeated_same_definition",
+                severity="P2",
+                occurrence=target_occ,
+                context=second_def.context or target_occ.excerpt,
+                english_full=second_def.english_full,
+                chinese_full=second_def.chinese_full,
+                details=f"同一定义重复出现 {len(repeated_defs[0])} 次",
+                recommendation=f"{abbr} 已重复以相同定义展开。建议保留首次定义，后文尽量直接使用 {abbr}。",
+            )
+
+        english_status = "missing"
+        if len(english_variants) == 1:
+            english_status = "unique"
+        elif len(english_variants) > 1:
+            english_status = "conflicting"
+
+        chinese_status = "missing"
+        if len(chinese_variants) == 1 and all(item.chinese_full for item in ordered_defs):
+            chinese_status = "unique"
+        elif len(chinese_variants) > 1:
+            chinese_status = "conflicting"
+        elif len(chinese_variants) == 1:
+            chinese_status = "partial_missing"
+
+        registry.append(
+            {
+                "abbr": abbr,
+                "first_occurrence": _occurrence_to_dict(first_occ),
+                "occurrences": [_occurrence_to_dict(item) for item in ordered_occs],
+                "definitions": [_definition_to_dict(item) for item in ordered_defs],
+                "status": {
+                    "first_use": first_use_status,
+                    "english_full_name": english_status,
+                    "chinese_full": chinese_status,
+                    "redefinition": "repeated_same_definition" if repeated_defs else "none",
+                },
+            }
+        )
+
     counts = {"P0": 0, "P1": 0, "P2": 0}
-    for it in issues:
-        sev = str(it.get("severity") or "")
+    issue_kinds: Dict[str, int] = {}
+    for item in issues:
+        sev = str(item.get("severity") or "")
         if sev in counts:
             counts[sev] += 1
+        kind = str(item.get("issue_kind") or "")
+        if kind:
+            issue_kinds[kind] = issue_kinds.get(kind, 0) + 1
+
+    render_stream_payload = [
+        {
+            "seq": item.seq,
+            "path": item.path,
+            "line": item.line,
+            "column": item.column,
+            "text": item.text,
+            "source_stack": list(item.source_stack),
+        }
+        for item in render_events
+    ]
 
     return {
         "summary": {
-            "abbreviations_detected": total_abbr,
+            "abbreviations_detected": len(by_abbr),
+            "occurrences_detected": len(occurrences),
+            "abbreviations_with_definitions": sum(1 for item in registry if item.get("definitions")),
             "issues": len(issues),
             "issues_by_severity": counts,
+            "issues_by_kind": issue_kinds,
         },
-        "issues_preview": preview,
-        "note": "Heuristic check: detect likely English abbreviations and whether the first occurrence is introduced as '中文全称（English Full Name, ABBR）' or 'English Full Name (ABBR)'. False positives/negatives are possible; treat as writing guidance.",
+        "issues_preview": issues[:200],
+        "registry_preview": registry[:50],
+        "registry": registry,
+        "render_stream": render_stream_payload,
+        "note": "Render-order heuristic: abbreviations are checked on the actual main.tex expansion order, then aggregated into a whole-document registry for late definition / conflict / repeated-definition checks.",
     }
 
 
@@ -1147,10 +1535,14 @@ def main() -> int:
     out_dir = Path(args.out).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    main_tex = (project_root / args.main_tex).resolve()
-    if not main_tex.exists():
-        print(f"error: main tex not found: {project_root / args.main_tex}", file=sys.stderr)
+    main_tex = _resolve_main_tex(project_root, str(args.main_tex))
+    if not main_tex:
+        print(f"error: main tex not found (or auto-detect failed): {project_root / args.main_tex}", file=sys.stderr)
         return 2
+    try:
+        main_tex_rel = str(main_tex.relative_to(project_root))
+    except Exception:
+        main_tex_rel = str(main_tex)
 
     tex_files = _find_included_tex_files(main_tex)
     bib_files = _find_bib_files(tex_files, project_root)
@@ -1158,7 +1550,7 @@ def main() -> int:
     bib_entries = _parse_bib_keys(bib_files)
     lengths = _rough_text_metrics(tex_files)
     typography = _detect_quote_issues(tex_files, project_root=project_root)
-    abbreviation_conventions = _detect_abbreviation_conventions(tex_files, project_root=project_root)
+    abbreviation_conventions = _detect_abbreviation_conventions(main_tex=main_tex, project_root=project_root)
     terminology_consistency = _detect_terminology_consistency(tex_files, project_root=project_root)
     citation_contexts = _extract_citation_contexts(tex_files, project_root=project_root)
 
@@ -1187,10 +1579,19 @@ def main() -> int:
         )
         reference_evidence["enabled"] = True
 
+    abbreviation_summary_public = abbreviation_conventions
+    if isinstance(abbreviation_conventions, dict):
+        abbreviation_summary_public = {
+            "summary": abbreviation_conventions.get("summary") or {},
+            "issues_preview": abbreviation_conventions.get("issues_preview") or [],
+            "registry_preview": abbreviation_conventions.get("registry_preview") or [],
+            "note": abbreviation_conventions.get("note") or "",
+        }
+
     precheck = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "project_root": str(project_root),
-        "main_tex": str(Path(args.main_tex)),
+        "main_tex": main_tex_rel,
         "tex_files": [
             str(p.relative_to(project_root)) if _is_within(project_root, p) else str(p)
             for p in tex_files
@@ -1213,7 +1614,7 @@ def main() -> int:
             }
         },
         "typography": typography,
-        "abbreviation_conventions": abbreviation_conventions,
+        "abbreviation_conventions": abbreviation_summary_public,
         "terminology_consistency": terminology_consistency,
         "reference_evidence": reference_evidence,
     }
@@ -1250,7 +1651,7 @@ def main() -> int:
     abbr_items = (abbreviation_conventions.get("issues_preview") or []) if isinstance(abbreviation_conventions, dict) else []
     with (out_dir / "abbreviation_issues.csv").open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["severity", "issue_kind", "abbr", "path", "line", "recommendation", "excerpt", "context"])
+        w.writerow(["severity", "issue_kind", "abbr", "path", "line", "column", "english_full", "chinese_full", "details", "recommendation", "excerpt", "context"])
         for it in abbr_items:
             w.writerow(
                 [
@@ -1259,6 +1660,10 @@ def main() -> int:
                     it.get("abbr", ""),
                     it.get("path", ""),
                     it.get("line", ""),
+                    it.get("column", ""),
+                    it.get("english_full", ""),
+                    it.get("chinese_full", ""),
+                    it.get("details", ""),
                     it.get("recommendation", ""),
                     it.get("excerpt", ""),
                     it.get("context", ""),
@@ -1287,14 +1692,22 @@ def main() -> int:
                 "severity": it.get("severity", ""),
                 "path": it.get("path", ""),
                 "line": it.get("line", ""),
+                "column": it.get("column", ""),
+                "english_full": it.get("english_full", ""),
+                "chinese_full": it.get("chinese_full", ""),
+                "details": it.get("details", ""),
                 "recommendation": it.get("recommendation", ""),
             }
         )
+    issue_kinds_count = {}
+    if isinstance(abbr_summary, dict):
+        issue_kinds_count = abbr_summary.get("issues_by_kind") or {}
     (out_dir / "abbreviation_issues_summary.json").write_text(
         json.dumps(
             {
                 "total_abbreviations_detected": total_abbr_detected,
                 "issues_count": issues_count,
+                "issues_by_kind": issue_kinds_count,
                 "top_issues": top_issues,
                 "note": "Heuristic only. AI threads should verify each item and filter false positives.",
             },
@@ -1304,6 +1717,17 @@ def main() -> int:
         + "\n",
         encoding="utf-8",
     )
+
+    abbr_registry = (abbreviation_conventions.get("registry") or []) if isinstance(abbreviation_conventions, dict) else []
+    (out_dir / "abbreviation_registry.json").write_text(
+        json.dumps(abbr_registry, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    render_stream = (abbreviation_conventions.get("render_stream") or []) if isinstance(abbreviation_conventions, dict) else []
+    with (out_dir / "abbreviation_render_stream.jsonl").open("w", encoding="utf-8") as f:
+        for item in render_stream:
+            f.write(json.dumps(item, ensure_ascii=False) + "\n")
 
     # terminology consistency CSV
     term_issues = (terminology_consistency.get("issues_preview") or []) if isinstance(terminology_consistency, dict) else []

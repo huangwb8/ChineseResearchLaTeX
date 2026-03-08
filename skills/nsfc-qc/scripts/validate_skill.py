@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import re
 import sys
+import py_compile
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -90,6 +91,20 @@ def main() -> int:
         for p in missing2:
             print(f"- {p}", file=sys.stderr)
         return 2
+
+    compile_targets = [
+        skill_root / "scripts" / "nsfc_qc_precheck.py",
+        skill_root / "scripts" / "run_parallel_qc.py",
+        skill_root / "scripts" / "nsfc_qc_run.py",
+        skill_root / "scripts" / "materialize_final_outputs.py",
+    ]
+    for target in compile_targets:
+        try:
+            py_compile.compile(str(target), doraise=True)
+        except py_compile.PyCompileError as exc:
+            print("FAIL: python syntax check failed", file=sys.stderr)
+            print(f"- {target.relative_to(skill_root)}: {exc.msg}", file=sys.stderr)
+            return 2
 
     print("OK: nsfc-qc skill structure looks valid.")
     print(f"- version: {v_cfg}")

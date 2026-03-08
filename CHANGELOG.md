@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- **nsfc-qc**：新增英文缩写检查优化计划文档 `skills/nsfc-qc/plans/英文缩写检查-v202603080812.md`，并显式放行该文件的版本控制；明确后续需按实际渲染顺序与全文级唯一性重构缩写检查
+
+### Changed（变更）
+
+- **nsfc-qc v1.1.0 → v1.2.0**：英文缩写预检升级为“按 main.tex 实际渲染顺序 + 全文级缩写注册表”模型
+  - `skills/nsfc-qc/scripts/nsfc_qc_precheck.py`：新增 render stream / abbreviation registry，支持 `late_definition`、`conflicting_english_full_name`、`conflicting_chinese_full`、`repeated_same_definition`
+  - 新增工件：`abbreviation_registry.json`、`abbreviation_render_stream.jsonl`
+  - `skills/nsfc-qc/scripts/materialize_final_outputs.py` / `skills/nsfc-qc/scripts/run_parallel_qc.py`：final findings 与 thread prompt 同步到新 issue model
+  - `skills/nsfc-qc/SKILL.md` / `skills/nsfc-qc/README.md` / `skills/nsfc-qc/references/qc_checklist.md`：文档口径同步到“真实渲染顺序 + 全文唯一性”
+
 ### Fixed（修复）
 
 - **nsfc-budget v0.1.1 → v0.1.2**：修复输出目录根路径/隐藏工作区重叠风险、run 目录同秒冲突、空输出目录伪失败与 LaTeX 特殊字符未转义等问题
