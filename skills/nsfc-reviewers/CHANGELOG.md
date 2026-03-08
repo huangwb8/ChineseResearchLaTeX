@@ -6,6 +6,13 @@
 
 ### Changed（变更）
 
+- `config.yaml`：版本号 `1.2.1 → 1.3.0`；将 `parallel_review.default_panel_count` 从 `7` 调整为 `3`，并将 `parallel_review.max_panel_count` 从 `7` 调整为 `5`，降低默认调用成本，同时保留多组交叉评审能力。
+- `config.yaml`：`skill_info.category` 规范化为 `writing`，与项目统一的技能元数据枚举保持一致。
+- `scripts/validate_skill.py`：新增 `skill_info.category` 与 `parallel_review.default_panel_count/max_panel_count` 的结构校验，并补充 README 中“默认组数 / 最大组数 / 每组专家 / 总专家人次”与配置一致性的自动检查，防止文档再次漂移。
+- `README.md`：同步修正默认组数、最大组数、每组专家数与 token 成本说明，避免继续混用“5 位专家”“默认 7 组”等过期口径。
+
+### Changed（变更）
+
 - `config.yaml`：版本号 `1.2.0 → 1.2.1`；将 `parallel_review.default_panel_count` 与 `parallel_review.max_panel_count` 同步调整为 `7`，使默认评审团数量为 7 组。
 - `README.md` / `skills/README.md` / 根级 `README.md`：同步默认评审组数、最大组数与版本口径，避免文档仍显示“默认 2 组、最多 5 组”。
 - `config.yaml`：版本号 `1.1.0 → 1.2.0`；每个评审组固定专家数从 5 位扩展为 7 位，更贴近现实函评常见的 5–7 位同行评审口径。

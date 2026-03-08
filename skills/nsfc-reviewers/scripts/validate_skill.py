@@ -47,6 +47,8 @@ def main() -> int:
     if not cfg_ver:
         errors.append("config.yaml: missing skill_info.version")
 
+    _validate_skill_info(cfg, errors)
+
     skill_md_text = _read_text(skill_md_path)
     fm = _parse_frontmatter(skill_md_text)
     fm_name = fm.get("name")
@@ -88,9 +90,24 @@ def main() -> int:
     _validate_parallel_review(cfg, skill_root, errors)
     _validate_scripts(skill_root, errors)
     _validate_references(skill_root, errors)
-    _validate_docs_consistency(skill_md_text, _read_text(readme_path) if readme_path.exists() else "", errors)
+    _validate_docs_consistency(cfg, skill_md_text, _read_text(readme_path) if readme_path.exists() else "", errors)
 
     return _finish(errors)
+
+
+def _validate_skill_info(cfg: dict, errors: list[str]) -> None:
+    skill = cfg.get("skill_info") if isinstance(cfg, dict) else None
+    if not isinstance(skill, dict):
+        errors.append("config.yaml: missing skill_info (dict)")
+        return
+
+    category = str(skill.get("category") or "").strip()
+    if category not in {"writing", "development", "normal"}:
+        errors.append("config.yaml: skill_info.category must be one of writing|development|normal")
+
+    description = str(skill.get("description") or "")
+    if not description:
+        errors.append("config.yaml: skill_info.description is empty")
 
 
 def _validate_parallel_review(cfg: dict, skill_root: Path, errors: list[str]) -> None:
@@ -102,6 +119,15 @@ def _validate_parallel_review(cfg: dict, skill_root: Path, errors: list[str]) ->
     for k in ["default_panel_count", "max_panel_count", "panel_output_filename", "runner", "runner_profile", "timeout_seconds"]:
         if k not in pr:
             errors.append(f"config.yaml: parallel_review missing {k}")
+
+    default_panel_count = pr.get("default_panel_count")
+    max_panel_count = pr.get("max_panel_count")
+    if not isinstance(default_panel_count, int) or default_panel_count < 1:
+        errors.append("config.yaml: parallel_review.default_panel_count must be an integer >= 1")
+    if not isinstance(max_panel_count, int) or max_panel_count < 1:
+        errors.append("config.yaml: parallel_review.max_panel_count must be an integer >= 1")
+    if isinstance(default_panel_count, int) and isinstance(max_panel_count, int) and default_panel_count > max_panel_count:
+        errors.append("config.yaml: parallel_review.default_panel_count must be <= max_panel_count")
 
     if "default_reviewer_count" in pr or "max_reviewer_count" in pr or "thread_output_filename" in pr:
         errors.append("config.yaml: parallel_review still contains old reviewer_count/thread_output_filename fields")
@@ -265,7 +291,17 @@ def _validate_references(skill_root: Path, errors: list[str]) -> None:
             errors.append("references/master_prompt_template.md: missing placeholder {panel_output_filename}")
 
 
-def _validate_docs_consistency(skill_md_text: str, readme_text: str, errors: list[str]) -> None:
+def _extract_doc_number(text: str, pattern: str) -> int | None:
+    m = re.search(pattern, text)
+    if not m:
+        return None
+    try:
+        return int(m.group(1))
+    except Exception:
+        return None
+
+
+def _validate_docs_consistency(cfg: dict, skill_md_text: str, readme_text: str, errors: list[str]) -> None:
     for label, t in [("SKILL.md", skill_md_text), ("README.md", readme_text)]:
         if "reviewer_count" in t:
             errors.append(f"{label}: still mentions old parameter reviewer_count (should use panel_count)")
@@ -285,6 +321,26 @@ def _validate_docs_consistency(skill_md_text: str, readme_text: str, errors: lis
             errors.append(f"{label}: missing default 函评/会评 stage assessment section")
         if "给过 / 不给过" not in t:
             errors.append(f"{label}: missing explicit binary verdict wording '给过 / 不给过'")
+
+    pr = cfg.get("parallel_review") if isinstance(cfg, dict) else None
+    pr = pr if isinstance(pr, dict) else {}
+    expected_reviewer_count = len(pr.get("reviewer_personas") or []) if isinstance(pr.get("reviewer_personas"), list) else None
+    expected_default_panels = pr.get("default_panel_count") if isinstance(pr.get("default_panel_count"), int) else None
+    expected_max_panels = pr.get("max_panel_count") if isinstance(pr.get("max_panel_count"), int) else None
+
+    readme_checks = [
+        (r"每组专家：\s*(\d+)\s*位", expected_reviewer_count, "README.md: 每组专家数量与 config.yaml:parallel_review.reviewer_personas 不一致"),
+        (r"总专家人次：N×\s*(\d+)\s*人次", expected_reviewer_count, "README.md: 总专家人次公式与每组专家数不一致"),
+        (r"默认组数[^\n]*?(\d+)\s*组", expected_default_panels, "README.md: 默认组数与 config.yaml:parallel_review.default_panel_count 不一致"),
+        (r"最大组数[^\n]*?(\d+)\s*组", expected_max_panels, "README.md: 最大组数与 config.yaml:parallel_review.max_panel_count 不一致"),
+        (r"最多\s*(\d+)\s*组", expected_max_panels, "README.md: 最多组数与 config.yaml:parallel_review.max_panel_count 不一致"),
+    ]
+    for pattern, expected, message in readme_checks:
+        if expected is None:
+            continue
+        found = _extract_doc_number(readme_text, pattern)
+        if found is not None and found != expected:
+            errors.append(f"{message}（文档={found}，配置={expected}）")
 
 
 def _finish(errors: list[str]) -> int:

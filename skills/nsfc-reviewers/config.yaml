@@ -4,10 +4,10 @@
 # 技能基本信息
 skill_info:
   name: nsfc-reviewers
-  version: 1.2.1
+  version: 1.3.0
   description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议"
   author: "Bensz Conan"
-  category: 科研写作
+  category: writing
 
 # 阶段性过会判断（默认写入报告）
 stage_assessment:
@@ -156,10 +156,10 @@ review_grades:
 parallel_review:
   # 是否启用并行评审模式
   enabled: true
-  # 默认评审组数量（每组固定 7 位专家）
-  default_panel_count: 7
-  # 最大评审组数量
-  max_panel_count: 7
+  # 默认评审组数量（每组固定 7 位专家；默认取 3 组以平衡成本与共识稳定性）
+  default_panel_count: 3
+  # 最大评审组数量（超过 5 组通常收益递减、成本显著上升）
+  max_panel_count: 5
   # parallel-vibe plan.threads[*].runner.type（评审任务推荐 claude）
   runner: claude
   # parallel-vibe plan.threads[*].runner.profile（default|fast|deep）
