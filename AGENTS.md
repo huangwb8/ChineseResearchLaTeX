@@ -337,6 +337,8 @@ xelatex → bibtex → xelatex → xelatex
 
 ### Release 发布流程
 
+> 基于 gh cli 发布 release
+
 每次创建新 Release 时，按以下顺序执行：
 
 1. **提交代码**：使用 `git-commit` skill 生成 commit 信息并 push
