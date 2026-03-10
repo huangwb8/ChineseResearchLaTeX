@@ -11,8 +11,7 @@
 模板优化：
 
 - 研究内容样式
-- ~~对于 \begin{enumerate} 里，我希望换行后的首行可以空2个中文字符，这样看上去更加规整。~~
-- ~~加粗相关的 AutoFakeBold=3 改为 AutoFakeBold=5~~
+- 可否类似fylimas/nsfc那个项目一样列出自己的发表工作
 
 写作skill的优化
 
