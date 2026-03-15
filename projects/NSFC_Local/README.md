@@ -7,8 +7,10 @@
 ### 推荐方式
 
 ```bash
-python ../../scripts/nsfc_project_tool.py build --project-dir .
+python code/nsfc_build.py build --project-dir .
 ```
+
+该入口同时兼容“完整仓库模式”和“已安装 `bensz-nsfc` 包的单项目 Release 压缩包模式”。
 
 这条固定 Python 渲染链会自动执行 `xelatex -> bibtex -> xelatex -> xelatex`，把中间文件全部收进 `.latex-cache/`，只在项目根目录保留 `main.pdf`。
 
@@ -63,7 +65,7 @@ NSFC_Local/
 \NSFCBodyText
 ```
 
-3. 运行 `python ../../scripts/nsfc_project_tool.py build --project-dir .` 生成 PDF（参考文献修改后会自动跑完整 4 步编译）。
+3. 运行 `python code/nsfc_build.py build --project-dir .` 生成 PDF（参考文献修改后会自动跑完整 4 步编译）。
 
 ## 间距设置（重点）
 

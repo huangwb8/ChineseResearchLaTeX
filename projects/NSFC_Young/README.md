@@ -16,8 +16,10 @@
 ### 推荐方式
 
 ```bash
-python ../../scripts/nsfc_project_tool.py build --project-dir .
+python code/nsfc_build.py build --project-dir .
 ```
+
+该入口同时兼容“完整仓库模式”和“已安装 `bensz-nsfc` 包的单项目 Release 压缩包模式”。
 
 这条固定 Python 渲染链会自动执行 `xelatex -> bibtex -> xelatex -> xelatex`，把中间文件全部收进 `.latex-cache/`，只在项目根目录保留 `main.pdf`。
 
@@ -78,7 +80,7 @@ NSFC_Young/
 1. **直接编辑内容模板文件**
    - 打开 `extraTex/1.1.立项依据.tex` 等文件
    - 按照模板中的注释和 `\NSFCBlankPara` 占位符填写内容
-   - 运行 `python ../../scripts/nsfc_project_tool.py build --project-dir .` 生成 PDF
+   - 运行 `python code/nsfc_build.py build --project-dir .` 生成 PDF
 
 2. **文件命名说明**
    - `1.xxx.tex`, `2.xxx.tex`：对应申请书的主要部分

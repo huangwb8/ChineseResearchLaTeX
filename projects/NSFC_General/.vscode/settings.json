@@ -23,7 +23,7 @@
       "command": "bash",
       "args": [
         "-lc",
-        "python3 ../../scripts/nsfc_project_tool.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
+        "python3 code/nsfc_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
       ]
     }
   ],
