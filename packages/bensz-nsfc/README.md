@@ -9,6 +9,7 @@
 - `assets/`：共享字体与 BibTeX 样式资源，供 `NSFC_General / NSFC_Local / NSFC_Young` 统一复用
 - `profiles/`：不同项目类型的版本与标识元信息
 - `impl/`：当前运行时使用的稳定实现，直接承载已通过像素级回归验证的排版逻辑
+- `scripts/`：围绕 `bensz-nsfc` 的安装、构建、校验与 TDS 打包脚本
 - `bensz-nsfc-layout.sty` / `bensz-nsfc-typography.sty` / `bensz-nsfc-headings.sty` / `bensz-nsfc-bibliography.sty`：后续进一步细化抽象时保留的模块化骨架
 
 ## 接入方式
@@ -24,15 +25,15 @@
 官方安装入口统一为：
 
 ```bash
-python scripts/install.py install --ref v3.5.1
-python scripts/install.py pin --ref v3.5.1
-python scripts/install.py sync
+python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py pin --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py sync
 ```
 
 仓库开发时推荐先把当前工作树安装到本机 `TEXMFHOME`：
 
 ```bash
-python scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
+python packages/bensz-nsfc/scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
 ```
 
 支持的核心能力：

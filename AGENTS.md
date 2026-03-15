@@ -10,7 +10,8 @@
 
 - 维护可直接使用的 NSFC LaTeX 模板与 Release 交付物
 - 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
-- 维护 `scripts/install.py`、`scripts/nsfc_project_tool.py` 等官方安装/构建入口
+- 维护 `packages/bensz-nsfc/scripts/` 下的 NSFC 官方脚本入口，包括安装、构建、校验与 TDS 打包
+- 维护根目录 `scripts/` 下的项目级脚本入口，例如 Release 打包与上传辅助脚本
 - 维护 `skills/` 目录中的项目级 AI Skills，支撑 NSFC 写作、评审、质控、迁移、出图等工作流
 - 为后续期刊论文、毕业论文模板保留包级扩展位点，但不为尚未落地的能力编造规则
 
@@ -20,6 +21,8 @@
 ChineseResearchLaTeX/
 ├── packages/
 │   ├── bensz-nsfc/          # NSFC 公共包源码（当前主线）
+│   │   ├── scripts/         # NSFC 安装/构建/校验/TDS 打包脚本
+│   │   └── ...
 │   ├── bensz-paper/         # 论文模板包位点（预留）
 │   └── bensz-thesis/        # 毕业论文模板包位点（预留）
 ├── projects/
@@ -27,11 +30,8 @@ ChineseResearchLaTeX/
 │   ├── NSFC_Local/          # 地区项目薄封装 + 示例正文
 │   └── NSFC_Young/          # 青年项目薄封装 + 示例正文
 ├── scripts/
-│   ├── install.py           # NSFC 公共包安装/切换/锁定/回退入口
-│   ├── nsfc_project_tool.py # NSFC 项目统一构建/清理入口
-│   ├── validate_package.py  # NSFC 公共包结构与编译校验
-│   ├── build_tds_zip.py     # 生成 TDS 分发包
-│   └── pack_release.py      # Release 资产打包与上传
+│   ├── pack_release.py      # Release 资产打包与上传
+│   └── get-github-token.sh  # GitHub 辅助脚本
 ├── docs/
 │   └── migration-guide.md   # 旧项目迁移到公共包模式的说明
 ├── references/              # 项目辅助文档
@@ -51,9 +51,10 @@ ChineseResearchLaTeX/
 
 - `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、稳定实现
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
-- `scripts/install.py`：安装、锁定、同步、回退、状态检查
-- `scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
-- `scripts/validate_package.py` / `scripts/build_tds_zip.py` / `scripts/pack_release.py`：校验、分发、发布
+- `packages/bensz-nsfc/scripts/install.py`：安装、锁定、同步、回退、状态检查
+- `packages/bensz-nsfc/scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
+- `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
+- `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
 
@@ -85,12 +86,12 @@ ChineseResearchLaTeX/
 
 #### NSFC 安装/版本管理问题
 
-- 优先检查 `scripts/install.py` 与 `docs/migration-guide.md`
+- 优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
 - 用户项目版本锁相关问题优先围绕 `.nsfc-version`、`pin/sync/check/rollback` 工作流处理
 
 #### NSFC 编译/渲染问题
 
-- 优先使用 `python scripts/nsfc_project_tool.py build --project-dir <项目路径>`
+- 优先使用 `python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir <项目路径>`
 - 只在排查底层编译链路时，才退回原生 `xelatex -> bibtex -> xelatex -> xelatex`
 
 #### Skill 相关问题
@@ -302,7 +303,8 @@ skill_info:
 - `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致
 - 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
-- 变更 `scripts/install.py`、`scripts/nsfc_project_tool.py`、`scripts/validate_package.py`、`scripts/pack_release.py` 时，应同步检查 README / docs / CHANGELOG 中的命令口径
+- 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径
+- 变更根目录 `scripts/pack_release.py` 时，应同步检查 Release 流程文档与 `CHANGELOG.md`
 
 ### 系统 Skill 保护
 
@@ -319,33 +321,35 @@ skill_info:
 当前 NSFC 模板采用“公共包安装 + 项目薄封装”模式。处理 NSFC 相关任务时，优先使用以下官方入口：
 
 ```bash
-python scripts/install.py install --ref v3.5.1
-python scripts/install.py pin --ref v3.5.1
-python scripts/install.py sync
-python scripts/install.py check
-python scripts/install.py rollback
+python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py pin --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py sync
+python packages/bensz-nsfc/scripts/install.py check
+python packages/bensz-nsfc/scripts/install.py rollback
 ```
 
 开发当前仓库时，如需直接验证本地源码：
 
 ```bash
-python scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
+python packages/bensz-nsfc/scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
 ```
 
 处理安装/锁定问题时，优先查看：
 
-- `scripts/install.py`
+- `packages/bensz-nsfc/scripts/install.py`
 - `docs/migration-guide.md`
 - 项目目录内的 `.nsfc-version`
+
+根目录 `scripts/` 不再承载 NSFC 直接脚本；凡是 NSFC 公共包安装、构建、校验、TDS 打包问题，都优先在 `packages/bensz-nsfc/scripts/` 下定位。
 
 ### 编译规范
 
 **首选入口**：使用统一 Python 渲染器，而不是手写一串裸 `xelatex` 命令。
 
 ```bash
-python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
-python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Local
-python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Young
+python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
+python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Local
+python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Young
 ```
 
 当前官方构建链路会自动执行：
@@ -374,19 +378,19 @@ xelatex -interaction=nonstopmode main.tex
 修改 NSFC 公共包、共享资源或安装逻辑后，优先运行：
 
 ```bash
-python scripts/validate_package.py
+python packages/bensz-nsfc/scripts/validate_package.py
 ```
 
 如仅做结构校验、暂不编译，可使用：
 
 ```bash
-python scripts/validate_package.py --skip-compile
+python packages/bensz-nsfc/scripts/validate_package.py --skip-compile
 ```
 
 如需清理项目缓存与根目录中间文件，使用：
 
 ```bash
-python scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_General
+python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_General
 ```
 
 ### 标题换行控制
@@ -451,8 +455,9 @@ python scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_General
 创建 Release 前，至少确认以下事项：
 
 - 目标变更已完成必要编译/脚本校验
-- NSFC 公共包相关改动已跑过 `python scripts/validate_package.py`
+- NSFC 公共包相关改动已跑过 `python packages/bensz-nsfc/scripts/validate_package.py`
 - 相关 README / docs / CHANGELOG 已同步
+- 如项目 zip 需要独立可用，确认项目内 `code/nsfc_build.py` 已能在“完整仓库路径 / 已安装 TEXMFHOME 路径”中定位 `bensz-nsfc` 公共脚本
 - 若涉及模板外观回归，优先把验证记录沉淀到 `tests/` 或相应计划目录
 
 ### Release 发布流程

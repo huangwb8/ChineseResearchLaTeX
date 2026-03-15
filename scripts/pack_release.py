@@ -13,6 +13,7 @@ pack_release.py - 打包 projects/ 下各子项目为 Release Assets
       1. INCLUDE_ITEMS 白名单中的文件/目录
       2. 项目根目录下的 *.code-workspace 文件
   - 不存在的白名单项自动跳过（如 .vscode/ 不存在时不报错）
+  - 不额外打包 `packages/bensz-nsfc/`；单项目 zip 通过 `code/nsfc_build.py` 在“完整仓库路径 / 已安装 TEXMFHOME 路径”中定位公共脚本
 
 严格约束：
   - 不修改 projects/ 目录内任何文件
@@ -37,7 +38,6 @@ INCLUDE_ITEMS = [
     "main.tex",
     "README.md",
 ]
-
 REPO_ROOT = Path(__file__).parent.parent
 PROJECTS_DIR = REPO_ROOT / "projects"
 TESTS_DIR = REPO_ROOT / "tests"

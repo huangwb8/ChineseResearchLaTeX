@@ -6,8 +6,8 @@ import json
 import zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_DIR = ROOT / "packages" / "bensz-nsfc"
+PACKAGE_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = PACKAGE_DIR.parents[1]
 
 
 def main() -> int:
@@ -17,7 +17,7 @@ def main() -> int:
 
     package_json = json.loads((PACKAGE_DIR / "package.json").read_text(encoding="utf-8"))
     version = package_json["version"]
-    output = args.out or (ROOT / "dist" / f"bensz-nsfc-{version}-tds.zip")
+    output = args.out or (REPO_ROOT / "dist" / f"bensz-nsfc-{version}-tds.zip")
     output.parent.mkdir(parents=True, exist_ok=True)
 
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as bundle:

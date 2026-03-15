@@ -43,6 +43,18 @@
 
 # 重构
 
+对于`用户安装 bensz-nsfc 包后，项目里有稳定办法找到这些脚本`这个需求，解决方法很简单
+
+- 做好安装latex包的python脚本，让它们不管在什么系统里，都可以找到当前机器的latex包的应该安装的位置
+
+---
+
+bensz-nsfc/scripts 不需要专门被用户下载； 因为它作为latex包的一部分。 用户只要安装latex包，就可以调用这些脚本了。 你觉得呢？因为，我觉得打包具体项目的zip时，不需要专门把bensz-nsfc/scripts打包进去。
+
+---
+
+请为 ./projects 里的项目添加写标书专用的 AGENTS.md 和 CLAUDE.md 文件，让ai可能更好地辅助用户写标书。 这是很重要的，因为用户一般是下载整个项目文件夹（比如 projects/NSFC_General） 的压缩包； 如果里面已经内置了这2个文件，它就不需要重新使用了。注意，不要动根目录的AGENTS.md 和 CLAUDE.md 文件（它们的主要作用不是写标书，而是开发本项目）。使用 awesome-code skill 辅助规划、优化。所有问题都要解决，所有建议都要落实。
+
 ---
 
 ./scripts中和nsfc直接相关的，应该搬到 packages/bensz-nsfc/scripts 里去。AGENTS.md 也要相应地调整、优化。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决，所有建议都要落实。

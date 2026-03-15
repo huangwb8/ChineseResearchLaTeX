@@ -6,8 +6,8 @@
 
 project:
   name: ChineseResearchLaTeX
-  version: 2.3.0
-  description: 中国科研常用LaTeX模板集，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等
+  version: 3.5.1
+  description: 中国科研常用 LaTeX 模板、NSFC 公共包源码与 AI Skills 协作仓库
   license: MIT
   repository: https://github.com/huangwb8/ChineseResearchLaTeX
 
@@ -49,11 +49,17 @@ projects:
 
 directory_structure:
   scripts:
-    description: 开发辅助脚本
+    description: 项目级辅助脚本（NSFC 直接相关脚本位于 packages/bensz-nsfc/scripts）
     examples:
-      - build_all.py
-      - clean_auxiliary.py
-      - check_references.py
+      - pack_release.py
+      - get-github-token.sh
+
+  packages:
+    description: 可复用 LaTeX 公共包与相关脚本
+    examples:
+      - bensz-nsfc
+      - bensz-paper
+      - bensz-thesis
 
   references:
     description: 项目辅助文档
@@ -63,7 +69,8 @@ directory_structure:
   skills:
     description: 项目专用技能
     examples:
-      - latex-helper
+      - nsfc-abstract
+      - nsfc-qc
 
 # ============================================================================
 # LaTeX 编译配置
@@ -170,10 +177,15 @@ git:
 # ============================================================================
 
 skills:
-  latex-helper:
+  nsfc-abstract:
     enabled: true
-    config_file: skills/latex-helper/config.yaml
-    description: LaTeX 模板辅助技能
+    config_file: skills/nsfc-abstract/config.yaml
+    description: NSFC 中英文摘要生成技能
+
+  nsfc-qc:
+    enabled: true
+    config_file: skills/nsfc-qc/config.yaml
+    description: NSFC 标书只读质量控制技能
 
 # ============================================================================
 # 验证规则
@@ -208,6 +220,6 @@ interaction:
 logging:
   enabled: true
   level: INFO
-  file: .latex-helper.log
+  file: .chinese-research-latex.log
   max_size: 1MB
   backup_count: 3

@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": "https://github.com/huangwb8/ChineseResearchLaTeX",
   "installer": {
-    "entry": "python scripts/install.py",
+    "entry": "python packages/bensz-nsfc/scripts/install.py",
     "minimum_version": "p_v20260315",
     "default_ref": "main"
   },

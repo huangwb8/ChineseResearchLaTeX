@@ -2,20 +2,20 @@
 
 ## 目标
 
-旧版本项目直接在 `extraTex/@config.tex` 里维护整套样式。重构后，项目入口改为加载公共包 `bensz-nsfc-common`，安装、锁定与切换统一交给 `scripts/install.py`。
+旧版本项目直接在 `extraTex/@config.tex` 里维护整套样式。重构后，项目入口改为加载公共包 `bensz-nsfc-common`，安装、锁定与切换统一交给 `packages/bensz-nsfc/scripts/install.py`。
 
 ## 最短迁移路径
 
 1. 安装公共包
 
 ```bash
-python scripts/install.py install --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
 ```
 
 开发当前仓库时可直接安装本地工作树：
 
 ```bash
-python scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
+python packages/bensz-nsfc/scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
 ```
 
 2. 将项目里的 `extraTex/@config.tex` 收敛为一行入口
@@ -34,7 +34,7 @@ python scripts/install.py install --source local --path packages/bensz-nsfc --re
 
 ```bash
 cd projects/NSFC_General
-python ../../scripts/install.py pin --ref v3.5.1
+python ../../packages/bensz-nsfc/scripts/install.py pin --ref v3.5.1
 ```
 
 这会生成 `.nsfc-version`，写入：
@@ -48,21 +48,24 @@ python ../../scripts/install.py pin --ref v3.5.1
 
 4. 编译项目
 
-始终使用 4 步法：
+优先使用统一 Python 渲染器：
 
 ```bash
-xelatex -interaction=nonstopmode main.tex
-bibtex main
-xelatex -interaction=nonstopmode main.tex
-xelatex -interaction=nonstopmode main.tex
+python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
+```
+
+该入口会自动执行标准 4 步法：
+
+```text
+xelatex -> bibtex -> xelatex -> xelatex
 ```
 
 ## 常用命令
 
-- `python scripts/install.py sync`：按 `.nsfc-version` 切换版本
-- `python scripts/install.py check`：检查当前激活版本是否与项目锁一致
-- `python scripts/install.py rollback`：回退到上一个激活版本
-- `python scripts/install.py status`：查看当前激活版本、安装路径与缓存信息
+- `python packages/bensz-nsfc/scripts/install.py sync`：按 `.nsfc-version` 切换版本
+- `python packages/bensz-nsfc/scripts/install.py check`：检查当前激活版本是否与项目锁一致
+- `python packages/bensz-nsfc/scripts/install.py rollback`：回退到上一个激活版本
+- `python packages/bensz-nsfc/scripts/install.py status`：查看当前激活版本、安装路径与缓存信息
 
 ## 验证结论
 
