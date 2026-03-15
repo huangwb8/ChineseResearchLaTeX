@@ -173,14 +173,15 @@ def build_status(
 
 def build_version_cell(
     spec: TemplateSpec,
-    release_url: str,
     tag_name: str,
     published_label: str,
-    has_asset: bool,
+    standard_asset: dict[str, Any] | None,
+    overleaf_asset: dict[str, Any] | None,
 ) -> str:
-    if not has_asset:
+    preferred_asset = standard_asset or overleaf_asset
+    if not preferred_asset:
         return "待发布"
-    return f"[{tag_name}]({release_url})<br>{published_label}"
+    return f"[{tag_name}]({preferred_asset['browser_download_url']})<br>{published_label}"
 
 
 def build_note_cell(
@@ -193,7 +194,6 @@ def build_note_cell(
 def render_category_table(
     category: str,
     specs: tuple[TemplateSpec, ...],
-    release_url: str,
     tag_name: str,
     published_label: str,
     assets_by_name: dict[str, dict[str, Any]],
@@ -219,7 +219,13 @@ def render_category_table(
                     build_status(spec, standard_asset, overleaf_asset),
                     render_asset_link(standard_asset),
                     render_asset_link(overleaf_asset),
-                    build_version_cell(spec, release_url, tag_name, published_label, has_asset),
+                    build_version_cell(
+                        spec,
+                        tag_name,
+                        published_label,
+                        standard_asset,
+                        overleaf_asset,
+                    ),
                     build_note_cell(spec, has_asset),
                 ]
             )
@@ -233,19 +239,18 @@ def render_category_table(
 def render_template_section(repo: str, release: dict[str, Any]) -> str:
     assets_by_name = build_asset_lookup(release)
     tag_name = release["tag_name"]
-    release_url = release["html_url"]
     published_label = format_release_time(release["published_at"])
     sections = [
         "<!-- 由 scripts/update_readme_template_list.py 自动生成，请勿手动编辑。 -->",
         (
-            f"> ⚠️ **建议优先使用最新正式 [Release]({release_url})。** "
+            "> ⚠️ **建议优先使用下表中的最新正式 zip 下载包。** "
             f"该列表由 GitHub Actions 每小时自动检查一次，也支持手动触发同步。"
         ),
         (
-            f"> 当前同步源：[`{repo}@{tag_name}`]({release_url})，发布时间：{published_label}。"
+            f"> 当前同步源：`{repo}@{tag_name}`，发布时间：{published_label}。"
         ),
         (
-            "> Overleaf 列直接指向可上传到 Overleaf 的 Release 压缩包，而不是在线演示链接。"
+            "> “最新稳定版”列默认直达对应模板的标准 zip；若当前仅发布 Overleaf 包，则直达 Overleaf zip。"
         ),
         "",
     ]
@@ -256,7 +261,6 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
             render_category_table(
                 category=category,
                 specs=category_specs,
-                release_url=release_url,
                 tag_name=tag_name,
                 published_label=published_label,
                 assets_by_name=assets_by_name,
