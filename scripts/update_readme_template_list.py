@@ -171,26 +171,6 @@ def build_status(
     return "🛠️ 等待发布"
 
 
-def build_version_cell(
-    spec: TemplateSpec,
-    tag_name: str,
-    published_label: str,
-    standard_asset: dict[str, Any] | None,
-    overleaf_asset: dict[str, Any] | None,
-) -> str:
-    preferred_asset = standard_asset or overleaf_asset
-    if not preferred_asset:
-        return "待发布"
-    return f"[{tag_name}]({preferred_asset['browser_download_url']})<br>{published_label}"
-
-
-def build_note_cell(
-    spec: TemplateSpec,
-    has_asset: bool,
-) -> str:
-    return spec.release_note if has_asset else spec.pending_note
-
-
 def render_category_table(
     category: str,
     specs: tuple[TemplateSpec, ...],
@@ -203,8 +183,8 @@ def render_category_table(
         "",
         f"> {CATEGORY_DESCRIPTIONS[category]}",
         "",
-        "| 模板 | 状态 | 标准包 | Overleaf 包 | 最新稳定版 | 说明 |",
-        "|------|------|--------|-------------|------------|------|",
+        "| 模板 | 状态 | 标准包 | Overleaf 包 |",
+        "|------|------|--------|-------------|",
     ]
 
     for spec in specs:
@@ -219,14 +199,6 @@ def render_category_table(
                     build_status(spec, standard_asset, overleaf_asset),
                     render_asset_link(standard_asset),
                     render_asset_link(overleaf_asset),
-                    build_version_cell(
-                        spec,
-                        tag_name,
-                        published_label,
-                        standard_asset,
-                        overleaf_asset,
-                    ),
-                    build_note_cell(spec, has_asset),
                 ]
             )
             + " |"
@@ -248,9 +220,6 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
         ),
         (
             f"> 当前同步源：`{repo}@{tag_name}`，发布时间：{published_label}。"
-        ),
-        (
-            "> “最新稳定版”列默认直达对应模板的标准 zip；若当前仅发布 Overleaf 包，则直达 Overleaf zip。"
         ),
         "",
     ]

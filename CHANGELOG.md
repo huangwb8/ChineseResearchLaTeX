@@ -19,6 +19,8 @@
 - 更新 `AGENTS.md`：在 `scripts/` 目录结构中新增 `install.py` 条目，在分层模型中补充 `scripts/install.py` 说明，将工作流中"NSFC 安装/版本管理问题"扩展为"LaTeX 包安装问题"并加入远程安装入口
 - 重构根级 `README.md` 的 `## 📋 模板列表`：改为由自动生成区块接管，不再手写维护模板状态、下载地址与最新 Release 信息
 - 优化 `scripts/update_readme_template_list.py` 生成口径：README 模板列表顶部说明不再把用户引导到泛化的 GitHub Release 页面，`最新稳定版` 列改为默认直达对应模板的具体 zip 下载链接（优先标准包，其次 Overleaf 包）
+- 精简 `scripts/update_readme_template_list.py` 生成结果：移除 README 模板列表中与下载列重复的 `最新稳定版` 列，仅保留模板状态、标准包、Overleaf 包与说明四类核心信息
+- 继续精简 `scripts/update_readme_template_list.py` 生成结果：移除 README 模板列表中信息密度较低的 `说明` 列，仅保留模板、状态、标准包与 Overleaf 包四类核心字段
 
 ## [v4.0.0] - 2026-03-15
 
