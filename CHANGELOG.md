@@ -10,10 +10,13 @@
 
 ### Added（新增）
 
+- 新增 `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`）与本地执行，可通过 `--packages bensz-nsfc,bensz-paper` 安装 `packages/` 下的一个或多个公共包；`bensz-nsfc` 委托给包级安装器，`bensz-paper` 直接复制 `.sty` 文件到 `TEXMFHOME`
 - 新增 `scripts/update_readme_template_list.py` 与 `.github/workflows/update-template-list.yml`：自动读取 GitHub 最新正式 Release 资产，每小时定时检查并支持手动触发，将根级 `README.md` 中 `## 📋 模板列表` 重构为按 `NSFC / SCI / 毕业论文` 分组展示的实时模板清单；Overleaf 列统一改为指向 Overleaf 专用 zip 包地址，而不再维护单独的在线演示链接
 
 ### Changed（变更）
 
+- 更新根级 `README.md`：将 `## NSFC 公共包安装` 重命名为 `## LaTeX 包安装`，新增可安装包清单表格、远程硬编码安装方式（curl + python3）、远程 AI 自主规划安装 Prompt 模板，并将 bensz-nsfc 版本管理与 NSFC 编译命令改为各自小节
+- 更新 `AGENTS.md`：在 `scripts/` 目录结构中新增 `install.py` 条目，在分层模型中补充 `scripts/install.py` 说明，将工作流中"NSFC 安装/版本管理问题"扩展为"LaTeX 包安装问题"并加入远程安装入口
 - 重构根级 `README.md` 的 `## 📋 模板列表`：改为由自动生成区块接管，不再手写维护模板状态、下载地址与最新 Release 信息
 
 ## [v4.0.0] - 2026-03-15

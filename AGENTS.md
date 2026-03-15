@@ -32,6 +32,7 @@ ChineseResearchLaTeX/
 │   ├── NSFC_Young/          # 青年项目薄封装 + 示例正文
 │   └── paper-sci-01/        # SCI 论文示例项目（PDF + DOCX）
 ├── scripts/
+│   ├── install.py           # 统一 LaTeX 包安装器（支持远程执行）
 │   ├── pack_release.py      # Release 资产打包与上传
 │   └── get-github-token.sh  # GitHub 辅助脚本
 ├── docs/
@@ -59,6 +60,7 @@ ChineseResearchLaTeX/
 - `packages/bensz-nsfc/scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
 - `packages/bensz-paper/scripts/paper_project_tool.py` / `packages/bensz-paper/scripts/manuscript_tool.py`：SCI 论文 PDF + DOCX 统一构建入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
+- `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-nsfc`、`bensz-paper` 等 `packages/` 下的公共包
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
@@ -89,9 +91,12 @@ ChineseResearchLaTeX/
 - 共享样式问题优先修 `packages/bensz-nsfc/`
 - 项目示例内容、说明文字、局部项目差异再修 `projects/NSFC_*`
 
-#### NSFC 安装/版本管理问题
+#### LaTeX 包安装问题
 
-- 优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
+- 用户无需克隆仓库时，优先使用根级统一安装器（`scripts/install.py`）：
+  - `curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py | python3 - install --packages bensz-nsfc --ref <tag>`
+  - 支持多包安装：`--packages bensz-nsfc,bensz-paper`
+- 在仓库内开发时，bensz-nsfc 包级安装优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
 - 用户项目版本锁相关问题优先围绕 `.nsfc-version`、`pin/sync/check/rollback` 工作流处理
 
 #### NSFC 编译/渲染问题
