@@ -1,5 +1,3 @@
-
-
 # 通用
 
 ---
@@ -44,6 +42,18 @@
 请把上述规则有机地融入 @AGENTS.md 里
 
 # 重构
+
+---
+
+这里写一下： 
+
+- 我准备对本项目的国自然基金模板进行重构，为未来50年发展打好基础
+- 我会新增类似 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 的期刊论文写作latex能力，助力大家使用vibe coding的能力来写论文
+- 我会新增类似 /Volumes/2T01/Github/smu-thesis-latex-clinical/projects/mmed-cy-01 的毕业论文写作latex能力，助力毕业的小伙伴使用vibe coding的能力来写论文 
+
+通过上面3个点，让ChineseResearchLaTeX项目变成一个真正的国人latex平台，而不仅限于国自然（尽管国自然仍是重头戏）。要求在400-500字左右。
+
+---
 
 plans/重构-v202603101512.md 的计划觉得可以吗？有没有可以优化的空间？
 
