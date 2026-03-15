@@ -22,6 +22,10 @@
 - 精简 `scripts/update_readme_template_list.py` 生成结果：移除 README 模板列表中与下载列重复的 `最新稳定版` 列，仅保留模板状态、标准包、Overleaf 包与说明四类核心信息
 - 继续精简 `scripts/update_readme_template_list.py` 生成结果：移除 README 模板列表中信息密度较低的 `说明` 列，仅保留模板、状态、标准包与 Overleaf 包四类核心字段
 
+### Fixed（修复）
+
+- 更新根级 `.gitignore`：新增 Microsoft Office 临时文件忽略规则，避免 `~$*.docx`、`~$*.xlsx`、`~$*.pptx` 等锁文件误入版本控制
+
 ## [v4.0.0] - 2026-03-15
 
 ### Added（新增）
