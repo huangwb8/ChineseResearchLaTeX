@@ -12,6 +12,7 @@
 
 - 新增 `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`）与本地执行，可通过 `--packages bensz-nsfc,bensz-paper` 安装 `packages/` 下的一个或多个公共包；`bensz-nsfc` 委托给包级安装器，`bensz-paper` 直接复制 `.sty` 文件到 `TEXMFHOME`
 - 新增 `scripts/update_readme_template_list.py` 与 `.github/workflows/update-template-list.yml`：自动读取 GitHub 最新正式 Release 资产，每小时定时检查并支持手动触发，将根级 `README.md` 中 `## 📋 模板列表` 重构为按 `NSFC / SCI / 毕业论文` 分组展示的实时模板清单；Overleaf 列统一改为指向 Overleaf 专用 zip 包地址，而不再维护单独的在线演示链接
+- 新增 `docs/bensz-nsfc-design-principles.md`：系统解释 `bensz-nsfc` 的设计目标、分层模型、加载链路、覆盖顺序、资源策略、版本锁定与维护边界，帮助用户和维护者理解“公共包 + profile + 薄项目 + 官方脚本入口”的设计取舍
 
 ### Changed（变更）
 
@@ -21,6 +22,7 @@
 - 优化 `scripts/update_readme_template_list.py` 生成口径：README 模板列表顶部说明不再把用户引导到泛化的 GitHub Release 页面，`最新稳定版` 列改为默认直达对应模板的具体 zip 下载链接（优先标准包，其次 Overleaf 包）
 - 精简 `scripts/update_readme_template_list.py` 生成结果：移除 README 模板列表中与下载列重复的 `最新稳定版` 列，仅保留模板状态、标准包、Overleaf 包与说明四类核心信息
 - 继续精简 `scripts/update_readme_template_list.py` 生成结果：移除 README 模板列表中信息密度较低的 `说明` 列，仅保留模板、状态、标准包与 Overleaf 包四类核心字段
+- 更新 `README.md` 与 `docs/nsfc-usage-guide.md`：新增 `bensz-nsfc` 设计原理文档入口，并将 NSFC 使用说明中的延伸阅读改为只引用当前仓库里真实存在的文档与包级说明
 
 ### Fixed（修复）
 

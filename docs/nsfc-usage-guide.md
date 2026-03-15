@@ -214,6 +214,6 @@ python packages/bensz-nsfc/scripts/install.py install --ref <tag>
 
 ## 延伸阅读
 
-- [`docs/migration-guide.md`](./migration-guide.md)：旧项目如何迁移到公共包模式
-- [`docs/latex-writing-guide.md`](./latex-writing-guide.md)：常见 LaTeX 写作命令速查
+- [`docs/bensz-nsfc-design-principles.md`](./bensz-nsfc-design-principles.md)：解释公共包、profile、薄项目与官方脚本入口为何这样分层
+- [`packages/bensz-nsfc/README.md`](../packages/bensz-nsfc/README.md)：包级结构、安装入口与资源策略速览
 - [`projects/NSFC_Young/AGENTS.md`](../projects/NSFC_Young/AGENTS.md)：面向 AI 协作写作的项目级指令
