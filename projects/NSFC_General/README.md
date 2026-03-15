@@ -19,7 +19,7 @@
 python code/nsfc_build.py build --project-dir .
 ```
 
-该入口同时兼容“完整仓库模式”和“已安装 `bensz-nsfc` 包的单项目 Release 压缩包模式”。
+该入口同时兼容“完整仓库模式”和“已安装 `bensz-nsfc` 包的单项目 Release 压缩包模式”。脚本发现优先依赖 `kpsewhich bensz-nsfc-common.sty` 与常规 TEXMF 安装路径。
 
 这条固定 Python 渲染链会自动执行 `xelatex -> bibtex -> xelatex -> xelatex`，把中间文件全部收进 `.latex-cache/`，只在项目根目录保留 `main.pdf`。
 

@@ -43,9 +43,24 @@
 
 # 重构
 
+---
+
+scripts/pack_release.py 优化：
+
+- 里面除了可以对项目进行一般的打包，还需要打包一个专门可在overleaf中使用的zip。因为，overleaf中用户无法像本地电脑那样随时将一个latex包安装到它的系统里。你只要优化些规则，应该就可以做到。
+- 发布版本的时候，压缩包的命名类似于：
+  - 普通的可在个人电脑里用的包： NSFC_Young-{release号}.zip
+  - 定制的可在Overleaf上使用的包： NSFC_Young-Overleaf-{release号}.zip
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决，所有建议都要落实。
+
+---
+
 对于`用户安装 bensz-nsfc 包后，项目里有稳定办法找到这些脚本`这个需求，解决方法很简单
 
-- 做好安装latex包的python脚本，让它们不管在什么系统里，都可以找到当前机器的latex包的应该安装的位置
+- 做好安装用的python脚本，让用户不管在什么系统、什么设备里，基于这个python脚本都可以将bensz-nsfc 包安装到正确的位置
+- 设计好AGENTS.md的规则，要求ai去latex包的根目录里找脚本。这样ai在实际工作的时候就会自主规划了
+- 因为包已经按常规安装正确，一般来说ai肯定很容易找到它（因为latex包一般都装在一些固定的位置）
 
 ---
 

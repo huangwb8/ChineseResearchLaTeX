@@ -342,6 +342,15 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 
 根目录 `scripts/` 不再承载 NSFC 直接脚本；凡是 NSFC 公共包安装、构建、校验、TDS 打包问题，都优先在 `packages/bensz-nsfc/scripts/` 下定位。
 
+在“只打开单个 NSFC 项目目录”或“处理项目 Release 压缩包”场景下，默认不要假设项目目录内自带这些脚本。应先定位已安装的 `bensz-nsfc` 包根目录，再进入其 `scripts/` 目录找脚本：
+
+1. 首选 `kpsewhich bensz-nsfc-common.sty`
+2. 若能得到 `.sty` 路径，则将其父目录视为包根目录，并优先查找 `<包根>/scripts/`
+3. 若 `kpsewhich` 不可用或未返回结果，再检查常规 `TEXMFHOME/tex/latex/bensz-nsfc/`
+4. 只有在完整仓库开发模式下，才直接使用仓库内 `packages/bensz-nsfc/scripts/`
+
+默认假设：只要用户按官方 Python 安装脚本正确安装了 `bensz-nsfc` 包，AI 就应能通过上述路径发现策略找到对应脚本，而不需要要求项目 zip 重复携带这些脚本。
+
 ### 编译规范
 
 **首选入口**：使用统一 Python 渲染器，而不是手写一串裸 `xelatex` 命令。

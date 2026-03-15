@@ -3,6 +3,7 @@
 ## 目标
 
 旧版本项目直接在 `extraTex/@config.tex` 里维护整套样式。重构后，项目入口改为加载公共包 `bensz-nsfc-common`，安装、锁定与切换统一交给 `packages/bensz-nsfc/scripts/install.py`。
+这些脚本跟随 `bensz-nsfc` 包一起安装，不要求在每个具体项目 zip 里重复携带。
 
 ## 最短迁移路径
 
