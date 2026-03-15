@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+## [v4.0.0] - 2026-03-15
+
 ### Added（新增）
 
 - 新增使用说明文档 `docs/nsfc-usage-guide.md`：面向普通用户说明 NSFC 模板的基本使用方法，并以 `projects/NSFC_Young/` 作为示例演示公共包安装、项目编译、正文编辑、参考文献维护、版本锁定与 Overleaf 使用；同时在根级 `README.md` 增加文档导读入口
