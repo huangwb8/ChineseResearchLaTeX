@@ -135,7 +135,7 @@
 **完整仓库模式**（项目在 `ChineseResearchLaTeX/projects/NSFC_Young/`）：
 
 ```bash
-python code/nsfc_build.py build --project-dir .
+python scripts/nsfc_build.py build --project-dir .
 ```
 
 **手工兜底**（任意环境均可，需已安装 TeXLive + 中文字体）：
