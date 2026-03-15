@@ -72,15 +72,21 @@ PAPER_PACKAGE_RUNTIME_ITEMS = [
     "profiles",
 ]
 SKIP_FILE_NAMES = {".DS_Store", "Thumbs.db"}
+SKIP_FILE_SUFFIXES = {".pyc", ".pyo"}
+SKIP_DIR_NAMES = {"__pycache__", ".latex-cache", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 
 
-def should_skip_file(path: Path) -> bool:
-    return path.name in SKIP_FILE_NAMES
+def should_skip_path(path: Path) -> bool:
+    if path.name in SKIP_FILE_NAMES:
+        return True
+    if path.suffix in SKIP_FILE_SUFFIXES:
+        return True
+    return any(part in SKIP_DIR_NAMES for part in path.parts)
 
 
 def iter_tree_files(root: Path):
     for file in sorted(root.rglob("*")):
-        if file.is_file() and not should_skip_file(file):
+        if file.is_file() and not should_skip_path(file):
             yield file
 
 
@@ -90,14 +96,14 @@ def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
         if not item_path.exists():
             continue
         if item_path.is_file():
-            if not should_skip_file(item_path):
+            if not should_skip_path(item_path):
                 zf.write(item_path, arcname=item_name)
             continue
         for file in iter_tree_files(item_path):
             zf.write(file, arcname=file.relative_to(project_dir))
 
     for workspace_file in sorted(project_dir.glob("*.code-workspace")):
-        if not should_skip_file(workspace_file):
+        if not should_skip_path(workspace_file):
             zf.write(workspace_file, arcname=workspace_file.name)
 
 

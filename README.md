@@ -172,6 +172,7 @@ python scripts/pack_release.py --tag v3.5.2 --upload
 
 - `{项目名}-{tag}.zip`：普通包，面向本地电脑使用；默认假设你已经按官方入口安装过对应公共包
 - `{项目名}-Overleaf-{tag}.zip`：Overleaf 专用包；在普通包基础上额外内嵌对应公共包运行时文件
+- 打包过程会自动跳过 `__pycache__/`、`.pyc`、`.latex-cache/` 等缓存或中间文件，避免把本地环境噪音带进正式 Release assets
 
 例如：
 

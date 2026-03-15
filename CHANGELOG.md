@@ -42,6 +42,7 @@
 
 - 修复 NSFC 模板重构后的版式回归风险：通过 `tests/重构-v202603101512/` 下的基线 PDF、4 步编译结果、页面 JPG 与逐页视觉对比，确认在官方安装路径下 `NSFC_General`、`NSFC_Local`、`NSFC_Young` 的输出 PDF 与重构前基线外观一致
 - 修复共享资源重构后的编译稳定性风险：XeLaTeX 现在直接从公共包解析共享字体，BibTeX 通过公共包输出的绝对路径样式入口加载 `gbt7714-nsfc.bst`，避免删除项目内重复资源后出现找不到字体或 `bst` 的问题
+- 修复 `scripts/pack_release.py` 的 Release 资产污染问题：打包 `projects/paper-sci-01/` 时不再把 `scripts/__pycache__/`、`.pyc`、`.latex-cache/` 等缓存/中间文件写入普通 zip 与 Overleaf zip；同时在根级 `README.md` 明确补充该过滤规则，保证发布资产更干净、可复现
 
 ## [v3.5.1] - 2026-03-08
 
