@@ -164,14 +164,35 @@ curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/
 
 > 💡 `--ref` 参数支持版本 tag（如 `v4.0.0`）或分支名（如 `main`），默认为 `main`。
 
+### 方法三：本地硬编码安装
+
+适用于已将仓库克隆到本地的场景。首先克隆仓库：
+
+```bash
+git clone https://github.com/huangwb8/ChineseResearchLaTeX.git
+cd ChineseResearchLaTeX
+```
+
+然后在**仓库根目录**执行：
+
+```bash
+# 安装 bensz-nsfc（默认）
+python3 scripts/install.py install --packages bensz-nsfc --ref v4.0.0
+
+# 安装多个包
+python3 scripts/install.py install --packages bensz-nsfc,bensz-paper --ref v4.0.0
+
+# 查看所有支持的包
+python3 scripts/install.py list
+```
+
+> 💡 `--ref` 参数支持版本 tag（如 `v4.0.0`）或分支名（如 `main`），默认为 `main`。
 
 ## LaTeX 模板编译
 
 可以手动在VSCode里编译； 也可以使用统一的 Python 渲染器生成 PDF：
 
 ```bash
-python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
-python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Local
 python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Young
 ```
 
@@ -185,7 +206,7 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir proj
 如果只想清理缓存与根目录中间文件，可执行：
 
 ```bash
-python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_General
+python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_Young
 ```
 
 
