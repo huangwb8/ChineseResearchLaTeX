@@ -1,57 +1,110 @@
 # 中国科研常用 LaTeX 模板集 - 项目指令
 
-本项目为「中国科研常用LaTeX模板集」，整理中国科研常用的LaTeX模板，包括国自然科学基金的正文模板（Mac/Win/Overleaf）、毕业论文等。一般建议使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
+本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线是 NSFC 系列模板；`bensz-paper`、`bensz-thesis` 目前主要作为后续扩展位点，除非用户明确要求或仓库内已有可验证实现，否则不要假定它们已经具备与 NSFC 同等级的完成度。
+
+一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。仓库主分支可以包含重构中的源码、脚本和技能，处理任务时要以“当前真实目录结构 + 当前脚本接口 + 当前 README/CHANGELOG”作为判断依据，而不是沿用旧版记忆。
 
 ---
 
 ## 项目目标
 
-整理中国科研常用的 LaTeX 模板（国自然科学基金正文模板、毕业论文等），维护可直接使用的项目结构与说明文档；一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。
+- 维护可直接使用的 NSFC LaTeX 模板与 Release 交付物
+- 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
+- 维护 `scripts/install.py`、`scripts/nsfc_project_tool.py` 等官方安装/构建入口
+- 维护 `skills/` 目录中的项目级 AI Skills，支撑 NSFC 写作、评审、质控、迁移、出图等工作流
+- 为后续期刊论文、毕业论文模板保留包级扩展位点，但不为尚未落地的能力编造规则
 
 ## 目录结构
 
-```
+```text
 ChineseResearchLaTeX/
-├── projects/              # LaTeX 项目模板
-│   ├── NSFC_General/      # 面上项目模板
-│   ├── NSFC_Local/        # 地区项目模板
-│   └── NSFC_Young/        # 青年基金模板
-├── references/            # 项目辅助文档
-│   ├── README.md
-│   └── latex-writing-guide.md
-├── skills/                # 项目专用技能
-│   └── [各个 skill 目录...]
-├── plans/                 # 计划文档（可选）
-├── tests/                 # 测试/验证记录（可选）
-├── config.yaml            # 项目配置文件
-├── CLAUDE.md              # Claude Code 项目指令
-├── AGENTS.md              # OpenAI Codex 项目指令
-├── CHANGELOG.md           # 变更日志
-├── README.md              # 项目说明
-└── license.txt            # 许可证
+├── packages/
+│   ├── bensz-nsfc/          # NSFC 公共包源码（当前主线）
+│   ├── bensz-paper/         # 论文模板包位点（预留）
+│   └── bensz-thesis/        # 毕业论文模板包位点（预留）
+├── projects/
+│   ├── NSFC_General/        # 面上项目薄封装 + 示例正文
+│   ├── NSFC_Local/          # 地区项目薄封装 + 示例正文
+│   └── NSFC_Young/          # 青年项目薄封装 + 示例正文
+├── scripts/
+│   ├── install.py           # NSFC 公共包安装/切换/锁定/回退入口
+│   ├── nsfc_project_tool.py # NSFC 项目统一构建/清理入口
+│   ├── validate_package.py  # NSFC 公共包结构与编译校验
+│   ├── build_tds_zip.py     # 生成 TDS 分发包
+│   └── pack_release.py      # Release 资产打包与上传
+├── docs/
+│   └── migration-guide.md   # 旧项目迁移到公共包模式的说明
+├── references/              # 项目辅助文档
+├── skills/                  # 项目级 Agent Skills
+├── plans/                   # 规划文档
+├── tests/                   # 回归验证与发布记录
+├── config.yaml              # 项目配置（仅作补充元信息，不必然代表最新工作流）
+├── CLAUDE.md                # Claude Code 项目指令适配
+├── AGENTS.md                # OpenAI Codex 项目指令
+├── CHANGELOG.md             # 项目级变更日志
+└── README.md                # 用户说明
 ```
+
+### 当前分层模型
+
+处理任务时，优先判断应该修改哪一层：
+
+- `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、稳定实现
+- `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
+- `scripts/install.py`：安装、锁定、同步、回退、状态检查
+- `scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
+- `scripts/validate_package.py` / `scripts/build_tds_zip.py` / `scripts/pack_release.py`：校验、分发、发布
+- `skills/`：项目级 AI 技能及其文档、脚本、测试
+- `docs/`：迁移说明等辅助文档
+
+如果一个问题影响三套 NSFC 模板的共同版式、字体、BibTeX 资源或公共宏逻辑，优先修改 `packages/bensz-nsfc/`，不要把同一份改动复制粘贴回 `projects/NSFC_General`、`projects/NSFC_Local`、`projects/NSFC_Young`。
 
 ---
 
 ## 核心工作流
 
-当用户提出 LaTeX 模板相关需求时，按以下流程执行：
+当用户提出 LaTeX 模板、NSFC 标书、公共包、安装脚本或 Skill 相关需求时，按以下流程执行：
 
 ### 任务理解
 
-- 理解用户的真实需求和意图（模板使用、编译问题、格式调整等）
-- 确认任务范围和预期输出（PDF 文档、代码修改、文档说明等）
-- 识别可能的依赖和约束（宏包版本、编译引擎、文件路径等）
+- 理解用户的真实需求和意图：是正文写作、版式修复、公共包重构、安装失败、编译报错、Skill 优化，还是 Release 打包
+- 确认任务层级：公共包、项目示例、脚本、技能文档、迁移文档、发布流程，分别落在哪个目录
+- 识别依赖和约束：XeLaTeX、BibTeX、`TEXMFHOME`、`.nsfc-version`、共享字体/BibTeX 资源、draw.io/Gemini 配置、技能输出目录等
 
 ### 执行流程
 
-模板选择 → 内容编辑 → 编译验证 → 格式检查 → 输出交付
+任务分层定位 → 最小范围修改 → 按官方入口验证 → 必要时同步文档与变更记录 → 输出交付
+
+### 当前推荐工作流
+
+#### NSFC 模板/版式问题
+
+- 先判断问题属于公共包还是项目层正文
+- 共享样式问题优先修 `packages/bensz-nsfc/`
+- 项目示例内容、说明文字、局部项目差异再修 `projects/NSFC_*`
+
+#### NSFC 安装/版本管理问题
+
+- 优先检查 `scripts/install.py` 与 `docs/migration-guide.md`
+- 用户项目版本锁相关问题优先围绕 `.nsfc-version`、`pin/sync/check/rollback` 工作流处理
+
+#### NSFC 编译/渲染问题
+
+- 优先使用 `python scripts/nsfc_project_tool.py build --project-dir <项目路径>`
+- 只在排查底层编译链路时，才退回原生 `xelatex -> bibtex -> xelatex -> xelatex`
+
+#### Skill 相关问题
+
+- 先确认是否改动 `SKILL.md`、`config.yaml`、脚本实现、README、CHANGELOG
+- 变更 Skill 后，检查根级 `README.md` 与根级 `CHANGELOG.md` 是否需要同步
 
 ### 输出规范
 
-- LaTeX 代码应遵循项目模板规范
-- 文档更新应保持格式一致性
-- 编译结果应无错误和警告
+- LaTeX / Python / Markdown 修改应遵循当前仓库真实结构，不再假设旧版“大一统模板目录”
+- NSFC 模板变更后，应优先通过官方构建链路完成验证
+- 编译结果以“无错误”为底线；若仍有 warning，需明确说明是否为已有 warning 或新增 warning
+- 新增共享逻辑时，优先沉淀到公共包或脚本，不要把重复资源重新散落回各项目目录
+- 构建产物应符合当前约定：中间文件尽量隔离到 `.latex-cache/` 或各 Skill 的隐藏工作区
 
 ---
 
@@ -61,14 +114,14 @@ ChineseResearchLaTeX/
 
 | 原则 | 核心思想 | 在本项目中的体现 |
 |------|----------|------------------|
-| **KISS** | Keep It Simple, Stupid | 追求极致简洁，避免过度设计；文档标题不使用序号前缀 |
-| **YAGNI** | You Aren't Gonna Need It | 只实现当前需要的功能 |
-| **DRY** | Don't Repeat Yourself | 相似逻辑应抽象复用 |
-| **SOLID** | 面向对象设计五大原则 | 单一职责、开闭原则等 |
-| **关注点分离** | Separation of Concerns | 不同层次逻辑应分离 |
-| **奥卡姆剃刀** | 如无必要，勿增实体 | 优先选择最简单的解决方案 |
-| **最小惊讶原则** | Principle of Least Astonishment | API 行为应符合用户直觉 |
-| **早期返回原则** | Early Return | 尽早返回，减少嵌套 |
+| **KISS** | Keep It Simple, Stupid | 优先维护“公共包 + 薄项目 + 官方脚本入口”的简单结构 |
+| **YAGNI** | You Aren't Gonna Need It | 不为尚未落地的论文/毕业论文能力过早设计复杂规则 |
+| **DRY** | Don't Repeat Yourself | 共享样式、共享字体、共享 `bst`、共享构建逻辑集中维护 |
+| **SOLID** | 面向对象设计五大原则 | 安装、构建、校验、发布、技能各司其职 |
+| **关注点分离** | Separation of Concerns | `packages/`、`projects/`、`scripts/`、`skills/`、`docs/` 分层清晰 |
+| **奥卡姆剃刀** | 如无必要，勿增实体 | 优先选择最短迁移路径和最少入口数量 |
+| **最小惊讶原则** | Principle of Least Astonishment | 默认走 README 中公开承诺的官方入口，不发明隐藏工作流 |
+| **早期返回原则** | Early Return | 及早判定任务层级与修改边界，减少误改共享逻辑或错误目录 |
 
 **原则冲突时的决策优先级**：
 1. **正确性 > 一切**
@@ -86,7 +139,7 @@ ChineseResearchLaTeX/
 
 每个 Skill 应包含以下标准文件：
 
-```
+```text
 skills/your-skill/
 ├── SKILL.md              # 必需：技能功能文档（AI 执行规范）
 ├── README.md             # 推荐：用户友好的使用指南
@@ -101,30 +154,31 @@ skills/your-skill/
 
 ### SKILL.md 规范
 
-**核心原则**：SKILL.md 应聚焦于 **AI 执行逻辑**，而非版本历史或宣传信息。
+**核心原则**：`SKILL.md` 应聚焦于 **AI 执行逻辑**，而非版本历史或宣传信息。
 
 | 要求 | 说明 | 示例 |
 |------|------|------|
 | **长度控制** | ≤500 行，避免冗余内容 | - |
-| **描述精简** | config.yaml 的 description 字段 ≤ 1024 字符 | `支持 DOI 和 arxiv ID` |
+| **描述精简** | `config.yaml` 的 `description` 字段 ≤ 1024 字符 | `支持 DOI 和 arxiv ID` |
 | **移除版本标记** | 不使用 `⚠️ v2.3.0 新增` 类标记 | ❌ `⚠️ v2.3.0 新增：支持XXX`<br>✅ `支持XXX功能` |
 | **简洁标题** | 标题不使用序号前缀 | ❌ `## 1) 功能概述`<br>✅ `## 功能概述` |
-| **单线描述** | description 字段使用单行格式，融入负向约束 | `生成 NSFC 摘要（不适用：非标书场景）` |
+| **单线描述** | `description` 字段使用单行格式，融入负向约束 | `生成 NSFC 摘要（不适用：非标书场景）` |
 
-**理由**：对 AI 而言，重要的是"功能是什么"，而非"何时加入的"。版本标记增加认知负荷，降低信号噪声比。
+**理由**：对 AI 而言，重要的是“功能是什么”，而非“何时加入的”。版本标记会增加认知负荷，降低信号噪声比。
 
 ### README.md 规范
 
-README.md 是**面向用户的使用指南**，说明如何触发和使用技能。
+`README.md` 是**面向用户的使用指南**，说明如何触发和使用技能。
 
 **应包含内容**：
+
 - 技能用途和适用场景
 - 快速开始指南
-- 参数说明（如有）
+- 参数说明
 - 使用示例
 - 常见问题和限制
 
-**注意**：README.md 应由 `write-skill-readme` skill 生成和维护。
+**注意**：`README.md` 应由 `write-skill-readme` skill 生成和维护。
 
 ### config.yaml 规范
 
@@ -134,91 +188,79 @@ README.md 是**面向用户的使用指南**，说明如何触发和使用技能
 
 ```yaml
 skill_info:
-  name: skill-name              # 技能名称（kebab-case）
-  version: x.y.z                # 版本号（遵循 Semver）
+  name: skill-name
+  version: x.y.z
   description: "功能描述（≤1024字符，单行格式）"
-  category: writing|development|normal  # 技能分类
+  category: writing|development|normal
 ```
 
 **版本号规则**（遵循语义化版本）：
 
 | 类型 | 格式 | 示例 | 说明 |
 |------|------|------|------|
-| **稳定版** | v1.0.0+ | v1.0.0 | 功能完整，经过充分测试（✅ 稳定） |
-| **开发中** | v0.x.x | v0.7.3 | 核心功能可用，持续优化（🚧 开发中） |
-| **实验性** | v0.0.x | v0.0.1 | 功能验证阶段（⚠️ 实验性） |
+| **稳定版** | v1.0.0+ | v1.0.0 | 功能完整，经过充分测试 |
+| **开发中** | v0.x.x | v0.7.3 | 核心功能可用，持续优化 |
+| **实验性** | v0.0.x | v0.0.1 | 功能验证阶段 |
 
 **版本号递增规则**：
+
 - **主版本号（Major）**：不兼容的 API 变更
 - **次版本号（Minor）**：向下兼容的功能性新增
 - **修订号（Patch）**：向下兼容的问题修正
 
 ### 六大质量原则
 
-每个 Skill 的实现必须遵守以下质量原则：
-
 #### 1. 硬编码与 AI 功能划分
 
-- **硬编码的确定性操作**：脚本化处理
-  - 路径处理、文件验证、格式转换等
-- **灵活判断**：交由 AI 处理
-  - 语义理解、多轮对话、启发式决策等
+- **硬编码的确定性操作**：路径处理、文件验证、格式转换、目录初始化、结构校验
+- **灵活判断**：语义理解、多轮对话、启发式决策、文风/逻辑评估
 
 #### 2. 多轮自检与人类监督
 
 - Skill 应支持多轮对话和渐进式优化
-- 关键决策应请求用户确认
+- 关键决策应请求用户确认，或在 README / SKILL 中明确默认策略
 
 #### 3. 冗余残留检查
 
 - 删除功能时，全局清理所有引用和依赖
-- 避免"孤立"的代码、配置、文档遗留物
+- 避免遗留孤立脚本、过期文档、失效示例和旧命令
 
 #### 4. 安全性审视
 
-- **输入验证**：验证用户输入的合法性
-- **路径处理**：使用正确的路径规范，避免路径穿越攻击
+- **输入验证**：验证用户输入合法性
+- **路径处理**：避免路径穿越和越界写入
 - **敏感信息防护**：不在日志中泄露密钥、密码等
 
 #### 5. 过度设计检查
 
-遵守 YAGNI 原则：
-- 不添加用户未要求的"预留功能"
-- 优先选择最简单的解决方案
+- 不添加用户未要求的“预留功能”
+- 优先选择最简单、最稳的方案
 
 #### 6. 通用性验证
 
-- 避免时间敏感的硬编码
-- 避免场景限制
-- 确保跨平台兼容性
+- 避免时间敏感硬编码
+- 避免只适用于单机单目录的脆弱实现
+- 尽量保证 macOS / Linux / Windows / WSL / Overleaf 口径一致
 
 ### 版本管理
 
-**核心原则**：`config.yaml` 为版本号的唯一真相来源。
+**核心原则**：`config.yaml` 为版本号唯一真相来源。
 
 **版本号同步顺序**：
 1. 更新 `config.yaml` 中的 `skill_info.version`
-2. 同步更新 README.md（如有版本表格）
-3. 同步更新 CHANGELOG.md（记录变更内容）
-4. 其他文档中的版本号必须与 config.yaml 保持一致
+2. 同步更新 `README.md`
+3. 同步更新 `CHANGELOG.md`
+4. 其他文档中的版本号必须与 `config.yaml` 保持一致
 
 ### 文档更新与发布
 
 每次修改 Skill 时：
 
-1. **更新 CHANGELOG.md**（Skill 级别）
-   - 记录该 Skill 的版本历史
-   - 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式
-
-2. **更新 SKILL.md**（如有功能变更）
-   - 移除版本标记，只保留最新功能说明
-   - 保持文档简洁（≤500 行）
-
-3. **重新生成 README.md**（使用 write-skill-readme skill）
-   - 确保用户文档与实现同步
-
-4. **同步到项目级 CHANGELOG.md**
-   - 在项目根目录的 CHANGELOG.md 中记录该 Skill 的更新
+1. 更新 `CHANGELOG.md`（Skill 级别）
+2. 更新 `SKILL.md`（如有功能变更）
+3. 重新生成 `README.md`（使用 `write-skill-readme` skill）
+4. 同步到项目级 `CHANGELOG.md`
+5. 视影响范围检查根级 `README.md`、`skills/README.md` 是否需要同步
 
 ---
 
@@ -232,11 +274,23 @@ skill_info:
 
 默认优先使用项目内文件与本地上下文；确需联网获取信息时，优先使用本地搜索工具。仅当本地工具不足以满足需求时再使用其它联网手段，并说明原因与保留关键链接。
 
+### 真实状态优先
+
+仓库已发生较大重构，处理任务时遵循以下优先级：
+
+1. 当前可执行脚本的真实接口
+2. 当前目录结构与源码实现
+3. `README.md`、`CHANGELOG.md`、`docs/` 中的现行说明
+4. 其他补充性配置文件
+
+若 `config.yaml`、旧计划文档或旧记忆与现状冲突，以真实目录和真实脚本行为为准，并在必要时同步修正文档。
+
 ### 文件引用规范
 
 在项目指令文档中引用文件时：
-- 使用 Markdown 链接语法（如 `[filename.md](path/filename.md)`）
-- 包含相关的起始行号（如 `path/filename.md#L42`）
+
+- 使用 Markdown 链接语法，如 `[filename.md](path/filename.md)`
+- 包含相关的起始行号，如 `path/filename.md#L42`
 - 使每个引用有独立路径，即使是同一文件
 
 ### 变更边界
@@ -244,54 +298,110 @@ skill_info:
 - 仅修改与当前任务直接相关的文件
 - 不主动添加用户未要求的功能
 - 保持现有代码风格和结构
-- 不自动清理/删除 `.DS_Store`（通常由 Git 全局忽略管理）
+- 不自动清理/删除 `.DS_Store`
 - `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致
-- `skills/` 目录内文件有变化时，检查 `README.md` 是否需要同步更新
+- 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
+- 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
+- 变更 `scripts/install.py`、`scripts/nsfc_project_tool.py`、`scripts/validate_package.py`、`scripts/pack_release.py` 时，应同步检查 README / docs / CHANGELOG 中的命令口径
 
 ### 系统 Skill 保护
 
 - **严禁直接修改系统级 Skill 的工作文件/代码**（如 `~/.claude/skills/`、`~/.codex/skills/` 下的文件）
 - 如有项目个性化需求，应在项目目录内添加代码或配置
-- 遵循「项目级覆盖系统级」原则，通过项目内的 `skills/` 目录扩展或覆盖功能
+- 遵循“项目级覆盖系统级”原则，通过项目内的 `skills/` 目录扩展或覆盖功能
 
 ---
 
 ## LaTeX 技术规范
 
+### 安装与版本锁定
+
+当前 NSFC 模板采用“公共包安装 + 项目薄封装”模式。处理 NSFC 相关任务时，优先使用以下官方入口：
+
+```bash
+python scripts/install.py install --ref v3.5.1
+python scripts/install.py pin --ref v3.5.1
+python scripts/install.py sync
+python scripts/install.py check
+python scripts/install.py rollback
+```
+
+开发当前仓库时，如需直接验证本地源码：
+
+```bash
+python scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
+```
+
+处理安装/锁定问题时，优先查看：
+
+- `scripts/install.py`
+- `docs/migration-guide.md`
+- 项目目录内的 `.nsfc-version`
+
 ### 编译规范
 
-**PDF 渲染4步法**：为保证参考文献和交叉引用的正确性，始终按以下顺序编译：
+**首选入口**：使用统一 Python 渲染器，而不是手写一串裸 `xelatex` 命令。
 
+```bash
+python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
+python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Local
+python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Young
 ```
+
+当前官方构建链路会自动执行：
+
+```text
 xelatex → bibtex → xelatex → xelatex
 ```
 
-| 步骤 | 作用 |
-|------|------|
-| `xelatex` (第1次) | 生成辅助文件（.aux 等） |
-| `bibtex` | 处理参考文献 |
-| `xelatex` (第2次) | 解析文献引用 |
-| `xelatex` (第3次) | 确保所有交叉引用正确 |
+并同时保证：
 
-**使用原则**：
-- 每次修改参考文献后必须重新执行完整4步
-- 仅修改正文时可省略 bibtex 步骤
-- 使用 `-interaction=nonstopmode` 参数避免编译中断
+- 所有中间文件尽量隔离到项目内 `.latex-cache/`
+- 根目录默认只保留最终 `main.pdf`
+- 为 VS Code PDF/源码跳转保留 `.latex-cache/*.synctex.gz`
+
+仅在排查底层编译问题时，才直接使用原生命令：
+
+```bash
+xelatex -interaction=nonstopmode main.tex
+bibtex main
+xelatex -interaction=nonstopmode main.tex
+xelatex -interaction=nonstopmode main.tex
+```
+
+### 校验规范
+
+修改 NSFC 公共包、共享资源或安装逻辑后，优先运行：
+
+```bash
+python scripts/validate_package.py
+```
+
+如仅做结构校验、暂不编译，可使用：
+
+```bash
+python scripts/validate_package.py --skip-compile
+```
+
+如需清理项目缓存与根目录中间文件，使用：
+
+```bash
+python scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_General
+```
 
 ### 标题换行控制
 
-对于需要精确控制换行长度的标题（如 NSFC 申请书的括号提示语）：
+对于需要精确控制换行长度的标题，例如 NSFC 申请书里的长括号提示语：
 
 **推荐方案：使用 `\linebreak{}`**
 
 ```latex
-% 示例：控制长标题的换行位置
 \subsection{2. 工作条件（包括已具备的实验条件，尚缺少的实验条件和拟\linebreak{}解决的途径...）}
 ```
 
 | 方法 | 优势 | 适用场景 |
 |------|------|----------|
-| `\linebreak{}` | 建议换行，保留 LaTeX 微调空间 | **推荐**：标题断行控制 |
+| `\linebreak{}` | 建议换行，保留 LaTeX 微调空间 | 标题断行控制 |
 | `\\` | 强制换行，不允许调整 | 仅用于必须强制换行的场景 |
 
 ---
@@ -300,17 +410,18 @@ xelatex → bibtex → xelatex → xelatex
 
 ### 变更记录规范
 
-**核心原则**：项目中的任何更新都必须在根级 [CHANGELOG.md](CHANGELOG.md) 中记录，避免在分散的文档中维护重复的版本历史。
+**核心原则**：项目中的任何更新都必须在根级 [CHANGELOG.md](CHANGELOG.md) 中记录，避免在分散文档中维护重复历史。
 
 ### 记录范围
 
-每次修改以下内容时，必须更新 CHANGELOG.md：
-- **项目指令文件**：CLAUDE.md、AGENTS.md 的任何修改
-- **项目结构变更**：新增/删除/重命名目录或关键文件
-- **工作流变更**：核心工作流程的调整
-- **工程原则变更**：新增、修改或删除工程原则
-- **重要配置变更**：影响项目行为的配置文件修改
-- **Skill 变更**：任何 Skill 的版本更新
+每次修改以下内容时，必须更新 `CHANGELOG.md`：
+
+- 项目指令文件：`CLAUDE.md`、`AGENTS.md`
+- 项目结构变更：新增/删除/重命名目录或关键文件
+- 工作流变更：安装、构建、校验、发布、技能协作等核心流程调整
+- 工程原则变更：新增、修改或删除工程原则
+- 重要配置变更：影响项目行为的配置文件、脚本、公共包接口修改
+- Skill 变更：任何 Skill 的版本更新
 
 ### 记录格式
 
@@ -331,34 +442,36 @@ xelatex → bibtex → xelatex → xelatex
 
 ### 记录时机
 
-- **修改前**：先在 CHANGELOG.md 的 `[Unreleased]` 部分草拟变更内容
+- **修改前**：先在 `CHANGELOG.md` 的 `[Unreleased]` 部分草拟变更内容
 - **修改后**：完善变更描述，添加具体细节和影响范围
 - **发布时**：将 `[Unreleased]` 内容移至具体版本号下
 
+### Release 前检查
+
+创建 Release 前，至少确认以下事项：
+
+- 目标变更已完成必要编译/脚本校验
+- NSFC 公共包相关改动已跑过 `python scripts/validate_package.py`
+- 相关 README / docs / CHANGELOG 已同步
+- 若涉及模板外观回归，优先把验证记录沉淀到 `tests/` 或相应计划目录
+
 ### Release 发布流程
 
-> 基于 gh cli 发布 release
+> 基于 `gh` CLI 发布 Release
 
 每次创建新 Release 时，按以下顺序执行：
 
 1. **提交代码**：使用 `git-commit` skill 生成 commit 信息并 push
-2. **创建 Tag**：创建新的版本 tag（遵循 Semver，如 `v3.3.0`）
+2. **创建 Tag**：创建新的版本 tag（遵循 Semver，如 `v3.5.2`）
 3. **生成 Release**：使用 `git-publish-release` skill 生成 Release Notes 并发布
-4. **打包并上传 Assets**：运行 [pack_release.py](scripts/pack_release.py) 完成打包与上传
+4. **打包并上传 Assets**：运行 `python scripts/pack_release.py --tag <tag> --upload` 完成打包与上传
+5. **发布微信动态**：在当前与用户交互的界面中生成一条微信动态，内容包含项目名、版本号、核心更新亮点和 Release 地址，字数控制在 100–200 字
 
-   ```bash
-   python scripts/pack_release.py --tag v3.3.0 --upload
-   ```
+参考：
 
-5. **发布微信动态**：在当前与用户交互的界面中生成一条微信动态，内容包含项目名、版本号、核心更新亮点和 Release 地址，字数控制在 100–200 字。参考格式：
-
-   ```
-   ChineseResearchLaTeX v3.4.0 发布 🎉
-
-   本次更新重点强化了 NSFC 标书 AI 辅助写作能力：新增「去 AI 味」润色技能（nsfc-humanization）和篇幅自动对齐技能（nsfc-length-aligner），帮你把机器感文字改写成专家手笔；新增申请代码智能推荐（nsfc-code），告别选代码的纠结；技术路线图与原理图生成也全面升级，默认启用 AI 规划模式，出图更稳。
-
-   Release 地址：https://github.com/huangwb8/ChineseResearchLaTeX/releases/tag/v3.4.0
-   ```
+```bash
+python scripts/pack_release.py --tag v3.5.2 --upload
+```
 
 ### Skill 文档编写原则
 
@@ -368,11 +481,12 @@ xelatex → bibtex → xelatex → xelatex
 |------|------|------|
 | **内容优先于版本** | 移除版本标记 | ❌ `⚠️ v2.3.0 新增：支持XXX`<br>✅ `支持XXX功能` |
 | **简洁标题** | 标题不使用序号前缀 | ❌ `## 1) 功能概述`<br>✅ `## 功能概述` |
-| **单一职责** | SKILL.md 专注功能规范，CHANGELOG.md 专注版本追踪 | 各司其职，避免重复 |
+| **单一职责** | `SKILL.md` 专注功能规范，`CHANGELOG.md` 专注版本追踪 | 各司其职，避免重复 |
 | **技术必要引用例外** | 保留技术性版本引用 | `v2.3.0 前的旧路径` |
 
 **设计公式**：
-```
+
+```text
 有效信息 = 总内容 - (版本标记 + 冗余序号 + 宣传性强调)
 ```
 
@@ -384,28 +498,33 @@ xelatex → bibtex → xelatex → xelatex
 
 ### 1. 理解意图
 
-首先理解用户需求背后的意图和在工作流中的本质作用。
+先理解用户需求背后的意图，以及它在当前“公共包 + 项目 + 脚本 + Skills”生态中的真实作用。
 
 ### 2. 定位生态位
 
-每条规则/要求都应找到其在整个文档结构中的"生态位"——它与其他内容的关系、它服务的目标、它影响的其他部分。
+每条规则都应找到它在整个文档结构中的“生态位”：
+
+- 它服务哪个工作流
+- 它约束哪个目录层级
+- 它是否会影响 README、docs、CHANGELOG、CLAUDE.md 或某个 Skill
 
 ### 3. 协调生长
 
 更新一个部分时，检查并同步更新相关部分：
-- 更新工作流步骤时，同步更新示例和验证清单
-- 更新输出规范时，同步更新引用该规范的其他章节
-- 更新术语定义时，全局统一替换
-- **更新本文档时，必须同步更新 CHANGELOG.md**
-- **更新本文档后，确保 CLAUDE.md 的核心内容保持一致**
+
+- 更新安装/构建流程时，同步更新 README、`docs/migration-guide.md`、命令示例
+- 更新共享包结构时，同步检查 `packages/bensz-nsfc/README.md` 与验证脚本口径
+- 更新 Skill 规范时，同步检查 `skills/README.md` 与相关 Skill 文档
+- 更新本文档时，必须同步更新 `CHANGELOG.md`
+- 更新本文档后，确保 `CLAUDE.md` 的核心内容保持一致
 
 ### 4. 保持呼吸感
 
-文档应该像生物体一样有"呼吸感"——章节之间有逻辑流动，而非割裂的清单。
+文档应保持结构流动，而不是变成割裂的堆砌清单；新增规则优先融入现有章节逻辑。
 
 ### 5. 定期修剪整合
 
-当某个章节变得过于臃肿时，主动重构。
+当某个章节开始承载过多旧时代信息、失效命令或重复说明时，主动重写，而不是继续叠补丁。
 
 ---
 

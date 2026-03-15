@@ -45,6 +45,10 @@
 
 ---
 
+./scripts中和nsfc直接相关的，应该搬到 packages/bensz-nsfc/scripts 里去。AGENTS.md 也要相应地调整、优化。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决，所有建议都要落实。
+
+---
+
 请了解下 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 是怎么渲染tex为PDF的。 它有这个特点：
 
 - 有固定的python代码负责渲染
