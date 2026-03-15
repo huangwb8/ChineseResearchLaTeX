@@ -1,0 +1,47 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-nsfc-bibliography}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC Bibliography]
+
+\newif\ifNSFCHasCite
+\NSFCHasCitefalse
+\AtBeginDocument{%
+  \pretocmd{\cite}{\global\NSFCHasCitetrue}{}{}%
+  \pretocmd{\nocite}{\global\NSFCHasCitetrue}{}{}%
+}
+
+\newlength{\NSFCBibTitleAboveSkip}
+\newlength{\NSFCBibTitleBelowSkip}
+\newlength{\NSFCBibItemSep}
+\newlength{\NSFCBibTextWidth}
+\setlength{\NSFCBibTitleAboveSkip}{10pt}
+\setlength{\NSFCBibTitleBelowSkip}{10pt}
+\setlength{\NSFCBibItemSep}{0pt}
+\setlength{\NSFCBibTextWidth}{397.16727pt}
+
+\makeatletter
+\renewenvironment{thebibliography}[1]{%
+  \par\addvspace{\NSFCBibTitleAboveSkip}%
+  \noindent{\color{MsBlue}\refname}\par%
+  \vspace{\NSFCBibTitleBelowSkip}%
+  \frenchspacing%
+  \list{\@biblabel{\@arabic\c@enumiv}}{%
+    \settowidth\labelwidth{\@biblabel{#1}}%
+    \leftmargin\labelwidth
+    \advance\leftmargin\labelsep
+    \rightmargin=\dimexpr\textwidth-\NSFCBibTextWidth-\leftmargin\relax
+    \ifdim\rightmargin<0pt\relax \rightmargin=0pt\relax \fi
+    \setlength{\itemsep}{\NSFCBibItemSep}%
+    \setlength{\parsep}{0pt}%
+    \setlength{\parskip}{0pt}%
+    \setlength{\topsep}{0pt}%
+    \setlength{\partopsep}{0pt}%
+    \usecounter{enumiv}%
+    \let\p@enumiv\@empty
+    \renewcommand\theenumiv{\@arabic\c@enumiv}%
+  }%
+  \sloppy\clubpenalty4000\widowpenalty4000%
+  \sfcode`\.=1000\relax%
+}{%
+  \def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+  \endlist%
+}
+\makeatother

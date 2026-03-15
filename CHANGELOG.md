@@ -8,9 +8,21 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- 新增 `packages/bensz-nsfc/` 公共包源码目录：引入 `bensz-nsfc-common` 安装入口、`profiles/` 模板元信息、`impl/` 稳定实现目录、包级 README、示例文件与字体资源；同时预留 `packages/bensz-paper/`、`packages/bensz-thesis/` 目录，作为后续论文/毕业论文模板包位点
+- 新增 `scripts/install.py`、`scripts/validate_package.py`、`scripts/build_tds_zip.py`：分别负责 NSFC 公共包安装/锁定/切换、包结构校验与 TDS 打包
+- 新增迁移说明文档 `docs/migration-guide.md`：说明从旧版“大而全 @config.tex”迁移到公共包安装模式的最短路径
+
 ### Changed（变更）
 
 - 优化计划文档 `plans/重构-v202603101512.md`：将模板版本控制提升为重构主线，明确 `python scripts/install.py` 为核心包唯一官方安装入口，并把用户版本语义统一为 Git `tag/branch/commit`；新增基于 `ref + commit` 的 `.nsfc-version` 锁文件方案、任意历史版本安装/回退工作流、GitHub archive/Release 双来源获取策略，以及对应的测试矩阵、风险控制与发布口径；同时将仓库源码布局收敛为 `packages/bensz-nsfc` / `packages/bensz-paper` / `packages/bensz-thesis`，并由安装器映射到标准 `texmf/tex/latex/...` 目录；`ChineseResearchLaTeX` 仅作为项目名，不作为具体安装目录名；另外将 NSFC 可分发文件统一收敛为 `bensz-nsfc-*` 前缀，避免仅靠目录名导致的文件名冲突；内部版本号规则也调整为“包版本 `p_vYYYYMMDD` + 模板版本 `t_vYYYYMMDD`”，并明确 `\ProvidesPackage` 前导日期只是 LaTeX 标准发布日期字段，不属于项目版本号体系
+- 重构 `projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`：三套项目入口统一收敛为 `\usepackage[type=...]{bensz-nsfc-common}`，不再在项目层保留大段样式实现
+- 更新 `README.md` 与 `packages/bensz-nsfc/README.md`：文档口径统一切换到“先安装公共包，再编译项目”的工作流，并补充 `pin/sync/check/rollback` 使用方式
+
+### Fixed（修复）
+
+- 修复 NSFC 模板重构后的版式回归风险：通过 `tests/重构-v202603101512/` 下的基线 PDF、4 步编译结果、页面 JPG 与逐页视觉对比，确认在官方安装路径下 `NSFC_General`、`NSFC_Local`、`NSFC_Young` 的输出 PDF 与重构前基线外观一致
 
 ## [v3.5.1] - 2026-03-08
 

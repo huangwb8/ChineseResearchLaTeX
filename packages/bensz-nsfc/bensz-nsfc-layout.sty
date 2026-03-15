@@ -1,0 +1,133 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-nsfc-layout}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC Layout]
+
+\RequirePackage[english]{babel}
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage{amsmath}
+\RequirePackage{bm}
+\ifNSFCUseWasysym
+  \RequirePackage{wasysym}
+\fi
+\RequirePackage{geometry}
+\RequirePackage{fontspec}
+\RequirePackage{setspace}
+\RequirePackage{amsfonts}
+\RequirePackage{xeCJK}
+\RequirePackage{titlesec}
+\RequirePackage{ragged2e}
+\RequirePackage{indentfirst}
+\RequirePackage{pifont}
+\RequirePackage{etoolbox}
+
+\ifNSFCRaggedBottom
+  \raggedbottom
+\fi
+
+\expandafter\geometry\expandafter{\NSFCGeometryOptions}
+\CJKsetecglue{\NSFCCJKGlue}
+
+\definecolor{MsBlue}{RGB}{0,113,192}
+\definecolor{headercolor}{RGB}{0,0,0}
+\definecolor{footercolor}{RGB}{0,0,0}
+
+\addto\captionsenglish{
+  \renewcommand{\contentsname}{目录}
+  \renewcommand{\listfigurename}{插图目录}
+  \renewcommand{\listtablename}{表格}
+  \renewcommand{\refname}{\sihao \templatefont \bfseries \leftline{参考文献}}
+  \renewcommand{\abstractname}{摘要}
+  \renewcommand{\indexname}{索引}
+  \renewcommand{\tablename}{表}
+  \renewcommand{\figurename}{图}
+}
+
+\RequirePackage{float}
+\RequirePackage{subfigure}
+\RequirePackage[section]{placeins}
+\RequirePackage{enumerate}
+\RequirePackage{enumitem}
+\setlist[enumerate]{
+  label={\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic*）},
+  leftmargin=0em,
+  itemindent=4em,
+  itemsep=0em,
+  labelsep=0.1pt,
+  parsep=0em,
+  topsep=0em,
+  before={\setlength{\hangindent}{2em}\hangafter=1}
+}
+\newcommand{\itemtitlefont}[1]{{\bfseries \color{MsBlue} #1}}
+
+\RequirePackage{caption}
+\ifNSFCUseFigureCaptionSetup
+  \captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf,singlelinecheck=off,justification=centering}
+\else
+  \captionsetup{font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf,singlelinecheck=off,justification=centering}
+\fi
+
+\RequirePackage{booktabs}
+\RequirePackage{tabularx}
+\RequirePackage{multirow}
+\RequirePackage{longtable}
+\RequirePackage{tabu}
+
+\RequirePackage[
+  colorlinks,
+  urlcolor=MsBlue,
+  linkcolor=black,
+  anchorcolor=black,
+  citecolor=black,
+  CJKbookmarks=True
+]{hyperref}
+\pdfstringdefDisableCommands{%
+  \def\linebreak{}%
+  \ifNSFCDisablePunctstyleInPdfstring
+    \def\punctstyle#1{}%
+  \fi
+}
+
+\RequirePackage{listings}
+\renewcommand{\lstlistingname}{Code}
+\lstdefinestyle{codestyle01}{
+  backgroundcolor=\color{gray!12},
+  basicstyle=\zihao{-5}\ttfamily,
+  commentstyle=\color{green!60!black},
+  keywordstyle=\color{magenta},
+  stringstyle=\color{blue!50!red},
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\footnotesize\color{gray},
+  numbersep=10pt,
+  stepnumber=1,
+  tabsize=4,
+  frame=single,
+  framerule=0.3pt,
+  rulecolor=\color{black!20},
+  xleftmargin=2em,
+  xrightmargin=0.5em,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b
+}
+\lstset{style=codestyle01}
+
+\ifNSFCUseUrlStyleSame
+  \urlstyle{same}
+\else
+  \renewcommand{\ttdefault}{tnr}
+\fi
+
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\intextsep}{0.5cm plus 1.0pt minus 2.0pt}
+\makeatother
+
+\pagestyle{empty}
+\punctstyle{hangmobanjiao}
+
+\ifNSFCUseDingSubtitle
+  \newcommand{\ssssubtitle}[1]{\ding{\numexpr171+#1\relax}}
+\else
+  \newcommand{\ssssubtitle}[1]{\textcircled{\raisebox{-0.8pt}{\xiaosihao #1}}}
+\fi

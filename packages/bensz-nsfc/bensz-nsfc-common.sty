@@ -1,0 +1,6 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-nsfc-common}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC Common Package]
+
+\InputIfFileExists{bensz-nsfc-core.sty}{}{%
+  \PackageError{bensz-nsfc-common}{Core file 'bensz-nsfc-core.sty' not found}{}%
+}

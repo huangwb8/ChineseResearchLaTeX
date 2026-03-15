@@ -1,0 +1,23 @@
+\ProvidesFile{bensz-nsfc-profile-general.def}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC General Profile]
+
+\renewcommand{\NSFCTemplateId}{general}
+\renewcommand{\NSFCTemplateVersion}{t_v20260315}
+\renewcommand{\NSFCGeometryOptions}{left=3.00cm,right=2.75cm,top=2.63cm,bottom=2.96cm}
+\renewcommand{\NSFCCJKGlue}{\hskip 0.15em plus 0.05em minus 0.05em}
+\renewcommand{\NSFCSectionBefore}{2pt plus 0pt minus 0pt}
+\renewcommand{\NSFCSectionAfter}{2pt}
+\renewcommand{\NSFCSubsectionIndent}{0pt}
+\renewcommand{\NSFCSubsectionBefore}{0pt plus 0pt minus 0pt}
+\renewcommand{\NSFCSubsectionAfter}{7.8pt}
+\renewcommand{\NSFCSubsubsectionBefore}{0pt plus 0pt minus 0pt}
+\renewcommand{\NSFCSubsubsectionAfter}{0pt plus 0pt minus 0pt}
+
+\NSFCUseWasysymtrue
+\NSFCRaggedBottomfalse
+\NSFCUseFrenchSpacingfalse
+\NSFCHFuzzfalse
+\NSFCUseAdjustedBlankParafalse
+\NSFCUseFigureCaptionSetupfalse
+\NSFCDisablePunctstyleInPdfstringfalse
+\NSFCUseUrlStyleSamefalse
+\NSFCUseDingSubtitlefalse

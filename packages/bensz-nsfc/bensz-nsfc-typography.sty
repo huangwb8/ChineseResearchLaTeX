@@ -1,0 +1,74 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-nsfc-typography}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC Typography]
+
+\newcommand{\chuhao}{\fontsize{42pt}{\baselineskip}\selectfont}
+\newcommand{\xiaochuhao}{\fontsize{36pt}{\baselineskip}\selectfont}
+\newcommand{\yihao}{\fontsize{26pt}{\baselineskip}\selectfont}
+\newcommand{\erhao}{\fontsize{22pt}{\baselineskip}\selectfont}
+\newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont}
+\newcommand{\sanhao}{\fontsize{16pt}{22pt}\selectfont}
+\newcommand{\sihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\xiaosihao}{\fontsize{12pt}{22pt}\selectfont}
+\newcommand{\yemeizihao}{\fontsize{11pt}{\baselineskip}\selectfont}
+\newcommand{\wuhao}{\fontsize{10.5pt}{\baselineskip}\selectfont}
+\newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont}
+\newcommand{\liuhao}{\fontsize{7.875pt}{\baselineskip}\selectfont}
+\newcommand{\qihao}{\fontsize{5.25pt}{\baselineskip}\selectfont}
+
+\newcommand{\NSFCSetupSystemFonts}{%
+  \setCJKfamilyfont{sectionzhfont}{KaiTi}[AutoFakeBold=5]%
+  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}%
+  \newfontfamily\sectionenfont{KaiTi}[AutoFakeBold=5]%
+  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}%
+  \setmainfont{Times New Roman}%
+  \setCJKmainfont{KaiTi}[AutoFakeBold=5]%
+  \setCJKmonofont{KaiTi}[AutoFakeBold=5]%
+  \xeCJKsetup{PunctStyle=quanjiao}%
+}
+
+\newcommand{\NSFCSetupProjectFonts}{%
+  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}%
+  \newfontfamily\sectionenfont[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}%
+  \setCJKmainfont[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+  \setCJKmonofont[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+  \setmainfont[BoldFont=Times New Roman,AutoFakeBold=5]{Times New Roman}%
+  \xeCJKsetup{PunctStyle=quanjiao}%
+}
+
+\NSFCBeforeFonts
+\ifwindows
+  \NSFCSetupSystemFonts
+\else
+  \IfFileExists{./fonts/Kaiti.ttf}{%
+    \NSFCSetupProjectFonts
+  }{%
+    \NSFCSetupSystemFonts
+  }%
+\fi
+\NSFCAfterFonts
+
+\renewcommand{\baselinestretch}{1.0}
+\ifNSFCUseFrenchSpacing
+  \AtBeginDocument{\fontsize{12pt}{22pt}\selectfont\frenchspacing}
+\else
+  \AtBeginDocument{\fontsize{12pt}{22pt}\selectfont}
+\fi
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\ifNSFCHFuzz
+  \hfuzz=20pt\relax
+\fi
+\XeTeXlinebreaklocale "zh"
+
+\ifNSFCUseAdjustedBlankPara
+  \newcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}
+\else
+  \newcommand{\NSFCBlankPara}{\vspace*{\baselineskip}}
+\fi
+
+\newcommand{\NSFCBodyText}{%
+  \setlength{\parindent}{2em}%
+  \setlength{\parskip}{0pt}%
+}

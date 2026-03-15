@@ -1,0 +1,60 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-nsfc-headings}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC Headings]
+
+\setcounter{secnumdepth}{4}
+
+\newcommand{\sectionzihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\subsectionzihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\subsubsectionzihao}{\fontsize{13.5pt}{20pt}\selectfont}
+
+\titleformat{\section}
+  {\color{MsBlue} \sectionzihao \templatefont \bfseries}
+  {\hspace*{2em}}
+  {0pt}
+  {}
+
+\titleformat{\subsection}
+  {\color{MsBlue} \subsectionzihao \templatefont}
+  {}
+  {0pt}
+  {\hspace*{2em}}
+
+\titleformat{\subsubsection}
+  {\color{MsBlue} \subsubsectionzihao \templatefont \bfseries}
+  {\hspace{1.1em} \textnormal{\templatefont \arabic{subsection}.\arabic{subsubsection}}}
+  {0.5em}
+  {}
+\renewcommand\thesubsubsection{\arabic{subsection}.\arabic{subsubsection}}
+
+\titleclass{\subsubsubsection}{straight}[\subsubsection]
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{（\arabic{subsubsubsection}）}
+\titleformat{\subsubsubsection}
+  {\templatefont \bfseries}
+  {\hspace{1em} （\arabic{subsubsubsection}）}
+  {0.5pt}
+  {}
+\makeatletter
+\def\toclevel@subsubsubsection{4}
+\def\l@subsubsubsection{\@dottedtocline{4}{7.0em}{4em}}
+\makeatother
+
+\titlespacing*{\section}
+  {0pt}
+  {\NSFCSectionBefore}
+  {\NSFCSectionAfter}
+
+\titlespacing*{\subsection}
+  {\NSFCSubsectionIndent}
+  {\NSFCSubsectionBefore}
+  {\NSFCSubsectionAfter}
+
+\titlespacing*{\subsubsection}
+  {0pt}
+  {\NSFCSubsubsectionBefore}
+  {\NSFCSubsubsectionAfter}
+
+\titlespacing*{\subsubsubsection}
+  {0pt}
+  {0pt plus 0pt minus 0pt}
+  {0pt plus 0pt minus 0pt}

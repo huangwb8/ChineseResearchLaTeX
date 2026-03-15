@@ -1,0 +1,63 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-nsfc-core}[2026/03/15 p_v20260315 ChineseResearchLaTeX NSFC Core]
+
+\RequirePackage{kvoptions}
+
+\SetupKeyvalOptions{family=NSFC,prefix=NSFC}
+\DeclareStringOption[general]{type}
+\ProcessKeyvalOptions*
+
+\providecommand{\NSFCBeforePackages}{}
+\providecommand{\NSFCAfterPackages}{}
+\providecommand{\NSFCBeforeFonts}{}
+\providecommand{\NSFCAfterFonts}{}
+\providecommand{\NSFCUserOverride}{}
+
+\newif\ifwindows
+\IfFileExists{/dev/null}{\windowsfalse}{\windowstrue}
+
+\newcommand{\NSFCPackageVersion}{p_v20260315}
+\newcommand{\NSFCTemplateVersion}{t_v20260315}
+\newcommand{\NSFCTemplateId}{general}
+\newcommand{\NSFCGeometryOptions}{left=3.00cm,right=2.75cm,top=2.63cm,bottom=2.96cm}
+\newcommand{\NSFCCJKGlue}{\hskip 0.15em plus 0.05em minus 0.05em}
+\newcommand{\NSFCSectionBefore}{2pt plus 0pt minus 0pt}
+\newcommand{\NSFCSectionAfter}{2pt}
+\newcommand{\NSFCSubsectionIndent}{0pt}
+\newcommand{\NSFCSubsectionBefore}{0pt plus 0pt minus 0pt}
+\newcommand{\NSFCSubsectionAfter}{7.8pt}
+\newcommand{\NSFCSubsubsectionBefore}{0pt plus 0pt minus 0pt}
+\newcommand{\NSFCSubsubsectionAfter}{0pt plus 0pt minus 0pt}
+
+\newif\ifNSFCUseWasysym
+\newif\ifNSFCRaggedBottom
+\newif\ifNSFCUseFrenchSpacing
+\newif\ifNSFCHFuzz
+\newif\ifNSFCUseAdjustedBlankPara
+\newif\ifNSFCUseFigureCaptionSetup
+\newif\ifNSFCDisablePunctstyleInPdfstring
+\newif\ifNSFCUseUrlStyleSame
+\newif\ifNSFCUseDingSubtitle
+
+\NSFCUseWasysymtrue
+\NSFCRaggedBottomfalse
+\NSFCUseFrenchSpacingfalse
+\NSFCHFuzzfalse
+\NSFCUseAdjustedBlankParafalse
+\NSFCUseFigureCaptionSetupfalse
+\NSFCDisablePunctstyleInPdfstringfalse
+\NSFCUseUrlStyleSamefalse
+\NSFCUseDingSubtitlefalse
+
+\InputIfFileExists{profiles/bensz-nsfc-profile-\NSFCtype.def}{}{%
+  \PackageError{bensz-nsfc-common}{Profile '\NSFCtype' not found}{%
+    Supported profiles are: general, local, young.%
+  }%
+}
+
+\NSFCBeforePackages
+\InputIfFileExists{impl/bensz-nsfc-\NSFCtype.tex}{}{%
+  \PackageError{bensz-nsfc-common}{Implementation file for '\NSFCtype' not found}{}%
+}
+\NSFCAfterPackages
+\NSFCUserOverride

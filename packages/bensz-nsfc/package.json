@@ -1,0 +1,35 @@
+{
+  "name": "bensz-nsfc-common",
+  "version": "p_v20260315",
+  "description": "国家自然科学基金申请书 LaTeX 通用配置包（统一共性配置与项目差异）",
+  "author": "ChineseResearchLaTeX Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/huangwb8/ChineseResearchLaTeX",
+  "installer": {
+    "entry": "python scripts/install.py",
+    "minimum_version": "p_v20260315",
+    "default_ref": "main"
+  },
+  "templates": {
+    "general": {
+      "template_version": "t_v20260315"
+    },
+    "local": {
+      "template_version": "t_v20260315"
+    },
+    "young": {
+      "template_version": "t_v20260315"
+    }
+  },
+  "dependencies": {
+    "texlive": ">=2020",
+    "xelatex": "*"
+  },
+  "features": [
+    "分层配置架构",
+    "单一路径接入",
+    "用户覆盖钩子机制",
+    "Python 安装与更新脚本",
+    "Git 引用安装与版本锁定"
+  ]
+}
