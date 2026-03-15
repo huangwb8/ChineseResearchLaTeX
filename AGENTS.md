@@ -500,6 +500,8 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir proj
 - NSFC 公共包相关改动已跑过 `python packages/bensz-nsfc/scripts/validate_package.py`
 - 相关 README / docs / CHANGELOG 已同步
 - 确认 `python scripts/pack_release.py --tag <tag>` 生成的普通 zip 与 Overleaf zip 命名、内容与目标场景一致
+- 若本次任务包含“发布 GitHub Release / 上传 Release Assets”，默认必须继续执行 `python scripts/pack_release.py --tag <tag> --upload`；除非用户明确要求“只本地打包 / 暂不上传”，否则不得省略
+- 在 `--upload` 真正执行成功前，AI 不得把任务表述为“Release 已发布完成”；只能明确写成“Release 已创建，但 Assets 尚未上传”
 - 如普通项目 zip 需要独立可用，确认项目内 `code/nsfc_build.py` 已能在“完整仓库路径 / 已安装 TEXMFHOME 路径”中定位 `bensz-nsfc` 公共脚本
 - 如 Overleaf zip 需要独立可用，确认压缩包已包含 `bensz-nsfc` 运行时文件、共享字体与共享 `bst` 资源
 - 若涉及模板外观回归，优先把验证记录沉淀到 `tests/` 或相应计划目录
@@ -513,8 +515,14 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir proj
 1. **提交代码**：使用 `git-commit` skill 生成 commit 信息并 push
 2. **创建 Tag**：创建新的版本 tag（遵循 Semver，如 `v3.5.2`）
 3. **生成 Release**：使用 `git-publish-release` skill 生成 Release Notes 并发布
-4. **打包并上传 Assets**：运行 `python scripts/pack_release.py --tag <tag> --upload` 完成打包与上传；默认会同时产出普通 zip（本地安装公共包场景）与 Overleaf 专用 zip（内嵌公共包运行时文件场景）
+4. **打包并上传 Assets**：运行 `python scripts/pack_release.py --tag <tag> --upload` 完成打包与上传；默认会同时产出普通 zip（本地安装公共包场景）与 Overleaf 专用 zip（内嵌公共包运行时文件场景）。这是 Release 发布任务的默认必做步骤，不得因为前面已创建 tag 或 GitHub Release 而省略；只有用户明确要求“只打包不上传”或“本次先不上传 Assets”时，才允许跳过
 5. **发布微信动态**：在当前与用户交互的界面中生成一条微信动态，内容包含项目名、版本号、核心更新亮点和 Release 地址，字数控制在 100–200 字
+
+完成判定：
+
+- 只有步骤 4 成功执行并确认 Assets 已上传后，才可称为“Release 发布完成”
+- 若因 `gh` 权限、网络、认证或用户策略导致未执行/执行失败，必须在最终答复中明确写出阻塞原因与当前停留步骤，不能省略不报
+- 最终答复需显式交代 `python scripts/pack_release.py --tag <tag> --upload` 是否已执行、是否成功，以及普通 zip / Overleaf zip 的处理结果
 
 参考：
 

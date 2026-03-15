@@ -19,6 +19,7 @@
 
 ### Changed（变更）
 
+- 更新 `AGENTS.md` 与 `CLAUDE.md` 的 Release 发布约束：将 `python scripts/pack_release.py --tag <tag> --upload` 明确强化为 GitHub Release 场景下默认不可省略的必做步骤；未执行成功前不得表述为“发布完成”，且最终答复必须显式交代 Assets 上传状态
 - 更新根级 `README.md`：毕业论文部分从“预留位点”升级为可直接构建的 `bensz-thesis` 产品线，新增 `thesis-smu-master` / `thesis-sysu-doctor` 项目入口，并补充 thesis 构建命令与安装说明
 - 更新 `AGENTS.md`：项目口径从“`bensz-thesis` 预留位点”升级为“已落地的毕业论文公共包 + 双示例项目”，同步补充 thesis 分层模型、脚本入口与像素级验收工作流
 - 更新根级 `scripts/install.py`：统一安装器新增 `bensz-thesis` 支持，并将 `bensz-paper` / `bensz-thesis` 的安装模式统一为复制完整包目录，保证已安装场景下项目级 wrapper 可以定位 `scripts/`、`profiles/`、`styles/`

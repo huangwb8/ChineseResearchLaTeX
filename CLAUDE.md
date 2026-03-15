@@ -19,6 +19,7 @@
 - 使用 TodoWrite 工具跟踪复杂任务的进度
 - 完成任务后及时标记为 completed
 - 拆分大任务为可管理的小步骤
+- 涉及 Release 发布任务时，将 `python scripts/pack_release.py --tag <tag> --upload` 视为默认必做检查点；未执行成功前，不要写成“已发布完成”
 
 ### 代码变更规范
 
@@ -38,4 +39,4 @@
   - AGENTS.md 标准：https://agents.md/
   - Claude Code @ 引用语法：https://github.com/anthropics/claude-code/issues/990
 
-**提示**：修改 AGENTS.md 后，请立即在 `CHANGELOG.md` 中记录变更。这是项目管理的强制性要求，不是可选项。
+**提示**：修改 AGENTS.md 后，请立即在 `CHANGELOG.md` 中记录变更。这是项目管理的强制性要求，不是可选项。若任务涉及 Release 发布，还需在最终答复中显式说明 `python scripts/pack_release.py --tag <tag> --upload` 是否已执行成功。
