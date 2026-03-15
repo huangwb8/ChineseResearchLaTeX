@@ -2,6 +2,10 @@
 
 ---
 
+Bachelor、Master、Doctor
+
+---
+
 ./projects 里的模板的正文里，应该要使用到 enumerate 和 ssssubtitle ，否则用户不知道可以使用它们。
 
 ---
@@ -42,6 +46,26 @@
 请把上述规则有机地融入 @AGENTS.md 里
 
 # 重构
+
+---
+
+新增毕业论文模板的支持。基于 /Volumes/2T01/Github/smu-thesis-latex-clinical/projects/mmed-cy-01 和 /Volumes/2T01/winE/iProjects/Manuscripts/thesis_sysu2 , 模仿目前SCI模板的套路，重构形成
+
+- 包
+  - packages/bensz-thesis 
+- 模板
+  - projects/thesis-smu-master：基于  /Volumes/2T01/Github/smu-thesis-latex-clinical/projects/mmed-cy-01 的样式。
+  - projects/thesis-sysu-doctor：基于 /Volumes/2T01/winE/iProjects/Manuscripts/thesis_sysu2 的样式。
+- 初步验收目标
+  - projects/thesis-smu-master和projects/thesis-sysu-doctor渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 去隐私
+  - 完成初步验收目标后，应该去隐私。因为/Volumes/2T01/Github/smu-thesis-latex-clinical/projects/mmed-cy-01 和 /Volumes/2T01/winE/iProjects/Manuscripts/thesis_sysu2都是真实的毕业论文，正文内容绝不能外传。 你可以构建一些假的内容，作为充分展示模板使用即可。 要求模板支持的所有样式都要用得上。论文主题同 projects/NSFC_Young
+  - 论文作者的名字统一为：冯宝宝
+- 注意事项：
+  - /Volumes/2T01/Github/smu-thesis-latex-clinical/projects/mmed-cy-01的完成度很高，是近期开发的； 因此projects/thesis-smu-master基本上搬过来就能用。  /Volumes/2T01/winE/iProjects/Manuscripts/thesis_sysu2 是很久以前的项目，很多设计肯定不太规范，要好好重构，按projects/thesis-smu-master的架构来重构，应该问题不大
+  - 总的来说，它们都是毕业论文模板，很多东西是很像的。这提示packages/bensz-thesis完全可以做得好。 可以参考 packages/bensz-nsfc 是怎么管理公共部分和模板的私有部分的。
+
+这些都是新特性，涉及多项目、多模板，重构难度很大。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 
