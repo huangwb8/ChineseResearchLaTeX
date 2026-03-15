@@ -1,0 +1,20 @@
+本章对示范模型进行评价，并讨论其可迁移边界。
+
+\subsection{评价结果}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\linewidth]{{figures/demo/evaluation.pdf}}
+    \caption{示范模型的评价结果}
+    \label{fig:sysu-eval}
+\end{figure}
+
+图 \ref{fig:sysu-eval} 表明，随着模型从描述层进入预测层，解释力与稳定性同步提升，但二者增幅并不完全相同。这提示后续研究可以围绕变量选择与权重设定继续优化。
+
+\subsection{边界讨论}
+
+本模型的边界在于：它服务于公开案例的结构化演示，而非真实世界的高风险决策。因此，研究者在正式应用时仍需要补充更严格的数据采样与外部验证。
+
+\subsection{本章结论}
+
+可解释预测框架为公开案例研究提供了一个自然的写作收束点：它既能总结前文阶段分析，也能为未来研究预留扩展接口。

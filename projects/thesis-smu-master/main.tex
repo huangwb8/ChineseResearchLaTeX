@@ -1,0 +1,64 @@
+%!TEX program = xelatex
+% SMU 临床医学硕士毕业论文 LaTeX 模板（M.Med）
+
+\documentclass[UTF8,12pt,a4paper,openany,oneside,fontset=none,AutoFakeBold]{ctexbook}
+
+% 样式与通用宏
+\input{extraTex/@config.tex}
+
+% 元信息（题名、作者、导师等）
+\input{extraTex/meta.tex}
+
+% 参考文献数据库
+\addbibresource{references/refs.bib}
+
+\begin{document}
+
+%------------------------ 封面 / 基本信息（不编号） ------------------------%
+\pagestyle{empty}
+\input{extraTex/front/cover.tex}
+\clearpage
+\restoregeometry % cover.tex 内使用了 \newgeometry；在封面页输出后恢复为全局版心
+% 原始 Word/PDF：封面背面通常留一页空白（PDF 查看器中信息页常显示为第 3 页）
+{\pagestyle{empty}\null\clearpage}
+
+\input{extraTex/front/info.tex}
+\clearpage{\pagestyle{empty}\cleardoublepage}
+
+%------------------------ 中文摘要（Roman） ------------------------%
+\pagenumbering{Roman}
+\setcounter{page}{1}
+\input{extraTex/front/abstract_zh.tex}
+\clearpage{\pagestyle{empty}\cleardoublepage}
+
+%------------------------ 英文摘要（roman） ------------------------%
+\pagenumbering{roman}
+\setcounter{page}{1}
+\input{extraTex/front/abstract_en.tex}
+\clearpage{\pagestyle{empty}\cleardoublepage}
+
+%------------------------ 目录（arabic，从 1 开始） ------------------------%
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\pagestyle{mmed-main}
+\mmedTOCBlackLinks
+\tableofcontents
+\mmedTOCRestoreLinks
+\clearpage{\pagestyle{empty}\cleardoublepage}
+
+%------------------------ 正文 ------------------------%
+\pagestyle{mmed-main}
+\input{extraTex/body/chapter-01.tex}
+\input{extraTex/body/chapter-02.tex}
+\input{extraTex/body/chapter-03.tex}
+\input{extraTex/body/chapter-04.tex}
+
+%------------------------ 参考文献 / 附录 / 致谢 / 声明 ------------------------%
+\clearpage{\cleardoublepage}
+\printbibliography[heading=bibintoc,title={参考文献}]
+
+\input{extraTex/back/abbreviations.tex}
+\input{extraTex/back/thanks.tex}
+\input{extraTex/back/statement.tex}
+
+\end{document}

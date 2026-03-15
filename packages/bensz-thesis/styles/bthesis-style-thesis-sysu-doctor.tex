@@ -1,0 +1,242 @@
+
+% XX大学博士毕业论文LaTeX模板v2.0.0
+% 原作：白鸽坐飞机（知乎、简书和B站同号）。原格式可以认为是惨不忍堵 (～￣▽￣)～ 
+% 改良：项目级重构版本
+% 需要xelatex→bibtex→xelatex→xelatex进行完全编绎
+% 本tex的内容可按需修改，但为了不打破依赖关系，本tex的布局不可轻易改动，特别是页脚部分！
+
+%%%————————————————————————————————全局环境
+
+\RequirePackage{xeCJK}
+\RequirePackage{fontspec}%字体的包
+\newcommand{\tnewroman}{\fontspec{Times New Roman}}
+\newcommand{\adobegothicstdb}{\fontspec{Adobe Gothic Std B}}
+\newcommand{\Centaur}{\fontspec{Centaur}}
+\setmainfont{Times New Roman} %fontspec下这个命令设置全局默认字体
+% \setmainfont{\songti\zihao{-4}} %fontspec下这个命令设置全局默认字体
+
+%%%————————————————————————————————目录设置
+
+% LaTeX目录设置教程：
+% 用latex写毕业论文--用titletoc包重设目录格式： https://blog.csdn.net/G_Barble/article/details/111500095
+% LaTeX目录格式控制：https://www.jianshu.com/p/d906e52b851d
+
+\RequirePackage{titlesec,titletoc} %更改目录的包
+\RequirePackage{afterpage}%更改目录计数
+
+\renewcommand\contentsname{目\hspace{1em}录}
+
+% \ctexset用于编辑section的样式，而非目录的样式。
+\ctexset{
+	section = {
+		number = 第\chinese{section}章,
+		format = \zihao{2}\bfseries\heiti\centering,
+	},
+	subsection = {
+		number = \arabic{section}.\arabic{subsection},
+		format = \zihao{-2}\bfseries\heiti,
+	},
+	subsubsection = {
+		number = \arabic{section}.\arabic{subsection}.\arabic{subsubsection},
+		format = \zihao{-3}\bfseries\heiti,
+	},
+	paragraph = {
+		number = \arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\arabic{paragraph},
+		format = \zihao{4}\bfseries\heiti,
+	}
+}
+
+\titlecontents{section}[4em]
+{\bfseries\songti\zihao{-4}\vspace{0.4em}}
+{\contentslabel{3.8em}}
+{\hspace*{-3.8em}}
+{~\titlerule*[0.6pc]{$.$}~\contentspage}
+
+\titlecontents{subsection}[3.5em]
+{\songti\zihao{-4}\vspace{0.2em}}
+{\contentslabel{2em}}
+{\hspace*{-2em}}
+{~\titlerule*[0.6pc]{$.$}~\contentspage} 
+
+\titlecontents{subsubsection}[5.5em]
+{\songti \zihao{-4}\vspace{0.2em}}
+{\contentslabel{2.5em}}
+{\hspace*{-2em}}
+{~\titlerule*[0.8pc]{$.$}~\contentspage}
+
+\setcounter{tocdepth}{3}% 设置目录级数
+\setcounter{secnumdepth}{4}% 设置在几级目录前标记序号
+
+% \titlecontents用于编辑目录的样式，而非section的样式。
+% \titlecontents{section}[4em]%标题位置左间距
+% {\bfseries\songti\zihao{-4}\vspace{10pt}}%设置标题字体是宋体；字号小四；与上一个标题垂直距离
+% {\contentslabel{3.8em}}%设置标题标志的格式，如序号格式、序号宽度、序号与标题内容之间的间距
+% {\hspace*{-2em}}%设置无序号标题的格式，如字体、字体尺寸、位置等。该参数可以空置
+% {~\titlerule*[0.6pc]{$.$}~\contentspage}%设置标题与页码之间的指引线样式以及页码的格式，该参数如果空置，标题将无指引线
+
+
+%%%————————————————————————————————图片与表格
+
+% 对于表格，推荐使用Excel的插件Excel2LaTeX自动生成LaTeX代码。详见： https://www.zhihu.com/question/307970489/answer/2305355098
+
+\RequirePackage{graphicx} %插图宏包
+\RequirePackage{float} %设置图片浮动位置的宏包
+\RequirePackage{subfigure} %插入多图时用子图显示的宏包
+\RequirePackage[section]{placeins} %避免浮动体跨过\section
+\RequirePackage{enumerate} %设置列表环境的包
+
+\RequirePackage{caption}
+\captionsetup[figure]{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+\captionsetup[table]{name={表},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf, singlelinecheck=off, justification=centering} 
+% \RequirePackage[font=small,labelfont=bf,labelsep=none]{caption}
+% \captionsetup[table]{
+%   %labelsep=newline,%换行
+%   singlelinecheck=false,%居左
+% }
+
+% 将每页的图片置顶展示（而不是居中）
+\makeatletter	
+	\setlength{\@fptop}{0pt}
+\makeatother
+
+\RequirePackage{booktabs} %表格
+\RequirePackage{tabularx} %表格宽度
+\RequirePackage{multirow} %多行合并
+
+% [latex Longtable使用指南-字体调节，与table不同\_易烊千蝈的博客-CSDN博客](https://blog.csdn.net/weixin_39490300/article/details/128184293)
+% [LaTeX使用笔记：长表格longtable（附实例） – Spark & Shine](http://sparkandshine.net/latex-use-notes-longtable-with-examples/)
+\RequirePackage{longtable} % latex 多页显示同一表格
+\RequirePackage{tabu} % 使用longtabu（tabularx + longtable）将长文本在单元格多行显示。
+
+%%%————————————————————————————————段落与行
+
+% LaTeX 段落：段落缩进、段落间距、行距：https://blog.csdn.net/xovee/article/details/119654826
+\RequirePackage{setspace}%设置行距的包
+%\setlength{\baselineskip}{1.6em}%2倍行距
+\linespread{1.3} % 设置行距为1.5倍行距。1.0，单倍行距；1.3，一点五倍行距；1.6，双倍行距。
+\setlength{\parskip}{0.5em} % 将段落之间的间距设置为0.5em
+
+% \RequirePackage{indentfirst}%首行缩进的包
+% \setlength{\parindent}{2em}%首行缩进2。不过我一般比较喜欢局部而非全局定义。
+
+\RequirePackage{geometry}%设置页边距的包
+\geometry{left=2.5cm,right=2.5cm,top=3.5cm,bottom=2.5cm} % 设置页边距
+
+% 参考：https://blog.csdn.net/jzwong/article/details/99964922
+\RequirePackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
+
+\RequirePackage{enumitem} % 增强自定义Bullet（即各种List前的那个标记）
+
+
+%%%————————————————————————————————代码与公式
+
+% 编辑数学公式推荐使用“在线LaTeX公式编辑器”： https://www.latexlive.com/
+
+\RequirePackage{bm} %加粗公式。使用方法为：\bm{$abc$}
+\RequirePackage{listings} %代码块
+\RequirePackage{xcolor} %代码块
+\renewcommand{\lstlistingname}{Code}
+% \lstset{
+% 	% language=bash,  %代码语言使用的是matlab
+% 	frame=shadowbox, %把代码用带有阴影的框圈起来
+% 	rulesepcolor=\color{red!20!green!20!blue!20},%代码块边框为淡青色
+% 	keywordstyle=\color{blue!90}\bfseries, %代码关键字的颜色为蓝色，粗体
+% 	commentstyle=\color{red!10!green!70}\textit,% 设置代码注释的颜色
+% 	showstringspaces=true,%不显示代码字符串中间的空格标记
+% 	numbers=left, % 显示行号
+% 	numberstyle=\tiny,    % 行号字体
+% 	stringstyle=\ttfamily, % 代码字符串的特殊格式
+% 	breaklines=false, %对过长的代码自动换行
+% 	extendedchars=false,  %解决代码跨页时，章节标题，页眉等汉字不显示的问题
+% 	escapebegin=\begin{CJK*},escapeend=\end{CJK*},% 代码中出现中文必须加上，否则报错
+% 	texcl=true
+% }
+% 教程见：
+% https://www.youtube.com/watch?v=qxkQgG1Y0bY
+% https://zhuanlan.zhihu.com/p/65441079
+\lstdefinestyle{codestyle01}{
+	backgroundcolor=\color{gray!12},
+	%basicstyle=\ttfamily\small,
+	basicstyle=\zihao{-5}\ttfamily,
+	commentstyle=\color{green!60!black},
+	keywordstyle=\color{magenta},
+	stringstyle=\color{blue!50!red},
+	showstringspaces=false,
+	% captionpos=
+	numbers=left,
+	numberstyle=\footnotesize\color{gray},
+	numbersep=10pt,
+	stepnumber=2, %左边数字的步幅
+	tabsize=4,
+	frame=TB %顶部和底部有两条竖线。
+	% frame=tblr
+	% frame=L,
+	% framerule=1pt,
+	% rulecolor=\color{red}
+}
+
+%%%————————————————————————————————引用
+
+\RequirePackage{cite}%设置参考文献的包
+%参考https://blog.csdn.net/wy_wy12/article/details/95604258
+%plain，按字母的顺序排列，比较次序为作者、年度和标题.
+%unsrt，样式同plain，只是按照引用的先后排序.
+%alpha，用作者名首字母+年份后两位作标号，以字母顺序排序.
+%abbrv，类似plain，将月份全拼改为缩写，更显紧凑.
+%ieeetr，国际电气电子工程师协会期刊样式.
+%acm，美国计算机学会期刊样式.
+%siam，美国工业和应用数学学会期刊样式.
+%apalike，美国心理学学会期刊样式.
+% 参考文献misc无法正常引用
+% https://gitlab.com/sysu-gitlab/latex-group/thesis/-/issues/96
+\makeatletter
+	\def\@cite#1#2{\textsuperscript{[{#1\if@tempswa , #2\fi}]}} % 参考文献标注置于右上角
+\makeatother
+
+
+% \RequirePackage{hyperref}%内部交叉引用
+% \hypersetup{hidelinks}%去除参考文献的绿框
+\RequirePackage[
+	colorlinks,
+	urlcolor=blue, % 超链接的颜色。默认是芭比粉
+	linkcolor=black,
+	anchorcolor=black,
+	citecolor=black,
+	CJKbookmarks=True
+]{hyperref}
+
+
+%%%————————————————————————————————页脚页眉
+
+%页眉参考http://www.ctex.org/documents/packages/layout/fancyhdr.htm
+\RequirePackage{fancyhdr}  %设置页眉页码的包
+% 字体大小 \tiny \scriptsize \footnotesize \small \normalsize \large \Large \LARGE \huge \Huge 或者 \zihao{number}{加入文字}
+\pagestyle{fancy}
+\lhead{\footnotesize 中山大学博士学位论文} %页眉左边 
+\chead{ } %页眉中间
+\rhead{\footnotesize \titleZh} %页眉右边显示论文中文标题
+%\lfoot{From: K. Grant} %页脚右边是From: K. Grant
+\cfoot{\thepage} %页脚中间是本页页码
+%\rfoot{To XXX} %页脚右边是To XXX
+\renewcommand{\headrulewidth}{0.4pt} %页眉划线
+%\renewcommand{\footrulewidth}{0.4pt}%页脚划线
+\RequirePackage{pgf} % 密级右上角
+
+%%%————————————————————————————————其它
+
+%-----解决\headheight is too small的warning
+\setlength{\headheight}{15pt}
+
+%-----输出docx
+% PowerShell: 
+% pandoc --version % pandoc.exe 2.17.1.1
+% cd E:\iProjects\Manuscripts\thesis_sysu; 
+% pandoc SYSU.palte.tex  --filter pandoc-crossref --citeproc --csl springer-basic-note.csl  --bibliography=Graduate.bib -M reference-section-title=Reference -o SYSU.palte_pandoc.docx
+
+% (.*) 删除备注？
+
+%------LaTeX入门和学习教程
+% https://nextcloud.hwb0307.com/s/t36QzwSnNCEBoR2。来自LaTeX学习交流群（qq群1019471316）。
+
+%------模块化设计思想
+%  Splitting a Large Document into Several Files: https://www.dickimaw-books.com/latex/thesis/html/include.html

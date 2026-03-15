@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-sysu-doctor.def}
+  [2026/03/16 v1.0.0 Thesis profile: thesis-sysu-doctor]
+
+\makeatletter
+\def\bthesis@template{thesis-sysu-doctor}
+\def\bthesis@templateversion{t_v20260316}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-sysu-doctor.tex}
+\makeatother

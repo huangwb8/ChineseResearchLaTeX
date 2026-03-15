@@ -1,0 +1,48 @@
+% 基本信息页（第二页）
+\thispagestyle{empty}
+
+\begingroup
+  % 说明：正文全局为 1.5 倍行距；信息页需要“单倍行距”才能与原始 Word/PDF 一致，
+  % 否则 tabular 会整体被挪到下一页，导致本页被拆成两页（页面“组织不好”）。
+  \setstretch{1.0}
+  \setlength{\parindent}{0pt}
+  % 给一点“弹性高度”，避免非常小的字体度量差导致溢出分页
+  \enlargethispage{1.5\baselineskip}
+
+  \vspace*{2.2cm}
+  \begin{center}
+    {\zihao{-4}\thesisSchoolLine\par}
+
+    \vspace*{1.2cm}
+    {\bfseries\zihao{3}\thesisTitleZh\par}
+    \vspace*{0.3cm}
+    {\bfseries\zihao{4}\thesisTitleEn\par}
+
+    \vspace*{1.0cm}
+    {\zihao{-4}课题来源：\thesisSource\par}
+
+    \vspace*{1.0cm}
+    \zihao{-4}
+    \renewcommand{\arraystretch}{1.6}
+    \begin{tabular}{@{}p{8em}p{18em}@{}}
+      学位申请人 & \thesisAuthorZh \\
+      导师姓名 & \thesisSupervisorZh \\
+      专业名称 & \thesisMajor \\
+      培养类型 & \thesisProgramType \\
+      培养层次 & \thesisProgramLevel \\
+      所在学院 & \thesisCollege \\
+      \\
+      答辩委员会主席 & 教授 \\
+      答辩委员会成员 & 教授 \\
+      & 教授 \\
+      & 教授 \\
+      & 教授 \\
+    \end{tabular}
+  \end{center}
+
+  % 原始 PDF：信息页底部有“日期 + 地点”，且尽量贴近页底居中
+  \vfill
+  \begin{center}
+    {\zihao{-4}\thesisDefenseDate\quad \thesisCity\par}
+  \end{center}
+\endgroup

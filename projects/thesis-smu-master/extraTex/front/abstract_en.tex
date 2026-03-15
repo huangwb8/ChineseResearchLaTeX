@@ -1,0 +1,24 @@
+% English ABSTRACT（页码 roman）
+% 约定：本页页眉为“硕士学位论文”，后续页眉为“ABSTRACT”
+\thispagestyle{mmed-main}
+\pagestyle{mmed-abstract-en}
+\mmedTOCAddChapter{ABSTRACT}
+
+\vspace*{\mmedAbstractTopGap}
+\begin{center}
+  {\bfseries\zihao{3}\thesisTitleEn\par}
+  \vspace*{0.6em}
+  {\zihao{-4}Name:\ \thesisAuthorEn\par}
+  \vspace*{0.2em}
+  {\zihao{-4}Supervisor:\ \thesisSupervisorEn\par}
+
+  \vspace*{1.0cm}
+  {\bfseries\zihao{3}ABSTRACT\par}
+\end{center}
+
+\vspace*{0.5em}
+% 避免英文长单词/缩写导致的轻微 overfull
+\begingroup
+\sloppy
+\input{extraTex/front/abstract_en_content.tex}
+\endgroup

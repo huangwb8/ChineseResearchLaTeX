@@ -10,12 +10,19 @@
 
 ### Added（新增）
 
+- 新增毕业论文公共包 `packages/bensz-thesis/`：引入 `bensz-thesis.sty` 公共入口、`thesis-smu-master` / `thesis-sysu-doctor` profile、统一 PDF 构建脚本 `thesis_project_tool.py`、像素级 PDF 比对能力、包级校验脚本与安装/TDS 打包脚本
+- 新增毕业论文示例项目 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`：分别基于南方医科大学硕士论文样式与中山大学博士论文样式重构，先通过与私有源 PDF 的像素级验收，再替换为公开可分享的演示正文、图表与参考文献；两套示例作者统一为“冯宝宝”
+- 新增 `projects/thesis-smu-master/AGENTS.md`、`projects/thesis-smu-master/CLAUDE.md`、`projects/thesis-smu-doctor/AGENTS.md`、`projects/thesis-sysu-doctor/CLAUDE.md` 与项目级 `scripts/thesis_build.py`：支持在完整仓库和单项目场景下调用 `bensz-thesis` 官方构建链路
 - 新增 `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`）与本地执行，可通过 `--packages bensz-nsfc,bensz-paper` 安装 `packages/` 下的一个或多个公共包；`bensz-nsfc` 委托给包级安装器，`bensz-paper` 直接复制 `.sty` 文件到 `TEXMFHOME`
 - 新增 `scripts/update_readme_template_list.py` 与 `.github/workflows/update-template-list.yml`：自动读取 GitHub 最新正式 Release 资产，每小时定时检查并支持手动触发，将根级 `README.md` 中 `## 📋 模板列表` 重构为按 `NSFC / SCI / 毕业论文` 分组展示的实时模板清单；Overleaf 列统一改为指向 Overleaf 专用 zip 包地址，而不再维护单独的在线演示链接
 - 新增 `docs/bensz-nsfc-design-principles.md`：系统解释 `bensz-nsfc` 的设计目标、分层模型、加载链路、覆盖顺序、资源策略、版本锁定与维护边界，帮助用户和维护者理解“公共包 + profile + 薄项目 + 官方脚本入口”的设计取舍
 
 ### Changed（变更）
 
+- 更新根级 `README.md`：毕业论文部分从“预留位点”升级为可直接构建的 `bensz-thesis` 产品线，新增 `thesis-smu-master` / `thesis-sysu-doctor` 项目入口，并补充 thesis 构建命令与安装说明
+- 更新 `AGENTS.md`：项目口径从“`bensz-thesis` 预留位点”升级为“已落地的毕业论文公共包 + 双示例项目”，同步补充 thesis 分层模型、脚本入口与像素级验收工作流
+- 更新根级 `scripts/install.py`：统一安装器新增 `bensz-thesis` 支持，并将 `bensz-paper` / `bensz-thesis` 的安装模式统一为复制完整包目录，保证已安装场景下项目级 wrapper 可以定位 `scripts/`、`profiles/`、`styles/`
+- 更新根级 `scripts/pack_release.py`：Release 打包新增 thesis 项目识别与 `bensz-thesis` 运行时文件注入；项目白名单同步补充 `assets/`、`bibtex-style/` 等毕业论文必需目录
 - 更新根级 `README.md`：将 `## NSFC 公共包安装` 重命名为 `## LaTeX 包安装`，新增可安装包清单表格、远程硬编码安装方式（curl + python3）、远程 AI 自主规划安装 Prompt 模板，并将 bensz-nsfc 版本管理与 NSFC 编译命令改为各自小节
 - 更新 `AGENTS.md`：在 `scripts/` 目录结构中新增 `install.py` 条目，在分层模型中补充 `scripts/install.py` 说明，将工作流中"NSFC 安装/版本管理问题"扩展为"LaTeX 包安装问题"并加入远程安装入口
 - 重构根级 `README.md` 的 `## 📋 模板列表`：改为由自动生成区块接管，不再手写维护模板状态、下载地址与最新 Release 信息
@@ -26,6 +33,8 @@
 
 ### Fixed（修复）
 
+- 修复 `packages/bensz-thesis/scripts/thesis_project_tool.py` 的缓存复用与 BibTeX 兼容问题：构建前会重建 `.latex-cache/`，不会再把旧 PDF 误判为新输出；针对 `bibtex + cache` 的 thesis 项目，会自动同步 `references/`、`bibtex-style/` 到缓存并规范化 `aux` 中的 `.bst` 样式名，保证 `thesis-sysu-doctor` 可稳定编译
+- 修复毕业论文 profile 选择逻辑：`thesis-sysu-doctor` 不再误用默认 SMU profile，保证两套源样式在迁移验收阶段都能与原始私有 PDF 做到像素级一致
 - 更新根级 `.gitignore`：新增 Microsoft Office 临时文件忽略规则，避免 `~$*.docx`、`~$*.xlsx`、`~$*.pptx` 等锁文件误入版本控制
 
 ## [v4.0.0] - 2026-03-15

@@ -10,7 +10,7 @@ ChineseResearchLaTeX — 统一 LaTeX 包安装器
 
   # 多包安装
   curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \\
-    | python3 - install --packages bensz-nsfc,bensz-paper --ref v4.0.0
+    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis --ref v4.0.0
 
   # Windows PowerShell
   (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py" `
@@ -18,6 +18,7 @@ ChineseResearchLaTeX — 统一 LaTeX 包安装器
 
 也可本地执行（在仓库根目录）：
   python3 scripts/install.py install --packages bensz-nsfc --ref v4.0.0
+  python3 scripts/install.py install --packages bensz-nsfc,bensz-paper,bensz-thesis --ref v4.0.0
   python3 scripts/install.py list
 """
 from __future__ import annotations
@@ -49,7 +50,12 @@ SUPPORTED_PACKAGES: dict[str, dict] = {
         "description": "SCI 论文公共包——支持 PDF / DOCX 双输出",
         "install_mode": "texmfhome",
         "package_subdir": "packages/bensz-paper",
-        "sty_extensions": (".sty",),
+    },
+    "bensz-thesis": {
+        "installer_path": None,
+        "description": "毕业论文公共包——支持硕士/博士论文模板与像素级验收脚本",
+        "install_mode": "texmfhome",
+        "package_subdir": "packages/bensz-thesis",
     },
 }
 
@@ -135,12 +141,26 @@ def _install_bensz_nsfc(ref: str, extra: list[str]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# bensz-paper：下载快照并安装到 TEXMFHOME
+# bensz-paper / bensz-thesis：下载快照并安装到 TEXMFHOME
 # ---------------------------------------------------------------------------
 
-def _install_bensz_paper(ref: str) -> None:
+def _copy_package_tree(pkg_src: Path, dest: Path) -> int:
+    copied = 0
+    for path in pkg_src.rglob("*"):
+        if not path.is_file():
+            continue
+        if any(part in {"__pycache__", ".DS_Store"} for part in path.parts) or path.suffix == ".pyc":
+            continue
+        target = dest / path.relative_to(pkg_src)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        copied += 1
+    return copied
+
+
+def _install_texmf_package(package_name: str, ref: str) -> None:
     print(f"  📥 下载仓库快照（{ref}）…")
-    tmp_dir = Path(tempfile.mkdtemp(prefix="bensz-paper-install-"))
+    tmp_dir = Path(tempfile.mkdtemp(prefix=f"{package_name}-install-"))
     archive = tmp_dir / "snapshot.zip"
     extract = tmp_dir / "extract"
 
@@ -156,32 +176,18 @@ def _install_bensz_paper(ref: str) -> None:
         _die("快照中未找到仓库根目录")
     repo_root = roots[0]
 
-    pkg_src = repo_root / "packages" / "bensz-paper"
+    pkg_src = repo_root / "packages" / package_name
     if not pkg_src.exists():
-        _die(f"快照中缺少 packages/bensz-paper 目录")
+        _die(f"快照中缺少 packages/{package_name} 目录")
 
     texmfhome = _texmfhome()
-    dest = texmfhome / "tex" / "latex" / "bensz-paper"
+    dest = texmfhome / "tex" / "latex" / package_name
+    if dest.exists():
+        shutil.rmtree(dest)
     dest.mkdir(parents=True, exist_ok=True)
+    copied = _copy_package_tree(pkg_src, dest)
 
-    copied = 0
-    for sty in pkg_src.glob("*.sty"):
-        shutil.copy2(sty, dest / sty.name)
-        copied += 1
-
-    # 同步子目录中的 .sty 文件（如 bml/ bpaper/ 等）
-    for sub in pkg_src.iterdir():
-        if sub.is_dir() and not sub.name.startswith(".") and sub.name not in ("scripts", "profiles"):
-            sub_dest = dest / sub.name
-            sub_dest.mkdir(parents=True, exist_ok=True)
-            for sty in sub.rglob("*.sty"):
-                rel = sty.relative_to(sub)
-                target = sub_dest / rel
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(sty, target)
-                copied += 1
-
-    print(f"  ✔ 已复制 {copied} 个 .sty 文件到 {dest}")
+    print(f"  ✔ 已复制 {copied} 个文件到 {dest}")
 
     # 刷新 TeX 文件数据库
     try:
@@ -207,7 +213,7 @@ def cmd_list() -> None:
     print()
     print("安装示例：")
     print("  curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \\")
-    print("    | python3 - install --packages bensz-nsfc --ref v4.0.0")
+    print("    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis --ref v4.0.0")
 
 
 # ---------------------------------------------------------------------------
@@ -228,7 +234,7 @@ def cmd_install(packages: list[str], ref: str, extra: list[str]) -> None:
         if info["install_mode"] == "delegate":
             _install_bensz_nsfc(ref, extra)
         elif info["install_mode"] == "texmfhome":
-            _install_bensz_paper(ref)
+            _install_texmf_package(pkg, ref)
 
     print(f"\n{'='*50}")
     print("✅ 所有包安装完成！")
@@ -255,7 +261,7 @@ def main() -> None:
     inst.add_argument(
         "--packages",
         default="bensz-nsfc",
-        help="要安装的包，逗号分隔（默认：bensz-nsfc）。可选：bensz-nsfc,bensz-paper",
+        help="要安装的包，逗号分隔（默认：bensz-nsfc）。可选：bensz-nsfc,bensz-paper,bensz-thesis",
     )
     inst.add_argument(
         "--ref",

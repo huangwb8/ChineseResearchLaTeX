@@ -1,0 +1,48 @@
+本章重点说明如何把公开案例转化为可计算、可比较的分析对象。
+
+\subsection{编码维度}
+
+编码表包含四类变量：阶段、平台、角色与结果。阶段变量用于描述时间位置；平台变量记录主要曝光场景；角色变量说明职业身份变化；结果变量则把舆论反馈、自主表达和持续产出转写为可比较指标。
+
+\begin{table}[H]
+    \centering
+    \caption{核心编码维度}
+    \begin{tabular}{lll}
+        \toprule
+        维度 & 变量示例 & 说明 \\
+        \midrule
+        阶段 & 起步/扩张/危机/重启 & 描述职业路径的主序列 \\
+        平台 & 杂志/电视/社交媒体/视频平台 & 记录主要传播场景 \\
+        角色 & 模特/演员/综艺/创作者 & 记录职业身份变化 \\
+        结果 & 韧性得分/稳定性得分 & 概括路径结果 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{阶段-特征热图}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.84\linewidth]{{figures/demo/stage-heatmap.pdf}}
+    \caption{职业阶段与能力维度热图}
+    \label{fig:sysu-heatmap}
+\end{figure}
+
+图 \ref{fig:sysu-heatmap} 说明，不同阶段关注的能力中心并不相同：起步阶段强调曝光，扩张阶段强调角色多样性，危机阶段强调恢复能力，重启阶段强调平台自主性。
+
+\subsection{规则驱动的评分函数}
+
+为方便演示可解释预测，本研究采用简单的规则驱动函数，而不依赖黑箱模型。示意代码如下：
+
+\begin{lstlisting}[style=codestyle01, caption={示例评分函数}, label={lst:sysu-rule}]
+def transition_score(exposure, autonomy, resilience):
+    return 0.35 * exposure + 0.25 * autonomy + 0.40 * resilience
+\end{lstlisting}
+
+式 \ref{eq:sysu-score} 给出了与代码对应的数学表达：
+\begin{equation}
+S = 0.35E + 0.25A + 0.40R
+\label{eq:sysu-score}
+\end{equation}
+
+其中，$E$ 表示曝光能力，$A$ 表示平台自主性，$R$ 表示危机后的韧性恢复能力。

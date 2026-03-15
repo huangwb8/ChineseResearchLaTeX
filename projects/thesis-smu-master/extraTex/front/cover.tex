@@ -1,0 +1,134 @@
+% 封面（第一页）
+% 目标：尽量贴近原始 Word/PDF 模板（标题分行+横线、底部字段带下划线等）
+\thispagestyle{empty}
+
+% 封面页边距：原始封面的左右留白更大；在 main.tex 中会在封面页后 \restoregeometry
+\newgeometry{left=4.33cm,right=4.33cm,top=2.7cm,bottom=2.7cm,headheight=14pt,headsep=10pt}
+
+\begingroup
+% 封面通常为“单倍行距”，避免受正文 1.5 倍行距影响导致版心偏移
+\setstretch{1.0}
+\setlength{\parindent}{0pt}
+% 避免封面因“微小高度差”触发不必要的分页（tabularx 为不可分割块，溢出会整体挪到下一页）
+\enlargethispage{2cm}
+
+% 封面专用：优先使用 meta.tex 中的 *Cover 变量（便于手动控制换行）
+\newcommand{\mmedCoverTitleZh}{%
+  \ifcsname thesisTitleZhCover\endcsname
+    \thesisTitleZhCover
+  \else
+    \thesisTitleZh
+  \fi
+}
+\newcommand{\mmedCoverTitleEn}{%
+  \ifcsname thesisTitleEnCover\endcsname
+    \thesisTitleEnCover
+  \else
+    \thesisTitleEn
+  \fi
+}
+
+%------------------------ 顶部：分类号 / UDC ------------------------%
+% 顶部字段区块位置微调：
+% - 把“分类号/UDC/密级/编号”整体上移一点
+% - 同时在其后补回等量间距，保证校名书法图（nfmu_calligraphy）位置基本不变，
+%   从而让顶部字段与书法图之间的距离更大、更贴近原始模板
+\vspace*{0.25cm}
+\noindent
+% 原始封面：每行“左标签 + 中间一条长下划线 + 右标签”，右侧无填写下划线
+\begingroup
+  \zihao{-4}
+  \renewcommand{\arraystretch}{2.05}
+  \setlength{\tabcolsep}{0pt}
+  % 顶部“分类号/UDC/密级/编号”字号：按你的要求整体放大约 20%，用于和原始模板对齐微调
+  \newcommand{\mmedCoverTopLabel}[1]{{\fontsize{14.4pt}{14.4pt}\selectfont #1}}
+  % 顶部区块在原始封面中相对“版心”更靠左：这里做一个小幅负缩进
+  \hspace*{-0.21cm}%
+  % 说明：按原始封面（Word/PDF）坐标反推的宽度组合
+  % - 右侧“密级/编号”并非靠右对齐到版心，而是在中部偏右的位置
+  \begin{tabular}{@{}p{2.2cm}p{4.2cm}@{\hspace{1.8cm}}p{2.0cm}@{}}
+    \mmedCoverTopLabel{分类号} & \mmedUnderlinedFieldL{\thesisClassNo}{4.2cm} & \mmedCoverTopLabel{密级} \\
+    % 原始封面里 UDC 与“分类号/密级/编号”字号一致（仅因大写字形显得更高）；
+    % 这里不再强行放大字号，避免与其它标签出现明显不一致。
+    \makebox[2.2cm][l]{\mmedCoverTopLabel{U\kern0.35em D\kern0.35em C}} &
+      \mmedUnderlinedFieldL{\thesisUDC}{4.2cm} & \mmedCoverTopLabel{编号} \\
+  \end{tabular}
+\endgroup
+
+%------------------------ 中部：校名书法 / 学位论文 / 题名 ------------------------%
+\vspace*{0.30cm}
+% 原始封面题名区块的可用宽度更大（英文第二行在较大字号下仍不换行）。
+% 这里在保持整体“偏右居中”观感的前提下，允许题名区块略超出当前 \textwidth（覆盖到页边距区域）。
+\noindent\hspace*{-0.71cm}\begin{minipage}{14.6cm}
+\centering
+  % 优先使用从 raw/ 原始 PDF 抽取的书法图（保证与学校模板一致）
+  \IfFileExists{assets/nfmu_calligraphy_raw.png}{%
+    \includegraphics[width=0.87\textwidth]{assets/nfmu_calligraphy_raw.png}\par
+  }{%
+    \IfFileExists{assets/nfmu_calligraphy.jpeg}{%
+      \includegraphics[width=0.87\textwidth]{assets/nfmu_calligraphy.jpeg}\par
+    }{}%
+  }
+
+  \vspace*{1.10cm}
+  % 原始封面中“硕士学位论文”一行相对题名区块略偏右，这里做一个小幅右移以对齐
+  {\zihao{1}\hspace*{0.54cm}硕\hspace{0.84em}士\hspace{0.84em}学\hspace{0.84em}位\hspace{0.84em}论\hspace{0.84em}文\par}
+
+  \vspace*{1.27cm}
+  % 中文题名：分行，行间用横线分隔
+  \begingroup
+    \setlength{\tabcolsep}{0pt}
+    \renewcommand{\arraystretch}{1.70}
+    \def\mmedCoverLinebreak{\\\hline} % 让 meta.tex 的换行符同时生成横线
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash\bfseries\zihao{3}}X}
+      \mmedCoverTitleZh\\\hline
+    \end{tabularx}
+  \endgroup
+
+  % 英文题名区块在原始封面中更靠上：这里对英文区块做“相对上移”
+  % 注意：为避免影响后续作者/底部区块的纵向位置，会在作者区块前补回相同间距
+  \vspace*{-0.02cm}
+  % 英文题名：分行，行间用横线分隔
+  \begingroup
+    \setlength{\tabcolsep}{0pt}
+    % 原始封面英文三行的行距更“松”，这里适当增大表格行高以贴近 Word/PDF 效果
+    \renewcommand{\arraystretch}{2.30}
+    \def\mmedCoverLinebreak{\\\hline}
+    % 原始封面英文题名的字级更大（更接近 Word 中的 15pt），这里提升字号以对齐原稿的字宽与观感
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash\bfseries\fontsize{15pt}{18pt}\selectfont}X}
+      \hline
+      \mmedCoverTitleEn\\\hline
+    \end{tabularx}
+  \endgroup
+
+\end{minipage}
+
+% 原始封面中，作者姓名区块的中心位置与“题名区块”略有差异；这里单独居中绘制
+% 这里的间距用于：抵消英文区块的相对上移，并对齐 raw/ 原始封面的作者区块纵向位置
+\vspace*{0.39cm}
+\begin{center}
+  {\bfseries\zihao{4}\thesisAuthorZh\par}
+  \rule{0.56\textwidth}{0.4pt}\par
+\end{center}
+
+%------------------------ 底部：导师/专业/培养类型/提交日期 ------------------------%
+% 原始封面底部区块相对顶部“稍向左”，这里做一个小幅负缩进
+% 该间距用于对齐 raw/ 原始封面底部四行的整体纵向位置
+\vspace*{0.40cm}
+\noindent
+\zihao{-4}
+% 底部区块的行距：原始封面更紧凑；此处降低 arraystretch 以避免后续行逐行“下漂”
+\renewcommand{\arraystretch}{1.75}
+\setlength{\tabcolsep}{0pt}
+% 底部区块在原始封面中更靠左：根据 bbox 反推结果再向左微调约 0.42cm
+% 标签采用“分散对齐”（Word 常见的‘导 师 姓 名’这种效果：字符间距会随字数自动伸缩）
+\newlength{\mmedCoverLabelWidth}
+\setlength{\mmedCoverLabelWidth}{4.60cm}
+\newcommand{\mmedCoverLabel}[1]{\textbf{\makebox[\mmedCoverLabelWidth][s]{#1}}}
+\hspace*{-0.77cm}\begin{tabularx}{\textwidth}{@{}p{\mmedCoverLabelWidth}@{\hspace{0.35em}}X@{}}
+  \mmedCoverLabel{导 师 姓 名} & \mmedUnderlinedFieldLPad{\thesisSupervisorZh}{\linewidth} \\
+  \mmedCoverLabel{专 业 名 称} & \mmedUnderlinedFieldLPad{\thesisMajor}{\linewidth} \\
+  \mmedCoverLabel{培 养 类 型} & \mmedUnderlinedFieldLPad{\thesisProgramType}{\linewidth} \\
+  \mmedCoverLabel{论 文 提 交 日 期} & \mmedUnderlinedFieldLPad{\thesisSubmitDate}{\linewidth} \\
+\end{tabularx}
+\endgroup

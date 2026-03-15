@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-smu-master.def}
+  [2026/03/16 v1.0.0 Thesis profile: thesis-smu-master]
+
+\makeatletter
+\def\bthesis@template{thesis-smu-master}
+\def\bthesis@templateversion{t_v20260316}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-smu-master.tex}
+\makeatother

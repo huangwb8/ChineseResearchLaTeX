@@ -1,0 +1,25 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bthesis-core}
+  [2026/03/16 v1.0.0 Bensz Thesis Core]
+
+\RequirePackage{keyval}
+
+\def\bthesis@template{thesis-smu-master}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-smu-master.tex}
+\def\bthesis@templateversion{t_v20260316}
+
+\define@key{bthesis}{template}{\def\bthesis@template{#1}}
+
+\newcommand{\BenszThesisProfileSetup}[1]{%
+  \setkeys{bthesis}{#1}%
+  \InputIfFileExists{profiles/bthesis-profile-\bthesis@template.def}{}{%
+    \PackageError{bensz-thesis}%
+      {Profile '\bthesis@template' not found}%
+      {Check that profiles/bthesis-profile-\bthesis@template.def exists.}%
+  }%
+  \InputIfFileExists{\bthesis@stylefile}{}{%
+    \PackageError{bensz-thesis}%
+      {Style file '\bthesis@stylefile' not found}%
+      {Check that the thesis style implementation exists in packages/bensz-thesis/styles/.}%
+  }%
+}
