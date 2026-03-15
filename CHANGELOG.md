@@ -8,6 +8,14 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- 新增 `scripts/update_readme_template_list.py` 与 `.github/workflows/update-template-list.yml`：自动读取 GitHub 最新正式 Release 资产，每小时定时检查并支持手动触发，将根级 `README.md` 中 `## 📋 模板列表` 重构为按 `NSFC / SCI / 毕业论文` 分组展示的实时模板清单；Overleaf 列统一改为指向 Overleaf 专用 zip 包地址，而不再维护单独的在线演示链接
+
+### Changed（变更）
+
+- 重构根级 `README.md` 的 `## 📋 模板列表`：改为由自动生成区块接管，不再手写维护模板状态、下载地址与最新 Release 信息
+
 ## [v4.0.0] - 2026-03-15
 
 ### Added（新增）
