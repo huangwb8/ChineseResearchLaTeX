@@ -105,6 +105,27 @@ python scripts/install.py install --source local --path packages/bensz-nsfc --re
 - `python scripts/install.py check`：检查当前激活版本与项目锁定版本是否一致
 - `python scripts/install.py rollback`：回退到上一个激活版本
 
+推荐使用统一的 Python 渲染器生成 PDF：
+
+```bash
+python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
+python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Local
+python scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Young
+```
+
+这条链路会自动：
+
+- 执行固定的 `xelatex -> bibtex -> xelatex -> xelatex`
+- 将所有中间文件隔离到项目内 `.latex-cache/`
+- 仅把最终 `main.pdf` 留在项目根目录
+- 为 VS Code 的 PDF/源码跳转保留 `.latex-cache/main.synctex.gz`
+
+如果只想清理缓存与根目录中间文件，可执行：
+
+```bash
+python scripts/nsfc_project_tool.py clean --project-dir projects/NSFC_General
+```
+
 本次重构已对三套模板执行“4 步编译 + PDF 转 JPG 逐页视觉对比”回归验证，当前官方安装路径下渲染出的 PDF 与重构前基线外观一致。
 
 当前 `fonts/` 与 `bibtex-style/` 已进一步收敛到 `packages/bensz-nsfc/assets/`，三套项目本身只保留正文、图和参考文献数据，减少重复资源占用。

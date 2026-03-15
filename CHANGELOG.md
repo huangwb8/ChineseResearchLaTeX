@@ -20,6 +20,7 @@
 - 重构 `projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`：三套项目入口统一收敛为 `\usepackage[type=...]{bensz-nsfc-common}`，不再在项目层保留大段样式实现
 - 更新 `README.md` 与 `packages/bensz-nsfc/README.md`：文档口径统一切换到“先安装公共包，再编译项目”的工作流，并补充 `pin/sync/check/rollback` 使用方式
 - 重构 `packages/bensz-nsfc/` 与 `projects/NSFC_{General,Local,Young}`：将三套项目重复的 `fonts/` 与 `bibtex-style/` 收敛到 `packages/bensz-nsfc/assets/`，公共包新增包内资源解析与 `\NSFCBibliographyStylePath` 统一入口；项目目录和 Release 打包清单同步瘦身，校验脚本新增共享字体/BibTeX 资源检查与参考文献编译 smoke test
+- 新增 `scripts/nsfc_project_tool.py` 并更新三个 NSFC 项目的 `.vscode/settings.json`：将 PDF 渲染统一收敛到固定 Python CLI，自动生成 cache 内 `bensz-nsfc-runtime.def`、隔离 `.latex-cache/` 中间文件、清理根目录杂项产物，并保留 `main.pdf + .latex-cache/*.synctex.gz` 的 VS Code 友好体验；本次不引入 DOCX 渲染链路
 
 ### Fixed（修复）
 

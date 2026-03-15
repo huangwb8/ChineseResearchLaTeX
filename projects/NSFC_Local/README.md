@@ -4,7 +4,15 @@
 
 ## 编译说明
 
-### 推荐编译顺序
+### 推荐方式
+
+```bash
+python ../../scripts/nsfc_project_tool.py build --project-dir .
+```
+
+这条固定 Python 渲染链会自动执行 `xelatex -> bibtex -> xelatex -> xelatex`，把中间文件全部收进 `.latex-cache/`，只在项目根目录保留 `main.pdf`。
+
+### 手工兜底顺序
 
 ```bash
 xelatex main.tex
@@ -55,7 +63,7 @@ NSFC_Local/
 \NSFCBodyText
 ```
 
-3. 编译 `main.tex` 生成 PDF（参考文献修改后建议跑完整 4 步编译）。
+3. 运行 `python ../../scripts/nsfc_project_tool.py build --project-dir .` 生成 PDF（参考文献修改后会自动跑完整 4 步编译）。
 
 ## 间距设置（重点）
 

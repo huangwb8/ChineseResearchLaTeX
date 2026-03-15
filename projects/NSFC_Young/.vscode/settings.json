@@ -1,71 +1,29 @@
 {
   // Keep ALL LaTeX build artifacts in `.latex-cache/`.
-  // The final deliverable is copied back to the project root as `main.pdf`.
+  // The final deliverable stays in the project root as `main.pdf`.
   "latex-workshop.latex.outDir": ".latex-cache",
   "latex-workshop.latex.auxDir": ".latex-cache",
 
-  // Prevent magic comments from bypassing our custom recipe/outDir.
+  // Prevent magic comments from bypassing the unified Python render pipeline.
   "latex-workshop.latex.build.enableMagicComments": false,
   "latex-workshop.latex.build.forceRecipeUsage": true,
 
-  "latex-workshop.latex.recipe.default": "xelatex -> bibtex -> xelatex*2",
+  "latex-workshop.latex.recipe.default": "nsfc build (python)",
   "latex-workshop.latex.recipes": [
     {
-      "name": "xelatex -> bibtex -> xelatex*2",
+      "name": "nsfc build (python)",
       "tools": [
-        "clean-root-artifacts",
-        "prepare-latex-cache",
-        "xelatex",
-        "bibtex",
-        "xelatex",
-        "xelatex",
-        "copy-pdf-to-root"
+        "nsfc-python-build"
       ]
     }
   ],
   "latex-workshop.latex.tools": [
     {
-      "name": "clean-root-artifacts",
+      "name": "nsfc-python-build",
       "command": "bash",
       "args": [
         "-lc",
-        "rm -f -- *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg *.fls *.fdb_latexmk *.synctex.gz *.synctex\\(busy\\) *.dvi *.xdv *.bcf *.run.xml *.nav *.snm *.vrb"
-      ]
-    },
-    {
-      "name": "prepare-latex-cache",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "mkdir -p .latex-cache && rm -rf .latex-cache/bibtex-style .latex-cache/references && ln -sfn ../bibtex-style .latex-cache/bibtex-style && ln -sfn ../references .latex-cache/references"
-      ]
-    },
-    {
-      "name": "xelatex",
-      "command": "xelatex",
-      "args": [
-        "-synctex=1",
-        "-interaction=nonstopmode",
-        "-file-line-error",
-        "-output-directory",
-        ".latex-cache",
-        "%DOC%"
-      ]
-    },
-    {
-      "name": "bibtex",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "cd .latex-cache && bibtex \"%DOCFILE%\""
-      ]
-    },
-    {
-      "name": "copy-pdf-to-root",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "cp -f \".latex-cache/%DOCFILE%.pdf\" \"%DIR%/%DOCFILE%.pdf\""
+        "python3 ../../scripts/nsfc_project_tool.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
       ]
     }
   ],
@@ -78,6 +36,7 @@
 
   // PDF preview
   "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true,
 
   // Explorer: hide cache dir and any root-level LaTeX intermediates (should be none after using this recipe).
   "files.exclude": {
@@ -96,5 +55,8 @@
     "*.synctex(busy)": true,
     "*.dvi": true,
     "*.xdv": true
+  },
+  "files.watcherExclude": {
+    "**/.latex-cache/**": true
   }
 }
