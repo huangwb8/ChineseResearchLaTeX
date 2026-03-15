@@ -10,7 +10,7 @@
 
 ### Changed（变更）
 
-- 优化计划文档 `plans/重构-v202603101512.md`：在保留“`nsfc-common` 包化、四种使用模式、Python 安装器、全局安装体验”核心设计的前提下，补强阶段划分、技术实现一致性、测试矩阵与发布口径，降低实施风险
+- 优化计划文档 `plans/重构-v202603101512.md`：将模板版本控制提升为重构主线，明确 `python common/install.py` 为核心包唯一官方安装入口，并把用户版本语义统一为 Git `tag/branch/commit`；新增基于 `ref + commit` 的 `.nsfc-version` 锁文件方案、任意历史版本安装/回退工作流、GitHub archive/Release 双来源获取策略，以及对应的测试矩阵、风险控制与发布口径
 
 ## [v3.5.1] - 2026-03-08
 
