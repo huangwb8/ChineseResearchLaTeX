@@ -10,7 +10,7 @@
 
 ### Changed（变更）
 
-- 优化计划文档 `plans/重构-v202603101512.md`：将模板版本控制提升为重构主线，明确 `python scripts/install.py` 为核心包唯一官方安装入口，并把用户版本语义统一为 Git `tag/branch/commit`；新增基于 `ref + commit` 的 `.nsfc-version` 锁文件方案、任意历史版本安装/回退工作流、GitHub archive/Release 双来源获取策略，以及对应的测试矩阵、风险控制与发布口径；同时将仓库源码布局收敛为 `packages/bensz-nsfc` / `packages/bensz-paper` / `packages/bensz-thesis`，并由安装器映射到标准 `texmf/tex/latex/...` 目录；`ChineseResearchLaTeX` 仅作为项目名，不作为具体安装目录名；另外将 NSFC 可分发文件统一收敛为 `bensz-nsfc-*` 前缀，避免仅靠目录名导致的文件名冲突；内部版本号规则也调整为“包版本 `p_vYYYYMMDD` + 模板版本 `t_vYYYYMMDD`”
+- 优化计划文档 `plans/重构-v202603101512.md`：将模板版本控制提升为重构主线，明确 `python scripts/install.py` 为核心包唯一官方安装入口，并把用户版本语义统一为 Git `tag/branch/commit`；新增基于 `ref + commit` 的 `.nsfc-version` 锁文件方案、任意历史版本安装/回退工作流、GitHub archive/Release 双来源获取策略，以及对应的测试矩阵、风险控制与发布口径；同时将仓库源码布局收敛为 `packages/bensz-nsfc` / `packages/bensz-paper` / `packages/bensz-thesis`，并由安装器映射到标准 `texmf/tex/latex/...` 目录；`ChineseResearchLaTeX` 仅作为项目名，不作为具体安装目录名；另外将 NSFC 可分发文件统一收敛为 `bensz-nsfc-*` 前缀，避免仅靠目录名导致的文件名冲突；内部版本号规则也调整为“包版本 `p_vYYYYMMDD` + 模板版本 `t_vYYYYMMDD`”，并明确 `\ProvidesPackage` 前导日期只是 LaTeX 标准发布日期字段，不属于项目版本号体系
 
 ## [v3.5.1] - 2026-03-08
 
