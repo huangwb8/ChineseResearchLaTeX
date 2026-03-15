@@ -66,4 +66,20 @@ xelatex -interaction=nonstopmode main.tex
 
 ## 验证结论
 
-本次重构已对三套模板执行“4 步编译 + PDF 转 JPG 逐页视觉对比”。在官方安装路径下，`NSFC_General`、`NSFC_Local`、`NSFC_Young` 的输出 PDF 与重构前基线外观一致。
+本次重构已对三套模板执行”4 步编译 + PDF 转 JPG 逐页视觉对比”。在官方安装路径下，`NSFC_General`、`NSFC_Local`、`NSFC_Young` 的输出 PDF 与重构前基线外观一致。
+
+## 参考文献间距配置
+
+三套 NSFC 模板（General/Local/Young）的参考文献间距参数采用”两层架构”管理：
+
+- 基础默认值：在各项目 `extraTex/@config.tex` 中定义
+- 项目级定制：在各项目 `references/reference.tex` 中用 `\setlength{...}{...}` 覆盖（推荐做法，便于后续升级合并）
+
+默认值：
+
+| 参数 | 默认值 |
+|------|--------|
+| `\NSFCBibTitleAboveSkip`（标题与上文） | `10pt` |
+| `\NSFCBibTitleBelowSkip`（标题与条目） | `0pt` |
+| `\NSFCBibItemSep`（条目间距） | `0pt` |
+| `\NSFCBibTextWidth`（条目行宽） | `397.16727pt` |
