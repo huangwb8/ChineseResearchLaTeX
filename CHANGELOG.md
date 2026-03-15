@@ -21,6 +21,7 @@
 
 ### Changed（变更）
 
+- 更新 `projects/paper-sci-01/` 示例参考文献：新增 3 条与儿童肿瘤全景基因组学和结构变异图谱相关的真实文献，并在 Markdown 单一真相正文中补充对应引用，确保官方构建链路重新导出的 PDF 与 DOCX 参考文献列表不再只有 1 条
 - 重构 `projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`：三套项目入口改为“项目级参数面板 + 公共包加载入口”结构；集中列出当前可调格式参数、真实默认值与调参说明，并通过 `\NSFCProjectConfigBeforePackage` / `\NSFCProjectConfigAfterPackage` 明确保证项目层设置压过公共包默认值
 - 更新 `packages/bensz-nsfc/bensz-nsfc-core.sty`：新增项目级前置/后置配置钩子，显式固化 `profile 默认值 -> 兼容旧钩子 -> 项目级钩子` 的覆盖顺序
 - 同步修正 `docs/migration-guide.md` 与三个项目的 `references/reference.tex` 注释口径：`@config.tex` 现为项目级默认配置入口，参考文献标题下间距默认值统一更正为真实的 `10pt`

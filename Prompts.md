@@ -45,6 +45,23 @@
 
 ---
 
+Readme文档里的`## 📋 模板列表`进行重构。不再需要我手动地写。 你在本项目开发一个github action流程（你可以看看 /Volumes/2T01/Github/huangwb8/.github/workflows 差不多是这种东西），它的作用是：
+
+- 定期检测最新的release（第1小时检查1次； 用户可以手动触发）
+- 在Readme文档里的`## 📋 模板列表`下构建一个格式化的表格，类似于现在的格式； 但里面的信息的实时更新的
+- NSFC模板、SCI论文模板、毕业论文模板应该有一定的分隔，样式优雅即可
+- Overleaf 演示不放实际的Overleaf地址； 而是放Overleaf包的地址
+
+---
+
+如果
+
+---
+
+你理解错了。 我是指， projects/paper-sci-01 的参考文献的docs样式和/Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 的参考文献的docs样式似乎不完全一样。 问题出在哪？
+
+---
+
 projects/paper-sci-01 的参考文献的docs/pdf的样式和/Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 似乎不完全一样。 问题出在哪？
 
 ---
