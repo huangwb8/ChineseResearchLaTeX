@@ -64,8 +64,7 @@ NSFC_General/
 │
 ├── references/                       # 参考文献目录
 ├── figures/                          # 图片目录
-├── bibtex-style/                     # BibTeX 样式目录
-└── fonts/                            # 字体目录
+└── （字体与 BibTeX 样式由 packages/bensz-nsfc/assets/ 统一提供）
 ```
 
 ## 使用指南
@@ -243,8 +242,8 @@ NSFC_General/
 **更换字体示例**：
 
 ```latex
-% macOS 下改用宋体
-\setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{SimSun}
+% 公共包共享字体资源中改用宋体
+\setCJKmainfont[Path={\NSFCResolvedFontsDir}, Extension=.ttf, AutoFakeBold=5]{SimSun}
 
 % Windows 下改用黑体
 \setCJKmainfont{SimHei}[AutoFakeBold=5]

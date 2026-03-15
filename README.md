@@ -107,6 +107,8 @@ python scripts/install.py install --source local --path packages/bensz-nsfc --re
 
 本次重构已对三套模板执行“4 步编译 + PDF 转 JPG 逐页视觉对比”回归验证，当前官方安装路径下渲染出的 PDF 与重构前基线外观一致。
 
+当前 `fonts/` 与 `bibtex-style/` 已进一步收敛到 `packages/bensz-nsfc/assets/`，三套项目本身只保留正文、图和参考文献数据，减少重复资源占用。
+
 ---
 
 ## 👥 社区支持

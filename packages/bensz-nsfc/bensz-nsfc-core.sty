@@ -12,6 +12,37 @@
 \providecommand{\NSFCBeforeFonts}{}
 \providecommand{\NSFCAfterFonts}{}
 \providecommand{\NSFCUserOverride}{}
+\providecommand{\NSFCPackageRootDir}{}
+\providecommand{\NSFCAssetsDir}{}
+\providecommand{\NSFCAssetFontsDir}{}
+\providecommand{\NSFCAssetBibStyleBase}{}
+\newcommand{\NSFCProjectFontsDir}{./fonts/}
+\newcommand{\NSFCProjectBibStyleBase}{bibtex-style/gbt7714-nsfc}
+\newcommand{\NSFCAssetFontFile}[1]{\NSFCAssetFontsDir#1}
+\newcommand{\NSFCProjectFontFile}[1]{\NSFCProjectFontsDir#1}
+
+\InputIfFileExists{bensz-nsfc-runtime.def}{}{}
+
+\newif\ifNSFCHasBundledFonts
+\NSFCHasBundledFontsfalse
+\newcommand{\NSFCResolvedFontsDir}{}
+\IfFileExists{\NSFCAssetFontFile{Kaiti.ttf}}{%
+  \NSFCHasBundledFontstrue
+  \edef\NSFCResolvedFontsDir{\NSFCAssetFontsDir}%
+}{%
+  \IfFileExists{\NSFCProjectFontFile{Kaiti.ttf}}{%
+    \NSFCHasBundledFontstrue
+    \edef\NSFCResolvedFontsDir{\NSFCProjectFontsDir}%
+  }{}%
+}
+
+\newcommand{\NSFCBibliographyStylePath}{gbt7714-nsfc}
+\IfFileExists{\NSFCProjectBibStyleBase.bst}{%
+  \edef\NSFCBibliographyStylePath{\NSFCProjectBibStyleBase}%
+}{}%
+\IfFileExists{\NSFCAssetBibStyleBase.bst}{%
+  \edef\NSFCBibliographyStylePath{\NSFCAssetBibStyleBase}%
+}{}%
 
 \newif\ifwindows
 \IfFileExists{/dev/null}{\windowsfalse}{\windowstrue}

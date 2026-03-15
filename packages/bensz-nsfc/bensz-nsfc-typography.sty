@@ -26,13 +26,13 @@
   \xeCJKsetup{PunctStyle=quanjiao}%
 }
 
-\newcommand{\NSFCSetupProjectFonts}{%
-  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+\newcommand{\NSFCSetupBundledFonts}{%
+  \setCJKfamilyfont{sectionzhfont}[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
   \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}%
-  \newfontfamily\sectionenfont[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+  \newfontfamily\sectionenfont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
   \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}%
-  \setCJKmainfont[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
-  \setCJKmonofont[Path=./fonts/,Extension=.ttf,AutoFakeBold=5]{Kaiti}%
+  \setCJKmainfont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+  \setCJKmonofont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
   \setmainfont[BoldFont=Times New Roman,AutoFakeBold=5]{Times New Roman}%
   \xeCJKsetup{PunctStyle=quanjiao}%
 }
@@ -41,11 +41,11 @@
 \ifwindows
   \NSFCSetupSystemFonts
 \else
-  \IfFileExists{./fonts/Kaiti.ttf}{%
-    \NSFCSetupProjectFonts
-  }{%
+  \ifNSFCHasBundledFonts
+    \NSFCSetupBundledFonts
+  \else
     \NSFCSetupSystemFonts
-  }%
+  \fi
 \fi
 \NSFCAfterFonts
 

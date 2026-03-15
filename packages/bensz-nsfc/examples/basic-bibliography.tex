@@ -1,0 +1,23 @@
+\documentclass[12pt,UTF8,AutoFakeBold=2.5,a4paper,fontset=none]{ctexart}
+
+\usepackage[type=general]{bensz-nsfc-common}
+
+\begin{document}
+
+{\centering
+{\sanhao \templatefont \bfseries 参考文献示例}\par
+}
+
+\section{（一）示例章节：}
+\subsection{（验证公共包内共享 BibTeX 样式）}
+
+\NSFCBodyText
+该示例用于验证 \verb|\NSFCBibliographyStylePath| 可以稳定指向公共包内的共享 bst 资源，并完成完整的四步编译流程\cite{lamport1994latex}。
+
+\begin{spacing}{1}
+\wuhao
+\bibliographystyle{\NSFCBibliographyStylePath}
+\bibliography{example}
+\end{spacing}
+
+\end{document}

@@ -40,8 +40,7 @@ NSFC_Local/
 │   ├── myexample.bib
 │   └── reference.tex                 # 参考文献渲染入口（建议在此覆盖间距参数）
 ├── figures/                          # 图片目录
-├── bibtex-style/                     # BibTeX 样式（gbt7714-nsfc）
-└── fonts/                            # 字体目录
+└── （字体与 BibTeX 样式由 packages/bensz-nsfc/assets/ 统一提供）
 ```
 
 ## 使用指南

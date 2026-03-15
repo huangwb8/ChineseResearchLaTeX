@@ -84,17 +84,28 @@
   % \setCJKmainfont{SimSun}[AutoFakeBold=5]  % 定义主体内容的字体为SimSun
   \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
 \else
-  % 使用仓库内置字体，避免不同系统的字体名差异影响可复现性
-  \setCJKfamilyfont{sectionzhfont}[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义模板中文字体为楷体
-  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
-  \newfontfamily\sectionenfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
-  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
-  \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti} % 定义主体内容的字体为Kaiti
-  \setCJKmonofont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{Kaiti}
-  % \setmainfont[Path=./fonts/, Extension=.ttf]{TimesNewRoman} % 定义主体内容的英文字体为Times New Roman。由于是外挂字体，无法自由使用英文斜体和粗体。
-  \setmainfont[BoldFont=Times New Roman, AutoFakeBold=5]{Times New Roman} %使用MacOS自带的Times New Roman，可以自由使用英文斜体和粗体。
-  % \setCJKmainfont[Path=./fonts/, Extension=.ttf, AutoFakeBold=5]{SimSun} % 定义主体内容的字体为SimSun
-  \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
+  \ifNSFCHasBundledFonts
+    % 优先使用公共包内共享字体资源，保持项目输出可复现且减少重复文件。
+    \setCJKfamilyfont{sectionzhfont}[Path={\NSFCResolvedFontsDir}, AutoFakeBold=5]{Kaiti.ttf} % 定义模板中文字体为楷体
+    \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
+    \newfontfamily\sectionenfont[Path={\NSFCResolvedFontsDir}, AutoFakeBold=5]{Kaiti.ttf} % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
+    \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
+    \setCJKmainfont[Path={\NSFCResolvedFontsDir}, AutoFakeBold=5]{Kaiti.ttf} % 定义主体内容的字体为Kaiti
+    \setCJKmonofont[Path={\NSFCResolvedFontsDir}, AutoFakeBold=5]{Kaiti.ttf}
+    % \setmainfont[Path={\NSFCResolvedFontsDir}, Extension=.ttf]{TimesNewRoman} % 定义主体内容的英文字体为Times New Roman。由于是外挂字体，无法自由使用英文斜体和粗体。
+    \setmainfont[BoldFont=Times New Roman, AutoFakeBold=5]{Times New Roman} %使用MacOS自带的Times New Roman，可以自由使用英文斜体和粗体。
+    % \setCJKmainfont[Path={\NSFCResolvedFontsDir}, Extension=.ttf, AutoFakeBold=5]{SimSun} % 定义主体内容的字体为SimSun
+    \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
+  \else
+    \setCJKfamilyfont{sectionzhfont}{KaiTi}[AutoFakeBold=5] % 定义模板中文字体为楷体
+    \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}} % 定义模板中文字体为新命令\sectionzhfont
+    \newfontfamily\sectionenfont{KaiTi}[AutoFakeBold=5] % 定义模板中英文字体为楷体，并定义新命令\sectionzhfont
+    \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont} % 模板中英文字体
+    \setmainfont{Times New Roman} % 定义主体内容的英文字体为Times New Roman
+    \setCJKmainfont{KaiTi}[AutoFakeBold=5]  % 定义主体内容的字体为Kaiti
+    \setCJKmonofont{KaiTi}[AutoFakeBold=5]  % 定义 CJK 等宽字体（避免 xeCJK tt 字体警告）
+    \xeCJKsetup{PunctStyle=quanjiao} % 强制中文标点符号使用中文字体
+  \fi
 \fi
 
 

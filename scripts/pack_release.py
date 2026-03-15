@@ -28,11 +28,9 @@ from pathlib import Path
 # zip 内保留的文件/目录（与 AGENTS.md 保持一致）
 INCLUDE_ITEMS = [
     ".vscode",
-    "bibtex-style",
     "code",
     "extraTex",
     "figures",
-    "fonts",
     "references",
     "template",
     "main.pdf",
