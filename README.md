@@ -133,6 +133,25 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir proj
 
 当前 `fonts/` 与 `bibtex-style/` 已进一步收敛到 `packages/bensz-nsfc/assets/`，三套项目本身只保留正文、图和参考文献数据，减少重复资源占用。
 
+### Release 压缩包说明
+
+运行：
+
+```bash
+python scripts/pack_release.py --tag v3.5.2
+python scripts/pack_release.py --tag v3.5.2 --upload
+```
+
+会为每个 NSFC 项目生成两类 Release 资产：
+
+- `{项目名}-{tag}.zip`：普通包，面向本地电脑使用；默认假设你已经按官方入口安装过 `bensz-nsfc` 公共包
+- `{项目名}-Overleaf-{tag}.zip`：Overleaf 专用包；在普通包基础上额外内嵌 `bensz-nsfc` 运行时文件与共享字体 / `bst` 资源，可直接上传到 Overleaf 编译
+
+例如：
+
+- `NSFC_Young-v3.5.2.zip`
+- `NSFC_Young-Overleaf-v3.5.2.zip`
+
 ---
 
 ## 👥 社区支持

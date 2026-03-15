@@ -45,6 +45,10 @@
 
 ---
 
+projects/NSFC_General/code/nsfc_build.py 之类的脚本用来干啥的？
+
+---
+
 scripts/pack_release.py 优化：
 
 - 里面除了可以对项目进行一般的打包，还需要打包一个专门可在overleaf中使用的zip。因为，overleaf中用户无法像本地电脑那样随时将一个latex包安装到它的系统里。你只要优化些规则，应该就可以做到。
