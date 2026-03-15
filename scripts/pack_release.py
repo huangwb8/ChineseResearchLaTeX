@@ -14,9 +14,9 @@ pack_release.py - 打包 projects/ 下各子项目为 Release Assets
   - 普通包保留：
       1. PROJECT_INCLUDE_ITEMS 白名单中的文件/目录
       2. 项目根目录下的 *.code-workspace 文件
-  - Overleaf 包在普通包基础上，额外内嵌 bensz-nsfc 公共包运行时文件与
-    一个指向 zip 内相对路径的 bensz-nsfc-runtime.def，使其可直接上传到
-    Overleaf 编译，而不依赖用户先把公共包安装到 Overleaf 系统中
+  - Overleaf 包会按项目类型自动内嵌对应公共包运行时文件：
+      1. NSFC 项目：补入 bensz-nsfc 运行时文件与 bensz-nsfc-runtime.def
+      2. SCI 项目：补入 bensz-paper 运行时文件
   - 不存在的白名单项自动跳过（如 .vscode/ 不存在时不报错）
   - 不修改 projects/ 目录内任何文件
   - zip 生成操作仅在 tests/ 目录进行
@@ -31,20 +31,24 @@ from pathlib import Path
 # zip 内保留的项目文件/目录（与 README / AGENTS.md 保持一致）
 PROJECT_INCLUDE_ITEMS = [
     ".vscode",
+    "artifacts",
     "code",
     "extraTex",
     "figures",
     "references",
+    "scripts",
     "template",
+    "main.docx",
     "main.pdf",
     "main.tex",
     "README.md",
 ]
 REPO_ROOT = Path(__file__).parent.parent
 PROJECTS_DIR = REPO_ROOT / "projects"
-PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-nsfc"
+NSFC_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-nsfc"
+PAPER_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-paper"
 TESTS_DIR = REPO_ROOT / "tests"
-PACKAGE_RUNTIME_ITEMS = [
+NSFC_PACKAGE_RUNTIME_ITEMS = [
     "bensz-nsfc-common.sty",
     "bensz-nsfc-core.sty",
     "bensz-nsfc-layout.sty",
@@ -54,6 +58,18 @@ PACKAGE_RUNTIME_ITEMS = [
     "profiles",
     "impl",
     "assets",
+]
+PAPER_PACKAGE_RUNTIME_ITEMS = [
+    "bensz-paper.sty",
+    "benszmanuscriptlatex.sty",
+    "bml-core.sty",
+    "bml-layout.sty",
+    "bml-headings.sty",
+    "bml-typography.sty",
+    "bml-floats.sty",
+    "bml-bibliography.sty",
+    "bml-review.sty",
+    "profiles",
 ]
 SKIP_FILE_NAMES = {".DS_Store", "Thumbs.db"}
 
@@ -85,6 +101,14 @@ def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
             zf.write(workspace_file, arcname=workspace_file.name)
 
 
+def detect_project_kind(project_dir: Path) -> str:
+    if (project_dir / "references" / "meta.yaml").exists():
+        return "paper"
+    if (project_dir / "extraTex" / "@config.tex").exists():
+        return "nsfc"
+    return "generic"
+
+
 def build_overleaf_runtime_def() -> str:
     return "\n".join(
         [
@@ -98,18 +122,30 @@ def build_overleaf_runtime_def() -> str:
     )
 
 
-def add_package_runtime_bundle(zf: zipfile.ZipFile) -> None:
-    for item_name in PACKAGE_RUNTIME_ITEMS:
-        item_path = PACKAGE_DIR / item_name
+def add_nsfc_runtime_bundle(zf: zipfile.ZipFile) -> None:
+    for item_name in NSFC_PACKAGE_RUNTIME_ITEMS:
+        item_path = NSFC_PACKAGE_DIR / item_name
         if not item_path.exists():
             raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
         if item_path.is_file():
             zf.write(item_path, arcname=item_name)
             continue
         for file in iter_tree_files(item_path):
-            zf.write(file, arcname=file.relative_to(PACKAGE_DIR))
+            zf.write(file, arcname=file.relative_to(NSFC_PACKAGE_DIR))
 
     zf.writestr("bensz-nsfc-runtime.def", build_overleaf_runtime_def())
+
+
+def add_paper_runtime_bundle(zf: zipfile.ZipFile) -> None:
+    for item_name in PAPER_PACKAGE_RUNTIME_ITEMS:
+        item_path = PAPER_PACKAGE_DIR / item_name
+        if not item_path.exists():
+            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
+        if item_path.is_file():
+            zf.write(item_path, arcname=item_name)
+            continue
+        for file in iter_tree_files(item_path):
+            zf.write(file, arcname=file.relative_to(PAPER_PACKAGE_DIR))
 
 
 def get_git_tag() -> str:
@@ -141,7 +177,11 @@ def pack_project_overleaf(project_dir: Path, output_dir: Path, tag: str) -> Path
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         add_project_contents(zf, project_dir)
-        add_package_runtime_bundle(zf)
+        project_kind = detect_project_kind(project_dir)
+        if project_kind == "nsfc":
+            add_nsfc_runtime_bundle(zf)
+        elif project_kind == "paper":
+            add_paper_runtime_bundle(zf)
 
     return zip_path
 
@@ -166,8 +206,10 @@ def main() -> None:
     output_dir = TESTS_DIR / f"release-{tag}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    if not PACKAGE_DIR.exists():
-        sys.exit(f"错误：未找到公共包目录 {PACKAGE_DIR}")
+    if not NSFC_PACKAGE_DIR.exists():
+        sys.exit(f"错误：未找到 NSFC 公共包目录 {NSFC_PACKAGE_DIR}")
+    if not PAPER_PACKAGE_DIR.exists():
+        sys.exit(f"错误：未找到 SCI 公共包目录 {PAPER_PACKAGE_DIR}")
 
     projects = sorted(p for p in PROJECTS_DIR.iterdir() if p.is_dir())
     if not projects:

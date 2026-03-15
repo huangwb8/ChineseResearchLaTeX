@@ -45,6 +45,39 @@
 
 ---
 
+projects/paper-sci-01 的参考文献的docs/pdf的样式和/Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 似乎不完全一样。 问题出在哪？
+
+---
+
+将 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 是一个已经做好的sci论文写作模板。 现在，请将它移植到本项目，作为一个子功能/子project而存在。 大致如下：
+
+- /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/texmf/tex/latex/benszmanuscriptlatex 到这里后变成 packages/bensz-paper
+- 基于它添加一个project，保存在 projects/paper-sci-01 代表是适合写sci论文的一个模板
+- 你不可以使用  /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper 里的正文内容，因为那是我未发表的论文。 你可以使用 https://www.cell.com/cancer-cell/fulltext/S1535-6108(26)00110-8 作为模板正文。
+
+注意：
+
+- 不能动nsfc项目
+- 因为多了一类项目——SCI写作模板； 也许，其它必要的部分也要调整，比如项目的 AGENTS.md; ./scripts 里的脚本等。 这个你自己把握。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决，所有建议都要落实。 
+
+验收目标：projects/paper-sci-01里可以渲染出格式标准的PDF和docx。
+
+---
+
+在 projects/NSFC_*/extraTex/@config.tex 里，应该添加大量注释类代码，让用户可以根据自己的需求定制化标书的格式。 我希望
+
+- 所有可调的参数都要列出来； 然后写的是目前的默认值
+- 要有说明教用户
+  - 这个参数是什么？
+  - 应该怎么设置？
+- 必须保证 projects/NSFC_*/extraTex/@config.tex 里的参数设置会压过默认的模板设置。在代码逻辑上要保证这一点。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决，所有建议都要落实。
+
+---
+
 projects/NSFC_General/code/nsfc_build.py 之类的脚本用来干啥的？
 
 ---

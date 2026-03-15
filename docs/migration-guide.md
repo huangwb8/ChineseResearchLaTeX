@@ -2,7 +2,7 @@
 
 ## 目标
 
-旧版本项目直接在 `extraTex/@config.tex` 里维护整套样式。重构后，项目入口改为加载公共包 `bensz-nsfc-common`，安装、锁定与切换统一交给 `packages/bensz-nsfc/scripts/install.py`。
+旧版本项目直接在 `extraTex/@config.tex` 里维护整套样式。重构后，项目入口仍然保留 `extraTex/@config.tex`，但职责改为“项目级参数面板 + 公共包加载入口”：公共样式实现收敛到 `bensz-nsfc`，项目侧只保留可调参数、说明注释以及覆盖钩子。安装、锁定与切换统一交给 `packages/bensz-nsfc/scripts/install.py`。
 这些脚本跟随 `bensz-nsfc` 包一起安装，不要求在每个具体项目 zip 里重复携带。
 
 ## 最短迁移路径
@@ -19,17 +19,17 @@ python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
 python packages/bensz-nsfc/scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
 ```
 
-2. 将项目里的 `extraTex/@config.tex` 收敛为一行入口
+2. 将项目入口改为在 `main.tex` 顶部输入 `extraTex/@config.tex`，并在 `@config.tex` 内加载公共包
 
 ```latex
-\usepackage[type=general]{bensz-nsfc-common}
+\input{extraTex/@config.tex}
 ```
 
 对应关系：
 
-- `NSFC_General` -> `type=general`
-- `NSFC_Local` -> `type=local`
-- `NSFC_Young` -> `type=young`
+- `NSFC_General` -> `\usepackage[type=general]{bensz-nsfc-common}`
+- `NSFC_Local` -> `\usepackage[type=local]{bensz-nsfc-common}`
+- `NSFC_Young` -> `\usepackage[type=young]{bensz-nsfc-common}`
 
 3. 锁定项目版本
 
@@ -74,16 +74,17 @@ xelatex -> bibtex -> xelatex -> xelatex
 
 ## 参考文献间距配置
 
-三套 NSFC 模板（General/Local/Young）的参考文献间距参数采用”两层架构”管理：
+三套 NSFC 模板（General/Local/Young）的参考文献间距参数采用“两层架构”管理：
 
-- 基础默认值：在各项目 `extraTex/@config.tex` 中定义
-- 项目级定制：在各项目 `references/reference.tex` 中用 `\setlength{...}{...}` 覆盖（推荐做法，便于后续升级合并）
+- 基础默认值：在 `packages/bensz-nsfc/impl/bensz-nsfc-{general,local,young}.tex` 中定义
+- 项目级默认值：在各项目 `extraTex/@config.tex` 中集中列出并通过项目级钩子覆盖
+- 局部临时覆盖：如只想在参考文献区块做一次性微调，可在各项目 `references/reference.tex` 中用 `\setlength{...}{...}` 再次覆盖
 
 默认值：
 
 | 参数 | 默认值 |
 |------|--------|
 | `\NSFCBibTitleAboveSkip`（标题与上文） | `10pt` |
-| `\NSFCBibTitleBelowSkip`（标题与条目） | `0pt` |
+| `\NSFCBibTitleBelowSkip`（标题与条目） | `10pt` |
 | `\NSFCBibItemSep`（条目间距） | `0pt` |
 | `\NSFCBibTextWidth`（条目行宽） | `397.16727pt` |

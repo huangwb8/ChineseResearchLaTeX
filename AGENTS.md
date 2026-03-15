@@ -1,6 +1,6 @@
 # 中国科研常用 LaTeX 模板集 - 项目指令
 
-本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线是 NSFC 系列模板；`bensz-paper`、`bensz-thesis` 目前主要作为后续扩展位点，除非用户明确要求或仓库内已有可验证实现，否则不要假定它们已经具备与 NSFC 同等级的完成度。
+本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 仍主要作为后续扩展位点。
 
 一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。仓库主分支可以包含重构中的源码、脚本和技能，处理任务时要以“当前真实目录结构 + 当前脚本接口 + 当前 README/CHANGELOG”作为判断依据，而不是沿用旧版记忆。
 
@@ -10,6 +10,7 @@
 
 - 维护可直接使用的 NSFC LaTeX 模板与 Release 交付物
 - 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
+- 维护 `packages/bensz-paper/` 公共包源码与 `projects/paper-sci-01/` 示例项目，支撑 SCI 论文写作模板的 PDF/DOCX 双输出
 - 维护 `packages/bensz-nsfc/scripts/` 下的 NSFC 官方脚本入口，包括安装、构建、校验与 TDS 打包
 - 维护根目录 `scripts/` 下的项目级脚本入口，例如 Release 打包与上传辅助脚本
 - 维护 `skills/` 目录中的项目级 AI Skills，支撑 NSFC 写作、评审、质控、迁移、出图等工作流
@@ -23,12 +24,13 @@ ChineseResearchLaTeX/
 │   ├── bensz-nsfc/          # NSFC 公共包源码（当前主线）
 │   │   ├── scripts/         # NSFC 安装/构建/校验/TDS 打包脚本
 │   │   └── ...
-│   ├── bensz-paper/         # 论文模板包位点（预留）
+│   ├── bensz-paper/         # SCI 论文公共包源码
 │   └── bensz-thesis/        # 毕业论文模板包位点（预留）
 ├── projects/
 │   ├── NSFC_General/        # 面上项目薄封装 + 示例正文
 │   ├── NSFC_Local/          # 地区项目薄封装 + 示例正文
-│   └── NSFC_Young/          # 青年项目薄封装 + 示例正文
+│   ├── NSFC_Young/          # 青年项目薄封装 + 示例正文
+│   └── paper-sci-01/        # SCI 论文示例项目（PDF + DOCX）
 ├── scripts/
 │   ├── pack_release.py      # Release 资产打包与上传
 │   └── get-github-token.sh  # GitHub 辅助脚本
@@ -50,9 +52,12 @@ ChineseResearchLaTeX/
 处理任务时，优先判断应该修改哪一层：
 
 - `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、稳定实现
+- `packages/bensz-paper/`：SCI 论文共享样式、profile 与 PDF/DOCX 构建脚本
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
+- `projects/paper-sci-01/`：SCI 论文示例正文、Markdown 单一真相来源、项目级 wrapper
 - `packages/bensz-nsfc/scripts/install.py`：安装、锁定、同步、回退、状态检查
 - `packages/bensz-nsfc/scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
+- `packages/bensz-paper/scripts/paper_project_tool.py` / `packages/bensz-paper/scripts/manuscript_tool.py`：SCI 论文 PDF + DOCX 统一构建入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
@@ -94,6 +99,12 @@ ChineseResearchLaTeX/
 - 优先使用 `python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir <项目路径>`
 - 只在排查底层编译链路时，才退回原生 `xelatex -> bibtex -> xelatex -> xelatex`
 
+#### SCI 论文模板问题
+
+- 公共样式、profile、DOCX 对齐逻辑优先修改 `packages/bensz-paper/`
+- 示例正文优先维护 `projects/paper-sci-01/artifacts/source/`，不要手工维护双份正文
+- 优先使用 `python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01` 验证 PDF + DOCX 双输出
+
 #### Skill 相关问题
 
 - 先确认是否改动 `SKILL.md`、`config.yaml`、脚本实现、README、CHANGELOG
@@ -103,6 +114,7 @@ ChineseResearchLaTeX/
 
 - LaTeX / Python / Markdown 修改应遵循当前仓库真实结构，不再假设旧版“大一统模板目录”
 - NSFC 模板变更后，应优先通过官方构建链路完成验证
+- SCI 模板变更后，应优先通过 `paper_project_tool.py` 完成 PDF + DOCX 联合验证
 - 编译结果以“无错误”为底线；若仍有 warning，需明确说明是否为已有 warning 或新增 warning
 - 新增共享逻辑时，优先沉淀到公共包或脚本，不要把重复资源重新散落回各项目目录
 - 构建产物应符合当前约定：中间文件尽量隔离到 `.latex-cache/` 或各 Skill 的隐藏工作区
@@ -303,7 +315,9 @@ skill_info:
 - `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致
 - 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
+- 变更 `packages/bensz-paper/` 时，不要把 Markdown 正文重新复制成项目内手写 `.tex` 正文；优先保持 `artifacts/source/` 为单一真相来源
 - 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径
+- 变更 `packages/bensz-paper/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-paper/README.md` 与 `projects/paper-sci-01/README.md`
 - 变更根目录 `scripts/pack_release.py` 时，应同步检查 Release 流程文档与 `CHANGELOG.md`
 
 ### 系统 Skill 保护

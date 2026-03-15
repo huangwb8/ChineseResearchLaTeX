@@ -1,0 +1,19 @@
+project:
+  id: paper-sci-01
+  kind: public-demo
+manuscript:
+  title: "Template Example: Structural Variation in Pediatric Cancer"
+  running_title: "Structural variation demo manuscript"
+  authors:
+    - name: Template Author One
+      markers: ["1", "†"]
+    - name: Template Author Two
+      markers: ["2", "†"]
+    - name: Template Author Three
+      markers: ["1", "*"]
+  affiliations:
+    "1": "Department of Translational Bioinformatics, Example Research Institute, Guangzhou, China"
+    "2": "School of Biomedical Data Science, Example University, Shanghai, China"
+  equal_contribution:
+    - "Template Author One and Template Author Two contributed equally to this demonstration manuscript."
+  correspondence: "template.author@example.org"

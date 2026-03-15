@@ -1,0 +1,5 @@
+For this demonstration project, we used only public information available from the published bibliographic record and abstract of the source article [@Greenhalgh_2026]. No unpublished files, figures, supplementary tables, or protected full-text material from other manuscripts were imported into this repository.
+
+The manuscript body was rewritten as an original summary and then stored in Markdown fragments under `artifacts/source/`. During build, `packages/bensz-paper/scripts/manuscript_tool.py` converts those fragments into LaTeX section files inside `.latex-cache/extraTex/` for PDF compilation and into a consolidated Markdown document for Pandoc-based DOCX export.
+
+PDF rendering follows the fixed sequence `xelatex -> biber -> xelatex -> xelatex`. DOCX rendering uses Pandoc with the bundled `reference.docx` and CSL file, after which a post-processing step normalizes line spacing, paragraph spacing, and bibliography placement so that the Word output remains visually close to the LaTeX PDF.

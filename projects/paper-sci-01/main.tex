@@ -1,0 +1,23 @@
+%!TEX program = xelatex
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{bensz-paper}
+\BenszPaperSetup{
+  template = paper-sci-01
+}
+
+\addbibresource{references/refs.bib}
+
+\begin{document}
+\input{extraTex/front/frontmatter.tex}
+\input{extraTex/front/abstract.tex}
+\input{extraTex/body/introduction.tex}
+\input{extraTex/body/methods.tex}
+\input{extraTex/body/results.tex}
+\input{extraTex/body/discussion.tex}
+\input{extraTex/body/conclusion.tex}
+\input{extraTex/back/additional-information.tex}
+\printbibliography[title={References}]
+\input{extraTex/back/figure-legends.tex}
+\input{extraTex/back/supplementary-materials.tex}
+\end{document}

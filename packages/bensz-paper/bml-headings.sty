@@ -1,0 +1,33 @@
+%% bml-headings.sty
+%% BenszManuscriptLaTeX — Section heading formats (titlesec)
+%%
+%% Reads: \bml@secfontsize, \bml@secleading, \bml@secspacebefore,
+%%        \bml@secspaceafter, \bml@subsecfontsize, \bml@subseceading,
+%%        \bml@subspacebefore, \bml@subspaceafter
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-headings}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Headings]
+
+\RequirePackage{titlesec}
+
+% Suppress section numbers in headings AND table of contents.
+% \section (non-starred) still generates TOC entries; secnumdepth=0
+% means only \part (depth -1) would be numbered in the article class.
+\setcounter{secnumdepth}{0}
+
+% section: bold, profile-defined size/leading, no numbering prefix
+\titleformat{\section}
+  {\bfseries\fontsize{\bml@secfontsize}{\bml@secleading}\selectfont}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\section}{0pt}{\bml@secspacebefore}{\bml@secspaceafter}
+
+% subsection: bold, profile-defined size/leading
+\titleformat{\subsection}
+  {\bfseries\fontsize{\bml@subsecfontsize}{\bml@subseceading}\selectfont}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\subsection}{0pt}{\bml@subspacebefore}{\bml@subspaceafter}

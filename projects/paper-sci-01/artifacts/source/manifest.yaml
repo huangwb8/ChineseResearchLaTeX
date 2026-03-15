@@ -1,0 +1,61 @@
+- title: Abstract
+  kind: single
+  path: artifacts/source/front/abstract.md
+  tex_path: extraTex/front/abstract.tex
+  slug: abstract
+- title: Introduction
+  kind: single
+  path: artifacts/source/body/introduction.md
+  tex_path: extraTex/body/introduction.tex
+  slug: introduction
+- title: Methods
+  kind: single
+  path: artifacts/source/body/methods.md
+  tex_path: extraTex/body/methods.tex
+  slug: methods
+- title: Results
+  kind: single
+  path: artifacts/source/body/results.md
+  tex_path: extraTex/body/results.tex
+  slug: results
+- title: Discussion
+  kind: single
+  path: artifacts/source/body/discussion.md
+  tex_path: extraTex/body/discussion.tex
+  slug: discussion
+- title: Conclusion
+  kind: single
+  path: artifacts/source/body/conclusion.md
+  tex_path: extraTex/body/conclusion.tex
+  slug: conclusion
+- title: Additional information
+  kind: group
+  tex_path: extraTex/back/additional-information.tex
+  slug: additional-information
+  children:
+    - title: Source statement
+      kind: single
+      path: artifacts/source/back/additional-information/source-statement.md
+      slug: source-statement
+    - title: Availability of materials
+      kind: single
+      path: artifacts/source/back/additional-information/availability-of-materials.md
+      slug: availability-of-materials
+    - title: Funding
+      kind: single
+      path: artifacts/source/back/additional-information/funding.md
+      slug: funding
+    - title: Competing interests
+      kind: single
+      path: artifacts/source/back/additional-information/competing-interests.md
+      slug: competing-interests
+- title: Figure legends
+  kind: single
+  path: artifacts/source/back/figure-legends.md
+  tex_path: extraTex/back/figure-legends.tex
+  slug: figure-legends
+- title: Supplementary materials
+  kind: single
+  path: artifacts/source/back/supplementary-materials.md
+  tex_path: extraTex/back/supplementary-materials.tex
+  slug: supplementary-materials

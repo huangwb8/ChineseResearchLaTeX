@@ -10,13 +10,20 @@
 
 ### Added（新增）
 
+- 新增使用说明文档 `docs/nsfc-usage-guide.md`：面向普通用户说明 NSFC 模板的基本使用方法，并以 `projects/NSFC_Young/` 作为示例演示公共包安装、项目编译、正文编辑、参考文献维护、版本锁定与 Overleaf 使用；同时在根级 `README.md` 增加文档导读入口
 - 新增三个 NSFC 项目目录下的写标书专用 AI 指令文件：`projects/NSFC_General/AGENTS.md`、`projects/NSFC_General/CLAUDE.md`、`projects/NSFC_Local/AGENTS.md`、`projects/NSFC_Local/CLAUDE.md`、`projects/NSFC_Young/AGENTS.md`、`projects/NSFC_Young/CLAUDE.md`；内置文件-章节映射表、各章节写作要点、常用 LaTeX 命令速查、AI 技能调用指引、编译说明和工程原则，用户下载单个项目压缩包后无需额外配置即可让 AI 辅助写标书
 - 新增 `packages/bensz-nsfc/` 公共包源码目录：引入 `bensz-nsfc-common` 安装入口、`profiles/` 模板元信息、`impl/` 稳定实现目录、包级 README、示例文件与字体资源；同时预留 `packages/bensz-paper/`、`packages/bensz-thesis/` 目录，作为后续论文/毕业论文模板包位点
 - 新增 `packages/bensz-nsfc/scripts/install.py`、`packages/bensz-nsfc/scripts/validate_package.py`、`packages/bensz-nsfc/scripts/build_tds_zip.py`：分别负责 NSFC 公共包安装/锁定/切换、包结构校验与 TDS 打包
 - 新增迁移说明文档 `docs/migration-guide.md`：说明从旧版“大而全 @config.tex”迁移到公共包安装模式的最短路径
+- 新增 SCI 论文公共包 `packages/bensz-paper/`：引入 `bensz-paper.sty` 公共入口、`paper-sci-01` profile、PDF/DOCX 统一构建脚本、安装脚本、TDS 打包脚本与 `bpaper` launcher，并保留 `benszmanuscriptlatex.sty` 兼容入口
+- 新增 SCI 示例项目 `projects/paper-sci-01/`：采用 `artifacts/source/*.md` 作为正文单一真相来源，构建时自动生成 `.latex-cache/extraTex/*.tex`，并可同时输出 `main.pdf`、`main.docx`
+- 新增 `projects/paper-sci-01/AGENTS.md`、`projects/paper-sci-01/CLAUDE.md` 与 `projects/paper-sci-01/scripts/paper_build.py`：支持在完整仓库和单项目场景下调用 `bensz-paper` 官方构建链路
 
 ### Changed（变更）
 
+- 重构 `projects/NSFC_General/extraTex/@config.tex`、`projects/NSFC_Local/extraTex/@config.tex`、`projects/NSFC_Young/extraTex/@config.tex`：三套项目入口改为“项目级参数面板 + 公共包加载入口”结构；集中列出当前可调格式参数、真实默认值与调参说明，并通过 `\NSFCProjectConfigBeforePackage` / `\NSFCProjectConfigAfterPackage` 明确保证项目层设置压过公共包默认值
+- 更新 `packages/bensz-nsfc/bensz-nsfc-core.sty`：新增项目级前置/后置配置钩子，显式固化 `profile 默认值 -> 兼容旧钩子 -> 项目级钩子` 的覆盖顺序
+- 同步修正 `docs/migration-guide.md` 与三个项目的 `references/reference.tex` 注释口径：`@config.tex` 现为项目级默认配置入口，参考文献标题下间距默认值统一更正为真实的 `10pt`
 - 将三个 NSFC 项目的构建入口脚本从 `code/nsfc_build.py` 迁移至 `scripts/nsfc_build.py`：`code/` 目录职责收敛为用户标书正文代码，构建脚本不应混入其中；同步更新三个项目 `AGENTS.md` 中的编译说明
 - 优化 `scripts/pack_release.py` Release 资产规则：每个 NSFC 项目现在默认同时生成普通 zip（如 `NSFC_Young-v3.5.2.zip`）与 Overleaf 专用 zip（如 `NSFC_Young-Overleaf-v3.5.2.zip`）；其中普通包继续保持“公共包单独安装”的轻量分发模式，Overleaf 包则额外内嵌 `bensz-nsfc` 运行时文件、共享字体与 `bst` 资源，并自动生成指向压缩包内相对路径的 `bensz-nsfc-runtime.def`，保证上传到 Overleaf 后可直接编译；同时同步更新 `README.md` 与 `AGENTS.md` 的 Release 口径
 - 重构 NSFC 脚本布局：将根目录 `scripts/` 下与 NSFC 公共包直接相关的 `install.py`、`nsfc_project_tool.py`、`validate_package.py`、`build_tds_zip.py` 统一迁移到 `packages/bensz-nsfc/scripts/`；根目录 `scripts/` 收敛为项目级脚本入口；并同步更新 `README.md`、`AGENTS.md`、`docs/migration-guide.md`、`packages/bensz-nsfc/README.md`、`packages/bensz-nsfc/package.json`、三个 NSFC 项目的 README / `.vscode/settings.json`、项目内 `code/nsfc_build.py` 启动器、重构计划文档与 `config.yaml`；普通项目 zip 不再重复打入整份 `packages/bensz-nsfc/`，项目侧改为优先通过 `kpsewhich bensz-nsfc-common.sty` 与常规 TEXMF 路径定位已安装包里的公共脚本；如需 Overleaf 独立可用，则由 `scripts/pack_release.py` 在 Overleaf 专用 zip 中补入最小运行时文件集合
@@ -27,6 +34,8 @@
 - 更新 `README.md` 与 `packages/bensz-nsfc/README.md`：文档口径统一切换到“先安装公共包，再编译项目”的工作流，并补充 `pin/sync/check/rollback` 使用方式
 - 重构 `packages/bensz-nsfc/` 与 `projects/NSFC_{General,Local,Young}`：将三套项目重复的 `fonts/` 与 `bibtex-style/` 收敛到 `packages/bensz-nsfc/assets/`，公共包新增包内资源解析与 `\NSFCBibliographyStylePath` 统一入口；项目目录和 Release 打包清单同步瘦身，校验脚本新增共享字体/BibTeX 资源检查与参考文献编译 smoke test
 - 新增 `packages/bensz-nsfc/scripts/nsfc_project_tool.py` 并更新三个 NSFC 项目的 `.vscode/settings.json`：将 PDF 渲染统一收敛到固定 Python CLI，自动生成 cache 内 `bensz-nsfc-runtime.def`、隔离 `.latex-cache/` 中间文件、清理根目录杂项产物，并保留 `main.pdf + .latex-cache/*.synctex.gz` 的 VS Code 友好体验；本次不引入 DOCX 渲染链路
+- 更新根级 `README.md` 与 `AGENTS.md`：项目口径从“NSFC + 预留论文位点”扩展为“NSFC 主线 + 首个 SCI 可验证链路”，新增 `bensz-paper` / `paper-sci-01` 的目录说明、构建入口与文档入口
+- 更新 `scripts/pack_release.py`：Release 打包现在可识别 SCI 项目，普通 zip 会保留 `artifacts/`、`scripts/`、`main.docx` 等必需文件；Overleaf zip 会按项目类型自动补入 `bensz-nsfc` 或 `bensz-paper` 运行时文件
 
 ### Fixed（修复）
 

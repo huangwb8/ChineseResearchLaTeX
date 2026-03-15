@@ -1,0 +1,42 @@
+%% bml-bibliography.sty
+%% BenszManuscriptLaTeX — Bibliography (biblatex / biber)
+%%
+%% Reads: \bml@bibstyle, \bml@bibmaxnames, \bml@bibminnames,
+%%        \bml@bibitemsep, \bml@bibhang,
+%%        \bml@bibfontsize, \bml@bibledaing
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-bibliography}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Bibliography]
+
+% Build biblatex option string with expanded macros so that
+% profile values are correctly substituted at load time.
+\edef\bml@bib@pkgopts{%
+  backend=biber,%
+  style=\bml@bibstyle,%
+  gbpub=false,%
+  gbtype=true,%
+  gbpunctin=true,%
+  url=true,%
+  doi=true,%
+  maxbibnames=\bml@bibmaxnames,%
+  minbibnames=\bml@bibminnames,%
+  gbnamefmt=lowercase,%
+  gbbiblabel=bracket%
+}
+\expandafter\RequirePackage\expandafter[\bml@bib@pkgopts]{biblatex}
+
+% Hide access-date fields (urlyear / urlmonth / urlday)
+\AtEveryBibitem{%
+  \clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}%
+}
+
+% Spacing and font
+\setlength{\bibitemsep}{\bml@bibitemsep}
+\setlength{\bibhang}{\bml@bibhang}
+\renewcommand*{\bibfont}{%
+  \fontsize{\bml@bibfontsize}{\bml@bibledaing}\selectfont%
+}
+
+% Section title string
+\DefineBibliographyStrings{english}{bibliography = {References}}

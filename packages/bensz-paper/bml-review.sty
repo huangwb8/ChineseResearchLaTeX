@@ -1,0 +1,21 @@
+%% bml-review.sty
+%% BenszManuscriptLaTeX — Review mode (line numbers)
+%%
+%% Reads: bml@linenumbers (bool), \bml@linenumbersep,
+%%        \bml@linenumberfontsize, \bml@modulolinenumbers
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-review}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Review]
+
+\RequirePackage{lineno}
+
+\setlength{\linenumbersep}{\bml@linenumbersep}
+\renewcommand\linenumberfont{%
+  \normalfont\fontsize{\bml@linenumberfontsize}{\bml@linenumberfontsize}%
+  \selectfont%
+}
+\modulolinenumbers[\bml@modulolinenumbers]
+
+% Enable line numbers at document start (conditional)
+\ifbool{bml@linenumbers}{\AtBeginDocument{\linenumbers}}{}

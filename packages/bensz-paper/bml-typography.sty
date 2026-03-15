@@ -1,0 +1,38 @@
+%% bml-typography.sty
+%% BenszManuscriptLaTeX — Font, spacing, and typographic settings
+%%
+%% Reads: \bml@mainfont, \bml@mainfontfallback, \bml@linespacing,
+%%        \bml@parindent, \bml@parskip, \bml@emergencystretch,
+%%        bml@raggedbottom (bool)
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-typography}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Typography]
+
+\RequirePackage{fontspec}        % XeLaTeX/LuaLaTeX font selection
+\RequirePackage{setspace}        % line spacing
+\RequirePackage[activate={true,nocompatibility},final,protrusion=true,expansion=false]{microtype}  % microtypography (protrusion only; expansion=false required for XeTeX)
+\RequirePackage[hidelinks]{hyperref}  % hyperlinks (no coloured boxes)
+\RequirePackage{bookmark}        % rewrites hyperref bookmark system; fixes anchor drift with titlesec + lineno
+\RequirePackage{xurl}            % improved URL line-breaking
+\RequirePackage{csquotes}        % smart quotes (required by biblatex)
+
+% Main font with graceful fallback
+\IfFontExistsTF{\bml@mainfont}{%
+  \setmainfont{\bml@mainfont}%
+}{%
+  \setmainfont{\bml@mainfontfallback}%
+}
+
+% Spacing
+\setstretch{\bml@linespacing}
+\setlength{\parindent}{\bml@parindent}
+\setlength{\parskip}{\bml@parskip}
+\setlength{\emergencystretch}{\bml@emergencystretch}
+\tolerance=\bml@tolerance\relax
+
+% Vertical page alignment
+\ifbool{bml@raggedbottom}{\raggedbottom}{}
+
+% URL rendered in body font
+\urlstyle{same}

@@ -1,0 +1,30 @@
+%% bml-layout.sty
+%% BenszManuscriptLaTeX — Page layout (geometry + fancyhdr)
+%%
+%% Reads: \bml@papersize, \bml@marginleft, \bml@marginright,
+%%        \bml@margintop, \bml@marginbottom, \bml@headheight,
+%%        \bml@footskip
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-layout}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Layout]
+
+% Page dimensions
+\RequirePackage{geometry}
+\geometry{%
+  \bml@papersize,%
+  left   = \bml@marginleft,%
+  right  = \bml@marginright,%
+  top    = \bml@margintop,%
+  bottom = \bml@marginbottom,%
+  headheight = \bml@headheight,%
+  footskip   = \bml@footskip%
+}
+
+% Header / footer
+\RequirePackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}                              % clear all fields
+\fancyfoot[C]{\thepage}                 % page number centred in footer
+\renewcommand{\headrulewidth}{0pt}      % no header rule
+\renewcommand{\footrulewidth}{0pt}      % no footer rule

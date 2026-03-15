@@ -1,0 +1,42 @@
+%% bml-profile-paper-sci-01.def
+%% Template profile: paper-sci-01
+
+\def\bml@papersize{a4paper}
+\def\bml@marginleft{1.25in}
+\def\bml@marginright{1.25in}
+\def\bml@margintop{1in}
+\def\bml@marginbottom{1in}
+\def\bml@headheight{12pt}
+\def\bml@footskip{0.7in}
+
+\def\bml@mainfont{Times New Roman}
+\def\bml@mainfontfallback{TeX Gyre Termes}
+\def\bml@linespacing{1.5}
+\def\bml@parindent{1.5em}
+\def\bml@parskip{0.2\baselineskip}
+\def\bml@emergencystretch{3em}
+\def\bml@tolerance{2000}
+\booltrue{bml@raggedbottom}
+
+\def\bml@secfontsize{14}
+\def\bml@secleading{18}
+\def\bml@secspacebefore{0pt}
+\def\bml@secspaceafter{3pt}
+\def\bml@subsecfontsize{12}
+\def\bml@subseceading{15}
+\def\bml@subspacebefore{4pt}
+\def\bml@subspaceafter{2pt}
+
+\def\bml@bibstyle{gb7714-2015}
+\def\bml@bibfontsize{7.875pt}
+\def\bml@bibledaing{9.5pt}
+\def\bml@bibhang{0.27in}
+\def\bml@bibitemsep{0pt}
+\def\bml@bibmaxnames{3}
+\def\bml@bibminnames{3}
+
+\booltrue{bml@linenumbers}
+\booltrue{bml@reviewmode}
+\def\bml@linenumbersep{12pt}
+\def\bml@linenumberfontsize{11pt}
+\def\bml@modulolinenumbers{1}

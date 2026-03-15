@@ -1,0 +1,33 @@
+%% bml-floats.sty
+%% BenszManuscriptLaTeX — Figures, tables, lists
+%%
+%% Hardcoded per bensz-manu-01 style (caption & list aesthetics
+%% are stable across templates; promote to profile keys if needed).
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-floats}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Floats]
+
+% Colour and graphics
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+
+% Table packages
+\RequirePackage{booktabs}        % professional triple-rule tables
+\RequirePackage{longtable}       % tables spanning multiple pages
+\RequirePackage{array}           % extended column spec
+\RequirePackage{tabularx}        % auto-width columns
+\RequirePackage{multirow}        % multi-row cells
+
+% Captions
+\RequirePackage{caption}
+\captionsetup{font={small,stretch=1.0}, labelfont=bf, labelsep=space}
+
+% Lists
+\RequirePackage{enumitem}
+\setlist[itemize] {leftmargin=2em, itemsep=0.2em, topsep=0.2em}
+\setlist[enumerate]{leftmargin=2em, itemsep=0.2em, topsep=0.2em}
+
+% Pandoc compatibility — \tightlist is emitted by Pandoc-generated LaTeX
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}

@@ -1,0 +1,112 @@
+%% bml-core.sty
+%% BenszManuscriptLaTeX — Core key-value system and module loader
+%%
+%% Defines \BenszManuscriptSetup{...} which:
+%%   1. Extracts template= key and loads the corresponding profile
+%%   2. Re-applies user keys (user overrides win over profile defaults)
+%%   3. Loads all style modules in order
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bml-core}
+  [2026/03/12 v1.0.0 BenszManuscriptLaTeX Core]
+
+\RequirePackage{keyval}
+\RequirePackage{etoolbox}
+
+% ── Internal parameter defaults ──────────────────────────────────
+% Set by profile files; user \BenszManuscriptSetup keys override.
+
+% Template selection
+\def\bml@template{paper-sci-01}
+
+% Layout
+\def\bml@papersize{a4paper}
+\def\bml@marginleft{1.25in}
+\def\bml@marginright{1.25in}
+\def\bml@margintop{1in}
+\def\bml@marginbottom{1in}
+\def\bml@headheight{12pt}
+\def\bml@footskip{0.7in}
+
+% Typography
+\def\bml@mainfont{Times New Roman}
+\def\bml@mainfontfallback{TeX Gyre Termes}
+\def\bml@linespacing{1.5}
+\def\bml@parindent{1.5em}
+\def\bml@parskip{0.2\baselineskip}
+\def\bml@emergencystretch{3em}
+\def\bml@tolerance{2000}
+\newbool{bml@raggedbottom}
+\booltrue{bml@raggedbottom}
+
+% Headings
+\def\bml@secfontsize{14}
+\def\bml@secleading{18}
+\def\bml@secspacebefore{0pt}
+\def\bml@secspaceafter{3pt}
+\def\bml@subsecfontsize{12}
+\def\bml@subseceading{15}
+\def\bml@subspacebefore{4pt}
+\def\bml@subspaceafter{2pt}
+
+% Bibliography
+\def\bml@bibstyle{gb7714-2015}
+\def\bml@bibfontsize{7.875pt}
+\def\bml@bibledaing{9.5pt}
+\def\bml@bibhang{0.27in}
+\def\bml@bibitemsep{0pt}
+\def\bml@bibmaxnames{3}
+\def\bml@bibminnames{3}
+
+% Review / line numbers
+\newbool{bml@linenumbers}
+\booltrue{bml@linenumbers}
+\newbool{bml@reviewmode}
+\booltrue{bml@reviewmode}
+\def\bml@linenumbersep{12pt}
+\def\bml@linenumberfontsize{11pt}
+\def\bml@modulolinenumbers{1}
+
+% ── User-facing key definitions ──────────────────────────────────
+
+\define@key{bml}{template}{\def\bml@template{#1}}
+\define@key{bml}{review-mode}{\setbool{bml@reviewmode}{#1}}
+\define@key{bml}{line-numbers}{\setbool{bml@linenumbers}{#1}}
+\define@key{bml}{main-font}{\def\bml@mainfont{#1}}
+\define@key{bml}{bibliography-style}{\def\bml@bibstyle{#1}}
+\define@key{bml}{paragraph-indent}{\def\bml@parindent{#1}}
+\define@key{bml}{paragraph-skip}{\def\bml@parskip{#1}}
+\define@key{bml}{tolerance}{\def\bml@tolerance{#1}}
+
+% ── \BenszManuscriptSetup ─────────────────────────────────────────
+% Call once in preamble after \usepackage{bensz-paper} or
+% \usepackage{benszmanuscriptlatex}.
+%
+% Algorithm:
+%   1. Apply keys (extracts template= name)
+%   2. Load profile (sets template-specific defaults via \def)
+%   3. Re-apply keys (user values override profile defaults)
+%   4. Load all style modules
+
+\newcommand{\BenszManuscriptSetup}[1]{%
+  % Pass 1: capture template= selection
+  \setkeys{bml}{#1}%
+  % Load profile
+  \InputIfFileExists{profiles/bml-profile-\bml@template.def}{}{%
+    \PackageError{benszmanuscriptlatex}%
+      {Profile '\bml@template' not found}%
+      {Check that profiles/bml-profile-\bml@template.def exists
+       in the package profiles/ directory.
+       Available built-in profiles: paper-sci-01, bensz-manu-01}%
+  }%
+  % Pass 2: user keys override profile defaults
+  \setkeys{bml}{#1}%
+  % Load style modules
+  \RequirePackage{bml-layout}%
+  \RequirePackage{bml-headings}%
+  % titlesec must be loaded before hyperref so section anchors remain distinct
+  \RequirePackage{bml-typography}%
+  \RequirePackage{bml-floats}%
+  \RequirePackage{bml-bibliography}%
+  \RequirePackage{bml-review}%
+}
