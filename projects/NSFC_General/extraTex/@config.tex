@@ -1,1 +1,428 @@
+% NSFC 面上项目的项目级格式配置入口。
+%
+% 设计目标：
+% 1. 把“当前模板允许调整的参数”都集中列在这里，默认值就是当前真实默认值。
+% 2. 每个参数都写清楚“它是什么”“应该怎么改”。
+% 3. 通过“前置覆盖 + 后置重放”保证这里的设置一定压过公共包默认值。
+%
+% 覆盖顺序（由 packages/bensz-nsfc/bensz-nsfc-core.sty 保证）：
+% - \NSFCProjectConfigBeforePackage：在 profile 默认值读入后、模板实现载入前执行。
+% - \NSFCProjectConfigAfterPackage：在模板实现载入后执行，再把 geometry / titlesec /
+%   enumitem / bibliography 等真正落地一次。
+% 因此，只要改本文件里的参数，就会优先于公共包默认设置生效。
+
+% 布尔参数统一写成 true 或 false；不要写 True / FALSE / 1 / 0。
+\newcommand{\NSFCProjectApplyToggle}[2]{\csname #1#2\endcsname}
+\newcommand{\NSFCProjectApplyGeometry}{%
+  \begingroup
+  \edef\NSFCProjectExpandedCommand{\endgroup
+    \noexpand\geometry{\NSFCProjectGeometryOptions}%
+  }%
+  \NSFCProjectExpandedCommand
+}
+\newcommand{\NSFCProjectApplyCaptionOptions}{%
+  \begingroup
+  \edef\NSFCProjectExpandedCommand{\endgroup
+    \noexpand\captionsetup{\NSFCProjectCaptionOptions}%
+  }%
+  \NSFCProjectExpandedCommand
+}
+\newcommand{\NSFCProjectApplyFigureCaptionOptions}{%
+  \begingroup
+  \edef\NSFCProjectExpandedCommand{\endgroup
+    \noexpand\captionsetup[figure]{\NSFCProjectFigureCaptionOptions}%
+  }%
+  \NSFCProjectExpandedCommand
+}
+
+% =========================
+% 基础版式参数（面上项目当前默认值）
+% =========================
+
+% 参数：\NSFCProjectGeometryOptions
+% 含义：整页页边距，直接传给 geometry 宏包。
+% 设置方法：只改 left/right/top/bottom 的数值，例如 left=3.10cm,right=2.90cm,...
+% 当前默认值：left=3.00cm,right=2.75cm,top=2.63cm,bottom=2.96cm
+\newcommand{\NSFCProjectGeometryOptions}{left=3.00cm,right=2.75cm,top=2.63cm,bottom=2.96cm}
+
+% 参数：\NSFCProjectCJKGlue
+% 含义：中文与数字/字母之间的弹性间距。
+% 设置方法：通常只微调第一个长度；想更紧凑可略减，想更松可略增。
+% 当前默认值：\hskip 0.15em plus 0.05em minus 0.05em
+\newcommand{\NSFCProjectCJKGlue}{\hskip 0.15em plus 0.05em minus 0.05em}
+
+% 参数：\NSFCProjectMsBlueRGB / \NSFCProjectHeaderColorRGB / \NSFCProjectFooterColorRGB
+% 含义：模板主蓝色、页眉色、页脚色。
+% 设置方法：保持 RGB 三元组格式，如 0,113,192。
+% 当前默认值：主蓝色 0,113,192；页眉页脚均为 0,0,0。
+\newcommand{\NSFCProjectMsBlueRGB}{0,113,192}
+\newcommand{\NSFCProjectHeaderColorRGB}{0,0,0}
+\newcommand{\NSFCProjectFooterColorRGB}{0,0,0}
+
+% 参数：\NSFCProjectUseWasysym
+% 含义：是否载入 wasysym（带圈符号等额外符号）。
+% 设置方法：true 表示载入；false 表示不载入。
+% 当前默认值：true
+\newcommand{\NSFCProjectUseWasysym}{true}
+
+% 参数：\NSFCProjectRaggedBottom
+% 含义：是否禁用 LaTeX 的 flushbottom，让页面底部不强行拉伸。
+% 设置方法：true 表示使用 \raggedbottom；false 表示保持默认页高拉伸。
+% 当前默认值：false
+\newcommand{\NSFCProjectRaggedBottom}{false}
+
+% 参数：\NSFCProjectUseFrenchSpacing
+% 含义：是否启用 \frenchspacing（英文句号后的额外空白更紧凑）。
+% 设置方法：true / false。
+% 当前默认值：false
+\newcommand{\NSFCProjectUseFrenchSpacing}{false}
+
+% 参数：\NSFCProjectHFuzz
+% 含义：是否把 \hfuzz 放宽到 20pt，减少示例内容触发的 Overfull \hbox 警告。
+% 设置方法：true / false。
+% 当前默认值：false
+\newcommand{\NSFCProjectHFuzz}{false}
+
+% 参数：\NSFCProjectUseAdjustedBlankPara
+% 含义：空白占位段 \NSFCBlankPara 是否按“基线减段距”精确补齐。
+% 设置方法：true 更适合已有段距配置；false 使用完整一行高度。
+% 当前默认值：false
+\newcommand{\NSFCProjectUseAdjustedBlankPara}{false}
+
+% 参数：\NSFCProjectUseFigureCaptionSetup
+% 含义：是否只对 figure 单独套 caption 配置；false 表示对全部 caption 统一配置。
+% 设置方法：true / false。
+% 当前默认值：false
+\newcommand{\NSFCProjectUseFigureCaptionSetup}{false}
+
+% 参数：\NSFCProjectDisablePunctstyleInPdfstring
+% 含义：是否在 PDF 书签字符串里禁用 \punctstyle，避免 hyperref 警告。
+% 设置方法：true / false。
+% 当前默认值：false
+\newcommand{\NSFCProjectDisablePunctstyleInPdfstring}{false}
+
+% 参数：\NSFCProjectUseUrlStyleSame
+% 含义：URL 是否使用正文同款字体；false 时维持 Times 风格等宽字体。
+% 设置方法：true / false。
+% 当前默认值：false
+\newcommand{\NSFCProjectUseUrlStyleSame}{false}
+
+% 参数：\NSFCProjectUseDingSubtitle
+% 含义：四级小标题 \ssssubtitle 是否使用 ding 带圈数字。
+% 设置方法：true 用 ding；false 用 \textcircled。
+% 当前默认值：false
+\newcommand{\NSFCProjectUseDingSubtitle}{false}
+
+% 参数：\NSFCProjectLinebreakLocale
+% 含义：XeTeX 中文断行语言环境。
+% 设置方法：通常保持 zh；除非你明确知道自己在改什么。
+% 当前默认值：zh
+\newcommand{\NSFCProjectLinebreakLocale}{zh}
+
+% =========================
+% 正文与对象名称
+% =========================
+
+% 参数：\NSFCProjectAtBeginDocumentFont
+% 含义：文档开始时统一施加的默认字号/行距命令。
+% 设置方法：通常写成 \fontsize{字号}{行距}\selectfont，可按需追加 \frenchspacing。
+% 当前默认值：\fontsize{12pt}{22pt}\selectfont
+\newcommand{\NSFCProjectAtBeginDocumentFont}{\fontsize{12pt}{22pt}\selectfont}
+
+% 参数：\NSFCProjectGlobalParIndent / \NSFCProjectGlobalParSkip
+% 含义：全局段首缩进与段后距。
+% 设置方法：正文模板通常建议保持 0pt；正文内容再交给 \NSFCProjectBody* 控制。
+% 当前默认值：0pt / 0pt
+\newcommand{\NSFCProjectGlobalParIndent}{0pt}
+\newcommand{\NSFCProjectGlobalParSkip}{0pt}
+
+% 参数：\NSFCProjectBodyParIndent / \NSFCProjectBodyParSkip
+% 含义：\NSFCBodyText 启用后的正文段首缩进与段后距。
+% 设置方法：中文正文通常保持 2em 首行缩进、0pt 段后距。
+% 当前默认值：2em / 0pt
+\newcommand{\NSFCProjectBodyParIndent}{2em}
+\newcommand{\NSFCProjectBodyParSkip}{0pt}
+
+% 参数：以下对象名称
+% 含义：目录、插图目录、表格目录、参考文献标题、摘要、索引、表名、图名。
+% 设置方法：直接改成你想显示的文本或格式命令。
+% 当前默认值：与当前面上项目模板一致。
+\newcommand{\NSFCProjectContentsName}{目录}
+\newcommand{\NSFCProjectListFigureName}{插图目录}
+\newcommand{\NSFCProjectListTableName}{表格}
+\newcommand{\NSFCProjectReferenceHeading}{\sihao \templatefont \bfseries \leftline{参考文献}}
+\newcommand{\NSFCProjectAbstractName}{摘要}
+\newcommand{\NSFCProjectIndexName}{索引}
+\newcommand{\NSFCProjectTableName}{表}
+\newcommand{\NSFCProjectFigureName}{图}
+
+% 参数：\NSFCProjectPunctStyle
+% 含义：xeCJK 全局标点样式。
+% 设置方法：常用值如 hangmobanjiao、quanjiao；不熟悉时建议保持默认。
+% 当前默认值：hangmobanjiao
+\newcommand{\NSFCProjectPunctStyle}{hangmobanjiao}
+
+% =========================
+% 标题字号、编号与间距
+% =========================
+
+% 参数：\NSFCProjectSectionZihao / \NSFCProjectSubsectionZihao / \NSFCProjectSubsubsectionZihao
+% 含义：一、二、三级标题字号与行距。
+% 设置方法：直接改 \fontsize{字号}{行距}\selectfont。
+% 当前默认值：14/22pt、14/22pt、13.5/20pt
+\newcommand{\NSFCProjectSectionZihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\NSFCProjectSubsectionZihao}{\fontsize{14pt}{22pt}\selectfont}
+\newcommand{\NSFCProjectSubsubsectionZihao}{\fontsize{13.5pt}{20pt}\selectfont}
+
+% 参数：以下四组标题 format / label / labelsep / before-code
+% 含义：完整控制 titlesec 的标题样式。
+% 设置方法：
+% - format：控制颜色、字体、粗细。
+% - label：控制编号/缩进前缀长什么样。
+% - labelsep：控制编号与标题正文之间的距离。
+% - before-code：控制标题正文前额外插入的代码。
+% 当前默认值：与当前面上项目模板一致。
+\newcommand{\NSFCProjectSectionFormat}{\color{MsBlue} \sectionzihao \templatefont \bfseries}
+\newcommand{\NSFCProjectSectionLabel}{\hspace*{2em}}
+\newcommand{\NSFCProjectSectionLabelSep}{0pt}
+\newcommand{\NSFCProjectSectionBeforeCode}{}
+
+\newcommand{\NSFCProjectSubsectionFormat}{\color{MsBlue} \subsectionzihao \templatefont}
+\newcommand{\NSFCProjectSubsectionLabel}{}
+\newcommand{\NSFCProjectSubsectionLabelSep}{0pt}
+\newcommand{\NSFCProjectSubsectionBeforeCode}{\hspace*{2em}}
+
+\newcommand{\NSFCProjectSubsubsectionNumber}{\arabic{subsection}.\arabic{subsubsection}}
+\newcommand{\NSFCProjectSubsubsectionFormat}{\color{MsBlue} \subsubsectionzihao \templatefont \bfseries}
+\newcommand{\NSFCProjectSubsubsectionLabel}{\hspace{1.1em}\textnormal{\templatefont \thesubsubsection}}
+\newcommand{\NSFCProjectSubsubsectionLabelSep}{0.5em}
+\newcommand{\NSFCProjectSubsubsectionBeforeCode}{}
+
+\newcommand{\NSFCProjectSubsubsubsectionNumber}{（\arabic{subsubsubsection}）}
+\newcommand{\NSFCProjectSubsubsubsectionFormat}{\templatefont \bfseries}
+\newcommand{\NSFCProjectSubsubsubsectionLabel}{\hspace{1em}\thesubsubsubsection}
+\newcommand{\NSFCProjectSubsubsubsectionLabelSep}{0.5pt}
+\newcommand{\NSFCProjectSubsubsubsectionBeforeCode}{}
+
+% 参数：以下标题上下间距
+% 含义：控制标题与前后正文的垂直距离。
+% 设置方法：可写成 2pt、5pt，或 2pt plus 0pt minus 0pt 这种弹性长度。
+% 当前默认值：面上项目 profile 的真实默认值。
+\newcommand{\NSFCProjectSectionBefore}{2pt plus 0pt minus 0pt}
+\newcommand{\NSFCProjectSectionAfter}{2pt}
+\newcommand{\NSFCProjectSubsectionIndent}{0pt}
+\newcommand{\NSFCProjectSubsectionBefore}{0pt plus 0pt minus 0pt}
+\newcommand{\NSFCProjectSubsectionAfter}{7.8pt}
+\newcommand{\NSFCProjectSubsubsectionBefore}{0pt plus 0pt minus 0pt}
+\newcommand{\NSFCProjectSubsubsectionAfter}{0pt plus 0pt minus 0pt}
+\newcommand{\NSFCProjectSubsubsubsectionBefore}{0pt plus 0pt minus 0pt}
+\newcommand{\NSFCProjectSubsubsubsectionAfter}{0pt plus 0pt minus 0pt}
+
+% =========================
+% 列表、图注、浮动体
+% =========================
+
+% 参数：以下 enumerate 参数
+% 含义：控制编号列表的标签样式、缩进和上下间距。
+% 设置方法：长度类参数直接改尺寸；label 改显示内容；before-code 可放续行缩进逻辑。
+% 当前默认值：与当前面上项目模板一致。
+\newcommand{\NSFCProjectEnumerateLabel}{\templatefont \bfseries \hspace{1em} \color{MsBlue}（\arabic*）}
+\newcommand{\NSFCProjectEnumerateLeftMargin}{0em}
+\newcommand{\NSFCProjectEnumerateItemIndent}{4em}
+\newcommand{\NSFCProjectEnumerateItemSep}{0em}
+\newcommand{\NSFCProjectEnumerateLabelSep}{0.1pt}
+\newcommand{\NSFCProjectEnumerateParsep}{0em}
+\newcommand{\NSFCProjectEnumerateTopSep}{0em}
+\newcommand{\NSFCProjectEnumerateBeforeCode}{\setlength{\hangindent}{2em}\hangafter=1}
+
+% 参数：\NSFCProjectItemTitleFormat
+% 含义：列表项内部小标题 \itemtitlefont 的显示格式。
+% 设置方法：直接改粗细、颜色、包裹命令即可。
+% 当前默认值：蓝色加粗。
+\newcommand{\NSFCProjectItemTitleFormat}[1]{{\bfseries \color{MsBlue} #1}}
+
+% 参数：\NSFCProjectCaptionOptions / \NSFCProjectFigureCaptionOptions
+% 含义：caption 的键值配置；前者作用于全部 caption，后者只作用于 figure。
+% 设置方法：按 caption 宏包语法写 key=value 列表。
+% 当前默认值：与当前面上项目模板一致。
+\newcommand{\NSFCProjectCaptionOptions}{font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf,singlelinecheck=off,justification=centering}
+\newcommand{\NSFCProjectFigureCaptionOptions}{name={图},font={footnotesize,stretch=1.25},labelsep=period,labelfont=bf,singlelinecheck=off,justification=centering}
+
+% 参数：\NSFCProjectFloatTop / \NSFCProjectInTextSep
+% 含义：浮动体页顶留白、文中浮动体与正文之间的垂直距离。
+% 设置方法：直接改长度。
+% 当前默认值：0pt / 0.5cm plus 1.0pt minus 2.0pt
+\newcommand{\NSFCProjectFloatTop}{0pt}
+\newcommand{\NSFCProjectInTextSep}{0.5cm plus 1.0pt minus 2.0pt}
+
+% =========================
+% 参考文献与四级小标题
+% =========================
+
+% 参数：以下四个参考文献长度
+% 含义：
+% - TitleAboveSkip：参考文献标题与上文之间的距离
+% - TitleBelowSkip：标题与第一条条目之间的距离
+% - ItemSep：条目之间的距离
+% - TextWidth：条目有效行宽（会影响换行）
+% 设置方法：直接改长度。
+% 当前默认值：10pt / 10pt / 0pt / 397.16727pt
+\newcommand{\NSFCProjectBibTitleAboveSkip}{10pt}
+\newcommand{\NSFCProjectBibTitleBelowSkip}{10pt}
+\newcommand{\NSFCProjectBibItemSep}{0pt}
+\newcommand{\NSFCProjectBibTextWidth}{397.16727pt}
+
+% 参数：\NSFCProjectExtraSetupCode
+% 含义：高级兜底入口。若上述参数仍不够，可把额外命令放这里；它会在全部默认配置之后执行。
+% 设置方法：把需要的 LaTeX 命令直接写在命令体里；默认留空。
+% 当前默认值：空
+\newcommand{\NSFCProjectExtraSetupCode}{}
+
+% =========================
+% 前置覆盖：先改“默认变量/开关”
+% =========================
+\newcommand{\NSFCProjectConfigBeforePackage}{%
+  \renewcommand{\NSFCGeometryOptions}{\NSFCProjectGeometryOptions}%
+  \renewcommand{\NSFCCJKGlue}{\NSFCProjectCJKGlue}%
+  \renewcommand{\NSFCSectionBefore}{\NSFCProjectSectionBefore}%
+  \renewcommand{\NSFCSectionAfter}{\NSFCProjectSectionAfter}%
+  \renewcommand{\NSFCSubsectionIndent}{\NSFCProjectSubsectionIndent}%
+  \renewcommand{\NSFCSubsectionBefore}{\NSFCProjectSubsectionBefore}%
+  \renewcommand{\NSFCSubsectionAfter}{\NSFCProjectSubsectionAfter}%
+  \renewcommand{\NSFCSubsubsectionBefore}{\NSFCProjectSubsubsectionBefore}%
+  \renewcommand{\NSFCSubsubsectionAfter}{\NSFCProjectSubsubsectionAfter}%
+  \NSFCProjectApplyToggle{NSFCUseWasysym}{\NSFCProjectUseWasysym}%
+  \NSFCProjectApplyToggle{NSFCRaggedBottom}{\NSFCProjectRaggedBottom}%
+  \NSFCProjectApplyToggle{NSFCUseFrenchSpacing}{\NSFCProjectUseFrenchSpacing}%
+  \NSFCProjectApplyToggle{NSFCHFuzz}{\NSFCProjectHFuzz}%
+  \NSFCProjectApplyToggle{NSFCUseAdjustedBlankPara}{\NSFCProjectUseAdjustedBlankPara}%
+  \NSFCProjectApplyToggle{NSFCUseFigureCaptionSetup}{\NSFCProjectUseFigureCaptionSetup}%
+  \NSFCProjectApplyToggle{NSFCDisablePunctstyleInPdfstring}{\NSFCProjectDisablePunctstyleInPdfstring}%
+  \NSFCProjectApplyToggle{NSFCUseUrlStyleSame}{\NSFCProjectUseUrlStyleSame}%
+  \NSFCProjectApplyToggle{NSFCUseDingSubtitle}{\NSFCProjectUseDingSubtitle}%
+}
+
+% =========================
+% 后置重放：再把真正会落地的格式重设一遍
+% =========================
+\newcommand{\NSFCProjectConfigAfterPackage}{%
+  \definecolor{MsBlue}{RGB}{\NSFCProjectMsBlueRGB}%
+  \definecolor{headercolor}{RGB}{\NSFCProjectHeaderColorRGB}%
+  \definecolor{footercolor}{RGB}{\NSFCProjectFooterColorRGB}%
+  \NSFCProjectApplyGeometry
+  \CJKsetecglue{\NSFCCJKGlue}%
+  \ifNSFCRaggedBottom
+    \raggedbottom
+  \fi
+  \ifNSFCHFuzz
+    \hfuzz=20pt\relax
+  \else
+    \hfuzz=0pt\relax
+  \fi
+  \AtBeginDocument{\NSFCProjectAtBeginDocumentFont}%
+  \setlength{\parindent}{\NSFCProjectGlobalParIndent}%
+  \setlength{\parskip}{\NSFCProjectGlobalParSkip}%
+  \XeTeXlinebreaklocale "\NSFCProjectLinebreakLocale"%
+  \ifNSFCUseAdjustedBlankPara
+    \renewcommand{\NSFCBlankPara}{\vspace*{\dimexpr\baselineskip-\parskip\relax}}%
+  \else
+    \renewcommand{\NSFCBlankPara}{\vspace*{\baselineskip}}%
+  \fi
+  \renewcommand{\NSFCBodyText}{%
+    \setlength{\parindent}{\NSFCProjectBodyParIndent}%
+    \setlength{\parskip}{\NSFCProjectBodyParSkip}%
+  }%
+  \addto\captionsenglish{%
+    \renewcommand{\contentsname}{\NSFCProjectContentsName}%
+    \renewcommand{\listfigurename}{\NSFCProjectListFigureName}%
+    \renewcommand{\listtablename}{\NSFCProjectListTableName}%
+    \renewcommand{\refname}{\NSFCProjectReferenceHeading}%
+    \renewcommand{\abstractname}{\NSFCProjectAbstractName}%
+    \renewcommand{\indexname}{\NSFCProjectIndexName}%
+    \renewcommand{\tablename}{\NSFCProjectTableName}%
+    \renewcommand{\figurename}{\NSFCProjectFigureName}%
+  }%
+  \renewcommand{\sectionzihao}{\NSFCProjectSectionZihao}%
+  \renewcommand{\subsectionzihao}{\NSFCProjectSubsectionZihao}%
+  \renewcommand{\subsubsectionzihao}{\NSFCProjectSubsubsectionZihao}%
+  \renewcommand\thesubsubsection{\NSFCProjectSubsubsectionNumber}%
+  \renewcommand\thesubsubsubsection{\NSFCProjectSubsubsubsectionNumber}%
+  \titleformat{\section}
+    {\NSFCProjectSectionFormat}
+    {\NSFCProjectSectionLabel}
+    {\NSFCProjectSectionLabelSep}
+    {\NSFCProjectSectionBeforeCode}%
+  \titleformat{\subsection}
+    {\NSFCProjectSubsectionFormat}
+    {\NSFCProjectSubsectionLabel}
+    {\NSFCProjectSubsectionLabelSep}
+    {\NSFCProjectSubsectionBeforeCode}%
+  \titleformat{\subsubsection}
+    {\NSFCProjectSubsubsectionFormat}
+    {\NSFCProjectSubsubsectionLabel}
+    {\NSFCProjectSubsubsectionLabelSep}
+    {\NSFCProjectSubsubsectionBeforeCode}%
+  \titleformat{\subsubsubsection}
+    {\NSFCProjectSubsubsubsectionFormat}
+    {\NSFCProjectSubsubsubsectionLabel}
+    {\NSFCProjectSubsubsubsectionLabelSep}
+    {\NSFCProjectSubsubsubsectionBeforeCode}%
+  \titlespacing*{\section}
+    {0pt}
+    {\NSFCSectionBefore}
+    {\NSFCSectionAfter}%
+  \titlespacing*{\subsection}
+    {\NSFCSubsectionIndent}
+    {\NSFCSubsectionBefore}
+    {\NSFCSubsectionAfter}%
+  \titlespacing*{\subsubsection}
+    {0pt}
+    {\NSFCSubsubsectionBefore}
+    {\NSFCSubsubsectionAfter}%
+  \titlespacing*{\subsubsubsection}
+    {0pt}
+    {\NSFCProjectSubsubsubsectionBefore}
+    {\NSFCProjectSubsubsubsectionAfter}%
+  \setlist[enumerate]{%
+    label={\NSFCProjectEnumerateLabel},%
+    leftmargin=\NSFCProjectEnumerateLeftMargin,%
+    itemindent=\NSFCProjectEnumerateItemIndent,%
+    itemsep=\NSFCProjectEnumerateItemSep,%
+    labelsep=\NSFCProjectEnumerateLabelSep,%
+    parsep=\NSFCProjectEnumerateParsep,%
+    topsep=\NSFCProjectEnumerateTopSep,%
+    before={\NSFCProjectEnumerateBeforeCode}%
+  }%
+  \renewcommand{\itemtitlefont}[1]{\NSFCProjectItemTitleFormat{##1}}%
+  \ifNSFCUseFigureCaptionSetup
+    \NSFCProjectApplyFigureCaptionOptions
+  \else
+    \NSFCProjectApplyCaptionOptions
+  \fi
+  \pdfstringdefDisableCommands{%
+    \def\linebreak{}%
+    \ifNSFCDisablePunctstyleInPdfstring
+      \def\punctstyle##1{}%
+    \fi
+  }%
+  \ifNSFCUseUrlStyleSame
+    \urlstyle{same}%
+  \else
+    \renewcommand{\ttdefault}{tnr}%
+  \fi
+  \setlength{\csname @fptop\endcsname}{\NSFCProjectFloatTop}%
+  \setlength{\intextsep}{\NSFCProjectInTextSep}%
+  \setlength{\NSFCBibTitleAboveSkip}{\NSFCProjectBibTitleAboveSkip}%
+  \setlength{\NSFCBibTitleBelowSkip}{\NSFCProjectBibTitleBelowSkip}%
+  \setlength{\NSFCBibItemSep}{\NSFCProjectBibItemSep}%
+  \setlength{\NSFCBibTextWidth}{\NSFCProjectBibTextWidth}%
+  \punctstyle{\NSFCProjectPunctStyle}%
+  \ifNSFCUseDingSubtitle
+    \renewcommand{\ssssubtitle}[1]{\ding{\numexpr171+##1\relax}}%
+  \else
+    \renewcommand{\ssssubtitle}[1]{\textcircled{\raisebox{-0.8pt}{\xiaosihao ##1}}}%
+  \fi
+  \NSFCProjectExtraSetupCode
+}
+
 \usepackage[type=general]{bensz-nsfc-common}

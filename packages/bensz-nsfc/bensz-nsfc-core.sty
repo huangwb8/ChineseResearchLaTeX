@@ -12,6 +12,8 @@
 \providecommand{\NSFCBeforeFonts}{}
 \providecommand{\NSFCAfterFonts}{}
 \providecommand{\NSFCUserOverride}{}
+\providecommand{\NSFCProjectConfigBeforePackage}{}
+\providecommand{\NSFCProjectConfigAfterPackage}{}
 \providecommand{\NSFCPackageRootDir}{}
 \providecommand{\NSFCAssetsDir}{}
 \providecommand{\NSFCAssetFontsDir}{}
@@ -86,9 +88,16 @@
   }%
 }
 
+% 项目级覆盖顺序：
+% 1. profile 默认值
+% 2. 兼容旧接口的 \NSFCBeforePackages / \NSFCAfterPackages / \NSFCUserOverride
+% 3. 项目入口专用的 \NSFCProjectConfigBeforePackage / \NSFCProjectConfigAfterPackage
+% 这样 projects/NSFC_*/extraTex/@config.tex 可以稳定压过公共包默认配置。
 \NSFCBeforePackages
+\NSFCProjectConfigBeforePackage
 \InputIfFileExists{impl/bensz-nsfc-\NSFCtype.tex}{}{%
   \PackageError{bensz-nsfc-common}{Implementation file for '\NSFCtype' not found}{}%
 }
 \NSFCAfterPackages
 \NSFCUserOverride
+\NSFCProjectConfigAfterPackage
