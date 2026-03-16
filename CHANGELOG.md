@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 [projects/thesis-smu-master/template.json](projects/thesis-smu-master/template.json) 与 [projects/thesis-sysu-doctor/template.json](projects/thesis-sysu-doctor/template.json)：将毕业论文项目的 `project_name`、`school`、`degree` 下沉到项目根目录元数据文件，作为 README 模板列表等脚本识别院校信息的来源
 - 新增 [docs/bensz-fonts-support-model.md](docs/bensz-fonts-support-model.md)：系统说明 `bensz-fonts` 如何通过统一字体 API、依赖安装、`TEXINPUTS` 注入与 Overleaf/runtime 打包支撑 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv`
 - 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：在 GitHub Release 发布后自动将默认分支与最新 tag 推送到 Gitee 镜像仓库，并支持 `workflow_dispatch` 手动重试
 - 新增 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md)：整理 GitHub Release 后自动同步到 Gitee 的一次性配置、首次验证、日常使用与常见故障排查步骤
@@ -27,6 +28,10 @@
 
 ### Changed（变更）
 
+- 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：毕业论文元数据中的 `degree` 现显式预留 `bachelor`，README 模板列表会自动渲染为“学士”；项目规则也同步明确 thesis 元数据统一使用 `bachelor` / `master` / `doctor` 枚举
+- 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与根级 `README.md`：README 模板列表中的毕业论文下载表在“院校”后新增“学位”列，并将 `projects/thesis-*/template.json` 中的 `master` / `doctor` 自动展示为“硕士” / “博士”，使模板差异更直观
+- 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：README 模板列表中的毕业论文院校信息不再由脚本硬编码维护，改为强制读取各 `projects/thesis-*/template.json`；新增 thesis 项目时若缺少元数据文件或必填字段，脚本会直接报错，避免错误识别院校
+- 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与根级 `README.md`：README 自动生成的毕业论文模板下载表不再显示“状态”列，改为展示“院校”列；当前已为 `thesis-smu-master` / `thesis-sysu-doctor` 分别映射“南方医科大学”与“中山大学”，使 Release zip 列表对用户更直观
 - 更新 `packages/bensz-nsfc/scripts/nsfc_project_tool.py`、`packages/bensz-paper/scripts/manuscript_tool.py`、`packages/bensz-paper/scripts/fix_docx_spacing.py`、`packages/bensz-paper/scripts/package/install.py`、`packages/bensz-paper/scripts/package/build_tds_zip.py`、`packages/bensz-thesis/scripts/thesis_project_tool.py`、`packages/bensz-cv/scripts/cv_project_tool.py`、`scripts/install.py` 与 `scripts/pack_release.py`：在 Windows CLI 入口启动时主动将 `stdout/stderr` 切换为 UTF-8，避免默认 GBK 控制台在输出 `✓ / ✗ / ⚠️ / ❌` 等 Unicode 状态符号时触发 `UnicodeEncodeError`
 - 更新 `scripts/vscode/` 模板、`scripts/sync_vscode_configs.py`、根级 `README.md`、`projects/README.md` 与 `AGENTS.md`：VS Code / LaTeX Workshop 固定配置不再依赖 `bash -lc "python3 ..."`，改为通过 `texlua` 调用项目级 `scripts/latex_workshop_build.lua` 自动寻找可用 Python 解释器并转调 `scripts/*_build.py`；同步后的 `projects/*/.vscode/settings.json` 现默认兼容 macOS / Linux / Windows 三平台
 - 更新根级 `README.md` 与 `AGENTS.md`：将 Windows PowerShell 远程安装示例从固定 `py -3` 调整为更稳妥的 `python -`，并补充“`No installed python found!` 多为 Python Launcher 缺失或 Python 未正确安装”的排障说明

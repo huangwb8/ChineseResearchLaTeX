@@ -30,8 +30,8 @@ class TemplateSpec:
     display_name: str
     local_path: str
     asset_prefix: str | None
-    release_note: str
-    pending_note: str
+    school: str | None = None
+    degree: str | None = None
 
 
 CATEGORY_TITLES = {
@@ -48,6 +48,13 @@ CATEGORY_DESCRIPTIONS = {
     "cv": "公共包 + 示例项目已落地，支持中英文 PDF 输出与像素级验收。",
     "thesis-placeholder": "当前仅保留包级扩展位点；当仓库接入公开 thesis 示例项目后，这里会自动展示对应 Release 资产。",
 }
+THESIS_TEMPLATE_METADATA_NAME = "template.json"
+THESIS_TEMPLATE_REQUIRED_FIELDS = ("project_name", "school", "degree")
+THESIS_DEGREE_LABELS = {
+    "bachelor": "学士",
+    "master": "硕士",
+    "doctor": "博士",
+}
 
 BASE_TEMPLATE_SPECS = (
     TemplateSpec(
@@ -55,32 +62,24 @@ BASE_TEMPLATE_SPECS = (
         display_name="青年 C",
         local_path="projects/NSFC_Young/",
         asset_prefix="NSFC_Young",
-        release_note="2026 青年科学基金项目正文模板",
-        pending_note="本地示例已存在，等待最新 Release 资产。",
     ),
     TemplateSpec(
         category="nsfc",
         display_name="面上",
         local_path="projects/NSFC_General/",
         asset_prefix="NSFC_General",
-        release_note="2026 面上项目正文模板",
-        pending_note="本地示例已存在，等待最新 Release 资产。",
     ),
     TemplateSpec(
         category="nsfc",
         display_name="地区",
         local_path="projects/NSFC_Local/",
         asset_prefix="NSFC_Local",
-        release_note="2026 地区科学基金项目正文模板",
-        pending_note="本地示例已存在，等待最新 Release 资产。",
     ),
     TemplateSpec(
         category="paper",
         display_name="paper-sci-01",
         local_path="projects/paper-sci-01/",
         asset_prefix="paper-sci-01",
-        release_note="首个公开 SCI 示例项目",
-        pending_note="示例项目已存在，等待最新 Release 资产。",
     ),
 )
 
@@ -100,11 +99,38 @@ def discover_cv_template_specs() -> tuple[TemplateSpec, ...]:
             display_name=project_name,
             local_path=f"projects/{project_name}/",
             asset_prefix=project_name,
-            release_note=f"{project_name} 中英文简历示例项目",
-            pending_note="示例项目已存在，等待最新 Release 资产。",
         )
         for project_name in cv_projects
     )
+
+
+def load_thesis_template_metadata(project_dir: Path) -> dict[str, str]:
+    metadata_path = project_dir / THESIS_TEMPLATE_METADATA_NAME
+    if not metadata_path.exists():
+        raise RuntimeError(f"毕业论文项目缺少元数据文件：{metadata_path}")
+
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"毕业论文项目元数据不是合法 JSON：{metadata_path}") from exc
+
+    if not isinstance(data, dict):
+        raise RuntimeError(f"毕业论文项目元数据必须是 JSON 对象：{metadata_path}")
+
+    normalized: dict[str, str] = {}
+    for field_name in THESIS_TEMPLATE_REQUIRED_FIELDS:
+        value = data.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            raise RuntimeError(f"毕业论文项目元数据缺少必填字段 `{field_name}`：{metadata_path}")
+        normalized[field_name] = value.strip()
+
+    if normalized["project_name"] != project_dir.name:
+        raise RuntimeError(
+            "毕业论文项目元数据中的 `project_name` 与目录名不一致："
+            f"{metadata_path} -> {normalized['project_name']} != {project_dir.name}"
+        )
+
+    return normalized
 
 
 def discover_thesis_template_specs() -> tuple[TemplateSpec, ...]:
@@ -123,22 +149,23 @@ def discover_thesis_template_specs() -> tuple[TemplateSpec, ...]:
                 display_name="bensz-thesis",
                 local_path="packages/bensz-thesis/",
                 asset_prefix=None,
-                release_note="毕业论文公共包位点",
-                pending_note="当前仅保留包级扩展位点，尚无公开示例与 Release 资产。",
             ),
         )
 
-    return tuple(
-        TemplateSpec(
-            category="thesis",
-            display_name=project_name,
-            local_path=f"projects/{project_name}/",
-            asset_prefix=project_name,
-            release_note=f"{project_name} 毕业论文示例项目",
-            pending_note="示例项目已存在，等待最新 Release 资产。",
+    specs = []
+    for project_name in thesis_projects:
+        metadata = load_thesis_template_metadata(PROJECTS_DIR / project_name)
+        specs.append(
+            TemplateSpec(
+                category="thesis",
+                display_name=project_name,
+                local_path=f"projects/{project_name}/",
+                asset_prefix=project_name,
+                school=metadata["school"],
+                degree=metadata["degree"],
+            )
         )
-        for project_name in thesis_projects
-    )
+    return tuple(specs)
 
 
 def get_template_specs() -> tuple[TemplateSpec, ...]:
@@ -235,33 +262,72 @@ def build_status(
     return "🛠️ 等待发布"
 
 
+def format_thesis_degree(degree: str) -> str:
+    return THESIS_DEGREE_LABELS.get(degree.strip().lower(), degree.strip())
+
+
+def build_detail_value(
+    spec: TemplateSpec,
+    standard_asset: dict[str, Any] | None,
+    overleaf_asset: dict[str, Any] | None,
+) -> str:
+    return build_status(spec, standard_asset, overleaf_asset)
+
+
+def build_row_values(
+    category: str,
+    spec: TemplateSpec,
+    standard_asset: dict[str, Any] | None,
+    overleaf_asset: dict[str, Any] | None,
+) -> list[str]:
+    template_link = f"[{spec.display_name}]({spec.local_path})"
+    if category == "thesis" and spec.asset_prefix:
+        if not spec.school:
+            raise RuntimeError(f"毕业论文模板缺少院校元数据：{spec.local_path}")
+        if not spec.degree:
+            raise RuntimeError(f"毕业论文模板缺少学位元数据：{spec.local_path}")
+        return [
+            template_link,
+            spec.school,
+            format_thesis_degree(spec.degree),
+            render_asset_link(standard_asset),
+            render_asset_link(overleaf_asset),
+        ]
+    return [
+        template_link,
+        build_detail_value(spec, standard_asset, overleaf_asset),
+        render_asset_link(standard_asset),
+        render_asset_link(overleaf_asset),
+    ]
+
+
 def render_category_table(
     category: str,
     specs: tuple[TemplateSpec, ...],
     tag_name: str,
     assets_by_name: dict[str, dict[str, Any]],
 ) -> str:
+    if category == "thesis" and any(spec.asset_prefix for spec in specs):
+        header = "| 模板 | 院校 | 学位 | 标准包 | Overleaf 包 |"
+        separator = "|------|------|------|--------|-------------|"
+    else:
+        header = "| 模板 | 状态 | 标准包 | Overleaf 包 |"
+        separator = "|------|------|--------|-------------|"
     lines = [
         f"### {CATEGORY_TITLES[category]}",
         "",
         f"> {get_category_description(category, specs)}",
         "",
-        "| 模板 | 状态 | 标准包 | Overleaf 包 |",
-        "|------|------|--------|-------------|",
+        header,
+        separator,
     ]
 
     for spec in specs:
         standard_asset, overleaf_asset = resolve_assets(spec, tag_name, assets_by_name)
-        template_link = f"[{spec.display_name}]({spec.local_path})"
         lines.append(
             "| "
             + " | ".join(
-                [
-                    template_link,
-                    build_status(spec, standard_asset, overleaf_asset),
-                    render_asset_link(standard_asset),
-                    render_asset_link(overleaf_asset),
-                ]
+                build_row_values(category, spec, standard_asset, overleaf_asset)
             )
             + " |"
         )
