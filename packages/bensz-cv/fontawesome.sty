@@ -40,13 +40,11 @@
 %-------------------------------------------------------------------------------
 \iffontawesome@otf
 \usepackage{fontspec}
-\RequirePackage[abspath]{currfile}
-\getabspath{fontawesome.sty}
-\edef\FontAwesomePackageDir{\theabsdir}
+\RequirePackage{bensz-fonts}
 
 % definition of \FA as a shortcut to load the Font Awesome font
 \newfontfamily{\FA}[
-Path = \FontAwesomePackageDir fonts/fontawesome/opentype/ ,
+Path = \BenszFontsDir ,
 Scale = 0.85 ,
 SmallCapsFont = *
 ]{FontAwesome}

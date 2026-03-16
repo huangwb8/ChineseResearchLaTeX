@@ -27,25 +27,33 @@
 }
 
 \newcommand{\NSFCSetupBundledFonts}{%
-  \setCJKfamilyfont{sectionzhfont}[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
-  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}%
-  \newfontfamily\sectionenfont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
-  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}%
-  \setCJKmainfont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
-  \setCJKmonofont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
-  \setmainfont[BoldFont=Times New Roman,AutoFakeBold=5]{Times New Roman}%
-  \xeCJKsetup{PunctStyle=quanjiao}%
+  \IfFileExists{bensz-fonts.sty}{%
+    \BenszFontsSetupNSFCBundled
+  }{%
+    \setCJKfamilyfont{sectionzhfont}[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+    \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}%
+    \newfontfamily\sectionenfont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+    \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}%
+    \setCJKmainfont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+    \setCJKmonofont[Path={\NSFCResolvedFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+    \setmainfont[BoldFont=Times New Roman,AutoFakeBold=5]{Times New Roman}%
+    \xeCJKsetup{PunctStyle=quanjiao}%
+  }%
 }
 
 \NSFCBeforeFonts
 \ifwindows
   \NSFCSetupSystemFonts
 \else
-  \ifNSFCHasBundledFonts
+  \IfFileExists{bensz-fonts.sty}{%
     \NSFCSetupBundledFonts
-  \else
-    \NSFCSetupSystemFonts
-  \fi
+  }{%
+    \ifNSFCHasBundledFonts
+      \NSFCSetupBundledFonts
+    \else
+      \NSFCSetupSystemFonts
+    \fi
+  }%
 \fi
 \NSFCAfterFonts
 

@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 
 
 def parse_provides_package(style_file: Path) -> tuple[str, str]:
@@ -34,9 +35,6 @@ def validate_required_files() -> list[str]:
         "bensz-nsfc-typography.sty",
         "bensz-nsfc-headings.sty",
         "bensz-nsfc-bibliography.sty",
-        "assets/fonts/Kaiti.ttf",
-        "assets/fonts/SimSun.ttf",
-        "assets/fonts/TimesNewRoman.ttf",
         "assets/bibtex-style/gbt7714-nsfc.bst",
         "profiles/bensz-nsfc-profile-general.def",
         "profiles/bensz-nsfc-profile-local.def",
@@ -48,6 +46,13 @@ def validate_required_files() -> list[str]:
         "examples/example.bib",
     ]
     missing = [entry for entry in required if not (PACKAGE_DIR / entry).exists()]
+    font_required = [
+        "bensz-fonts.sty",
+        "fonts/Kaiti.ttf",
+        "fonts/SimSun.ttf",
+        "fonts/TimesNewRoman.ttf",
+    ]
+    missing.extend(f"../bensz-fonts/{entry}" for entry in font_required if not (FONTS_PACKAGE_DIR / entry).exists())
     return missing
 
 
@@ -67,7 +72,11 @@ def _compile_command(command: list[str], cwd: Path, env: dict[str, str]) -> tupl
 def _write_runtime_file(package_dir: Path) -> None:
     package_root = package_dir.resolve().as_posix() + "/"
     assets_dir = package_root + "assets/"
-    assets_fonts_dir = assets_dir + "fonts/"
+    fonts_package_dir = package_dir.parent / "bensz-fonts"
+    if (fonts_package_dir / "bensz-fonts.sty").exists():
+        assets_fonts_dir = fonts_package_dir.resolve().as_posix() + "/fonts/"
+    else:
+        assets_fonts_dir = assets_dir + "fonts/"
     asset_bib_style_base = assets_dir + "bibtex-style/gbt7714-nsfc"
     (package_dir / "bensz-nsfc-runtime.def").write_text(
         "\n".join(
@@ -87,15 +96,18 @@ def _write_runtime_file(package_dir: Path) -> None:
 @contextmanager
 def _package_copy() -> Path:
     with tempfile.TemporaryDirectory(prefix="bensz-nsfc-validate-") as temp_dir:
-        temp_package_dir = Path(temp_dir) / "bensz-nsfc"
+        temp_root = Path(temp_dir)
+        temp_package_dir = temp_root / "bensz-nsfc"
         shutil.copytree(PACKAGE_DIR, temp_package_dir)
+        if FONTS_PACKAGE_DIR.exists():
+            shutil.copytree(FONTS_PACKAGE_DIR, temp_root / "bensz-fonts")
         _write_runtime_file(temp_package_dir)
-        yield temp_package_dir
+        yield temp_root
 
 
-def _example_env(package_dir: Path) -> dict[str, str]:
+def _example_env(temp_root: Path) -> dict[str, str]:
     env = dict(**os.environ)
-    texinputs = str(package_dir) + "//" + os.pathsep
+    texinputs = str(temp_root / "bensz-nsfc") + "//" + os.pathsep + str(temp_root / "bensz-fonts") + "//" + os.pathsep
     if env.get("TEXINPUTS"):
         texinputs = texinputs + env["TEXINPUTS"]
     env["TEXINPUTS"] = texinputs
@@ -103,9 +115,9 @@ def _example_env(package_dir: Path) -> dict[str, str]:
 
 
 def compile_example() -> dict[str, str | int]:
-    with _package_copy() as package_dir:
-        example_dir = package_dir / "examples"
-        env = _example_env(package_dir)
+    with _package_copy() as temp_root:
+        example_dir = temp_root / "bensz-nsfc" / "examples"
+        env = _example_env(temp_root)
         returncode, stdout = _compile_command(
             ["xelatex", "-interaction=nonstopmode", "-halt-on-error", "basic-usage.tex"],
             cwd=example_dir,
@@ -115,9 +127,9 @@ def compile_example() -> dict[str, str | int]:
 
 
 def compile_bibliography_example() -> dict[str, str | int]:
-    with _package_copy() as package_dir:
-        example_dir = package_dir / "examples"
-        env = _example_env(package_dir)
+    with _package_copy() as temp_root:
+        example_dir = temp_root / "bensz-nsfc" / "examples"
+        env = _example_env(temp_root)
         steps = [
             ["xelatex", "-interaction=nonstopmode", "-halt-on-error", "basic-bibliography.tex"],
             ["bibtex", "basic-bibliography"],

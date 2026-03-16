@@ -148,17 +148,17 @@ main.tex
 - 老项目尽量不断
 - 新项目有明确、可预期的覆盖行为
 
-## 资源为什么集中到 `assets/`
+## 资源为什么拆成“字体基础包 + NSFC 资产目录”
 
-[`packages/bensz-nsfc/assets/fonts/`](../packages/bensz-nsfc/assets/fonts/) 和 [`packages/bensz-nsfc/assets/bibtex-style/`](../packages/bensz-nsfc/assets/bibtex-style/) 集中维护共享资源，原因很直接：
+[`packages/bensz-fonts/`](../packages/bensz-fonts/) 和 [`packages/bensz-nsfc/assets/bibtex-style/`](../packages/bensz-nsfc/assets/bibtex-style/) 分别维护字体与 `bst` 资源，原因很直接：
 
-- 三套模板本来就在复用同一批字体和 `bst`
-- 资源放在项目里会导致重复分发
-- 资源更新时容易漏改
+- 字体并不天然属于 NSFC，一套字体完全可能被 CV、thesis、paper 等多条产品线复用
+- 继续把字体塞在 `bensz-nsfc/assets/` 里，会让其它包要么重复拷贝，要么产生错误的归属关系
+- 把字体独立成 `bensz-fonts` 后，安装器、Overleaf runtime 和 TDS 打包都只需要围绕一个基础包处理
 
 同时，core 仍保留了项目级兼容兜底：
 
-- 如果公共包内有字体和 `bst`，优先走公共包
+- 如果 `bensz-fonts` 与公共包内 `bst` 可用，优先走共享基础资源
 - 如果用户历史项目里仍保留 `./fonts/` 或 `bibtex-style/`，可以临时兜底
 
 这不是鼓励继续分散资源，而是为了平滑迁移旧项目。

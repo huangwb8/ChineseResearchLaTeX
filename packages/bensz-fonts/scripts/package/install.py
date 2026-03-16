@@ -8,9 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-PACKAGE_NAME = "bensz-thesis"
+PACKAGE_NAME = "bensz-fonts"
 PACKAGE_SUBPATH = Path("tex") / "latex" / PACKAGE_NAME
-DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 
 
@@ -52,34 +51,23 @@ def run_mktexlsr(texmfhome: Path, dry_run: bool) -> None:
 
 def install_tree(src: Path, dest: Path, dry_run: bool) -> None:
     if dry_run:
-        for f in sorted(src.rglob("*")):
-            if not f.is_file():
+        for file_path in sorted(src.rglob("*")):
+            if not file_path.is_file():
                 continue
-            if any(p in EXCLUDE_NAMES for p in f.parts) or f.suffix == ".pyc":
+            if any(part in EXCLUDE_NAMES for part in file_path.parts) or file_path.suffix == ".pyc":
                 continue
-            print(f"  {f.relative_to(src)}")
+            print(f"  {file_path.relative_to(src)}")
         return
 
     dest.mkdir(parents=True, exist_ok=True)
-    for f in src.rglob("*"):
-        if not f.is_file():
+    for file_path in src.rglob("*"):
+        if not file_path.is_file():
             continue
-        if any(p in EXCLUDE_NAMES for p in f.parts) or f.suffix == ".pyc":
+        if any(part in EXCLUDE_NAMES for part in file_path.parts) or file_path.suffix == ".pyc":
             continue
-        target = dest / f.relative_to(src)
+        target = dest / file_path.relative_to(src)
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(f, target)
-
-
-def install_dependencies(src: Path, texmfhome: Path, dry_run: bool) -> None:
-    packages_root = src.parent
-    for dependency in DEPENDENCY_PACKAGE_NAMES:
-        dependency_src = packages_root / dependency
-        if not dependency_src.exists():
-            continue
-        dependency_dest = texmfhome / "tex" / "latex" / dependency
-        print(f"  Dependency: {dependency_src} -> {dependency_dest}")
-        install_tree(dependency_src, dependency_dest, dry_run)
+        shutil.copy2(file_path, target)
 
 
 def do_install(args: argparse.Namespace) -> int:
@@ -87,14 +75,13 @@ def do_install(args: argparse.Namespace) -> int:
     texmfhome = get_texmfhome(args.texmfhome)
     dest = texmfhome / PACKAGE_SUBPATH
 
-    print("bensz-thesis — install")
+    print("bensz-fonts — install")
     print(f"  Source : {src}")
     print(f"  Dest   : {dest}")
     if args.dry_run:
         print("  Mode   : dry-run")
     print()
 
-    install_dependencies(src, texmfhome, args.dry_run)
     install_tree(src, dest, args.dry_run)
     run_mktexlsr(texmfhome, args.dry_run)
     return 0
@@ -103,7 +90,7 @@ def do_install(args: argparse.Namespace) -> int:
 def do_status(args: argparse.Namespace) -> int:
     texmfhome = get_texmfhome(args.texmfhome)
     dest = texmfhome / PACKAGE_SUBPATH
-    print("bensz-thesis — status")
+    print("bensz-fonts — status")
     print()
     print(f"Package dir: {dest}")
     print(f"Exists     : {'yes' if dest.exists() else 'no'}")
@@ -121,7 +108,7 @@ def do_status(args: argparse.Namespace) -> int:
 def do_uninstall(args: argparse.Namespace) -> int:
     texmfhome = get_texmfhome(args.texmfhome)
     dest = texmfhome / PACKAGE_SUBPATH
-    print("bensz-thesis — uninstall")
+    print("bensz-fonts — uninstall")
     print(f"  Target : {dest}")
     if args.dry_run:
         print("  Mode   : dry-run")
@@ -136,7 +123,7 @@ def do_uninstall(args: argparse.Namespace) -> int:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="bensz-thesis 本地安装工具")
+    parser = argparse.ArgumentParser(description="bensz-fonts 本地安装工具")
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--status", action="store_true", help="检查安装状态")
     action.add_argument("--uninstall", action="store_true", help="卸载")

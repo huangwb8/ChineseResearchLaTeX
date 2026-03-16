@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 PROJECT_ROOT_MARKERS = ("main.tex", "extraTex/@config.tex")
 CACHE_DIRNAME = ".latex-cache"
 ROOT_ARTIFACT_PATTERNS = (
@@ -108,7 +109,10 @@ def write_runtime_file(cache_dir: Path) -> Path:
     runtime_path = cache_dir / "bensz-nsfc-runtime.def"
     package_root = PACKAGE_DIR.resolve().as_posix() + "/"
     assets_dir = package_root + "assets/"
-    assets_fonts_dir = assets_dir + "fonts/"
+    if FONTS_PACKAGE_DIR.exists():
+        assets_fonts_dir = FONTS_PACKAGE_DIR.resolve().as_posix() + "/fonts/"
+    else:
+        assets_fonts_dir = assets_dir + "fonts/"
     asset_bib_style_base = assets_dir + "bibtex-style/gbt7714-nsfc"
     runtime_path.write_text(
         "\n".join(
@@ -183,7 +187,10 @@ def build_project(project_dir: Path, tex_file: str) -> None:
     clean_root_artifacts(project_dir, tex_stem)
 
     tex_env = os.environ.copy()
-    tex_env["TEXINPUTS"] = build_texinputs([cache_dir, PACKAGE_DIR], tex_env.get("TEXINPUTS", ""))
+    tex_roots = [cache_dir, PACKAGE_DIR]
+    if FONTS_PACKAGE_DIR.exists():
+        tex_roots.append(FONTS_PACKAGE_DIR)
+    tex_env["TEXINPUTS"] = build_texinputs(tex_roots, tex_env.get("TEXINPUTS", ""))
 
     xelatex_bin = resolve_executable("xelatex")
     bibtex_bin = resolve_executable("bibtex")

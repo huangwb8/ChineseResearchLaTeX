@@ -9,10 +9,11 @@
 
 \RequirePackage{xeCJK}
 \RequirePackage{fontspec}%字体的包
-\newcommand{\tnewroman}{\fontspec{Times New Roman}}
+\RequirePackage{bensz-fonts}
+\newcommand{\tnewroman}{\BenszFontsUseTimesFallback}
 \newcommand{\adobegothicstdb}{\fontspec{Adobe Gothic Std B}}
 \newcommand{\Centaur}{\fontspec{Centaur}}
-\setmainfont{Times New Roman} %fontspec下这个命令设置全局默认字体
+\BenszFontsSetMainTimesFallback %fontspec下这个命令设置全局默认字体
 % \setmainfont{\songti\zihao{-4}} %fontspec下这个命令设置全局默认字体
 
 %%%————————————————————————————————目录设置

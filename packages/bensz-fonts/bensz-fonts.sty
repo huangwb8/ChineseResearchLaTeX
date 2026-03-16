@@ -1,0 +1,123 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bensz-fonts}[2026/03/16 f_v20260316 ChineseResearchLaTeX Shared Fonts]
+
+\RequirePackage[abspath]{currfile}
+
+\getabspath{bensz-fonts.sty}
+\edef\BenszFontsPackageDir{\theabsdir}
+
+\newcommand{\BenszFontsDir}{\BenszFontsPackageDir fonts/}
+\newcommand{\BenszFontsFile}[1]{\BenszFontsPackageDir fonts/#1}
+
+\newcommand{\BenszFontsDefineCVAliases}{%
+  \providecommand*{\songti}{}%
+  \providecommand*{\heiti}{}%
+  \providecommand*{\kaishu}{}%
+  \providecommand*{\fangsong}{}%
+  \renewcommand*{\songti}{\CJKfamily{zhsong}}%
+  \renewcommand*{\heiti}{\CJKfamily{zhhei}}%
+  \renewcommand*{\kaishu}{\CJKfamily{zhkai}}%
+  \renewcommand*{\fangsong}{\CJKfamily{zhfs}}%
+}
+
+\newcommand{\BenszFontsSetupNSFCBundled}{%
+  \setCJKfamilyfont{sectionzhfont}[Path={\BenszFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+  \newcommand{\sectionzhfont}{\CJKfamily{sectionzhfont}}%
+  \newfontfamily\sectionenfont[Path={\BenszFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+  \NewDocumentCommand \templatefont {} {\sectionzhfont \sectionenfont}%
+  \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+  \setCJKmonofont[Path={\BenszFontsDir},AutoFakeBold=5]{Kaiti.ttf}%
+  \IfFontExistsTF{Times New Roman}{%
+    \setmainfont[BoldFont=Times New Roman,AutoFakeBold=5]{Times New Roman}%
+  }{%
+    \setmainfont[Path={\BenszFontsDir},Extension=.ttf,AutoFakeBold=5,AutoFakeSlant=0.2]{TimesNewRoman}%
+  }%
+  \xeCJKsetup{PunctStyle=quanjiao}%
+}
+
+\newcommand{\BenszFontsSetupCVResumeMain}{%
+  \setmainfont[
+    Path=\BenszFontsDir,
+    Extension=.otf,
+    UprightFont=*-regular,
+    BoldFont=*-bold,
+    ItalicFont=*-italic,
+    BoldItalicFont=*-bolditalic,
+    SmallCapsFont=Fontin-SmallCaps
+  ]{texgyretermes}%
+}
+
+\newcommand{\BenszFontsSetupCVNotoSansSC}{%
+  \defaultfontfeatures{Mapping=tex-text}%
+  \setCJKmainfont[
+    Path={\BenszFontsDir},
+    BoldFont=NotoSansSC-Bold.otf,
+    ItalicFont=NotoSansSC-Regular.otf,
+    SmallCapsFont=NotoSansSC-Bold.otf
+  ]{NotoSansSC-Regular.otf}%
+  \setCJKsansfont[Path={\BenszFontsDir}]{NotoSansSC-Bold.otf}%
+  \setCJKmonofont[Path={\BenszFontsDir}]{NotoSansSC-Regular.otf}%
+  \setCJKfamilyfont{zhsong}[Path={\BenszFontsDir}]{NotoSansSC-Regular.otf}%
+  \setCJKfamilyfont{zhhei}[Path={\BenszFontsDir}]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhfs}[Path={\BenszFontsDir}]{NotoSansSC-Regular.otf}%
+  \setCJKfamilyfont{zhkai}[Path={\BenszFontsDir}]{NotoSansSC-Regular.otf}%
+  \BenszFontsDefineCVAliases%
+}
+
+\newcommand{\BenszFontsSetupCVNotoSerifCJKsc}{%
+  \defaultfontfeatures{Mapping=tex-text}%
+  \setCJKmainfont[
+    Path={\BenszFontsDir},
+    BoldFont=NotoSerifCJKsc-Bold.otf,
+    ItalicFont=NotoSerifCJKsc-Regular.otf,
+    SmallCapsFont=NotoSerifCJKsc-Bold.otf
+  ]{NotoSerifCJKsc-Regular.otf}%
+  \setCJKsansfont[Path={\BenszFontsDir}]{NotoSerifCJKsc-Bold.otf}%
+  \setCJKmonofont[Path={\BenszFontsDir}]{NotoSerifCJKsc-Regular.otf}%
+  \setCJKfamilyfont{zhsong}[Path={\BenszFontsDir}]{NotoSerifCJKsc-Regular.otf}%
+  \setCJKfamilyfont{zhhei}[Path={\BenszFontsDir}]{NotoSerifCJKsc-Bold.otf}%
+  \setCJKfamilyfont{zhfs}[Path={\BenszFontsDir}]{NotoSerifCJKsc-Regular.otf}%
+  \setCJKfamilyfont{zhkai}[Path={\BenszFontsDir}]{NotoSerifCJKsc-Regular.otf}%
+  \BenszFontsDefineCVAliases%
+}
+
+\newcommand{\BenszFontsSetupCVAdobeExternal}{%
+  \defaultfontfeatures{Mapping=tex-text}%
+  \setCJKmainfont[
+    Path={\BenszFontsDir},
+    BoldFont=AdobeHeitiStd-Regular.otf,
+    ItalicFont=AdobeKaitiStd-Regular.otf,
+    SmallCapsFont=AdobeHeitiStd-Regular.otf
+  ]{AdobeSongStd-Light.otf}%
+  \setCJKsansfont[Path={\BenszFontsDir}]{AdobeHeitiStd-Regular.otf}%
+  \setCJKmonofont[Path={\BenszFontsDir}]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{zhsong}[Path={\BenszFontsDir}]{AdobeSongStd-Light.otf}%
+  \setCJKfamilyfont{zhhei}[Path={\BenszFontsDir}]{AdobeHeitiStd-Regular.otf}%
+  \setCJKfamilyfont{zhfs}[Path={\BenszFontsDir}]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{zhkai}[Path={\BenszFontsDir}]{AdobeKaitiStd-Regular.otf}%
+  \BenszFontsDefineCVAliases%
+}
+
+\newcommand{\BenszFontsSetMainTimesFallback}{%
+  \IfFontExistsTF{Times New Roman}{%
+    \setmainfont{Times New Roman}%
+  }{%
+    \IfFileExists{\BenszFontsFile{TimesNewRoman.ttf}}{%
+      \setmainfont[Path={\BenszFontsDir},Extension=.ttf,AutoFakeBold=5,AutoFakeSlant=0.2]{TimesNewRoman}%
+    }{%
+      \setmainfont{TeX Gyre Termes}%
+    }%
+  }%
+}
+
+\newcommand{\BenszFontsUseTimesFallback}{%
+  \IfFontExistsTF{Times New Roman}{%
+    \fontspec{Times New Roman}%
+  }{%
+    \IfFileExists{\BenszFontsFile{TimesNewRoman.ttf}}{%
+      \fontspec[Path={\BenszFontsDir},Extension=.ttf,AutoFakeBold=5,AutoFakeSlant=0.2]{TimesNewRoman}%
+    }{%
+      \fontspec{TeX Gyre Termes}%
+    }%
+  }%
+}

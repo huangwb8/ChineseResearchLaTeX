@@ -22,6 +22,7 @@ REPO_OWNER = "huangwb8"
 REPO_NAME = "ChineseResearchLaTeX"
 PACKAGE_SLUG = "bensz-nsfc"
 PACKAGE_NAME = "bensz-nsfc-common"
+DEPENDENCY_PACKAGE_SLUGS = ("bensz-fonts",)
 PACKAGE_SOURCE_RELATIVE = Path("packages") / PACKAGE_SLUG
 LOCKFILE_NAME = ".nsfc-version"
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
@@ -36,6 +37,23 @@ def discover_repo_root() -> Path:
 
 class InstallError(RuntimeError):
     pass
+
+
+def mirror_archive_url(mirror: str, ref: str) -> str:
+    quoted_ref = urllib.parse.quote(ref, safe="")
+    if mirror == "github":
+        return f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/zipball/{quoted_ref}"
+    if mirror == "gitee":
+        return f"https://gitee.com/{REPO_OWNER}/{REPO_NAME}/repository/archive/{quoted_ref}.zip"
+    raise InstallError(f"不支持的镜像：{mirror}")
+
+
+def iter_mirrors(mirror: str) -> tuple[str, ...]:
+    if mirror in {"github", "gitee"}:
+        return (mirror,)
+    if mirror == "auto":
+        return ("gitee", "github")
+    raise InstallError(f"不支持的镜像：{mirror}")
 
 
 class NSFCPackageManager:
@@ -103,6 +121,15 @@ class NSFCPackageManager:
             raise InstallError(f"未找到包元数据：{package_json}")
         return json.loads(package_json.read_text(encoding="utf-8"))
 
+    def _find_dependency_dirs(self, package_dir: Path) -> dict[str, Path]:
+        found: dict[str, Path] = {}
+        packages_root = package_dir.parent
+        for slug in DEPENDENCY_PACKAGE_SLUGS:
+            candidate = packages_root / slug
+            if candidate.exists():
+                found[slug] = candidate
+        return found
+
     def _hash_directory(self, directory: Path) -> str:
         digest = hashlib.sha256()
         for file_path in sorted(p for p in directory.rglob("*") if p.is_file()):
@@ -166,6 +193,31 @@ class NSFCPackageManager:
             raise InstallError(f"快照中缺少包目录：{PACKAGE_SOURCE_RELATIVE}")
         return temp_dir, package_dir
 
+    def _download_mirrored_snapshot(self, ref: str, mirror: str) -> tuple[Path, Path, str]:
+        last_error = None
+        for current_mirror in iter_mirrors(mirror):
+            temp_dir = Path(tempfile.mkdtemp(prefix=f"{PACKAGE_SLUG}-{current_mirror}-"))
+            archive_path = temp_dir / "snapshot.zip"
+            extract_dir = temp_dir / "extract"
+            try:
+                self._download_file(mirror_archive_url(current_mirror, ref), archive_path)
+                with zipfile.ZipFile(archive_path) as bundle:
+                    bundle.extractall(extract_dir)
+                extracted_roots = [extract_dir, *[path for path in extract_dir.iterdir() if path.is_dir()]]
+                package_dir = None
+                for root in extracted_roots:
+                    candidate = root / PACKAGE_SOURCE_RELATIVE
+                    if candidate.exists():
+                        package_dir = candidate
+                        break
+                if package_dir is None:
+                    raise InstallError(f"快照中缺少包目录：{PACKAGE_SOURCE_RELATIVE}")
+                return temp_dir, package_dir, current_mirror
+            except Exception as exc:  # noqa: BLE001
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                last_error = exc
+        raise InstallError(f"无法通过镜像下载 {ref}：{last_error}") from last_error
+
     def _download_release_snapshot(self, ref: str, commit: str) -> tuple[Path, Path]:
         releases = self._fetch_json(f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases")
         release = next((item for item in releases if item.get("tag_name") == ref), None)
@@ -190,13 +242,25 @@ class NSFCPackageManager:
                     return temp_dir, package_dir
         return self._download_github_snapshot(commit)
 
-    def _cache_package(self, package_dir: Path, requested_ref: str, resolved_commit: str, source: str) -> dict[str, Any]:
+    def _cache_package(
+        self,
+        package_dir: Path,
+        requested_ref: str,
+        resolved_commit: str,
+        source: str,
+        dependency_dirs: dict[str, Path] | None = None,
+    ) -> dict[str, Any]:
         commit_root = self.cache_root / resolved_commit
         package_target = commit_root / "package"
         if package_target.exists():
             shutil.rmtree(package_target)
         package_target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(package_dir, package_target)
+        dependencies_root = commit_root / "dependencies"
+        if dependencies_root.exists():
+            shutil.rmtree(dependencies_root)
+        for slug, dependency_dir in (dependency_dirs or {}).items():
+            shutil.copytree(dependency_dir, dependencies_root / slug)
         package_metadata = self._load_package_metadata(package_dir)
         payload = {
             "requested_ref": requested_ref,
@@ -207,6 +271,7 @@ class NSFCPackageManager:
             "package_version": package_metadata.get("version"),
             "templates": package_metadata.get("templates", {}),
             "installer": package_metadata.get("installer", {}),
+            "dependencies": sorted((dependency_dirs or {}).keys()),
         }
         self._json_dump(commit_root / "metadata.json", payload)
         if requested_ref:
@@ -254,7 +319,11 @@ class NSFCPackageManager:
         runtime_file = package_dir / "bensz-nsfc-runtime.def"
         package_root = package_dir.resolve().as_posix() + "/"
         assets_dir = package_root + "assets/"
-        assets_fonts_dir = assets_dir + "fonts/"
+        fonts_package_dir = package_dir.parent / "bensz-fonts"
+        if (fonts_package_dir / "bensz-fonts.sty").exists():
+            assets_fonts_dir = fonts_package_dir.resolve().as_posix() + "/fonts/"
+        else:
+            assets_fonts_dir = assets_dir + "fonts/"
         asset_bib_style_base = assets_dir + "bibtex-style/gbt7714-nsfc"
         runtime_file.write_text(
             "\n".join(
@@ -283,6 +352,15 @@ class NSFCPackageManager:
             }
 
         target.parent.mkdir(parents=True, exist_ok=True)
+        dependencies_root = self.cache_root / commit / "dependencies"
+        for slug in DEPENDENCY_PACKAGE_SLUGS:
+            dependency_source = dependencies_root / slug
+            if not dependency_source.exists():
+                continue
+            dependency_target = target.parent / slug
+            if dependency_target.exists():
+                shutil.rmtree(dependency_target)
+            shutil.copytree(dependency_source, dependency_target)
         if target.exists():
             shutil.rmtree(target)
         shutil.copytree(self.cache_root / commit / "package", target)
@@ -310,6 +388,7 @@ class NSFCPackageManager:
         self,
         ref: str,
         source: str = "github",
+        mirror: str = "github",
         activate: bool = True,
         force: bool = False,
         dry_run: bool = False,
@@ -319,10 +398,30 @@ class NSFCPackageManager:
             if local_path is None:
                 raise InstallError("本地安装模式必须提供 --path")
             package_dir = self._resolve_local_package_dir(local_path)
+            dependency_dirs = self._find_dependency_dirs(package_dir)
             commit = f"local-{self._hash_directory(package_dir)[:12]}"
             cached = self._cache_root_for(commit)
             if force or not cached.exists():
-                self._cache_package(package_dir, ref or commit, commit, "local")
+                self._cache_package(package_dir, ref or commit, commit, "local", dependency_dirs)
+            metadata = self._cache_metadata(commit)
+        elif mirror != "github":
+            temp_dir, package_dir, actual_mirror = self._download_mirrored_snapshot(ref, mirror)
+            dependency_dirs = self._find_dependency_dirs(package_dir)
+            commit = f"{actual_mirror}-{self._hash_directory(package_dir)[:12]}"
+            if force or not self._cache_root_for(commit).exists():
+                if dry_run:
+                    return {
+                        "action": "download",
+                        "requested_ref": ref,
+                        "resolved_commit": commit,
+                        "source": actual_mirror,
+                    }
+                try:
+                    self._cache_package(package_dir, ref, commit, actual_mirror, dependency_dirs)
+                finally:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+            else:
+                shutil.rmtree(temp_dir, ignore_errors=True)
             metadata = self._cache_metadata(commit)
         else:
             resolved = self._resolve_ref(ref)
@@ -337,10 +436,16 @@ class NSFCPackageManager:
                     }
                 if source == "release":
                     temp_dir, package_dir = self._download_release_snapshot(ref, commit)
+                    dependency_dirs = self._find_dependency_dirs(package_dir)
+                    if not dependency_dirs:
+                        shutil.rmtree(temp_dir, ignore_errors=True)
+                        temp_dir, package_dir = self._download_github_snapshot(commit)
+                        dependency_dirs = self._find_dependency_dirs(package_dir)
                 else:
                     temp_dir, package_dir = self._download_github_snapshot(commit)
+                    dependency_dirs = self._find_dependency_dirs(package_dir)
                 try:
-                    self._cache_package(package_dir, ref, commit, source)
+                    self._cache_package(package_dir, ref, commit, source, dependency_dirs)
                 finally:
                     shutil.rmtree(temp_dir, ignore_errors=True)
             metadata = self._cache_metadata(commit)
@@ -565,6 +670,7 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser = subparsers.add_parser("install")
     install_parser.add_argument("--ref", required=True)
     install_parser.add_argument("--source", choices=("github", "release", "local"), default="github")
+    install_parser.add_argument("--mirror", choices=("github", "gitee", "auto"), default="github")
     install_parser.add_argument("--path", type=Path)
     install_parser.add_argument("--force", action="store_true")
     install_parser.add_argument("--dry-run", action="store_true")
@@ -616,6 +722,7 @@ def main() -> int:
             result = manager.install(
                 ref=args.ref,
                 source=args.source,
+                mirror=args.mirror,
                 activate=not args.no_activate,
                 force=args.force,
                 dry_run=args.dry_run,

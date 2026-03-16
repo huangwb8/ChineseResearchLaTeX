@@ -1,6 +1,6 @@
 # 中国科研常用 LaTeX 模板集 - 项目指令
 
-本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-sysu-doctor/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
+本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，仓库已经引入 `packages/bensz-fonts/` 作为跨产品线共享字体基础包，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-sysu-doctor/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
 
 一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。仓库主分支可以包含重构中的源码、脚本和技能，处理任务时要以“当前真实目录结构 + 当前脚本接口 + 当前 README/CHANGELOG”作为判断依据，而不是沿用旧版记忆。
 
@@ -10,6 +10,7 @@
 
 - 维护可直接使用的 NSFC LaTeX 模板与 Release 交付物
 - 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
+- 维护 `packages/bensz-fonts/` 共享字体基础包源码，统一托管字体文件并为其它 `bensz-*` 包提供字体引用 API
 - 维护 `packages/bensz-paper/` 公共包源码与 `projects/paper-sci-01/` 示例项目，支撑 SCI 论文写作模板的 PDF/DOCX 双输出
 - 维护 `packages/bensz-thesis/` 公共包源码与 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/` 示例项目，支撑硕士/博士论文模板的 PDF 输出与像素级验收
 - 维护 `packages/bensz-cv/` 公共包源码与 `projects/cv-01/` 示例项目，支撑中英文简历模板的 PDF 输出、像素级验收与去隐私公开演示
@@ -26,6 +27,7 @@ ChineseResearchLaTeX/
 │   ├── bensz-nsfc/          # NSFC 公共包源码（当前主线）
 │   │   ├── scripts/         # NSFC 安装/构建/校验/TDS 打包脚本
 │   │   └── ...
+│   ├── bensz-fonts/         # 共享字体基础包源码
 │   ├── bensz-paper/         # SCI 论文公共包源码
 │   ├── bensz-thesis/        # 毕业论文公共包源码
 │   └── bensz-cv/            # 学术简历公共包源码
@@ -61,9 +63,10 @@ ChineseResearchLaTeX/
 处理任务时，优先判断应该修改哪一层：
 
 - `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、稳定实现
+- `packages/bensz-fonts/`：跨产品线共享字体资源与统一字体引用 API
 - `packages/bensz-paper/`：SCI 论文共享样式、profile 与 PDF/DOCX 构建脚本
 - `packages/bensz-thesis/`：毕业论文共享样式、profile、统一 PDF 构建与像素比对脚本
-- `packages/bensz-cv/`：中英文简历共享样式、字体资源、统一 PDF 构建与像素比对脚本
+- `packages/bensz-cv/`：中英文简历共享样式、字体配置、统一 PDF 构建与像素比对脚本
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
 - `projects/paper-sci-01/`：SCI 论文示例正文、Markdown 单一真相来源、项目级 wrapper
 - `projects/thesis-smu-master/` / `projects/thesis-sysu-doctor/`：毕业论文示例正文、项目级 wrapper 与公开演示资产
@@ -74,14 +77,14 @@ ChineseResearchLaTeX/
 - `packages/bensz-thesis/scripts/thesis_project_tool.py`：毕业论文 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-cv/scripts/cv_project_tool.py`：中英文简历 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
-- `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包
+- `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-fonts`、`bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包，并支持 `--mirror gitee`
 - `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace` 与 `.vscode/settings.json`
 - `scripts/vscode/`：按 `nsfc / paper / thesis / cv` 分型托管 VS Code / LaTeX Workshop 固定模板
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
 
-如果一个问题影响三套 NSFC 模板的共同版式、字体、BibTeX 资源或公共宏逻辑，优先修改 `packages/bensz-nsfc/`，不要把同一份改动复制粘贴回 `projects/NSFC_General`、`projects/NSFC_Local`、`projects/NSFC_Young`。
+如果一个问题影响多条产品线共享的字体文件、字体路径解析或字体引用 API，优先修改 `packages/bensz-fonts/`；如果问题影响三套 NSFC 模板的共同版式、BibTeX 资源或公共宏逻辑，再优先修改 `packages/bensz-nsfc/`，不要把同一份改动复制粘贴回 `projects/NSFC_General`、`projects/NSFC_Local`、`projects/NSFC_Young`。
 
 ---
 
@@ -111,7 +114,8 @@ ChineseResearchLaTeX/
 
 - 用户无需克隆仓库时，优先使用根级统一安装器（`scripts/install.py`）：
   - `curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py | python3 - install --packages bensz-nsfc --ref <tag>`
-  - 支持多包安装：`--packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv`
+  - 支持多包安装：`--packages bensz-fonts,bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv`
+  - 中国大陆用户如需走镜像，可显式加 `--mirror gitee`
 - 在仓库内开发时，bensz-nsfc 包级安装优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
 - 用户项目版本锁相关问题优先围绕 `.nsfc-version`、`pin/sync/check/rollback` 工作流处理
 
@@ -135,7 +139,7 @@ ChineseResearchLaTeX/
 
 #### 简历模板问题
 
-- 公共样式、字体资源、统一构建与比对逻辑优先修改 `packages/bensz-cv/`
+- 公共样式、字体配置、统一构建与比对逻辑优先修改 `packages/bensz-cv/`
 - 示例正文与公开演示头像优先维护 `projects/cv-01/`
 - 优先使用 `python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects/cv-01 --variant all` 验证中英双语 PDF 输出
 - 若需与私有源简历验收版式回归，可使用 `python packages/bensz-cv/scripts/cv_project_tool.py compare --project-dir projects/cv-01 --variant <zh|en> --baseline-pdf <原始PDF>` 做像素级验收
@@ -366,6 +370,7 @@ skill_info:
 - 不自动清理/删除 `.DS_Store`
 - `CLAUDE.md` 与 `AGENTS.md` 的核心章节需保持一致
 - 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
+- 变更 `packages/bensz-fonts/` 时，不要把共享字体文件重新复制回 `packages/bensz-nsfc/`、`packages/bensz-cv/` 或各 `projects/` 目录
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
 - 变更 `packages/bensz-paper/` 时，不要把 Markdown 正文重新复制成项目内手写 `.tex` 正文；优先保持 `artifacts/source/` 为单一真相来源
 - 变更 `packages/bensz-cv/` 时，不要把私有简历正文、私有头像或验收阶段的私有对比图重新留在 `projects/cv-01/`；公开示例必须保持去隐私状态
@@ -391,6 +396,7 @@ skill_info:
 
 ```bash
 python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1 --mirror gitee
 python packages/bensz-nsfc/scripts/install.py pin --ref v3.5.1
 python packages/bensz-nsfc/scripts/install.py sync
 python packages/bensz-nsfc/scripts/install.py check
@@ -420,10 +426,11 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 
 默认假设：普通项目 zip 仍按“先安装 `bensz-nsfc` 公共包，再使用项目”的模式工作，AI 应优先通过上述路径发现策略定位脚本；只有在专门面向 Overleaf 的 Release zip 场景下，才允许把公共包运行时文件与共享资源一并打入压缩包，以保证上传后可直接编译。
 
-处理 `bensz-paper`、`bensz-thesis`、`bensz-cv` 安装问题时，优先使用根级统一安装器：
+处理 `bensz-fonts`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 安装问题时，优先使用根级统一安装器：
 
 ```bash
-python3 scripts/install.py install --packages bensz-paper,bensz-thesis,bensz-cv
+python3 scripts/install.py install --packages bensz-fonts,bensz-paper,bensz-thesis,bensz-cv
+python3 scripts/install.py install --packages bensz-paper --mirror gitee
 ```
 
 ### 编译规范

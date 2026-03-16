@@ -6,7 +6,17 @@ on:
   release:
     types:
       - published
+      - edited
   workflow_dispatch:
+    inputs:
+      repo:
+        description: "GitHub repository in owner/name format"
+        required: false
+        default: "huangwb8/ChineseResearchLaTeX"
+      skip_tests:
+        description: "Skip release asset and font-architecture regression tests"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -20,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
+      TARGET_REPO: ${{ inputs.repo || github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,10 +42,17 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Run regression tests
+        if: ${{ inputs.skip_tests != 'true' }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          pytest -q tests/test_install_architecture.py tests/test_update_readme_template_list.py
+
       - name: Update README template list
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python scripts/update_readme_template_list.py --repo "${{ github.repository }}"
+        run: python scripts/update_readme_template_list.py --repo "${{ env.TARGET_REPO }}"
 
       - name: Detect changes
         id: changes
@@ -53,3 +71,17 @@ jobs:
           git add README.md
           git commit -m "docs: sync template list from latest release"
           git push
+
+      - name: Verify README contains cv release links
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/update_readme_template_list.py --repo "${{ env.TARGET_REPO }}"
+          if ! grep -q "cv-01" README.md; then
+            echo "README does not contain cv-01 section"
+            exit 1
+          fi
+          if ! grep -q "cv-01-Overleaf" README.md; then
+            echo "README does not contain cv-01 Overleaf download link"
+            exit 1
+          fi

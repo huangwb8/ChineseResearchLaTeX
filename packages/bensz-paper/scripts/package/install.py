@@ -16,6 +16,7 @@ from pathlib import Path
 
 PACKAGE_NAME = "bensz-paper"
 PACKAGE_SUBPATH = Path("tex") / "latex" / PACKAGE_NAME
+DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 PRIMARY_LAUNCHER = "bpaper"
 
@@ -138,6 +139,33 @@ def install_launcher(dest: Path, bin_dir: Path, dry_run: bool) -> None:
     print(f"✓ Launcher: {launcher_dest}")
 
 
+def install_dependencies(src: Path, texmfhome: Path, dry_run: bool) -> None:
+    packages_root = src.parent
+    for dependency in DEPENDENCY_PACKAGE_NAMES:
+        dependency_src = packages_root / dependency
+        if not dependency_src.exists():
+            continue
+        dependency_dest = texmfhome / "tex" / "latex" / dependency
+        print(f"  Dependency: {dependency_src} -> {dependency_dest}")
+        if dry_run:
+            for file_path in sorted(dependency_src.rglob("*")):
+                if not file_path.is_file():
+                    continue
+                if any(part in EXCLUDE_NAMES for part in file_path.parts) or file_path.suffix == ".pyc":
+                    continue
+                print(f"    {file_path.relative_to(dependency_src)}")
+            continue
+        dependency_dest.mkdir(parents=True, exist_ok=True)
+        for file_path in dependency_src.rglob("*"):
+            if not file_path.is_file():
+                continue
+            if any(part in EXCLUDE_NAMES for part in file_path.parts) or file_path.suffix == ".pyc":
+                continue
+            target = dependency_dest / file_path.relative_to(dependency_src)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(file_path, target)
+
+
 # ---------------------------------------------------------------------------
 # Actions
 # ---------------------------------------------------------------------------
@@ -156,6 +184,8 @@ def do_install(args: argparse.Namespace) -> int:
     if dry_run:
         print("  Mode   : dry-run (no files will be written)")
     print()
+
+    install_dependencies(src, texmfhome, dry_run)
 
     if dry_run:
         print("Files that would be installed:")

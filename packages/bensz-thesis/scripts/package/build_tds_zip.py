@@ -6,6 +6,7 @@ import zipfile
 from pathlib import Path
 
 PACKAGE_NAME = "bensz-thesis"
+DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 
 
@@ -28,13 +29,31 @@ def iter_files(package_src: Path):
         yield path
 
 
+def find_dependency_dirs(project_dir: Path) -> list[tuple[str, Path]]:
+    found: list[tuple[str, Path]] = []
+    for dependency in DEPENDENCY_PACKAGE_NAMES:
+        for candidate in (
+            project_dir / "packages" / dependency,
+            project_dir / "tex" / "latex" / dependency,
+        ):
+            if (candidate / f"{dependency}.sty").exists():
+                found.append((dependency, candidate))
+                break
+    return found
+
+
 def build_zip(project_dir: Path, output: Path) -> Path:
     package_src = find_package_dir(project_dir)
+    dependency_dirs = find_dependency_dirs(project_dir)
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as zf:
         for src_file in iter_files(package_src):
             arcname = Path("tex") / "latex" / PACKAGE_NAME / src_file.relative_to(package_src)
             zf.write(src_file, arcname=arcname)
+        for dependency, dependency_src in dependency_dirs:
+            for src_file in iter_files(dependency_src):
+                arcname = Path("tex") / "latex" / dependency / src_file.relative_to(dependency_src)
+                zf.write(src_file, arcname=arcname)
     return output
 
 

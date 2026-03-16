@@ -285,6 +285,10 @@ def resolve_tex_search_roots(project_dir: Path) -> list[Path]:
     if (package_root / "bml-core.sty").exists() and package_root not in roots:
         roots.append(package_root)
 
+    fonts_package_root = package_root.parent / "bensz-fonts"
+    if (fonts_package_root / "bensz-fonts.sty").exists() and fonts_package_root not in roots:
+        roots.append(fonts_package_root)
+
     return roots
 
 

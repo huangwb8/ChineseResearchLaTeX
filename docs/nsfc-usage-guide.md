@@ -8,7 +8,8 @@
 
 当前仓库不是“每个项目各带一整套样式文件”的旧结构，而是：
 
-- `packages/bensz-nsfc/`：NSFC 公共包源码、共享样式、共享字体、共享 BibTeX 资源、官方脚本入口
+- `packages/bensz-nsfc/`：NSFC 公共包源码、共享样式、共享 BibTeX 资源、官方脚本入口
+- `packages/bensz-fonts/`：共享字体基础包，供 NSFC / CV / 其它 bensz 系列模板统一引用
 - `projects/NSFC_Young/`：青年基金项目正文示例和最薄的一层入口封装
 - `docs/`：迁移说明、写作指南和本文这类辅助文档
 
@@ -59,7 +60,7 @@ python packages/bensz-nsfc/scripts/install.py install --ref <tag>
 python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
 ```
 
-这一步会把 `bensz-nsfc` 安装到你的 `TEXMFHOME` 下，供 `NSFC_Young`、`NSFC_General`、`NSFC_Local` 共用。
+这一步会把 `bensz-nsfc` 与其强制依赖 `bensz-fonts` 安装到你的 `TEXMFHOME` 下，供 `NSFC_Young`、`NSFC_General`、`NSFC_Local` 共用。
 
 ### 开发当前仓库源码
 
@@ -67,6 +68,12 @@ python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
 
 ```bash
 python packages/bensz-nsfc/scripts/install.py install --source local --path packages/bensz-nsfc --ref local-dev
+```
+
+如果你在中国大陆网络环境下安装远端版本，也可以显式指定：
+
+```bash
+python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1 --mirror gitee
 ```
 
 ## 编译青年基金示例项目

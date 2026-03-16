@@ -6,11 +6,12 @@
 
 - `bensz-nsfc-common.sty`：薄入口
 - `bensz-nsfc-core.sty`：选项解析、profile 元信息与实现分发
-- `assets/`：共享字体与 BibTeX 样式资源，供 `NSFC_General / NSFC_Local / NSFC_Young` 统一复用
+- `assets/`：共享 BibTeX 样式资源
 - `profiles/`：不同项目类型的版本与标识元信息
 - `impl/`：当前运行时使用的稳定实现，直接承载已通过像素级回归验证的排版逻辑
 - `scripts/`：围绕 `bensz-nsfc` 的安装、构建、校验与 TDS 打包脚本
 - `bensz-nsfc-layout.sty` / `bensz-nsfc-typography.sty` / `bensz-nsfc-headings.sty` / `bensz-nsfc-bibliography.sty`：后续进一步细化抽象时保留的模块化骨架
+- `../bensz-fonts/`：共享字体基础包；`bensz-nsfc` 安装时会作为强制依赖一并安装
 
 ## 接入方式
 
@@ -26,6 +27,7 @@
 
 ```bash
 python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1
+python packages/bensz-nsfc/scripts/install.py install --ref v3.5.1 --mirror gitee
 python packages/bensz-nsfc/scripts/install.py pin --ref v3.5.1
 python packages/bensz-nsfc/scripts/install.py sync
 ```
@@ -45,6 +47,7 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 
 ## 资源策略
 
-- 字体与 `bst` 统一托管在 `assets/fonts/`、`assets/bibtex-style/`
+- 字体统一托管在 `packages/bensz-fonts/fonts/`，`bensz-nsfc` 通过 `bensz-fonts` 提供的统一 API 引用字体
+- `bst` 统一托管在 `assets/bibtex-style/`
 - 三套项目默认优先使用公共包内共享资源；若用户保留了历史项目内 `./fonts/` 或 `bibtex-style/`，仍可作为兼容兜底
 - `examples/basic-usage.tex` 与 `examples/basic-bibliography.tex` 都直接走公共包内共享资源，方便 `validate_package.py` 做 smoke test

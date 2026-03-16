@@ -5,8 +5,7 @@ import argparse
 import zipfile
 from pathlib import Path
 
-PACKAGE_NAME = "bensz-cv"
-DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
+PACKAGE_NAME = "bensz-fonts"
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 
 
@@ -15,7 +14,7 @@ def find_package_dir(project_dir: Path) -> Path:
     direct_package = project_dir / PACKAGE_NAME
     installed_package = project_dir / "tex" / "latex" / PACKAGE_NAME
     for candidate in (repo_package, direct_package, installed_package):
-        if (candidate / f"{PACKAGE_NAME}.cls").exists():
+        if (candidate / f"{PACKAGE_NAME}.sty").exists():
             return candidate
     raise FileNotFoundError(f"{PACKAGE_NAME} source directory not found under: {project_dir}")
 
@@ -29,42 +28,24 @@ def iter_files(package_src: Path):
         yield path
 
 
-def find_dependency_dirs(project_dir: Path) -> list[tuple[str, Path]]:
-    found: list[tuple[str, Path]] = []
-    for dependency in DEPENDENCY_PACKAGE_NAMES:
-        for candidate in (
-            project_dir / "packages" / dependency,
-            project_dir / "tex" / "latex" / dependency,
-        ):
-            if (candidate / f"{dependency}.sty").exists():
-                found.append((dependency, candidate))
-                break
-    return found
-
-
 def build_zip(project_dir: Path, output: Path) -> Path:
     package_src = find_package_dir(project_dir)
-    dependency_dirs = find_dependency_dirs(project_dir)
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as zf:
         for src_file in iter_files(package_src):
             arcname = Path("tex") / "latex" / PACKAGE_NAME / src_file.relative_to(package_src)
             zf.write(src_file, arcname=arcname)
-        for dependency, dependency_src in dependency_dirs:
-            for src_file in iter_files(dependency_src):
-                arcname = Path("tex") / "latex" / dependency / src_file.relative_to(dependency_src)
-                zf.write(src_file, arcname=arcname)
     return output
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Package bensz-cv as a TDS zip.")
+    parser = argparse.ArgumentParser(description="Package bensz-fonts as a TDS zip.")
     parser.add_argument("--project-dir", type=Path, default=Path.cwd(), help="Project or repo root.")
     parser.add_argument("--output", type=Path, default=None, help="Output zip path.")
     args = parser.parse_args()
 
     project_dir = args.project_dir.expanduser().resolve()
-    output = args.output or project_dir / "dist" / "bensz-cv.tds.zip"
+    output = args.output or project_dir / "dist" / "bensz-fonts.tds.zip"
     zip_path = build_zip(project_dir, output.expanduser().resolve())
     print(zip_path)
 

@@ -12,6 +12,7 @@ import tempfile
 from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 CACHE_DIRNAME = ".latex-cache"
 ROOT_ARTIFACT_PATTERNS = (
     "*.aux",
@@ -207,7 +208,10 @@ def build_project(project_dir: Path, tex_file: str) -> Path:
     clean_root_artifacts(project_dir, tex_stem)
 
     tex_env = os.environ.copy()
-    tex_env["TEXINPUTS"] = build_texinputs([PACKAGE_DIR], tex_env.get("TEXINPUTS", ""))
+    tex_roots = [PACKAGE_DIR]
+    if FONTS_PACKAGE_DIR.exists():
+        tex_roots.append(FONTS_PACKAGE_DIR)
+    tex_env["TEXINPUTS"] = build_texinputs(tex_roots, tex_env.get("TEXINPUTS", ""))
 
     xelatex_cmd = [
         resolve_executable("xelatex"),

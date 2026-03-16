@@ -9,6 +9,7 @@ import argparse
 import zipfile
 from pathlib import Path
 
+DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 
 def looks_like_distribution_root(path: Path) -> bool:
     repo_package = path / "packages" / "bensz-paper"
@@ -44,9 +45,24 @@ def resolve_texmf_source(project_dir: Path) -> Path:
     raise FileNotFoundError(f"bensz-paper source directory not found under: {project_dir}")
 
 
+def resolve_dependency_sources(project_dir: Path) -> list[tuple[str, Path]]:
+    sources: list[tuple[str, Path]] = []
+    for dependency in DEPENDENCY_PACKAGE_NAMES:
+        candidates = (
+            project_dir / "packages" / dependency,
+            project_dir / "tex" / "latex" / dependency,
+        )
+        for candidate in candidates:
+            if (candidate / f"{dependency}.sty").exists():
+                sources.append((dependency, candidate))
+                break
+    return sources
+
+
 def build_tds_zip(project_dir: Path, output_path: Path) -> None:
     """Build a TDS-compliant zip from the local package directory."""
     package_src = resolve_texmf_source(project_dir)
+    dependency_sources = resolve_dependency_sources(project_dir)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -60,6 +76,15 @@ def build_tds_zip(project_dir: Path, output_path: Path) -> None:
             arcname = Path("tex") / "latex" / "bensz-paper" / src_file.relative_to(package_src)
             zf.write(src_file, arcname)
             print(f'  + {arcname}')
+        for dependency, dependency_src in dependency_sources:
+            for src_file in sorted(dependency_src.rglob('*')):
+                if not src_file.is_file():
+                    continue
+                if "__pycache__" in src_file.parts or src_file.suffix == ".pyc" or src_file.name == ".DS_Store":
+                    continue
+                arcname = Path("tex") / "latex" / dependency / src_file.relative_to(dependency_src)
+                zf.write(src_file, arcname)
+                print(f'  + {arcname}')
 
     print(f'\n✓ TDS zip created: {output_path}')
     print(

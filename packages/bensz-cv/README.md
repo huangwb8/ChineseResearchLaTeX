@@ -13,7 +13,7 @@
 - `bensz-cv.cls`：公共入口类
 - `resume.cls`：源样式实现与兼容入口
 - `fontawesome.sty`、`zh_CN-*.sty`、`Noto*.sty`：字体与中英文支持
-- `fonts/`：模板依赖字体资源
+- `../bensz-fonts/`：共享字体基础包；`bensz-cv` 安装时会作为强制依赖一并安装
 - `profiles/`：示例 profile
 - `scripts/cv_project_tool.py`：PDF 构建 / 清理 / 像素级比较入口
 - `scripts/package/install.py`：本地安装脚本

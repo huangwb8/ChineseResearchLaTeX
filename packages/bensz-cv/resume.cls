@@ -13,26 +13,14 @@
 \hypersetup{hidelinks}
 \RequirePackage{url}
 \urlstyle{tt}
-% resolve font paths relative to this class file
-\RequirePackage[abspath]{currfile}
 % use fontawesome
 \RequirePackage{fontawesome}
 % use xcolor for customizing color
 %\RequirePackage[usenames,dvipsnames]{xcolor}
 % loading fonts
 \RequirePackage{fontspec}
-\getabspath{resume.cls}
-\edef\ResumePackageDir{\theabsdir}
-% Main document font
-\setmainfont[
-  Path = \ResumePackageDir fonts/Main/ ,
-  Extension = .otf ,
-  UprightFont = *-regular ,
-  BoldFont = *-bold ,
-  ItalicFont = *-italic ,
-  BoldItalicFont = *-bolditalic ,
-  SmallCapsFont = Fontin-SmallCaps
-]{texgyretermes}
+\RequirePackage{bensz-fonts}
+\BenszFontsSetupCVResumeMain
 
 \RequirePackage[
 	a4paper,

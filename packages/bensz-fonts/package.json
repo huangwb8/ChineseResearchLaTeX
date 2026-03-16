@@ -1,0 +1,18 @@
+{
+  "name": "bensz-fonts",
+  "version": "f_v20260316",
+  "description": "ChineseResearchLaTeX 共享字体基础包（集中托管字体资产并提供统一字体 API）",
+  "author": "ChineseResearchLaTeX Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/huangwb8/ChineseResearchLaTeX",
+  "dependencies": {
+    "texlive": ">=2020",
+    "xelatex": "*"
+  },
+  "features": [
+    "共享字体资源托管",
+    "统一字体路径解析",
+    "跨包字体配置 API",
+    "支持本地安装与 Overleaf 运行时打包"
+  ]
+}

@@ -10,6 +10,7 @@ from pathlib import Path
 
 PACKAGE_NAME = "bensz-cv"
 PACKAGE_SUBPATH = Path("tex") / "latex" / PACKAGE_NAME
+DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 
 
@@ -70,6 +71,17 @@ def install_tree(src: Path, dest: Path, dry_run: bool) -> None:
         shutil.copy2(f, target)
 
 
+def install_dependencies(src: Path, texmfhome: Path, dry_run: bool) -> None:
+    packages_root = src.parent
+    for dependency in DEPENDENCY_PACKAGE_NAMES:
+        dependency_src = packages_root / dependency
+        if not dependency_src.exists():
+            continue
+        dependency_dest = texmfhome / "tex" / "latex" / dependency
+        print(f"  Dependency: {dependency_src} -> {dependency_dest}")
+        install_tree(dependency_src, dependency_dest, dry_run)
+
+
 def do_install(args: argparse.Namespace) -> int:
     src = find_package_source()
     texmfhome = get_texmfhome(args.texmfhome)
@@ -82,6 +94,7 @@ def do_install(args: argparse.Namespace) -> int:
         print("  Mode   : dry-run")
     print()
 
+    install_dependencies(src, texmfhome, args.dry_run)
     install_tree(src, dest, args.dry_run)
     run_mktexlsr(texmfhome, args.dry_run)
     return 0

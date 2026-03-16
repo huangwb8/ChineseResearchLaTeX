@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增共享字体基础包 `packages/bensz-fonts/`：集中托管原先分散在 `bensz-nsfc` 与 `bensz-cv` 中的字体文件，提供统一字体路径与字体配置 API，并补充本地安装脚本与 TDS 打包脚本
 - 新增学术简历公共包 `packages/bensz-cv/`：引入 `bensz-cv.cls` / `resume.cls` 双入口、字体与图标运行时资源、统一构建/清理/像素级比较脚本 `cv_project_tool.py`、本地安装脚本与 TDS 打包脚本
 - 新增中英文简历示例项目 `projects/cv-01/`：基于只读源简历样式完成中英文 PDF 像素级验收后，再替换为公开可分享的去隐私演示内容；当前示例人物统一为“佐佐木希 / Nozomi Sasaki”，并配套项目级 wrapper、VS Code 工作区与演示参考文献
 - 新增 `scripts/vscode/` 与 `scripts/sync_vscode_configs.py`：统一托管 `projects/` 下各示例项目的 VS Code 工作区与 LaTeX Workshop 固定配置，并提供一键同步 / 漂移检查入口
@@ -23,6 +24,10 @@
 
 ### Changed（变更）
 
+- 更新 `scripts/install.py`、`packages/bensz-nsfc/scripts/install.py` 与各包本地安装/TDS 打包脚本：统一安装器新增 `bensz-fonts`、依赖自动补齐与 `--mirror gitee` 镜像下载能力；`bensz-nsfc` / `bensz-paper` / `bensz-thesis` / `bensz-cv` 的本地安装与 TDS 打包链路现会同步纳入 `bensz-fonts`
+- 更新 `scripts/pack_release.py`、`packages/bensz-nsfc/scripts/nsfc_project_tool.py`、`packages/bensz-paper/scripts/manuscript_tool.py`、`packages/bensz-thesis/scripts/thesis_project_tool.py` 与 `packages/bensz-cv/scripts/cv_project_tool.py`：Overleaf runtime、仓库内构建与缓存运行时统一接入 `bensz-fonts`，并将 Overleaf 压缩包的字体注入策略改为“按项目最小必需字体集”而非全量打包，确保单项目 zip、本地开发和 TEXMF 安装三种场景下的字体解析一致
+- 更新根级 `README.md`、`packages/bensz-nsfc/README.md`、`packages/bensz-cv/README.md`、`docs/nsfc-usage-guide.md` 与 `docs/bensz-nsfc-design-principles.md`：将字体资源架构从“NSFC 资产目录内托管”调整为“`bensz-fonts` 基础包 + 各模板共享引用”，并补充 `--mirror gitee` 安装说明
+- 更新 `.github/workflows/update-template-list.yml`：README 模板列表同步流程现支持 `release.edited` 与手动触发后的字体分离架构回归测试，并在执行后强制校验 README 中存在 `cv-01` 下载链接
 - 更新根级 `README.md`、`projects/README.md` 与 `AGENTS.md`：将产品线从“NSFC + SCI + 毕业论文”扩展为覆盖学术简历模板，补充 `bensz-cv` / `cv-01` 的目录结构、安装命令、官方构建入口与去隐私维护边界
 - 更新根级 `scripts/install.py`、`scripts/pack_release.py`、`scripts/update_readme_template_list.py` 与 `.github/workflows/update-template-list.yml`：统一安装器新增 `bensz-cv` 支持，Release 打包新增 `cv-*` 项目与 `bensz-cv` 运行时注入逻辑，README 模板列表生成脚本新增简历模板分类，模板列表同步工作流新增 `release.published` 触发
 - 统一 `projects/` 下各示例项目的 VS Code 工作区口径：保留每个项目各自的 `*.code-workspace` 入口，并为 `projects/paper-sci-01/`、`projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/` 新增 `.vscode/settings.json`，参照 NSFC 项目的 LaTeX Workshop 配置接入项目级 Python wrapper、固定 `.latex-cache/` 中间目录并隐藏根目录杂项产物；同时修正 3 个 NSFC 项目的 `.vscode/settings.json`，将已迁移的构建入口从失效的 `code/nsfc_build.py` 同步到真实存在的 `scripts/nsfc_build.py`

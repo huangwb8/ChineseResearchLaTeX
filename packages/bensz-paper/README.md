@@ -13,6 +13,7 @@
 - `bensz-paper.sty`：新的公共入口包名
 - `benszmanuscriptlatex.sty`：兼容旧名称的入口
 - `bml-*.sty`：内部模块实现
+- `../bensz-fonts/`：共享字体基础包；`bensz-paper` 安装时会作为强制依赖一并安装
 - `profiles/`：模板 profile
 - `scripts/manuscript_tool.py`：PDF + DOCX 统一构建工具
 - `scripts/paper_project_tool.py`：面向仓库工作流的官方 wrapper

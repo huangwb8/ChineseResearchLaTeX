@@ -8,6 +8,7 @@ from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = PACKAGE_DIR.parents[1]
+FONTS_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-fonts"
 
 
 def main() -> int:
@@ -32,6 +33,16 @@ def main() -> int:
             else:
                 archive_name = Path("tex") / "latex" / "bensz-nsfc" / relative
             bundle.write(file_path, archive_name.as_posix())
+        if FONTS_PACKAGE_DIR.exists():
+            for file_path in FONTS_PACKAGE_DIR.rglob("*"):
+                if file_path.is_dir():
+                    continue
+                relative = file_path.relative_to(FONTS_PACKAGE_DIR)
+                if relative.name in {"README.md", "package.json"}:
+                    archive_name = Path("doc") / "latex" / "bensz-fonts" / relative
+                else:
+                    archive_name = Path("tex") / "latex" / "bensz-fonts" / relative
+                bundle.write(file_path, archive_name.as_posix())
 
     print(output)
     return 0
