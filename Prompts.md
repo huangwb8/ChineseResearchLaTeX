@@ -55,6 +55,49 @@ Bachelor、Master、Doctor
 
 ---
 
+./packages 文件夹里 LaTeX包架构的优化
+
+- latex包有一个很重的资产： 字体。 我希望有一个新的包 ./packages/bensz-fonts 。 它的主要作用是
+  - 托管字体文件
+  - 提供统一的字体引用的API
+  - 作为其它bensz系列latex包的基础包
+- 这样设计有几个好处
+  - 每个新的latex包开发时，不需要再关注字体怎么引用、设计，因为 bensz-font 已经定义好了这一些
+- 注意
+  - 目前安装包的时候，bensz-font 包必须是强制安装的（否则，单独安装其它LaTeX包可能无法正常工作）
+  - 安装bensz-font 包时，因为它的体积比较大，应该有一个智能选择镜像的功能。 我在 Gitee 里是有镜像的， 中国大陆的用户用Gitee的URL下载应该会快一些，这个请帮忙协调好安装脚本，保证用户可以通过指定某个参数，从而可以在Gitee里下载这个包。其它的包也是类似，都要支持从Gitee镜像里下载。当然，默认还是从Github下载。
+
+这些都是新特性，涉及多项目、多模板，优化难度很大。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
+.github/workflows 里的 github action 的自动化流程应该支持 cv 模板。请：
+
+- 完善流程
+- 提交release。具体为：
+  - 创建tag v4.0.2
+  - Git-commit skill 创建commit
+  - Git-publish-release skill 创建 release
+- 立刻触发1次github action 自动化流程
+- 检查项目README里是否已经有cv模板的可下载的zip链接。如果正常就可以结束工作； 否则， 需要反复优化直至成功。
+
+---
+
+新增简历LaTeX模板支持。 基于/Volumes/2T01/winE/iProjects/Manuscripts/hwbCV （只读） 模仿目前SCI模板的套路，重构形成：
+
+- 包
+  - packages/bensz-cv
+- 模板
+  - projects/cv-01：基于 /Volumes/2T01/winE/iProjects/Manuscripts/hwbCV  的样式。有中/英版。
+- 初步验收目标
+  - projects/cv-01渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 去隐私
+  - 完成初步验收目标后，应该去隐私。因为/Volumes/2T01/winE/iProjects/Manuscripts/hwbCV 是真实的简历，正文内容绝不能外传。 你可以构建一些假的内容，作为充分展示模板使用即可。 要求模板支持的所有样式都要用得上。可以使用  projects/NSFC_Young 里提到的佐佐木希。 你可以copy这个头像来用： /Volumes/2T01/winE/我的坚果云/样式备份/头像/zzmx-logo-02.jpg 
+
+这些都是新特性，涉及多项目、多模板，重构难度很大。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 新增毕业论文模板的支持。基于 /Volumes/2T01/Github/smu-thesis-latex-clinical/projects/mmed-cy-01 和 /Volumes/2T01/winE/iProjects/Manuscripts/thesis_sysu2 , 模仿目前SCI模板的套路，重构形成
 
 - 包
