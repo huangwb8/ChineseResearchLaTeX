@@ -73,7 +73,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
-          pytest -q tests/test_sync_gitee_mirror.py
+          pytest -q scripts/test_sync_gitee_mirror.py
 
       - name: Sync branch and tag to Gitee
         run: |

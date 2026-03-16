@@ -327,11 +327,11 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects
 
 首次启用时，需要在 GitHub 仓库中配置：
 
-- `secrets.GITEE_SSH_PRIVATE_KEY`：具备 Gitee 仓库写权限的 SSH 私钥
+- `secrets.GITEE_SSH_PRIVATE_KEY`：具备 Gitee 仓库写权限、且**不带 passphrase** 的 SSH 私钥
 - `vars.GITEE_REPO`：Gitee 仓库标识，例如 `huangwb8/ChineseResearchLaTeX`
 - 可选 `vars.GITEE_REMOTE_URL`：如果不想用默认 `git@gitee.com:<owner>/<repo>.git`，可直接覆盖完整 remote URL
 
-配好后，每次 GitHub Release 发布都会自动同步；如需手动重试，也可直接触发该 workflow 的 `workflow_dispatch`。
+配好后，每次 GitHub Release 发布都会自动同步；如需手动重试，也可直接触发该 workflow 的 `workflow_dispatch`。完整配置与排障步骤见 [docs/gitee-sync-guide.md](/Volumes/2T01/Github/ChineseResearchLaTeX/docs/gitee-sync-guide.md)。
 
 ---
 

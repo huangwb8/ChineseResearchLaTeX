@@ -11,6 +11,7 @@
 ### Added（新增）
 
 - 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：在 GitHub Release 发布后自动将默认分支与最新 tag 推送到 Gitee 镜像仓库，并支持 `workflow_dispatch` 手动重试
+- 新增 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md)：整理 GitHub Release 后自动同步到 Gitee 的一次性配置、首次验证、日常使用与常见故障排查步骤
 - 新增共享字体基础包 `packages/bensz-fonts/`：集中托管原先分散在 `bensz-nsfc` 与 `bensz-cv` 中的字体文件，提供统一字体路径与字体配置 API，并补充本地安装脚本与 TDS 打包脚本
 - 新增学术简历公共包 `packages/bensz-cv/`：引入 `bensz-cv.cls` / `resume.cls` 双入口、字体与图标运行时资源、统一构建/清理/像素级比较脚本 `cv_project_tool.py`、本地安装脚本与 TDS 打包脚本
 - 新增中英文简历示例项目 `projects/cv-01/`：基于只读源简历样式完成中英文 PDF 像素级验收后，再替换为公开可分享的去隐私演示内容；当前示例人物统一为“佐佐木希 / Nozomi Sasaki”，并配套项目级 wrapper、VS Code 工作区与演示参考文献
@@ -26,6 +27,9 @@
 ### Changed（变更）
 
 - 更新根级 `README.md` 与 `AGENTS.md`：补充 Gitee 镜像自动同步工作流、所需 GitHub Secrets/Variables 与维护边界说明
+- 更新根级 `README.md`：在 Gitee 镜像自动同步说明中补充 `docs/gitee-sync-guide.md` 文档入口，方便维护者按步骤完成配置
+- 更新 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md) 与根级 `README.md`：明确 `GITEE_SSH_PRIVATE_KEY` 必须使用不带 passphrase 的 SSH 私钥，并补充 `ssh-add -` 提示输入口令时的排障说明
+- 更新 `.github/workflows/sync-gitee-mirror.yml`、[docs/gitee-sync-guide.md](docs/gitee-sync-guide.md) 与测试文件位置：将 Gitee 镜像同步的轻量回归测试从 `tests/test_sync_gitee_mirror.py` 调整为 `scripts/test_sync_gitee_mirror.py`，避免受根级 `tests/` 忽略策略影响，并保持该工作流自带校验脚本始终可随仓库一起发布
 - 更新 `scripts/install.py`、`packages/bensz-nsfc/scripts/install.py` 与各包本地安装/TDS 打包脚本：统一安装器新增 `bensz-fonts`、依赖自动补齐与 `--mirror gitee` 镜像下载能力；`bensz-nsfc` / `bensz-paper` / `bensz-thesis` / `bensz-cv` 的本地安装与 TDS 打包链路现会同步纳入 `bensz-fonts`
 - 更新 `scripts/pack_release.py`、`packages/bensz-nsfc/scripts/nsfc_project_tool.py`、`packages/bensz-paper/scripts/manuscript_tool.py`、`packages/bensz-thesis/scripts/thesis_project_tool.py` 与 `packages/bensz-cv/scripts/cv_project_tool.py`：Overleaf runtime、仓库内构建与缓存运行时统一接入 `bensz-fonts`，并将 Overleaf 压缩包的字体注入策略改为“按项目最小必需字体集”而非全量打包，确保单项目 zip、本地开发和 TEXMF 安装三种场景下的字体解析一致
 - 更新根级 `README.md`、`packages/bensz-nsfc/README.md`、`packages/bensz-cv/README.md`、`docs/nsfc-usage-guide.md` 与 `docs/bensz-nsfc-design-principles.md`：将字体资源架构从“NSFC 资产目录内托管”调整为“`bensz-fonts` 基础包 + 各模板共享引用”，并补充 `--mirror gitee` 安装说明
