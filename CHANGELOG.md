@@ -63,6 +63,7 @@
 
 ### Fixed（修复）
 
+- 修复 `.github/workflows/update-template-list.yml` 的回归测试路径失效问题：将 `test_install_architecture.py` 与 `test_update_readme_template_list.py` 从已忽略的 `tests/` 迁回 `scripts/`，并同步更新 README 模板列表工作流的 `pytest` 入口，避免 GitHub Actions 因找不到测试文件而以 `exit code 4` 失败
 - 修复根目录 `tests/` 的版本控制边界：`./tests` 现重新恢复为完全忽略目录，不再特意放行单个回归测试文件；避免本地测试记录、临时压缩包与会话产物误上传到 GitHub
 - 修复 `bensz-cv` 公共包安装场景下的字体路径解析问题：`resume.cls`、`fontawesome.sty` 与中文字体支持样式现改为基于包文件绝对路径解析字体资源，保证仓库开发模式、已安装 `TEXMFHOME` 模式与像素级验收模式的版式一致
 - 修复 `packages/bensz-thesis/scripts/thesis_project_tool.py` 的缓存复用与 BibTeX 兼容问题：构建前会重建 `.latex-cache/`，不会再把旧 PDF 误判为新输出；针对 `bibtex + cache` 的 thesis 项目，会自动同步 `references/`、`bibtex-style/` 到缓存并规范化 `aux` 中的 `.bst` 样式名，保证 `thesis-sysu-doctor` 可稳定编译

@@ -47,7 +47,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
-          pytest -q tests/test_install_architecture.py tests/test_update_readme_template_list.py
+          pytest -q scripts/test_install_architecture.py scripts/test_update_readme_template_list.py
 
       - name: Update README template list
         env:
