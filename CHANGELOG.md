@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `projects/README.md`：为 `projects/` 目录补充入口级导览，按“国自然 / SCI 论文 / 毕业论文”三大版块说明不同用户群体应进入的示例项目与具体用途
 - 新增毕业论文公共包 `packages/bensz-thesis/`：引入 `bensz-thesis.sty` 公共入口、`thesis-smu-master` / `thesis-sysu-doctor` profile、统一 PDF 构建脚本 `thesis_project_tool.py`、像素级 PDF 比对能力、包级校验脚本与安装/TDS 打包脚本
 - 新增毕业论文示例项目 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`：分别基于南方医科大学硕士论文样式与中山大学博士论文样式重构，先通过与私有源 PDF 的像素级验收，再替换为公开可分享的演示正文、图表与参考文献；两套示例作者统一为“冯宝宝”
 - 新增 `projects/thesis-smu-master/AGENTS.md`、`projects/thesis-smu-master/CLAUDE.md`、`projects/thesis-smu-doctor/AGENTS.md`、`projects/thesis-sysu-doctor/CLAUDE.md` 与项目级 `scripts/thesis_build.py`：支持在完整仓库和单项目场景下调用 `bensz-thesis` 官方构建链路
