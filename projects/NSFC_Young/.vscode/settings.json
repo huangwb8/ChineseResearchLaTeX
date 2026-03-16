@@ -23,7 +23,7 @@
       "command": "bash",
       "args": [
         "-lc",
-        "python3 code/nsfc_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
+        "python3 scripts/nsfc_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
       ]
     }
   ],
@@ -38,7 +38,7 @@
   "latex-workshop.view.pdf.viewer": "tab",
   "latex-workshop.synctex.afterBuild.enabled": true,
 
-  // Explorer: hide cache dir and any root-level LaTeX intermediates (should be none after using this recipe).
+  // Explorer: hide cache dir and common root-level LaTeX intermediates.
   "files.exclude": {
     "%OUTDIR%/": true,
     "*.aux": true,
@@ -49,6 +49,11 @@
     "*.lot": true,
     "*.bbl": true,
     "*.blg": true,
+    "*.bcf": true,
+    "*.run.xml": true,
+    "*.nav": true,
+    "*.snm": true,
+    "*.vrb": true,
     "*.fls": true,
     "*.fdb_latexmk": true,
     "*.synctex.gz": true,

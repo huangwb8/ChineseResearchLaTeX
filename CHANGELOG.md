@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `scripts/vscode/` 与 `scripts/sync_vscode_configs.py`：统一托管 `projects/` 下各示例项目的 VS Code 工作区与 LaTeX Workshop 固定配置，并提供一键同步 / 漂移检查入口
 - 新增 `projects/README.md`：为 `projects/` 目录补充入口级导览，按“国自然 / SCI 论文 / 毕业论文”三大版块说明不同用户群体应进入的示例项目与具体用途
 - 新增毕业论文公共包 `packages/bensz-thesis/`：引入 `bensz-thesis.sty` 公共入口、`thesis-smu-master` / `thesis-sysu-doctor` profile、统一 PDF 构建脚本 `thesis_project_tool.py`、像素级 PDF 比对能力、包级校验脚本与安装/TDS 打包脚本
 - 新增毕业论文示例项目 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`：分别基于南方医科大学硕士论文样式与中山大学博士论文样式重构，先通过与私有源 PDF 的像素级验收，再替换为公开可分享的演示正文、图表与参考文献；两套示例作者统一为“冯宝宝”
@@ -20,6 +21,8 @@
 
 ### Changed（变更）
 
+- 统一 `projects/` 下各示例项目的 VS Code 工作区口径：保留每个项目各自的 `*.code-workspace` 入口，并为 `projects/paper-sci-01/`、`projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/` 新增 `.vscode/settings.json`，参照 NSFC 项目的 LaTeX Workshop 配置接入项目级 Python wrapper、固定 `.latex-cache/` 中间目录并隐藏根目录杂项产物；同时修正 3 个 NSFC 项目的 `.vscode/settings.json`，将已迁移的构建入口从失效的 `code/nsfc_build.py` 同步到真实存在的 `scripts/nsfc_build.py`
+- 更新 `AGENTS.md`、`README.md` 与 `projects/README.md`：将“每个示例项目都必须提供与目录同名的 `*.code-workspace` 与 `.vscode/settings.json`，并优先通过工作区文件打开 VS Code”明确固化为项目规则，同时补充 `python scripts/sync_vscode_configs.py` 作为官方同步入口
 - 优化根级 `README.md` 首页主标语的 HTML 展示样式：改为 GitHub README 稳定支持的 `h3 + strong` 简化标签组合，并保留人机协作氛围的表情元素，增强首屏强调效果同时避免 `style` 属性失效
 - 更新 `AGENTS.md` 与 `CLAUDE.md` 的 Release 发布约束：将 `python scripts/pack_release.py --tag <tag> --upload` 明确强化为 GitHub Release 场景下默认不可省略的必做步骤；未执行成功前不得表述为“发布完成”，且最终答复必须显式交代 Assets 上传状态
 - 更新根级 `README.md` 的项目愿景与概览口径：首页标语从单一“国自然标书”扩展为覆盖中国科研 LaTeX 文档整体场景，并将项目定位同步修正为支持国自然标书、SCI 论文、毕业论文等多条写作主线

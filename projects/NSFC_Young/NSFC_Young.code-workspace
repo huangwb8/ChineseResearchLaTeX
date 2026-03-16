@@ -1,7 +1,13 @@
 {
-    "folders": [
-        {
-            "path": "."
-        }
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "extensions": {
+    "recommendations": [
+      "james-yu.latex-workshop",
+      "ms-python.python"
     ]
+  }
 }

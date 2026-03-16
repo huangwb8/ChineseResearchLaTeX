@@ -1,6 +1,6 @@
 {
   // Keep ALL LaTeX build artifacts in `.latex-cache/`.
-  // The final deliverable stays in the project root as `main.pdf`.
+  // The final deliverables stay in the project root as `main.pdf` and `main.docx`.
   "latex-workshop.latex.outDir": ".latex-cache",
   "latex-workshop.latex.auxDir": ".latex-cache",
 
@@ -8,22 +8,22 @@
   "latex-workshop.latex.build.enableMagicComments": false,
   "latex-workshop.latex.build.forceRecipeUsage": true,
 
-  "latex-workshop.latex.recipe.default": "nsfc build (python)",
+  "latex-workshop.latex.recipe.default": "paper build (python)",
   "latex-workshop.latex.recipes": [
     {
-      "name": "nsfc build (python)",
+      "name": "paper build (python)",
       "tools": [
-        "nsfc-python-build"
+        "paper-python-build"
       ]
     }
   ],
   "latex-workshop.latex.tools": [
     {
-      "name": "nsfc-python-build",
+      "name": "paper-python-build",
       "command": "bash",
       "args": [
         "-lc",
-        "python3 scripts/nsfc_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
+        "python3 scripts/paper_build.py build --project-dir \"%DIR%\""
       ]
     }
   ],

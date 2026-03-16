@@ -36,6 +36,8 @@ ChineseResearchLaTeX/
 │   └── thesis-sysu-doctor/  # 中山大学博士论文示例项目
 ├── scripts/
 │   ├── install.py           # 统一 LaTeX 包安装器（支持远程执行）
+│   ├── sync_vscode_configs.py # 同步 projects/ 下固定的 VS Code 工作区与 LaTeX 配置
+│   ├── vscode/              # VS Code / LaTeX Workshop 固定配置模板
 │   ├── pack_release.py      # Release 资产打包与上传
 │   └── get-github-token.sh  # GitHub 辅助脚本
 ├── docs/
@@ -67,6 +69,8 @@ ChineseResearchLaTeX/
 - `packages/bensz-thesis/scripts/thesis_project_tool.py`：毕业论文 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
 - `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-nsfc`、`bensz-paper`、`bensz-thesis` 等 `packages/` 下的公共包
+- `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace` 与 `.vscode/settings.json`
+- `scripts/vscode/`：按 `nsfc / paper / thesis` 分型托管 VS Code / LaTeX Workshop 固定模板
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
@@ -122,6 +126,13 @@ ChineseResearchLaTeX/
 - 示例正文与公开演示资产优先维护 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`
 - 优先使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <项目路径>` 验证 PDF 输出
 - 涉及版式回归时，可使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py compare --project-dir <项目路径> --baseline-pdf <原始PDF>` 做像素级验收
+
+#### VS Code 工作区配置
+
+- `projects/` 下每个示例项目都必须提交一个与目录同名的 `*.code-workspace` 文件，以及 `.vscode/` 隐藏目录
+- `.code-workspace` 用于 VS Code 打开项目本身；`.vscode/settings.json` 负责把 LaTeX Workshop 固定到项目级 Python wrapper，不直接裸跑 `xelatex`
+- 固定模板统一托管在 `scripts/vscode/`，批量同步入口为 `python scripts/sync_vscode_configs.py`
+- 调整 VS Code / LaTeX Workshop 配置时，优先修改 `scripts/vscode/` 模板，再同步到各项目；不要只改单个项目导致配置漂移
 
 #### Skill 相关问题
 
@@ -325,6 +336,14 @@ skill_info:
 - 包含相关的起始行号，如 `path/filename.md#L42`
 - 使每个引用有独立路径，即使是同一文件
 
+### VS Code 工程文件
+
+- `projects/` 下每个项目必须包含 `<项目目录名>.code-workspace`
+- 同时必须包含 `.vscode/` 隐藏目录，至少提供 `.vscode/settings.json`
+- 默认应让 LaTeX Workshop 通过项目级 wrapper 脚本构建，并把中间文件隔离到 `.latex-cache/`
+- 固定模板统一维护在 `scripts/vscode/`；新增项目或调整模板后，使用 `python scripts/sync_vscode_configs.py` 同步
+- 普通用户本地开发时，默认建议直接用项目自带的 `*.code-workspace` 打开 VS Code，而不是裸开目录
+
 ### 变更边界
 
 - 仅修改与当前任务直接相关的文件
@@ -337,6 +356,7 @@ skill_info:
 - 变更 `packages/bensz-paper/` 时，不要把 Markdown 正文重新复制成项目内手写 `.tex` 正文；优先保持 `artifacts/source/` 为单一真相来源
 - 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径
 - 变更 `packages/bensz-paper/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-paper/README.md` 与 `projects/paper-sci-01/README.md`
+- 变更 `scripts/sync_vscode_configs.py` 或 `scripts/vscode/` 时，应同步检查根级 `README.md`、`projects/README.md`、`AGENTS.md` 与各项目落地的 `*.code-workspace` / `.vscode/settings.json`
 - 变更根目录 `scripts/pack_release.py` 时，应同步检查 Release 流程文档与 `CHANGELOG.md`
 
 ### 系统 Skill 保护

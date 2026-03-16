@@ -2,6 +2,11 @@
 
 `projects/` 目录存放的是各条产品线的示例项目与最薄的一层项目入口。它们面向的用户群体并不相同，建议先按你的写作场景选择版块，再进入具体项目。
 
+补充说明：
+
+- 每个示例项目都应自带一个与目录同名的 `*.code-workspace` 和 `.vscode/settings.json`
+- 本地使用 VS Code 时，建议直接打开该 `*.code-workspace`，让 LaTeX Workshop 自动走项目内置的构建 wrapper，而不是手工拼 `xelatex`
+
 ## 国自然（NSFC）
 
 适合人群：

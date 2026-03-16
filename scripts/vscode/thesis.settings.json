@@ -8,22 +8,22 @@
   "latex-workshop.latex.build.enableMagicComments": false,
   "latex-workshop.latex.build.forceRecipeUsage": true,
 
-  "latex-workshop.latex.recipe.default": "nsfc build (python)",
+  "latex-workshop.latex.recipe.default": "thesis build (python)",
   "latex-workshop.latex.recipes": [
     {
-      "name": "nsfc build (python)",
+      "name": "thesis build (python)",
       "tools": [
-        "nsfc-python-build"
+        "thesis-python-build"
       ]
     }
   ],
   "latex-workshop.latex.tools": [
     {
-      "name": "nsfc-python-build",
+      "name": "thesis-python-build",
       "command": "bash",
       "args": [
         "-lc",
-        "python3 scripts/nsfc_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
+        "python3 scripts/thesis_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
       ]
     }
   ],
