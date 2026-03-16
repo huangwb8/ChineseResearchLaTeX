@@ -13,6 +13,7 @@ SETTINGS_TEMPLATES = {
     "nsfc": TEMPLATES_DIR / "nsfc.settings.json",
     "paper": TEMPLATES_DIR / "paper.settings.json",
     "thesis": TEMPLATES_DIR / "thesis.settings.json",
+    "cv": TEMPLATES_DIR / "cv.settings.json",
 }
 
 
@@ -23,6 +24,8 @@ def infer_project_profile(project_name: str) -> str | None:
         return "paper"
     if project_name.startswith("thesis-"):
         return "thesis"
+    if project_name.startswith("cv-"):
+        return "cv"
     return None
 
 

@@ -1,0 +1,102 @@
+% !TEX program = xelatex
+
+%%%———————————————————————————————Environment
+
+% 需要 xelatex→bibtex→xelatex→xelatex 进行完全编译
+
+% Packages
+\documentclass{bensz-cv}
+\usepackage{graphicx}
+\usepackage{tabu}
+\usepackage{multirow}
+\usepackage{progressbar}
+\usepackage{academicons}
+\usepackage{NotoSerifCJKsc_external}
+\usepackage{linespacing_fix}
+
+% colors
+\definecolor{orcidlogocol}{HTML}{A6CE39}
+\definecolor{linkcol}{HTML}{3498DB}
+
+%%%———————————————————————————————Main
+\begin{document}
+\pagenumbering{gobble}
+
+%%%———————————————————————————————Basic information
+\Large{
+  \begin{tabu}{ c l r }
+   \multirow{5}{1in}{\includegraphics[width=0.80in]{assets/avatar.jpg}} & \scshape{佐佐木希 / Nozomi Sasaki} & {Branding~}\progressbar{0.95} \\
+    & \email{nozomi.sasaki.cv@example.com} & {Acting~}\progressbar{0.85} \\
+    & \phone{(+81) 90-1234-5678} & {Writing~}\progressbar{0.72}\\
+    & \href{https://orcid.org/0009-0000-2026-0101}{\textcolor{orcidlogocol}{\aiOrcid 0009-0000-2026-0101}} & {Public Talk~}\progressbar{0.70} \\
+    & \github[\textcolor{linkcol}{github.com/nozomi-sasaki-demo}]{https://github.com/nozomi-sasaki-demo} & {LaTeX~}\progressbar{0.68}
+  \end{tabu}
+}
+
+%%%———————————————————————————————Education
+\section{\faGraduationCap\ 教育背景}
+\datedsubsection{\textbf{Tokyo Visual Communication Institute}, Tokyo, Japan}{2012~\~{}~2014}
+\textit{Master of Arts} in Media Design and Narrative Communication
+\datedsubsection{\textbf{Akita Creative Studies College}, Akita, Japan}{2007~\~{}~2011}
+\textit{Bachelor of Arts} in Visual Communication
+
+
+%%%———————————————————————————————Experience
+\section{\faUsers\ 代表经历}
+
+\datedsubsection{\textbf{1.~跨媒体叙事作品集 Demo} \cite{DemoNarrative2026}}{Jan. 2024~\~{}~Present}
+\begin{itemize}
+  \item 围绕公开可分享的艺人案例素材，设计“履历叙事 + 视觉呈现 + 链接交付”的双语简历展示方案
+  \item 以统一的人设线索串联海报、短视频脚本、媒体介绍页与个人资料页，强调可迁移的个人品牌结构
+  \item 使用 LaTeX 维护 PDF 版式基线，同时保留后续扩展到网页与画册的内容骨架
+\end{itemize}
+
+\datedsubsection{\textbf{2.~公开资料编目与内容策划} \cite{DemoPortfolio2023, DemoInterview2022}}{May 2021~\~{}~Dec. 2023}
+\begin{itemize}
+  \item 整理公开采访、活动报道与视觉素材，构建按主题检索的演示资料库
+  \item 输出中英双语简介、活动时间线与项目说明，便于媒体包、简历页和合作提案复用
+  \item 将“人物简介 - 核心标签 - 代表作品 - 联系方式”固化为可复用模板，降低重复排版成本
+\end{itemize}
+
+\datedsubsection{\textbf{3.~知识分享与开源模板实践} \cite{DemoCommunity2025}}{Mar. 2022~\~{}~Present}
+\begin{itemize}
+  \item 维护面向个人作品集的 LaTeX 演示模板，验证中英文排版、引用列表与图像占位的一致性
+  \item 将公开头像、虚构履历与演示引用组合为可分享示例，避免真实简历内容外泄
+  \item 输出简短教程，说明如何替换头像、联系方式、教育经历和参考文献而不破坏版式
+\end{itemize}
+
+%%%———————————————————————————————Skills
+\section{\faCogs\ 技能概览}
+\subsection{Core strengths}
+\begin{itemize}[parsep=0.5ex]
+  \item 视觉叙事：擅长用简洁版式呈现人物主线、项目亮点与协作信息
+  \item 内容生产：可在中文与英文之间稳定切换，适合媒体包、简历和合作简介
+  \item 工具链：熟悉 LaTeX、Markdown、基础图像处理与轻量化版本管理
+\end{itemize}
+
+\subsection{Preferred collaboration modes}
+\begin{enumerate}[parsep=0.4ex]
+  \item 先用一页式资料对齐人物定位，再扩展成长版履历或项目介绍
+  \item 用统一资料源维护 PDF、网页和演示文稿，减少多份内容漂移
+  \item 重要版式改动先做像素级比对，确认标题、缩进和行距稳定后再发布
+\end{enumerate}
+
+\section{\faHeartO\ 亮点与里程碑}
+\datedline{完成双语公开演示 CV 套件，覆盖头像、教育、经历、技能、引用列表等主要样式}{2026}
+\datedline{建立“公开资料优先、隐私信息清零”的模板演示流程}{2025}
+\datedline{形成可复用的一页式人物介绍版面规范}{2024}
+
+%%%———————————————————————————————Miscellaneous
+\section{\faInfo\ 其他信息}
+\begin{itemize}[parsep=0.5ex]
+  \item 主页：\homepage[portfolio.nozomi-demo.example]{https://portfolio.nozomi-demo.example}
+  \item LinkedIn：\linkedinsquare[nozomi-sasaki-demo]{https://www.linkedin.com/in/nozomi-sasaki-demo}
+  \item GitHub：\github[github.com/nozomi-sasaki-demo]{https://github.com/nozomi-sasaki-demo}
+  \item 语言：日语（母语）、英语（工作交流）、中文（基础阅读）
+\end{itemize}
+
+%%%———————————————————————————————Reference
+\newpage
+\bibliographystyle{abbrv}
+\bibliography{references/mycite.bib, references/mycite2.bib}
+\end{document}

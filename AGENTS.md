@@ -1,6 +1,6 @@
 # 中国科研常用 LaTeX 模板集 - 项目指令
 
-本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 也已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-sysu-doctor/`）。
+本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-sysu-doctor/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
 
 一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。仓库主分支可以包含重构中的源码、脚本和技能，处理任务时要以“当前真实目录结构 + 当前脚本接口 + 当前 README/CHANGELOG”作为判断依据，而不是沿用旧版记忆。
 
@@ -12,6 +12,7 @@
 - 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
 - 维护 `packages/bensz-paper/` 公共包源码与 `projects/paper-sci-01/` 示例项目，支撑 SCI 论文写作模板的 PDF/DOCX 双输出
 - 维护 `packages/bensz-thesis/` 公共包源码与 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/` 示例项目，支撑硕士/博士论文模板的 PDF 输出与像素级验收
+- 维护 `packages/bensz-cv/` 公共包源码与 `projects/cv-01/` 示例项目，支撑中英文简历模板的 PDF 输出、像素级验收与去隐私公开演示
 - 维护 `packages/bensz-nsfc/scripts/` 下的 NSFC 官方脚本入口，包括安装、构建、校验与 TDS 打包
 - 维护根目录 `scripts/` 下的项目级脚本入口，例如 Release 打包与上传辅助脚本
 - 维护 `skills/` 目录中的项目级 AI Skills，支撑 NSFC 写作、评审、质控、迁移、出图等工作流
@@ -26,14 +27,16 @@ ChineseResearchLaTeX/
 │   │   ├── scripts/         # NSFC 安装/构建/校验/TDS 打包脚本
 │   │   └── ...
 │   ├── bensz-paper/         # SCI 论文公共包源码
-│   └── bensz-thesis/        # 毕业论文公共包源码
+│   ├── bensz-thesis/        # 毕业论文公共包源码
+│   └── bensz-cv/            # 学术简历公共包源码
 ├── projects/
 │   ├── NSFC_General/        # 面上项目薄封装 + 示例正文
 │   ├── NSFC_Local/          # 地区项目薄封装 + 示例正文
 │   ├── NSFC_Young/          # 青年项目薄封装 + 示例正文
 │   ├── paper-sci-01/        # SCI 论文示例项目（PDF + DOCX）
 │   ├── thesis-smu-master/   # 南方医科大学硕士论文示例项目
-│   └── thesis-sysu-doctor/  # 中山大学博士论文示例项目
+│   ├── thesis-sysu-doctor/  # 中山大学博士论文示例项目
+│   └── cv-01/               # 中英文简历示例项目（PDF）
 ├── scripts/
 │   ├── install.py           # 统一 LaTeX 包安装器（支持远程执行）
 │   ├── sync_vscode_configs.py # 同步 projects/ 下固定的 VS Code 工作区与 LaTeX 配置
@@ -60,17 +63,20 @@ ChineseResearchLaTeX/
 - `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、稳定实现
 - `packages/bensz-paper/`：SCI 论文共享样式、profile 与 PDF/DOCX 构建脚本
 - `packages/bensz-thesis/`：毕业论文共享样式、profile、统一 PDF 构建与像素比对脚本
+- `packages/bensz-cv/`：中英文简历共享样式、字体资源、统一 PDF 构建与像素比对脚本
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
 - `projects/paper-sci-01/`：SCI 论文示例正文、Markdown 单一真相来源、项目级 wrapper
 - `projects/thesis-smu-master/` / `projects/thesis-sysu-doctor/`：毕业论文示例正文、项目级 wrapper 与公开演示资产
+- `projects/cv-01/`：中英文简历示例正文、公开演示头像与项目级 wrapper
 - `packages/bensz-nsfc/scripts/install.py`：安装、锁定、同步、回退、状态检查
 - `packages/bensz-nsfc/scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
 - `packages/bensz-paper/scripts/paper_project_tool.py` / `packages/bensz-paper/scripts/manuscript_tool.py`：SCI 论文 PDF + DOCX 统一构建入口
 - `packages/bensz-thesis/scripts/thesis_project_tool.py`：毕业论文 PDF 构建、缓存清理与像素级 PDF 比对入口
+- `packages/bensz-cv/scripts/cv_project_tool.py`：中英文简历 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
-- `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-nsfc`、`bensz-paper`、`bensz-thesis` 等 `packages/` 下的公共包
+- `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包
 - `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace` 与 `.vscode/settings.json`
-- `scripts/vscode/`：按 `nsfc / paper / thesis` 分型托管 VS Code / LaTeX Workshop 固定模板
+- `scripts/vscode/`：按 `nsfc / paper / thesis / cv` 分型托管 VS Code / LaTeX Workshop 固定模板
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
@@ -105,7 +111,7 @@ ChineseResearchLaTeX/
 
 - 用户无需克隆仓库时，优先使用根级统一安装器（`scripts/install.py`）：
   - `curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py | python3 - install --packages bensz-nsfc --ref <tag>`
-  - 支持多包安装：`--packages bensz-nsfc,bensz-paper,bensz-thesis`
+  - 支持多包安装：`--packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv`
 - 在仓库内开发时，bensz-nsfc 包级安装优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
 - 用户项目版本锁相关问题优先围绕 `.nsfc-version`、`pin/sync/check/rollback` 工作流处理
 
@@ -127,6 +133,13 @@ ChineseResearchLaTeX/
 - 优先使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <项目路径>` 验证 PDF 输出
 - 涉及版式回归时，可使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py compare --project-dir <项目路径> --baseline-pdf <原始PDF>` 做像素级验收
 
+#### 简历模板问题
+
+- 公共样式、字体资源、统一构建与比对逻辑优先修改 `packages/bensz-cv/`
+- 示例正文与公开演示头像优先维护 `projects/cv-01/`
+- 优先使用 `python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects/cv-01 --variant all` 验证中英双语 PDF 输出
+- 若需与私有源简历验收版式回归，可使用 `python packages/bensz-cv/scripts/cv_project_tool.py compare --project-dir projects/cv-01 --variant <zh|en> --baseline-pdf <原始PDF>` 做像素级验收
+
 #### VS Code 工作区配置
 
 - `projects/` 下每个示例项目都必须提交一个与目录同名的 `*.code-workspace` 文件，以及 `.vscode/` 隐藏目录
@@ -145,6 +158,7 @@ ChineseResearchLaTeX/
 - NSFC 模板变更后，应优先通过官方构建链路完成验证
 - SCI 模板变更后，应优先通过 `paper_project_tool.py` 完成 PDF + DOCX 联合验证
 - 毕业论文模板变更后，应优先通过 `thesis_project_tool.py` 完成 PDF 构建验证；若涉及版式迁移，再执行像素级 PDF 比对
+- 简历模板变更后，应优先通过 `cv_project_tool.py` 完成中英双语 PDF 构建验证；若涉及样式迁移，再执行像素级 PDF 比对
 - 编译结果以“无错误”为底线；若仍有 warning，需明确说明是否为已有 warning 或新增 warning
 - 新增共享逻辑时，优先沉淀到公共包或脚本，不要把重复资源重新散落回各项目目录
 - 构建产物应符合当前约定：中间文件尽量隔离到 `.latex-cache/` 或各 Skill 的隐藏工作区
@@ -354,8 +368,10 @@ skill_info:
 - 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
 - 变更 `packages/bensz-paper/` 时，不要把 Markdown 正文重新复制成项目内手写 `.tex` 正文；优先保持 `artifacts/source/` 为单一真相来源
+- 变更 `packages/bensz-cv/` 时，不要把私有简历正文、私有头像或验收阶段的私有对比图重新留在 `projects/cv-01/`；公开示例必须保持去隐私状态
 - 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径
 - 变更 `packages/bensz-paper/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-paper/README.md` 与 `projects/paper-sci-01/README.md`
+- 变更 `packages/bensz-cv/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-cv/README.md` 与 `projects/cv-01/README.md`
 - 变更 `scripts/sync_vscode_configs.py` 或 `scripts/vscode/` 时，应同步检查根级 `README.md`、`projects/README.md`、`AGENTS.md` 与各项目落地的 `*.code-workspace` / `.vscode/settings.json`
 - 变更根目录 `scripts/pack_release.py` 时，应同步检查 Release 流程文档与 `CHANGELOG.md`
 
@@ -404,6 +420,12 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 
 默认假设：普通项目 zip 仍按“先安装 `bensz-nsfc` 公共包，再使用项目”的模式工作，AI 应优先通过上述路径发现策略定位脚本；只有在专门面向 Overleaf 的 Release zip 场景下，才允许把公共包运行时文件与共享资源一并打入压缩包，以保证上传后可直接编译。
 
+处理 `bensz-paper`、`bensz-thesis`、`bensz-cv` 安装问题时，优先使用根级统一安装器：
+
+```bash
+python3 scripts/install.py install --packages bensz-paper,bensz-thesis,bensz-cv
+```
+
 ### 编译规范
 
 **首选入口**：使用统一 Python 渲染器，而不是手写一串裸 `xelatex` 命令。
@@ -412,6 +434,7 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_General
 python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Local
 python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir projects/NSFC_Young
+python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects/cv-01 --variant all
 ```
 
 当前官方构建链路会自动执行：

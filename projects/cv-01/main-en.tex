@@ -1,0 +1,99 @@
+% !TEX program = xelatex
+
+%%%———————————————————————————————Environment
+
+% Use xelatex→bibtex→xelatex→xelatex for a complete build
+
+% Packages
+\documentclass{bensz-cv}
+\usepackage{graphicx}
+\usepackage{tabu}
+\usepackage{multirow}
+\usepackage{progressbar}
+\usepackage{academicons}
+
+% colors
+\definecolor{orcidlogocol}{HTML}{A6CE39}
+\definecolor{linkcol}{HTML}{3498DB}
+
+%%%———————————————————————————————Main
+\begin{document}
+\pagenumbering{gobble}
+
+%%%———————————————————————————————Basic information
+\Large{
+  \begin{tabu}{ c l r }
+   \multirow{5}{1in}{\includegraphics[width=0.85in]{assets/avatar.jpg}} & \scshape{Nozomi Sasaki} & {Branding~}\progressbar{0.95} \\
+    & \email{nozomi.sasaki.cv@example.com} & {Acting~}\progressbar{0.85} \\
+    & \phone{(+81) 90-1234-5678} &  {Writing~}\progressbar{0.72}\\
+    & \href{https://orcid.org/0009-0000-2026-0101}{\textcolor{orcidlogocol}{\aiOrcid 0009-0000-2026-0101}} & {Public Talk~}\progressbar{0.70} \\
+    & \github[\textcolor{linkcol}{github.com/nozomi-sasaki-demo}]{https://github.com/nozomi-sasaki-demo} & {LaTeX~}\progressbar{0.68}
+  \end{tabu}
+}
+
+%%%———————————————————————————————Education
+\section{\faGraduationCap\ Education}
+\datedsubsection{\textbf{Tokyo Visual Communication Institute}, Tokyo, Japan}{2012~\~{}~2014}
+\textit{Master of Arts} in Media Design and Narrative Communication
+\datedsubsection{\textbf{Akita Creative Studies College}, Akita, Japan}{2007~\~{}~2011}
+\textit{Bachelor of Arts} in Visual Communication
+
+
+%%%———————————————————————————————Experience
+\section{\faUsers\ Selected Experience}
+
+\datedsubsection{\textbf{\uppercase\expandafter{\romannumeral1}.~Cross-Media Narrative Portfolio Demo} \cite{DemoNarrative2026}}{Jan. 2024~\~{}~Present}
+\begin{itemize}
+  \item Designed a bilingual CV narrative built from public, shareable profile material rather than private resume data
+  \item Structured one consistent storyline across media notes, visual assets, collaboration briefs and printable profile pages
+  \item Maintained the PDF layout baseline in LaTeX while keeping the content model ready for web and deck reuse
+\end{itemize}
+
+\datedsubsection{\textbf{\uppercase\expandafter{\romannumeral2}.~Public Archive Curation and Editorial Planning} \cite{DemoPortfolio2023, DemoInterview2022}}{May 2021~\~{}~Dec. 2023}
+\begin{itemize}
+  \item Organized public interviews, event notes and visual materials into a searchable demo archive
+  \item Produced English and Chinese profile summaries, project blurbs and timeline notes for press-kit style reuse
+  \item Standardized the pattern of introduction, key labels, representative work and contact block into a reusable template
+\end{itemize}
+
+\datedsubsection{\textbf{\uppercase\expandafter{\romannumeral3}.~Open Knowledge and Template Practice} \cite{DemoCommunity2025}}{Mar. 2022~\~{}~Present}
+\begin{itemize}
+  \item Maintains a public LaTeX demo template for portfolio-style resumes with bilingual support
+  \item Validates avatar replacement, citation rendering and typography stability without exposing real personal records
+  \item Documents how to swap profile photo, education history, links and bibliography while preserving layout quality
+\end{itemize}
+
+%%%———————————————————————————————Skills
+\section{\faCogs\ Skills}
+\subsection{Core strengths}
+\begin{itemize}[parsep=0.5ex]
+  \item Visual storytelling for one-page profile documents
+  \item Bilingual copywriting for portfolio, media kit and collaboration contexts
+  \item LaTeX, Markdown and lightweight image-prep workflows for reproducible assets
+\end{itemize}
+
+\subsection{Preferred collaboration modes}
+\begin{enumerate}[parsep=0.4ex]
+  \item Align the public-facing positioning first, then expand into a longer CV or media profile
+  \item Keep PDF, web and presentation outputs tied to one content source whenever possible
+  \item Run pixel-level comparisons before releasing any major typography or spacing change
+\end{enumerate}
+
+\section{\faHeartO\ Highlights}
+\datedline{Delivered a bilingual public demo CV that exercises photo, skills, sections, citations and reference pages}{2026}
+\datedline{Established a privacy-first demo workflow for replacing real identities with openly shareable examples}{2025}
+\datedline{Turned a personal-style resume layout into a reusable public package plus project wrapper}{2024}
+
+\section{\faInfo\ Miscellaneous}
+\begin{itemize}[parsep=0.5ex]
+  \item Homepage: \homepage[portfolio.nozomi-demo.example]{https://portfolio.nozomi-demo.example}
+  \item LinkedIn: \linkedinsquare[nozomi-sasaki-demo]{https://www.linkedin.com/in/nozomi-sasaki-demo}
+  \item GitHub: \github[github.com/nozomi-sasaki-demo]{https://github.com/nozomi-sasaki-demo}
+  \item Languages: Japanese (native), English (working proficiency), Chinese (reading for collaboration)
+\end{itemize}
+
+%%%———————————————————————————————Reference
+\newpage
+\bibliographystyle{unsrt}
+\bibliography{references/mycite.bib, references/mycite2.bib}
+\end{document}

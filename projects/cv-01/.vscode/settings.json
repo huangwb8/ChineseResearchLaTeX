@@ -1,0 +1,63 @@
+{
+  // Keep ALL LaTeX build artifacts in `.latex-cache/`.
+  // The final deliverables stay in the project root as `main-zh.pdf` and `main-en.pdf`.
+  "latex-workshop.latex.outDir": ".latex-cache/%DOCFILE%",
+  "latex-workshop.latex.auxDir": ".latex-cache/%DOCFILE%",
+
+  // Prevent magic comments from bypassing the unified Python render pipeline.
+  "latex-workshop.latex.build.enableMagicComments": false,
+  "latex-workshop.latex.build.forceRecipeUsage": true,
+
+  "latex-workshop.latex.recipe.default": "cv build (python)",
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "cv build (python)",
+      "tools": [
+        "cv-python-build"
+      ]
+    }
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "cv-python-build",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "python3 scripts/cv_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
+      ]
+    }
+  ],
+
+  "latex-workshop.message.log.level": "info",
+  "latex-workshop.linting.chktex.enabled": false,
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoClean.run": "never",
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true,
+
+  "files.exclude": {
+    ".latex-cache/": true,
+    "*.aux": true,
+    "*.log": true,
+    "*.out": true,
+    "*.toc": true,
+    "*.lof": true,
+    "*.lot": true,
+    "*.bbl": true,
+    "*.blg": true,
+    "*.bcf": true,
+    "*.run.xml": true,
+    "*.nav": true,
+    "*.snm": true,
+    "*.vrb": true,
+    "*.fls": true,
+    "*.fdb_latexmk": true,
+    "*.synctex.gz": true,
+    "*.synctex(busy)": true,
+    "*.dvi": true,
+    "*.xdv": true
+  },
+  "files.watcherExclude": {
+    "**/.latex-cache/**": true
+  }
+}

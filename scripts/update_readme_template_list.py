@@ -38,12 +38,14 @@ CATEGORY_TITLES = {
     "nsfc": "NSFC 模板",
     "paper": "SCI 论文模板",
     "thesis": "毕业论文模板",
+    "cv": "简历模板",
 }
 
 CATEGORY_DESCRIPTIONS = {
     "nsfc": "当前主线，优先面向正式申报与 Overleaf 打包分发。",
     "paper": "公共包 + 示例项目已落地，支持 PDF / DOCX 双输出。",
     "thesis": "公共包 + 示例项目已落地，支持 PDF 输出与像素级验收。",
+    "cv": "公共包 + 示例项目已落地，支持中英文 PDF 输出与像素级验收。",
     "thesis-placeholder": "当前仅保留包级扩展位点；当仓库接入公开 thesis 示例项目后，这里会自动展示对应 Release 资产。",
 }
 
@@ -83,6 +85,28 @@ BASE_TEMPLATE_SPECS = (
 )
 
 
+def discover_cv_template_specs() -> tuple[TemplateSpec, ...]:
+    if not PROJECTS_DIR.exists():
+        return ()
+
+    cv_projects = sorted(
+        project_dir.name
+        for project_dir in PROJECTS_DIR.iterdir()
+        if project_dir.is_dir() and project_dir.name.startswith("cv-")
+    )
+    return tuple(
+        TemplateSpec(
+            category="cv",
+            display_name=project_name,
+            local_path=f"projects/{project_name}/",
+            asset_prefix=project_name,
+            release_note=f"{project_name} 中英文简历示例项目",
+            pending_note="示例项目已存在，等待最新 Release 资产。",
+        )
+        for project_name in cv_projects
+    )
+
+
 def discover_thesis_template_specs() -> tuple[TemplateSpec, ...]:
     if not PROJECTS_DIR.exists():
         return ()
@@ -118,7 +142,7 @@ def discover_thesis_template_specs() -> tuple[TemplateSpec, ...]:
 
 
 def get_template_specs() -> tuple[TemplateSpec, ...]:
-    return BASE_TEMPLATE_SPECS + discover_thesis_template_specs()
+    return BASE_TEMPLATE_SPECS + discover_thesis_template_specs() + discover_cv_template_specs()
 
 
 def get_category_description(category: str, specs: tuple[TemplateSpec, ...]) -> str:

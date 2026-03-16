@@ -18,6 +18,7 @@ pack_release.py - 打包 projects/ 下各子项目为 Release Assets
       1. NSFC 项目：补入 bensz-nsfc 运行时文件与 bensz-nsfc-runtime.def
       2. SCI 项目：补入 bensz-paper 运行时文件
       3. Thesis 项目：补入 bensz-thesis 运行时文件
+      4. CV 项目：补入 bensz-cv 运行时文件
   - 不存在的白名单项自动跳过（如 .vscode/ 不存在时不报错）
   - 不修改 projects/ 目录内任何文件
   - zip 生成操作仅在 tests/ 目录进行
@@ -44,6 +45,10 @@ PROJECT_INCLUDE_ITEMS = [
     "main.docx",
     "main.pdf",
     "main.tex",
+    "main-zh.pdf",
+    "main-en.pdf",
+    "main-zh.tex",
+    "main-en.tex",
     "README.md",
 ]
 REPO_ROOT = Path(__file__).parent.parent
@@ -51,6 +56,7 @@ PROJECTS_DIR = REPO_ROOT / "projects"
 NSFC_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-nsfc"
 PAPER_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-paper"
 THESIS_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-thesis"
+CV_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-cv"
 TESTS_DIR = REPO_ROOT / "tests"
 NSFC_PACKAGE_RUNTIME_ITEMS = [
     "bensz-nsfc-common.sty",
@@ -80,6 +86,21 @@ THESIS_PACKAGE_RUNTIME_ITEMS = [
     "bthesis-core.sty",
     "profiles",
     "styles",
+]
+CV_PACKAGE_RUNTIME_ITEMS = [
+    "bensz-cv.cls",
+    "resume.cls",
+    "fontawesome.sty",
+    "fontawesomesymbols-generic.tex",
+    "fontawesomesymbols-pdftex.tex",
+    "fontawesomesymbols-xeluatex.tex",
+    "linespacing_fix.sty",
+    "zh_CN-Adobefonts_external.sty",
+    "zh_CN-Adobefonts_internal.sty",
+    "NotoSansSC_external.sty",
+    "NotoSerifCJKsc_external.sty",
+    "fonts",
+    "profiles",
 ]
 SKIP_FILE_NAMES = {".DS_Store", "Thumbs.db"}
 SKIP_FILE_SUFFIXES = {".pyc", ".pyo"}
@@ -120,6 +141,8 @@ def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
 def detect_project_kind(project_dir: Path) -> str:
     if (project_dir / "references" / "meta.yaml").exists():
         return "paper"
+    if project_dir.name.startswith("cv-"):
+        return "cv"
     if project_dir.name.startswith("thesis-"):
         return "thesis"
     if (project_dir / "extraTex" / "@config.tex").exists() and project_dir.name.startswith("NSFC_"):
@@ -178,6 +201,18 @@ def add_thesis_runtime_bundle(zf: zipfile.ZipFile) -> None:
             zf.write(file, arcname=file.relative_to(THESIS_PACKAGE_DIR))
 
 
+def add_cv_runtime_bundle(zf: zipfile.ZipFile) -> None:
+    for item_name in CV_PACKAGE_RUNTIME_ITEMS:
+        item_path = CV_PACKAGE_DIR / item_name
+        if not item_path.exists():
+            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
+        if item_path.is_file():
+            zf.write(item_path, arcname=item_name)
+            continue
+        for file in iter_tree_files(item_path):
+            zf.write(file, arcname=file.relative_to(CV_PACKAGE_DIR))
+
+
 def get_git_tag() -> str:
     """从 git 获取最新 tag。"""
     result = subprocess.run(
@@ -214,6 +249,8 @@ def pack_project_overleaf(project_dir: Path, output_dir: Path, tag: str) -> Path
             add_paper_runtime_bundle(zf)
         elif project_kind == "thesis":
             add_thesis_runtime_bundle(zf)
+        elif project_kind == "cv":
+            add_cv_runtime_bundle(zf)
 
     return zip_path
 
@@ -244,6 +281,8 @@ def main() -> None:
         sys.exit(f"错误：未找到 SCI 公共包目录 {PAPER_PACKAGE_DIR}")
     if not THESIS_PACKAGE_DIR.exists():
         sys.exit(f"错误：未找到 Thesis 公共包目录 {THESIS_PACKAGE_DIR}")
+    if not CV_PACKAGE_DIR.exists():
+        sys.exit(f"错误：未找到 CV 公共包目录 {CV_PACKAGE_DIR}")
 
     projects = sorted(p for p in PROJECTS_DIR.iterdir() if p.is_dir())
     if not projects:

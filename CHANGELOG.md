@@ -10,6 +10,8 @@
 
 ### Added（新增）
 
+- 新增学术简历公共包 `packages/bensz-cv/`：引入 `bensz-cv.cls` / `resume.cls` 双入口、字体与图标运行时资源、统一构建/清理/像素级比较脚本 `cv_project_tool.py`、本地安装脚本与 TDS 打包脚本
+- 新增中英文简历示例项目 `projects/cv-01/`：基于只读源简历样式完成中英文 PDF 像素级验收后，再替换为公开可分享的去隐私演示内容；当前示例人物统一为“佐佐木希 / Nozomi Sasaki”，并配套项目级 wrapper、VS Code 工作区与演示参考文献
 - 新增 `scripts/vscode/` 与 `scripts/sync_vscode_configs.py`：统一托管 `projects/` 下各示例项目的 VS Code 工作区与 LaTeX Workshop 固定配置，并提供一键同步 / 漂移检查入口
 - 新增 `projects/README.md`：为 `projects/` 目录补充入口级导览，按“国自然 / SCI 论文 / 毕业论文”三大版块说明不同用户群体应进入的示例项目与具体用途
 - 新增毕业论文公共包 `packages/bensz-thesis/`：引入 `bensz-thesis.sty` 公共入口、`thesis-smu-master` / `thesis-sysu-doctor` profile、统一 PDF 构建脚本 `thesis_project_tool.py`、像素级 PDF 比对能力、包级校验脚本与安装/TDS 打包脚本
@@ -21,6 +23,8 @@
 
 ### Changed（变更）
 
+- 更新根级 `README.md`、`projects/README.md` 与 `AGENTS.md`：将产品线从“NSFC + SCI + 毕业论文”扩展为覆盖学术简历模板，补充 `bensz-cv` / `cv-01` 的目录结构、安装命令、官方构建入口与去隐私维护边界
+- 更新根级 `scripts/install.py`、`scripts/pack_release.py`、`scripts/update_readme_template_list.py` 与 `.github/workflows/update-template-list.yml`：统一安装器新增 `bensz-cv` 支持，Release 打包新增 `cv-*` 项目与 `bensz-cv` 运行时注入逻辑，README 模板列表生成脚本新增简历模板分类，模板列表同步工作流新增 `release.published` 触发
 - 统一 `projects/` 下各示例项目的 VS Code 工作区口径：保留每个项目各自的 `*.code-workspace` 入口，并为 `projects/paper-sci-01/`、`projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/` 新增 `.vscode/settings.json`，参照 NSFC 项目的 LaTeX Workshop 配置接入项目级 Python wrapper、固定 `.latex-cache/` 中间目录并隐藏根目录杂项产物；同时修正 3 个 NSFC 项目的 `.vscode/settings.json`，将已迁移的构建入口从失效的 `code/nsfc_build.py` 同步到真实存在的 `scripts/nsfc_build.py`
 - 更新 `AGENTS.md`、`README.md` 与 `projects/README.md`：将“每个示例项目都必须提供与目录同名的 `*.code-workspace` 与 `.vscode/settings.json`，并优先通过工作区文件打开 VS Code”明确固化为项目规则，同时补充 `python scripts/sync_vscode_configs.py` 作为官方同步入口
 - 优化根级 `README.md` 首页主标语的 HTML 展示样式：改为 GitHub README 稳定支持的 `h3 + strong` 简化标签组合，并保留人机协作氛围的表情元素，增强首屏强调效果同时避免 `style` 属性失效
@@ -41,6 +45,7 @@
 
 ### Fixed（修复）
 
+- 修复 `bensz-cv` 公共包安装场景下的字体路径解析问题：`resume.cls`、`fontawesome.sty` 与中文字体支持样式现改为基于包文件绝对路径解析字体资源，保证仓库开发模式、已安装 `TEXMFHOME` 模式与像素级验收模式的版式一致
 - 修复 `packages/bensz-thesis/scripts/thesis_project_tool.py` 的缓存复用与 BibTeX 兼容问题：构建前会重建 `.latex-cache/`，不会再把旧 PDF 误判为新输出；针对 `bibtex + cache` 的 thesis 项目，会自动同步 `references/`、`bibtex-style/` 到缓存并规范化 `aux` 中的 `.bst` 样式名，保证 `thesis-sysu-doctor` 可稳定编译
 - 修复毕业论文 profile 选择逻辑：`thesis-sysu-doctor` 不再误用默认 SMU profile，保证两套源样式在迁移验收阶段都能与原始私有 PDF 做到像素级一致
 - 更新根级 `.gitignore`：新增 Microsoft Office 临时文件忽略规则，避免 `~$*.docx`、`~$*.xlsx`、`~$*.pptx` 等锁文件误入版本控制

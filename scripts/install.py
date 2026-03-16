@@ -10,7 +10,7 @@ ChineseResearchLaTeX — 统一 LaTeX 包安装器
 
   # 多包安装
   curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \\
-    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis --ref v4.0.0
+    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv --ref v4.0.0
 
   # Windows PowerShell
   (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py" `
@@ -18,7 +18,7 @@ ChineseResearchLaTeX — 统一 LaTeX 包安装器
 
 也可本地执行（在仓库根目录）：
   python3 scripts/install.py install --packages bensz-nsfc --ref v4.0.0
-  python3 scripts/install.py install --packages bensz-nsfc,bensz-paper,bensz-thesis --ref v4.0.0
+  python3 scripts/install.py install --packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv --ref v4.0.0
   python3 scripts/install.py list
 """
 from __future__ import annotations
@@ -56,6 +56,12 @@ SUPPORTED_PACKAGES: dict[str, dict] = {
         "description": "毕业论文公共包——支持硕士/博士论文模板与像素级验收脚本",
         "install_mode": "texmfhome",
         "package_subdir": "packages/bensz-thesis",
+    },
+    "bensz-cv": {
+        "installer_path": None,
+        "description": "学术简历公共包——支持中英文简历模板与像素级验收脚本",
+        "install_mode": "texmfhome",
+        "package_subdir": "packages/bensz-cv",
     },
 }
 
@@ -141,7 +147,7 @@ def _install_bensz_nsfc(ref: str, extra: list[str]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# bensz-paper / bensz-thesis：下载快照并安装到 TEXMFHOME
+# bensz-paper / bensz-thesis / bensz-cv：下载快照并安装到 TEXMFHOME
 # ---------------------------------------------------------------------------
 
 def _copy_package_tree(pkg_src: Path, dest: Path) -> int:
@@ -213,7 +219,7 @@ def cmd_list() -> None:
     print()
     print("安装示例：")
     print("  curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \\")
-    print("    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis --ref v4.0.0")
+    print("    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv --ref v4.0.0")
 
 
 # ---------------------------------------------------------------------------
@@ -261,7 +267,7 @@ def main() -> None:
     inst.add_argument(
         "--packages",
         default="bensz-nsfc",
-        help="要安装的包，逗号分隔（默认：bensz-nsfc）。可选：bensz-nsfc,bensz-paper,bensz-thesis",
+        help="要安装的包，逗号分隔（默认：bensz-nsfc）。可选：bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv",
     )
     inst.add_argument(
         "--ref",
