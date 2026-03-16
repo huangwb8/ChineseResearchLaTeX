@@ -16,7 +16,11 @@
 <div align="center">
 
 
-打造最适合中国研究者的科研写作 AI Agent，让天下没有难写的国自然标书、SCI论文、毕业论文！我们备受关注：
+<p style="font-size: 1.45em; font-weight: 800; line-height: 1.7;">
+  🤝 打造最适合中国研究者的科研写作 AI Agent，让天下没有难写的国自然标书、SCI 论文、毕业论文！🚀
+</p>
+
+我们备受关注：
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date&theme=dark" />
