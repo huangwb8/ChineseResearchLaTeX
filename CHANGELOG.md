@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 [docs/bensz-fonts-support-model.md](docs/bensz-fonts-support-model.md)：系统说明 `bensz-fonts` 如何通过统一字体 API、依赖安装、`TEXINPUTS` 注入与 Overleaf/runtime 打包支撑 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv`
 - 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：在 GitHub Release 发布后自动将默认分支与最新 tag 推送到 Gitee 镜像仓库，并支持 `workflow_dispatch` 手动重试
 - 新增 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md)：整理 GitHub Release 后自动同步到 Gitee 的一次性配置、首次验证、日常使用与常见故障排查步骤
 - 新增共享字体基础包 `packages/bensz-fonts/`：集中托管原先分散在 `bensz-nsfc` 与 `bensz-cv` 中的字体文件，提供统一字体路径与字体配置 API，并补充本地安装脚本与 TDS 打包脚本
@@ -26,6 +27,8 @@
 
 ### Changed（变更）
 
+- 更新 `scripts/install.py`、`packages/bensz-nsfc/scripts/install.py` 与各包本地安装脚本：安装器现会在 macOS / Linux / Windows 下自动探测常见 TeX Live / MiKTeX 可执行目录，`TEXMFHOME` 解析新增环境变量与 `--texmfhome` 覆盖支持，TeX 文件数据库刷新补充 `texhash` 与 Windows `initexmf --update-fndb` 兜底
+- 更新根级 `README.md` 与 `AGENTS.md`：补充 Windows PowerShell 远程安装命令、`--texmfhome` 用法，并明确统一安装器现在支持三平台自动探测 TeX 命令
 - 更新根级 `README.md` 与 `AGENTS.md`：补充 Gitee 镜像自动同步工作流、所需 GitHub Secrets/Variables 与维护边界说明
 - 更新根级 `README.md`：在 Gitee 镜像自动同步说明中补充 `docs/gitee-sync-guide.md` 文档入口，方便维护者按步骤完成配置
 - 更新 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md) 与根级 `README.md`：明确 `GITEE_SSH_PRIVATE_KEY` 必须使用不带 passphrase 的 SSH 私钥，并补充 `ssh-add -` 提示输入口令时的排障说明
@@ -96,6 +99,7 @@
 
 ### Fixed（修复）
 
+- 修复根级 `scripts/install.py` 在安装 `bensz-fonts`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 后刷新 TeX 文件数据库的误报问题：现统一改为优先执行 `mktexlsr <TEXMFHOME>`，必要时回退到 `texhash <TEXMFHOME>`，避免在 macOS/TeX Live 环境下因裸跑 `mktexlsr` 触碰系统树权限而错误提示“请手动刷新”
 - 修复 NSFC 模板重构后的版式回归风险：通过 `tests/重构-v202603101512/` 下的基线 PDF、4 步编译结果、页面 JPG 与逐页视觉对比，确认在官方安装路径下 `NSFC_General`、`NSFC_Local`、`NSFC_Young` 的输出 PDF 与重构前基线外观一致
 - 修复共享资源重构后的编译稳定性风险：XeLaTeX 现在直接从公共包解析共享字体，BibTeX 通过公共包输出的绝对路径样式入口加载 `gbt7714-nsfc.bst`，避免删除项目内重复资源后出现找不到字体或 `bst` 的问题
 - 修复 `scripts/pack_release.py` 的 Release 资产污染问题：打包 `projects/paper-sci-01/` 时不再把 `scripts/__pycache__/`、`.pyc`、`.latex-cache/` 等缓存/中间文件写入普通 zip 与 Overleaf zip；同时在根级 `README.md` 明确补充该过滤规则，保证发布资产更干净、可复现

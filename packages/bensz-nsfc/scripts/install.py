@@ -35,6 +35,89 @@ def discover_repo_root() -> Path:
     return PACKAGE_DIR.parents[1]
 
 
+def unique_existing_dirs(paths: list[Path]) -> list[Path]:
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        expanded = path.expanduser()
+        try:
+            resolved = expanded.resolve()
+        except OSError:
+            resolved = expanded
+        key = str(resolved).lower() if platform.system() == "Windows" else str(resolved)
+        if key in seen or not resolved.exists() or not resolved.is_dir():
+            continue
+        seen.add(key)
+        unique.append(resolved)
+    return unique
+
+
+def candidate_tex_bin_dirs() -> list[Path]:
+    candidates: list[Path] = []
+    path_env = os.environ.get("PATH", "")
+    candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
+
+    for env_name in ("TEXBIN", "TEXLIVE_BIN", "MIKTEX_BIN"):
+        env_value = os.environ.get(env_name)
+        if env_value:
+            candidates.append(Path(env_value))
+
+    system = platform.system()
+    if system == "Darwin":
+        candidates.extend(
+            [
+                Path("/Library/TeX/texbin"),
+                Path("/usr/local/bin"),
+                Path("/opt/homebrew/bin"),
+            ]
+        )
+        texlive_root = Path("/usr/local/texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*/bin/*") if path.is_dir())
+    elif system == "Windows":
+        for root in (
+            os.environ.get("LOCALAPPDATA"),
+            os.environ.get("ProgramFiles"),
+            os.environ.get("ProgramFiles(x86)"),
+        ):
+            if not root:
+                continue
+            base = Path(root)
+            candidates.extend(
+                [
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin",
+                    base / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "MiKTeX" / "miktex" / "bin",
+                ]
+            )
+        system_drive = os.environ.get("SystemDrive", Path.home().drive or "C:")
+        texlive_root = Path(f"{system_drive}\\texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\win32") if path.is_dir())
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\windows") if path.is_dir())
+    else:
+        candidates.extend([Path("/usr/local/bin"), Path("/usr/bin"), Path("/bin")])
+        for root in (Path("/usr/local/texlive"), Path("/opt/texlive"), Path.home() / ".TinyTeX"):
+            if root.exists():
+                candidates.extend(path for path in root.glob("*/bin/*") if path.is_dir())
+
+    return unique_existing_dirs(candidates)
+
+
+def resolve_executable(*names: str) -> str | None:
+    for name in names:
+        resolved = shutil.which(name)
+        if resolved:
+            return resolved
+    for directory in candidate_tex_bin_dirs():
+        for name in names:
+            resolved = shutil.which(name, path=str(directory))
+            if resolved:
+                return resolved
+    return None
+
+
 class InstallError(RuntimeError):
     pass
 
@@ -57,8 +140,9 @@ def iter_mirrors(mirror: str) -> tuple[str, ...]:
 
 
 class NSFCPackageManager:
-    def __init__(self, cwd: Path | None = None) -> None:
+    def __init__(self, cwd: Path | None = None, texmfhome_override: str | None = None) -> None:
         self.cwd = (cwd or Path.cwd()).resolve()
+        self.texmfhome_override = texmfhome_override
         self.package_dir = PACKAGE_DIR
         self.repo_root = discover_repo_root()
         self.state_root = Path.home() / ".bensz-nsfc"
@@ -279,7 +363,14 @@ class NSFCPackageManager:
         return payload
 
     def _get_texmf_home(self) -> Path:
-        kpsewhich = shutil.which("kpsewhich")
+        if self.texmfhome_override:
+            return Path(self.texmfhome_override).expanduser().resolve()
+
+        env_value = os.environ.get("TEXMFHOME")
+        if env_value:
+            return Path(env_value).expanduser().resolve()
+
+        kpsewhich = resolve_executable("kpsewhich")
         if kpsewhich:
             result = subprocess.run(
                 [kpsewhich, "-var-value", "TEXMFHOME"],
@@ -292,19 +383,20 @@ class NSFCPackageManager:
                 return Path(value).expanduser()
 
         system = platform.system()
-        if system == "Windows":
-            return Path.home() / "texmf"
         if system == "Darwin":
             return Path.home() / "Library" / "texmf"
         return Path.home() / "texmf"
 
     def _refresh_texmf(self, texmf_home: Path) -> None:
         for command in ("mktexlsr", "texhash"):
-            executable = shutil.which(command)
+            executable = resolve_executable(command)
             if not executable:
                 continue
             subprocess.run([executable, str(texmf_home)], check=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             return
+        initexmf = resolve_executable("initexmf")
+        if initexmf:
+            subprocess.run([initexmf, "--update-fndb"], check=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
     def _target_install_dir(self) -> Path:
         return self._get_texmf_home() / "tex" / "latex" / PACKAGE_SLUG
@@ -665,6 +757,10 @@ class NSFCPackageManager:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="NSFC 公共包安装/切换/锁定工具")
+    parser.add_argument(
+        "--texmfhome",
+        help="覆盖 TEXMFHOME 安装目录；当 TeX 未加入 PATH 或需安装到自定义 texmf 树时使用",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     install_parser = subparsers.add_parser("install")
@@ -715,7 +811,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
-    manager = NSFCPackageManager()
+    manager = NSFCPackageManager(texmfhome_override=args.texmfhome)
 
     try:
         if args.command == "install":

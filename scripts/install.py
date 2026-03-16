@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -206,20 +207,148 @@ def _die(msg: str) -> None:
     sys.exit(1)
 
 
-def _texmfhome() -> Path:
+def _unique_existing_dirs(paths: list[Path]) -> list[Path]:
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        expanded = path.expanduser()
+        try:
+            resolved = expanded.resolve()
+        except OSError:
+            resolved = expanded
+        key = str(resolved).lower() if platform.system() == "Windows" else str(resolved)
+        if key in seen or not resolved.exists() or not resolved.is_dir():
+            continue
+        seen.add(key)
+        unique.append(resolved)
+    return unique
+
+
+def _candidate_tex_bin_dirs() -> list[Path]:
+    candidates: list[Path] = []
+    path_env = os.environ.get("PATH", "")
+    candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
+
+    for env_name in ("TEXBIN", "TEXLIVE_BIN", "MIKTEX_BIN"):
+        env_value = os.environ.get(env_name)
+        if env_value:
+            candidates.append(Path(env_value))
+
+    system = platform.system()
+    if system == "Darwin":
+        candidates.extend(
+            [
+                Path("/Library/TeX/texbin"),
+                Path("/usr/local/bin"),
+                Path("/opt/homebrew/bin"),
+            ]
+        )
+        texlive_root = Path("/usr/local/texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*/bin/*") if path.is_dir())
+    elif system == "Windows":
+        for root in (
+            os.environ.get("LOCALAPPDATA"),
+            os.environ.get("ProgramFiles"),
+            os.environ.get("ProgramFiles(x86)"),
+        ):
+            if not root:
+                continue
+            base = Path(root)
+            candidates.extend(
+                [
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin",
+                    base / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "MiKTeX" / "miktex" / "bin",
+                ]
+            )
+        system_drive = os.environ.get("SystemDrive", Path.home().drive or "C:")
+        texlive_root = Path(f"{system_drive}\\texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\win32") if path.is_dir())
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\windows") if path.is_dir())
+    else:
+        candidates.extend([Path("/usr/local/bin"), Path("/usr/bin"), Path("/bin")])
+        for root in (Path("/usr/local/texlive"), Path("/opt/texlive"), Path.home() / ".TinyTeX"):
+            if root.exists():
+                candidates.extend(path for path in root.glob("*/bin/*") if path.is_dir())
+
+    return _unique_existing_dirs(candidates)
+
+
+def _resolve_executable(*names: str) -> str | None:
+    for name in names:
+        resolved = shutil.which(name)
+        if resolved:
+            return resolved
+    for directory in _candidate_tex_bin_dirs():
+        for name in names:
+            resolved = shutil.which(name, path=str(directory))
+            if resolved:
+                return resolved
+    return None
+
+
+def _texmfhome(override: str | None = None) -> Path:
+    if override:
+        return Path(override).expanduser().resolve()
+    env_value = os.environ.get("TEXMFHOME")
+    if env_value:
+        return Path(env_value).expanduser().resolve()
     try:
+        kpsewhich = _resolve_executable("kpsewhich")
+        if not kpsewhich:
+            raise FileNotFoundError("kpsewhich not found")
         result = subprocess.run(
-            ["kpsewhich", "--var-value=TEXMFHOME"],
+            [kpsewhich, "--var-value=TEXMFHOME"],
             capture_output=True,
             text=True,
             check=True,
         )
         path = Path(result.stdout.strip())
         if path != Path(""):
-            return path
+            return path.expanduser().resolve()
     except (FileNotFoundError, subprocess.CalledProcessError):
         pass
+    if platform.system() == "Darwin":
+        return Path.home() / "Library" / "texmf"
     return Path.home() / "texmf"
+
+
+def _refresh_texmf(texmfhome: Path) -> tuple[str, str]:
+    attempted = False
+    for command in ("mktexlsr", "texhash"):
+        executable = _resolve_executable(command)
+        if not executable:
+            continue
+        attempted = True
+        try:
+            subprocess.run(
+                [executable, str(texmfhome)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return "ok", command
+        except subprocess.CalledProcessError:
+            continue
+    initexmf = _resolve_executable("initexmf")
+    if initexmf:
+        attempted = True
+        try:
+            subprocess.run(
+                [initexmf, "--update-fndb"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return "ok", "initexmf"
+        except subprocess.CalledProcessError:
+            pass
+    if attempted:
+        return "failed", ""
+    return "missing", ""
 
 
 def _locate_repo_root(extract_root: Path, package_name: str) -> Path:
@@ -230,7 +359,7 @@ def _locate_repo_root(extract_root: Path, package_name: str) -> Path:
     raise FileNotFoundError("快照中未找到仓库根目录")
 
 
-def _install_bensz_nsfc(ref: str, extra: list[str], mirror: str) -> None:
+def _install_bensz_nsfc(ref: str, extra: list[str], mirror: str, texmfhome: str | None = None) -> None:
     content = None
     chosen_repo = None
     for repo in iter_remote_repos(mirror):
@@ -255,7 +384,11 @@ def _install_bensz_nsfc(ref: str, extra: list[str], mirror: str) -> None:
         installer = temp_file.name
 
     try:
-        cmd = [sys.executable, installer, "install", "--ref", ref, "--mirror", mirror] + extra
+        cmd = [sys.executable, installer]
+        if texmfhome:
+            cmd.extend(["--texmfhome", texmfhome])
+        cmd.extend(["install", "--ref", ref, "--mirror", mirror])
+        cmd += extra
         print(f"  ▶ {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as exc:
@@ -304,11 +437,11 @@ def _download_repo_snapshot(package_name: str, ref: str, mirror: str) -> tuple[P
     _die(f"无法下载 {package_name}（ref={ref}, mirror={mirror}）。最后错误：{last_error}")
 
 
-def _install_texmf_package(package_name: str, ref: str, mirror: str) -> None:
+def _install_texmf_package(package_name: str, ref: str, mirror: str, texmfhome_override: str | None = None) -> None:
     print(f"  📥 下载仓库快照（{ref}）…")
     tmp_dir, pkg_src, actual_mirror = _download_repo_snapshot(package_name, ref, mirror)
     try:
-        texmfhome = _texmfhome()
+        texmfhome = _texmfhome(texmfhome_override)
         dest = texmfhome / "tex" / "latex" / package_name
         if dest.exists():
             shutil.rmtree(dest)
@@ -316,13 +449,13 @@ def _install_texmf_package(package_name: str, ref: str, mirror: str) -> None:
         copied = _copy_package_tree(pkg_src, dest)
 
         print(f"  ✔ 已从 {actual_mirror} 复制 {copied} 个文件到 {dest}")
-        try:
-            subprocess.run(["mktexlsr"], check=True, capture_output=True)
-            print("  ✔ mktexlsr 已刷新")
-        except FileNotFoundError:
-            print("  ℹ️  mktexlsr 未找到，请手动运行 `mktexlsr` 或 `texhash` 刷新 TeX 文件数据库")
-        except subprocess.CalledProcessError:
-            print("  ⚠️  mktexlsr 执行失败，请手动刷新 TeX 文件数据库")
+        refresh_status, refresh_command = _refresh_texmf(texmfhome)
+        if refresh_status == "ok":
+            print(f"  ✔ {refresh_command} 已刷新")
+        elif refresh_status == "missing":
+            print("  ℹ️  未找到 `mktexlsr` / `texhash` / `initexmf`，请手动刷新 TeX 文件数据库")
+        else:
+            print("  ⚠️  `mktexlsr` / `texhash` / `initexmf` 执行失败，请手动刷新 TeX 文件数据库")
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -341,7 +474,13 @@ def cmd_list() -> None:
     print("  python3 scripts/install.py install --packages bensz-paper --mirror gitee --ref v4.0.0")
 
 
-def cmd_install(packages: list[str], ref: str, extra: list[str], mirror: str) -> None:
+def cmd_install(
+    packages: list[str],
+    ref: str,
+    extra: list[str],
+    mirror: str,
+    texmfhome: str | None = None,
+) -> None:
     ordered_packages = resolve_requested_packages(packages)
     if ordered_packages != packages:
         print(f"ℹ️  自动补齐依赖后的安装顺序：{', '.join(ordered_packages)}")
@@ -353,9 +492,9 @@ def cmd_install(packages: list[str], ref: str, extra: list[str], mirror: str) ->
         print(f"{'=' * 50}")
 
         if info["install_mode"] == "delegate":
-            _install_bensz_nsfc(ref, extra, mirror)
+            _install_bensz_nsfc(ref, extra, mirror, texmfhome=texmfhome)
         elif info["install_mode"] == "texmfhome":
-            _install_texmf_package(pkg, ref, mirror)
+            _install_texmf_package(pkg, ref, mirror, texmfhome_override=texmfhome)
 
     print(f"\n{'=' * 50}")
     print("✅ 所有包安装完成！")
@@ -390,6 +529,10 @@ def main() -> None:
         help="下载镜像，默认 github；中国大陆可显式传 --mirror gitee",
     )
     inst.add_argument(
+        "--texmfhome",
+        help="覆盖 TEXMFHOME 安装目录；当 TeX 未加入 PATH 或需安装到自定义 texmf 树时使用",
+    )
+    inst.add_argument(
         "extra",
         nargs=argparse.REMAINDER,
         help="透传给子安装器的额外参数（仅 bensz-nsfc 有效）",
@@ -401,7 +544,7 @@ def main() -> None:
         cmd_list()
     elif args.command == "install":
         requested = [item.strip() for item in args.packages.split(",") if item.strip()]
-        cmd_install(requested, args.ref, args.extra or [], args.mirror)
+        cmd_install(requested, args.ref, args.extra or [], args.mirror, texmfhome=args.texmfhome)
     else:
         parser.print_help()
 

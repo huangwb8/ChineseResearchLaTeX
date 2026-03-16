@@ -116,8 +116,10 @@ ChineseResearchLaTeX/
 
 - 用户无需克隆仓库时，优先使用根级统一安装器（`scripts/install.py`）：
   - `curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py | python3 - install --packages bensz-nsfc --ref <tag>`
+  - Windows PowerShell 可使用：`(Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py' -UseBasicParsing).Content | py -3 - install --packages bensz-nsfc --ref <tag>`
   - 支持多包安装：`--packages bensz-fonts,bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv`
   - 中国大陆用户如需走镜像，可显式加 `--mirror gitee`
+  - 若 TeX 未加入 `PATH` 或需安装到自定义 texmf 树，可显式加 `--texmfhome <path>`
 - 在仓库内开发时，bensz-nsfc 包级安装优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
 - 用户项目版本锁相关问题优先围绕 `.nsfc-version`、`pin/sync/check/rollback` 工作流处理
 

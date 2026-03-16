@@ -25,6 +25,83 @@ PRIMARY_LAUNCHER = "bpaper"
 # Path resolution
 # ---------------------------------------------------------------------------
 
+
+def unique_existing_dirs(paths: list[Path]) -> list[Path]:
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        expanded = path.expanduser()
+        try:
+            resolved = expanded.resolve()
+        except OSError:
+            resolved = expanded
+        key = str(resolved).lower() if platform.system() == "Windows" else str(resolved)
+        if key in seen or not resolved.exists() or not resolved.is_dir():
+            continue
+        seen.add(key)
+        unique.append(resolved)
+    return unique
+
+
+def candidate_tex_bin_dirs() -> list[Path]:
+    candidates: list[Path] = []
+    path_env = os.environ.get("PATH", "")
+    candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
+
+    for env_name in ("TEXBIN", "TEXLIVE_BIN", "MIKTEX_BIN"):
+        env_value = os.environ.get(env_name)
+        if env_value:
+            candidates.append(Path(env_value))
+
+    system = platform.system()
+    if system == "Darwin":
+        candidates.extend([Path("/Library/TeX/texbin"), Path("/usr/local/bin"), Path("/opt/homebrew/bin")])
+        texlive_root = Path("/usr/local/texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*/bin/*") if path.is_dir())
+    elif system == "Windows":
+        for root in (
+            os.environ.get("LOCALAPPDATA"),
+            os.environ.get("ProgramFiles"),
+            os.environ.get("ProgramFiles(x86)"),
+        ):
+            if not root:
+                continue
+            base = Path(root)
+            candidates.extend(
+                [
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin",
+                    base / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "MiKTeX" / "miktex" / "bin",
+                ]
+            )
+        system_drive = os.environ.get("SystemDrive", Path.home().drive or "C:")
+        texlive_root = Path(f"{system_drive}\\texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\win32") if path.is_dir())
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\windows") if path.is_dir())
+    else:
+        candidates.extend([Path("/usr/local/bin"), Path("/usr/bin"), Path("/bin")])
+        for root in (Path("/usr/local/texlive"), Path("/opt/texlive"), Path.home() / ".TinyTeX"):
+            if root.exists():
+                candidates.extend(path for path in root.glob("*/bin/*") if path.is_dir())
+
+    return unique_existing_dirs(candidates)
+
+
+def resolve_executable(*names: str) -> str | None:
+    for name in names:
+        resolved = shutil.which(name)
+        if resolved:
+            return resolved
+    for directory in candidate_tex_bin_dirs():
+        for name in names:
+            resolved = shutil.which(name, path=str(directory))
+            if resolved:
+                return resolved
+    return None
+
 def find_package_source() -> Path:
     """Return the bensz-paper source directory."""
     # scripts/package/install.py -> scripts/package -> scripts -> pkg_root
@@ -45,14 +122,19 @@ def get_texmfhome(override: str | None = None) -> Path:
     if env_val:
         return Path(env_val).expanduser().resolve()
     try:
+        kpsewhich = resolve_executable("kpsewhich")
+        if not kpsewhich:
+            raise FileNotFoundError("kpsewhich not found")
         result = subprocess.run(
-            ["kpsewhich", "--var-value", "TEXMFHOME"],
+            [kpsewhich, "--var-value", "TEXMFHOME"],
             capture_output=True, text=True, timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
             return Path(result.stdout.strip()).expanduser().resolve()
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
+    if platform.system() == "Darwin":
+        return Path.home() / "Library" / "texmf"
     return Path.home() / "texmf"
 
 
@@ -77,17 +159,28 @@ def run_mktexlsr(texmfhome: Path, dry_run: bool) -> None:
     if dry_run:
         print(f"  [dry-run] mktexlsr {texmfhome}")
         return
-    if shutil.which("mktexlsr"):
+    for command in ("mktexlsr", "texhash"):
+        executable = resolve_executable(command)
+        if not executable:
+            continue
         try:
             subprocess.run(
-                ["mktexlsr", str(texmfhome)],
+                [executable, str(texmfhome)],
                 check=True, capture_output=True,
             )
-            print("✓ mktexlsr refreshed")
+            print(f"✓ {command} refreshed")
+            return
         except subprocess.CalledProcessError as exc:
-            print(f"  Warning: mktexlsr failed: {exc}")
-    else:
-        print("  Note: mktexlsr not found — run it manually if needed.")
+            print(f"  Warning: {command} failed: {exc}")
+    initexmf = resolve_executable("initexmf")
+    if initexmf:
+        try:
+            subprocess.run([initexmf, "--update-fndb"], check=True, capture_output=True)
+            print("✓ initexmf refreshed")
+            return
+        except subprocess.CalledProcessError as exc:
+            print(f"  Warning: initexmf failed: {exc}")
+    print("  Note: no TeX database refresh command was found — run it manually if needed.")
 
 
 def install_python_deps(dest: Path, dry_run: bool, skip: bool) -> None:
@@ -124,7 +217,20 @@ def install_launcher(dest: Path, bin_dir: Path, dry_run: bool) -> None:
             return
         bin_dir.mkdir(parents=True, exist_ok=True)
         launcher_dest.write_text(
-            f'@echo off\npython3 "{launcher_src}" %*\n', encoding="utf-8"
+            "\n".join(
+                [
+                    "@echo off",
+                    f'set "BPAPER_SCRIPT={launcher_src}"',
+                    "where py >nul 2>nul",
+                    "if %ERRORLEVEL% EQU 0 (",
+                    '  py -3 "%BPAPER_SCRIPT%" %*',
+                    "  exit /b %ERRORLEVEL%",
+                    ")",
+                    'python "%BPAPER_SCRIPT%" %*',
+                    "",
+                ]
+            ),
+            encoding="utf-8",
         )
     else:
         launcher_dest = bin_dir / PRIMARY_LAUNCHER
@@ -224,12 +330,15 @@ def do_install(args: argparse.Namespace) -> int:
         print("  bpaper --version")
         path_dirs = os.environ.get("PATH", "").split(os.pathsep)
         if str(bin_dir) not in path_dirs:
-            shell = os.environ.get("SHELL", "")
-            profile = "~/.zshrc" if "zsh" in shell else "~/.bashrc"
             print()
             print(f"  Note: {bin_dir} is not on PATH.")
-            print(f"  Add to {profile}:")
-            print(f'    export PATH="{bin_dir}:$PATH"')
+            if platform.system() == "Windows":
+                print("  Add it to your user PATH in System Settings, then reopen PowerShell.")
+            else:
+                shell = os.environ.get("SHELL", "")
+                profile = "~/.zshrc" if "zsh" in shell else "~/.bashrc"
+                print(f"  Add to {profile}:")
+                print(f'    export PATH="{bin_dir}:$PATH"')
     return 0
 
 
@@ -247,9 +356,10 @@ def do_status(args: argparse.Namespace) -> int:
     else:
         print(f"✗ Package NOT found : {dest}")
 
-    if shutil.which("kpsewhich"):
+    kpsewhich = resolve_executable("kpsewhich")
+    if kpsewhich:
         r = subprocess.run(
-            ["kpsewhich", f"{PACKAGE_NAME}.sty"],
+            [kpsewhich, f"{PACKAGE_NAME}.sty"],
             capture_output=True, text=True,
         )
         if r.returncode == 0 and r.stdout.strip():

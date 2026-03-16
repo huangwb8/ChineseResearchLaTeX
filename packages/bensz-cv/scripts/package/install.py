@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -12,6 +13,83 @@ PACKAGE_NAME = "bensz-cv"
 PACKAGE_SUBPATH = Path("tex") / "latex" / PACKAGE_NAME
 DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
+
+
+def unique_existing_dirs(paths: list[Path]) -> list[Path]:
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        expanded = path.expanduser()
+        try:
+            resolved = expanded.resolve()
+        except OSError:
+            resolved = expanded
+        key = str(resolved).lower() if platform.system() == "Windows" else str(resolved)
+        if key in seen or not resolved.exists() or not resolved.is_dir():
+            continue
+        seen.add(key)
+        unique.append(resolved)
+    return unique
+
+
+def candidate_tex_bin_dirs() -> list[Path]:
+    candidates: list[Path] = []
+    path_env = os.environ.get("PATH", "")
+    candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
+
+    for env_name in ("TEXBIN", "TEXLIVE_BIN", "MIKTEX_BIN"):
+        env_value = os.environ.get(env_name)
+        if env_value:
+            candidates.append(Path(env_value))
+
+    system = platform.system()
+    if system == "Darwin":
+        candidates.extend([Path("/Library/TeX/texbin"), Path("/usr/local/bin"), Path("/opt/homebrew/bin")])
+        texlive_root = Path("/usr/local/texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*/bin/*") if path.is_dir())
+    elif system == "Windows":
+        for root in (
+            os.environ.get("LOCALAPPDATA"),
+            os.environ.get("ProgramFiles"),
+            os.environ.get("ProgramFiles(x86)"),
+        ):
+            if not root:
+                continue
+            base = Path(root)
+            candidates.extend(
+                [
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "Programs" / "MiKTeX" / "miktex" / "bin",
+                    base / "MiKTeX" / "miktex" / "bin" / "x64",
+                    base / "MiKTeX" / "miktex" / "bin",
+                ]
+            )
+        system_drive = os.environ.get("SystemDrive", Path.home().drive or "C:")
+        texlive_root = Path(f"{system_drive}\\texlive")
+        if texlive_root.exists():
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\win32") if path.is_dir())
+            candidates.extend(path for path in texlive_root.glob("*\\bin\\windows") if path.is_dir())
+    else:
+        candidates.extend([Path("/usr/local/bin"), Path("/usr/bin"), Path("/bin")])
+        for root in (Path("/usr/local/texlive"), Path("/opt/texlive"), Path.home() / ".TinyTeX"):
+            if root.exists():
+                candidates.extend(path for path in root.glob("*/bin/*") if path.is_dir())
+
+    return unique_existing_dirs(candidates)
+
+
+def resolve_executable(*names: str) -> str | None:
+    for name in names:
+        resolved = shutil.which(name)
+        if resolved:
+            return resolved
+    for directory in candidate_tex_bin_dirs():
+        for name in names:
+            resolved = shutil.which(name, path=str(directory))
+            if resolved:
+                return resolved
+    return None
 
 
 def find_package_source() -> Path:
@@ -28,8 +106,11 @@ def get_texmfhome(override: str | None = None) -> Path:
     if env_val:
         return Path(env_val).expanduser().resolve()
     try:
+        kpsewhich = resolve_executable("kpsewhich")
+        if not kpsewhich:
+            raise FileNotFoundError("kpsewhich not found")
         result = subprocess.run(
-            ["kpsewhich", "--var-value", "TEXMFHOME"],
+            [kpsewhich, "--var-value", "TEXMFHOME"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -39,6 +120,8 @@ def get_texmfhome(override: str | None = None) -> Path:
             return Path(result.stdout.strip()).expanduser().resolve()
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
+    if platform.system() == "Darwin":
+        return Path.home() / "Library" / "texmf"
     return Path.home() / "texmf"
 
 
@@ -46,8 +129,14 @@ def run_mktexlsr(texmfhome: Path, dry_run: bool) -> None:
     if dry_run:
         print(f"  [dry-run] mktexlsr {texmfhome}")
         return
-    if shutil.which("mktexlsr"):
-        subprocess.run(["mktexlsr", str(texmfhome)], check=False, capture_output=True)
+    for command in ("mktexlsr", "texhash"):
+        executable = resolve_executable(command)
+        if executable:
+            subprocess.run([executable, str(texmfhome)], check=False, capture_output=True)
+            return
+    initexmf = resolve_executable("initexmf")
+    if initexmf:
+        subprocess.run([initexmf, "--update-fndb"], check=False, capture_output=True)
 
 
 def install_tree(src: Path, dest: Path, dry_run: bool) -> None:
@@ -107,9 +196,10 @@ def do_status(args: argparse.Namespace) -> int:
     print()
     print(f"Package dir: {dest}")
     print(f"Exists     : {'yes' if dest.exists() else 'no'}")
-    if shutil.which("kpsewhich"):
+    kpsewhich = resolve_executable("kpsewhich")
+    if kpsewhich:
         result = subprocess.run(
-            ["kpsewhich", f"{PACKAGE_NAME}.cls"],
+            [kpsewhich, f"{PACKAGE_NAME}.cls"],
             capture_output=True,
             text=True,
             check=False,
