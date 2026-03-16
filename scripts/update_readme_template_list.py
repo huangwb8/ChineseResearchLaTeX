@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 README_PATH = REPO_ROOT / "README.md"
+PROJECTS_DIR = REPO_ROOT / "projects"
 DEFAULT_REPO = "huangwb8/ChineseResearchLaTeX"
 START_MARKER = "<!-- TEMPLATE-LIST:START -->"
 END_MARKER = "<!-- TEMPLATE-LIST:END -->"
@@ -42,10 +43,11 @@ CATEGORY_TITLES = {
 CATEGORY_DESCRIPTIONS = {
     "nsfc": "当前主线，优先面向正式申报与 Overleaf 打包分发。",
     "paper": "公共包 + 示例项目已落地，支持 PDF / DOCX 双输出。",
-    "thesis": "当前仍处于包级预留阶段，后续有公开示例时会自动接入最新 Release 资产。",
+    "thesis": "公共包 + 示例项目已落地，支持 PDF 输出与像素级验收。",
+    "thesis-placeholder": "当前仅保留包级扩展位点；当仓库接入公开 thesis 示例项目后，这里会自动展示对应 Release 资产。",
 }
 
-TEMPLATE_SPECS = (
+BASE_TEMPLATE_SPECS = (
     TemplateSpec(
         category="nsfc",
         display_name="青年 C",
@@ -78,15 +80,53 @@ TEMPLATE_SPECS = (
         release_note="首个公开 SCI 示例项目",
         pending_note="示例项目已存在，等待最新 Release 资产。",
     ),
-    TemplateSpec(
-        category="thesis",
-        display_name="bensz-thesis",
-        local_path="packages/bensz-thesis/",
-        asset_prefix=None,
-        release_note="毕业论文公共包位点",
-        pending_note="当前仅保留包级扩展位点，尚无公开示例与 Release 资产。",
-    ),
 )
+
+
+def discover_thesis_template_specs() -> tuple[TemplateSpec, ...]:
+    if not PROJECTS_DIR.exists():
+        return ()
+
+    thesis_projects = sorted(
+        project_dir.name
+        for project_dir in PROJECTS_DIR.iterdir()
+        if project_dir.is_dir() and project_dir.name.startswith("thesis-")
+    )
+    if not thesis_projects:
+        return (
+            TemplateSpec(
+                category="thesis",
+                display_name="bensz-thesis",
+                local_path="packages/bensz-thesis/",
+                asset_prefix=None,
+                release_note="毕业论文公共包位点",
+                pending_note="当前仅保留包级扩展位点，尚无公开示例与 Release 资产。",
+            ),
+        )
+
+    return tuple(
+        TemplateSpec(
+            category="thesis",
+            display_name=project_name,
+            local_path=f"projects/{project_name}/",
+            asset_prefix=project_name,
+            release_note=f"{project_name} 毕业论文示例项目",
+            pending_note="示例项目已存在，等待最新 Release 资产。",
+        )
+        for project_name in thesis_projects
+    )
+
+
+def get_template_specs() -> tuple[TemplateSpec, ...]:
+    return BASE_TEMPLATE_SPECS + discover_thesis_template_specs()
+
+
+def get_category_description(category: str, specs: tuple[TemplateSpec, ...]) -> str:
+    if category != "thesis":
+        return CATEGORY_DESCRIPTIONS[category]
+    if any(spec.asset_prefix for spec in specs):
+        return CATEGORY_DESCRIPTIONS["thesis"]
+    return CATEGORY_DESCRIPTIONS["thesis-placeholder"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -175,13 +215,12 @@ def render_category_table(
     category: str,
     specs: tuple[TemplateSpec, ...],
     tag_name: str,
-    published_label: str,
     assets_by_name: dict[str, dict[str, Any]],
 ) -> str:
     lines = [
         f"### {CATEGORY_TITLES[category]}",
         "",
-        f"> {CATEGORY_DESCRIPTIONS[category]}",
+        f"> {get_category_description(category, specs)}",
         "",
         "| 模板 | 状态 | 标准包 | Overleaf 包 |",
         "|------|------|--------|-------------|",
@@ -189,7 +228,6 @@ def render_category_table(
 
     for spec in specs:
         standard_asset, overleaf_asset = resolve_assets(spec, tag_name, assets_by_name)
-        has_asset = bool(standard_asset or overleaf_asset)
         template_link = f"[{spec.display_name}]({spec.local_path})"
         lines.append(
             "| "
@@ -212,6 +250,7 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
     assets_by_name = build_asset_lookup(release)
     tag_name = release["tag_name"]
     published_label = format_release_time(release["published_at"])
+    template_specs = get_template_specs()
     sections = [
         "<!-- 由 scripts/update_readme_template_list.py 自动生成，请勿手动编辑。 -->",
         (
@@ -225,13 +264,12 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
     ]
 
     for category in ("nsfc", "paper", "thesis"):
-        category_specs = tuple(spec for spec in TEMPLATE_SPECS if spec.category == category)
+        category_specs = tuple(spec for spec in template_specs if spec.category == category)
         sections.append(
             render_category_table(
                 category=category,
                 specs=category_specs,
                 tag_name=tag_name,
-                published_label=published_label,
                 assets_by_name=assets_by_name,
             )
         )

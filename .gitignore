@@ -204,3 +204,6 @@ test.md
 skills/*/plans/
 skills/*/tests/
 /tests/
+!/tests/
+/tests/*
+!/tests/test_update_readme_template_list.py
