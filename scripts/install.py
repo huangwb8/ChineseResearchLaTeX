@@ -41,6 +41,15 @@ REPO_OWNER = "huangwb8"
 REPO_NAME = "ChineseResearchLaTeX"
 
 
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 @dataclass(frozen=True)
 class RemoteRepo:
     name: str
@@ -502,6 +511,7 @@ def cmd_install(
 
 
 def main() -> None:
+    configure_windows_stdio_utf8()
     parser = argparse.ArgumentParser(
         description="ChineseResearchLaTeX 统一 LaTeX 包安装器",
         formatter_class=argparse.RawDescriptionHelpFormatter,

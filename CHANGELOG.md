@@ -27,6 +27,7 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-nsfc/scripts/nsfc_project_tool.py`、`packages/bensz-paper/scripts/manuscript_tool.py`、`packages/bensz-paper/scripts/fix_docx_spacing.py`、`packages/bensz-paper/scripts/package/install.py`、`packages/bensz-paper/scripts/package/build_tds_zip.py`、`packages/bensz-thesis/scripts/thesis_project_tool.py`、`packages/bensz-cv/scripts/cv_project_tool.py`、`scripts/install.py` 与 `scripts/pack_release.py`：在 Windows CLI 入口启动时主动将 `stdout/stderr` 切换为 UTF-8，避免默认 GBK 控制台在输出 `✓ / ✗ / ⚠️ / ❌` 等 Unicode 状态符号时触发 `UnicodeEncodeError`
 - 更新 `scripts/vscode/` 模板、`scripts/sync_vscode_configs.py`、根级 `README.md`、`projects/README.md` 与 `AGENTS.md`：VS Code / LaTeX Workshop 固定配置不再依赖 `bash -lc "python3 ..."`，改为通过 `texlua` 调用项目级 `scripts/latex_workshop_build.lua` 自动寻找可用 Python 解释器并转调 `scripts/*_build.py`；同步后的 `projects/*/.vscode/settings.json` 现默认兼容 macOS / Linux / Windows 三平台
 - 更新根级 `README.md` 与 `AGENTS.md`：将 Windows PowerShell 远程安装示例从固定 `py -3` 调整为更稳妥的 `python -`，并补充“`No installed python found!` 多为 Python Launcher 缺失或 Python 未正确安装”的排障说明
 - 更新根级 `README.md`：将首页定位从“三条写作主线”扩展为真正覆盖“NSFC / SCI / 毕业论文 / 学术简历”四条产品线，并在保持首页简洁的前提下增强 `bensz-cv` / `cv-01` 的可见性；更具体的包级与模板级使用说明继续下沉到各自 README 维护

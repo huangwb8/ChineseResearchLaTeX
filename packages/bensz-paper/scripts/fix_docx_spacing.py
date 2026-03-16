@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import sys
 from pathlib import Path
 from docx import Document
 from docx.shared import Pt
@@ -43,6 +44,15 @@ ABSTRACT_HEADING = "Abstract"
 REFERENCES_HEADING = "References"
 # Section headings whose body paragraphs should all be flush left (no first-line indent)
 NO_INDENT_SECTIONS = {ABSTRACT_HEADING, "Figure legends", "Supplementary materials"}
+
+
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def is_project_root(path: Path) -> bool:
@@ -252,6 +262,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     """主函数。"""
+    configure_windows_stdio_utf8()
     args = parse_args()
     if args.docx is not None:
         docx_path = args.docx.expanduser().resolve()

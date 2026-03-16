@@ -109,6 +109,15 @@ SKIP_FILE_SUFFIXES = {".pyc", ".pyo"}
 SKIP_DIR_NAMES = {"__pycache__", ".latex-cache", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 
 
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def should_skip_path(path: Path) -> bool:
     if path.name in SKIP_FILE_NAMES:
         return True
@@ -350,6 +359,7 @@ def upload_asset(tag: str, zip_path: Path) -> None:
 
 
 def main() -> None:
+    configure_windows_stdio_utf8()
     parser = argparse.ArgumentParser(description="打包 Release Assets")
     parser.add_argument("--tag", help="版本 tag（如 v3.3.0），省略则自动从 git 获取")
     parser.add_argument("--upload", action="store_true", help="打包后上传到 GitHub Release")

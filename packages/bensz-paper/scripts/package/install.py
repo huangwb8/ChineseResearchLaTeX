@@ -21,6 +21,15 @@ EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 PRIMARY_LAUNCHER = "bpaper"
 
 
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 # ---------------------------------------------------------------------------
 # Path resolution
 # ---------------------------------------------------------------------------
@@ -453,6 +462,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    configure_windows_stdio_utf8()
     args = parse_args()
     if args.status:
         sys.exit(do_status(args))

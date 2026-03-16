@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -50,6 +51,15 @@ def run_cmd(args: list[str], cwd: Path | None = None, input_text: str | None = N
         check=True,
     )
     return result.stdout
+
+
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def run_best_effort(
@@ -599,6 +609,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    configure_windows_stdio_utf8()
     args = parse_args()
     if args.command == "build":
         project_dir = resolve_project_dir(args.project_dir)

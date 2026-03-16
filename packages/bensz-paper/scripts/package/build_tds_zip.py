@@ -6,10 +6,20 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import zipfile
 from pathlib import Path
 
 DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
+
+
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 def looks_like_distribution_root(path: Path) -> bool:
     repo_package = path / "packages" / "bensz-paper"
@@ -114,6 +124,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    configure_windows_stdio_utf8()
     args = parse_args()
     project_dir = find_distribution_root(args.project_dir)
     output = args.output or project_dir / 'dist' / 'bensz-paper.tds.zip'

@@ -51,6 +51,15 @@ class BuildError(RuntimeError):
     pass
 
 
+def configure_windows_stdio_utf8() -> None:
+    if sys.platform != "win32":
+        return
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def is_project_root(path: Path) -> bool:
     return all((path / marker).exists() for marker in PROJECT_ROOT_MARKERS)
 
@@ -295,6 +304,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    configure_windows_stdio_utf8()
     args = parse_args()
     project_dir = resolve_project_dir(getattr(args, "project_dir", None))
 
