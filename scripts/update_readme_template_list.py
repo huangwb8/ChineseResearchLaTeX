@@ -287,8 +287,10 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
         "",
     ]
 
-    for category in ("nsfc", "paper", "thesis"):
+    for category in ("nsfc", "paper", "thesis", "cv"):
         category_specs = tuple(spec for spec in template_specs if spec.category == category)
+        if not category_specs:
+            continue
         sections.append(
             render_category_table(
                 category=category,
