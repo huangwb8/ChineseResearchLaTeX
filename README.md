@@ -245,14 +245,16 @@ curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/
 
 ```powershell
 (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py' `
-  -UseBasicParsing).Content | py -3 - install --packages bensz-nsfc
+  -UseBasicParsing).Content | python - install --packages bensz-nsfc
 ```
+
+如果你的 Windows 安装了官方 Python Launcher，也可以把上面的 `python -` 换成 `py -3 -`。若直接提示 `No installed python found!`，通常说明当前机器没有可用的 `py` 启动器，或 Python 尚未正确安装到命令行环境。
 
 如需显式覆盖安装目录，可参考：
 
 ```powershell
 (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py' `
-  -UseBasicParsing).Content | py -3 - install --packages bensz-nsfc --texmfhome "$HOME\\texmf"
+  -UseBasicParsing).Content | python - install --packages bensz-nsfc --texmfhome "$HOME\\texmf"
 ```
 
 查看所有支持的包：
