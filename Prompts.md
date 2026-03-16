@@ -2,7 +2,7 @@
 
 ---
 
-创建tag v4.0.1 ； /git-commit ;   /git-publish-release
+创建tag v4.0.4 ； /git-commit ;   /git-publish-release
 
 # 改进
 

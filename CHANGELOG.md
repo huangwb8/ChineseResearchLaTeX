@@ -27,7 +27,7 @@
 
 ### Changed（变更）
 
-- 更新根级 `README.md`：将首页定位从“三条写作主线”扩展为真正覆盖“NSFC / SCI / 毕业论文 / 学术简历”四条产品线，新增“当前已落地的四条产品线”与“怎么选模板”两节，并补充 `bensz-cv` / `cv-01` 的设计价值、适用场景与常用构建命令，增强简历产品线在首页的可见性与可理解性
+- 更新根级 `README.md`：将首页定位从“三条写作主线”扩展为真正覆盖“NSFC / SCI / 毕业论文 / 学术简历”四条产品线，并在保持首页简洁的前提下增强 `bensz-cv` / `cv-01` 的可见性；更具体的包级与模板级使用说明继续下沉到各自 README 维护
 - 更新 `scripts/install.py`、`packages/bensz-nsfc/scripts/install.py` 与各包本地安装脚本：安装器现会在 macOS / Linux / Windows 下自动探测常见 TeX Live / MiKTeX 可执行目录，`TEXMFHOME` 解析新增环境变量与 `--texmfhome` 覆盖支持，TeX 文件数据库刷新补充 `texhash` 与 Windows `initexmf --update-fndb` 兜底
 - 更新根级 `README.md` 与 `AGENTS.md`：补充 Windows PowerShell 远程安装命令、`--texmfhome` 用法，并明确统一安装器现在支持三平台自动探测 TeX 命令
 - 更新根级 `README.md` 与 `AGENTS.md`：补充 Gitee 镜像自动同步工作流、所需 GitHub Secrets/Variables 与维护边界说明
