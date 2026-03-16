@@ -19,7 +19,7 @@
 
 ### Changed（变更）
 
-- 优化根级 `README.md` 首页主标语的 HTML 展示样式：进一步提高字号与字重，并保留人机协作氛围的表情元素，增强首页首屏视觉强调效果
+- 优化根级 `README.md` 首页主标语的 HTML 展示样式：改为 GitHub README 稳定支持的 `h3 + strong` 简化标签组合，并保留人机协作氛围的表情元素，增强首屏强调效果同时避免 `style` 属性失效
 - 更新 `AGENTS.md` 与 `CLAUDE.md` 的 Release 发布约束：将 `python scripts/pack_release.py --tag <tag> --upload` 明确强化为 GitHub Release 场景下默认不可省略的必做步骤；未执行成功前不得表述为“发布完成”，且最终答复必须显式交代 Assets 上传状态
 - 更新根级 `README.md` 的项目愿景与概览口径：首页标语从单一“国自然标书”扩展为覆盖中国科研 LaTeX 文档整体场景，并将项目定位同步修正为支持国自然标书、SCI 论文、毕业论文等多条写作主线
 - 优化 `scripts/update_readme_template_list.py` 的 thesis 模板识别逻辑：README 模板列表改为优先从 `projects/thesis-*` 自动发现毕业论文示例项目，并按真实 Release 资产名称生成标准包 / Overleaf 包下载链接；不再把已落地的 thesis 产品线误显示为包级预留位点；同时调整根级 `.gitignore`，仅放行该链路的回归测试文件以避免 `tests/` 目录整体忽略导致测试丢失

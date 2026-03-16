@@ -16,9 +16,7 @@
 <div align="center">
 
 
-<p style="font-size: 1.8em; font-weight: 900; line-height: 1.75;">
-  🤝 打造最适合中国研究者的科研写作 AI Agent，让天下没有难写的国自然标书、SCI 论文、毕业论文！🚀
-</p>
+<h3><strong>🤝 打造最适合中国研究者的科研写作 AI Agent，让天下没有难写的国自然标书、SCI 论文、毕业论文！🚀</strong></h3>
 
 我们备受关注：
 
