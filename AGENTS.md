@@ -78,9 +78,11 @@ ChineseResearchLaTeX/
 - `packages/bensz-cv/scripts/cv_project_tool.py`：中英文简历 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
 - `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-fonts`、`bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包，并支持 `--mirror gitee`
+- `scripts/sync_gitee_mirror.py`：将默认分支与 release tag 从 GitHub 同步推送到 Gitee 镜像仓库的官方脚本
 - `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace` 与 `.vscode/settings.json`
 - `scripts/vscode/`：按 `nsfc / paper / thesis / cv` 分型托管 VS Code / LaTeX Workshop 固定模板
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
+- `.github/workflows/sync-gitee-mirror.yml`：GitHub Release 发布后自动同步默认分支与新 tag 到 Gitee
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
 
@@ -379,6 +381,7 @@ skill_info:
 - 变更 `packages/bensz-cv/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-cv/README.md` 与 `projects/cv-01/README.md`
 - 变更 `scripts/sync_vscode_configs.py` 或 `scripts/vscode/` 时，应同步检查根级 `README.md`、`projects/README.md`、`AGENTS.md` 与各项目落地的 `*.code-workspace` / `.vscode/settings.json`
 - 变更根目录 `scripts/pack_release.py` 时，应同步检查 Release 流程文档与 `CHANGELOG.md`
+- 变更 `.github/workflows/sync-gitee-mirror.yml` 或 `scripts/sync_gitee_mirror.py` 时，应同步检查根级 `README.md`、`AGENTS.md`、`CHANGELOG.md` 与仓库变量/密钥说明
 
 ### 系统 Skill 保护
 

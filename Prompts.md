@@ -55,6 +55,26 @@ Bachelor、Master、Doctor
 
 ---
 
+现在推送至Gitee，都是我手动登陆Gitee然后拉取github里的东西。 能不能搞个自动化流程，当我在github里发布新release的时候，直接把最新的release推送到gitee里？使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
+.github/workflows 里的 github action 的自动化流程应该支持最新的字体分离架构。请：
+
+- 完善流程
+- 提交release。具体为：
+  - 创建tag v4.0.3
+  - Git-commit skill 创建commit
+  - Git-publish-release skill 创建 release
+- 立刻触发1次github action 自动化流程
+- 检查项目README里是否已经有cv模板的可下载的zip链接。如果正常就可以结束工作； 否则， 需要反复优化直至成功。
+
+---
+
+Overleaf压缩包你一定要特别关注字体；要保证每个Overleaf包里均有字体（应该不需要全部字体都塞进去； 每个project模板需要的字体是不一样的，有的甚至不需要字体）。总之，要保证Overleaf压缩包可以正常工作。
+
+---
+
 ./packages 文件夹里 LaTeX包架构的优化
 
 - latex包有一个很重的资产： 字体。 我希望有一个新的包 ./packages/bensz-fonts 。 它的主要作用是

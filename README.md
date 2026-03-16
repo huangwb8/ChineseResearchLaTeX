@@ -321,6 +321,18 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects
 - **GitHub 源站**：[huangwb8/ChineseResearchLaTeX](https://github.com/huangwb8/ChineseResearchLaTeX)
 - **Gitee 镜像**：[huangwb8/ChineseResearchLaTeX](https://gitee.com/huangwb8/ChineseResearchLaTeX)（方便中国大陆访问）
 
+### 维护者自动同步
+
+仓库已支持在 **GitHub Release 发布后自动把默认分支与最新 tag 同步到 Gitee**。对应流程文件为 [sync-gitee-mirror.yml](/Volumes/2T01/Github/ChineseResearchLaTeX/.github/workflows/sync-gitee-mirror.yml)，使用 SSH 推送镜像，避免手工登录 Gitee 再执行拉取。
+
+首次启用时，需要在 GitHub 仓库中配置：
+
+- `secrets.GITEE_SSH_PRIVATE_KEY`：具备 Gitee 仓库写权限的 SSH 私钥
+- `vars.GITEE_REPO`：Gitee 仓库标识，例如 `huangwb8/ChineseResearchLaTeX`
+- 可选 `vars.GITEE_REMOTE_URL`：如果不想用默认 `git@gitee.com:<owner>/<repo>.git`，可直接覆盖完整 remote URL
+
+配好后，每次 GitHub Release 发布都会自动同步；如需手动重试，也可直接触发该 workflow 的 `workflow_dispatch`。
+
 ---
 
 ## 🤖 Skills
