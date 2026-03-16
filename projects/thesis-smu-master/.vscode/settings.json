@@ -20,10 +20,15 @@
   "latex-workshop.latex.tools": [
     {
       "name": "thesis-python-build",
-      "command": "bash",
+      "command": "texlua",
       "args": [
-        "-lc",
-        "python3 scripts/thesis_build.py build --project-dir \"%DIR%\" --tex-file \"%DOCFILE%.tex\""
+        "%WORKSPACE_FOLDER%/scripts/latex_workshop_build.lua",
+        "%WORKSPACE_FOLDER%/scripts/thesis_build.py",
+        "build",
+        "--project-dir",
+        "%WORKSPACE_FOLDER%",
+        "--tex-file",
+        "%DOCFILE_EXT%"
       ]
     }
   ],

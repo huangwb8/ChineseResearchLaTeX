@@ -15,6 +15,7 @@ SETTINGS_TEMPLATES = {
     "thesis": TEMPLATES_DIR / "thesis.settings.json",
     "cv": TEMPLATES_DIR / "cv.settings.json",
 }
+LATEX_WORKSHOP_LAUNCHER_TEMPLATE = TEMPLATES_DIR / "latex_workshop_build.lua"
 
 
 def infer_project_profile(project_name: str) -> str | None:
@@ -55,10 +56,12 @@ def sync_project(project_dir: Path, *, check_only: bool) -> list[str]:
 
     workspace_content = load_template(WORKSPACE_TEMPLATE)
     settings_content = load_template(SETTINGS_TEMPLATES[profile])
+    launcher_content = load_template(LATEX_WORKSHOP_LAUNCHER_TEMPLATE)
 
     targets = [
         (project_dir / f"{project_dir.name}.code-workspace", workspace_content),
         (project_dir / ".vscode" / "settings.json", settings_content),
+        (project_dir / "scripts" / "latex_workshop_build.lua", launcher_content),
     ]
 
     messages: list[str] = []

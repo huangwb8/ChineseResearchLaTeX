@@ -79,8 +79,8 @@ ChineseResearchLaTeX/
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
 - `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-fonts`、`bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包，并支持 `--mirror gitee`
 - `scripts/sync_gitee_mirror.py`：将默认分支与 release tag 从 GitHub 同步推送到 Gitee 镜像仓库的官方脚本
-- `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace` 与 `.vscode/settings.json`
-- `scripts/vscode/`：按 `nsfc / paper / thesis / cv` 分型托管 VS Code / LaTeX Workshop 固定模板
+- `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace`、`.vscode/settings.json` 与 VS Code 构建 launcher
+- `scripts/vscode/`：按 `nsfc / paper / thesis / cv` 分型托管 VS Code / LaTeX Workshop 固定模板，并提供通过 `texlua` 转调项目级 Python wrapper 的跨平台 launcher
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
 - `.github/workflows/sync-gitee-mirror.yml`：GitHub Release 发布后自动同步默认分支与新 tag 到 Gitee
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
@@ -152,6 +152,7 @@ ChineseResearchLaTeX/
 
 - `projects/` 下每个示例项目都必须提交一个与目录同名的 `*.code-workspace` 文件，以及 `.vscode/` 隐藏目录
 - `.code-workspace` 用于 VS Code 打开项目本身；`.vscode/settings.json` 负责把 LaTeX Workshop 固定到项目级 Python wrapper，不直接裸跑 `xelatex`
+- `.vscode/settings.json` 默认应通过 `texlua` 调起项目级 `scripts/latex_workshop_build.lua`，再由该 launcher 自动寻找可用 Python 解释器并转调 `scripts/*_build.py`，以兼容 macOS / Linux / Windows
 - 固定模板统一托管在 `scripts/vscode/`，批量同步入口为 `python scripts/sync_vscode_configs.py`
 - 调整 VS Code / LaTeX Workshop 配置时，优先修改 `scripts/vscode/` 模板，再同步到各项目；不要只改单个项目导致配置漂移
 

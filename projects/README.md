@@ -6,6 +6,7 @@
 
 - 每个示例项目都应自带一个与目录同名的 `*.code-workspace` 和 `.vscode/settings.json`
 - 本地使用 VS Code 时，建议直接打开该 `*.code-workspace`，让 LaTeX Workshop 自动走项目内置的构建 wrapper，而不是手工拼 `xelatex`
+- 当前固定配置默认通过 `texlua + scripts/latex_workshop_build.lua` 转调项目级 Python wrapper，按同一套模板兼容 macOS / Linux / Windows
 
 ## 国自然（NSFC）
 

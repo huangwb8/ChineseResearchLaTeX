@@ -20,10 +20,13 @@
   "latex-workshop.latex.tools": [
     {
       "name": "paper-python-build",
-      "command": "bash",
+      "command": "texlua",
       "args": [
-        "-lc",
-        "python3 scripts/paper_build.py build --project-dir \"%DIR%\""
+        "%WORKSPACE_FOLDER%/scripts/latex_workshop_build.lua",
+        "%WORKSPACE_FOLDER%/scripts/paper_build.py",
+        "build",
+        "--project-dir",
+        "%WORKSPACE_FOLDER%"
       ]
     }
   ],
