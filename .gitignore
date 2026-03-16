@@ -195,7 +195,7 @@ projects/NSFC_General/template/~$26年最新word模板-1.面上项目-正文.doc
 test.md
 
 # =============================================================================
-# 计划与测试文档（可追溯记录，建议纳入版本控制）
+# 计划与测试文档
 # =============================================================================
 # 可选：忽略会话中的中间产物目录（不影响 TEST_PLAN/TEST_REPORT 等主文档）
 **/tests/**/_artifacts/
@@ -204,6 +204,3 @@ test.md
 skills/*/plans/
 skills/*/tests/
 /tests/
-!/tests/
-/tests/*
-!/tests/test_update_readme_template_list.py
