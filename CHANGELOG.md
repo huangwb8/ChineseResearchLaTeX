@@ -15,6 +15,7 @@
 - 新增 [docs/bensz-fonts-support-model.md](docs/bensz-fonts-support-model.md)：系统说明 `bensz-fonts` 如何通过统一字体 API、依赖安装、`TEXINPUTS` 注入与 Overleaf/runtime 打包支撑 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv`
 - 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：在 GitHub Release 发布后自动将默认分支与最新 tag 推送到 Gitee 镜像仓库，并支持 `workflow_dispatch` 手动重试
 - 新增 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md)：整理 GitHub Release 后自动同步到 Gitee 的一次性配置、首次验证、日常使用与常见故障排查步骤
+- 新增 `.github/ISSUE_TEMPLATE/` 下的 `paper-template-customization.yml`、`thesis-template-customization.yml`、`docx-template-support.yml`、`template-bug-report.yml` 与 `config.yml`：为 SCI 模板定制、毕业论文模板定制、DOCX 模板问题/需求和通用模板问题提供结构化 Issue 表单，重点把 `reference.docx` / 官方 Word 模板 / baseline 资料等关键上下文前置为必填信息
 - 新增共享字体基础包 `packages/bensz-fonts/`：集中托管原先分散在 `bensz-nsfc` 与 `bensz-cv` 中的字体文件，提供统一字体路径与字体配置 API，并补充本地安装脚本与 TDS 打包脚本
 - 新增学术简历公共包 `packages/bensz-cv/`：引入 `bensz-cv.cls` / `resume.cls` 双入口、字体与图标运行时资源、统一构建/清理/像素级比较脚本 `cv_project_tool.py`、本地安装脚本与 TDS 打包脚本
 - 新增中英文简历示例项目 `projects/cv-01/`：基于只读源简历样式完成中英文 PDF 像素级验收后，再替换为公开可分享的去隐私演示内容；当前示例人物统一为“佐佐木希 / Nozomi Sasaki”，并配套项目级 wrapper、VS Code 工作区与演示参考文献
@@ -30,6 +31,7 @@
 ### Changed（变更）
 
 - 更新根级 `README.md`：在“社区支持”区域新增开发者贡献规范入口，明确代码/模板/脚本协作默认走“Issue 先行、确认后再提 PR”的流程
+- 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、根级 `README.md` 与 `.github/workflows/update-template-list.yml`：README 自动生成的 SCI / 毕业论文模板区块现会直接提示“如有个性化需求可提 Issue”，并分别引导到 SCI 模板定制、毕业论文模板定制与 DOCX 模板问题/需求表单；模板列表工作流也新增对应回归校验
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：毕业论文元数据中的 `degree` 现显式预留 `bachelor`，README 模板列表会自动渲染为“学士”；项目规则也同步明确 thesis 元数据统一使用 `bachelor` / `master` / `doctor` 枚举
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与根级 `README.md`：README 模板列表中的毕业论文下载表在“院校”后新增“学位”列，并将 `projects/thesis-*/template.json` 中的 `master` / `doctor` 自动展示为“硕士” / “博士”，使模板差异更直观
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：README 模板列表中的毕业论文院校信息不再由脚本硬编码维护，改为强制读取各 `projects/thesis-*/template.json`；新增 thesis 项目时若缺少元数据文件或必填字段，脚本会直接报错，避免错误识别院校

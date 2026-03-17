@@ -55,6 +55,11 @@ THESIS_DEGREE_LABELS = {
     "master": "硕士",
     "doctor": "博士",
 }
+ISSUE_FORM_FILENAMES = {
+    "paper-customization": "paper-template-customization.yml",
+    "thesis-customization": "thesis-template-customization.yml",
+    "docx-support": "docx-template-support.yml",
+}
 
 BASE_TEMPLATE_SPECS = (
     TemplateSpec(
@@ -178,6 +183,33 @@ def get_category_description(category: str, specs: tuple[TemplateSpec, ...]) -> 
     if any(spec.asset_prefix for spec in specs):
         return CATEGORY_DESCRIPTIONS["thesis"]
     return CATEGORY_DESCRIPTIONS["thesis-placeholder"]
+
+
+def build_issue_form_url(repo: str, issue_form_filename: str) -> str:
+    return f"https://github.com/{repo}/issues/new?template={issue_form_filename}"
+
+
+def get_category_support_notes(category: str, repo: str) -> tuple[str, ...]:
+    if category == "paper":
+        paper_issue_url = build_issue_form_url(
+            repo, ISSUE_FORM_FILENAMES["paper-customization"]
+        )
+        docx_issue_url = build_issue_form_url(repo, ISSUE_FORM_FILENAMES["docx-support"])
+        return (
+            "> SCI 模板通常需要按期刊规范或既有 Word 稿件做个性化定制；"
+            f"如有这类需求，建议提交 [SCI 论文模板定制需求]({paper_issue_url})。",
+            "> 如果最关键的是 `reference.docx`、目标 Word 模板或 PDF / DOCX 对齐问题，"
+            f"请优先提交 [DOCX 模板问题/需求]({docx_issue_url})。",
+        )
+    if category == "thesis":
+        thesis_issue_url = build_issue_form_url(
+            repo, ISSUE_FORM_FILENAMES["thesis-customization"]
+        )
+        return (
+            "> 毕业论文模板通常需要按学校、学院或学位规范做个性化定制；"
+            f"如有这类需求，建议提交 [毕业论文模板定制需求]({thesis_issue_url})。",
+        )
+    return ()
 
 
 def parse_args() -> argparse.Namespace:
@@ -304,6 +336,7 @@ def build_row_values(
 def render_category_table(
     category: str,
     specs: tuple[TemplateSpec, ...],
+    repo: str,
     tag_name: str,
     assets_by_name: dict[str, dict[str, Any]],
 ) -> str:
@@ -317,6 +350,7 @@ def render_category_table(
         f"### {CATEGORY_TITLES[category]}",
         "",
         f"> {get_category_description(category, specs)}",
+        *get_category_support_notes(category, repo),
         "",
         header,
         separator,
@@ -361,6 +395,7 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
             render_category_table(
                 category=category,
                 specs=category_specs,
+                repo=repo,
                 tag_name=tag_name,
                 assets_by_name=assets_by_name,
             )

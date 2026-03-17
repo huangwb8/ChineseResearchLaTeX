@@ -1,0 +1,140 @@
+name: 毕业论文模板定制需求
+description: 收集学校 / 学院 / 学位相关的毕业论文模板定制需求
+title: "[毕业论文模板定制] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        毕业论文模板通常高度依赖学校、学院与学位层级的规范。
+
+        请优先提供：
+        - 学校官方规范或研究生院 / 教务处页面
+        - 可公开的样例 PDF / Word / LaTeX 模板
+        - 是否允许脱敏后提供 baseline 文件
+
+        如果缺少这些材料，维护者通常无法判断应当改 `packages/bensz-thesis/` 还是新增 `projects/thesis-*` 示例项目。
+
+  - type: input
+    id: school_name
+    attributes:
+      label: 学校名称
+      placeholder: 例如：中山大学
+    validations:
+      required: true
+
+  - type: dropdown
+    id: degree_type
+    attributes:
+      label: 学位类型
+      options:
+        - 本科
+        - 硕士
+        - 博士
+        - 其它 / 还不确定
+    validations:
+      required: true
+
+  - type: input
+    id: college_or_major
+    attributes:
+      label: 学院 / 专业 / 学科
+      placeholder: 例如：公共卫生学院 / 生物医学工程
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_base
+    attributes:
+      label: 准备基于哪个现有目录推进
+      options:
+        - projects/thesis-smu-master
+        - projects/thesis-sysu-doctor
+        - packages/bensz-thesis
+        - 需要新增学校模板 / 还没有合适基线
+        - 还不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: 需求类型
+      options:
+        - 新增学校模板
+        - 现有 thesis 模板改版
+        - 样式微调
+        - 学校规范升级
+        - 还不确定，需要先帮忙判断
+    validations:
+      required: true
+
+  - type: textarea
+    id: official_sources
+    attributes:
+      label: 官方规范来源
+      description: 请提供研究生院 / 教务处页面、PDF 名称或下载链接。
+      placeholder: |
+        请尽量提供：
+        - 学校官方规范 URL
+        - 论文写作手册 PDF
+        - 官方 Word / LaTeX 模板
+        - 任何可公开对照的样例论文
+    validations:
+      required: true
+
+  - type: textarea
+    id: layout_requirements
+    attributes:
+      label: 关键版式要求
+      description: 请尽量写清封面、原创性声明、摘要、目录、章节标题、参考文献、附录、页眉页脚等要求。
+      placeholder: |
+        例如：
+        - 封面字段与排列
+        - 中英文摘要和关键词格式
+        - 目录、图表目录、参考文献要求
+        - 页码、页眉、章节标题、附录、致谢等细则
+    validations:
+      required: true
+
+  - type: dropdown
+    id: baseline_status
+    attributes:
+      label: 现有 baseline 文件情况
+      description: 这会直接影响能否做像素级验收。
+      options:
+        - 有学校官方样例 PDF
+        - 有 Word 模板
+        - 有 LaTeX 模板
+        - 有多个材料，但需脱敏后才能提供
+        - 暂无
+    validations:
+      required: true
+
+  - type: dropdown
+    id: privacy_status
+    attributes:
+      label: 隐私处理状态
+      options:
+        - 已脱敏，可公开上传
+        - 只能描述，暂不能上传原件
+        - 可私下补充最小样例
+    validations:
+      required: true
+
+  - type: dropdown
+    id: accept_nearest_base
+    attributes:
+      label: 是否接受先基于最接近的现有模板做第一版
+      options:
+        - 接受，先用最接近模板起步
+        - 只接受指定学校 / 学位规范
+        - 还不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra_notes
+    attributes:
+      label: 额外说明
+      description: 可补充答辩 / 送审时间、实验室既有格式、最严格条款等。
+      placeholder: 例如：学校要求参考文献用 GB/T 7714，且页眉页脚必须与官方样例一致

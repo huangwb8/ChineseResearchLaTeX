@@ -1,0 +1,127 @@
+name: SCI 论文模板定制需求
+description: 收集期刊论文模板、PDF / DOCX 双输出与投稿格式定制需求
+title: "[SCI模板定制] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请尽量一次性补齐关键信息。
+
+        对 `bensz-paper` 而言，最常见的返工点不是“能不能编译”，而是：
+        - 目标期刊或出版社到底要求什么
+        - 需要交付 `PDF`、`DOCX` 还是两者同时对齐
+        - 是否已有官方 Word 模板、作者指南或可对照的样张
+
+        如果你的核心诉求是 `reference.docx`、目标 Word 模板、Pandoc 样式映射或 PDF / DOCX 对齐，请优先改用“DOCX 模板问题/需求”表单。
+
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: 需求类型
+      description: 请选择最接近的场景。
+      options:
+        - 新建期刊模板
+        - 现有 paper 模板定制
+        - PDF + DOCX 对齐优化
+        - 投稿返修格式调整
+        - 还不确定，需要先帮忙判断
+    validations:
+      required: true
+
+  - type: input
+    id: target_journal
+    attributes:
+      label: 目标期刊 / 出版社 / 模板名
+      description: 请填写具体期刊、出版社或会议名称。
+      placeholder: 例如：Cancer Cell / Nature 子刊 / Elsevier 某期刊
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_base
+    attributes:
+      label: 准备基于哪个现有目录推进
+      description: 不确定时选最接近的现有模板即可。
+      options:
+        - projects/paper-sci-01
+        - packages/bensz-paper
+        - 需要新增模板 / 还没有合适基线
+        - 还不确定
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: deliverables
+    attributes:
+      label: 必须交付物
+      description: 请至少勾选一个；如果 PDF 和 DOCX 都要，请同时勾选。
+      options:
+        - label: PDF
+          required: false
+        - label: DOCX
+          required: false
+        - label: Overleaf 可用包
+          required: false
+        - label: 本地 XeLaTeX 构建链路
+          required: false
+
+  - type: textarea
+    id: official_sources
+    attributes:
+      label: 官方模板来源 / 作者指南 / 样张来源
+      description: 这是判断工作量和可行性的关键材料。
+      placeholder: |
+        请尽量提供：
+        - 期刊官网作者指南 URL
+        - 官方 LaTeX / Word 模板下载地址
+        - 版式要求 PDF 或截图
+        - 任何可公开对照的已发表样张
+    validations:
+      required: true
+
+  - type: textarea
+    id: format_requirements
+    attributes:
+      label: 必须满足的格式要求
+      description: 请尽量写清标题页、作者信息、摘要、图表、参考文献、附录等要求。
+      placeholder: |
+        例如：
+        - 标题页需要哪些字段
+        - 摘要 / 关键词 / Graphical Abstract 要求
+        - 图表标题、表格脚注、参考文献格式
+        - 是否必须与官方 Word 模板 1:1 接近
+    validations:
+      required: true
+
+  - type: dropdown
+    id: accept_nearest_base
+    attributes:
+      label: 是否接受先基于最接近的现有模板做第一版
+      options:
+        - 接受，先用最接近模板起步
+        - 只接受全新模板 / 指定模板
+        - 还不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: supporting_materials
+    attributes:
+      label: 已准备好的参考材料
+      description: 请列出你已经有的文件、截图、样张或仓库路径。
+      placeholder: |
+        例如：
+        - 目标期刊官方 Word 模板
+        - 既有 PDF 样张
+        - 参考文献样例
+        - 自己的匿名化稿件
+        - 仓库内相关路径
+    validations:
+      required: true
+
+  - type: textarea
+    id: deadline_and_priority
+    attributes:
+      label: 截止时间 / 紧急程度 / 其它补充
+      description: 可选，但如果你有明确投递时间，建议写明。
+      placeholder: 例如：两周内需要首版；目前最卡的是图表标题和参考文献格式

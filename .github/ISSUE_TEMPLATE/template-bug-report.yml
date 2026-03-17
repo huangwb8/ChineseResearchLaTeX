@@ -1,0 +1,98 @@
+name: 通用模板问题反馈
+description: 反馈模板、脚本、Release 资产或文档中的一般性问题
+title: "[模板问题] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        如果你的问题明确属于：
+        - SCI 模板个性化定制
+        - 毕业论文模板个性化定制
+        - DOCX 模板 / reference.docx / PDF-DOCX 对齐
+
+        请优先使用对应的专用表单。这个表单更适合一般性 bug、构建问题、Release 资产问题或文档错误。
+
+  - type: dropdown
+    id: product_line
+    attributes:
+      label: 受影响产品线
+      options:
+        - nsfc
+        - paper
+        - thesis
+        - cv
+        - scripts
+        - docs
+        - release-assets
+    validations:
+      required: true
+
+  - type: input
+    id: target_path
+    attributes:
+      label: 目标项目 / 路径 / 文件
+      placeholder: 例如：projects/NSFC_General 或 packages/bensz-paper/scripts/paper_project_tool.py
+    validations:
+      required: true
+
+  - type: dropdown
+    id: problem_type
+    attributes:
+      label: 问题类型
+      options:
+        - 编译失败
+        - 样式错误
+        - 文档问题
+        - 脚本问题
+        - Release 资产问题
+        - 其它
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        请写清：
+        1. 打开的项目或目录
+        2. 执行的命令
+        3. 出现问题的步骤
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_result
+    attributes:
+      label: 期望结果
+      placeholder: 例如：成功生成 main.pdf，且 README 中的命令可以直接工作
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_result
+    attributes:
+      label: 实际结果
+      placeholder: 例如：脚本退出、样式错位、下载包缺文件、README 命令失效
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+      placeholder: |
+        例如：
+        - 操作系统
+        - TeX 发行版
+        - Python 版本
+        - 相关 release tag
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs_and_screenshots
+    attributes:
+      label: 错误日志 / 截图 / 补充信息
+      description: 建议贴出核心报错、截图、相关 release 链接，或说明最近可用版本。
+      placeholder: 可选，但越完整越容易定位

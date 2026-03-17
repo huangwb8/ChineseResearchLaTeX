@@ -1,0 +1,152 @@
+name: DOCX 模板问题 / 需求
+description: 收集 reference.docx、Word 模板、Pandoc 样式映射与 PDF / DOCX 对齐问题
+title: "[DOCX] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        这是最关键的表单之一。
+
+        对当前仓库来说，很多 DOCX 问题并不发生在 LaTeX 本身，而是发生在：
+        - `reference.docx` 或目标 Word 模板
+        - Pandoc 样式映射
+        - 当前生成的 `main.docx`
+        - PDF 与 DOCX 对齐预期
+
+        如果没有 `reference.docx`、官方 Word 模板或当前输出样张，维护者通常无法稳定复现问题。
+
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: 问题类型
+      options:
+        - DOCX 输出错误
+        - reference.docx 定制需求
+        - Pandoc / 样式映射问题
+        - 与 PDF 不一致
+        - 还不确定，需要先帮忙判断
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_project
+    attributes:
+      label: 目标项目
+      options:
+        - projects/paper-sci-01
+        - 自定义 paper 项目
+        - 其它 / 未来扩展场景
+    validations:
+      required: true
+
+  - type: dropdown
+    id: main_docx_status
+    attributes:
+      label: 当前 main.docx 状态
+      options:
+        - 无法生成
+        - 可以生成，但格式明显错误
+        - 可以生成，格式基本正确，但需要定制
+        - 还没有开始生成
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reference_docx_status
+    attributes:
+      label: reference.docx / 目标 DOCX 模板状态
+      description: 请如实说明是否已经拿到关键模板文件。
+      options:
+        - 已有并可提供
+        - 已有，但暂不能公开提供
+        - 没有，需要从官方模板提取
+        - 还不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: docx_template_source
+    attributes:
+      label: 最关键：目标 DOCX 模板文件如何获取？
+      description: 请写清 `reference.docx`、官方 Word 模板或目标 `.docx/.dotx` 的获取方式。
+      placeholder: |
+        请至少写清 1 项：
+        1. 可公开下载链接；
+        2. 仓库内现有路径；
+        3. issue 创建后会追加附件；
+        4. 无法公开时，可提供的脱敏最小样例或截图。
+
+        如果你手上已有 `reference.docx`、期刊官方 Word 模板、当前生成的 `main.docx`，请都写明。
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: docx_material_ack
+    attributes:
+      label: 关键材料确认
+      description: 这些材料越完整，问题越容易被复现。
+      options:
+        - label: 我已尽量准备 `reference.docx`、官方 Word 模板、当前生成的 `main.docx` 或对应截图 / 日志
+          required: true
+        - label: 如果当前不能公开原件，我会提供匿名化最小样例、截图或明确说明限制
+          required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: 复现步骤 / 执行命令
+      description: 请写清你执行过的命令、输入文件和产生问题的步骤。
+      placeholder: |
+        例如：
+        python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01
+        然后查看 main.docx / 修改 artifacts/reference.docx 后重新构建
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_result
+    attributes:
+      label: 期望结果
+      placeholder: 例如：段落首行缩进、标题层级、图表题注、参考文献格式应与官方 Word 模板一致
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_result
+    attributes:
+      label: 实际结果
+      placeholder: 例如：标题样式没有继承、题注编号错位、参考文献格式不对、表格间距异常
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+      description: 请尽量写清操作系统、Python、Pandoc、Word / WPS 等版本。
+      placeholder: |
+        例如：
+        - macOS 15 / Windows 11 / Ubuntu 24.04
+        - Python 3.11
+        - Pandoc 3.x
+        - Microsoft Word 版本 / WPS 版本
+    validations:
+      required: true
+
+  - type: dropdown
+    id: minimal_repro
+    attributes:
+      label: 是否可提供最小复现包
+      options:
+        - 可以
+        - 需要脱敏后提供
+        - 暂时不能
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra_docx_notes
+    attributes:
+      label: 其它补充
+      description: 可补充是否涉及中文样式、表格、脚注、图片题注、交叉引用等特殊元素。
+      placeholder: 例如：主要问题集中在中文标题样式和表格跨页

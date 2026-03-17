@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 开发者贡献规范
+    url: https://github.com/huangwb8/ChineseResearchLaTeX/blob/main/docs/developer-contribution-guide.md
+    about: 提交 PR、扩展新模板或调整公共脚本前，请先阅读 Issue 先行与分层修改规则。

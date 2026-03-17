@@ -78,6 +78,67 @@ def test_render_template_section_includes_cv_release_assets():
     assert "https://example.com/cv-01-Overleaf-v4.0.2.zip" in rendered
 
 
+def test_render_template_section_includes_paper_customization_issue_hints():
+    release = {
+        "tag_name": "v4.0.2",
+        "published_at": "2026-03-16T07:31:00Z",
+        "assets": [
+            {
+                "name": "paper-sci-01-v4.0.2.zip",
+                "size": 2081792,
+                "browser_download_url": "https://example.com/paper-sci-01-v4.0.2.zip",
+            },
+            {
+                "name": "paper-sci-01-Overleaf-v4.0.2.zip",
+                "size": 105994240,
+                "browser_download_url": "https://example.com/paper-sci-01-Overleaf-v4.0.2.zip",
+            },
+        ],
+    }
+
+    rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
+
+    assert "### SCI 论文模板" in rendered
+    assert "如有这类需求，建议提交 [SCI 论文模板定制需求]" in rendered
+    assert "?template=paper-template-customization.yml" in rendered
+    assert "?template=docx-template-support.yml" in rendered
+
+
+def test_render_template_section_includes_thesis_customization_issue_hint():
+    release = {
+        "tag_name": "v4.0.1",
+        "published_at": "2026-03-15T23:34:20Z",
+        "assets": [
+            {
+                "name": "thesis-smu-master-v4.0.1.zip",
+                "size": 564731,
+                "browser_download_url": "https://example.com/thesis-smu-master-v4.0.1.zip",
+            },
+            {
+                "name": "thesis-smu-master-Overleaf-v4.0.1.zip",
+                "size": 576416,
+                "browser_download_url": "https://example.com/thesis-smu-master-Overleaf-v4.0.1.zip",
+            },
+            {
+                "name": "thesis-sysu-doctor-v4.0.1.zip",
+                "size": 569793,
+                "browser_download_url": "https://example.com/thesis-sysu-doctor-v4.0.1.zip",
+            },
+            {
+                "name": "thesis-sysu-doctor-Overleaf-v4.0.1.zip",
+                "size": 581478,
+                "browser_download_url": "https://example.com/thesis-sysu-doctor-Overleaf-v4.0.1.zip",
+            },
+        ],
+    }
+
+    rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
+
+    assert "### 毕业论文模板" in rendered
+    assert "如有这类需求，建议提交 [毕业论文模板定制需求]" in rendered
+    assert "?template=thesis-template-customization.yml" in rendered
+
+
 def test_discover_thesis_template_specs_reads_school_from_template_json(tmp_path, monkeypatch):
     thesis_dir = tmp_path / "thesis-demo-master"
     thesis_dir.mkdir()
