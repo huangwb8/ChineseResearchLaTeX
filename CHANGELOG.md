@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 [docs/developer-contribution-guide.md](docs/developer-contribution-guide.md)：明确仓库的开发者协作与 PR 规范，要求贡献者默认遵循“先提 Issue、获维护者确认后再提 PR”的流程，并结合当前 `packages/` 分层补充受欢迎 PR 类型、提交流程与验证要求
 - 新增 [projects/thesis-smu-master/template.json](projects/thesis-smu-master/template.json) 与 [projects/thesis-sysu-doctor/template.json](projects/thesis-sysu-doctor/template.json)：将毕业论文项目的 `project_name`、`school`、`degree` 下沉到项目根目录元数据文件，作为 README 模板列表等脚本识别院校信息的来源
 - 新增 [docs/bensz-fonts-support-model.md](docs/bensz-fonts-support-model.md)：系统说明 `bensz-fonts` 如何通过统一字体 API、依赖安装、`TEXINPUTS` 注入与 Overleaf/runtime 打包支撑 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv`
 - 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：在 GitHub Release 发布后自动将默认分支与最新 tag 推送到 Gitee 镜像仓库，并支持 `workflow_dispatch` 手动重试
@@ -28,6 +29,7 @@
 
 ### Changed（变更）
 
+- 更新根级 `README.md`：在“社区支持”区域新增开发者贡献规范入口，明确代码/模板/脚本协作默认走“Issue 先行、确认后再提 PR”的流程
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：毕业论文元数据中的 `degree` 现显式预留 `bachelor`，README 模板列表会自动渲染为“学士”；项目规则也同步明确 thesis 元数据统一使用 `bachelor` / `master` / `doctor` 枚举
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与根级 `README.md`：README 模板列表中的毕业论文下载表在“院校”后新增“学位”列，并将 `projects/thesis-*/template.json` 中的 `master` / `doctor` 自动展示为“硕士” / “博士”，使模板差异更直观
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：README 模板列表中的毕业论文院校信息不再由脚本硬编码维护，改为强制读取各 `projects/thesis-*/template.json`；新增 thesis 项目时若缺少元数据文件或必填字段，脚本会直接报错，避免错误识别院校
