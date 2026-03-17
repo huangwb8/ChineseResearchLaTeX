@@ -101,7 +101,7 @@ def test_render_template_section_includes_paper_customization_issue_hints():
     assert "### SCI 论文模板" in rendered
     assert "如有这类需求，建议提交 [SCI 论文模板定制需求]" in rendered
     assert "?template=paper-template-customization.yml" in rendered
-    assert "?template=docx-template-support.yml" in rendered
+    assert "如果最关键的是" not in rendered
 
 
 def test_render_template_section_includes_thesis_customization_issue_hint():

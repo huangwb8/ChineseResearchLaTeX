@@ -30,6 +30,7 @@
 
 ### Changed（变更）
 
+- 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、`scripts/test_issue_templates.py`、根级 `README.md` 与 `.github/ISSUE_TEMPLATE/paper-template-customization.yml`：移除 README 自动生成的 SCI 区块中“DOCX 模板问题/需求”引导，并将 DOCX / `reference.docx` / PDF 对齐类诉求统一并回 SCI 模板定制表单，避免维护独立入口
 - 更新根级 `README.md`：在“社区支持”区域新增开发者贡献规范入口，明确代码/模板/脚本协作默认走“Issue 先行、确认后再提 PR”的流程
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、根级 `README.md` 与 `.github/workflows/update-template-list.yml`：README 自动生成的 SCI / 毕业论文模板区块现会直接提示“如有个性化需求可提 Issue”，并分别引导到 SCI 模板定制、毕业论文模板定制与 DOCX 模板问题/需求表单；模板列表工作流也新增对应回归校验
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py` 与 `AGENTS.md`：毕业论文元数据中的 `degree` 现显式预留 `bachelor`，README 模板列表会自动渲染为“学士”；项目规则也同步明确 thesis 元数据统一使用 `bachelor` / `master` / `doctor` 枚举

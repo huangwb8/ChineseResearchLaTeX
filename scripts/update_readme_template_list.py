@@ -58,7 +58,6 @@ THESIS_DEGREE_LABELS = {
 ISSUE_FORM_FILENAMES = {
     "paper-customization": "paper-template-customization.yml",
     "thesis-customization": "thesis-template-customization.yml",
-    "docx-support": "docx-template-support.yml",
 }
 
 BASE_TEMPLATE_SPECS = (
@@ -194,12 +193,9 @@ def get_category_support_notes(category: str, repo: str) -> tuple[str, ...]:
         paper_issue_url = build_issue_form_url(
             repo, ISSUE_FORM_FILENAMES["paper-customization"]
         )
-        docx_issue_url = build_issue_form_url(repo, ISSUE_FORM_FILENAMES["docx-support"])
         return (
             "> SCI 模板通常需要按期刊规范或既有 Word 稿件做个性化定制；"
             f"如有这类需求，建议提交 [SCI 论文模板定制需求]({paper_issue_url})。",
-            "> 如果最关键的是 `reference.docx`、目标 Word 模板或 PDF / DOCX 对齐问题，"
-            f"请优先提交 [DOCX 模板问题/需求]({docx_issue_url})。",
         )
     if category == "thesis":
         thesis_issue_url = build_issue_form_url(

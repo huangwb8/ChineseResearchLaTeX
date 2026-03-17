@@ -12,8 +12,6 @@ body:
         - 需要交付 `PDF`、`DOCX` 还是两者同时对齐
         - 是否已有官方 Word 模板、作者指南或可对照的样张
 
-        如果你的核心诉求是 `reference.docx`、目标 Word 模板、Pandoc 样式映射或 PDF / DOCX 对齐，请优先改用“DOCX 模板问题/需求”表单。
-
   - type: dropdown
     id: request_type
     attributes:
