@@ -36,6 +36,8 @@
 	subsection = {
 		number = \arabic{section}.\arabic{subsection},
 		format = \zihao{-2}\bfseries\heiti,
+		beforeskip = 0.18em,
+		afterskip = 0.12em,
 	},
 	subsubsection = {
 		number = \arabic{section}.\arabic{subsection}.\arabic{subsubsection},
@@ -46,6 +48,10 @@
 		format = \zihao{4}\bfseries\heiti,
 	}
 }
+
+% 直接用 titlesec 精确压紧小节标题上下留白；仅靠 ctexset 的
+% beforeskip/afterskip 在当前模板里体感不够明显。
+\titlespacing*{\subsection}{0pt}{4pt}{2pt}
 
 \titlecontents{section}[4em]
 {\bfseries\songti\zihao{-4}\vspace{0.4em}}
@@ -122,6 +128,7 @@
 
 \RequirePackage{geometry}%设置页边距的包
 \geometry{left=2.5cm,right=2.5cm,top=3.5cm,bottom=2.5cm} % 设置页边距
+\raggedbottom % 避免为齐底强行拉伸标题前后的竖向留白
 
 % 参考：https://blog.csdn.net/jzwong/article/details/99964922
 \RequirePackage{ragged2e} % 正文两端对齐所需的包。在需要两端对齐的文字前面添加\justifying即可。
