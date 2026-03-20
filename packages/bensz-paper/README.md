@@ -7,6 +7,7 @@
 - 公共包：[`packages/bensz-paper`](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper)
 - 示例项目：[`projects/paper-sci-01`](/Volumes/2T01/Github/ChineseResearchLaTeX/projects/paper-sci-01)
 - 官方构建入口：`python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01`
+- 正文源策略：`extraTex/**/*.tex` 为 PDF / DOCX 唯一真相来源，Markdown 只在 DOCX 导出时临时生成
 
 ## 目录说明
 
@@ -19,6 +20,12 @@
 - `scripts/paper_project_tool.py`：面向仓库工作流的官方 wrapper
 - `scripts/package/install.py`：本地安装脚本
 - `scripts/package/build_tds_zip.py`：TDS ZIP 打包脚本
+
+## 构建说明
+
+- PDF 直接编译项目内的 `main.tex + extraTex/**/*.tex`
+- DOCX 按 `main.tex` 中的 `\input{extraTex/...}` 顺序读取同一批 `.tex` 片段，运行时经 Pandoc 转成临时 Markdown 后导出 Word
+- 构建后默认保留 `main.pdf`、`main.docx` 与 `.latex-cache/`，不再持久化正文 Markdown 中间稿
 
 ## 使用方式
 

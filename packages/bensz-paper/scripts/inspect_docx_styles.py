@@ -15,7 +15,7 @@ import argparse
 from pathlib import Path
 from docx import Document
 
-PROJECT_ROOT_MARKERS = ("main.tex", "references/meta.yaml")
+PROJECT_ROOT_MARKERS = ("main.tex",)
 
 
 def is_project_root(path: Path) -> bool:
@@ -95,7 +95,7 @@ def parse_args() -> argparse.Namespace:
         "--project-dir",
         type=Path,
         default=None,
-        help="Project directory. Defaults to the nearest parent containing main.tex or meta.yaml.",
+        help="Project directory. Defaults to the nearest parent containing main.tex.",
     )
     parser.add_argument(
         "--docx",

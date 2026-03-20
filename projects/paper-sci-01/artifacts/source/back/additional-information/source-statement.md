@@ -1,1 +1,0 @@
-This project is a formatting demonstration derived from public metadata and abstract-level findings of Greenhalgh et al., *Cancer Cell* 2026 [@Greenhalgh_2026]. It is **not** the publisher PDF, not the article's original full text, and not an unpublished manuscript.

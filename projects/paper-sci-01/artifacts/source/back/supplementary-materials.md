@@ -1,1 +1,0 @@
-No supplementary tables or appendices are included in this starter project. The section is retained so that downstream users have a ready-made insertion point for supplements when adapting the template to a real manuscript.

@@ -1,1 +1,0 @@
-No figures are bundled with this public demonstration project. Users can add journal-ready figures later under a project-local `figures/` directory and extend the manuscript in the same workflow.

@@ -68,7 +68,7 @@ ChineseResearchLaTeX/
 - `packages/bensz-thesis/`：毕业论文共享样式、profile、统一 PDF 构建与像素比对脚本
 - `packages/bensz-cv/`：中英文简历共享样式、字体配置、统一 PDF 构建与像素比对脚本
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
-- `projects/paper-sci-01/`：SCI 论文示例正文、Markdown 单一真相来源、项目级 wrapper
+- `projects/paper-sci-01/`：SCI 论文示例正文、`extraTex/**/*.tex` 单一真相来源、项目级 wrapper
 - `projects/thesis-smu-master/` / `projects/thesis-sysu-doctor/`：毕业论文示例正文、项目级 wrapper 与公开演示资产
 - `projects/thesis-*/template.json`：毕业论文项目元数据，至少记录 `project_name`、`school`、`degree`，供 README 模板列表等脚本识别院校与学位来源；`degree` 当前统一使用英文枚举 `bachelor` / `master` / `doctor`
 - `projects/cv-01/`：中英文简历示例正文、公开演示头像与项目级 wrapper
@@ -132,7 +132,7 @@ ChineseResearchLaTeX/
 #### SCI 论文模板问题
 
 - 公共样式、profile、DOCX 对齐逻辑优先修改 `packages/bensz-paper/`
-- 示例正文优先维护 `projects/paper-sci-01/artifacts/source/`，不要手工维护双份正文
+- 示例正文优先维护 `projects/paper-sci-01/extraTex/`，不要再把同一份正文拆成持久化 Markdown 与 LaTeX 双份
 - 优先使用 `python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01` 验证 PDF + DOCX 双输出
 
 #### 毕业论文模板问题
@@ -379,7 +379,7 @@ skill_info:
 - 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
 - 变更 `packages/bensz-fonts/` 时，不要把共享字体文件重新复制回 `packages/bensz-nsfc/`、`packages/bensz-cv/` 或各 `projects/` 目录
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
-- 变更 `packages/bensz-paper/` 时，不要把 Markdown 正文重新复制成项目内手写 `.tex` 正文；优先保持 `artifacts/source/` 为单一真相来源
+- 变更 `packages/bensz-paper/` 时，不要重新引入持久化正文 Markdown 副本；优先保持 `projects/paper-sci-01/extraTex/**/*.tex` 为 PDF / DOCX 的唯一真相来源
 - 变更 `projects/thesis-*` 时，不要遗漏项目根目录 `template.json`；新增学校模板或重命名 thesis 项目时，必须同步更新其中的 `project_name`、`school`、`degree`，且 `degree` 保持 `bachelor` / `master` / `doctor` 这组统一枚举
 - 变更 `packages/bensz-cv/` 时，不要把私有简历正文、私有头像或验收阶段的私有对比图重新留在 `projects/cv-01/`；公开示例必须保持去隐私状态
 - 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径

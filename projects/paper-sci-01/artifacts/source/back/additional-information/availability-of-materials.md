@@ -1,1 +1,0 @@
-All editable source files required to rebuild this demonstration project are stored in this repository under `projects/paper-sci-01/`. Generated artifacts are written to `.latex-cache/`, `main.pdf`, and `main.docx` during the official build process.

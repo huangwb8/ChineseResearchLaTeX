@@ -5,8 +5,8 @@
 它的核心特点是：
 
 - 依赖公共包 [`packages/bensz-paper`](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper)
-- 正文只维护在 `artifacts/source/*.md`
-- 构建时自动生成 `.latex-cache/extraTex/*.tex`
+- 正文只维护在 `extraTex/**/*.tex`
+- DOCX 构建时仅在运行期临时生成 Markdown，不再持久化正文 `.md`
 - 同一份正文可同时输出 `main.pdf` 与 `main.docx`
 
 ## 内容来源说明
@@ -40,9 +40,8 @@ python scripts/paper_build.py
 ## 结构
 
 - `main.tex`：LaTeX 主入口
-- `artifacts/source/`：正文 Markdown 单一真相来源
+- `extraTex/`：正文 LaTeX 单一真相来源
 - `artifacts/reference.docx`：DOCX 样式模板
 - `artifacts/manuscript.csl`：参考文献样式
-- `references/meta.yaml`：题名、作者、单位、通讯作者等元信息
 - `references/refs.bib`：BibTeX 数据库
 - `scripts/paper_build.py`：项目级构建 wrapper

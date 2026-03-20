@@ -314,6 +314,8 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir proj
 
 适用于 `projects/paper-*`，支持 PDF + DOCX 双输出：
 
+- 正文默认维护在 `extraTex/**/*.tex`；DOCX 导出只在运行期临时生成 Markdown，不再保存第二份正文源文件
+
 ```bash
 python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01
 ```

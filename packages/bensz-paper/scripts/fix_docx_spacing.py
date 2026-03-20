@@ -26,7 +26,7 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_LINE_SPACING
 
-PROJECT_ROOT_MARKERS = ("main.tex", "references/meta.yaml")
+PROJECT_ROOT_MARKERS = ("main.tex",)
 
 
 # DOCX spacing constants — keep in sync with bml-profile-bensz-manu-01.def
@@ -244,7 +244,7 @@ def parse_args() -> argparse.Namespace:
         "--project-dir",
         type=Path,
         default=None,
-        help="Project directory. Defaults to the nearest parent containing main.tex or meta.yaml.",
+        help="Project directory. Defaults to the nearest parent containing main.tex.",
     )
     parser.add_argument(
         "--docx",

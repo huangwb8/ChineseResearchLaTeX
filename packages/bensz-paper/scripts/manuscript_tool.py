@@ -14,13 +14,16 @@ import sys
 import tempfile
 from pathlib import Path
 
-import yaml
 from docx import Document
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import Pt
 
-VERSION = "1.2.0"
-PROJECT_ROOT_MARKERS = ("main.tex", "references/meta.yaml")
+VERSION = "1.3.0"
+PROJECT_ROOT_MARKERS = ("main.tex",)
+EXTRA_TEX_INPUT_PATTERN = re.compile(r"\\input\{(extraTex/[^}]+)\}")
+CITATION_PATTERN = re.compile(
+    r"\\(supercite|cite|autocite|parencite|textcite|citep|citet)\{([^}]*)\}"
+)
 TOOL_CANDIDATES = {
     "xelatex": (
         "/Library/TeX/texbin/xelatex",
@@ -77,49 +80,69 @@ def run_best_effort(
     )
 
 
-def write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content.rstrip() + "\n", encoding="utf-8")
+def collect_extra_tex_inputs(project_dir: Path) -> list[Path]:
+    main_tex = project_dir / "main.tex"
+    if not main_tex.exists():
+        raise FileNotFoundError(f"Missing main.tex: {main_tex}")
+
+    ordered_inputs: list[Path] = []
+    main_tex_text = []
+    for line in main_tex.read_text(encoding="utf-8").splitlines():
+        comment_index = None
+        for index, char in enumerate(line):
+            if char == "%" and (index == 0 or line[index - 1] != "\\"):
+                comment_index = index
+                break
+        main_tex_text.append(line if comment_index is None else line[:comment_index])
+
+    for matched_path in EXTRA_TEX_INPUT_PATTERN.findall("\n".join(main_tex_text)):
+        rel_path = Path(matched_path)
+        if rel_path.suffix != ".tex":
+            rel_path = rel_path.with_suffix(".tex")
+        source_path = project_dir / rel_path
+        if not source_path.exists():
+            raise FileNotFoundError(f"Missing extraTex source referenced by main.tex: {source_path}")
+        ordered_inputs.append(rel_path)
+    return ordered_inputs
 
 
-def latex_escape(text: str) -> str:
-    replacements = {
-        "\\": r"\textbackslash{}",
-        "&": r"\&",
-        "%": r"\%",
-        "$": r"\$",
-        "#": r"\#",
-        "_": r"\_",
-        "{": r"\{",
-        "}": r"\}",
-        "~": r"\textasciitilde{}",
-        "^": r"\textasciicircum{}",
-    }
-    for old, new in replacements.items():
-        text = text.replace(old, new)
-    return text
-
-
-def pandoc_markdown_to_latex(md_text: str) -> str:
+def _replace_latex_citations_with_tokens(latex_text: str) -> tuple[str, dict[str, str]]:
     placeholder_map: dict[str, str] = {}
 
-    def cite_repl(match: re.Match[str]) -> str:
+    def repl(match: re.Match[str]) -> str:
         token = f"CITETOKEN{len(placeholder_map) + 1:04d}"
-        keys = [part.strip().lstrip("@") for part in match.group(1).split(";") if part.strip()]
-        placeholder_map[token] = "\\supercite{" + ",".join(keys) + "}"
+        keys = [part.strip() for part in match.group(2).split(",") if part.strip()]
+        placeholder_map[token] = "[" + "; ".join(f"@{key}" for key in keys) + "]"
         return token
 
-    md_text = re.sub(r"\[([^\]]*@[^\]]+)\]", cite_repl, md_text)
-    latex = run_cmd(
-        [resolve_executable("pandoc"), "-f", "gfm+raw_html", "-t", "latex"],
-        input_text=md_text,
-    )
-    latex = latex.strip()
+    return CITATION_PATTERN.sub(repl, latex_text), placeholder_map
+
+
+def _normalize_frontmatter_markdown(md_text: str) -> str:
+    lines = [line for line in md_text.splitlines() if line.strip() not in {"<div class=\"center\">", "</div>"}]
+    normalized: list[str] = []
+    title_promoted = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not title_promoted and stripped.startswith("**") and stripped.endswith("**") and len(stripped) > 4:
+            normalized.append("# " + stripped[2:-2].strip())
+            title_promoted = True
+            continue
+        normalized.append(line)
+
+    return "\n".join(normalized).strip()
+
+
+def pandoc_latex_to_markdown(latex_text: str) -> str:
+    prepared_text, placeholder_map = _replace_latex_citations_with_tokens(latex_text)
+    markdown = run_cmd(
+        [resolve_executable("pandoc"), "-f", "latex", "-t", "gfm+raw_html"],
+        input_text=prepared_text,
+    ).strip()
     for token, replacement in placeholder_map.items():
-        latex = latex.replace(token, replacement)
-        latex = latex.replace("{" + token + "}", replacement)
-    latex = latex.replace("\\textbackslash{}", "\\")
-    return latex.strip() + "\n"
+        markdown = markdown.replace(token, replacement)
+    return markdown.strip() + "\n" if markdown.strip() else ""
 
 
 def _add_references_heading_if_missing(doc: "Document", heading_text: str = "References") -> None:
@@ -308,175 +331,53 @@ def summarize_process_output(label: str, result: subprocess.CompletedProcess[str
     return f"[{label}] exit={result.returncode}\n{tail}"
 
 
-def _shift_heading_levels(md_text: str, shift: int = 1) -> str:
-    result = []
-    for line in md_text.splitlines():
-        match = re.match(r"^(#{1,6})(\s.*|$)", line)
-        if match:
-            new_level = min(len(match.group(1)) + shift, 6)
-            line = "#" * new_level + match.group(2)
-        result.append(line)
-    return "\n".join(result)
+def remove_legacy_docx_intermediates(cache_dir: Path) -> None:
+    legacy_markdown = cache_dir / "main.md"
+    legacy_extra_tex = cache_dir / "extraTex"
+
+    if legacy_markdown.exists():
+        legacy_markdown.unlink()
+    if legacy_extra_tex.exists():
+        shutil.rmtree(legacy_extra_tex)
 
 
-def build_markdown_for_docx(project_dir: Path, meta: dict, manifest: list[dict]) -> str:
-    manuscript = meta["manuscript"]
-    lines: list[str] = [f"# {manuscript['title']}", ""]
+def build_markdown_for_docx(project_dir: Path) -> str:
+    parts: list[str] = []
 
-    authors = []
-    for item in manuscript["authors"]:
-        markers = "".join(item["markers"])
-        authors.append(f"{item['name']}<sup>{markers}</sup>")
-    if authors:
-        if len(authors) > 1:
-            lines.append(", ".join(authors[:-1]) + ", and " + authors[-1] + ".")
-        else:
-            lines.append(authors[0])
-        lines.append("")
+    for rel_path in collect_extra_tex_inputs(project_dir):
+        source_text = (project_dir / rel_path).read_text(encoding="utf-8").strip()
+        if not source_text:
+            continue
+        markdown = pandoc_latex_to_markdown(source_text).strip()
+        if not markdown:
+            continue
+        if rel_path.name == "frontmatter.tex":
+            markdown = _normalize_frontmatter_markdown(markdown)
+        parts.append(markdown)
 
-    for marker, content in manuscript["affiliations"].items():
-        lines.append(f"<sup>{marker}</sup>{content}")
-        lines.append("")
+    if not parts:
+        raise RuntimeError(f"No DOCX source fragments found under {project_dir / 'extraTex'}")
 
-    for line in manuscript.get("equal_contribution", []):
-        lines.append(f"<sup>†</sup>{line}")
-        lines.append("")
-
-    if manuscript.get("correspondence"):
-        lines.append(f"*Correspondence:* {manuscript['correspondence']}")
-        lines.append("")
-
-    if manuscript.get("running_title"):
-        lines.append(f"Running title: {manuscript['running_title']}")
-        lines.append("")
-
-    for node in manifest:
-        if node["kind"] == "single":
-            lines.append(f"## {node['title']}")
-            lines.append("")
-            md_path = project_dir / node["path"]
-            content = md_path.read_text(encoding="utf-8").strip()
-            lines.append(_shift_heading_levels(content, shift=1))
-            lines.append("")
-        else:
-            lines.append(f"## {node['title']}")
-            lines.append("")
-            for child in node.get("children", []):
-                lines.append(f"### {child['title']}")
-                lines.append("")
-                md_path = project_dir / child["path"]
-                content = md_path.read_text(encoding="utf-8").strip()
-                lines.append(_shift_heading_levels(content, shift=2))
-                lines.append("")
-
-    return "\n".join(lines).rstrip() + "\n"
-
-
-def _render_author_line(authors: list[dict[str, object]]) -> str:
-    rendered = []
-    for item in authors:
-        markers = "".join(f"\\textsuperscript{{{latex_escape(str(marker))}}}" for marker in item["markers"])
-        rendered.append(f"{latex_escape(item['name'])}{markers}")
-    return ", ".join(rendered)
-
-
-def render_frontmatter_tex(meta: dict) -> str:
-    manuscript = meta["manuscript"]
-    title = latex_escape(manuscript["title"])
-    lines = [
-        "{",
-        "\\thispagestyle{fancy}",
-        "\\begin{center}",
-        f"{{\\bfseries\\fontsize{{15.12}}{{20}}\\selectfont {title}\\par}}",
-        "\\vspace{1.2\\baselineskip}",
-        _render_author_line(manuscript["authors"]) + "\\par",
-        "\\end{center}",
-        "",
-        "\\sloppy",
-    ]
-
-    for marker, content in manuscript["affiliations"].items():
-        lines.append(
-            f"\\noindent\\textsuperscript{{{latex_escape(str(marker))}}}{latex_escape(content)}\\par"
-        )
-    for line in manuscript.get("equal_contribution", []):
-        lines.append(f"\\noindent\\textsuperscript{{†}}{latex_escape(line)}\\par")
-    if manuscript.get("correspondence"):
-        lines.append(
-            f"\\noindent\\textsuperscript{{*}}Correspondence: {latex_escape(manuscript['correspondence'])}.\\par"
-        )
-    if manuscript.get("running_title"):
-        lines.append(f"\\noindent Running title: {latex_escape(manuscript['running_title'])}\\par")
-    lines.extend(["\\fussy", "}"])
-    return "\n".join(lines) + "\n"
-
-
-def render_single_node_latex(project_dir: Path, node: dict) -> str:
-    md_path = project_dir / node["path"]
-    content = md_path.read_text(encoding="utf-8").strip()
-    body = pandoc_markdown_to_latex(content) if content else ""
-    title = latex_escape(node["title"])
-    slug = node.get("slug", "")
-
-    if slug == "abstract":
-        heading = f"\\section*{{{title}}}\n"
-    elif slug in {"figure-legends", "supplementary-materials"}:
-        heading = f"\\section*{{{title}}}\n"
-    else:
-        heading = f"\\section{{{title}}}\n"
-    return heading + body
-
-
-def render_group_node_latex(project_dir: Path, node: dict) -> str:
-    title = latex_escape(node["title"])
-    parts = [f"\\section*{{{title}}}", ""]
-    for child in node.get("children", []):
-        child_title = latex_escape(child["title"])
-        md_path = project_dir / child["path"]
-        content = md_path.read_text(encoding="utf-8").strip()
-        body = pandoc_markdown_to_latex(content) if content else ""
-        parts.append(f"\\subsection*{{{child_title}}}")
-        parts.append(body.rstrip())
-        parts.append("")
-    return "\n".join(parts).rstrip() + "\n"
-
-
-def generate_latex_inputs(project_dir: Path, cache_dir: Path, meta: dict, manifest: list[dict]) -> None:
-    frontmatter_target = cache_dir / "extraTex" / "front" / "frontmatter.tex"
-    write_text(frontmatter_target, render_frontmatter_tex(meta))
-
-    for node in manifest:
-        tex_target = cache_dir / node["tex_path"]
-        if node["kind"] == "single":
-            write_text(tex_target, render_single_node_latex(project_dir, node))
-        else:
-            write_text(tex_target, render_group_node_latex(project_dir, node))
+    return "\n\n".join(parts).rstrip() + "\n"
 
 
 def build_project(project_dir: Path) -> None:
     print(f"Building project: {project_dir}")
 
-    meta_path = project_dir / "references" / "meta.yaml"
-    manifest_path = project_dir / "artifacts" / "source" / "manifest.yaml"
-    if not meta_path.exists():
-        raise FileNotFoundError(f"Missing metadata file: {meta_path}")
-    if not manifest_path.exists():
-        raise FileNotFoundError(f"Missing manifest file: {manifest_path}")
-
-    meta = yaml.safe_load(meta_path.read_text(encoding="utf-8"))
-    manifest_data = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    main_tex = project_dir / "main.tex"
+    if not main_tex.exists():
+        raise FileNotFoundError(f"Missing main.tex: {main_tex}")
 
     print("Building PDF...")
     cache_dir = project_dir / ".latex-cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    generate_latex_inputs(project_dir, cache_dir, meta, manifest_data)
+    remove_legacy_docx_intermediates(cache_dir)
 
     tex_env = os.environ.copy()
     tex_roots = resolve_tex_search_roots(project_dir)
     if tex_roots:
-        tex_env["TEXINPUTS"] = build_texinputs([cache_dir, *tex_roots], tex_env.get("TEXINPUTS", ""))
+        tex_env["TEXINPUTS"] = build_texinputs(tex_roots, tex_env.get("TEXINPUTS", ""))
         print("TeX search roots:")
-        print(f"  - {cache_dir}")
         for root in tex_roots:
             print(f"  - {root}")
 
@@ -532,9 +433,7 @@ def build_project(project_dir: Path) -> None:
     print(f"✓ PDF generated: {project_dir / 'main.pdf'}")
 
     print("Building DOCX...")
-    manuscript_md = build_markdown_for_docx(project_dir, meta, manifest_data)
-    manuscript_md_path = cache_dir / "main.md"
-    write_text(manuscript_md_path, manuscript_md)
+    manuscript_md = build_markdown_for_docx(project_dir)
 
     reference_doc = project_dir / "artifacts" / "reference.docx"
     reference_doc_arg = ["--reference-doc", str(reference_doc)] if reference_doc.exists() else []
@@ -546,7 +445,7 @@ def build_project(project_dir: Path) -> None:
     docx_path = project_dir / "main.docx"
     pandoc_cmd = [
         resolve_executable("pandoc"),
-        str(manuscript_md_path),
+        "-",
         "-f",
         "markdown+raw_html",
         "--citeproc",
@@ -558,7 +457,7 @@ def build_project(project_dir: Path) -> None:
         "-o",
         str(docx_path),
     ]
-    run_cmd(pandoc_cmd, cwd=project_dir)
+    run_cmd(pandoc_cmd, cwd=project_dir, input_text=manuscript_md)
     print(f"✓ DOCX generated: {docx_path}")
 
     print("Fixing DOCX spacing...")
@@ -603,7 +502,7 @@ def parse_args() -> argparse.Namespace:
         "--project-dir",
         type=Path,
         default=None,
-        help="Project directory. Defaults to the nearest parent containing main.tex or meta.yaml.",
+        help="Project directory. Defaults to the nearest parent containing main.tex.",
     )
     return parser.parse_args()
 

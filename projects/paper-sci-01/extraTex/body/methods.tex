@@ -1,0 +1,22 @@
+\section{Methods}
+For this demonstration project, we used only public information
+available from the published bibliographic record and abstract of the
+source article \supercite{Greenhalgh_2026}. No unpublished files, figures,
+supplementary tables, or protected full-text material from other
+manuscripts were imported into this repository.
+
+The manuscript body is maintained directly as LaTeX fragments under
+\texttt{extraTex/}. During build,
+\texttt{packages/bensz-paper/scripts/manuscript\_tool.py} compiles
+\texttt{main.tex} against those source files for PDF output and converts
+the same \texttt{extraTex/**/*.tex} fragments into temporary Markdown at
+runtime for Pandoc-based DOCX export. The Markdown is treated only as an
+intermediate representation and is not stored as a second editable
+source of truth.
+
+PDF rendering follows the fixed sequence
+\texttt{xelatex\ -\textgreater{}\ biber\ -\textgreater{}\ xelatex\ -\textgreater{}\ xelatex}.
+DOCX rendering uses Pandoc with the bundled \texttt{reference.docx} and
+CSL file, after which a post-processing step normalizes line spacing,
+paragraph spacing, and bibliography placement so that the Word output
+remains visually close to the LaTeX PDF.
