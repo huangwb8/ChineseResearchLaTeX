@@ -2,7 +2,7 @@
 
 ---
 
-创建tag v4.0.7 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
+创建tag v4.0.8 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
 
 # 改进
 
