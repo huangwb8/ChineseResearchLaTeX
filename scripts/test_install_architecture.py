@@ -63,6 +63,16 @@ def test_build_remote_repo_keeps_github_as_default_source():
     )
 
 
+def test_repo_level_pytest_cache_is_redirected_under_tests():
+    pytest_ini = REPO_ROOT / "pytest.ini"
+
+    assert pytest_ini.exists(), "仓库根目录应提供 pytest.ini 统一缓存位置"
+    content = pytest_ini.read_text(encoding="utf-8")
+
+    assert "[pytest]" in content
+    assert "cache_dir = tests/.pytest_cache" in content
+
+
 def test_add_nsfc_runtime_bundle_includes_bensz_fonts(tmp_path: Path):
     zip_path = tmp_path / "nsfc-runtime.zip"
 
