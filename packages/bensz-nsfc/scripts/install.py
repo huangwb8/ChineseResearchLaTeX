@@ -28,6 +28,15 @@ LOCKFILE_NAME = ".nsfc-version"
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
 
 
+def should_skip_reinstall(
+    installed_version: str | None,
+    target_version: str | None,
+    *,
+    force: bool,
+) -> bool:
+    return bool(installed_version and target_version and installed_version == target_version and not force)
+
+
 def discover_repo_root() -> Path:
     for candidate in [PACKAGE_DIR, *PACKAGE_DIR.parents]:
         if (candidate / "packages" / PACKAGE_SLUG / "package.json").exists():
@@ -131,6 +140,16 @@ def mirror_archive_url(mirror: str, ref: str) -> str:
     raise InstallError(f"不支持的镜像：{mirror}")
 
 
+def mirror_raw_url(mirror: str, ref: str, path: str) -> str:
+    quoted_ref = urllib.parse.quote(ref, safe="")
+    normalized_path = path.lstrip("/")
+    if mirror == "github":
+        return f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/{quoted_ref}/{normalized_path}"
+    if mirror == "gitee":
+        return f"https://gitee.com/{REPO_OWNER}/{REPO_NAME}/raw/{quoted_ref}/{normalized_path}"
+    raise InstallError(f"不支持的镜像：{mirror}")
+
+
 def iter_mirrors(mirror: str) -> tuple[str, ...]:
     if mirror in {"github", "gitee"}:
         return (mirror,)
@@ -199,11 +218,58 @@ class NSFCPackageManager:
         except urllib.error.URLError as exc:
             raise InstallError(f"无法下载资源：{url}") from exc
 
+    def _try_fetch_text(self, url: str) -> str | None:
+        request = urllib.request.Request(url, headers=self._github_headers())
+        try:
+            with urllib.request.urlopen(request) as response:
+                return response.read().decode("utf-8")
+        except (urllib.error.HTTPError, urllib.error.URLError):
+            return None
+
     def _load_package_metadata(self, package_dir: Path) -> dict[str, Any]:
         package_json = package_dir / "package.json"
         if not package_json.exists():
             raise InstallError(f"未找到包元数据：{package_json}")
         return json.loads(package_json.read_text(encoding="utf-8"))
+
+    def _installed_package_version(self) -> str | None:
+        target_install_dir = self._target_install_dir().resolve()
+        package_json = target_install_dir / "package.json"
+        if package_json.exists():
+            try:
+                payload = json.loads(package_json.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                payload = {}
+            version = payload.get("version")
+            if version:
+                return str(version)
+
+        current = self._state().get("current") or {}
+        install_path = current.get("install_path")
+        if install_path:
+            try:
+                resolved_install_path = Path(install_path).expanduser().resolve()
+            except OSError:
+                resolved_install_path = Path(install_path).expanduser()
+            if resolved_install_path == target_install_dir:
+                version = current.get("package_version")
+                return str(version) if version else None
+        return None
+
+    def _fetch_remote_package_version(self, ref: str, mirror: str) -> str | None:
+        raw_path = f"{PACKAGE_SOURCE_RELATIVE.as_posix()}/package.json"
+        for current_mirror in iter_mirrors(mirror):
+            content = self._try_fetch_text(mirror_raw_url(current_mirror, ref, raw_path))
+            if content is None:
+                continue
+            try:
+                payload = json.loads(content)
+            except json.JSONDecodeError:
+                continue
+            version = payload.get("version")
+            if version:
+                return str(version)
+        return None
 
     def _find_dependency_dirs(self, package_dir: Path) -> dict[str, Path]:
         found: dict[str, Path] = {}
@@ -490,6 +556,17 @@ class NSFCPackageManager:
             if local_path is None:
                 raise InstallError("本地安装模式必须提供 --path")
             package_dir = self._resolve_local_package_dir(local_path)
+            target_version = self._load_package_metadata(package_dir).get("version")
+            installed_version = self._installed_package_version()
+            if should_skip_reinstall(installed_version, target_version, force=force):
+                return {
+                    "requested_ref": ref,
+                    "source": "local",
+                    "package_version": target_version,
+                    "installed_version": installed_version,
+                    "skipped": True,
+                    "reason": "same_version",
+                }
             dependency_dirs = self._find_dependency_dirs(package_dir)
             commit = f"local-{self._hash_directory(package_dir)[:12]}"
             cached = self._cache_root_for(commit)
@@ -497,6 +574,17 @@ class NSFCPackageManager:
                 self._cache_package(package_dir, ref or commit, commit, "local", dependency_dirs)
             metadata = self._cache_metadata(commit)
         elif mirror != "github":
+            target_version = self._fetch_remote_package_version(ref, mirror)
+            installed_version = self._installed_package_version()
+            if should_skip_reinstall(installed_version, target_version, force=force):
+                return {
+                    "requested_ref": ref,
+                    "source": mirror,
+                    "package_version": target_version,
+                    "installed_version": installed_version,
+                    "skipped": True,
+                    "reason": "same_version",
+                }
             temp_dir, package_dir, actual_mirror = self._download_mirrored_snapshot(ref, mirror)
             dependency_dirs = self._find_dependency_dirs(package_dir)
             commit = f"{actual_mirror}-{self._hash_directory(package_dir)[:12]}"
@@ -516,6 +604,17 @@ class NSFCPackageManager:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             metadata = self._cache_metadata(commit)
         else:
+            target_version = self._fetch_remote_package_version(ref, mirror)
+            installed_version = self._installed_package_version()
+            if should_skip_reinstall(installed_version, target_version, force=force):
+                return {
+                    "requested_ref": ref,
+                    "source": source,
+                    "package_version": target_version,
+                    "installed_version": installed_version,
+                    "skipped": True,
+                    "reason": "same_version",
+                }
             resolved = self._resolve_ref(ref)
             commit = resolved["resolved_commit"]
             if force or not self._cache_root_for(commit).exists():

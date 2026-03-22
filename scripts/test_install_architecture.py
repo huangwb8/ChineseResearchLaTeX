@@ -5,6 +5,8 @@ import sys
 import zipfile
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,6 +21,10 @@ def _load_module(module_name: str, path: Path):
 
 
 install_script = _load_module("project_install_script", REPO_ROOT / "scripts" / "install.py")
+nsfc_install_script = _load_module(
+    "project_nsfc_install_script",
+    REPO_ROOT / "packages" / "bensz-nsfc" / "scripts" / "install.py",
+)
 pack_release = _load_module("project_pack_release", REPO_ROOT / "scripts" / "pack_release.py")
 
 
@@ -66,11 +72,80 @@ def test_build_remote_repo_keeps_github_as_default_source():
 def test_repo_level_pytest_cache_is_redirected_under_tests():
     pytest_ini = REPO_ROOT / "pytest.ini"
 
-    assert pytest_ini.exists(), "仓库根目录应提供 pytest.ini 统一缓存位置"
+    assert pytest_ini.exists(), "pytest 配置必须留在仓库根目录，不能简单挪到 tests/ 子目录"
     content = pytest_ini.read_text(encoding="utf-8")
 
     assert "[pytest]" in content
     assert "cache_dir = tests/.pytest_cache" in content
+
+
+def test_default_requested_packages_covers_all_supported_packages():
+    assert install_script.default_requested_packages() == list(install_script.SUPPORTED_PACKAGES)
+
+
+def test_should_skip_reinstall_when_versions_match_without_force():
+    assert install_script.should_skip_reinstall("p_v20260322", "p_v20260322", force=False) is True
+    assert install_script.should_skip_reinstall("p_v20260322", "p_v20260322", force=True) is False
+    assert install_script.should_skip_reinstall("p_v20260322", "p_v20260323", force=False) is False
+
+
+def test_build_parser_defaults_to_installing_all_packages():
+    parser = install_script.build_parser()
+    args = parser.parse_args(["install"])
+
+    assert args.packages == ",".join(install_script.default_requested_packages())
+    assert args.force is False
+
+
+def test_cmd_install_passes_force_to_package_installers(monkeypatch: pytest.MonkeyPatch):
+    calls: list[tuple[str, bool]] = []
+
+    monkeypatch.setattr(
+        install_script,
+        "_install_texmf_package",
+        lambda package_name, ref, mirror, texmfhome_override=None, force=False: calls.append(
+            (package_name, force)
+        ),
+    )
+    monkeypatch.setattr(
+        install_script,
+        "_install_bensz_nsfc",
+        lambda ref, extra, mirror, texmfhome=None, force=False: calls.append(("bensz-nsfc", force)),
+    )
+
+    install_script.cmd_install(
+        ["bensz-paper", "bensz-nsfc"],
+        "main",
+        [],
+        "github",
+        texmfhome="/tmp/texmf",
+        force=True,
+    )
+
+    assert ("bensz-paper", True) in calls
+    assert ("bensz-nsfc", True) in calls
+
+
+def test_nsfc_should_skip_reinstall_when_versions_match_without_force():
+    assert nsfc_install_script.should_skip_reinstall("p_v20260315", "p_v20260315", force=False) is True
+    assert nsfc_install_script.should_skip_reinstall("p_v20260315", "p_v20260315", force=True) is False
+    assert nsfc_install_script.should_skip_reinstall("p_v20260315", "p_v20260316", force=False) is False
+
+
+def test_nsfc_installed_version_ignores_state_from_other_texmfhome(tmp_path: Path):
+    texmfhome = tmp_path / "texmf-a"
+    manager = nsfc_install_script.NSFCPackageManager(cwd=tmp_path, texmfhome_override=str(texmfhome))
+    other_install = tmp_path / "texmf-b" / "tex" / "latex" / "bensz-nsfc"
+    manager._save_state(
+        {
+            "current": {
+                "package_version": "p_v20260315",
+                "install_path": str(other_install),
+            }
+        }
+    )
+
+    assert manager._installed_package_version() is None
 
 
 def test_add_nsfc_runtime_bundle_includes_bensz_fonts(tmp_path: Path):

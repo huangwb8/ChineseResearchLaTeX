@@ -6,24 +6,25 @@ ChineseResearchLaTeX — 统一 LaTeX 包安装器
 
   # macOS / Linux / WSL
   curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \
-    | python3 - install --packages bensz-nsfc --ref v4.0.0
+    | python3 - install --ref v4.0.0
 
   # 使用 Gitee 镜像下载包体（脚本本身仍可从 GitHub 获取）
   curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \
     | python3 - install --packages bensz-paper --mirror gitee --ref v4.0.0
 
-  # 多包安装
+  # 强制重装所有公共包
   curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \
-    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv --ref v4.0.0
+    | python3 - install --ref v4.0.0 --force
 
 也可本地执行（在仓库根目录）：
-  python3 scripts/install.py install --packages bensz-nsfc --ref v4.0.0
+  python3 scripts/install.py install --ref v4.0.0
   python3 scripts/install.py install --packages bensz-paper --mirror gitee --ref v4.0.0
   python3 scripts/install.py list
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import platform
 import shutil
@@ -102,6 +103,19 @@ SUPPORTED_PACKAGES: dict[str, dict] = {
         "dependencies": ["bensz-fonts"],
     },
 }
+
+
+def default_requested_packages() -> list[str]:
+    return list(SUPPORTED_PACKAGES)
+
+
+def should_skip_reinstall(
+    installed_version: str | None,
+    target_version: str | None,
+    *,
+    force: bool,
+) -> bool:
+    return bool(installed_version and target_version and installed_version == target_version and not force)
 
 
 def build_remote_repo(mirror: str) -> RemoteRepo:
@@ -368,7 +382,45 @@ def _locate_repo_root(extract_root: Path, package_name: str) -> Path:
     raise FileNotFoundError("快照中未找到仓库根目录")
 
 
-def _install_bensz_nsfc(ref: str, extra: list[str], mirror: str, texmfhome: str | None = None) -> None:
+def _load_package_metadata(package_dir: Path) -> dict:
+    package_json = package_dir / "package.json"
+    if not package_json.exists():
+        return {}
+    return json.loads(package_json.read_text(encoding="utf-8"))
+
+
+def _installed_package_version(package_name: str, texmfhome_override: str | None = None) -> str | None:
+    package_json = _texmfhome(texmfhome_override) / "tex" / "latex" / package_name / "package.json"
+    if not package_json.exists():
+        return None
+    try:
+        payload = json.loads(package_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    version = payload.get("version")
+    return str(version) if version else None
+
+
+def _fetch_remote_package_metadata(package_name: str, ref: str, mirror: str) -> tuple[dict, str] | None:
+    raw_path = f"packages/{package_name}/package.json"
+    for repo in iter_remote_repos(mirror):
+        content = _try_fetch_text(repo.raw_url(ref, raw_path))
+        if content is None:
+            continue
+        try:
+            return json.loads(content), repo.name
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def _install_bensz_nsfc(
+    ref: str,
+    extra: list[str],
+    mirror: str,
+    texmfhome: str | None = None,
+    force: bool = False,
+) -> None:
     content = None
     chosen_repo = None
     for repo in iter_remote_repos(mirror):
@@ -397,6 +449,8 @@ def _install_bensz_nsfc(ref: str, extra: list[str], mirror: str, texmfhome: str 
         if texmfhome:
             cmd.extend(["--texmfhome", texmfhome])
         cmd.extend(["install", "--ref", ref, "--mirror", mirror])
+        if force:
+            cmd.append("--force")
         cmd += extra
         print(f"  ▶ {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
@@ -446,11 +500,38 @@ def _download_repo_snapshot(package_name: str, ref: str, mirror: str) -> tuple[P
     _die(f"无法下载 {package_name}（ref={ref}, mirror={mirror}）。最后错误：{last_error}")
 
 
-def _install_texmf_package(package_name: str, ref: str, mirror: str, texmfhome_override: str | None = None) -> None:
+def _install_texmf_package(
+    package_name: str,
+    ref: str,
+    mirror: str,
+    texmfhome_override: str | None = None,
+    force: bool = False,
+) -> None:
+    texmfhome = _texmfhome(texmfhome_override)
+    remote_metadata_result = _fetch_remote_package_metadata(package_name, ref, mirror)
+    if remote_metadata_result is not None:
+        remote_metadata, metadata_mirror = remote_metadata_result
+        target_version = remote_metadata.get("version")
+        installed_version = _installed_package_version(package_name, texmfhome_override)
+        if should_skip_reinstall(installed_version, target_version, force=force):
+            print(
+                "  ⏭️  检测到已安装相同版本："
+                f"{package_name} {installed_version}（ref={ref}, source={metadata_mirror}），跳过重复安装"
+            )
+            return
+
     print(f"  📥 下载仓库快照（{ref}）…")
     tmp_dir, pkg_src, actual_mirror = _download_repo_snapshot(package_name, ref, mirror)
     try:
-        texmfhome = _texmfhome(texmfhome_override)
+        package_metadata = _load_package_metadata(pkg_src)
+        target_version = package_metadata.get("version")
+        installed_version = _installed_package_version(package_name, texmfhome_override)
+        if should_skip_reinstall(installed_version, target_version, force=force):
+            print(
+                "  ⏭️  检测到已安装相同版本："
+                f"{package_name} {installed_version}（ref={ref}, source={actual_mirror}），跳过重复安装"
+            )
+            return
         dest = texmfhome / "tex" / "latex" / package_name
         if dest.exists():
             shutil.rmtree(dest)
@@ -479,7 +560,8 @@ def cmd_list() -> None:
     print()
     print("安装示例：")
     print("  curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py \\")
-    print("    | python3 - install --packages bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv --ref v4.0.0")
+    print("    | python3 - install --ref v4.0.0")
+    print("  python3 scripts/install.py install --ref v4.0.0 --force")
     print("  python3 scripts/install.py install --packages bensz-paper --mirror gitee --ref v4.0.0")
 
 
@@ -489,6 +571,7 @@ def cmd_install(
     extra: list[str],
     mirror: str,
     texmfhome: str | None = None,
+    force: bool = False,
 ) -> None:
     ordered_packages = resolve_requested_packages(packages)
     if ordered_packages != packages:
@@ -501,17 +584,16 @@ def cmd_install(
         print(f"{'=' * 50}")
 
         if info["install_mode"] == "delegate":
-            _install_bensz_nsfc(ref, extra, mirror, texmfhome=texmfhome)
+            _install_bensz_nsfc(ref, extra, mirror, texmfhome=texmfhome, force=force)
         elif info["install_mode"] == "texmfhome":
-            _install_texmf_package(pkg, ref, mirror, texmfhome_override=texmfhome)
+            _install_texmf_package(pkg, ref, mirror, texmfhome_override=texmfhome, force=force)
 
     print(f"\n{'=' * 50}")
     print("✅ 所有包安装完成！")
     print(f"{'=' * 50}")
 
 
-def main() -> None:
-    configure_windows_stdio_utf8()
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="ChineseResearchLaTeX 统一 LaTeX 包安装器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -524,8 +606,8 @@ def main() -> None:
     inst = sub.add_parser("install", help="安装一个或多个包")
     inst.add_argument(
         "--packages",
-        default="bensz-nsfc",
-        help="要安装的包，逗号分隔（默认：bensz-nsfc）。可选：bensz-fonts,bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv",
+        default=",".join(default_requested_packages()),
+        help="要安装的包，逗号分隔（默认：安装所有公共包）。可选：bensz-fonts,bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv",
     )
     inst.add_argument(
         "--ref",
@@ -543,10 +625,22 @@ def main() -> None:
         help="覆盖 TEXMFHOME 安装目录；当 TeX 未加入 PATH 或需安装到自定义 texmf 树时使用",
     )
     inst.add_argument(
+        "--force",
+        action="store_true",
+        help="即使检测到已安装相同版本，也强制重新安装",
+    )
+    inst.add_argument(
         "extra",
         nargs=argparse.REMAINDER,
         help="透传给子安装器的额外参数（仅 bensz-nsfc 有效）",
     )
+
+    return parser
+
+
+def main() -> None:
+    configure_windows_stdio_utf8()
+    parser = build_parser()
 
     args = parser.parse_args()
 
@@ -554,7 +648,14 @@ def main() -> None:
         cmd_list()
     elif args.command == "install":
         requested = [item.strip() for item in args.packages.split(",") if item.strip()]
-        cmd_install(requested, args.ref, args.extra or [], args.mirror, texmfhome=args.texmfhome)
+        cmd_install(
+            requested,
+            args.ref,
+            args.extra or [],
+            args.mirror,
+            texmfhome=args.texmfhome,
+            force=args.force,
+        )
     else:
         parser.print_help()
 

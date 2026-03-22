@@ -1,0 +1,18 @@
+{
+  "name": "bensz-paper",
+  "version": "p_v20260322",
+  "description": "ChineseResearchLaTeX SCI 论文公共包（支持 PDF / DOCX 双输出与统一构建脚本）",
+  "author": "ChineseResearchLaTeX Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/huangwb8/ChineseResearchLaTeX",
+  "dependencies": {
+    "texlive": ">=2020",
+    "xelatex": "*"
+  },
+  "features": [
+    "SCI 论文共享样式",
+    "PDF / DOCX 双输出",
+    "统一项目构建入口",
+    "依赖 bensz-fonts 共享字体包"
+  ]
+}

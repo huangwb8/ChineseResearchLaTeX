@@ -1,0 +1,18 @@
+{
+  "name": "bensz-thesis",
+  "version": "p_v20260322",
+  "description": "ChineseResearchLaTeX 毕业论文公共包（支持多学校 profile、PDF 构建与像素级验收）",
+  "author": "ChineseResearchLaTeX Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/huangwb8/ChineseResearchLaTeX",
+  "dependencies": {
+    "texlive": ">=2020",
+    "xelatex": "*"
+  },
+  "features": [
+    "毕业论文共享样式",
+    "多学校 profile",
+    "统一 PDF 构建入口",
+    "依赖 bensz-fonts 共享字体包"
+  ]
+}
