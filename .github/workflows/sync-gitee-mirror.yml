@@ -1,9 +1,11 @@
 name: Sync Gitee Mirror
 
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       branch:
@@ -23,15 +25,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: sync-gitee-mirror-${{ github.event.release.tag_name || inputs.tag || github.run_id }}
+  group: sync-gitee-mirror-${{ inputs.branch || github.ref_name || github.event.repository.default_branch || 'main' }}
   cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     env:
-      TARGET_BRANCH: ${{ inputs.branch || github.event.repository.default_branch || 'main' }}
-      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      TARGET_BRANCH: ${{ inputs.branch || github.ref_name || github.event.repository.default_branch || 'main' }}
       GITEE_REPO: ${{ vars.GITEE_REPO }}
       GITEE_REMOTE_URL: ${{ vars.GITEE_REMOTE_URL }}
     steps:
@@ -52,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ github.ref_name || github.event.repository.default_branch }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -75,11 +76,11 @@ jobs:
           python -m pip install pytest
           pytest -q scripts/test_sync_gitee_mirror.py
 
-      - name: Sync branch and tag to Gitee
+      - name: Sync latest branch commit to Gitee
         run: |
           cmd=(python scripts/sync_gitee_mirror.py --branch "$TARGET_BRANCH")
-          if [ -n "$RELEASE_TAG" ]; then
-            cmd+=(--tag "$RELEASE_TAG")
+          if [ -n "${{ inputs.tag }}" ]; then
+            cmd+=(--tag "${{ inputs.tag }}")
           fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             cmd+=(--dry-run)

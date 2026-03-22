@@ -13,8 +13,8 @@
 - 新增 [docs/developer-contribution-guide.md](docs/developer-contribution-guide.md)：明确仓库的开发者协作与 PR 规范，要求贡献者默认遵循“先提 Issue、获维护者确认后再提 PR”的流程，并结合当前 `packages/` 分层补充受欢迎 PR 类型、提交流程与验证要求
 - 新增 [projects/thesis-smu-master/template.json](projects/thesis-smu-master/template.json) 与 [projects/thesis-sysu-doctor/template.json](projects/thesis-sysu-doctor/template.json)：将毕业论文项目的 `project_name`、`school`、`degree` 下沉到项目根目录元数据文件，作为 README 模板列表等脚本识别院校信息的来源
 - 新增 [docs/bensz-fonts-support-model.md](docs/bensz-fonts-support-model.md)：系统说明 `bensz-fonts` 如何通过统一字体 API、依赖安装、`TEXINPUTS` 注入与 Overleaf/runtime 打包支撑 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv`
-- 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：在 GitHub Release 发布后自动将默认分支与最新 tag 推送到 Gitee 镜像仓库，并支持 `workflow_dispatch` 手动重试
-- 新增 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md)：整理 GitHub Release 后自动同步到 Gitee 的一次性配置、首次验证、日常使用与常见故障排查步骤
+- 新增 `scripts/sync_gitee_mirror.py` 与 `.github/workflows/sync-gitee-mirror.yml`：为 GitHub→Gitee 镜像同步提供官方脚本与工作流入口，并支持 `workflow_dispatch` 手动重试
+- 新增 [docs/gitee-sync-guide.md](docs/gitee-sync-guide.md)：整理 GitHub→Gitee 自动同步的一次性配置、首次验证、日常使用与常见故障排查步骤
 - 新增 `.github/ISSUE_TEMPLATE/` 下的 `paper-template-customization.yml`、`thesis-template-customization.yml`、`docx-template-support.yml`、`template-bug-report.yml` 与 `config.yml`：为 SCI 模板定制、毕业论文模板定制、DOCX 模板问题/需求和通用模板问题提供结构化 Issue 表单，重点把 `reference.docx` / 官方 Word 模板 / baseline 资料等关键上下文前置为必填信息
 - 新增共享字体基础包 `packages/bensz-fonts/`：集中托管原先分散在 `bensz-nsfc` 与 `bensz-cv` 中的字体文件，提供统一字体路径与字体配置 API，并补充本地安装脚本与 TDS 打包脚本
 - 新增学术简历公共包 `packages/bensz-cv/`：引入 `bensz-cv.cls` / `resume.cls` 双入口、字体与图标运行时资源、统一构建/清理/像素级比较脚本 `cv_project_tool.py`、本地安装脚本与 TDS 打包脚本
@@ -30,7 +30,9 @@
 
 ### Changed（变更）
 
-- 新增仓库级 `pytest.ini` 并更新 `scripts/test_install_architecture.py`：统一将仓库根目录执行的 pytest 缓存重定向到 `tests/.pytest_cache`，避免 `.pytest_cache/` 继续出现在根目录，同时用回归测试锁定该约束
+- 更新根级 `pytest.ini` 与 `scripts/test_install_architecture.py`：补充“配置必须留在仓库根目录、不能简单挪到 `tests/` 子目录”的约束说明，并继续将仓库根目录执行的 pytest 缓存重定向到 `tests/.pytest_cache`
+- 更新 `scripts/install.py`、`packages/bensz-nsfc/scripts/install.py` 与新增 `packages/bensz-paper/package.json`、`packages/bensz-thesis/package.json`、`packages/bensz-cv/package.json`：统一安装器现改为未显式传 `--packages` 时默认安装全部公共包，并在安装前对比已安装包 `version`；若版本未变化则跳过重复安装，支持通过 `--force` 强制覆盖重装
+- 更新 `scripts/sync_gitee_mirror.py`、`.github/workflows/sync-gitee-mirror.yml`、`docs/gitee-sync-guide.md`、根级 `README.md` 与 `AGENTS.md`：Gitee 镜像同步现改为默认分支 `push` 触发 + 每小时巡检的 commit 驱动模式，不再默认推送“最新 tag”；同步脚本会在推送后校验 Gitee 远端分支是否与 GitHub 当前 commit 完全一致，确保失败时明确报错而不是静默通过
 - 更新 `packages/bensz-paper/scripts/manuscript_tool.py`、`packages/bensz-paper/scripts/fix_docx_spacing.py`、`packages/bensz-paper/scripts/inspect_docx_styles.py`、`packages/bensz-paper/tests/test_manuscript_tool.py`、`projects/paper-sci-01/extraTex/`、`projects/paper-sci-01/README.md`、`projects/paper-sci-01/AGENTS.md`、`packages/bensz-paper/README.md`、`projects/README.md`、根级 `README.md` 与 `AGENTS.md`：`bensz-paper` 现改为以 `extraTex/**/*.tex` 作为 PDF / DOCX 的唯一正文真相来源，DOCX 导出时只在运行期临时生成 Markdown；示例项目已移除持久化正文 Markdown 与 `references/meta.yaml`
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、`scripts/test_issue_templates.py`、根级 `README.md` 与 `.github/ISSUE_TEMPLATE/paper-template-customization.yml`：移除 README 自动生成的 SCI 区块中“DOCX 模板问题/需求”引导，并将 DOCX / `reference.docx` / PDF 对齐类诉求统一并回 SCI 模板定制表单，避免维护独立入口
 - 更新根级 `README.md`：在“社区支持”区域新增开发者贡献规范入口，明确代码/模板/脚本协作默认走“Issue 先行、确认后再提 PR”的流程

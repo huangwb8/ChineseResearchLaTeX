@@ -79,11 +79,11 @@ ChineseResearchLaTeX/
 - `packages/bensz-cv/scripts/cv_project_tool.py`：中英文简历 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
 - `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-fonts`、`bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包，并支持 `--mirror gitee`
-- `scripts/sync_gitee_mirror.py`：将默认分支与 release tag 从 GitHub 同步推送到 Gitee 镜像仓库的官方脚本
+- `scripts/sync_gitee_mirror.py`：将默认分支最新 commit（以及手动指定 tag）从 GitHub 同步推送到 Gitee 镜像仓库的官方脚本
 - `scripts/sync_vscode_configs.py`：同步 `projects/` 下各项目的 `*.code-workspace`、`.vscode/settings.json` 与 VS Code 构建 launcher
 - `scripts/vscode/`：按 `nsfc / paper / thesis / cv` 分型托管 VS Code / LaTeX Workshop 固定模板，并提供通过 `texlua` 转调项目级 Python wrapper 的跨平台 launcher
 - `scripts/pack_release.py`：项目级 Release 资产打包与上传
-- `.github/workflows/sync-gitee-mirror.yml`：GitHub Release 发布后自动同步默认分支与新 tag 到 Gitee
+- `.github/workflows/sync-gitee-mirror.yml`：在默认分支有新 commit 时立即同步到 Gitee，并额外每小时巡检一次
 - `skills/`：项目级 AI 技能及其文档、脚本、测试
 - `docs/`：迁移说明等辅助文档
 
@@ -116,9 +116,11 @@ ChineseResearchLaTeX/
 #### LaTeX 包安装问题
 
 - 用户无需克隆仓库时，优先使用根级统一安装器（`scripts/install.py`）：
-  - `curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py | python3 - install --packages bensz-nsfc --ref <tag>`
-  - Windows PowerShell 可使用：`(Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py' -UseBasicParsing).Content | python - install --packages bensz-nsfc --ref <tag>`；若系统已安装官方 Python Launcher，也可改用 `py -3 -`
+  - 未显式指定 `--packages` 时，默认安装 `bensz-fonts,bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv`
+  - `curl -fsSL https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py | python3 - install --ref <tag>`
+  - Windows PowerShell 可使用：`(Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/huangwb8/ChineseResearchLaTeX/main/scripts/install.py' -UseBasicParsing).Content | python - install --ref <tag>`；若系统已安装官方 Python Launcher，也可改用 `py -3 -`
   - 支持多包安装：`--packages bensz-fonts,bensz-nsfc,bensz-paper,bensz-thesis,bensz-cv`
+  - 若目标包 `version` 与已安装版本一致，安装器默认跳过重复安装；需要覆盖时显式加 `--force`
   - 中国大陆用户如需走镜像，可显式加 `--mirror gitee`
   - 若 TeX 未加入 `PATH` 或需安装到自定义 texmf 树，可显式加 `--texmfhome <path>`
 - 在仓库内开发时，bensz-nsfc 包级安装优先检查 `packages/bensz-nsfc/scripts/install.py` 与 `docs/migration-guide.md`
@@ -438,6 +440,7 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 处理 `bensz-fonts`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 安装问题时，优先使用根级统一安装器：
 
 ```bash
+python3 scripts/install.py install
 python3 scripts/install.py install --packages bensz-fonts,bensz-paper,bensz-thesis,bensz-cv
 python3 scripts/install.py install --packages bensz-paper --mirror gitee
 ```

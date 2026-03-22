@@ -1,6 +1,6 @@
-# GitHub Release 后自动同步到 Gitee 指南
+# GitHub 最新 Commit 自动同步到 Gitee 指南
 
-本文面向仓库维护者，说明如何在 **GitHub 发布新 Release 后**，自动把当时的默认分支最新状态和对应 tag 推送到 Gitee 镜像仓库。
+本文面向仓库维护者，说明如何在 **GitHub 默认分支出现新 commit 时**，自动把最新状态推送到 Gitee 镜像仓库，并通过定时巡检补偿偶发漏触发场景。
 
 当前自动化入口：
 
@@ -9,10 +9,12 @@
 
 ## 同步内容
 
-当 GitHub 上有新的 Release 被发布为 `published` 状态时，工作流会自动：
+当 GitHub 默认分支有新的 commit，或定时巡检发现 Gitee 落后时，工作流会自动：
 
 - 将当前默认分支的最新提交推送到 Gitee 对应分支
-- 将本次 Release 的 tag 推送到 Gitee
+- 推送后比对 GitHub / Gitee 两端分支 commit，只有完全一致才视为成功
+
+只有在手动触发 `workflow_dispatch` 且显式填写 `tag` 时，工作流才会顺带同步该 tag。
 
 这条链路的目标是“自动同步仓库状态到 Gitee 镜像”，不是在 Gitee 上额外创建 Release 页面或上传 Release Assets。
 
@@ -123,7 +125,7 @@ GitHub 仓库 -> Settings -> Secrets and variables -> Actions
 
 ## 首次验证
 
-推荐先手动跑一次工作流，确认配置无误，而不是等下次正式发布时再发现问题。
+推荐先手动跑一次工作流，确认配置无误，而不是等下次默认分支更新时再发现问题。
 
 进入 GitHub：
 
@@ -134,24 +136,25 @@ Actions -> Sync Gitee Mirror -> Run workflow
 默认参数说明：
 
 - `branch`：默认同步默认分支，通常是 `main`
-- `tag`：留空时会使用当前仓库可见的最新本地 tag
+- `tag`：默认留空；只有需要手动补推某个 tag 时才填写
 - `dry_run`：`true` 时只打印计划，不真正推送；首次排查时可先用它
 
 建议验证顺序：
 
 1. 先运行一次 `dry_run=true`
 2. 再运行一次真实同步
-3. 到 Gitee 检查目标分支和 tag 是否已更新
+3. 到 Gitee 检查目标分支是否已更新到和 GitHub 同一 commit
 
 ## 日常使用方式
 
-完成一次性配置后，后续只需要照常发布 GitHub Release。
+完成一次性配置后，后续只需要照常向默认分支推送 commit。
 
-当新的 Release 进入 `published` 状态时：
+默认情况下：
 
-- [sync-gitee-mirror.yml](../.github/workflows/sync-gitee-mirror.yml) 会自动触发
+- `push` 到 `main` 时会立即触发 [sync-gitee-mirror.yml](../.github/workflows/sync-gitee-mirror.yml)
+- 工作流还会每小时自动巡检一次，发现 Gitee 落后时补推
 - 工作流会执行 [scripts/sync_gitee_mirror.py](../scripts/sync_gitee_mirror.py)
-- 默认分支最新状态和本次 Release tag 会被推到 Gitee
+- 默认分支最新状态会被推到 Gitee，并在推送后做远端 commit 校验
 
 换句话说，日常维护流程不需要再手动登录 Gitee 执行“拉取 GitHub 仓库”的操作。
 
@@ -212,18 +215,24 @@ Enter passphrase for (stdin):
 - 把新的公钥重新加到 Gitee
 - 用新的无口令私钥覆盖 GitHub 中的 `GITEE_SSH_PRIVATE_KEY`
 
-### 5. 这次只是打 tag，没有真正发布 GitHub Release
+### 5. 这次没有进入默认分支
 
 当前工作流触发条件是：
 
 ```yaml
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "17 * * * *"
 ```
 
-所以只有“Release 被发布”才会自动触发；单独 push tag 不会触发这条工作流。
+处理方式：
+
+- 确认目标提交已经进入默认分支 `main`
+- 或等待下一次定时巡检
+- 如需立即补推，可手动触发 `workflow_dispatch`
 
 ### 6. 历史 Release 不会自动补跑
 
@@ -238,8 +247,8 @@ on:
 推荐把维护动作固定为以下顺序：
 
 1. 提交并推送代码到 GitHub 默认分支
-2. 创建并发布 GitHub Release
-3. 等待 `Sync Gitee Mirror` workflow 成功
-4. 如需确认，到 Gitee 检查分支和 tag 是否同步
+2. 等待 `Sync Gitee Mirror` workflow 成功
+3. 如需确认，到 Gitee 检查分支 commit 是否同步
+4. 只有需要补推 tag 时，再手动触发 `workflow_dispatch` 并填写 `tag`
 
 这样就能把“GitHub 为源站、Gitee 为镜像”的维护动作稳定固定下来。

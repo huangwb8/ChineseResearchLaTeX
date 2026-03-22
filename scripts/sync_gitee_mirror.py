@@ -81,6 +81,37 @@ def infer_latest_tag(repo_root: Path) -> str | None:
     return value or None
 
 
+def resolve_local_ref(repo_root: Path, ref: str) -> str:
+    result = run_git(["rev-parse", ref], repo_root)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip() or f"Unable to resolve {ref}")
+    return result.stdout.strip()
+
+
+def resolve_remote_ref(repo_root: Path, remote_name: str, ref: str) -> str | None:
+    result = run_git(["ls-remote", remote_name, ref], repo_root)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+    line = next((item for item in result.stdout.splitlines() if item.strip()), "")
+    if not line:
+        return None
+    return line.split()[0]
+
+
+def branch_needs_sync(repo_root: Path, remote_name: str, branch: str) -> bool:
+    local_sha = resolve_local_ref(repo_root, "HEAD")
+    remote_sha = resolve_remote_ref(repo_root, remote_name, f"refs/heads/{branch}")
+    return remote_sha != local_sha
+
+
+def tag_needs_sync(repo_root: Path, remote_name: str, tag: str | None) -> bool:
+    if not tag:
+        return False
+    local_sha = resolve_local_ref(repo_root, f"refs/tags/{tag}")
+    remote_sha = resolve_remote_ref(repo_root, remote_name, f"refs/tags/{tag}")
+    return remote_sha != local_sha
+
+
 def push_with_retry(
     repo_root: Path,
     remote_name: str,
@@ -107,16 +138,21 @@ def push_with_retry(
     raise RuntimeError(last_error or f"git {' '.join(base_cmd)} failed")
 
 
-def verify_remote_refs(repo_root: Path, remote_name: str, branch: str, tag: str | None) -> None:
-    refs = [f"refs/heads/{branch}"]
+def verify_remote_refs_match(repo_root: Path, remote_name: str, branch: str, tag: str | None) -> None:
+    local_branch_sha = resolve_local_ref(repo_root, "HEAD")
+    remote_branch_sha = resolve_remote_ref(repo_root, remote_name, f"refs/heads/{branch}")
+    if remote_branch_sha != local_branch_sha:
+        raise RuntimeError(
+            f"Remote branch '{branch}' mismatch: expected {local_branch_sha}, got {remote_branch_sha or '(missing)'}"
+        )
+
     if tag:
-        refs.append(f"refs/tags/{tag}")
-    result = run_git(["ls-remote", remote_name, *refs], repo_root)
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
-    lines = [line for line in result.stdout.splitlines() if line.strip()]
-    if len(lines) != len(refs):
-        raise RuntimeError(f"Remote verification failed for refs: {', '.join(refs)}")
+        local_tag_sha = resolve_local_ref(repo_root, f"refs/tags/{tag}")
+        remote_tag_sha = resolve_remote_ref(repo_root, remote_name, f"refs/tags/{tag}")
+        if remote_tag_sha != local_tag_sha:
+            raise RuntimeError(
+                f"Remote tag '{tag}' mismatch: expected {local_tag_sha}, got {remote_tag_sha or '(missing)'}"
+            )
 
 
 def parse_args() -> argparse.Namespace:
@@ -146,17 +182,28 @@ def main() -> int:
             raise RuntimeError("Missing GITEE_REPO or --remote-url")
         remote_url = build_gitee_remote_url(args.repo, host=args.host)
 
-    tag = args.tag.strip() or infer_latest_tag(repo_root)
-    refspecs = build_refspecs(args.branch, tag)
-
     if args.dry_run:
+        tag = args.tag.strip() or None
         print(f"repo_root={repo_root}")
         print(f"remote_name={args.remote_name}")
         print(f"remote_url={remote_url}")
-        print("refspecs=" + ",".join(refspecs))
+        print("refspecs=" + ",".join(build_refspecs(args.branch, tag)))
         return 0
 
     ensure_remote(repo_root, args.remote_name, remote_url)
+    tag = args.tag.strip() or None
+    needs_branch = branch_needs_sync(repo_root, args.remote_name, args.branch)
+    needs_tag = tag_needs_sync(repo_root, args.remote_name, tag)
+    if not needs_branch and not needs_tag:
+        print(f"Gitee mirror is already up to date for branch '{args.branch}'")
+        return 0
+
+    refspecs: list[str] = []
+    if needs_branch:
+        refspecs.append(f"HEAD:refs/heads/{args.branch}")
+    if needs_tag and tag:
+        refspecs.append(f"refs/tags/{tag}:refs/tags/{tag}")
+
     push_with_retry(
         repo_root,
         args.remote_name,
@@ -165,10 +212,11 @@ def main() -> int:
         retries=args.retries,
         delay_seconds=args.retry_delay,
     )
-    verify_remote_refs(repo_root, args.remote_name, args.branch, tag)
+    verify_remote_refs_match(repo_root, args.remote_name, args.branch, tag if needs_tag else None)
 
-    print(f"Synced branch '{args.branch}' to {remote_url}")
-    if tag:
+    if needs_branch:
+        print(f"Synced branch '{args.branch}' to {remote_url}")
+    if needs_tag and tag:
         print(f"Synced tag '{tag}' to {remote_url}")
     return 0
 
