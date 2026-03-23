@@ -40,7 +40,11 @@ class PackageSpec:
         return Path("tex") / "latex" / self.package_name
 
     def resolved_state_dir_name(self) -> str:
-        return self.state_dir_name or f".{self.package_name}"
+        return self.state_dir_name or self.package_name
+
+
+def get_project_state_home() -> Path:
+    return Path.home() / ".ChineseResearchLaTeX"
 
 
 def configure_windows_stdio_utf8() -> None:
@@ -275,7 +279,9 @@ class VersionedPackageManager:
             else Path(__file__).resolve().parents[1] / "packages" / spec.package_name
         )
         self.repo_root = self.package_dir.parents[1]
-        self.state_root = (state_root_override or (Path.home() / spec.resolved_state_dir_name())).resolve()
+        self.state_root = (
+            state_root_override or (get_project_state_home() / spec.resolved_state_dir_name())
+        ).resolve()
         self.cache_root = self.state_root / "cache" / "commits"
         self.refs_root = self.state_root / "cache" / "refs"
         self.state_file = self.state_root / "state.json"

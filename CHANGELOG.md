@@ -30,7 +30,7 @@
 
 ### Changed（变更）
 
-- 更新 `scripts/install.py`、新增 `scripts/package_version_manager.py`，并重写 `packages/bensz-paper/scripts/package/install.py`、`packages/bensz-thesis/scripts/package/install.py`、`packages/bensz-cv/scripts/package/install.py` 以及相关 README / `AGENTS.md`：`bensz-paper`、`bensz-thesis`、`bensz-cv` 现改为与 `bensz-nsfc` 同类的“包级版本管理 + 激活”安装模型，支持缓存多版本、`install/use/rollback/check/uninstall` 等命令；根级统一安装器也同步改为委托这些包的专用安装器，同时保持默认 `scripts/install.py install` 入口不变
+- 更新 `scripts/install.py`、新增 `scripts/package_version_manager.py`，并重写 `packages/bensz-paper/scripts/package/install.py`、`packages/bensz-thesis/scripts/package/install.py`、`packages/bensz-cv/scripts/package/install.py` 以及相关 README / `AGENTS.md`：`bensz-paper`、`bensz-thesis`、`bensz-cv` 现改为与 `bensz-nsfc` 同类的“包级版本管理 + 激活”安装模型，支持缓存多版本、`install/use/rollback/check/uninstall` 等命令；根级统一安装器也同步改为委托这些包的专用安装器，同时保持默认 `scripts/install.py install` 入口不变；所有包级缓存/状态目录统一收口到 `~/.ChineseResearchLaTeX/<package>/`
 - 更新根级 `pytest.ini` 与 `scripts/test_install_architecture.py`：补充“配置必须留在仓库根目录、不能简单挪到 `tests/` 子目录”的约束说明，并继续将仓库根目录执行的 pytest 缓存重定向到 `tests/.pytest_cache`
 - 更新 `scripts/install.py`、`packages/bensz-nsfc/scripts/install.py` 与新增 `packages/bensz-paper/package.json`、`packages/bensz-thesis/package.json`、`packages/bensz-cv/package.json`：统一安装器现改为未显式传 `--packages` 时默认安装全部公共包，并在安装前对比已安装包 `version`；若版本未变化则跳过重复安装，支持通过 `--force` 强制覆盖重装
 - 更新 `scripts/sync_gitee_mirror.py`、`.github/workflows/sync-gitee-mirror.yml`、`docs/gitee-sync-guide.md`、根级 `README.md` 与 `AGENTS.md`：Gitee 镜像同步现改为默认分支 `push` 触发 + 每小时巡检的 commit 驱动模式，不再默认推送“最新 tag”；同步脚本会在推送后校验 Gitee 远端分支是否与 GitHub 当前 commit 完全一致，确保失败时明确报错而不是静默通过

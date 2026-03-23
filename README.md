@@ -314,6 +314,8 @@ python packages/bensz-thesis/scripts/package/install.py check
 python packages/bensz-cv/scripts/package/install.py use --ref v4.0.0
 ```
 
+这些包级安装器的缓存与状态文件现统一收口到 `~/.ChineseResearchLaTeX/<package>/`，例如 `~/.ChineseResearchLaTeX/bensz-paper/`，避免在用户主目录散落多个顶级隐藏目录。
+
 ## LaTeX 模板编译
 
 可以手动在 VSCode 里编译，也可以使用统一的 Python 渲染器生成 PDF。

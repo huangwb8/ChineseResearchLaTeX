@@ -97,6 +97,16 @@ def test_versioned_package_manager_installed_version_ignores_other_texmfhome(tmp
     assert manager._installed_package_version() is None
 
 
+def test_versioned_package_manager_defaults_under_chineseresearchlatex_home():
+    spec = package_version_manager.PackageSpec(
+        package_name="demo-package",
+        source_marker="demo-package.sty",
+    )
+    manager = package_version_manager.VersionedPackageManager(spec=spec)
+
+    assert manager.state_root == Path.home() / ".ChineseResearchLaTeX" / "demo-package"
+
+
 def test_versioned_package_manager_dry_run_does_not_persist_cache_or_state(tmp_path: Path):
     spec = package_version_manager.PackageSpec(
         package_name="demo-package",

@@ -149,6 +149,12 @@ def test_nsfc_installed_version_ignores_state_from_other_texmfhome(tmp_path: Pat
     assert manager._installed_package_version() is None
 
 
+def test_nsfc_state_root_is_under_chineseresearchlatex_home():
+    manager = nsfc_install_script.NSFCPackageManager()
+
+    assert manager.state_root == Path.home() / ".ChineseResearchLaTeX" / "bensz-nsfc"
+
+
 def test_add_nsfc_runtime_bundle_includes_bensz_fonts(tmp_path: Path):
     zip_path = tmp_path / "nsfc-runtime.zip"
 

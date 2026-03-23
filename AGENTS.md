@@ -454,6 +454,8 @@ python packages/bensz-thesis/scripts/package/install.py check
 python packages/bensz-cv/scripts/package/install.py use --ref v4.0.0
 ```
 
+这些包级安装器的缓存与状态目录统一放在 `~/.ChineseResearchLaTeX/<package>/` 下，避免在用户主目录散落多个 `.bensz-*` 顶级隐藏目录。
+
 ### 编译规范
 
 **首选入口**：使用统一 Python 渲染器，而不是手写一串裸 `xelatex` 命令。

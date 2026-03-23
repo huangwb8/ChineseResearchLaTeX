@@ -28,6 +28,10 @@ LOCKFILE_NAME = ".nsfc-version"
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
 
 
+def get_project_state_home() -> Path:
+    return Path.home() / ".ChineseResearchLaTeX"
+
+
 def should_skip_reinstall(
     installed_version: str | None,
     target_version: str | None,
@@ -164,7 +168,7 @@ class NSFCPackageManager:
         self.texmfhome_override = texmfhome_override
         self.package_dir = PACKAGE_DIR
         self.repo_root = discover_repo_root()
-        self.state_root = Path.home() / ".bensz-nsfc"
+        self.state_root = get_project_state_home() / "bensz-nsfc"
         self.cache_root = self.state_root / "cache" / "commits"
         self.refs_root = self.state_root / "cache" / "refs"
         self.state_file = self.state_root / "state.json"
