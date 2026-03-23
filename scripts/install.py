@@ -82,25 +82,25 @@ SUPPORTED_PACKAGES: dict[str, dict] = {
         "dependencies": ["bensz-fonts"],
     },
     "bensz-paper": {
-        "installer_path": None,
+        "installer_path": "packages/bensz-paper/scripts/package/install.py",
         "description": "SCI 论文公共包——支持 PDF / DOCX 双输出",
-        "install_mode": "texmfhome",
-        "package_subdir": "packages/bensz-paper",
+        "install_mode": "delegate",
         "dependencies": ["bensz-fonts"],
+        "delegate_support_files": ["scripts/package_version_manager.py"],
     },
     "bensz-thesis": {
-        "installer_path": None,
+        "installer_path": "packages/bensz-thesis/scripts/package/install.py",
         "description": "毕业论文公共包——支持硕士/博士论文模板与像素级验收脚本",
-        "install_mode": "texmfhome",
-        "package_subdir": "packages/bensz-thesis",
+        "install_mode": "delegate",
         "dependencies": ["bensz-fonts"],
+        "delegate_support_files": ["scripts/package_version_manager.py"],
     },
     "bensz-cv": {
-        "installer_path": None,
+        "installer_path": "packages/bensz-cv/scripts/package/install.py",
         "description": "学术简历公共包——支持中英文简历模板与像素级验收脚本",
-        "install_mode": "texmfhome",
-        "package_subdir": "packages/bensz-cv",
+        "install_mode": "delegate",
         "dependencies": ["bensz-fonts"],
+        "delegate_support_files": ["scripts/package_version_manager.py"],
     },
 }
 
@@ -414,38 +414,52 @@ def _fetch_remote_package_metadata(package_name: str, ref: str, mirror: str) -> 
     return None
 
 
-def _install_bensz_nsfc(
+def _download_delegate_support_files(package_name: str, temp_dir: Path, mirror: str) -> None:
+    support_files = SUPPORTED_PACKAGES[package_name].get("delegate_support_files", [])
+    if not support_files:
+        return
+
+    for relative_path in support_files:
+        content = None
+        for repo in iter_remote_repos(mirror):
+            content = _try_fetch_text(repo.raw_url("main", relative_path))
+            if content is not None:
+                break
+        if content is None:
+            _die(f"无法下载 {package_name} 委托安装依赖：{relative_path}")
+        destination = temp_dir / Path(relative_path).name
+        destination.write_text(content, encoding="utf-8")
+
+
+def _install_delegated_package(
+    package_name: str,
     ref: str,
     extra: list[str],
     mirror: str,
     texmfhome: str | None = None,
     force: bool = False,
 ) -> None:
+    installer_path = SUPPORTED_PACKAGES[package_name]["installer_path"]
     content = None
     chosen_repo = None
     for repo in iter_remote_repos(mirror):
-        url = repo.raw_url("main", "packages/bensz-nsfc/scripts/install.py")
+        url = repo.raw_url("main", installer_path)
         content = _try_fetch_text(url)
         if content is not None:
             chosen_repo = repo
             break
 
     if content is None or chosen_repo is None:
-        _die("无法下载 bensz-nsfc 安装器，请检查网络或改用 --mirror github/gitee")
+        _die(f"无法下载 {package_name} 安装器，请检查网络或改用 --mirror github/gitee")
 
-    print(f"  📥 下载 bensz-nsfc 安装器（{chosen_repo.name}）…")
-    with tempfile.NamedTemporaryFile(
-        suffix=".py",
-        delete=False,
-        mode="w",
-        encoding="utf-8",
-        prefix="bensz-nsfc-installer-",
-    ) as temp_file:
-        temp_file.write(content)
-        installer = temp_file.name
+    print(f"  📥 下载 {package_name} 安装器（{chosen_repo.name}）…")
+    temp_dir = Path(tempfile.mkdtemp(prefix=f"{package_name}-installer-"))
+    installer = temp_dir / "installer.py"
+    installer.write_text(content, encoding="utf-8")
+    _download_delegate_support_files(package_name, temp_dir, chosen_repo.name)
 
     try:
-        cmd = [sys.executable, installer]
+        cmd = [sys.executable, str(installer)]
         if texmfhome:
             cmd.extend(["--texmfhome", texmfhome])
         cmd.extend(["install", "--ref", ref, "--mirror", mirror])
@@ -453,11 +467,13 @@ def _install_bensz_nsfc(
             cmd.append("--force")
         cmd += extra
         print(f"  ▶ {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(temp_dir) + os.pathsep + env.get("PYTHONPATH", "")
+        subprocess.run(cmd, check=True, env=env)
     except subprocess.CalledProcessError as exc:
-        _die(f"bensz-nsfc 安装失败（退出码 {exc.returncode}）")
+        _die(f"{package_name} 安装失败（退出码 {exc.returncode}）")
     finally:
-        os.unlink(installer)
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def _copy_package_tree(pkg_src: Path, dest: Path) -> int:
@@ -584,7 +600,7 @@ def cmd_install(
         print(f"{'=' * 50}")
 
         if info["install_mode"] == "delegate":
-            _install_bensz_nsfc(ref, extra, mirror, texmfhome=texmfhome, force=force)
+            _install_delegated_package(pkg, ref, extra, mirror, texmfhome=texmfhome, force=force)
         elif info["install_mode"] == "texmfhome":
             _install_texmf_package(pkg, ref, mirror, texmfhome_override=texmfhome, force=force)
 
@@ -632,7 +648,7 @@ def build_parser() -> argparse.ArgumentParser:
     inst.add_argument(
         "extra",
         nargs=argparse.REMAINDER,
-        help="透传给子安装器的额外参数（仅 bensz-nsfc 有效）",
+        help="透传给委托安装器的额外参数（对 bensz-nsfc / bensz-paper / bensz-thesis / bensz-cv 有效）",
     )
 
     return parser

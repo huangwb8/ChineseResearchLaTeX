@@ -1,195 +1,48 @@
 #!/usr/bin/env python3
 """
-bensz-paper 本地安装工具
+bensz-paper 版本管理安装器
 """
 
 from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import os
 import platform
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 
+
+def _load_shared_module():
+    try:
+        import package_version_manager as module
+
+        return module
+    except ImportError:
+        for parent in Path(__file__).resolve().parents:
+            helper_dir = parent / "scripts"
+            if (helper_dir / "package_version_manager.py").exists():
+                sys.path.insert(0, str(helper_dir))
+                import package_version_manager as module
+
+                return module
+        raise
+
+
+package_version_manager = _load_shared_module()
+
 PACKAGE_NAME = "bensz-paper"
-PACKAGE_SUBPATH = Path("tex") / "latex" / PACKAGE_NAME
-DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
-EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
+PACKAGE_DIR = Path(__file__).resolve().parents[2]
 PRIMARY_LAUNCHER = "bpaper"
 
 
-def configure_windows_stdio_utf8() -> None:
-    if sys.platform != "win32":
-        return
-    for stream_name in ("stdout", "stderr"):
-        stream = getattr(sys, stream_name, None)
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="replace")
-
-
-# ---------------------------------------------------------------------------
-# Path resolution
-# ---------------------------------------------------------------------------
-
-
-def unique_existing_dirs(paths: list[Path]) -> list[Path]:
-    unique: list[Path] = []
-    seen: set[str] = set()
-    for path in paths:
-        expanded = path.expanduser()
-        try:
-            resolved = expanded.resolve()
-        except OSError:
-            resolved = expanded
-        key = str(resolved).lower() if platform.system() == "Windows" else str(resolved)
-        if key in seen or not resolved.exists() or not resolved.is_dir():
-            continue
-        seen.add(key)
-        unique.append(resolved)
-    return unique
-
-
-def candidate_tex_bin_dirs() -> list[Path]:
-    candidates: list[Path] = []
-    path_env = os.environ.get("PATH", "")
-    candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
-
-    for env_name in ("TEXBIN", "TEXLIVE_BIN", "MIKTEX_BIN"):
-        env_value = os.environ.get(env_name)
-        if env_value:
-            candidates.append(Path(env_value))
-
-    system = platform.system()
-    if system == "Darwin":
-        candidates.extend([Path("/Library/TeX/texbin"), Path("/usr/local/bin"), Path("/opt/homebrew/bin")])
-        texlive_root = Path("/usr/local/texlive")
-        if texlive_root.exists():
-            candidates.extend(path for path in texlive_root.glob("*/bin/*") if path.is_dir())
-    elif system == "Windows":
-        for root in (
-            os.environ.get("LOCALAPPDATA"),
-            os.environ.get("ProgramFiles"),
-            os.environ.get("ProgramFiles(x86)"),
-        ):
-            if not root:
-                continue
-            base = Path(root)
-            candidates.extend(
-                [
-                    base / "Programs" / "MiKTeX" / "miktex" / "bin" / "x64",
-                    base / "Programs" / "MiKTeX" / "miktex" / "bin",
-                    base / "MiKTeX" / "miktex" / "bin" / "x64",
-                    base / "MiKTeX" / "miktex" / "bin",
-                ]
-            )
-        system_drive = os.environ.get("SystemDrive", Path.home().drive or "C:")
-        texlive_root = Path(f"{system_drive}\\texlive")
-        if texlive_root.exists():
-            candidates.extend(path for path in texlive_root.glob("*\\bin\\win32") if path.is_dir())
-            candidates.extend(path for path in texlive_root.glob("*\\bin\\windows") if path.is_dir())
-    else:
-        candidates.extend([Path("/usr/local/bin"), Path("/usr/bin"), Path("/bin")])
-        for root in (Path("/usr/local/texlive"), Path("/opt/texlive"), Path.home() / ".TinyTeX"):
-            if root.exists():
-                candidates.extend(path for path in root.glob("*/bin/*") if path.is_dir())
-
-    return unique_existing_dirs(candidates)
-
-
-def resolve_executable(*names: str) -> str | None:
-    for name in names:
-        resolved = shutil.which(name)
-        if resolved:
-            return resolved
-    for directory in candidate_tex_bin_dirs():
-        for name in names:
-            resolved = shutil.which(name, path=str(directory))
-            if resolved:
-                return resolved
-    return None
-
-def find_package_source() -> Path:
-    """Return the bensz-paper source directory."""
-    # scripts/package/install.py -> scripts/package -> scripts -> pkg_root
-    pkg_dir = Path(__file__).resolve().parent.parent.parent
-    if not (pkg_dir / f"{PACKAGE_NAME}.sty").exists():
-        raise FileNotFoundError(
-            f"Package source not found at: {pkg_dir}\n"
-            "Run this script from within the repository."
-        )
-    return pkg_dir
-
-
-def get_texmfhome(override: str | None = None) -> Path:
-    """Resolve TEXMFHOME: CLI override > env var > kpsewhich > ~/texmf."""
-    if override:
-        return Path(override).expanduser().resolve()
-    env_val = os.environ.get("TEXMFHOME")
-    if env_val:
-        return Path(env_val).expanduser().resolve()
-    try:
-        kpsewhich = resolve_executable("kpsewhich")
-        if not kpsewhich:
-            raise FileNotFoundError("kpsewhich not found")
-        result = subprocess.run(
-            [kpsewhich, "--var-value", "TEXMFHOME"],
-            capture_output=True, text=True, timeout=5,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return Path(result.stdout.strip()).expanduser().resolve()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-    if platform.system() == "Darwin":
-        return Path.home() / "Library" / "texmf"
-    return Path.home() / "texmf"
-
-
 def get_bin_dir(override: str | None = None) -> Path:
-    """Resolve the directory for the bpaper launcher."""
     if override:
         return Path(override).expanduser().resolve()
     if platform.system() == "Windows":
         return Path.home() / "AppData" / "Local" / "Programs" / PRIMARY_LAUNCHER
     return Path.home() / ".local" / "bin"
-
-
-def get_dest(texmfhome: Path) -> Path:
-    return texmfhome / PACKAGE_SUBPATH
-
-
-# ---------------------------------------------------------------------------
-# Installation helpers
-# ---------------------------------------------------------------------------
-
-def run_mktexlsr(texmfhome: Path, dry_run: bool) -> None:
-    if dry_run:
-        print(f"  [dry-run] mktexlsr {texmfhome}")
-        return
-    for command in ("mktexlsr", "texhash"):
-        executable = resolve_executable(command)
-        if not executable:
-            continue
-        try:
-            subprocess.run(
-                [executable, str(texmfhome)],
-                check=True, capture_output=True,
-            )
-            print(f"✓ {command} refreshed")
-            return
-        except subprocess.CalledProcessError as exc:
-            print(f"  Warning: {command} failed: {exc}")
-    initexmf = resolve_executable("initexmf")
-    if initexmf:
-        try:
-            subprocess.run([initexmf, "--update-fndb"], check=True, capture_output=True)
-            print("✓ initexmf refreshed")
-            return
-        except subprocess.CalledProcessError as exc:
-            print(f"  Warning: initexmf failed: {exc}")
-    print("  Note: no TeX database refresh command was found — run it manually if needed.")
 
 
 def install_python_deps(dest: Path, dry_run: bool, skip: bool) -> None:
@@ -214,6 +67,8 @@ def install_python_deps(dest: Path, dry_run: bool, skip: bool) -> None:
         pip_cmd.append("--user")
     pip_cmd.extend(["-r", str(req_file)])
     print("  Installing Python dependencies...")
+    import subprocess
+
     subprocess.run(pip_cmd, check=True)
 
 
@@ -254,171 +109,7 @@ def install_launcher(dest: Path, bin_dir: Path, dry_run: bool) -> None:
     print(f"✓ Launcher: {launcher_dest}")
 
 
-def install_dependencies(src: Path, texmfhome: Path, dry_run: bool) -> None:
-    packages_root = src.parent
-    for dependency in DEPENDENCY_PACKAGE_NAMES:
-        dependency_src = packages_root / dependency
-        if not dependency_src.exists():
-            continue
-        dependency_dest = texmfhome / "tex" / "latex" / dependency
-        print(f"  Dependency: {dependency_src} -> {dependency_dest}")
-        if dry_run:
-            for file_path in sorted(dependency_src.rglob("*")):
-                if not file_path.is_file():
-                    continue
-                if any(part in EXCLUDE_NAMES for part in file_path.parts) or file_path.suffix == ".pyc":
-                    continue
-                print(f"    {file_path.relative_to(dependency_src)}")
-            continue
-        dependency_dest.mkdir(parents=True, exist_ok=True)
-        for file_path in dependency_src.rglob("*"):
-            if not file_path.is_file():
-                continue
-            if any(part in EXCLUDE_NAMES for part in file_path.parts) or file_path.suffix == ".pyc":
-                continue
-            target = dependency_dest / file_path.relative_to(dependency_src)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(file_path, target)
-
-
-# ---------------------------------------------------------------------------
-# Actions
-# ---------------------------------------------------------------------------
-
-def do_install(args: argparse.Namespace) -> int:
-    src = find_package_source()
-    texmfhome = get_texmfhome(args.texmfhome)
-    dest = get_dest(texmfhome)
-    bin_dir = get_bin_dir(args.bin_dir)
-    dry_run = args.dry_run
-
-    print("bensz-paper — install")
-    print(f"  Source : {src}")
-    print(f"  Dest   : {dest}")
-    print(f"  {PRIMARY_LAUNCHER:<6}: {bin_dir / PRIMARY_LAUNCHER}")
-    if dry_run:
-        print("  Mode   : dry-run (no files will be written)")
-    print()
-
-    install_dependencies(src, texmfhome, dry_run)
-
-    if dry_run:
-        print("Files that would be installed:")
-        for f in sorted(src.rglob("*")):
-            if not f.is_file():
-                continue
-            if any(p in EXCLUDE_NAMES for p in f.parts) or f.suffix == ".pyc":
-                continue
-            print(f"  {f.relative_to(src)}")
-        print()
-    else:
-        if src == dest:
-            print("  Source is already the install destination; refreshing launcher only.")
-        else:
-            dest.mkdir(parents=True, exist_ok=True)
-            for f in src.rglob("*"):
-                if not f.is_file():
-                    continue
-                if any(p in EXCLUDE_NAMES for p in f.parts) or f.suffix == ".pyc":
-                    continue
-                target = dest / f.relative_to(src)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(f, target)
-            for pycache in dest.rglob("__pycache__"):
-                shutil.rmtree(pycache, ignore_errors=True)
-        print(f"✓ Installed to {dest}")
-
-    install_launcher(dest, bin_dir, dry_run)
-    install_python_deps(dest, dry_run, args.skip_python_deps)
-    run_mktexlsr(texmfhome, dry_run)
-
-    if not dry_run:
-        print()
-        print("Verify with:")
-        print("  kpsewhich bensz-paper.sty")
-        print("  bpaper --version")
-        path_dirs = os.environ.get("PATH", "").split(os.pathsep)
-        if str(bin_dir) not in path_dirs:
-            print()
-            print(f"  Note: {bin_dir} is not on PATH.")
-            if platform.system() == "Windows":
-                print("  Add it to your user PATH in System Settings, then reopen PowerShell.")
-            else:
-                shell = os.environ.get("SHELL", "")
-                profile = "~/.zshrc" if "zsh" in shell else "~/.bashrc"
-                print(f"  Add to {profile}:")
-                print(f'    export PATH="{bin_dir}:$PATH"')
-    return 0
-
-
-def do_status(args: argparse.Namespace) -> int:
-    texmfhome = get_texmfhome(args.texmfhome)
-    dest = get_dest(texmfhome)
-    bin_dir = get_bin_dir(args.bin_dir)
-
-    print("bensz-paper — status")
-    print()
-
-    sty = dest / f"{PACKAGE_NAME}.sty"
-    if sty.exists():
-        print(f"✓ Package installed : {dest}")
-    else:
-        print(f"✗ Package NOT found : {dest}")
-
-    kpsewhich = resolve_executable("kpsewhich")
-    if kpsewhich:
-        r = subprocess.run(
-            [kpsewhich, f"{PACKAGE_NAME}.sty"],
-            capture_output=True, text=True,
-        )
-        if r.returncode == 0 and r.stdout.strip():
-            print(f"✓ kpsewhich         : {r.stdout.strip()}")
-        else:
-            print("✗ kpsewhich         : not in TeX search path (run mktexlsr?)")
-    else:
-        print("  kpsewhich           : not found (TeX Live not installed?)")
-
-    launcher = bin_dir / PRIMARY_LAUNCHER
-    if launcher.exists() or launcher.is_symlink():
-        print(f"✓ Launcher          : {launcher}")
-    else:
-        print(f"✗ Launcher NOT found: {launcher}")
-
-    missing = [
-        name for name in ("yaml", "docx")
-        if importlib.util.find_spec(name) is None
-    ]
-    if not missing:
-        print("✓ Python deps       : satisfied")
-    else:
-        print(f"✗ Python deps       : missing {', '.join(missing)}")
-    return 0
-
-
-def do_uninstall(args: argparse.Namespace) -> int:
-    texmfhome = get_texmfhome(args.texmfhome)
-    dest = get_dest(texmfhome)
-    bin_dir = get_bin_dir(args.bin_dir)
-    dry_run = args.dry_run
-
-    print("bensz-paper — uninstall")
-    print(f"  Target : {dest}")
-    if dry_run:
-        print("  Mode   : dry-run")
-    print()
-
-    removed_any = False
-
-    if dest.exists():
-        if dry_run:
-            print(f"  [dry-run] rm -rf {dest}")
-        else:
-            shutil.rmtree(dest)
-            print(f"✓ Removed: {dest}")
-        removed_any = True
-    else:
-        print(f"  Not installed: {dest}")
-
+def remove_launcher(bin_dir: Path, dry_run: bool) -> None:
     for name in (PRIMARY_LAUNCHER, f"{PRIMARY_LAUNCHER}.cmd"):
         launcher = bin_dir / name
         if launcher.exists() or launcher.is_symlink():
@@ -427,49 +118,164 @@ def do_uninstall(args: argparse.Namespace) -> int:
             else:
                 launcher.unlink()
                 print(f"✓ Removed launcher: {launcher}")
-            removed_any = True
-
-    if removed_any and not dry_run:
-        run_mktexlsr(texmfhome, dry_run)
-    return 0
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
+class PaperPackageManager(package_version_manager.VersionedPackageManager):
+    def __init__(
+        self,
+        *,
+        cwd: Path | None = None,
+        texmfhome_override: str | None = None,
+        bin_dir_override: str | None = None,
+        skip_python_deps: bool = False,
+    ) -> None:
+        super().__init__(
+            spec=package_version_manager.PackageSpec(
+                package_name=PACKAGE_NAME,
+                source_marker="bensz-paper.sty",
+                dependency_package_names=("bensz-fonts",),
+            ),
+            cwd=cwd,
+            texmfhome_override=texmfhome_override,
+            package_dir_override=PACKAGE_DIR,
+        )
+        self.bin_dir_override = bin_dir_override
+        self.skip_python_deps = skip_python_deps
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="bensz-paper 本地安装工具",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=(
-            "示例：\n"
-            "  python install.py                        # 安装\n"
-            "  python install.py --status               # 检查状态\n"
-            "  python install.py --uninstall            # 卸载\n"
-            "  python install.py --dry-run              # 预览\n"
-            "  python install.py --texmfhome ~/mytexmf  # 指定安装目录"
-        ),
+    def after_activate(self, commit: str, dry_run: bool = False) -> None:
+        dest = self._target_install_dir()
+        bin_dir = get_bin_dir(self.bin_dir_override)
+        install_launcher(dest, bin_dir, dry_run)
+        install_python_deps(dest, dry_run, self.skip_python_deps)
+
+    def after_uninstall(self, dry_run: bool = False) -> None:
+        remove_launcher(get_bin_dir(self.bin_dir_override), dry_run)
+
+    def status_details(self) -> list[str]:
+        lines: list[str] = []
+        launcher = get_bin_dir(self.bin_dir_override) / PRIMARY_LAUNCHER
+        lines.append(
+            f"launcher={launcher if launcher.exists() or launcher.is_symlink() else '(missing)'}"
+        )
+        missing = [
+            name for name in ("yaml", "docx")
+            if importlib.util.find_spec(name) is None
+        ]
+        if missing:
+            lines.append(f"python_deps=missing {', '.join(missing)}")
+        else:
+            lines.append("python_deps=satisfied")
+        return lines
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="bensz-paper 版本管理安装器")
+    parser.add_argument("--texmfhome", metavar="PATH")
+    parser.add_argument("--bin-dir", metavar="PATH")
+    parser.add_argument("--skip-python-deps", action="store_true")
+    subparsers = parser.add_subparsers(dest="command")
+
+    install_parser = subparsers.add_parser("install")
+    install_parser.add_argument("--ref", default="main")
+    install_parser.add_argument("--mirror", default="github", choices=["github", "gitee", "auto"])
+    install_parser.add_argument("--source", choices=["local", "github", "gitee"])
+    install_parser.add_argument("--path", help="本地源码路径（仅 --source local 时使用）")
+    install_parser.add_argument("--no-activate", action="store_true")
+    install_parser.add_argument("--dry-run", action="store_true")
+    install_parser.add_argument("--force", action="store_true")
+
+    use_parser = subparsers.add_parser("use")
+    use_parser.add_argument("--ref", required=True)
+    use_parser.add_argument("--dry-run", action="store_true")
+
+    subparsers.add_parser("status")
+
+    subparsers.add_parser("check")
+
+    rollback_parser = subparsers.add_parser("rollback")
+    rollback_parser.add_argument("--dry-run", action="store_true")
+
+    uninstall_parser = subparsers.add_parser("uninstall")
+    uninstall_parser.add_argument("--dry-run", action="store_true")
+
+    return parser
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    commands = {"install", "use", "status", "check", "rollback", "uninstall"}
+    if "--status" in argv:
+        argv = ["status", *[arg for arg in argv if arg != "--status"]]
+    elif "--uninstall" in argv:
+        argv = ["uninstall", *[arg for arg in argv if arg != "--uninstall"]]
+    elif not argv:
+        argv = ["install", "--source", "local"]
+    elif argv[0] not in commands and not any(arg in commands for arg in argv[1:]):
+        argv = ["install", "--source", "local", *argv]
+
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if not getattr(args, "command", None):
+        args = parser.parse_args(["install", "--source", "local", *argv])
+
+    if args.command == "install" and args.source is None:
+        args.source = "local" if args.path or "--ref" not in argv else "github"
+    return args
+
+
+def build_manager(args: argparse.Namespace) -> PaperPackageManager:
+    return PaperPackageManager(
+        cwd=Path.cwd(),
+        texmfhome_override=getattr(args, "texmfhome", None),
+        bin_dir_override=getattr(args, "bin_dir", None),
+        skip_python_deps=getattr(args, "skip_python_deps", False),
     )
-    action = parser.add_mutually_exclusive_group()
-    action.add_argument("--status", action="store_true", help="检查安装状态")
-    action.add_argument("--uninstall", action="store_true", help="卸载")
-    parser.add_argument("--dry-run", action="store_true", help="预览，不实际写入")
-    parser.add_argument("--skip-python-deps", action="store_true", help="跳过 pip 依赖安装")
-    parser.add_argument("--texmfhome", metavar="PATH", help="覆盖 TEXMFHOME 路径")
-    parser.add_argument("--bin-dir", metavar="PATH", help="覆盖 bpaper 启动器安装目录")
-    return parser.parse_args()
 
 
-def main() -> None:
-    configure_windows_stdio_utf8()
-    args = parse_args()
-    if args.status:
-        sys.exit(do_status(args))
-    elif args.uninstall:
-        sys.exit(do_uninstall(args))
-    else:
-        sys.exit(do_install(args))
+def print_status(manager: PaperPackageManager) -> None:
+    status = manager.status()
+    print("bensz-paper — status")
+    print()
+    print(f"Package dir: {status['package_dir']}")
+    print(f"Exists     : {'yes' if status['exists'] else 'no'}")
+    print(f"Current    : {json.dumps(status['current'], ensure_ascii=False) if status['current'] else '(none)'}")
+    print(f"kpsewhich  : {status['kpsewhich'] or '(not found)'}")
+    for line in status["details"]:
+        print(f"Detail     : {line}")
+
+
+def main(argv: list[str] | None = None) -> None:
+    package_version_manager.configure_windows_stdio_utf8()
+    args = parse_args(argv)
+    manager = build_manager(args)
+
+    try:
+        if args.command in {"status", "check"}:
+            print_status(manager)
+            return
+        if args.command == "install":
+            result = manager.install(
+                ref=args.ref,
+                source=args.source,
+                mirror=args.mirror,
+                activate=not args.no_activate,
+                dry_run=args.dry_run,
+                force=args.force,
+                path=args.path,
+            )
+        elif args.command == "use":
+            result = manager.use(args.ref, dry_run=args.dry_run)
+        elif args.command == "rollback":
+            result = manager.rollback(dry_run=args.dry_run)
+        elif args.command == "uninstall":
+            result = manager.uninstall(dry_run=args.dry_run)
+        else:
+            raise package_version_manager.InstallError(f"不支持的命令：{args.command}")
+    except package_version_manager.InstallError as exc:
+        print(f"❌ {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

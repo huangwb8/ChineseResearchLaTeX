@@ -445,6 +445,15 @@ python3 scripts/install.py install --packages bensz-fonts,bensz-paper,bensz-thes
 python3 scripts/install.py install --packages bensz-paper --mirror gitee
 ```
 
+`bensz-paper`、`bensz-thesis`、`bensz-cv` 现也具备与 `bensz-nsfc` 类似的包级版本管理/激活能力；默认仍先推荐根级统一安装器，只有在明确需要切换、回退或单独排查某个公共包时，才直接调用各自的 `scripts/package/install.py`，例如：
+
+```bash
+python packages/bensz-paper/scripts/package/install.py install --ref main
+python packages/bensz-paper/scripts/package/install.py rollback
+python packages/bensz-thesis/scripts/package/install.py check
+python packages/bensz-cv/scripts/package/install.py use --ref v4.0.0
+```
+
 ### 编译规范
 
 **首选入口**：使用统一 Python 渲染器，而不是手写一串裸 `xelatex` 命令。

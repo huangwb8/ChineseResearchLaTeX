@@ -37,6 +37,9 @@ python packages/bensz-cv/scripts/cv_project_tool.py compare --project-dir projec
 
 ```bash
 python packages/bensz-cv/scripts/package/install.py
+python packages/bensz-cv/scripts/package/install.py install --ref main
+python packages/bensz-cv/scripts/package/install.py rollback
+python packages/bensz-cv/scripts/package/install.py check
 ```
 
 安装后可通过以下方式检查：

@@ -102,15 +102,10 @@ def test_cmd_install_passes_force_to_package_installers(monkeypatch: pytest.Monk
 
     monkeypatch.setattr(
         install_script,
-        "_install_texmf_package",
-        lambda package_name, ref, mirror, texmfhome_override=None, force=False: calls.append(
+        "_install_delegated_package",
+        lambda package_name, ref, extra, mirror, texmfhome=None, force=False: calls.append(
             (package_name, force)
         ),
-    )
-    monkeypatch.setattr(
-        install_script,
-        "_install_bensz_nsfc",
-        lambda ref, extra, mirror, texmfhome=None, force=False: calls.append(("bensz-nsfc", force)),
     )
 
     install_script.cmd_install(
@@ -124,6 +119,12 @@ def test_cmd_install_passes_force_to_package_installers(monkeypatch: pytest.Monk
 
     assert ("bensz-paper", True) in calls
     assert ("bensz-nsfc", True) in calls
+
+
+def test_version_managed_packages_use_delegate_install_mode():
+    for package_name in ("bensz-nsfc", "bensz-paper", "bensz-thesis", "bensz-cv"):
+        assert install_script.SUPPORTED_PACKAGES[package_name]["install_mode"] == "delegate"
+        assert install_script.SUPPORTED_PACKAGES[package_name]["installer_path"]
 
 
 def test_nsfc_should_skip_reinstall_when_versions_match_without_force():

@@ -39,6 +39,9 @@ python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir pr
 
 ```bash
 python packages/bensz-paper/scripts/package/install.py
+python packages/bensz-paper/scripts/package/install.py install --ref main
+python packages/bensz-paper/scripts/package/install.py rollback
+python packages/bensz-paper/scripts/package/install.py check
 ```
 
 安装后可通过以下方式检查：

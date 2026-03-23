@@ -305,6 +305,15 @@ python3 scripts/install.py install --packages bensz-paper --mirror gitee
 python3 scripts/install.py list
 ```
 
+其中 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 现都带包级版本管理/激活能力；普通用户仍建议优先走根级统一安装器，如需直接切换或回退某个公共包版本，可再调用各包自己的安装器，例如：
+
+```bash
+python packages/bensz-paper/scripts/package/install.py install --ref main
+python packages/bensz-paper/scripts/package/install.py rollback
+python packages/bensz-thesis/scripts/package/install.py check
+python packages/bensz-cv/scripts/package/install.py use --ref v4.0.0
+```
+
 ## LaTeX 模板编译
 
 可以手动在 VSCode 里编译，也可以使用统一的 Python 渲染器生成 PDF。

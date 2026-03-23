@@ -32,4 +32,7 @@ python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir 
 
 ```bash
 python packages/bensz-thesis/scripts/package/install.py
+python packages/bensz-thesis/scripts/package/install.py install --ref main
+python packages/bensz-thesis/scripts/package/install.py rollback
+python packages/bensz-thesis/scripts/package/install.py check
 ```
