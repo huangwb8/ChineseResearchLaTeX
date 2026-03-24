@@ -1,0 +1,66 @@
+{
+  "latex-workshop.latex.outDir": ".latex-cache",
+  "latex-workshop.latex.auxDir": ".latex-cache",
+
+  "latex-workshop.latex.build.enableMagicComments": false,
+  "latex-workshop.latex.build.forceRecipeUsage": true,
+
+  "latex-workshop.latex.recipe.default": "thesis build (python)",
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "thesis build (python)",
+      "tools": [
+        "thesis-python-build"
+      ]
+    }
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "thesis-python-build",
+      "command": "texlua",
+      "args": [
+        "%WORKSPACE_FOLDER%/scripts/latex_workshop_build.lua",
+        "%WORKSPACE_FOLDER%/scripts/thesis_build.py",
+        "build",
+        "--project-dir",
+        "%WORKSPACE_FOLDER%",
+        "--tex-file",
+        "Thesis.tex"
+      ]
+    }
+  ],
+
+  "latex-workshop.message.log.level": "info",
+  "latex-workshop.linting.chktex.enabled": false,
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoClean.run": "never",
+
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true,
+
+  "files.exclude": {
+    "%OUTDIR%/": true,
+    "*.aux": true,
+    "*.log": true,
+    "*.out": true,
+    "*.toc": true,
+    "*.lof": true,
+    "*.lot": true,
+    "*.bbl": true,
+    "*.blg": true,
+    "*.bcf": true,
+    "*.run.xml": true,
+    "*.nav": true,
+    "*.snm": true,
+    "*.vrb": true,
+    "*.fls": true,
+    "*.fdb_latexmk": true,
+    "*.synctex.gz": true,
+    "*.synctex(busy)": true,
+    "*.dvi": true,
+    "*.xdv": true
+  },
+  "files.watcherExclude": {
+    "**/.latex-cache/**": true
+  }
+}

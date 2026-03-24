@@ -1,0 +1,28 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{styles/ucasSilence}[抑制字体相关的警告]
+
+% 抑制LaTeX Font警告, 详见 https://tex.stackexchange.com/a/328322
+\RequirePackage{anyfontsize}
+
+% 把使用fontspec的Script=CJK选项导致的no-script警告 (warning) 重定向为信息 (info), 抑制如下警告 (需在加载ctexbook类前).
+% Font "FandolSong-Regular" does not contain requested
+% (fontspec)	Script "CJK".
+
+% fontspec包需要执行\normalsize命令, 但这个命令在\LoadClass{ctexbook}中的\LoadClass[book]中加载的size12.clo中才重定义
+% 为了在加载ctexbook前加载fontspec包, 在此重定义\normalsize (与size12.clo中定义一样)
+\renewcommand\normalsize{
+    \@setfontsize\normalsize\@xiipt{14.5}%
+    \abovedisplayskip 12\p@ \@plus3\p@ \@minus7\p@
+    \abovedisplayshortskip \z@ \@plus3\p@
+    \belowdisplayshortskip 6.5\p@ \@plus3.5\p@ \@minus3\p@
+    \belowdisplayskip \abovedisplayskip
+    \let\@listi\@listI}
+\RequirePackage{fontspec}
+\RequirePackage{xpatch}
+\ExplSyntaxOn
+\xpatchcmd \fontspec_new_script:nn
+{ \__fontspec_warning:nxx }
+{ \__fontspec_info:nxx }
+{}{}
+\newfontscript{CJK}{hani}
+\ExplSyntaxOff

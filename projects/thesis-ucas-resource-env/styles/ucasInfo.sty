@@ -1,0 +1,43 @@
+% 提供一组用于设置论文信息变量的命令, 定义出的论文信息变量为:
+% - \UCAS@XX@cn与\UCAS@XX@en, 其中XX可为
+%   - degree
+%   - supervisor
+%   - title
+%   - author
+%   - degreeType
+%   - subject
+%   - institute
+%   - date
+% - \UCAS@articleType
+% - \UCAS@supervisor@institute
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{styles/ucasInfo}[一组论文信息变量设置命令]
+
+\RequirePackage{ifthen} % 提供\ifthenelse命令
+
+\newcommand{\degreeLevel}[1]{
+    \ifthenelse{\equal{#1}{硕士}}{
+        \newcommand{\UCAS@degree@cn}{硕士}
+        \newcommand{\UCAS@degree@en}{master}
+        \newcommand{\UCAS@articleType}{thesis}
+    }{
+        \newcommand{\UCAS@degree@cn}{博士}
+        \newcommand{\UCAS@degree@en}{doctor}
+        \newcommand{\UCAS@articleType}{dissertation}
+    }
+}
+\newcommand{\supervisor}[3]{
+    \newcommand{\UCAS@supervisor@cn}{#1}
+    \newcommand{\UCAS@supervisor@en}{#2}
+    \newcommand{\UCAS@supervisor@institute}{#3}
+}
+\newcommand{\gradYear}[1]{\newcommand{\UCAS@gradYear}{#1}}
+
+\newcommand{\setterFactory}[1]{
+    \expandafter\edef\csname #1\endcsname##1##2{
+        \expandafter\def\csname UCAS@#1@cn\endcsname{##1}
+        \expandafter\def\csname UCAS@#1@en\endcsname{##2}
+    }
+}
+\forcsvlist{\setterFactory}{title, author, degreeType, subject, institute, gradMonth} % 定义\title, \author等命令

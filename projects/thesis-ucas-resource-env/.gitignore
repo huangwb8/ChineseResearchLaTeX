@@ -1,0 +1,13 @@
+build/
+.latex-cache/
+minted_cache/
+!.latexmkrc
+scripts/__pycache__/
+*.pyc
+.tmp_pandoc_direct.err
+Thesis_from_*.md
+Thesis_from_*.docx
+docs/*.doc
+docs/*.docx
+中国科学院大学*.doc
+中国科学院大学*.docx
