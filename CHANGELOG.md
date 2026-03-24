@@ -30,6 +30,7 @@
 
 ### Changed（变更）
 
+- 删除根级 `config.yaml`：确认当前仓库级脚本、测试与工作流均未再读取该文件，且其内容已长期落后于真实目录结构与版本现状；同时更新 [AGENTS.md](AGENTS.md) 中对该文件的根目录列举与“真实状态优先”表述，避免继续把过期元信息误当作仓库级配置源
 - 更新 [packages/bensz-paper/README.md](packages/bensz-paper/README.md)、[packages/bensz-nsfc/README.md](packages/bensz-nsfc/README.md)、[packages/bensz-cv/README.md](packages/bensz-cv/README.md)、[packages/bensz-fonts/README.md](packages/bensz-fonts/README.md) 与 [packages/bensz-thesis/README.md](packages/bensz-thesis/README.md)：统一将包级 README 收敛为“公共包职责 + 目录结构 + 通用官方入口”，移除对具体 `projects/*` 示例项目的绑定描述，避免新增项目时反向牵动公共包文档
 - 更新 `scripts/install.py`、新增 `scripts/package_version_manager.py`，并重写 `packages/bensz-paper/scripts/package/install.py`、`packages/bensz-thesis/scripts/package/install.py`、`packages/bensz-cv/scripts/package/install.py` 以及相关 README / `AGENTS.md`：`bensz-paper`、`bensz-thesis`、`bensz-cv` 现改为与 `bensz-nsfc` 同类的“包级版本管理 + 激活”安装模型，支持缓存多版本、`install/use/rollback/check/uninstall` 等命令；根级统一安装器也同步改为委托这些包的专用安装器，同时保持默认 `scripts/install.py install` 入口不变；所有包级缓存/状态目录统一收口到 `~/.ChineseResearchLaTeX/<package>/`
 - 更新根级 `pytest.ini` 与 `scripts/test_install_architecture.py`：补充“配置必须留在仓库根目录、不能简单挪到 `tests/` 子目录”的约束说明，并继续将仓库根目录执行的 pytest 缓存重定向到 `tests/.pytest_cache`
@@ -671,7 +672,7 @@
 - **transfer_old_latex_to_new**：资源扫描与复制增加路径越界保护，避免不受控写入与异常。
 - **transfer_old_latex_to_new**：批量 AI 响应解析不完整时自动回退，避免静默丢失结果。
 - **transfer_old_latex_to_new**：资源扫描补充排除目录统计并输出提醒，避免隐式漏拷资源。
-- 修复 [references/README.md](references/README.md) 与 [config.yaml](config.yaml) 的辅助文档列表不一致问题：移除对不存在文件的引用，并修正文档中 LaTeX 命令的反斜杠显示。
+- 修复 [references/README.md](references/README.md) 与根级 `config.yaml` 的辅助文档列表不一致问题：移除对不存在文件的引用，并修正文档中 LaTeX 命令的反斜杠显示。
 - 修复正文“提示语/标题”排版异常：保留模板的全局 `\\parindent=0pt`，改为在 `extraTex` 正文中通过 `\\NSFCBodyText` 启用段首缩进 2em，避免与 `main.tex` 的 `\\hspace*{2em}`/`\\linebreak{}` 叠加导致换行错位：`projects/NSFC_Young/extraTex/@config.tex`, `projects/NSFC_General/extraTex/@config.tex`, `projects/NSFC_Local/extraTex/@config.tex`
 - 示例内容整合仓库素材：正文中引用 `projects/*/figures/*` 与 `projects/*/code/test.sh`（`\\includegraphics` + `\\lstinputlisting`），并统一 `listings` 样式为 `codestyle01`
 - 篇幅控制：三套项目 PDF 均落在 12–14 页；对 Young/General/Local 将两张示例图合并为子图，代码清单做片段截取；并移除 General 示例中过多的 `\\NSFCBlankPara` 额外留白以避免无意义增页

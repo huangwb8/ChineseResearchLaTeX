@@ -51,7 +51,6 @@ ChineseResearchLaTeX/
 ├── skills/                  # 项目级 Agent Skills
 ├── plans/                   # 规划文档
 ├── tests/                   # 回归验证与发布记录
-├── config.yaml              # 项目配置（仅作补充元信息，不必然代表最新工作流）
 ├── CLAUDE.md                # Claude Code 项目指令适配
 ├── AGENTS.md                # OpenAI Codex 项目指令
 ├── CHANGELOG.md             # 项目级变更日志
@@ -353,7 +352,7 @@ skill_info:
 3. `README.md`、`CHANGELOG.md`、`docs/` 中的现行说明
 4. 其他补充性配置文件
 
-若 `config.yaml`、旧计划文档或旧记忆与现状冲突，以真实目录和真实脚本行为为准，并在必要时同步修正文档。
+若旧计划文档、补充性配置或旧记忆与现状冲突，以真实目录和真实脚本行为为准，并在必要时同步修正文档。
 
 ### 文件引用规范
 
