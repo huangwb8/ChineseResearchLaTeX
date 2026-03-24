@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `docs/for-developers/README.md`、`docs/for-developers/nsfc-template-standard.md`、`docs/for-developers/paper-template-standard.md`、`docs/for-developers/thesis-template-standard.md` 与 `docs/for-developers/cv-template-standard.md`：基于当前 `projects/` 与 `packages/` 的真实源码、构建入口和分层模型，系统整理四条模板产品线的“标准模板长什么样”，帮助贡献者和 AI Agent 按当前仓库标准协作新增或维护模板
 - 新增 [docs/developer-contribution-guide.md](docs/developer-contribution-guide.md)：明确仓库的开发者协作与 PR 规范，要求贡献者默认遵循“先提 Issue、获维护者确认后再提 PR”的流程，并结合当前 `packages/` 分层补充受欢迎 PR 类型、提交流程与验证要求
 - 新增 [projects/thesis-smu-master/template.json](projects/thesis-smu-master/template.json) 与 [projects/thesis-sysu-doctor/template.json](projects/thesis-sysu-doctor/template.json)：将毕业论文项目的 `project_name`、`school`、`degree` 下沉到项目根目录元数据文件，作为 README 模板列表等脚本识别院校信息的来源
 - 新增 [docs/bensz-fonts-support-model.md](docs/bensz-fonts-support-model.md)：系统说明 `bensz-fonts` 如何通过统一字体 API、依赖安装、`TEXINPUTS` 注入与 Overleaf/runtime 打包支撑 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv`

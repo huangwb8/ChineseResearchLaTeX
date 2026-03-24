@@ -77,6 +77,14 @@ Bachelor、Master、Doctor
 
 ---
 
+目前， projects 有多种类型的模板，比如标书、毕业论文、sci论文。 有一些开发者想要贡献，但也许他们不确切地知道怎么样是一个标准的模板。这个markdown还有一个好处，就是方便让ai知道标准的模板长什么样，从而让人类用户方便地通过人机协作的方式来贡献模板。 请你：
+
+- 彻底了解projects里不同类型模板的源代码、packages里latex包的源代码
+- 彻底了解projects里不同类型模板的标准
+- 在 docs/for-developers 里添加数个md文档，分别介绍不同类型的模板的标准
+
+---
+
 测试和latex包安装的优化：
 
 - pytest.ini 这个文件是不是可以放在 ./tests 里？ 不要在根目录放太多不必要的文件
