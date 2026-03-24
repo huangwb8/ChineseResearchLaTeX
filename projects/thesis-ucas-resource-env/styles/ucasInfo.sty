@@ -15,6 +15,7 @@
 \ProvidesPackage{styles/ucasInfo}[一组论文信息变量设置命令]
 
 \RequirePackage{ifthen} % 提供\ifthenelse命令
+\RequirePackage{etoolbox} % 提供\forcsvlist命令
 
 \newcommand{\degreeLevel}[1]{
     \ifthenelse{\equal{#1}{硕士}}{

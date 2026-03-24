@@ -5,7 +5,7 @@
     % draft, % 指定为草稿模式, 会进行简化使生成更快, 在断行不良/溢出出加黑色方块给出提示
 ]{styles/ucasDissertation}
 \addbibresource{bibs/references.bib}
-\graphicspath{{assets}}
+\graphicspath{{assets/}}
 
 \GlsXtrLoadResources[
     src={bibs/symbols.bib, bibs/abbreviations.bib}, % 这里的文件名对应cls文件中创建的术语表名
@@ -34,22 +34,22 @@
     code,
 ]
 % 符号说明 (术语表)
-\listofnotaions
+\listofnotations
 % ------------------------------------------------------------------------------
 \mainmatter
-\include{chapter1.tex}
-\include{chapter2.tex}
+\include{chapter1}
+\include{chapter2}
 % 参考文献
 \printbibliography[heading = bibintoc]
 % 附录
 \appendix
-\include{appendix1.tex}
-\include{appendix2.tex}
+\include{appendix1}
+\include{appendix2}
 % ------------------------------------------------------------------------------
 \backmatter % 切换到章节不编号但计入目录状态
 % 致谢
-\include{acknowledgements.tex}
+\include{acknowledgements}
 % 作者简历及攻读学位期间发表的学术论文与其他相关学术成果
-\include{cv.tex}
+\include{cv}
 
 \end{document}

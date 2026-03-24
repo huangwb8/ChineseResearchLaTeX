@@ -988,7 +988,7 @@ def _write_quality_report(
         )
 
     checks = _spec_checks(after)
-    lines.extend(["", "## 资环规范一致性检查（自动）", "", "- 依据：`中国科学院大学资源与环境学位评定分委员会研究生学位论文撰写具体要`（2023）", ""])
+    lines.extend(["", "## 资环规范一致性检查（自动）", "", "- 依据：`中国科学院大学资源与环境学位评定分委员会研究生学位论文撰写具体要求`（2023）", ""])
     lines.append("| 检查项 | 结果 | 说明 |")
     lines.append("|---|---|---|")
     for item, status, detail in checks:

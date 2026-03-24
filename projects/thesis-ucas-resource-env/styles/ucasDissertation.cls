@@ -357,7 +357,7 @@
     \global\let\listofmaterials\relax
 }
 % 改\printunsrtglossary
-\newcommand{\listofnotaions}{
+\newcommand{\listofnotations}{
     \ifUCAS@print\cleardoublepage\else\clearpage\fi
     \currentpdfbookmark{术语表}{术语表}
     \chapter*{
@@ -373,6 +373,7 @@
 
     \let\@mkboth\oldmarkboth
 }
+\let\listofnotaions\listofnotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 6. 正文
 
@@ -450,7 +451,7 @@
 \floatplacement{figure}{htb} % 图的默认位置: 优先放在当前位置, 其次放在页面顶部, 再次放在页面底部
 \appto\figure{\centering\zihao{5}} % 图居中
 \RequirePackage{graphicx}
-\graphicspath{{assets}}
+\graphicspath{{assets/}}
 \RequirePackage{subcaption} % 提供子图环境subfigure
 
 % tikz绘图
