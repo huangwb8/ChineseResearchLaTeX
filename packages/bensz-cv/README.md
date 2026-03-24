@@ -2,11 +2,14 @@
 
 `bensz-cv` 是本仓库中面向中英文学术简历的公共包源码目录。
 
-当前首个模板链路是 `cv-01`，定位为：
+README 只描述公共包能力、结构和官方入口；具体示例项目、公开演示内容与项目级素材，应维护在对应项目目录中。
 
-- 公共包：[`packages/bensz-cv`](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-cv)
-- 示例项目：[`projects/cv-01`](/Volumes/2T01/Github/ChineseResearchLaTeX/projects/cv-01)
-- 官方构建入口：`python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects/cv-01 --variant all`
+## 包职责
+
+- 提供中英文简历模板的公共入口类与兼容入口
+- 提供中英文字体、图标与 profile 组织方式
+- 提供 PDF 构建、缓存清理与像素级比较脚本入口
+- 依赖 `bensz-fonts` 统一管理共享字体资源
 
 ## 目录说明
 
@@ -24,13 +27,13 @@
 在仓库中开发时，优先直接调用：
 
 ```bash
-python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects/cv-01 --variant all
+python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project-dir> --variant all
 ```
 
 如需与基线 PDF 做像素级比较：
 
 ```bash
-python packages/bensz-cv/scripts/cv_project_tool.py compare --project-dir projects/cv-01 --variant zh --baseline-pdf <baseline.pdf>
+python packages/bensz-cv/scripts/cv_project_tool.py compare --project-dir <project-dir> --variant <zh|en> --baseline-pdf <baseline.pdf>
 ```
 
 如需安装到本地 `TEXMFHOME`：

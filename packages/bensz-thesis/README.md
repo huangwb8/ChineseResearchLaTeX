@@ -2,12 +2,13 @@
 
 `bensz-thesis` 是本仓库中面向毕业论文模板的公共包源码目录。
 
-当前已落地两条示例链路：
+README 只描述公共包本身的职责、稳定入口和目录结构；具体学校、学位、示例正文与演示资产，应维护在各自的项目目录中。
 
-- 公共包：[`packages/bensz-thesis`](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-thesis)
-- 示例项目：[`projects/thesis-smu-master`](/Volumes/2T01/Github/ChineseResearchLaTeX/projects/thesis-smu-master)
-- 示例项目：[`projects/thesis-sysu-doctor`](/Volumes/2T01/Github/ChineseResearchLaTeX/projects/thesis-sysu-doctor)
-- 官方构建入口：`python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <project-dir>`
+## 包职责
+
+- 提供毕业论文模板的公共入口包、profile 与样式装配逻辑
+- 提供 PDF 构建、缓存清理与像素级比较脚本入口
+- 依赖 `bensz-fonts` 统一管理共享字体资源
 
 ## 目录说明
 
@@ -25,7 +26,7 @@
 在仓库中开发时，优先直接调用：
 
 ```bash
-python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-smu-master
+python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <project-dir>
 ```
 
 如需安装到本地 `TEXMFHOME`：

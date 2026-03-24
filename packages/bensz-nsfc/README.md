@@ -1,6 +1,8 @@
 # bensz-nsfc-common
 
-`bensz-nsfc-common` 是 `ChineseResearchLaTeX` 为 NSFC 模板抽出的公共包源码。它把 `NSFC_General / NSFC_Local / NSFC_Young` 统一收敛到一个安装入口，并通过 `type=general|local|young` 切换模板类型。
+`bensz-nsfc-common` 是 `ChineseResearchLaTeX` 为 NSFC 模板抽出的公共包源码。它将不同 NSFC 项目类型收敛到统一安装入口，并通过 `type=general|local|young` 切换模板类型。
+
+README 只描述公共包自身的结构、入口与资源策略；具体示例项目、正文内容与项目差异，应维护在对应项目目录中。
 
 ## 结构
 
@@ -49,5 +51,5 @@ python packages/bensz-nsfc/scripts/install.py install --source local --path pack
 
 - 字体统一托管在 `packages/bensz-fonts/fonts/`，`bensz-nsfc` 通过 `bensz-fonts` 提供的统一 API 引用字体
 - `bst` 统一托管在 `assets/bibtex-style/`
-- 三套项目默认优先使用公共包内共享资源；若用户保留了历史项目内 `./fonts/` 或 `bibtex-style/`，仍可作为兼容兜底
+- 各 NSFC 项目默认优先使用公共包内共享资源；若用户保留了历史项目内 `./fonts/` 或 `bibtex-style/`，仍可作为兼容兜底
 - `examples/basic-usage.tex` 与 `examples/basic-bibliography.tex` 都直接走公共包内共享资源，方便 `validate_package.py` 做 smoke test

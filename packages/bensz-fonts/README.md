@@ -21,7 +21,7 @@
 
 ```bash
 python3 scripts/install.py install --packages bensz-fonts
-python3 scripts/install.py install --packages bensz-cv --mirror gitee
+python3 scripts/install.py install --packages bensz-fonts --mirror gitee
 ```
 
 当安装其它 `bensz-*` 包时，`bensz-fonts` 会作为强制依赖自动一并安装。
