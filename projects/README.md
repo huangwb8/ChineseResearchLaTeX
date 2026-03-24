@@ -62,6 +62,7 @@
 |------|------|----------|
 | [`thesis-smu-master/`](./thesis-smu-master/) | 南方医科大学硕士论文示例项目 | 需要 SMU 硕士论文版式模板 |
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
+| [`thesis-ucas-resource-env/`](./thesis-ucas-resource-env/) | 中国科学院大学资环论文示例项目 | 需要 UCAS 资源与环境方向论文版式模板 |
 
 如果你当前的核心需求是毕业论文排版，请优先进入与你学校和学位最接近的 thesis 项目。
 
@@ -87,7 +88,7 @@
 
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
 - 写 SCI 论文：进入 `paper-sci-01/`
-- 写毕业论文：进入 `thesis-smu-master/` 或 `thesis-sysu-doctor/`
+- 写毕业论文：进入与你学校和学位最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-sysu-doctor/`、`thesis-ucas-resource-env/`）
 - 写中英文简历：进入 `cv-01/`
 
 若你的问题涉及共享样式、公共宏、构建脚本或安装逻辑，再回到 `packages/` 目录定位对应公共包。
