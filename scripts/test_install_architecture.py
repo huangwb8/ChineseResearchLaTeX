@@ -89,6 +89,21 @@ def test_add_paper_runtime_bundle_includes_bensz_fonts(tmp_path: Path):
     assert "fonts/TimesNewRoman.ttf" not in names
 
 
+def test_pack_project_preserves_legacy_thesis_project_files(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "thesis-ucas-resource-env"
+    zip_path = pack_release.pack_project(project_dir, tmp_path, "v-test")
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = set(zf.namelist())
+
+    assert "Thesis.tex" in names
+    assert "styles/ucasDissertation.cls" in names
+    assert "bibs/references.bib" in names
+    assert "template.json" in names
+    assert "LICENSE" in names
+    assert ".latexmkrc" in names
+
+
 def test_add_cv_runtime_bundle_includes_shared_cv_fonts(tmp_path: Path):
     zip_path = tmp_path / "cv-runtime.zip"
 
@@ -111,6 +126,11 @@ def test_select_overleaf_fonts_matches_project_requirements():
     assert pack_release.select_overleaf_font_files(REPO_ROOT / "projects" / "paper-sci-01") == set()
     assert pack_release.select_overleaf_font_files(REPO_ROOT / "projects" / "thesis-smu-master") == set()
     assert pack_release.select_overleaf_font_files(REPO_ROOT / "projects" / "thesis-sysu-doctor") == {
+        "TimesNewRoman.ttf",
+    }
+    assert pack_release.select_overleaf_font_files(
+        REPO_ROOT / "projects" / "thesis-ucas-resource-env"
+    ) == {
         "TimesNewRoman.ttf",
     }
     assert pack_release.select_overleaf_font_files(REPO_ROOT / "projects" / "cv-01") == {

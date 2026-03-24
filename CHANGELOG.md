@@ -30,6 +30,7 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-thesis/scripts/thesis_project_tool.py`、`scripts/pack_release.py`、`scripts/test_install_architecture.py`、根级 `README.md`、`projects/README.md`、`packages/bensz-thesis/README.md` 与 `AGENTS.md`：毕业论文统一构建入口现同时支持 `main.tex + extraTex/` 与 `template.json + Thesis.tex + .latexmkrc` 两类项目布局；Release 打包白名单同步纳入 `bibs/`、`styles/`、项目级许可证/元数据/根目录 `.tex` 文件，并为使用 `Times New Roman` 的 thesis 项目自动补齐 Overleaf 字体运行时
 - 更新 `packages/bensz-paper/scripts/manuscript_tool.py`、`packages/bensz-paper/scripts/fix_docx_spacing.py`、`packages/bensz-paper/scripts/inspect_docx_styles.py`、`packages/bensz-paper/tests/test_manuscript_tool.py`、`projects/paper-sci-01/extraTex/`、`projects/paper-sci-01/README.md`、`projects/paper-sci-01/AGENTS.md`、`packages/bensz-paper/README.md`、`projects/README.md`、根级 `README.md` 与 `AGENTS.md`：`bensz-paper` 现改为以 `extraTex/**/*.tex` 作为 PDF / DOCX 的唯一正文真相来源，DOCX 导出时只在运行期临时生成 Markdown；示例项目已移除持久化正文 Markdown 与 `references/meta.yaml`
 - 更新 `scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、`scripts/test_issue_templates.py`、根级 `README.md` 与 `.github/ISSUE_TEMPLATE/paper-template-customization.yml`：移除 README 自动生成的 SCI 区块中“DOCX 模板问题/需求”引导，并将 DOCX / `reference.docx` / PDF 对齐类诉求统一并回 SCI 模板定制表单，避免维护独立入口
 - 更新根级 `README.md`：在“社区支持”区域新增开发者贡献规范入口，明确代码/模板/脚本协作默认走“Issue 先行、确认后再提 PR”的流程

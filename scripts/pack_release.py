@@ -36,12 +36,14 @@ PROJECT_INCLUDE_ITEMS = [
     ".vscode",
     "artifacts",
     "assets",
+    "bibs",
     "bibtex-style",
     "code",
     "extraTex",
     "figures",
     "references",
     "scripts",
+    "styles",
     "template",
     "main.docx",
     "main.pdf",
@@ -52,6 +54,17 @@ PROJECT_INCLUDE_ITEMS = [
     "main-en.tex",
     "README.md",
 ]
+PROJECT_ROOT_INCLUDE_GLOBS = (
+    "*.code-workspace",
+    "*.tex",
+    "*.pdf",
+    "README.md",
+    "template.json",
+    "LICENSE*",
+    ".gitignore",
+    ".chktexrc",
+    ".latexmkrc",
+)
 REPO_ROOT = Path(__file__).parent.parent
 PROJECTS_DIR = REPO_ROOT / "projects"
 NSFC_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-nsfc"
@@ -133,20 +146,29 @@ def iter_tree_files(root: Path):
 
 
 def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
+    added_arcnames: set[str] = set()
+
+    def add_file(file_path: Path, arcname: Path | str) -> None:
+        arcname_str = str(arcname)
+        if arcname_str in added_arcnames or should_skip_path(file_path):
+            return
+        zf.write(file_path, arcname=arcname_str)
+        added_arcnames.add(arcname_str)
+
     for item_name in PROJECT_INCLUDE_ITEMS:
         item_path = project_dir / item_name
         if not item_path.exists():
             continue
         if item_path.is_file():
-            if not should_skip_path(item_path):
-                zf.write(item_path, arcname=item_name)
+            add_file(item_path, item_name)
             continue
         for file in iter_tree_files(item_path):
-            zf.write(file, arcname=file.relative_to(project_dir))
+            add_file(file, file.relative_to(project_dir))
 
-    for workspace_file in sorted(project_dir.glob("*.code-workspace")):
-        if not should_skip_path(workspace_file):
-            zf.write(workspace_file, arcname=workspace_file.name)
+    for pattern in PROJECT_ROOT_INCLUDE_GLOBS:
+        for root_file in sorted(project_dir.glob(pattern)):
+            if root_file.is_file():
+                add_file(root_file, root_file.name)
 
 
 def detect_project_kind(project_dir: Path) -> str:
@@ -186,6 +208,19 @@ def project_contains_package(project_dir: Path, package_name: str) -> bool:
     return False
 
 
+def project_uses_times_new_roman(project_dir: Path) -> bool:
+    patterns = ("*.tex", "*.cls", "*.sty")
+    regex = re.compile(r"\\setmainfont(?:\[[^\]]*\])?\{Times New Roman\}")
+    for pattern in patterns:
+        for tex_file in project_dir.rglob(pattern):
+            if should_skip_path(tex_file):
+                continue
+            content = tex_file.read_text(encoding="utf-8", errors="ignore")
+            if regex.search(content):
+                return True
+    return False
+
+
 def select_overleaf_font_files(project_dir: Path) -> set[str]:
     project_kind = detect_project_kind(project_dir)
 
@@ -206,6 +241,8 @@ def select_overleaf_font_files(project_dir: Path) -> set[str]:
             content = config_file.read_text(encoding="utf-8", errors="ignore")
             if "template=thesis-sysu-doctor" in content:
                 return {"TimesNewRoman.ttf"}
+        if project_uses_times_new_roman(project_dir):
+            return {"TimesNewRoman.ttf"}
         return set()
 
     if project_kind == "cv":

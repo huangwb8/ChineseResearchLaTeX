@@ -1,6 +1,6 @@
 # 中国科研常用 LaTeX 模板集 - 项目指令
 
-本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，仓库已经引入 `packages/bensz-fonts/` 作为跨产品线共享字体基础包，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-sysu-doctor/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
+本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，仓库已经引入 `packages/bensz-fonts/` 作为跨产品线共享字体基础包，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-sysu-doctor/` + `projects/thesis-ucas-resource-env/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
 
 一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。仓库主分支可以包含重构中的源码、脚本和技能，处理任务时要以“当前真实目录结构 + 当前脚本接口 + 当前 README/CHANGELOG”作为判断依据，而不是沿用旧版记忆。
 
@@ -12,7 +12,7 @@
 - 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
 - 维护 `packages/bensz-fonts/` 共享字体基础包源码，统一托管字体文件并为其它 `bensz-*` 包提供字体引用 API
 - 维护 `packages/bensz-paper/` 公共包源码与 `projects/paper-sci-01/` 示例项目，支撑 SCI 论文写作模板的 PDF/DOCX 双输出
-- 维护 `packages/bensz-thesis/` 公共包源码与 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/` 示例项目，支撑硕士/博士论文模板的 PDF 输出与像素级验收
+- 维护 `packages/bensz-thesis/` 公共包源码与 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`、`projects/thesis-ucas-resource-env/` 示例项目，支撑硕士/博士论文模板的 PDF 输出与像素级验收
 - 维护 `packages/bensz-cv/` 公共包源码与 `projects/cv-01/` 示例项目，支撑中英文简历模板的 PDF 输出、像素级验收与去隐私公开演示
 - 维护 `packages/bensz-nsfc/scripts/` 下的 NSFC 官方脚本入口，包括安装、构建、校验与 TDS 打包
 - 维护根目录 `scripts/` 下的项目级脚本入口，例如 Release 打包与上传辅助脚本
@@ -38,6 +38,7 @@ ChineseResearchLaTeX/
 │   ├── paper-sci-01/        # SCI 论文示例项目（PDF + DOCX）
 │   ├── thesis-smu-master/   # 南方医科大学硕士论文示例项目
 │   ├── thesis-sysu-doctor/  # 中山大学博士论文示例项目
+│   ├── thesis-ucas-resource-env/ # 中国科学院大学资环论文示例项目
 │   └── cv-01/               # 中英文简历示例项目（PDF）
 ├── scripts/
 │   ├── install.py           # 统一 LaTeX 包安装器（支持远程执行）
@@ -69,13 +70,13 @@ ChineseResearchLaTeX/
 - `packages/bensz-cv/`：中英文简历共享样式、字体配置、统一 PDF 构建与像素比对脚本
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
 - `projects/paper-sci-01/`：SCI 论文示例正文、`extraTex/**/*.tex` 单一真相来源、项目级 wrapper
-- `projects/thesis-smu-master/` / `projects/thesis-sysu-doctor/`：毕业论文示例正文、项目级 wrapper 与公开演示资产
+- `projects/thesis-smu-master/` / `projects/thesis-sysu-doctor/` / `projects/thesis-ucas-resource-env/`：毕业论文示例正文、项目级 wrapper 与公开演示资产
 - `projects/thesis-*/template.json`：毕业论文项目元数据，至少记录 `project_name`、`school`、`degree`，供 README 模板列表等脚本识别院校与学位来源；`degree` 当前统一使用英文枚举 `bachelor` / `master` / `doctor`
 - `projects/cv-01/`：中英文简历示例正文、公开演示头像与项目级 wrapper
 - `packages/bensz-nsfc/scripts/install.py`：安装、锁定、同步、回退、状态检查
 - `packages/bensz-nsfc/scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
 - `packages/bensz-paper/scripts/paper_project_tool.py` / `packages/bensz-paper/scripts/manuscript_tool.py`：SCI 论文 PDF + DOCX 统一构建入口
-- `packages/bensz-thesis/scripts/thesis_project_tool.py`：毕业论文 PDF 构建、缓存清理与像素级 PDF 比对入口
+- `packages/bensz-thesis/scripts/thesis_project_tool.py`：毕业论文 PDF 构建、缓存清理与像素级 PDF 比对入口；当前支持 `main.tex + extraTex/` 与 `template.json + Thesis.tex + .latexmkrc` 两类 thesis 项目布局
 - `packages/bensz-cv/scripts/cv_project_tool.py`：中英文简历 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
 - `scripts/install.py`：统一 LaTeX 包安装器，支持远程执行（`curl | python3 -`），可安装 `bensz-fonts`、`bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 等 `packages/` 下的公共包，并支持 `--mirror gitee`
@@ -138,7 +139,7 @@ ChineseResearchLaTeX/
 #### 毕业论文模板问题
 
 - 公共样式、profile、统一构建与比对逻辑优先修改 `packages/bensz-thesis/`
-- 示例正文与公开演示资产优先维护 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`
+- 示例正文与公开演示资产优先维护 `projects/thesis-smu-master/`、`projects/thesis-sysu-doctor/`、`projects/thesis-ucas-resource-env/`
 - 新增、重命名或复制 `projects/thesis-*` 项目时，必须同步维护项目根目录 `template.json`；至少包含 `project_name`、`school`、`degree`，并保证 `project_name` 与目录名一致；`degree` 当前统一使用 `bachelor` / `master` / `doctor`，供 `scripts/update_readme_template_list.py` 等脚本自动识别院校与学位信息
 - 优先使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <项目路径>` 验证 PDF 输出
 - 涉及版式回归时，可使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py compare --project-dir <项目路径> --baseline-pdf <原始PDF>` 做像素级验收
