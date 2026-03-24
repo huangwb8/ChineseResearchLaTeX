@@ -2,7 +2,7 @@
 
 ---
 
-创建tag v4.0.8 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
+创建tag v4.0.9 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
 
 # 改进
 
@@ -52,6 +52,23 @@ Bachelor、Master、Doctor
 请把上述规则有机地融入 @AGENTS.md 里
 
 # 处理pr
+
+---
+
+projects/thesis-ucas-doctor 的根目录里还有一些工作 tex，目前这样肯定是不合适的。 除main.tex外，其它的应该放在 extraTex里 
+
+---
+
+https://github.com/huangwb8/ChineseResearchLaTeX/pull/36 已经获得了源作者的授权，因此merge可以提上日程。 请：
+
+- merge该pr到main。该pr与main存在一些conflict，以main为准，我们只merge不conflict的部分。
+- 这个merge是比较粗糙的。 请根据 docs/for-developers 的相关规范重构这个pr对应的模板。如果你需要动 packages/bensz-thesis 包，要注意千万不能影响其它毕业论文模板的样式。
+- 这个模板的正文内容已经写好了，不需要再另外修改为某些别的内容。
+- 重命名这个模板为： thesis-ucas-doctor
+- 与本项目进行对齐后，初步验收目标：thesis-ucas-doctor渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 在 projects/thesis-ucas-doctor/README.md 里要注明源作者授权了（具体见： https://github.com/huangwb8/ChineseResearchLaTeX/pull/36#issuecomment-4120624795），所以我们仍可以保持MIT。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 

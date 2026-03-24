@@ -153,6 +153,10 @@ def sync_optional_tree(cache_dir: Path, project_dir: Path, name: str) -> None:
             shutil.copy2(source, target)
 
 
+def ensure_cache_subdir(cache_dir: Path, relative_dir: str) -> None:
+    (cache_dir / relative_dir).mkdir(parents=True, exist_ok=True)
+
+
 def normalize_bibtex_aux(cache_dir: Path, tex_stem: str) -> None:
     aux_path = cache_dir / f"{tex_stem}.aux"
     if not aux_path.exists():
@@ -213,6 +217,7 @@ def build_project(project_dir: Path, tex_file: str) -> Path:
     if cache_dir.exists():
         shutil.rmtree(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
+    ensure_cache_subdir(cache_dir, "extraTex")
 
     clean_root_artifacts(project_dir, tex_stem)
 
