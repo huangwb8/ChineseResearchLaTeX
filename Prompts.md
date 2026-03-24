@@ -51,6 +51,12 @@ Bachelor、Master、Doctor
 
 请把上述规则有机地融入 @AGENTS.md 里
 
+# 处理pr
+
+---
+
+这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/36 请使用 git-pr-review skill 帮我评估一下这个pr。结果保存在 ./docs/pr-review 文件夹里
+
 # 重构
 
 ---
