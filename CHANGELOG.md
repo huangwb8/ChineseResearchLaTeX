@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `projects/thesis-ucas-doctor/`、`projects/thesis-ucas-doctor/AGENTS.md`、`projects/thesis-ucas-doctor/CLAUDE.md`、`projects/thesis-ucas-doctor/template.json`、`tests/baselines/thesis-ucas-doctor/source-baseline.pdf` 与 `packages/bensz-thesis/profiles/bthesis-profile-thesis-ucas-doctor.def`：将 PR #36 引入的 UCAS 模板重构为当前仓库标准的毕业论文示例项目，保留公开正文与资源，并补齐项目级指令、元数据与像素级验收基线
 - 新增 `docs/for-developers/README.md`、`docs/for-developers/nsfc-template-standard.md`、`docs/for-developers/paper-template-standard.md`、`docs/for-developers/thesis-template-standard.md` 与 `docs/for-developers/cv-template-standard.md`：基于当前 `projects/` 与 `packages/` 的真实源码、构建入口和分层模型，系统整理四条模板产品线的“标准模板长什么样”，帮助贡献者和 AI Agent 按当前仓库标准协作新增或维护模板
 - 新增 [docs/developer-contribution-guide.md](docs/developer-contribution-guide.md)：明确仓库的开发者协作与 PR 规范，要求贡献者默认遵循“先提 Issue、获维护者确认后再提 PR”的流程，并结合当前 `packages/` 分层补充受欢迎 PR 类型、提交流程与验证要求
 - 新增 [projects/thesis-smu-master/template.json](projects/thesis-smu-master/template.json) 与 [projects/thesis-sysu-doctor/template.json](projects/thesis-sysu-doctor/template.json)：将毕业论文项目的 `project_name`、`school`、`degree` 下沉到项目根目录元数据文件，作为 README 模板列表等脚本识别院校信息的来源
@@ -31,6 +32,8 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-thesis/styles/ucas/ucasDissertation.cls`、`packages/bensz-thesis/styles/bthesis-style-thesis-ucas-doctor.tex`、`packages/bensz-thesis/styles/ucas/ucasInfo.sty`、`packages/bensz-thesis/styles/ucas/ucasSilence.sty`、`packages/bensz-thesis/scripts/validate_package.py` 与 `projects/thesis-ucas-doctor/main.tex`：将 UCAS 模板的稳定实现正式收敛到 `bensz-thesis` 包级目录，由项目层保留 `main.tex + extraTex + wrapper + template.json` 薄封装，同时继续通过包内专属 class 保持与源 PDF 的像素级一致，且不影响现有 `thesis-smu-master` / `thesis-sysu-doctor`
+- 更新 `scripts/pack_release.py`、`scripts/test_install_architecture.py`、`README.md`、`projects/README.md`、`docs/for-developers/README.md`、`docs/for-developers/thesis-template-standard.md`、`packages/bensz-thesis/README.md` 与 `AGENTS.md`：将毕业论文产品线口径同步到 `thesis-ucas-doctor`，移除对 PR 36 旧版 `Thesis.tex + .latexmkrc + 项目私有样式` 结构的说明，并让 Overleaf 打包正确识别 UCAS 模板所需的 `TimesNewRoman.ttf`
 - 删除根级 `config.yaml`：确认当前仓库级脚本、测试与工作流均未再读取该文件，且其内容已长期落后于真实目录结构与版本现状；同时更新 [AGENTS.md](AGENTS.md) 中对该文件的根目录列举与“真实状态优先”表述，避免继续把过期元信息误当作仓库级配置源
 - 更新 [packages/bensz-paper/README.md](packages/bensz-paper/README.md)、[packages/bensz-nsfc/README.md](packages/bensz-nsfc/README.md)、[packages/bensz-cv/README.md](packages/bensz-cv/README.md)、[packages/bensz-fonts/README.md](packages/bensz-fonts/README.md) 与 [packages/bensz-thesis/README.md](packages/bensz-thesis/README.md)：统一将包级 README 收敛为“公共包职责 + 目录结构 + 通用官方入口”，移除对具体 `projects/*` 示例项目的绑定描述，避免新增项目时反向牵动公共包文档
 - 更新 `scripts/install.py`、新增 `scripts/package_version_manager.py`，并重写 `packages/bensz-paper/scripts/package/install.py`、`packages/bensz-thesis/scripts/package/install.py`、`packages/bensz-cv/scripts/package/install.py` 以及相关 README / `AGENTS.md`：`bensz-paper`、`bensz-thesis`、`bensz-cv` 现改为与 `bensz-nsfc` 同类的“包级版本管理 + 激活”安装模型，支持缓存多版本、`install/use/rollback/check/uninstall` 等命令；根级统一安装器也同步改为委托这些包的专用安装器，同时保持默认 `scripts/install.py install` 入口不变；所有包级缓存/状态目录统一收口到 `~/.ChineseResearchLaTeX/<package>/`

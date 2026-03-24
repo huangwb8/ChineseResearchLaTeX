@@ -35,7 +35,7 @@ def main() -> int:
     if script_path is None:
         print("未找到 bensz-thesis 构建脚本。请先安装 bensz-thesis，或在完整仓库中运行本项目。", file=sys.stderr)
         return 1
-    args = sys.argv[1:] or ["build", "--project-dir", str(PROJECT_DIR), "--tex-file", "Thesis.tex"]
+    args = sys.argv[1:] or ["build", "--project-dir", str(PROJECT_DIR)]
     result = subprocess.run([sys.executable, str(script_path), *args], cwd=PROJECT_DIR)
     return result.returncode
 

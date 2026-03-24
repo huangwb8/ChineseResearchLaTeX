@@ -1,9 +1,9 @@
 % ucasDissertation文档类
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{styles/ucasDissertation}[中国科学院大学硕博学位论文LaTeX模板]
+\ProvidesClass{styles/ucas/ucasDissertation}[中国科学院大学硕博学位论文LaTeX模板]
 
-\RequirePackage{styles/ucasSilence} % 抑制字体相关的警告, 需要放在加载ctexbook前
+\RequirePackage{styles/ucas/ucasSilence} % 抑制字体相关的警告, 需要放在加载ctexbook前
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 解析选项
 \RequirePackage{kvoptions}
@@ -109,7 +109,7 @@
 % 1. 封面
 
 % 加载论文信息变量设置命令 -----------------------------------------------------------
-\RequirePackage{styles/ucasInfo}
+\RequirePackage{styles/ucas/ucasInfo}
 
 % 增强下划线样式 ----------------------------------------------------------------
 \RequirePackage[normalem]{ulem} % 支持复杂内容的下划线\uline{}
@@ -471,7 +471,7 @@
 \RequirePackage{amssymb}
 \RequirePackage{unicode-math}
 \everydisplay{\zihao{5}} % 显示公式的表达式及右侧编号为五号Times New Roman
-\usepackage{gensymb} % 提供一些科学和数学中常用的通用符号，如单位符号
+\RequirePackage{gensymb} % 提供一些科学和数学中常用的通用符号，如单位符号
 
 % 算法环境 ---------------------------------------------------------------------
 \RequirePackage{algpseudocode}

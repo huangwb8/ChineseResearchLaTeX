@@ -1,9 +1,8 @@
 \documentclass[
     print,
-    colorlinks, % 超链接是否彩色, 不开启时为黑色无边框
-    % bibBackref, % 是否在参考文献列表中显示文献引用页, 不开启时为不显示
-    % draft, % 指定为草稿模式, 会进行简化使生成更快, 在断行不良/溢出出加黑色方块给出提示
-]{styles/ucasDissertation}
+    colorlinks,
+]{styles/ucas/ucasDissertation}
+\input{extraTex/config-pre.tex}
 \addbibresource{bibs/references.bib}
 \graphicspath{{assets/}}
 
@@ -17,13 +16,13 @@
 \begin{document}
 % ------------------------------------------------------------------------------
 % 封面
-\input{info.tex}
+\input{extraTex/info.tex}
 \makeCover
 % 原创性声明及授权使用声明
 \makeDeclaration
 \frontmatter
 % 摘要
-\input{abstract.tex}
+\input{extraTex/abstract.tex}
 % 目录
 \tableofcontents
 % 图表目录

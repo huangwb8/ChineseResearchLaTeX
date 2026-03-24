@@ -17,8 +17,13 @@ def validate_required_files() -> list[str]:
         "bthesis-core.sty",
         "profiles/bthesis-profile-thesis-smu-master.def",
         "profiles/bthesis-profile-thesis-sysu-doctor.def",
+        "profiles/bthesis-profile-thesis-ucas-doctor.def",
         "styles/bthesis-style-thesis-smu-master.tex",
         "styles/bthesis-style-thesis-sysu-doctor.tex",
+        "styles/bthesis-style-thesis-ucas-doctor.tex",
+        "styles/ucas/ucasDissertation.cls",
+        "styles/ucas/ucasInfo.sty",
+        "styles/ucas/ucasSilence.sty",
         "README.md",
         "scripts/thesis_project_tool.py",
         "scripts/package/install.py",
@@ -59,7 +64,7 @@ def main() -> int:
         "package": "bensz-thesis",
     }
     if not args.skip_compile:
-        for project_name in ("thesis-smu-master", "thesis-sysu-doctor"):
+        for project_name in ("thesis-smu-master", "thesis-sysu-doctor", "thesis-ucas-doctor"):
             result = compile_project(project_name)
             status[f"{project_name}_compile"] = result
             if result["returncode"] != 0:

@@ -14,8 +14,6 @@ from pathlib import Path
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
 FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 CACHE_DIRNAME = ".latex-cache"
-DEFAULT_TEX_MAIN = "main.tex"
-LEGACY_TEX_MAIN = "Thesis.tex"
 ROOT_ARTIFACT_PATTERNS = (
     "*.aux",
     "*.log",
@@ -73,20 +71,8 @@ def configure_windows_stdio_utf8() -> None:
             stream.reconfigure(encoding="utf-8", errors="replace")
 
 
-def has_main_extra_tex_layout(path: Path) -> bool:
-    return (path / DEFAULT_TEX_MAIN).exists() and (path / "extraTex").exists()
-
-
-def has_legacy_thesis_layout(path: Path) -> bool:
-    return (
-        (path / LEGACY_TEX_MAIN).exists()
-        and (path / ".latexmkrc").exists()
-        and (path / "template.json").exists()
-    )
-
-
 def is_project_root(path: Path) -> bool:
-    return has_main_extra_tex_layout(path) or has_legacy_thesis_layout(path)
+    return (path / "main.tex").exists() and (path / "extraTex").exists()
 
 
 def find_project_root(start: Path | None = None) -> Path:
@@ -95,7 +81,7 @@ def find_project_root(start: Path | None = None) -> Path:
         if is_project_root(candidate):
             return candidate
     raise FileNotFoundError(
-        "无法定位 thesis 项目根目录。支持布局：`main.tex + extraTex/` 或 `template.json + Thesis.tex + .latexmkrc`。"
+        "无法定位 thesis 项目根目录。请在项目目录内运行，或使用 --project-dir 显式指定。"
     )
 
 
@@ -112,17 +98,7 @@ def resolve_project_dir(project_dir: Path | None) -> Path:
     return find_project_root(candidate)
 
 
-def detect_default_tex_file(project_dir: Path) -> str:
-    if has_main_extra_tex_layout(project_dir):
-        return DEFAULT_TEX_MAIN
-    if has_legacy_thesis_layout(project_dir):
-        return LEGACY_TEX_MAIN
-    raise FileNotFoundError(f"无法为 thesis 项目自动识别主 TeX 文件：{project_dir}")
-
-
-def resolve_tex_file(project_dir: Path, tex_file: str | None) -> Path:
-    if tex_file is None:
-        tex_file = detect_default_tex_file(project_dir)
+def resolve_tex_file(project_dir: Path, tex_file: str) -> Path:
     candidate = (project_dir / tex_file).resolve()
     if not candidate.exists():
         raise FileNotFoundError(f"TeX 主文件不存在：{candidate}")
@@ -230,7 +206,7 @@ def detect_bibliography_backend(tex_path: Path) -> str | None:
     return None
 
 
-def build_project(project_dir: Path, tex_file: str | None) -> Path:
+def build_project(project_dir: Path, tex_file: str) -> Path:
     tex_path = resolve_tex_file(project_dir, tex_file)
     tex_stem = tex_path.stem
     cache_dir = project_dir / CACHE_DIRNAME
@@ -307,7 +283,7 @@ def build_project(project_dir: Path, tex_file: str | None) -> Path:
     return output_pdf
 
 
-def clean_project(project_dir: Path, tex_file: str | None, remove_pdf: bool) -> None:
+def clean_project(project_dir: Path, tex_file: str, remove_pdf: bool) -> None:
     tex_path = resolve_tex_file(project_dir, tex_file)
     tex_stem = tex_path.stem
     clean_root_artifacts(project_dir, tex_stem)
@@ -424,29 +400,17 @@ def parse_args() -> argparse.Namespace:
 
     build_parser = subparsers.add_parser("build", help="渲染 PDF")
     build_parser.add_argument("--project-dir", type=Path, default=None, help="项目目录。")
-    build_parser.add_argument(
-        "--tex-file",
-        default=None,
-        help="主 TeX 文件名。省略时自动识别（如 main.tex 或 Thesis.tex）。",
-    )
+    build_parser.add_argument("--tex-file", default="main.tex", help="主 TeX 文件名，默认 main.tex。")
 
     clean_parser = subparsers.add_parser("clean", help="清理缓存与根目录中间文件")
     clean_parser.add_argument("--project-dir", type=Path, default=None, help="项目目录。")
-    clean_parser.add_argument(
-        "--tex-file",
-        default=None,
-        help="主 TeX 文件名。省略时自动识别（如 main.tex 或 Thesis.tex）。",
-    )
+    clean_parser.add_argument("--tex-file", default="main.tex", help="主 TeX 文件名，默认 main.tex。")
     clean_parser.add_argument("--remove-pdf", action="store_true", help="清理时一并删除根目录 PDF。")
 
     compare_parser = subparsers.add_parser("compare", help="与基线 PDF 做像素级比较")
     compare_parser.add_argument("--project-dir", type=Path, default=None, help="项目目录。")
     compare_parser.add_argument("--baseline-pdf", type=Path, required=True, help="基线 PDF 路径。")
-    compare_parser.add_argument(
-        "--tex-file",
-        default=None,
-        help="主 TeX 文件名。省略时自动识别（如 main.tex 或 Thesis.tex）。",
-    )
+    compare_parser.add_argument("--tex-file", default="main.tex", help="主 TeX 文件名，默认 main.tex。")
     compare_parser.add_argument("--build-first", action="store_true", help="比较前先重新构建项目。")
     compare_parser.add_argument("--dpi", type=int, default=144, help="PDF 转图分辨率，默认 144。")
     compare_parser.add_argument("--keep-rasters", action="store_true", help="保留中间 PNG。")
@@ -469,8 +433,7 @@ def main() -> None:
         return
 
     if args.command == "compare":
-        tex_path = resolve_tex_file(project_dir, args.tex_file)
-        project_pdf = project_dir / tex_path.with_suffix(".pdf").name
+        project_pdf = project_dir / Path(args.tex_file).with_suffix(".pdf").name
         if args.build_first or not project_pdf.exists():
             project_pdf = build_project(project_dir, args.tex_file)
         result = compare_pdfs(

@@ -1,7 +1,10 @@
 {
+  // Keep ALL LaTeX build artifacts in `.latex-cache/`.
+  // The final deliverable stays in the project root as `main.pdf`.
   "latex-workshop.latex.outDir": ".latex-cache",
   "latex-workshop.latex.auxDir": ".latex-cache",
 
+  // Prevent magic comments from bypassing the unified Python render pipeline.
   "latex-workshop.latex.build.enableMagicComments": false,
   "latex-workshop.latex.build.forceRecipeUsage": true,
 
@@ -25,19 +28,22 @@
         "--project-dir",
         "%WORKSPACE_FOLDER%",
         "--tex-file",
-        "Thesis.tex"
+        "%DOCFILE_EXT%"
       ]
     }
   ],
 
+  // Logging / UX
   "latex-workshop.message.log.level": "info",
   "latex-workshop.linting.chktex.enabled": false,
   "latex-workshop.latex.autoBuild.run": "onSave",
   "latex-workshop.latex.autoClean.run": "never",
 
+  // PDF preview
   "latex-workshop.view.pdf.viewer": "tab",
   "latex-workshop.synctex.afterBuild.enabled": true,
 
+  // Explorer: hide cache dir and common root-level LaTeX intermediates.
   "files.exclude": {
     "%OUTDIR%/": true,
     "*.aux": true,

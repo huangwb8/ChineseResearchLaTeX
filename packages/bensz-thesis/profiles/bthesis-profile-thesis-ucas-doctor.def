@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-ucas-doctor.def}
+  [2026/03/25 v1.0.0 Thesis profile: thesis-ucas-doctor]
+
+\makeatletter
+\def\bthesis@template{thesis-ucas-doctor}
+\def\bthesis@templateversion{t_v20260325}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-ucas-doctor.tex}
+\makeatother

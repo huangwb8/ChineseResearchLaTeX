@@ -4,6 +4,7 @@
 
 - `projects/thesis-smu-master/`
 - `projects/thesis-sysu-doctor/`
+- `projects/thesis-ucas-doctor/`
 - `packages/bensz-thesis/`
 - `packages/bensz-fonts/`
 
@@ -84,6 +85,7 @@ projects/thesis-school-degree/
 
 - `thesis-smu-master`：`extraTex/@config.tex`
 - `thesis-sysu-doctor`：`extraTex/config-pre.tex`
+- `thesis-ucas-doctor`：`extraTex/config-pre.tex`
 
 ### `template.json`
 

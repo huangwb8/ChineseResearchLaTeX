@@ -13,7 +13,7 @@
 |------|------|------|------|
 | NSFC 标书 | `projects/NSFC_General`、`projects/NSFC_Local`、`projects/NSFC_Young` | `packages/bensz-nsfc/` | `main.pdf` |
 | SCI 论文 | `projects/paper-sci-01` | `packages/bensz-paper/` | `main.pdf`、`main.docx` |
-| 毕业论文 | `projects/thesis-smu-master`、`projects/thesis-sysu-doctor` | `packages/bensz-thesis/` | `main.pdf` |
+| 毕业论文 | `projects/thesis-smu-master`、`projects/thesis-sysu-doctor`、`projects/thesis-ucas-doctor` | `packages/bensz-thesis/` | `main.pdf` |
 | 学术简历 | `projects/cv-01` | `packages/bensz-cv/` | `main-zh.pdf`、`main-en.pdf` |
 
 ## 共享标准

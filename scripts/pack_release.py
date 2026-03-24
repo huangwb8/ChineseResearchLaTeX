@@ -52,18 +52,12 @@ PROJECT_INCLUDE_ITEMS = [
     "main-en.pdf",
     "main-zh.tex",
     "main-en.tex",
+    "template.json",
     "README.md",
 ]
 PROJECT_ROOT_INCLUDE_GLOBS = (
     "*.code-workspace",
     "*.tex",
-    "*.pdf",
-    "README.md",
-    "template.json",
-    "LICENSE*",
-    ".gitignore",
-    ".chktexrc",
-    ".latexmkrc",
 )
 REPO_ROOT = Path(__file__).parent.parent
 PROJECTS_DIR = REPO_ROOT / "projects"
@@ -208,19 +202,6 @@ def project_contains_package(project_dir: Path, package_name: str) -> bool:
     return False
 
 
-def project_uses_times_new_roman(project_dir: Path) -> bool:
-    patterns = ("*.tex", "*.cls", "*.sty")
-    regex = re.compile(r"\\setmainfont(?:\[[^\]]*\])?\{Times New Roman\}")
-    for pattern in patterns:
-        for tex_file in project_dir.rglob(pattern):
-            if should_skip_path(tex_file):
-                continue
-            content = tex_file.read_text(encoding="utf-8", errors="ignore")
-            if regex.search(content):
-                return True
-    return False
-
-
 def select_overleaf_font_files(project_dir: Path) -> set[str]:
     project_kind = detect_project_kind(project_dir)
 
@@ -235,14 +216,16 @@ def select_overleaf_font_files(project_dir: Path) -> set[str]:
             project_dir / "extraTex" / "@config.tex",
             project_dir / "extraTex" / "config-pre.tex",
         )
+        times_new_roman_templates = {
+            "template=thesis-sysu-doctor",
+            "template=thesis-ucas-doctor",
+        }
         for config_file in config_files:
             if not config_file.exists():
                 continue
             content = config_file.read_text(encoding="utf-8", errors="ignore")
-            if "template=thesis-sysu-doctor" in content:
+            if any(template_marker in content for template_marker in times_new_roman_templates):
                 return {"TimesNewRoman.ttf"}
-        if project_uses_times_new_roman(project_dir):
-            return {"TimesNewRoman.ttf"}
         return set()
 
     if project_kind == "cv":
