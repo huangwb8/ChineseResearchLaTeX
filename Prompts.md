@@ -55,7 +55,15 @@ Bachelor、Master、Doctor
 
 ---
 
-这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/36 请使用 git-pr-review skill 帮我评估一下这个pr。结果保存在 ./docs/pr-review 文件夹里
+这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/36 请使用 git-pr-review skill （parallel-vibe runner=codex 1个thread 5个runner）帮我评估一下这个pr。我发现了一些问题：
+
+- 使用的是GNU LISENCE。也许与本项目的MIT license是冲突的
+- 源项目（LeoJhonSong/UCAS-Dissertation）的开发者是否知情，因为这相当于对他的代码进行了copy，有版权问题
+- 目前该pr并不符合我的thesis的规范，可能要稍加改良才能使用。
+
+结果保存在 ./docs/pr-review 文件夹里
+
+
 
 # 重构
 
