@@ -55,6 +55,14 @@ Bachelor、Master、Doctor
 
 ---
 
+先在本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/36 里回复 Tenstu ，不要做merge。 回复的内容包括：
+
+- 最重要的待确认点：  LeoJhonSong 来判断是否允许license冲突； 是否允许变更license的重构。 你要艾特 LeoJhonSong 这样他才知道这个事
+- 目前并不符合项目的规范，需要进行改良
+- 其它问题见： 具体见 docs/pr-review/Git-PR-Review_huangwb8_ChineseResearchLaTeX_pr-36_20260324141226.md ； 当然这个文件要用超链接，方便用户访问
+
+---
+
 这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/36 请使用 git-pr-review skill （parallel-vibe runner=codex 1个thread 5个runner）帮我评估一下这个pr。我发现了一些问题：
 
 - 使用的是GNU LISENCE。也许与本项目的MIT license是冲突的
