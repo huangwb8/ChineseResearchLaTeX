@@ -84,6 +84,7 @@
 
 ### Fixed（修复）
 
+- 修复 `.github/workflows/update-template-list.yml` 在 `2026-03-24` 之后持续失败的问题：`scripts/test_install_architecture.py` 不再沿用 `thesis-ucas-doctor` 根目录仍含 `chapter1.tex` 的旧假设，改为校验当前 `extraTex/` 单一真相结构与 Release 打包结果一致，避免 README 模板列表同步工作流被过时的 UCAS 项目结构断言误拦截；同时重新同步根级 `README.md` 到最新正式 Release `v4.0.9`
 - 修复 `packages/bensz-thesis/styles/bthesis-style-thesis-sysu-doctor.tex` 的 `subsection` 竖向留白问题：SYSU 博士论文模板现显式启用 `\raggedbottom` 以避免页内内容较少时被齐底机制放大留白，并额外使用 `titlesec` 的 `\titlespacing*{\subsection}{0pt}{4pt}{2pt}` 精确收紧小节标题前后距，使标题与上下文衔接更紧凑
 - 修复 `.github/workflows/update-template-list.yml` 的回归测试路径失效问题：将 `test_install_architecture.py` 与 `test_update_readme_template_list.py` 从已忽略的 `tests/` 迁回 `scripts/`，并同步更新 README 模板列表工作流的 `pytest` 入口，避免 GitHub Actions 因找不到测试文件而以 `exit code 4` 失败
 - 修复根目录 `tests/` 的版本控制边界：`./tests` 现重新恢复为完全忽略目录，不再特意放行单个回归测试文件；避免本地测试记录、临时压缩包与会话产物误上传到 GitHub

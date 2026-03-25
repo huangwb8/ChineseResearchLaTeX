@@ -189,8 +189,11 @@ def test_pack_project_preserves_ucas_thesis_project_files(tmp_path: Path):
         names = set(zf.namelist())
 
     assert "main.tex" in names
-    assert "chapter1.tex" in names
     assert "extraTex/chapter1.tex" in names
+    assert "extraTex/chapter2.tex" in names
+    assert "extraTex/acknowledgements.tex" in names
+    assert "extraTex/cv.tex" in names
+    assert "chapter1.tex" not in names
     assert "bibs/references.bib" in names
     assert "template.json" in names
     assert "source-baseline.pdf" not in names

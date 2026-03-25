@@ -4,52 +4,14 @@
 
 创建tag v4.0.9 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
 
-# 改进
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+
+# 日常
 
 ---
 
-Bachelor、Master、Doctor
-
----
-
-./projects 里的模板的正文里，应该要使用到 enumerate 和 ssssubtitle ，否则用户不知道可以使用它们。
-
----
-
-模板优化：
-
-- 研究内容样式
-- 可否类似fylimas/nsfc那个项目一样列出自己的发表工作
-
-写作skill的优化
-
-- 局限性和本研究的解决方案在逻辑上要统一。
-- 立项依据里，科学问题、研究设计、科学假设要统一。
-- 方法学细节，不应该在立项依据和研究内容的高层描述中大书特书，只需在研究方法小节里提到即可。
-- 类似`在经费与样本质量允许时`这样的表述是绝对禁忌！这类"条件允许时"、"经费允许时"的表述会让评审认为申请人自己都不确信项目可行，是标书写作的大忌。
-
----
-
-如果本项目要创建新release，要这样做：
-
-- 使用 git-commit skill 创建commit信息并push
-- 创建一个新的tag
-- 使用 git-publish-release 生成release
-- projects里的每个项目，都要生成 .zip 文件，保存在在 ./tests/release-{本次的tag} 这个文件夹里。生成.zip时，zip里仅保留这些文件/文件夹（当然，不能对projects里的文件有任何修改； 这一步只是在一个测试文件夹里生成zip）
-  - .vscode
-  - bibtex-style
-  - code
-  - extraTex
-  - figures
-  - fonts
-  - references
-  - template
-  - main.pdf
-  - main.tex
-  - README.md
-- 把这些zip当作release的Assets推送到github
-
-请把上述规则有机地融入 @AGENTS.md 里
+我在 https://github.com/huangwb8/ChineseResearchLaTeX/actions 里看到几次失败，具体是`Sync README Template List`。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 # 处理pr
 
@@ -985,9 +947,60 @@ skill开发的时候要遵守 '/Users/bensz/Nutstore Files/PythonCloud/Agents/pi
 请结合 plans/v202601051859.md，给出skill开发计划让我审核。
 ```
 
+# 改进
+
+---
+
+Bachelor、Master、Doctor
+
+---
+
+./projects 里的模板的正文里，应该要使用到 enumerate 和 ssssubtitle ，否则用户不知道可以使用它们。
+
+---
+
+模板优化：
+
+- 研究内容样式
+- 可否类似fylimas/nsfc那个项目一样列出自己的发表工作
+
+写作skill的优化
+
+- 局限性和本研究的解决方案在逻辑上要统一。
+- 立项依据里，科学问题、研究设计、科学假设要统一。
+- 方法学细节，不应该在立项依据和研究内容的高层描述中大书特书，只需在研究方法小节里提到即可。
+- 类似`在经费与样本质量允许时`这样的表述是绝对禁忌！这类"条件允许时"、"经费允许时"的表述会让评审认为申请人自己都不确信项目可行，是标书写作的大忌。
+
+---
+
+如果本项目要创建新release，要这样做：
+
+- 使用 git-commit skill 创建commit信息并push
+- 创建一个新的tag
+- 使用 git-publish-release 生成release
+- projects里的每个项目，都要生成 .zip 文件，保存在在 ./tests/release-{本次的tag} 这个文件夹里。生成.zip时，zip里仅保留这些文件/文件夹（当然，不能对projects里的文件有任何修改； 这一步只是在一个测试文件夹里生成zip）
+  - .vscode
+  - bibtex-style
+  - code
+  - extraTex
+  - figures
+  - fonts
+  - references
+  - template
+  - main.pdf
+  - main.tex
+  - README.md
+- 把这些zip当作release的Assets推送到github
+
+请把上述规则有机地融入 @AGENTS.md 里
+
+
 
 # Legacy
 
 - 请按 plans/v202601051748.md  这个计划设计skill，保存在当前项目的 skills 文件夹内。
 
 - NSFC基金每年的模板都可能会变化。以NSFC_Young为例，一般projects/NSFC_Young/template 里会包含今年的最新模板（比如今年是2026年，那么 projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 就是最新的官方模板）。而 projects/NSFC_Young/main.tex 有可能是旧的（比如是去年的仿Word样式的Latex模板）。我希望在 `skills` 目录下开发一个skill，名为`make_latex_model`。它的作用是： 在充分了解目前main.tex和projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc的基础上，优化main.tex及其相关的 projects/NSFC_Young/extraTex/@config.tex 文件，以实现对doc的高仿（渲染的PDF和Word版打印的PDF在标题样式上完全一样）。 国自然基金委对格式的要求很严格，因此这种模仿的保真度要求非常高。这个skill在工作的时候要非常注意：1、尽量轻量地修改main.tex和@config.tex，不要进行大的重构（除非有必要这样做），特别是样式的规定。老样式经过长期维护，可靠性非常高；一般只需要在它的基础上优化就行 2、 最新版的word模板有时有main.tex很不一样，有时差不多。你要注意优化时的度，不能过度开发，也不能太懒开发。 3、 skill的开发必须遵守 '/Users/bensz/Nutstore Files/PythonCloud/Agents/pipelines/skills' 的相关规范。请给出开发该skill的计划供我审查。 
+
+
+
