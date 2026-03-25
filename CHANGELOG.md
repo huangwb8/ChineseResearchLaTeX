@@ -34,6 +34,10 @@
 
 - 更新 `packages/bensz-thesis/styles/ucas/ucasDissertation.cls`、`packages/bensz-thesis/styles/bthesis-style-thesis-ucas-doctor.tex`、`packages/bensz-thesis/styles/ucas/ucasInfo.sty`、`packages/bensz-thesis/styles/ucas/ucasSilence.sty`、`packages/bensz-thesis/scripts/validate_package.py` 与 `projects/thesis-ucas-doctor/main.tex`：将 UCAS 模板的稳定实现正式收敛到 `bensz-thesis` 包级目录，由项目层保留 `main.tex + extraTex + wrapper + template.json` 薄封装，同时继续通过包内专属 class 保持与源 PDF 的像素级一致，且不影响现有 `thesis-smu-master` / `thesis-sysu-doctor`
 - 更新 `scripts/pack_release.py`、`scripts/test_install_architecture.py`、`README.md`、`projects/README.md`、`docs/for-developers/README.md`、`docs/for-developers/thesis-template-standard.md`、`packages/bensz-thesis/README.md` 与 `AGENTS.md`：将毕业论文产品线口径同步到 `thesis-ucas-doctor`，移除对 PR 36 旧版 `Thesis.tex + .latexmkrc + 项目私有样式` 结构的说明，并让 Overleaf 打包正确识别 UCAS 模板所需的 `TimesNewRoman.ttf`
+
+### Removed（删除）
+
+- 删除 `tests/baselines/` 下的已跟踪基线文件：该目录中的 baseline 产物不再纳入 Git 跟踪，避免在默认已忽略的 `tests/` 目录下继续保留历史二进制基线文件
 - 删除根级 `config.yaml`：确认当前仓库级脚本、测试与工作流均未再读取该文件，且其内容已长期落后于真实目录结构与版本现状；同时更新 [AGENTS.md](AGENTS.md) 中对该文件的根目录列举与“真实状态优先”表述，避免继续把过期元信息误当作仓库级配置源
 - 更新 [packages/bensz-paper/README.md](packages/bensz-paper/README.md)、[packages/bensz-nsfc/README.md](packages/bensz-nsfc/README.md)、[packages/bensz-cv/README.md](packages/bensz-cv/README.md)、[packages/bensz-fonts/README.md](packages/bensz-fonts/README.md) 与 [packages/bensz-thesis/README.md](packages/bensz-thesis/README.md)：统一将包级 README 收敛为“公共包职责 + 目录结构 + 通用官方入口”，移除对具体 `projects/*` 示例项目的绑定描述，避免新增项目时反向牵动公共包文档
 - 更新 `scripts/install.py`、新增 `scripts/package_version_manager.py`，并重写 `packages/bensz-paper/scripts/package/install.py`、`packages/bensz-thesis/scripts/package/install.py`、`packages/bensz-cv/scripts/package/install.py` 以及相关 README / `AGENTS.md`：`bensz-paper`、`bensz-thesis`、`bensz-cv` 现改为与 `bensz-nsfc` 同类的“包级版本管理 + 激活”安装模型，支持缓存多版本、`install/use/rollback/check/uninstall` 等命令；根级统一安装器也同步改为委托这些包的专用安装器，同时保持默认 `scripts/install.py install` 入口不变；所有包级缓存/状态目录统一收口到 `~/.ChineseResearchLaTeX/<package>/`
