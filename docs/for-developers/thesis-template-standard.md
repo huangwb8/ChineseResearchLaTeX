@@ -3,6 +3,7 @@
 本文档描述当前仓库里毕业论文模板的标准形态。它基于以下真实项目和源码整理：
 
 - `projects/thesis-smu-master/`
+- `projects/thesis-nju-master/`
 - `projects/thesis-sysu-doctor/`
 - `projects/thesis-ucas-doctor/`
 - `packages/bensz-thesis/`
@@ -84,6 +85,7 @@ projects/thesis-school-degree/
 只是入口文件名不同：
 
 - `thesis-smu-master`：`extraTex/@config.tex`
+- `thesis-nju-master`：`extraTex/@config.tex`（并额外提供 `main.tex` 的公开基线验收入口与 `editable.tex` 的干净脚手架）
 - `thesis-sysu-doctor`：`extraTex/config-pre.tex`
 - `thesis-ucas-doctor`：`extraTex/config-pre.tex`
 

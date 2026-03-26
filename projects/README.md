@@ -61,6 +61,7 @@
 | 项目 | 用途 | 适用场景 |
 |------|------|----------|
 | [`thesis-smu-master/`](./thesis-smu-master/) | 南方医科大学硕士论文示例项目 | 需要 SMU 硕士论文版式模板 |
+| [`thesis-nju-master/`](./thesis-nju-master/) | 南京大学工程管理硕士论文示例项目 | 需要 NJU 工程管理硕士论文版式模板，或需要“公开基线 + 可编辑脚手架”双入口示例 |
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |
 
@@ -88,7 +89,7 @@
 
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
 - 写 SCI 论文：进入 `paper-sci-01/`
-- 写毕业论文：进入与你学校和学位最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
+- 写毕业论文：进入与你学校和学位最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
 - 写中英文简历：进入 `cv-01/`
 
 若你的问题涉及共享样式、公共宏、构建脚本或安装逻辑，再回到 `packages/` 目录定位对应公共包。

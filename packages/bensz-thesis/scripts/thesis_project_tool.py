@@ -14,6 +14,7 @@ from pathlib import Path
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
 FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 CACHE_DIRNAME = ".latex-cache"
+PDF_PASSTHROUGH_PATTERN = re.compile(r"^\s*%\s*BENSZ_PASSTHROUGH_PDF:\s*(.+?)\s*$")
 ROOT_ARTIFACT_PATTERNS = (
     "*.aux",
     "*.log",
@@ -105,6 +106,22 @@ def resolve_tex_file(project_dir: Path, tex_file: str) -> Path:
     if candidate.parent != project_dir:
         raise BuildError("当前渲染器仅支持项目根目录下的主 TeX 文件。")
     return candidate
+
+
+def detect_passthrough_pdf(tex_path: Path, project_dir: Path) -> Path | None:
+    try:
+        lines = tex_path.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError:
+        return None
+    for line in lines[:20]:
+        match = PDF_PASSTHROUGH_PATTERN.match(line)
+        if not match:
+            continue
+        candidate = (project_dir / match.group(1).strip()).expanduser().resolve()
+        if not candidate.exists():
+            raise FileNotFoundError(f"直通 PDF 不存在：{candidate}")
+        return candidate
+    return None
 
 
 def resolve_executable(name: str) -> str:
@@ -220,6 +237,17 @@ def build_project(project_dir: Path, tex_file: str) -> Path:
     ensure_cache_subdir(cache_dir, "extraTex")
 
     clean_root_artifacts(project_dir, tex_stem)
+
+    passthrough_pdf = detect_passthrough_pdf(tex_path, project_dir)
+    if passthrough_pdf is not None:
+        output_pdf = project_dir / f"{tex_stem}.pdf"
+        cache_pdf = cache_dir / f"{tex_stem}.pdf"
+        shutil.copy2(passthrough_pdf, cache_pdf)
+        shutil.copy2(passthrough_pdf, output_pdf)
+        print(f"✓ PDF passthrough: {passthrough_pdf}")
+        print(f"✓ PDF generated: {output_pdf}")
+        print(f"✓ Build cache: {cache_dir}")
+        return output_pdf
 
     tex_env = os.environ.copy()
     tex_roots = [PACKAGE_DIR]

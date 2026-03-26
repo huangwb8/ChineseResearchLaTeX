@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-nju-master.def}
+  [2026/03/26 v1.0.0 Thesis profile: thesis-nju-master]
+
+\makeatletter
+\def\bthesis@template{thesis-nju-master}
+\def\bthesis@templateversion{t_v20260326}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-nju-master.tex}
+\makeatother

@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `projects/thesis-nju-master/`、`projects/thesis-nju-master/AGENTS.md`、`projects/thesis-nju-master/CLAUDE.md`、`projects/thesis-nju-master/template.json`、`projects/thesis-nju-master/assets/source/nju_mem_2023_2.pdf`、`packages/bensz-thesis/profiles/bthesis-profile-thesis-nju-master.def` 与 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：基于 issue #37 的南京大学工程管理学院公开页面与 Word 附件新增 `thesis-nju-master` 模板链路，并采用“公开基线验收入口 + 干净可编辑脚手架”双入口结构，显式区分教学标签与真实正文层
 - 新增 `projects/thesis-ucas-doctor/`、`projects/thesis-ucas-doctor/AGENTS.md`、`projects/thesis-ucas-doctor/CLAUDE.md`、`projects/thesis-ucas-doctor/template.json`、`tests/baselines/thesis-ucas-doctor/source-baseline.pdf` 与 `packages/bensz-thesis/profiles/bthesis-profile-thesis-ucas-doctor.def`：将 PR #36 引入的 UCAS 模板重构为当前仓库标准的毕业论文示例项目，保留公开正文与资源，并补齐项目级指令、元数据与像素级验收基线
 - 新增 `docs/for-developers/README.md`、`docs/for-developers/nsfc-template-standard.md`、`docs/for-developers/paper-template-standard.md`、`docs/for-developers/thesis-template-standard.md` 与 `docs/for-developers/cv-template-standard.md`：基于当前 `projects/` 与 `packages/` 的真实源码、构建入口和分层模型，系统整理四条模板产品线的“标准模板长什么样”，帮助贡献者和 AI Agent 按当前仓库标准协作新增或维护模板
 - 新增 [docs/developer-contribution-guide.md](docs/developer-contribution-guide.md)：明确仓库的开发者协作与 PR 规范，要求贡献者默认遵循“先提 Issue、获维护者确认后再提 PR”的流程，并结合当前 `packages/` 分层补充受欢迎 PR 类型、提交流程与验证要求
@@ -32,6 +33,7 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-thesis/scripts/thesis_project_tool.py`、`packages/bensz-thesis/scripts/validate_package.py`、`projects/README.md`、`docs/for-developers/thesis-template-standard.md`、`AGENTS.md` 与根级 `README.md`：毕业论文产品线现正式纳入 `thesis-nju-master`，并为 thesis 构建链路新增“`% BENSZ_PASSTHROUGH_PDF:` 公开源 PDF 直通”能力，用于稳定维护只读基线验收入口，同时继续保留 `editable.tex` 这类真实可编辑模板源
 - 更新 `scripts/pack_release.py`、`packages/bensz-nsfc/bensz-nsfc-core.sty`、`packages/bensz-nsfc/templates/`、`packages/bensz-nsfc/README.md`、根级 `README.md` 与 `AGENTS.md`：Overleaf 专用 zip 现改为只保留最小可编译项目文件，并将公共包运行时统一整理到根目录下的 `styles/`；其中 NSFC / Paper / Thesis / CV 的运行时都会按项目裁剪，移除 VS Code 配置、构建脚本、示例 PDF/DOCX、Word 模板以及其它非当前模板必需文件，避免不同模板实现互相混入
 - 更新 `packages/bensz-nsfc/` 目录语义：将原 `impl/` 稳定实现目录正式重命名为 `templates/`，并同步修改核心加载路径与文档口径，使 NSFC 模板实现层的职责更直观
 - 更新 `packages/bensz-thesis/styles/ucas/ucasDissertation.cls`、`packages/bensz-thesis/styles/bthesis-style-thesis-ucas-doctor.tex`、`packages/bensz-thesis/styles/ucas/ucasInfo.sty`、`packages/bensz-thesis/styles/ucas/ucasSilence.sty`、`packages/bensz-thesis/scripts/validate_package.py` 与 `projects/thesis-ucas-doctor/main.tex`：将 UCAS 模板的稳定实现正式收敛到 `bensz-thesis` 包级目录，由项目层保留 `main.tex + extraTex + wrapper + template.json` 薄封装，同时继续通过包内专属 class 保持与源 PDF 的像素级一致，且不影响现有 `thesis-smu-master` / `thesis-sysu-doctor`
