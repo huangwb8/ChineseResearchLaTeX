@@ -66,6 +66,12 @@
   \newCJKfontfamily\njuHei{FandolHei-Regular}
 }
 
+\IfFontExistsTF{Yuanti SC}{
+  \newCJKfontfamily\njuYuanti{Yuanti SC}
+}{
+  \newCJKfontfamily\njuYuanti{FandolHei-Regular}
+}
+
 \xeCJKsetup{PunctStyle=plain}
 \setstretch{1.25}
 \setlength{\parindent}{2em}
@@ -82,8 +88,8 @@
 }
 
 \newcommand{\njuBodyFont}{\njuFangSong\fontsize{12bp}{20bp}\selectfont}
-\newcommand{\njuFrontTitleFont}{\njuKai\bfseries\fontsize{26bp}{36bp}\selectfont}
-\newcommand{\njuCoverLabelFont}{\njuHei\bfseries\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\njuFrontTitleFont}{\njuYuanti\bfseries\fontsize{26bp}{36bp}\selectfont}
+\newcommand{\njuCoverLabelFont}{\njuYuanti\bfseries\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{24bp}\selectfont}
 \newcommand{\njuSectionFont}{\njuFangSong\bfseries\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\njuSubsectionFont}{\njuFangSong\bfseries\fontsize{12bp}{20bp}\selectfont}
