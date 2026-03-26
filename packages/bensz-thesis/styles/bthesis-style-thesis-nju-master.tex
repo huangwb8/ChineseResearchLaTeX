@@ -57,7 +57,11 @@
 \IfFontExistsTF{Kaiti SC}{%
   \newCJKfontfamily\njuKai{Kaiti SC}
 }{%
-  \newCJKfontfamily\njuKai{FandolKai-Regular}
+  \IfFontExistsTF{KaiTi}{%
+    \newCJKfontfamily\njuKai{KaiTi}
+  }{%
+    \newCJKfontfamily\njuKai{FandolKai-Regular}
+  }%
 }
 
 \IfFontExistsTF{STFangsong}{%
@@ -85,9 +89,10 @@
 }
 
 \newcommand{\njuBodyFont}{\njuSong\fontsize{12bp}{20bp}\selectfont}
-\newcommand{\njuCoverTitleFont}{\njuHei\bfseries\fontsize{20bp}{28bp}\selectfont}
-\newcommand{\njuCoverLabelFont}{\njuHei\bfseries\fontsize{11bp}{15bp}\selectfont}
-\newcommand{\njuCoverValueFont}{\njuSong\fontsize{11bp}{16bp}\selectfont}
+\newcommand{\njuCoverTitleFont}{\njuKai\fontsize{24bp}{32bp}\selectfont}
+\newcommand{\njuCoverDegreeFont}{\njuKai\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\njuCoverLabelFont}{\njuKai\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\njuCoverValueFont}{\njuKai\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\njuFrontHeadingFont}{\njuHei\bfseries\fontsize{15bp}{20bp}\selectfont}
 \newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{20bp}\selectfont}
 \newcommand{\njuSectionFont}{\njuHei\bfseries\fontsize{14bp}{18bp}\selectfont}
@@ -228,15 +233,23 @@
 
 \newcommand{\njuCoverRule}[1]{%
   \parbox[t]{8cm}{%
+    \centering
     \njuCoverValueFont #1\par
-    \vspace*{0.3em}%
+    \vspace*{0.15em}%
     \rule{\linewidth}{0.4pt}%
   }%
 }
 
 \newcommand{\njuCoverField}[2]{%
-  \par\vspace*{0.65em}%
-  {\njuCoverLabelFont #1}\hspace{1.2em}\njuCoverRule{#2}%
+  \par\vspace*{0.4em}%
+  \makebox[2.4cm][s]{\njuCoverLabelFont #1}%
+  \hspace{0.9em}%
+  \parbox[t]{6.4cm}{%
+    \centering
+    \njuCoverValueFont #2\par
+    \vspace*{0.15em}%
+    \rule{\linewidth}{0.4pt}%
+  }%
 }
 
 \newcommand{\njuMakeCover}{%
@@ -248,9 +261,9 @@
       \includegraphics[width=0.34\textwidth]{assets/demo/nju_logo_calligraphy.jpeg}\par
       \vspace{1.05cm}
     }{}
-    {\njuCoverTitleFont 研\hspace{0.65em}究\hspace{0.65em}生\hspace{0.65em}毕\hspace{0.65em}业\hspace{0.65em}论\hspace{0.65em}文\par}
-    \vspace{0.42cm}
-    {\njuCoverTitleFont
+    {\njuCoverTitleFont 研\hspace{0.55em}究\hspace{0.55em}生\hspace{0.55em}毕\hspace{0.55em}业\hspace{0.55em}论\hspace{0.55em}文\par}
+    \vspace{0.32cm}
+    {\njuCoverDegreeFont
       \ifnjuProfessionalDegree
         （申请硕士专业学位）%
       \else
@@ -258,10 +271,9 @@
       \fi
       \par
     }
-    \vspace{1.35cm}
-    \raggedright
-    \hspace*{3.1cm}%
-    \begin{minipage}{10.2cm}
+    \vspace{1.85cm}
+    \begin{center}
+    \begin{minipage}{9.8cm}
       \njuCoverField{论文题目}{\njuTitleValue}
       \njuCoverField{作者姓名}{\njuAuthorValue}
       \ifnjuProfessionalDegree
@@ -272,10 +284,11 @@
       \njuCoverField{研究方向}{\njuResearchValue}
       \njuCoverField{指导教师}{\njuSupervisorValue}
     \end{minipage}
+    \end{center}
     \par
-    \vspace{1.45cm}
+    \vspace{1.7cm}
     \centering
-    {\njuCoverLabelFont \njuDateValue\par}
+    {\njuCoverValueFont \njuDateValue\par}
   \end{titlepage}
 }
 
