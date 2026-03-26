@@ -8,23 +8,31 @@
 \begin{document}
 
 \njuMakeCover
+\njuMakeInfoPage
 \njuMakeEnglishTitle
-\njuMakeDeclaration
+\njuMakeBlankPage
 
-\frontmatter
-\pagenumbering{Roman}
+\clearpage
+\setcounter{page}{5}
 \njuUseFrontmatterStyle{摘要}
+\addcontentsline{toc}{chapter}{摘要}
 \input{extraTex/front/abstract_zh.tex}
 \clearpage
 \njuUseFrontmatterStyle{ABSTRACT}
+\addcontentsline{toc}{chapter}{Abstract}
 \input{extraTex/front/abstract_en.tex}
 \clearpage
 \njuUseFrontmatterStyle{目录}
+\begingroup
+\makeatletter
+\let\ps@plain\ps@njuempty
+\makeatother
 \tableofcontents
+\endgroup
 \clearpage
 
-\mainmatter
 \pagenumbering{arabic}
+\setcounter{page}{1}
 \njuUseMainmatterStyle
 \input{extraTex/body/chapter-01.tex}
 \input{extraTex/body/chapter-02.tex}

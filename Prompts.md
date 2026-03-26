@@ -10,11 +10,37 @@
 
 ---
 
+如图，左边是示例文献； 右边是项目pdf。 我感觉这字体不太对。示例里应该是某种楷体； 而且字体大小也不太相称。 你看一下这个封面页，有没有可以改良的。如果要用到额外字体， bensz-fonts包应该可以提供帮助。 
+
+---
+
+tests/thesis-nju-master模板文献里有一个真实的、格式通过评审的 thesis-nju-master 毕业论文的PDF版。 请你：
+
+- 彻底了解这个真实论文的实际样式
+- 评估目前 projects/thesis-nju-master 有哪些缺陷
+- 优化 projects/thesis-nju-master 。 初步验收目标：thesis-nju-master 渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 通过初步验收后，模板可以填回原来的佐佐木希的正文，这样就可以完成脱敏
+- 注意
+  - 模板文献是保密级，不能通过任何方式公开在网上
+  - 本次任务中，不要产生任何向github的commit或release。 要先给我看过
+
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
+如图，左是projects/thesis-nju-master 的原始，右是本项目的情况。 我感觉有这些差异：
+
+- 专业学位类别（领域）应该要压扁，保持比作者姓名略长点
+- 每条横线与其上面的文字的空隔太大，不太方便
+
+---
+
 有人提了个毕业论文的需求，具体在 https://github.com/huangwb8/ChineseResearchLaTeX/issues/37 请：
 
 - 用户在该issue里给了一些链接、附件。你要充分利用
 - 基于 `projects/thesis-*` 和 packages/bensz-thesis 制作模板。 命名为thesis-nju-master。
-- 初步验收目标：thesis-ucas-doctor渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 初步验收目标：thesis-nju-master渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
 - 用户提供的pdf源，你要区分好正文和教学类文字。 有一些标签是教学用的，不应该是模板的正文。要注意区分。
 
 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
@@ -37,7 +63,10 @@
 
 ---
 
-Merge 这个pr https://github.com/huangwb8/ChineseResearchLaTeX/pull/39 到main。 不过，根据 docs/pr-review/Git-PR-Review_huangwb8_ChineseResearchLaTeX_pr-39_20260326184515.md 这个审查报告，这个pr还有一些问题，你要处理好。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+Merge 这个pr https://github.com/huangwb8/ChineseResearchLaTeX/pull/39 到main。 注意：
+
+- 该pr与main存在一些conflict，以main为准，我们只merge不conflict的部分。
+- 根据 docs/pr-review/Git-PR-Review_huangwb8_ChineseResearchLaTeX_pr-39_20260326184515.md 这个审查报告，这个pr还有一些问题，你要处理好。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 
