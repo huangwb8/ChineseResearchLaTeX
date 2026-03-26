@@ -35,7 +35,13 @@
 
 # 处理pr
 
-这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/39 请使用 git-pr-review skill （parallel-vibe runner=codex; 5个thread;  2个runner/thread）帮我评估一下这个pr。
+---
+
+Merge 这个pr https://github.com/huangwb8/ChineseResearchLaTeX/pull/39 到main。 不过，根据 docs/pr-review/Git-PR-Review_huangwb8_ChineseResearchLaTeX_pr-39_20260326184515.md 这个审查报告，这个pr还有一些问题，你要处理好。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
+这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/39 请使用 git-pr-review skill （parallel-vibe runner=codex; 5次独立评审）帮我评估一下这个pr。
 
 ---
 
