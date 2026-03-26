@@ -201,7 +201,11 @@
 \newcommand{\njuKeywordsEn}[1]{\gdef\njuKeywordsEnValue{#1}}
 
 \newcommand{\njuCoverRule}[1]{%
-  \parbox[t]{0.68\textwidth}{\rule[-0.35em]{\linewidth}{0.4pt}\par\vspace*{0.35em}\njuFangSong\fontsize{12bp}{20bp}\selectfont #1}%
+  \parbox[t]{0.68\textwidth}{%
+    \njuFangSong\fontsize{12bp}{20bp}\selectfont #1\par
+    \vspace*{0.15em}%
+    \rule{\linewidth}{0.4pt}%
+  }%
 }
 
 \newcommand{\njuCoverField}[2]{%
