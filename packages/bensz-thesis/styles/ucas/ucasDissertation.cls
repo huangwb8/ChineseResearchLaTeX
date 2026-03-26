@@ -15,6 +15,7 @@
 \DeclareBoolOption[false]{print} % 印刷版/电子版 (电子版非另页右页, 仅另页), 默认为电子版
 \DeclareBoolOption[false]{colorlinks} % 超链接是否彩色, 默认false, 此时为黑色无边框
 \DeclareBoolOption[false]{bibBackref} % 是否在参考文献列表中显示文献引用页, 默认false, 此时为不显示
+\DeclareBoolOption[false]{resourceenv} % 资环学科群三级标题约束
 \DeclareVoidOption{draft}{
     \special{xdvipdfmx:config z 0} % 将pdf压缩等级设为0, 缩短生成时间 (但会导致pdf更大)
     \PassOptionsToClass{draft}{ctexbook}
@@ -241,7 +242,34 @@
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3. 书脊
-% 在ucasSpine.cls
+\newcommand{\makeSpine}{
+    \clearpage
+    \thispagestyle{empty}
+    \begingroup
+    \newgeometry{
+        a4paper,
+        top = 2.54cm,
+        bottom = 2.54cm,
+        left = 2.54cm,
+        right = 2.54cm,
+    }
+    \vspace*{\fill}
+    \begin{center}
+        \rotatebox{90}{
+            \parbox{0.84\textheight}{
+                \centering
+                \heiti\zihao{-3}\UCAS@title@cn\par
+                \vspace{1.2\baselineskip}
+                \heiti\zihao{4}\UCAS@author@cn
+            }
+        }
+    \end{center}
+    \vspace*{\fill}
+    \restoregeometry
+    \endgroup
+    \clearpage
+    \global\let\makeSpine\relax % 销毁该命令, 防止重复调用
+}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 4. 摘要和关键词
 \newcommand{\abstract}[2]{
@@ -430,6 +458,56 @@
 % 文档默认样式即段落文字样式
 
 \ctexset{secnumdepth=subsubsection} % 正文中对最多四级的标题编号, 更深的标题不编号
+
+\ifUCAS@resourceenv
+    \ctexset{secnumdepth=subsection} % 资环口径中正文仅对最多三级标题编号
+    \setcounter{tocdepth}{2} % 目录中最多显示到三级标题
+
+    % 资环口径要求最多到三级标题：四级及更深层级不阻断，但给出告警并降级为非正式标题
+    \newcommand{\UCAS@warnDeepHeading}[1]{
+        \PackageWarningNoLine{styles/ucas/ucasDissertation}{
+            Detected \string#1.\MessageBreak
+            UCAS resource-environment guideline allows at most level-3 headings.\MessageBreak
+            The heading is downgraded to unnumbered form and excluded from TOC.
+        }
+    }
+
+    \let\UCAS@orig@subsubsection\subsubsection
+    \renewcommand{\subsubsection}{\@ifstar{\UCAS@subsubsection@star}{\UCAS@subsubsection@nostar}}
+    \newcommand{\UCAS@subsubsection@star}[1]{
+        \UCAS@warnDeepHeading{\subsubsection}
+        \UCAS@orig@subsubsection*{#1}
+    }
+    \newcommand{\UCAS@subsubsection@nostar}{\@dblarg\UCAS@subsubsection@nostar@i}
+    \newcommand{\UCAS@subsubsection@nostar@i}[2]{
+        \UCAS@warnDeepHeading{\subsubsection}
+        \UCAS@orig@subsubsection*{#2}
+    }
+
+    \let\UCAS@orig@paragraph\paragraph
+    \renewcommand{\paragraph}{\@ifstar{\UCAS@paragraph@star}{\UCAS@paragraph@nostar}}
+    \newcommand{\UCAS@paragraph@star}[1]{
+        \UCAS@warnDeepHeading{\paragraph}
+        \UCAS@orig@paragraph*{#1}
+    }
+    \newcommand{\UCAS@paragraph@nostar}{\@dblarg\UCAS@paragraph@nostar@i}
+    \newcommand{\UCAS@paragraph@nostar@i}[2]{
+        \UCAS@warnDeepHeading{\paragraph}
+        \UCAS@orig@paragraph*{#2}
+    }
+
+    \let\UCAS@orig@subparagraph\subparagraph
+    \renewcommand{\subparagraph}{\@ifstar{\UCAS@subparagraph@star}{\UCAS@subparagraph@nostar}}
+    \newcommand{\UCAS@subparagraph@star}[1]{
+        \UCAS@warnDeepHeading{\subparagraph}
+        \UCAS@orig@subparagraph*{#1}
+    }
+    \newcommand{\UCAS@subparagraph@nostar}{\@dblarg\UCAS@subparagraph@nostar@i}
+    \newcommand{\UCAS@subparagraph@nostar@i}[2]{
+        \UCAS@warnDeepHeading{\subparagraph}
+        \UCAS@orig@subparagraph*{#2}
+    }
+\fi
 
 %列表 --------------------------------------------------------------------------
 % 设置无序列表标签样式
