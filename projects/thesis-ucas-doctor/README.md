@@ -7,7 +7,7 @@
 - 版式源自上游开源项目 [`LeoJhonSong/UCAS-Dissertation`](https://github.com/LeoJhonSong/UCAS-Dissertation/tree/master)，现已按本仓库的 thesis 标准重构为“包级实现 + 项目级薄封装”
 - 当前正文、摘要、附录、图表与参考文献沿用源模板中的公开内容，不额外改写为其它演示主题
 - 源作者已在 [PR #36 评论](https://github.com/huangwb8/ChineseResearchLaTeX/pull/36#issuecomment-4120624795) 明确表示“你们随便用随便改”，因此本项目继续按仓库根级 MIT 口径维护
-- 已通过 `tests/baselines/thesis-ucas-doctor/source-baseline.pdf` 的像素级 PDF 对比验收
+- 当前仓库默认不附带公开的像素级基线 PDF；如需做版式回归，请使用你自己的基线文件运行 `compare`
 
 构建方式：
 
@@ -85,12 +85,12 @@ python3 projects/thesis-ucas-doctor/scripts/export_docx.py --project-dir project
 - 正文是否超过三级标题(0083)
 - 章节存在：摘要 / Abstract / 目录 / 图表目录 / 参考文献 / 致谢
 
-像素级比对：
+像素级比对（需自备基线 PDF）：
 
 ```bash
 python packages/bensz-thesis/scripts/thesis_project_tool.py compare \
   --project-dir projects/thesis-ucas-doctor \
-  --baseline-pdf tests/baselines/thesis-ucas-doctor/source-baseline.pdf \
+  --baseline-pdf <path-to-baseline.pdf> \
   --build-first
 ```
 

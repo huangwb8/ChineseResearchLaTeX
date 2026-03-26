@@ -228,12 +228,8 @@ def resolve_graphics_path(
     except ValueError:
         source_rel = Path(".")
 
-    search_roots: List[Path] = []
-    if candidate_path.parent not in {Path("."), Path("")}:
-        search_roots.append(Path("."))
-    else:
-        search_roots.extend([Path("."), source_rel])
-        search_roots.extend(graphic_search_dirs)
+    search_roots: List[Path] = [Path("."), source_rel]
+    search_roots.extend(graphic_search_dirs)
 
     deduped_roots: List[Path] = []
     seen_roots: set[str] = set()
