@@ -37,6 +37,7 @@
 `projects/thesis-*` 负责：
 
 - `main.tex`：论文结构
+- 可选的 `baseline.tex`：仅当需要保留只读公开基线直通时使用
 - `extraTex/`：前置配置、元信息、章节正文、附录等
 - `template.json`：项目元数据
 - `references/`、`bibtex-style/`、`assets/`、`figures/`：项目资源
@@ -85,7 +86,7 @@ projects/thesis-school-degree/
 只是入口文件名不同：
 
 - `thesis-smu-master`：`extraTex/@config.tex`
-- `thesis-nju-master`：`extraTex/@config.tex`（并额外提供 `main.tex` 的公开基线验收入口与 `editable.tex` 的干净脚手架）
+- `thesis-nju-master`：`extraTex/@config.tex`（`main.tex` 为默认可编辑入口，额外提供 `baseline.tex` 公开基线验收入口与 `editable.tex` 兼容别名）
 - `thesis-sysu-doctor`：`extraTex/config-pre.tex`
 - `thesis-ucas-doctor`：`extraTex/config-pre.tex`
 

@@ -354,6 +354,7 @@ python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir pr
 
 ```bash
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-nju-master
+python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-nju-master --tex-file baseline.tex
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-nju-master --tex-file editable.tex
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-sysu-doctor
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-ucas-doctor

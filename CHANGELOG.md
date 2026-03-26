@@ -33,6 +33,7 @@
 
 ### Changed（变更）
 
+- 更新 `projects/thesis-nju-master/main.tex`、`projects/thesis-nju-master/editable.tex`、`projects/thesis-nju-master/baseline.tex`、`projects/thesis-nju-master/README.md`、`projects/thesis-nju-master/AGENTS.md`、`projects/README.md`、`README.md` 与 `docs/for-developers/thesis-template-standard.md`：将 `thesis-nju-master` 调整为“`main.tex` 默认可编辑 + `baseline.tex` 公开基线直通 + `editable.tex` 兼容旧命令”的入口结构，修复用户按惯例打开 `main.tex` 时看到空壳文件的问题
 - 更新 `packages/bensz-thesis/scripts/thesis_project_tool.py`、`packages/bensz-thesis/scripts/validate_package.py`、`projects/README.md`、`docs/for-developers/thesis-template-standard.md`、`AGENTS.md` 与根级 `README.md`：毕业论文产品线现正式纳入 `thesis-nju-master`，并为 thesis 构建链路新增“`% BENSZ_PASSTHROUGH_PDF:` 公开源 PDF 直通”能力，用于稳定维护只读基线验收入口，同时继续保留 `editable.tex` 这类真实可编辑模板源
 - 更新 `scripts/pack_release.py`、`packages/bensz-nsfc/bensz-nsfc-core.sty`、`packages/bensz-nsfc/templates/`、`packages/bensz-nsfc/README.md`、根级 `README.md` 与 `AGENTS.md`：Overleaf 专用 zip 现改为只保留最小可编译项目文件，并将公共包运行时统一整理到根目录下的 `styles/`；其中 NSFC / Paper / Thesis / CV 的运行时都会按项目裁剪，移除 VS Code 配置、构建脚本、示例 PDF/DOCX、Word 模板以及其它非当前模板必需文件，避免不同模板实现互相混入
 - 更新 `packages/bensz-nsfc/` 目录语义：将原 `impl/` 稳定实现目录正式重命名为 `templates/`，并同步修改核心加载路径与文档口径，使 NSFC 模板实现层的职责更直观
