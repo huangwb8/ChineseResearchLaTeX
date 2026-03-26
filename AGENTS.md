@@ -62,7 +62,7 @@ ChineseResearchLaTeX/
 
 处理任务时，优先判断应该修改哪一层：
 
-- `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、稳定实现
+- `packages/bensz-nsfc/`：NSFC 三套模板共享的样式、资源、profile、`templates/` 模板实现与稳定脚本入口
 - `packages/bensz-fonts/`：跨产品线共享字体资源与统一字体引用 API
 - `packages/bensz-paper/`：SCI 论文共享样式、profile 与 PDF/DOCX 构建脚本
 - `packages/bensz-thesis/`：毕业论文共享样式、profile、统一 PDF 构建与像素比对脚本
@@ -576,7 +576,7 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py clean --project-dir proj
 - 若本次任务包含“发布 GitHub Release / 上传 Release Assets”，默认必须继续执行 `python scripts/pack_release.py --tag <tag> --upload`；除非用户明确要求“只本地打包 / 暂不上传”，否则不得省略
 - 在 `--upload` 真正执行成功前，AI 不得把任务表述为“Release 已发布完成”；只能明确写成“Release 已创建，但 Assets 尚未上传”
 - 如普通项目 zip 需要独立可用，确认项目内 `code/nsfc_build.py` 已能在“完整仓库路径 / 已安装 TEXMFHOME 路径”中定位 `bensz-nsfc` 公共脚本
-- 如 Overleaf zip 需要独立可用，确认压缩包已包含 `bensz-nsfc` 运行时文件、共享字体与共享 `bst` 资源
+- 如 Overleaf zip 需要独立可用，确认压缩包已将最小必需运行时裁剪后注入 `styles/`，且只包含当前项目所需的模板实现、共享字体与共享 `bst` 资源
 - 若涉及模板外观回归，优先把验证记录沉淀到 `tests/` 或相应计划目录
 
 ### Release 发布流程

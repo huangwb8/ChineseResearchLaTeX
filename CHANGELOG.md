@@ -32,6 +32,8 @@
 
 ### Changed（变更）
 
+- 更新 `scripts/pack_release.py`、`packages/bensz-nsfc/bensz-nsfc-core.sty`、`packages/bensz-nsfc/templates/`、`packages/bensz-nsfc/README.md`、根级 `README.md` 与 `AGENTS.md`：Overleaf 专用 zip 现改为只保留最小可编译项目文件，并将公共包运行时统一整理到根目录下的 `styles/`；其中 NSFC / Paper / Thesis / CV 的运行时都会按项目裁剪，移除 VS Code 配置、构建脚本、示例 PDF/DOCX、Word 模板以及其它非当前模板必需文件，避免不同模板实现互相混入
+- 更新 `packages/bensz-nsfc/` 目录语义：将原 `impl/` 稳定实现目录正式重命名为 `templates/`，并同步修改核心加载路径与文档口径，使 NSFC 模板实现层的职责更直观
 - 更新 `packages/bensz-thesis/styles/ucas/ucasDissertation.cls`、`packages/bensz-thesis/styles/bthesis-style-thesis-ucas-doctor.tex`、`packages/bensz-thesis/styles/ucas/ucasInfo.sty`、`packages/bensz-thesis/styles/ucas/ucasSilence.sty`、`packages/bensz-thesis/scripts/validate_package.py` 与 `projects/thesis-ucas-doctor/main.tex`：将 UCAS 模板的稳定实现正式收敛到 `bensz-thesis` 包级目录，由项目层保留 `main.tex + extraTex + wrapper + template.json` 薄封装，同时继续通过包内专属 class 保持与源 PDF 的像素级一致，且不影响现有 `thesis-smu-master` / `thesis-sysu-doctor`
 - 更新 `scripts/pack_release.py`、`scripts/test_install_architecture.py`、`README.md`、`projects/README.md`、`docs/for-developers/README.md`、`docs/for-developers/thesis-template-standard.md`、`packages/bensz-thesis/README.md` 与 `AGENTS.md`：将毕业论文产品线口径同步到 `thesis-ucas-doctor`，移除对 PR 36 旧版 `Thesis.tex + .latexmkrc + 项目私有样式` 结构的说明，并让 Overleaf 打包正确识别 UCAS 模板所需的 `TimesNewRoman.ttf`
 

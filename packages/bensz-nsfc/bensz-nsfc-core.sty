@@ -95,8 +95,8 @@
 % 这样 projects/NSFC_*/extraTex/@config.tex 可以稳定压过公共包默认配置。
 \NSFCBeforePackages
 \NSFCProjectConfigBeforePackage
-\InputIfFileExists{impl/bensz-nsfc-\NSFCtype.tex}{}{%
-  \PackageError{bensz-nsfc-common}{Implementation file for '\NSFCtype' not found}{}%
+\InputIfFileExists{templates/bensz-nsfc-\NSFCtype.tex}{}{%
+  \PackageError{bensz-nsfc-common}{Template file for '\NSFCtype' not found}{}%
 }
 \NSFCAfterPackages
 \NSFCUserOverride

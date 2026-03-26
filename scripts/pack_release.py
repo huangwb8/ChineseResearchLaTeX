@@ -12,27 +12,31 @@ pack_release.py - 打包 projects/ 下各子项目为 Release Assets
       1. 普通包：{项目名}-{tag}.zip
       2. Overleaf 包：{项目名}-Overleaf-{tag}.zip
   - 普通包保留：
-      1. PROJECT_INCLUDE_ITEMS 白名单中的文件/目录
-      2. 项目根目录下的 *.code-workspace 文件
-  - Overleaf 包会按项目类型自动内嵌对应公共包运行时文件：
-      1. NSFC 项目：补入 bensz-nsfc 运行时文件与 bensz-nsfc-runtime.def
-      2. SCI 项目：补入 bensz-paper 运行时文件
-      3. Thesis 项目：补入 bensz-thesis 运行时文件
-      4. CV 项目：补入 bensz-cv 运行时文件
+      1. STANDARD_PROJECT_INCLUDE_ITEMS 白名单中的文件/目录
+      2. 项目根目录下的 *.code-workspace 文件与 *.tex 文件
+  - Overleaf 包保留：
+      1. OVERLEAF_PROJECT_INCLUDE_ITEMS 中的最小可编译项目文件
+      2. 项目根目录下的 *.tex 文件
+      3. 按项目类型裁剪后的公共包运行时文件，并统一放到 styles/ 目录
+  - Overleaf 包不会把无关模板实现、VS Code 配置、构建脚本、示例 PDF/DOCX、Word 模板等本地开发产物一起打进 zip
   - 不存在的白名单项自动跳过（如 .vscode/ 不存在时不报错）
   - 不修改 projects/ 目录内任何文件
   - zip 生成操作仅在 tests/ 目录进行
 """
 
+from __future__ import annotations
+
 import argparse
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 
 # zip 内保留的项目文件/目录（与 README / AGENTS.md 保持一致）
-PROJECT_INCLUDE_ITEMS = [
+STANDARD_PROJECT_INCLUDE_ITEMS = [
     ".vscode",
     "artifacts",
     "assets",
@@ -55,10 +59,24 @@ PROJECT_INCLUDE_ITEMS = [
     "template.json",
     "README.md",
 ]
-PROJECT_ROOT_INCLUDE_GLOBS = (
+STANDARD_PROJECT_ROOT_INCLUDE_GLOBS = (
     "*.code-workspace",
     "*.tex",
 )
+
+OVERLEAF_PROJECT_INCLUDE_ITEMS = [
+    "assets",
+    "bibs",
+    "bibtex-style",
+    "code",
+    "extraTex",
+    "figures",
+    "references",
+    "styles",
+    "README.md",
+]
+OVERLEAF_PROJECT_ROOT_INCLUDE_GLOBS = ("*.tex",)
+
 REPO_ROOT = Path(__file__).parent.parent
 PROJECTS_DIR = REPO_ROOT / "projects"
 NSFC_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-nsfc"
@@ -67,20 +85,17 @@ THESIS_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-thesis"
 CV_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-cv"
 FONTS_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-fonts"
 TESTS_DIR = REPO_ROOT / "tests"
-NSFC_PACKAGE_RUNTIME_ITEMS = [
+
+NSFC_SHARED_RUNTIME_FILES = [
     "bensz-nsfc-common.sty",
     "bensz-nsfc-core.sty",
     "bensz-nsfc-layout.sty",
     "bensz-nsfc-typography.sty",
     "bensz-nsfc-headings.sty",
     "bensz-nsfc-bibliography.sty",
-    "profiles",
-    "impl",
-    "assets",
 ]
-PAPER_PACKAGE_RUNTIME_ITEMS = [
+PAPER_SHARED_RUNTIME_FILES = [
     "bensz-paper.sty",
-    "benszmanuscriptlatex.sty",
     "bml-core.sty",
     "bml-layout.sty",
     "bml-headings.sty",
@@ -88,15 +103,12 @@ PAPER_PACKAGE_RUNTIME_ITEMS = [
     "bml-floats.sty",
     "bml-bibliography.sty",
     "bml-review.sty",
-    "profiles",
 ]
-THESIS_PACKAGE_RUNTIME_ITEMS = [
+THESIS_SHARED_RUNTIME_FILES = [
     "bensz-thesis.sty",
     "bthesis-core.sty",
-    "profiles",
-    "styles",
 ]
-CV_PACKAGE_RUNTIME_ITEMS = [
+CV_SHARED_RUNTIME_FILES = [
     "bensz-cv.cls",
     "resume.cls",
     "fontawesome.sty",
@@ -108,9 +120,14 @@ CV_PACKAGE_RUNTIME_ITEMS = [
     "zh_CN-Adobefonts_internal.sty",
     "NotoSansSC_external.sty",
     "NotoSerifCJKsc_external.sty",
-    "profiles",
 ]
+
 FONTS_PACKAGE_ENTRY = "bensz-fonts.sty"
+NSFC_TEMPLATE_IDS = {
+    "NSFC_General": "general",
+    "NSFC_Local": "local",
+    "NSFC_Young": "young",
+}
 SKIP_FILE_NAMES = {".DS_Store", "Thumbs.db"}
 SKIP_FILE_SUFFIXES = {".pyc", ".pyo"}
 SKIP_DIR_NAMES = {"__pycache__", ".latex-cache", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
@@ -139,6 +156,25 @@ def iter_tree_files(root: Path):
             yield file
 
 
+def ensure_parent(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def copy_file(source: Path, destination: Path) -> None:
+    ensure_parent(destination)
+    shutil.copy2(source, destination)
+
+
+def copy_tree_contents(source_dir: Path, destination_dir: Path) -> None:
+    for file in iter_tree_files(source_dir):
+        copy_file(file, destination_dir / file.relative_to(source_dir))
+
+
+def write_text_file(path: Path, content: str) -> None:
+    ensure_parent(path)
+    path.write_text(content, encoding="utf-8")
+
+
 def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
     added_arcnames: set[str] = set()
 
@@ -149,7 +185,7 @@ def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
         zf.write(file_path, arcname=arcname_str)
         added_arcnames.add(arcname_str)
 
-    for item_name in PROJECT_INCLUDE_ITEMS:
+    for item_name in STANDARD_PROJECT_INCLUDE_ITEMS:
         item_path = project_dir / item_name
         if not item_path.exists():
             continue
@@ -159,14 +195,59 @@ def add_project_contents(zf: zipfile.ZipFile, project_dir: Path) -> None:
         for file in iter_tree_files(item_path):
             add_file(file, file.relative_to(project_dir))
 
-    for pattern in PROJECT_ROOT_INCLUDE_GLOBS:
+    for pattern in STANDARD_PROJECT_ROOT_INCLUDE_GLOBS:
         for root_file in sorted(project_dir.glob(pattern)):
             if root_file.is_file():
                 add_file(root_file, root_file.name)
 
 
+def copy_project_contents(
+    target_dir: Path,
+    project_dir: Path,
+    include_items: list[str],
+    root_globs: tuple[str, ...],
+    *,
+    rewrite_text: callable | None = None,
+) -> None:
+    copied_relpaths: set[Path] = set()
+
+    def copy_entry(file_path: Path, relative_path: Path) -> None:
+        if relative_path in copied_relpaths or should_skip_path(file_path):
+            return
+        destination = target_dir / relative_path
+        if rewrite_text is not None and file_path.suffix == ".tex":
+            content = file_path.read_text(encoding="utf-8")
+            rewritten = rewrite_text(relative_path, content)
+            write_text_file(destination, rewritten)
+        else:
+            copy_file(file_path, destination)
+        copied_relpaths.add(relative_path)
+
+    for item_name in include_items:
+        item_path = project_dir / item_name
+        if not item_path.exists():
+            continue
+        if item_path.is_file():
+            copy_entry(item_path, Path(item_name))
+            continue
+        for file in iter_tree_files(item_path):
+            copy_entry(file, file.relative_to(project_dir))
+
+    for pattern in root_globs:
+        for root_file in sorted(project_dir.glob(pattern)):
+            if root_file.is_file():
+                copy_entry(root_file, Path(root_file.name))
+
+
+def zip_directory(source_dir: Path, zip_path: Path) -> None:
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file in sorted(source_dir.rglob("*")):
+            if file.is_file() and not should_skip_path(file):
+                zf.write(file, arcname=file.relative_to(source_dir))
+
+
 def detect_project_kind(project_dir: Path) -> str:
-    if (project_dir / "references" / "meta.yaml").exists():
+    if project_dir.name.startswith("paper-"):
         return "paper"
     if project_dir.name.startswith("cv-"):
         return "cv"
@@ -177,28 +258,46 @@ def detect_project_kind(project_dir: Path) -> str:
     return "generic"
 
 
+def detect_nsfc_template_id(project_dir: Path) -> str:
+    template_id = NSFC_TEMPLATE_IDS.get(project_dir.name)
+    if template_id is None:
+        raise ValueError(f"无法识别 NSFC 项目类型：{project_dir.name}")
+    return template_id
+
+
+def detect_paper_template_id(project_dir: Path) -> str:
+    main_tex = project_dir / "main.tex"
+    if not main_tex.exists():
+        return project_dir.name
+    content = main_tex.read_text(encoding="utf-8", errors="ignore")
+    match = re.search(r"template\s*=\s*([a-zA-Z0-9._-]+)", content)
+    return match.group(1) if match else project_dir.name
+
+
+def detect_thesis_template_id(project_dir: Path) -> str:
+    return project_dir.name
+
+
 def build_overleaf_runtime_def() -> str:
     return "\n".join(
         [
             "% Auto-generated by scripts/pack_release.py for Overleaf release bundles.",
-            r"\renewcommand{\NSFCPackageRootDir}{./}",
-            r"\renewcommand{\NSFCAssetsDir}{assets/}",
-            r"\renewcommand{\NSFCAssetFontsDir}{fonts/}",
-            r"\renewcommand{\NSFCAssetBibStyleBase}{assets/bibtex-style/gbt7714-nsfc}",
+            r"\renewcommand{\NSFCPackageRootDir}{./styles/}",
+            r"\renewcommand{\NSFCAssetsDir}{./styles/assets/}",
+            r"\renewcommand{\NSFCAssetFontsDir}{./styles/fonts/}",
+            r"\renewcommand{\NSFCAssetBibStyleBase}{./styles/assets/bibtex-style/gbt7714-nsfc}",
             "",
         ]
     )
 
 
 def project_contains_package(project_dir: Path, package_name: str) -> bool:
-    patterns = ("*.tex",)
-    for pattern in patterns:
-        for tex_file in project_dir.rglob(pattern):
-            if should_skip_path(tex_file):
-                continue
-            content = tex_file.read_text(encoding="utf-8", errors="ignore")
-            if re.search(rf"\\usepackage(?:\[[^\]]*\])?\{{{re.escape(package_name)}\}}", content):
-                return True
+    for tex_file in project_dir.rglob("*.tex"):
+        if should_skip_path(tex_file):
+            continue
+        content = tex_file.read_text(encoding="utf-8", errors="ignore")
+        if re.search(rf"\\usepackage(?:\[[^\]]*\])?\{{{re.escape(package_name)}\}}", content):
+            return True
     return False
 
 
@@ -255,75 +354,317 @@ def select_overleaf_font_files(project_dir: Path) -> set[str]:
     return set()
 
 
-def add_fonts_runtime_bundle(zf: zipfile.ZipFile, font_files: set[str]) -> None:
+def copy_fonts_runtime_bundle(target_dir: Path, font_files: set[str]) -> None:
     if not font_files:
         return
 
     entry_file = FONTS_PACKAGE_DIR / FONTS_PACKAGE_ENTRY
     if not entry_file.exists():
         raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{entry_file}")
-    zf.write(entry_file, arcname=FONTS_PACKAGE_ENTRY)
+    copy_file(entry_file, target_dir / FONTS_PACKAGE_ENTRY)
 
     for font_name in sorted(font_files):
         font_path = FONTS_PACKAGE_DIR / "fonts" / font_name
         if not font_path.exists():
             raise FileNotFoundError(f"缺少 Overleaf 字体文件：{font_path}")
-        zf.write(font_path, arcname=Path("fonts") / font_name)
+        copy_file(font_path, target_dir / "fonts" / font_name)
 
 
-def add_nsfc_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
-    for item_name in NSFC_PACKAGE_RUNTIME_ITEMS:
-        item_path = NSFC_PACKAGE_DIR / item_name
-        if not item_path.exists():
-            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
-        if item_path.is_file():
-            zf.write(item_path, arcname=item_name)
+def build_nsfc_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
+    for file_name in NSFC_SHARED_RUNTIME_FILES:
+        file_path = NSFC_PACKAGE_DIR / file_name
+        if not file_path.exists():
+            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{file_path}")
+        if file_name == "bensz-nsfc-common.sty":
+            content = file_path.read_text(encoding="utf-8")
+            content = content.replace(
+                r"\RequirePackage{bensz-nsfc-core}",
+                r"\makeatletter\input{styles/bensz-nsfc-core.sty}\makeatother",
+            )
+            write_text_file(runtime_dir / file_name, content)
             continue
-        for file in iter_tree_files(item_path):
-            zf.write(file, arcname=file.relative_to(NSFC_PACKAGE_DIR))
-
-    add_fonts_runtime_bundle(zf, select_overleaf_font_files(project_dir or PROJECTS_DIR / "NSFC_General"))
-    zf.writestr("bensz-nsfc-runtime.def", build_overleaf_runtime_def())
-
-
-def add_paper_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
-    for item_name in PAPER_PACKAGE_RUNTIME_ITEMS:
-        item_path = PAPER_PACKAGE_DIR / item_name
-        if not item_path.exists():
-            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
-        if item_path.is_file():
-            zf.write(item_path, arcname=item_name)
+        if file_name == "bensz-nsfc-core.sty":
+            content = file_path.read_text(encoding="utf-8")
+            content = content.replace(
+                r"\InputIfFileExists{bensz-nsfc-runtime.def}{}{}",
+                r"\InputIfFileExists{styles/bensz-nsfc-runtime.def}{}{}",
+            )
+            content = content.replace(
+                r"\InputIfFileExists{profiles/bensz-nsfc-profile-\NSFCtype.def}{}{%",
+                r"\InputIfFileExists{styles/profiles/bensz-nsfc-profile-\NSFCtype.def}{}{%",
+            )
+            content = content.replace(
+                r"\InputIfFileExists{templates/bensz-nsfc-\NSFCtype.tex}{}{%",
+                r"\InputIfFileExists{styles/templates/bensz-nsfc-\NSFCtype.tex}{}{%",
+            )
+            write_text_file(runtime_dir / file_name, content)
             continue
-        for file in iter_tree_files(item_path):
-            zf.write(file, arcname=file.relative_to(PAPER_PACKAGE_DIR))
-    add_fonts_runtime_bundle(zf, select_overleaf_font_files(project_dir or PROJECTS_DIR / "paper-sci-01"))
+        copy_file(file_path, runtime_dir / file_name)
+
+    copy_tree_contents(NSFC_PACKAGE_DIR / "assets", runtime_dir / "assets")
+
+    template_id = detect_nsfc_template_id(project_dir)
+    profile_name = f"bensz-nsfc-profile-{template_id}.def"
+    template_name = f"bensz-nsfc-{template_id}.tex"
+    copy_file(NSFC_PACKAGE_DIR / "profiles" / profile_name, runtime_dir / "profiles" / profile_name)
+    copy_file(NSFC_PACKAGE_DIR / "templates" / template_name, runtime_dir / "templates" / template_name)
+
+    copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
+    write_text_file(runtime_dir / "bensz-nsfc-runtime.def", build_overleaf_runtime_def())
 
 
-def add_thesis_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
-    for item_name in THESIS_PACKAGE_RUNTIME_ITEMS:
-        item_path = THESIS_PACKAGE_DIR / item_name
-        if not item_path.exists():
-            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
-        if item_path.is_file():
-            zf.write(item_path, arcname=item_name)
+def build_paper_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
+    for file_name in PAPER_SHARED_RUNTIME_FILES:
+        file_path = PAPER_PACKAGE_DIR / file_name
+        if not file_path.exists():
+            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{file_path}")
+        if file_name == "bensz-paper.sty":
+            content = file_path.read_text(encoding="utf-8")
+            content = content.replace(
+                r"\IfFileExists{bensz-fonts.sty}{\RequirePackage{bensz-fonts}}{}",
+                r"\IfFileExists{styles/bensz-fonts.sty}{\makeatletter\input{styles/bensz-fonts.sty}\makeatother}{}",
+            )
+            content = content.replace(
+                r"\RequirePackage{bml-core}",
+                r"\makeatletter\input{styles/bml-core.sty}\makeatother",
+            )
+            write_text_file(runtime_dir / file_name, content)
             continue
-        for file in iter_tree_files(item_path):
-            zf.write(file, arcname=file.relative_to(THESIS_PACKAGE_DIR))
-    default_project = PROJECTS_DIR / "thesis-smu-master"
-    add_fonts_runtime_bundle(zf, select_overleaf_font_files(project_dir or default_project))
-
-
-def add_cv_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
-    for item_name in CV_PACKAGE_RUNTIME_ITEMS:
-        item_path = CV_PACKAGE_DIR / item_name
-        if not item_path.exists():
-            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{item_path}")
-        if item_path.is_file():
-            zf.write(item_path, arcname=item_name)
+        if file_name == "bml-core.sty":
+            content = file_path.read_text(encoding="utf-8")
+            content = content.replace(
+                r"\InputIfFileExists{profiles/bml-profile-\bml@template.def}{}{%",
+                r"\InputIfFileExists{styles/profiles/bml-profile-\bml@template.def}{}{%",
+            )
+            for module_name in (
+                "bml-layout",
+                "bml-headings",
+                "bml-typography",
+                "bml-floats",
+                "bml-bibliography",
+                "bml-review",
+            ):
+                content = content.replace(
+                    rf"\RequirePackage{{{module_name}}}",
+                    rf"\makeatletter\input{{styles/{module_name}.sty}}\makeatother",
+                )
+            write_text_file(runtime_dir / file_name, content)
             continue
-        for file in iter_tree_files(item_path):
-            zf.write(file, arcname=file.relative_to(CV_PACKAGE_DIR))
-    add_fonts_runtime_bundle(zf, select_overleaf_font_files(project_dir or PROJECTS_DIR / "cv-01"))
+        copy_file(file_path, runtime_dir / file_name)
+
+    profile_id = detect_paper_template_id(project_dir)
+    profile_name = f"bml-profile-{profile_id}.def"
+    copy_file(PAPER_PACKAGE_DIR / "profiles" / profile_name, runtime_dir / "profiles" / profile_name)
+    copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
+
+
+def build_thesis_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
+    template_id = detect_thesis_template_id(project_dir)
+    profile_name = f"bthesis-profile-{template_id}.def"
+    style_name = f"bthesis-style-{template_id}.tex"
+
+    for file_name in THESIS_SHARED_RUNTIME_FILES:
+        file_path = THESIS_PACKAGE_DIR / file_name
+        if not file_path.exists():
+            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{file_path}")
+        if file_name == "bensz-thesis.sty":
+            content = file_path.read_text(encoding="utf-8")
+            content = content.replace(
+                r"\IfFileExists{bensz-fonts.sty}{\RequirePackage{bensz-fonts}}{}",
+                "\\makeatletter\n\\@ifundefined{benszthesislocalfontsloaded}{\\IfFileExists{styles/bensz-fonts.sty}{\\input{styles/bensz-fonts.sty}\\global\\let\\benszthesislocalfontsloaded\\@empty}{}}{}\n\\makeatother",
+            )
+            content = content.replace(
+                r"\RequirePackage{bthesis-core}",
+                r"\makeatletter\input{styles/bthesis-core.sty}\makeatother",
+            )
+            write_text_file(runtime_dir / file_name, content)
+            continue
+        if file_name == "bthesis-core.sty":
+            content = file_path.read_text(encoding="utf-8")
+            content = content.replace(
+                r"\InputIfFileExists{profiles/bthesis-profile-\bthesis@template.def}{}{%",
+                r"\InputIfFileExists{styles/profiles/bthesis-profile-\bthesis@template.def}{}{%",
+            )
+            write_text_file(runtime_dir / file_name, content)
+            continue
+        copy_file(file_path, runtime_dir / file_name)
+
+    copy_file(THESIS_PACKAGE_DIR / "profiles" / profile_name, runtime_dir / "profiles" / profile_name)
+
+    style_source = THESIS_PACKAGE_DIR / "styles" / style_name
+    style_content = style_source.read_text(encoding="utf-8")
+    if template_id == "thesis-sysu-doctor":
+        style_content = style_content.replace(
+            r"\RequirePackage{bensz-fonts}",
+            "\\makeatletter\n\\@ifundefined{benszthesislocalfontsloaded}{\\IfFileExists{styles/bensz-fonts.sty}{\\input{styles/bensz-fonts.sty}\\global\\let\\benszthesislocalfontsloaded\\@empty}{}}{}\n\\makeatother",
+        )
+    write_text_file(runtime_dir / style_name, style_content)
+    if template_id == "thesis-ucas-doctor":
+        copy_tree_contents(THESIS_PACKAGE_DIR / "styles" / "ucas", runtime_dir / "ucas")
+
+    copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
+
+
+def build_cv_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
+    for file_name in CV_SHARED_RUNTIME_FILES:
+        file_path = CV_PACKAGE_DIR / file_name
+        if not file_path.exists():
+            raise FileNotFoundError(f"缺少 Overleaf 打包所需文件：{file_path}")
+        content = file_path.read_text(encoding="utf-8")
+        if file_name == "bensz-cv.cls":
+            content = content.replace(
+                r"\RequirePackage{bensz-fonts}",
+                r"\relax",
+            )
+            content = content.replace(
+                r"\LoadClass{resume}",
+                r"\makeatletter\input{styles/resume.cls}\makeatother",
+            )
+            write_text_file(runtime_dir / file_name, content)
+            continue
+        if file_name == "resume.cls":
+            content = content.replace(
+                r"\RequirePackage{fontawesome}",
+                "\\makeatletter\n\\@ifundefined{benszcvlocalfontsloaded}{\\input{styles/bensz-fonts.sty}\\global\\let\\benszcvlocalfontsloaded\\@empty}{}\n\\@ifundefined{benszcvlocalfontawesomeloaded}{\\input{styles/fontawesome.sty}\\global\\let\\benszcvlocalfontawesomeloaded\\@empty}{}\n\\makeatother",
+            )
+            content = content.replace(
+                r"\RequirePackage{bensz-fonts}",
+                r"\relax",
+            )
+            write_text_file(runtime_dir / file_name, content)
+            continue
+        if file_name == "fontawesome.sty":
+            content = content.replace(
+                r"\RequirePackage{bensz-fonts}",
+                r"\relax",
+            )
+            content = content.replace(
+                "Path = \\BenszFontsDir ,\nExtension = .otf ,",
+                "Path = \\BenszFontsDir ,",
+            )
+            content = content.replace(
+                "]{FontAwesome}",
+                "]{FontAwesome.otf}",
+            )
+            content = content.replace(
+                r"\input{fontawesomesymbols-generic.tex}",
+                r"\input{styles/fontawesomesymbols-generic.tex}",
+            )
+            content = content.replace(
+                r"\input{fontawesomesymbols-xeluatex.tex}",
+                r"\input{styles/fontawesomesymbols-xeluatex.tex}",
+            )
+            content = content.replace(
+                r"\input{fontawesomesymbols-pdftex.tex}",
+                r"\input{styles/fontawesomesymbols-pdftex.tex}",
+            )
+            write_text_file(runtime_dir / file_name, content)
+            continue
+        if file_name in {
+            "NotoSansSC_external.sty",
+            "NotoSerifCJKsc_external.sty",
+            "zh_CN-Adobefonts_external.sty",
+        }:
+            content = content.replace(
+                r"\RequirePackage{bensz-fonts}",
+                r"\relax",
+            )
+            write_text_file(runtime_dir / file_name, content)
+            continue
+        copy_file(file_path, runtime_dir / file_name)
+
+    copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
+
+
+def rewrite_tex_command_target(content: str, command: str, original: str, replacement: str) -> str:
+    pattern = re.compile(
+        rf"(\\{command}(?:\[[\s\S]*?\])?\{{){re.escape(original)}(\}})",
+        re.MULTILINE,
+    )
+    return pattern.sub(rf"\1{replacement}\2", content)
+
+
+def rewrite_overleaf_project_tex(relative_path: Path, content: str, project_dir: Path) -> str:
+    project_kind = detect_project_kind(project_dir)
+    rewritten = content
+
+    if project_kind == "nsfc":
+        rewritten = rewrite_tex_command_target(
+            rewritten,
+            "usepackage",
+            "bensz-nsfc-common",
+            "styles/bensz-nsfc-common",
+        )
+        return rewritten
+
+    if project_kind == "paper":
+        rewritten = rewrite_tex_command_target(
+            rewritten,
+            "usepackage",
+            "bensz-paper",
+            "styles/bensz-paper",
+        )
+        rewritten = rewrite_tex_command_target(
+            rewritten,
+            "usepackage",
+            "benszmanuscriptlatex",
+            "styles/benszmanuscriptlatex",
+        )
+        return rewritten
+
+    if project_kind == "thesis":
+        rewritten = rewrite_tex_command_target(
+            rewritten,
+            "usepackage",
+            "bensz-thesis",
+            "styles/bensz-thesis",
+        )
+        return rewritten
+
+    if project_kind == "cv":
+        rewritten = rewrite_tex_command_target(
+            rewritten,
+            "documentclass",
+            "bensz-cv",
+            "styles/bensz-cv",
+        )
+        for package_name in (
+            "NotoSansSC_external",
+            "NotoSerifCJKsc_external",
+            "linespacing_fix",
+            "zh_CN-Adobefonts_external",
+            "zh_CN-Adobefonts_internal",
+        ):
+            rewritten = rewrite_tex_command_target(
+                rewritten,
+                "usepackage",
+                package_name,
+                f"styles/{package_name}",
+            )
+        return rewritten
+
+    return rewritten
+
+
+def populate_overleaf_bundle(bundle_dir: Path, project_dir: Path) -> None:
+    copy_project_contents(
+        bundle_dir,
+        project_dir,
+        OVERLEAF_PROJECT_INCLUDE_ITEMS,
+        OVERLEAF_PROJECT_ROOT_INCLUDE_GLOBS,
+        rewrite_text=lambda relative_path, content: rewrite_overleaf_project_tex(relative_path, content, project_dir),
+    )
+
+    runtime_dir = bundle_dir / "styles"
+    project_kind = detect_project_kind(project_dir)
+    if project_kind == "nsfc":
+        build_nsfc_runtime_bundle(runtime_dir, project_dir)
+    elif project_kind == "paper":
+        build_paper_runtime_bundle(runtime_dir, project_dir)
+    elif project_kind == "thesis":
+        build_thesis_runtime_bundle(runtime_dir, project_dir)
+    elif project_kind == "cv":
+        build_cv_runtime_bundle(runtime_dir, project_dir)
 
 
 def get_git_tag() -> str:
@@ -353,17 +694,13 @@ def pack_project_overleaf(project_dir: Path, output_dir: Path, tag: str) -> Path
     zip_name = f"{project_dir.name}-Overleaf-{tag}.zip"
     zip_path = output_dir / zip_name
 
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        add_project_contents(zf, project_dir)
-        project_kind = detect_project_kind(project_dir)
-        if project_kind == "nsfc":
-            add_nsfc_runtime_bundle(zf, project_dir)
-        elif project_kind == "paper":
-            add_paper_runtime_bundle(zf, project_dir)
-        elif project_kind == "thesis":
-            add_thesis_runtime_bundle(zf, project_dir)
-        elif project_kind == "cv":
-            add_cv_runtime_bundle(zf, project_dir)
+    staging_root = TESTS_DIR / ".pack_release_tmp"
+    staging_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f"{project_dir.name}-overleaf-", dir=staging_root) as temp_dir:
+        bundle_dir = Path(temp_dir) / project_dir.name
+        bundle_dir.mkdir(parents=True, exist_ok=True)
+        populate_overleaf_bundle(bundle_dir, project_dir)
+        zip_directory(bundle_dir, zip_path)
 
     return zip_path
 
