@@ -35,6 +35,8 @@
 
 # 处理pr
 
+这有个本项目的pr： https://github.com/huangwb8/ChineseResearchLaTeX/pull/39 请使用 git-pr-review skill （parallel-vibe runner=codex; 5个thread;  2个runner/thread）帮我评估一下这个pr。
+
 ---
 
 projects/thesis-ucas-doctor 的根目录里还有一些工作 tex，目前这样肯定是不合适的。 除main.tex外，其它的应该放在 extraTex里 
