@@ -10,6 +10,17 @@
 
 ---
 
+有人提了个毕业论文的需求，具体在 https://github.com/huangwb8/ChineseResearchLaTeX/issues/37 请：
+
+- 用户在该issue里给了一些链接、附件。你要充分利用
+- 基于 `projects/thesis-*` 和 packages/bensz-thesis 制作模板。 命名为thesis-nju-master。
+- 初步验收目标：thesis-ucas-doctor渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 用户提供的pdf源，你要区分好正文和教学类文字。 有一些标签是教学用的，不应该是模板的正文。要注意区分。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 目前，overleaf包的结构是比较乱的：
 
 - 各种 .sty 文件、.def和 main.tex 在同样的根目录； 我觉得最好用一个文件夹（比如styles）来托管
