@@ -404,16 +404,20 @@ git clone https://github.com/huangwb8/skills.git &&
 
 ### 🧩 技能生态系统
 
-本项目提供多个 AI 技能，覆盖标书写作全流程：
+本项目提供多个 AI 技能，覆盖文献调研、模板迁移、标书写作与模板开发等协作场景。
+
+说明：
+- `make-latex-model` 是当前正式名称，兼容旧写法 `make_latex_model`
+- `transfer-old-latex-to-new` 是当前正式名称，兼容历史别名 `migrating-latex-templates`
 
 #### 📚 文献调研阶段
 - **get-review-theme**：主题提取（从文件/图片/URL/自然语言描述提取结构化综述主题）
 - **systematic-literature-review**：系统综述（AI 自定检索词，多源检索→去重→AI 逐篇阅读并评分，生成专家级综述；多源降级、摘要补齐、检索质量评估与可视化）
 - **check-review-alignment**：引用核查（AI 检查综述正文引用与文献内容的语义一致性，减少幻觉引用）
 
-#### 📋 标书准备阶段
+#### 📋 标书准备与模板迁移阶段
 - **guide-updater**：指南优化（基于文献综述结果优化项目指南，明确研究方向和亮点）
-- **transfer_old_latex_to_new**：标书迁移（将旧标书内容迁移到新模板）
+- **transfer-old-latex-to-new**：模板迁移与重构编排（把旧项目、旧模板或多源材料接入当前 ChineseResearchLaTeX 结构）
 
 #### ✍️ 标书写作阶段
 - **nsfc-justification-writer**：理论创新导向的立项依据写作（适用于各类科研基金申请书），构建"价值与必要性 → 现状与不足 → 科学问题/科学假设 → 切入点"四段闭环叙事，识别并改写"绝对化/填补空白"等高风险表述，防止用方法学术语稀释科学问题主线
@@ -433,14 +437,14 @@ git clone https://github.com/huangwb8/skills.git &&
 - **nsfc-humanization**：去 AI 机器味（使标书文本读起来像资深领域专家亲笔撰写，而非 AI 生成）
 
 #### 🔧 模板开发阶段（开发者专用，普通用户可忽略）
-- **make_latex_model**：样式对齐（基于 PDF/Word 模板高保真优化 LaTeX 样式，推荐 PDF 单源）
+- **make-latex-model**：模板落地与高保真对齐（支持 `NSFC / paper / thesis / cv` 四条产品线，先按当前 `packages/ + projects/` 分层选对修改位置，再做样式/基线验收）
 - **complete_example**：示例生成（智能示例生成和补全）
 
 | 技能 | 版本 | 类型 | 功能 | 状态 |
 |------|------|------|------|------|
-| [make_latex_model](skills/make_latex_model/) | v2.9.0 | 🔧 开发 | 基于 PDF/Word 模板高保真优化 LaTeX 样式（推荐 PDF 单源） | ✅ 稳定 |
+| [make-latex-model](skills/make-latex-model/) | v3.0.0 | 🔧 开发 | 面向 ChineseResearchLaTeX 全仓库的模板落地与高保真对齐（正式名；兼容旧写法 `make_latex_model`） | ✅ 稳定 |
 | [complete_example](skills/complete_example/) | v1.4.1 | 🔧 开发 | 智能示例生成和补全 | ✅ 稳定 |
-| [transfer_old_latex_to_new](skills/transfer_old_latex_to_new/) | v1.4.1 | 📝 日常 | 将旧标书内容迁移到新模板 | ✅ 稳定 |
+| [transfer-old-latex-to-new](skills/transfer-old-latex-to-new/) | v2.0.0 | 📝 日常 | 模板迁移与重构编排，支持任意输入并由 AI 自主决定输出（正式名；兼容 `migrating-latex-templates`） | ✅ 稳定 |
 | [systematic-literature-review](skills/systematic-literature-review/) | v1.0.9 | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
 | [check-review-alignment](skills/check-review-alignment/) | v1.0.2 | 📝 日常 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [get-review-theme](skills/get-review-theme/) | v1.0.0 | 📝 日常 | 结构化综述主题提取 | ✅ 稳定 |

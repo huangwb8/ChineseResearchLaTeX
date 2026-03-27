@@ -208,3 +208,4 @@ test.md
 skills/*/plans/
 skills/*/tests/
 /tests/
+.parallel_vibe/

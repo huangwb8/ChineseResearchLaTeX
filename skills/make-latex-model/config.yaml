@@ -1,0 +1,218 @@
+# make-latex-model 默认配置
+#
+# 说明：
+# 1. 当前仓库的权威工作流是各产品线官方构建脚本，而不是本 skill 自带的 legacy NSFC 脚本。
+# 2. 本文件既服务于 skill 元信息，也兼容保留的辅助脚本。
+# 3. 如脚本能力与当前 packages/ + projects/ 真实结构冲突，以真实结构为准。
+
+skill_info:
+  name: make-latex-model
+  version: 3.0.0
+  description: ChineseResearchLaTeX 模板落地与高保真对齐 skill，适配 NSFC / paper / thesis / cv 四条产品线；优先使用 make-latex-model 触发，也兼容旧写法 make_latex_model；先按 packages/ 与 projects/ 的真实分层判断修改范围，再依据官方构建入口完成样式对齐、基线比对和验收，旧版 NSFC 专用脚本仅作可选辅助。
+  author: "Bensz Conan"
+  category: normal
+
+parameters:
+  project:
+    type: string
+    required: true
+    description: 项目名称或路径（如 projects/NSFC_Young、projects/paper-sci-01、projects/thesis-nju-master）
+    default: null
+
+  product_line:
+    type: string
+    required: false
+    description: 产品线类型；默认 auto，根据项目路径和真实入口自动判断
+    allowed_values:
+      - auto
+      - nsfc
+      - paper
+      - thesis
+      - cv
+    default: auto
+
+  target_scope:
+    type: string
+    required: false
+    description: 修改层级；默认 auto，优先选最小正确层
+    allowed_values:
+      - auto
+      - project_only
+      - package_only
+      - mixed
+    default: auto
+
+  baseline_pdf:
+    type: string
+    required: false
+    description: 验收基线 PDF 的路径；可为空
+    default: null
+
+  baseline_kind:
+    type: string
+    required: false
+    description: 基线来源说明
+    allowed_values:
+      - auto
+      - official_pdf
+      - word_export_pdf
+      - rendered_pdf
+      - none
+    default: auto
+
+  template:
+    type: string
+    required: false
+    description: legacy 参数，主要供旧版 NSFC 辅助脚本使用；留空则自动检测
+    default: null
+
+  word_template_year:
+    type: string
+    required: false
+    description: legacy 参数，仅供旧版 Word/NSFC 工作流参考
+    pattern: "^\\d{4}$"
+    default: "2026"
+
+  optimization_level:
+    type: string
+    required: false
+    description: 优化级别
+    allowed_values:
+      - minimal
+      - moderate
+      - thorough
+    default: moderate
+
+  acceptance_mode:
+    type: string
+    required: false
+    description: 验收强度
+    allowed_values:
+      - build_only
+      - compare_if_available
+      - require_compare
+    default: compare_if_available
+
+  dry_run:
+    type: boolean
+    required: false
+    description: 预览模式，不实际修改文件
+    default: false
+
+optimization_strategies:
+  minimal:
+    description: "最小改动：仅修复明显错误或阻塞构建的问题"
+    actions:
+      - fix_critical_layout_issues
+      - keep_existing_structure
+
+  moderate:
+    description: "中等优化：按当前仓库分层完成样式和结构对齐（默认）"
+    actions:
+      - align_layout_parameters
+      - choose_correct_layer
+      - verify_with_official_tool
+
+  thorough:
+    description: "彻底重构：允许必要的包层/项目层联动调整，以达到稳定交付"
+    actions:
+      - refactor_shared_styles
+      - adjust_project_wrappers
+      - perform_regression_checks
+
+style_reference:
+  colors:
+    MsBlue: "RGB 0,112,192"
+    header_color: "RGB 0,0,0"
+    footer_color: "RGB 0,0,0"
+    text_color: "RGB 0,0,0"
+
+compile_config:
+  engine: xelatex
+  interaction_mode: nonstopmode
+  max_runs: 4
+  sequence:
+    - xelatex
+    - bibtex
+    - xelatex
+    - xelatex
+
+official_build_commands:
+  nsfc: "python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir <project>"
+  paper: "python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir <project>"
+  thesis: "python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <project>"
+  cv: "python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project> --variant all"
+
+validation:
+  max_iterations: 3
+  required_checks:
+    - official_build_success
+    - no_new_unexplained_warnings
+    - correct_layer_selection
+    - baseline_alignment_if_requested
+
+  tolerance:
+    font_size_diff: 0.5
+    color_diff: 2
+    spacing_diff: 0.05
+    margin_diff: 0.5
+    line_height_diff: 0.1
+    chars_per_line_diff: 1
+    line_position_diff: 2
+    pixel_changed_ratio: 0.01
+
+output:
+  format: markdown
+  language: zh-CN
+  include_diff: true
+  include_validation_report: true
+  backup_before_modification: false
+
+compatibility:
+  preserve_old_commands: true
+  preserve_if_conditions: true
+  support_os:
+    - windows
+    - macos
+    - linux
+
+workspace:
+  root: ".make_latex_model"
+  location: project_level
+  auto_cleanup: true
+  cache_max_age_hours: 24
+  keep_iterations: true
+  max_iterations_kept: 30
+  auto_migrate_legacy: true
+  verbose_migration: true
+
+iteration:
+  max_iterations: 30
+  convergence_threshold: 0.01
+  no_improvement_limit: 5
+  adjustment_granularity:
+    font_size_pt: 0.1
+    line_spacing: 0.05
+    margin_cm: 0.05
+    color_rgb: 1
+  rollback_on_worsening: true
+  save_best_config: true
+  pixel_comparison:
+    dpi: 150
+    tolerance: 2
+    mode: paragraph
+    min_similarity: 0.85
+    focus_areas:
+      - title_area
+      - body_area
+      - page_margins
+
+baseline:
+  converter_priority:
+    - word
+    - libreoffice
+    - quicklook
+
+legacy_helpers:
+  nsfc_first: true
+  note: "validate.sh、templates/nsfc/*.yaml、config_loader 等入口主要服务旧版 NSFC 辅助工作流；与当前仓库真实结构冲突时，应直接跳过。"

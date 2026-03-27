@@ -970,6 +970,10 @@ PlanName = 第三方约束-优化-v202602221613
 
 # make_latex_model
 
+目前，projects 里项目的性质已经发生很大的变化， skills/make_latex_model 也要随之变化。 总之，能按要求做出好的模板就行。 你调一下 skills/make_latex_model， 让它适应ChineseResearchLaTeX的变化。 版本号要剧烈变化。
+
+---
+
 - 正式交付项目
 
 ```
@@ -985,7 +989,13 @@ PlanName = 第三方约束-优化-v202602221613
 - 在 skills/make_latex_model/tests/Auto-Test-01 生成一个测试，评估 `make_latex_model`这个skill（下称`目标skill`）的能力。 以 projects/NSFC_Young 为例，利用 projects/NSFC_Young/template/2026年最新word模板-青年科学基金项目（C类）-正文.doc 对 projects/NSFC_Young 进行改造（当然，不要直接改动 projects/NSFC_Young 里的原始文件 ；所有过程都在测试目录里进行）。利用 auto-test-skill 这个skill（已经安装在Claude Code/Codex里）进行自动化测试。每一轮测试完成后，目标skill都要变得更好；同时，把Auto-Test-01里上一轮测试的文件清空，在同一个测试目录里进行下一轮测试。如此循环，利用ai的智能不断地优化目标skill。直到目标skill完全正常工作或者超过10轮测试为止。
 ```
 
-# `transfer_old_latex_to_new`
+# transfer_old_latex_to_new
+
+目前，projects 里项目的性质已经发生很大的变化， skills/transfer_old_latex_to_new 也要随之变化。 总之，能按要求做出好的模板就行。 你调一下 skills/transfer_old_latex_to_new， 让它适应ChineseResearchLaTeX的变化。 版本号要剧烈变化。我还有一些要求：
+
+- 对于输入和输出不要做什么特别的限制，完全由ai来托管。 我希望skill可以适应任何类型的输入； 并且输出时，由ai完全决定该怎么输出。
+
+---
 
 - 干活
 

@@ -58,26 +58,33 @@ graph LR
 
 ## 当前技能列表
 
-### 1. make_latex_model - 样式对齐优化
+说明：
+- `make-latex-model` 是当前正式名称，兼容旧写法 `make_latex_model`
+- `transfer-old-latex-to-new` 是当前正式名称，兼容历史别名 `migrating-latex-templates`
+
+### 1. make-latex-model - 样式对齐优化
 
 **类型**：🔧 开发
 
-**功能**：基于最新 PDF/Word 模板，高保真优化 LaTeX 样式（推荐 PDF 单源）
+**功能**：面向整个 ChineseResearchLaTeX 的模板落地与高保真对齐，支持 `NSFC / paper / thesis / cv` 四条产品线
 
-**使用场景**：NSFC 发布新模板（PDF 或 Word），需要 LaTeX 模板与之像素级对齐
+**使用场景**：需要把 `projects/*` 做成高质量模板，或根据 PDF / Word / baseline 对齐现有模板，同时正确判断应改项目层还是公共包层
 
 **推荐 Prompt 模板**：
 
 ```
-请使用 make_latex_model 这个 skill 对 projects/NSFC_Young 进行改造，使其与 template/2026年最新word模板-青年科学基金项目（C类）-正文.pdf 对齐
+请使用 make-latex-model 这个 skill 处理 projects/thesis-nju-master。
+参考基线：学校 PDF 或现有 baseline。
+目标：根据当前 ChineseResearchLaTeX 的真实分层，把问题改到正确层级；如果属于共享样式，请优先修改 packages/bensz-thesis。
 ```
 
 **技能特点**：
-- 仅修改 `projects/{project}/extraTex/@config.tex`
-- 修改 `main.tex` 中的标题文本（不触碰正文内容）
-- 支持标题文字对齐和样式参数对齐
+- 先判断 `projects/*` 还是 `packages/bensz-*` 才是正确修改层
+- 默认走各产品线官方构建入口验收
+- 旧版 NSFC 辅助脚本仅作补充，不再充当唯一工作流
+- 触发时优先使用 `make-latex-model`，也兼容旧写法 `make_latex_model`
 
-[详细文档 →](make_latex_model/SKILL.md)
+[详细文档 →](make-latex-model/SKILL.md)
 
 ---
 
@@ -99,26 +106,29 @@ graph LR
 
 ---
 
-### 3. transfer_old_latex_to_new - 标书智能迁移
+### 3. transfer-old-latex-to-new - 模板迁移与重构编排
 
 **类型**：📝 日常
 
-**功能**：将旧标书内容迁移到新模板
+**功能**：把旧项目、旧模板或多源材料迁移/整理到当前 ChineseResearchLaTeX 的合适结构中
 
-**使用场景**：旧版本标书迁移到新模板（结构变化大的情况）
+**使用场景**：旧标书/旧论文/旧毕业论文/旧简历/零散 Word-PDF-tex 材料接入当前仓库的 NSFC、paper、thesis、cv 产品线
 
 **推荐 Prompt 模板**：
 
 ```
-请基于 transfer_old_latex_to_new 这个 skill 把 /xxx/NSFC_Young_2025 这个旧项目迁移到 /xxx/NSFC_Young_2026 这个文件夹里；新项目的模板是 projects/NSFC_Young。注意，千万不能修改或者删除 NSFC_Young_2025 里面的任何文件（完全只读）；只需要在 NSFC_Young_2026 里按要求生成内容就行。如果你工作时有测试文件/中间文件要生成，请一律放在 ./tests/v202601081624 里；测试/中间文件必须要保存在该测试目录里。
+请使用 transfer-old-latex-to-new 这个 skill，把我现有的旧材料迁移/整理/重构到 ChineseResearchLaTeX 当前合适的模板里。
+输入：可以是项目目录、tex/docx/pdf/md、截图、说明文字的任意组合
+目标：请你自己判断应该修改 packages 还是 projects，最后做出一个结构清晰、可维护、尽量可构建的结果；输出形式也由你自主决定。
 ```
 
 **技能特点**：
-- 充当顶尖科学家的角色
-- AI 自主规划迁移策略
-- 严格遵守新模板格式
+- AI 自主托管输入解析与输出形态
+- 适配当前 `projects/` 的 NSFC / paper / thesis / cv 四条产品线
+- `run.py` 等脚本仅作为 legacy CLI 后备，不再限制主工作流
+- 触发时优先使用 `transfer-old-latex-to-new`，也兼容历史别名 `migrating-latex-templates`
 
-[详细文档 →](transfer_old_latex_to_new/SKILL.md)
+[详细文档 →](transfer-old-latex-to-new/SKILL.md)
 
 ---
 

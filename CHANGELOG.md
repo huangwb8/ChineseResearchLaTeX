@@ -8,6 +8,11 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- 同步 `skills/make-latex-model/` 与 `skills/transfer-old-latex-to-new/` 的对外名称、README/索引链接与示例命令，统一改为当前连字符命名，并保留旧别名的兼容说明。
+- 按两个 skill 当前 `SKILL.md` frontmatter 回写版本号：`make-latex-model` 统一为 `v3.0.0`，`transfer-old-latex-to-new` 统一为 `v2.0.0`；相关 `config.yaml`、Skill README、Skill CHANGELOG 与根级 README 已同步。
+
 ### Added（新增）
 
 - 新增 [projects/thesis-ucas-doctor/docs/official/README.md](projects/thesis-ucas-doctor/docs/official/README.md)、[projects/thesis-ucas-doctor/docs/official/SHA256SUMS.txt](projects/thesis-ucas-doctor/docs/official/SHA256SUMS.txt) 与 `projects/thesis-ucas-doctor/docs/official/.gitignore`：将 UCAS 资环官方资料的来源页面、本地文件名约定与完整性校验清单收口到 `docs/official/`，仓库不再直接分发许可待确认的官方 `.doc/.docx` 原件
@@ -37,8 +42,20 @@
 
 ### Changed（变更）
 
+- **make-latex-model v2.9.0 → v3.0.0**：按当前 ChineseResearchLaTeX 的真实架构重定位为“模板落地与高保真对齐”skill，不再把所有任务简化成 NSFC 的 `@config.tex + main.tex` 微调
+  - `skills/make-latex-model/{SKILL.md,config.yaml,README.md}`：改为面向 `NSFC / paper / thesis / cv` 四条产品线，强调先判断 `projects/*` 与 `packages/bensz-*` 的正确修改层级，再走官方构建入口验收
+  - `skills/make-latex-model/docs/{WORKFLOW.md,FAQ.md}`：同步切换到当前仓库的 `packages/ + projects/ + 官方构建脚本` 工作流
+  - `skills/make-latex-model/scripts/README.md`：将旧版 NSFC 风格脚本明确降级为 legacy 辅助工具，不再充当唯一主流程
+  - 新增 `skills/make-latex-model/CHANGELOG.md`：为该 skill 建立独立版本记录
+- **transfer-old-latex-to-new v1.4.1 → v2.0.0**：按当前 `projects/` 与 `packages/` 的真实分层重定位为“模板迁移与重构编排”skill，不再把任务限定为“旧 NSFC 目录迁移到新目录”
+  - `skills/transfer-old-latex-to-new/{SKILL.md,README.md}`：改为支持 `NSFC / paper / thesis / cv` 四条产品线，强调任意输入由 AI 自主解析、任意输出由 AI 自主决定
+  - `skills/transfer-old-latex-to-new/config.yaml`：版本跃迁到 `2.0.0`，并明确该配置主要服务 legacy CLI，而不是限制主工作流的输入输出边界
+  - `skills/transfer-old-latex-to-new/scripts/README.md`：将 `run.py`、`migrate.sh` 等脚本降级为可选 legacy CLI 后备说明
+  - 新增 `skills/transfer-old-latex-to-new/CHANGELOG.md`：为该 skill 建立独立版本记录
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：进一步收紧 NJU 硕士论文封面中“论文题目 / 作者姓名 / 专业名称 / 研究方向 / 指导教师”字段的专用行距、字段盒高度、题目双行间距与字段区上下留白，并下移日期位置，使左侧标签和右侧填写内容的纵向节奏更贴近公开示例
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：修正 NJU 硕士论文封面字段的排版顺序，将值文字恢复到横线上方、横线改为下划线语义，避免首页出现“上面一条线、下面一行字”的错误布局
+- 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：收紧 NJU 硕士论文封面字段的标签盒宽度与标签到填写线的间距，统一“论文题目 / 作者姓名 / 专业名称 / 研究方向 / 指导教师”左侧标签的字距与横线起点，使信息区更贴近公开基线封面
+- 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：将 NJU 硕士论文封面题目区改为按整块高度垂直对齐，并移除双行题目块末尾的额外留白，使“论文题目”标签与双行题目填写区的相对位置更贴近公开样张
 - 更新 `projects/thesis-nju-master/main.tex`、`projects/thesis-nju-master/editable.tex`、`projects/thesis-nju-master/baseline.tex`、`projects/thesis-nju-master/README.md`、`projects/thesis-nju-master/AGENTS.md`、`projects/README.md`、`README.md` 与 `docs/for-developers/thesis-template-standard.md`：将 `thesis-nju-master` 调整为“`main.tex` 默认可编辑 + `baseline.tex` 公开基线直通 + `editable.tex` 兼容旧命令”的入口结构，修复用户按惯例打开 `main.tex` 时看到空壳文件的问题
 - 更新 `packages/bensz-thesis/scripts/thesis_project_tool.py`、`packages/bensz-thesis/scripts/validate_package.py`、`projects/README.md`、`docs/for-developers/thesis-template-standard.md`、`AGENTS.md` 与根级 `README.md`：毕业论文产品线现正式纳入 `thesis-nju-master`，并为 thesis 构建链路新增“`% BENSZ_PASSTHROUGH_PDF:` 公开源 PDF 直通”能力，用于稳定维护只读基线验收入口，同时继续保留 `editable.tex` 这类真实可编辑模板源
 - 更新 `scripts/pack_release.py`、`packages/bensz-nsfc/bensz-nsfc-core.sty`、`packages/bensz-nsfc/templates/`、`packages/bensz-nsfc/README.md`、根级 `README.md` 与 `AGENTS.md`：Overleaf 专用 zip 现改为只保留最小可编译项目文件，并将公共包运行时统一整理到根目录下的 `styles/`；其中 NSFC / Paper / Thesis / CV 的运行时都会按项目裁剪，移除 VS Code 配置、构建脚本、示例 PDF/DOCX、Word 模板以及其它非当前模板必需文件，避免不同模板实现互相混入

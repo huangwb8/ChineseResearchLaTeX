@@ -21,7 +21,7 @@ cd skills/nsfc-budget/models/01
 xelatex -interaction=nonstopmode budget.tex
 ```
 
-当前 `template/baseline.pdf` 仅作为 `make_latex_model` 的样式对齐基准；最终交付仍为可编辑的 LaTeX 模板与其编译得到的 `budget.pdf`。
+当前 `template/baseline.pdf` 仅作为 `make-latex-model` 的样式对齐基准；最终交付仍为可编辑的 LaTeX 模板与其编译得到的 `budget.pdf`。
 
 约束：`.template.yaml` 中的 `section_files`、`latex_entry`、`pdf_name` 必须保持为模板目录内的相对安全路径。
 
