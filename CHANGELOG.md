@@ -10,6 +10,7 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：为 NJU 硕士论文封面“论文题目”右侧的题目文字与下划线块新增轻微下移量，使其与左侧标签的相对位置更贴近人工微调后的视觉效果
 - 同步 `skills/make-latex-model/` 与 `skills/transfer-old-latex-to-new/` 的对外名称、README/索引链接与示例命令，统一改为当前连字符命名，并保留旧别名的兼容说明。
 - 按两个 skill 当前 `SKILL.md` frontmatter 回写版本号：`make-latex-model` 统一为 `v3.0.0`，`transfer-old-latex-to-new` 统一为 `v2.0.0`；相关 `config.yaml`、Skill README、Skill CHANGELOG 与根级 README 已同步。
 
