@@ -18,6 +18,13 @@ config: skills/nsfc-code/config.yaml
 
 # nsfc-code
 
+## 与 bensz-collect-bugs 的协作约定
+
+- 当用户环境中出现因本 skill 设计缺陷导致的 bug 时，优先使用 `bensz-collect-bugs` 按规范记录到 `~/.bensz-skills/bugs/`，严禁直接修改用户本地 Claude Code / Codex 中已安装的 skill 源码。
+- 若 AI 仍可通过 workaround 继续完成用户任务，应先记录 bug，再继续完成当前任务。
+- 当用户明确要求“report bensz skills bugs”等公开上报动作时，调用本地 `gh` 与 `bensz-collect-bugs`，仅上传新增 bug 到 `huangwb8/bensz-bugs`；不要 pull / clone 整个 bug 仓库。
+
+
 基于标书正文内容，推荐最贴切的 NSFC 申请代码（每条推荐包含：申请代码1=主代码、申请代码2=次代码），并把结果写入 Markdown 文件（**全程只读，不修改标书**）。
 
 ## 技能定位
