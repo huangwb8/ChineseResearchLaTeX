@@ -245,14 +245,17 @@
     \regex_split:nVN { [|] } \l__nju_cover_title_text_tl \l__nju_cover_title_lines_seq
     \begingroup
     \vbox{%
-      \seq_map_inline:Nn \l__nju_cover_title_lines_seq
+      \seq_map_indexed_inline:Nn \l__nju_cover_title_lines_seq
         {
           \hbox{%
             \underline{%
-              \makebox[#1][c]{\njuCoverValueFont \strut ##1}%
+              \makebox[#1][c]{\njuCoverValueFont \strut ##2}%
             }%
           }%
-          \kern\njuCoverTitleLineGap
+          \int_compare:nNnT {##1} < { \seq_count:N \l__nju_cover_title_lines_seq }
+            {
+              \kern\njuCoverTitleLineGap
+            }
         }
     }
     \endgroup
@@ -263,16 +266,28 @@
   }
 \ExplSyntaxOff
 
+\newcommand{\njuCoverFieldLabelWidth}{2.2cm}
+\newcommand{\njuCoverTitleWidth}{6.35cm}
+\newcommand{\njuCoverFieldLabelGap}{0.55em}
 \newcommand{\njuCoverFieldRowGap}{0.02em}
 \newcommand{\njuCoverFieldRuleGap}{0.05em}
 \newcommand{\njuCoverFieldContentHeight}{0.74\baselineskip}
 \newdimen\njuCoverFieldMeasuredHeight
 
+\newcommand{\njuCoverTitleBlock}[1]{%
+  \begingroup
+  \setlength{\tabcolsep}{0pt}%
+  \begin{tabular}[t]{@{}>{\centering\arraybackslash}m{\njuCoverFieldLabelWidth}@{\hspace{\njuCoverFieldLabelGap}}>{\centering\arraybackslash}m{\njuCoverTitleWidth}@{}}
+    \njuCoverLabelFont \strut 论文题目 & \njuRenderCoverTitleLines{\njuCoverTitleWidth}{#1}
+  \end{tabular}%
+  \endgroup
+}
+
 \newcommand{\njuCoverFieldWithHeight}[3]{%
   \par\vspace*{\njuCoverFieldRowGap}%
-  \makebox[2.4cm][s]{\njuCoverFieldLabelFont \strut #1}%
-  \hspace{0.9em}%
-  \parbox[t]{6.4cm}{%
+  \makebox[\njuCoverFieldLabelWidth][s]{\njuCoverFieldLabelFont \strut #1}%
+  \hspace{\njuCoverFieldLabelGap}%
+  \parbox[t]{\njuCoverTitleWidth}{%
     \centering
     \begingroup
     \setbox0=\vbox{%
@@ -323,12 +338,10 @@
     \begin{center}
     \begin{minipage}{9.8cm}
       \par\vspace*{0.12em}%
-      \makebox[2.4cm][s]{\njuCoverLabelFont 论文题目}%
-      \hspace{0.9em}%
       \ifstrempty{\njuCoverTitleLinesValue}{%
-        \njuRenderCoverTitleLines{6.4cm}{\njuTitleValue}%
+        \njuCoverTitleBlock{\njuTitleValue}%
       }{%
-        \njuRenderCoverTitleLines{6.4cm}{\njuCoverTitleLinesValue}%
+        \njuCoverTitleBlock{\njuCoverTitleLinesValue}%
       }%
       \njuCoverField{作者姓名}{\njuAuthorValue}
       \ifnjuProfessionalDegree
