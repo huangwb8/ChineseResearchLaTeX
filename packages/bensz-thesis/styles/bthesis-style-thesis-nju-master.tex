@@ -55,12 +55,12 @@
 }
 
 \IfFontExistsTF{Kaiti SC}{%
-  \newCJKfontfamily\njuKai{Kaiti SC}
+  \newCJKfontfamily\njuKai[AutoFakeBold=3.5]{Kaiti SC}
 }{%
   \IfFontExistsTF{KaiTi}{%
-    \newCJKfontfamily\njuKai{KaiTi}
+    \newCJKfontfamily\njuKai[AutoFakeBold=3.5]{KaiTi}
   }{%
-    \newCJKfontfamily\njuKai{FandolKai-Regular}
+    \newCJKfontfamily\njuKai[AutoFakeBold=3.5]{FandolKai-Regular}
   }%
 }
 
@@ -89,9 +89,9 @@
 }
 
 \newcommand{\njuBodyFont}{\njuSong\fontsize{12bp}{20bp}\selectfont}
-\newcommand{\njuCoverTitleFont}{\njuKai\fontsize{24bp}{32bp}\selectfont}
-\newcommand{\njuCoverDegreeFont}{\njuKai\fontsize{22bp}{30bp}\selectfont}
-\newcommand{\njuCoverLabelFont}{\njuKai\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\njuCoverTitleFont}{\njuKai\bfseries\fontsize{24bp}{32bp}\selectfont}
+\newcommand{\njuCoverDegreeFont}{\njuKai\bfseries\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\njuCoverLabelFont}{\njuKai\bfseries\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\njuCoverValueFont}{\njuKai\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\njuFrontHeadingFont}{\njuHei\bfseries\fontsize{15bp}{20bp}\selectfont}
 \newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{20bp}\selectfont}
@@ -209,6 +209,7 @@
 \newcommand{\njuEnrollmentYearValue}{2026}
 \newcommand{\njuKeywordsZhValue}{关键词 1；关键词 2；关键词 3；关键词 4}
 \newcommand{\njuKeywordsEnValue}{keyword 1; keyword 2; keyword 3; keyword 4}
+\newcommand{\njuCoverTitleLinesValue}{}
 
 \newcommand{\njuSetDegreeType}[1]{%
   \edef\njuDegreeTypeValue{#1}%
@@ -230,26 +231,54 @@
 \newcommand{\njuEnrollmentYear}[1]{\gdef\njuEnrollmentYearValue{#1}}
 \newcommand{\njuKeywordsZh}[1]{\gdef\njuKeywordsZhValue{#1}}
 \newcommand{\njuKeywordsEn}[1]{\gdef\njuKeywordsEnValue{#1}}
+\newcommand{\njuTitleLines}[1]{\gdef\njuCoverTitleLinesValue{#1}}
 
-\newcommand{\njuCoverRule}[1]{%
-  \parbox[t]{8cm}{%
-    \centering
-    \njuCoverValueFont #1\par
-    \vspace*{0.15em}%
-    \rule{\linewidth}{0.4pt}%
-  }%
-}
+\ExplSyntaxOn
+\seq_new:N \l__nju_cover_title_lines_seq
+\tl_new:N \l__nju_cover_title_text_tl
+\cs_new_protected:Npn \nju_render_cover_title_lines:nn #1#2
+  {
+    \tl_set:Nx \l__nju_cover_title_text_tl {#2}
+    \regex_split:nVN { [|] } \l__nju_cover_title_text_tl \l__nju_cover_title_lines_seq
+    \begingroup
+    \vbox{%
+      \seq_map_inline:Nn \l__nju_cover_title_lines_seq
+        {
+          \hbox{%
+            \underline{%
+              \makebox[#1][c]{\njuCoverValueFont \strut ##1}%
+            }%
+          }%
+          \kern0.9em
+        }
+    }
+    \endgroup
+  }
+\cs_new_protected:Npn \njuRenderCoverTitleLines #1#2
+  {
+    \nju_render_cover_title_lines:nn {#1} {#2}
+  }
+\ExplSyntaxOff
 
-\newcommand{\njuCoverField}[2]{%
-  \par\vspace*{0.4em}%
+\newcommand{\njuCoverFieldWithHeight}[3]{%
+  \par\vspace*{0.35em}%
   \makebox[2.4cm][s]{\njuCoverLabelFont #1}%
   \hspace{0.9em}%
   \parbox[t]{6.4cm}{%
     \centering
-    \njuCoverValueFont #2\par
-    \vspace*{0.15em}%
-    \rule{\linewidth}{0.4pt}%
+    \vbox{%
+      \begin{minipage}[b][#2][b]{\linewidth}%
+        \centering
+        \njuCoverValueFont #3\par
+      \end{minipage}%
+      \kern0.22em
+      \hrule height 0.35pt
+    }%
   }%
+}
+
+\newcommand{\njuCoverField}[2]{%
+  \njuCoverFieldWithHeight{#1}{1.25\baselineskip}{#2}%
 }
 
 \newcommand{\njuMakeCover}{%
@@ -265,16 +294,23 @@
     \vspace{0.32cm}
     {\njuCoverDegreeFont
       \ifnjuProfessionalDegree
-        （申请硕士专业学位）%
+        （申请硕士学位）%
       \else
         （申请硕士学位）%
       \fi
       \par
     }
-    \vspace{1.85cm}
+    \vspace{1.55cm}
     \begin{center}
     \begin{minipage}{9.8cm}
-      \njuCoverField{论文题目}{\njuTitleValue}
+      \par\vspace*{0.35em}%
+      \makebox[2.4cm][s]{\njuCoverLabelFont 论文题目}%
+      \hspace{0.9em}%
+      \ifstrempty{\njuCoverTitleLinesValue}{%
+        \njuRenderCoverTitleLines{6.4cm}{\njuTitleValue}%
+      }{%
+        \njuRenderCoverTitleLines{6.4cm}{\njuCoverTitleLinesValue}%
+      }%
       \njuCoverField{作者姓名}{\njuAuthorValue}
       \ifnjuProfessionalDegree
         \njuCoverField{专业名称}{\njuMajorValue}
@@ -286,7 +322,7 @@
     \end{minipage}
     \end{center}
     \par
-    \vspace{1.7cm}
+    \vspace{0.95cm}
     \centering
     {\njuCoverValueFont \njuDateValue\par}
   \end{titlepage}
