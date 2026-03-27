@@ -269,7 +269,7 @@
 \newcommand{\njuCoverFieldLabelWidth}{2.2cm}
 \newcommand{\njuCoverTitleWidth}{6.35cm}
 \newcommand{\njuCoverFieldLabelGap}{0.55em}
-\newcommand{\njuCoverTitleVerticalShift}{0.32em}
+\newcommand{\njuCoverTitleVerticalShift}{5.80em}
 \newcommand{\njuCoverFieldRowGap}{0.02em}
 \newcommand{\njuCoverFieldRuleGap}{0.05em}
 \newcommand{\njuCoverFieldContentHeight}{0.74\baselineskip}
@@ -280,7 +280,8 @@
   \setlength{\tabcolsep}{0pt}%
   \begin{tabular}[t]{@{}>{\centering\arraybackslash}m{\njuCoverFieldLabelWidth}@{\hspace{\njuCoverFieldLabelGap}}>{\centering\arraybackslash}m{\njuCoverTitleWidth}@{}}
     \njuCoverLabelFont \strut 论文题目 &
-    \raisebox{-\njuCoverTitleVerticalShift}[0pt][0pt]{%
+    \vbox{%
+      \kern\njuCoverTitleVerticalShift
       \njuRenderCoverTitleLines{\njuCoverTitleWidth}{#1}%
     }
   \end{tabular}%
