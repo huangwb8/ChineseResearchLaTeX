@@ -91,10 +91,10 @@
 \newcommand{\njuBodyFont}{\njuSong\fontsize{12bp}{20bp}\selectfont}
 \newcommand{\njuCoverTitleFont}{\njuKai\bfseries\fontsize{24bp}{32bp}\selectfont}
 \newcommand{\njuCoverDegreeFont}{\njuKai\bfseries\fontsize{22bp}{30bp}\selectfont}
-\newcommand{\njuCoverLabelFont}{\njuKai\bfseries\fontsize{14bp}{20bp}\selectfont}
-\newcommand{\njuCoverValueFont}{\njuKai\fontsize{14bp}{18bp}\selectfont}
-\newcommand{\njuCoverFieldLabelFont}{\njuKai\bfseries\fontsize{14bp}{17bp}\selectfont}
-\newcommand{\njuCoverFieldValueFont}{\njuKai\fontsize{14bp}{17bp}\selectfont}
+\newcommand{\njuCoverLabelFont}{\njuKai\bfseries\fontsize{15.4bp}{19bp}\selectfont}
+\newcommand{\njuCoverValueFont}{\njuKai\fontsize{15.4bp}{19bp}\selectfont}
+\newcommand{\njuCoverFieldLabelFont}{\njuKai\bfseries\fontsize{15.4bp}{18bp}\selectfont}
+\newcommand{\njuCoverFieldValueFont}{\njuKai\fontsize{15.4bp}{18bp}\selectfont}
 \newcommand{\njuFrontHeadingFont}{\njuHei\bfseries\fontsize{15bp}{20bp}\selectfont}
 \newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{20bp}\selectfont}
 \newcommand{\njuSectionFont}{\njuHei\bfseries\fontsize{14bp}{18bp}\selectfont}
@@ -269,10 +269,10 @@
 \newcommand{\njuCoverFieldLabelWidth}{2.2cm}
 \newcommand{\njuCoverTitleWidth}{6.35cm}
 \newcommand{\njuCoverFieldLabelGap}{1.2em}
-\newcommand{\njuCoverTitleVerticalShift}{5.80em}
-\newcommand{\njuCoverFieldRowGap}{0.02em}
+\newcommand{\njuCoverTitleVerticalShift}{4.40em}
+\newcommand{\njuCoverFieldRowGap}{-0.55em}
 \newcommand{\njuCoverFieldRuleGap}{0.05em}
-\newcommand{\njuCoverFieldContentHeight}{0.74\baselineskip}
+\newcommand{\njuCoverFieldContentHeight}{0.55\baselineskip}
 \newdimen\njuCoverFieldMeasuredHeight
 
 \newcommand{\njuCoverTitleBlock}[1]{%
@@ -324,13 +324,13 @@
   \begin{titlepage}
     \thispagestyle{empty}
     \centering
-    \vspace*{1.35cm}
+    \vspace*{0.8cm}
     \IfFileExists{assets/demo/nju_logo_calligraphy.jpeg}{%
-      \includegraphics[width=0.34\textwidth]{assets/demo/nju_logo_calligraphy.jpeg}\par
-      \vspace{1.05cm}
+      \includegraphics[width=0.28\textwidth]{assets/demo/nju_logo_calligraphy.jpeg}\par
+      \vspace{0.7cm}
     }{}
     {\njuCoverTitleFont 研\hspace{0.55em}究\hspace{0.55em}生\hspace{0.55em}毕\hspace{0.55em}业\hspace{0.55em}论\hspace{0.55em}文\par}
-    \vspace{0.32cm}
+    \vspace{0.15cm}
     {\njuCoverDegreeFont
       \ifnjuProfessionalDegree
         （申请硕士学位）%
@@ -339,7 +339,7 @@
       \fi
       \par
     }
-    \vspace{1.10cm}
+    \vspace{0.55cm}
     \begin{center}
     \begin{minipage}{9.8cm}
       \par\vspace*{0.12em}%
@@ -359,7 +359,7 @@
     \end{minipage}
     \end{center}
     \par
-    \vspace{2.45cm}
+    \vspace{0.8cm}
     \centering
     {\njuCoverValueFont \njuDateValue\par}
   \end{titlepage}
