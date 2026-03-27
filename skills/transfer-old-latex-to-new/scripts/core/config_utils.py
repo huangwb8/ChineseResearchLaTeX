@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
+from .config_loader import _deep_merge
+
 T = TypeVar("T")
 
 
@@ -161,17 +163,7 @@ def apply_profile(config: Dict[str, Any], profile_name: str) -> Dict[str, Any]:
     if not profile:
         return config
 
-    # 深度合并配置
-    def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
-        result = base.copy()
-        for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-                result[key] = deep_merge(result[key], value)
-            else:
-                result[key] = value
-        return result
-
-    return deep_merge(config, profile)
+    return _deep_merge(config, profile)
 
 
 def get_config_accessor(config: Optional[Dict[str, Any]] = None, profile: Optional[str] = None) -> ConfigAccessor:

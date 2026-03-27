@@ -28,7 +28,7 @@
 
 ### `run.py`
 
-经典迁移入口，支持：
+经典迁移入口，定位是 **legacy CLI**，用于已经有明确 `--old` / `--new` 目录的场景，支持：
 
 ```bash
 python scripts/run.py analyze --old <旧项目> --new <新项目>
@@ -36,6 +36,8 @@ python scripts/run.py apply --run-id <run_id> --old <旧项目> --new <新项目
 python scripts/run.py compile --run-id <run_id> --new <新项目>
 python scripts/run.py restore --run-id <run_id> --new <新项目>
 ```
+
+可选：在 `analyze/apply/compile/restore` 时加 `--profile quick|balanced|thorough` 套用预设配置。
 
 补充：还支持 `runs list/show/delete`。
 
@@ -61,7 +63,19 @@ python scripts/validate_config.py
 
 ### `quicktest.py`
 
-轻量快速测试入口；完整测试请用 `pytest tests/`。
+轻量快速测试入口：
+
+```bash
+python scripts/quicktest.py
+```
+
+如需跑更系统的自动化测试，可直接使用现有 pytest 用例：
+
+```bash
+pytest tests/ -q
+```
+
+注意：当前 `tests/` 目录同时包含 pytest 用例与 auto-test 会话产物，维护时要区分“自动化测试代码”和“测试记录文档”两类内容。
 
 ## 结论
 

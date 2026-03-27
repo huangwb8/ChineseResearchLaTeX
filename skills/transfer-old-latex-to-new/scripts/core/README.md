@@ -1,6 +1,8 @@
 # 核心功能模块
 
-本目录包含 `transfer-old-latex-to-new` 技能的三大核心功能模块。
+本目录主要承载 `transfer-old-latex-to-new` legacy CLI 的核心支撑模块。
+
+其中 `WordCountAdapter` 等能力当前明显偏向 NSFC 迁移增强场景；它们是可选的 legacy 增强实现，不代表整个 skill 的主工作流或适用范围只限于 NSFC。
 
 ## 📊 WordCountAdapter - 字数自动适配器
 

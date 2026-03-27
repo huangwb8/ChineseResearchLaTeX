@@ -13,7 +13,7 @@ sys.dont_write_bytecode = True
 skill_root_for_import = Path(__file__).resolve().parent
 sys.path.insert(0, str(skill_root_for_import))
 
-from core.config_loader import DEFAULT_CONFIG, _deep_merge, apply_profile
+from core.config_loader import DEFAULT_CONFIG, _deep_merge, apply_profile, list_profiles
 
 
 def _load_yaml(path: Path) -> Dict[str, Any]:
@@ -60,6 +60,8 @@ def validate_config(config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
     errors: List[str] = []
     warnings: List[str] = []
 
+    skill_info = _as_dict(config.get("skill_info"))
+    metadata = _as_dict(config.get("metadata"))
     migration = _as_dict(config.get("migration"))
     quality = _as_dict(config.get("quality_thresholds"))
     compilation = _as_dict(config.get("compilation"))
@@ -142,6 +144,14 @@ def validate_config(config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
         if runs_dir is not None and not isinstance(runs_dir, str):
             errors.append("workspace.runs_dir 必须是字符串")
 
+    skill_version = skill_info.get("version")
+    metadata_version = metadata.get("skill_version")
+    if skill_version is not None and metadata_version is not None and str(skill_version) != str(metadata_version):
+        errors.append(
+            "metadata.skill_version 与 skill_info.version 不一致："
+            f"{metadata_version!r} != {skill_version!r}"
+        )
+
     return errors, warnings
 
 
@@ -149,10 +159,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="validate-config", description="校验 transfer-old-latex-to-new 的 config.yaml")
     parser.add_argument(
         "--config",
-        default=str(skill_root_for_import / "config.yaml"),
+        default=str(skill_root_for_import.parent / "config.yaml"),
         help="配置文件路径（默认 skills/transfer-old-latex-to-new/config.yaml）",
     )
-    parser.add_argument("--profile", default=None, choices=["quick", "balanced", "thorough"], help="可选：应用预设配置")
+    parser.add_argument("--profile", default=None, help="可选：应用预设配置（默认支持 quick/balanced/thorough）")
     parser.add_argument("--print-effective", action="store_true", help="打印合并后的最终配置（调试用）")
     args = parser.parse_args()
 
@@ -165,6 +175,14 @@ def main() -> int:
         raw = _load_yaml(config_path)
         merged = _deep_merge(dict(DEFAULT_CONFIG), raw)
         if args.profile:
+            available_profiles = set(list_profiles(merged))
+            if args.profile not in available_profiles:
+                print(
+                    "❌ 未知 profile："
+                    f"{args.profile}（可选：{', '.join(sorted(available_profiles))}）",
+                    file=sys.stderr,
+                )
+                return 2
             merged = apply_profile(merged, args.profile)
         errors, warnings = validate_config(merged)
     except Exception as exc:

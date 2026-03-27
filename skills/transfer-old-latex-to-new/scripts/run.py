@@ -16,7 +16,7 @@ skill_root_for_import = Path(__file__).resolve().parent
 sys.path.insert(0, str(skill_root_for_import))
 
 from core.compiler import compile_project
-from core.config_loader import get_runs_dir, load_config
+from core.config_loader import get_runs_dir, list_profiles, load_config, load_config_with_profile
 from core.ai_integration import AIIntegration
 from core.mapping_engine import compute_structure_diff_async
 from core.migration_plan import build_plan_from_diff
@@ -41,6 +41,15 @@ def _resolve_runs_root(skill_root: Path, config: Dict[str, Any], runs_root: Opti
     if runs_root:
         return Path(runs_root).expanduser().resolve()
     return get_runs_dir(skill_root, config)
+
+
+def _load_effective_config(skill_root: Path, profile: Optional[str]) -> Dict[str, Any]:
+    base_config = load_config(skill_root)
+    if profile:
+        available_profiles = set(list_profiles(base_config))
+        if profile not in available_profiles:
+            raise ValueError(f"未知 profile: {profile}（可选：{', '.join(sorted(available_profiles))}）")
+    return load_config_with_profile(skill_root, profile)
 
 
 def _validate_project_dir(project: Path, label: str) -> None:
@@ -69,7 +78,7 @@ def _print_friendly_error(exc: BaseException) -> None:
 
 def cmd_runs_list(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, None)
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     if not runs_root.exists():
         print(f"runs_root 不存在：{runs_root}")
@@ -101,7 +110,7 @@ def cmd_runs_list(args: argparse.Namespace) -> int:
 
 def cmd_runs_show(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, None)
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     run = get_run(runs_root, args.run_id)
 
@@ -121,7 +130,7 @@ def cmd_runs_show(args: argparse.Namespace) -> int:
 
 def cmd_runs_delete(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, None)
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     target = (runs_root / args.run_id).resolve()
     try:
@@ -145,7 +154,7 @@ def cmd_runs_delete(args: argparse.Namespace) -> int:
 
 def cmd_analyze(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, getattr(args, "profile", None))
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     run = create_run(runs_root, run_id=args.run_id)
 
@@ -189,7 +198,7 @@ def cmd_analyze(args: argparse.Namespace) -> int:
 
 def cmd_apply(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, getattr(args, "profile", None))
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     run = get_run(runs_root, args.run_id)
 
@@ -240,7 +249,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
 
 def cmd_compile(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, getattr(args, "profile", None))
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     run = get_run(runs_root, args.run_id)
 
@@ -262,7 +271,7 @@ def cmd_compile(args: argparse.Namespace) -> int:
 
 def cmd_restore(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
-    config = load_config(skill_root)
+    config = _load_effective_config(skill_root, getattr(args, "profile", None))
     runs_root = _resolve_runs_root(skill_root, config, getattr(args, "runs_root", None))
     run = get_run(runs_root, args.run_id)
 
@@ -279,7 +288,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="transfer-old-latex-to-new",
-        description="NSFC LaTeX 标书迁移（可执行 MVP：analyze/apply/compile/restore）",
+        description="ChineseResearchLaTeX 模板迁移 legacy CLI（用于 old/new 目录驱动的 analyze/apply/compile/restore 流程）",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -308,6 +317,7 @@ def main() -> int:
     p_analyze.add_argument("--new", required=True, help="新项目根目录")
     p_analyze.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录（用于隔离输出/测试）")
     p_analyze.add_argument("--run-id", default=None, help="可选：指定 run_id（用于复现）")
+    p_analyze.add_argument("--profile", default=None, help="可选：应用配置预设（默认支持 quick/balanced/thorough）")
     p_analyze.add_argument(
         "--strategy",
         default=None,
@@ -322,6 +332,7 @@ def main() -> int:
     p_apply.add_argument("--old", required=True, help="旧项目根目录")
     p_apply.add_argument("--new", required=True, help="新项目根目录")
     p_apply.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录（用于隔离输出/测试）")
+    p_apply.add_argument("--profile", default=None, help="可选：应用配置预设（默认支持 quick/balanced/thorough）")
     p_apply.add_argument("--allow-low", action="store_true", help="允许执行低置信度任务（谨慎）")
     p_apply.add_argument("--optimize", action="store_true", help="启用内容优化（迁移后自动优化）")
     p_apply.add_argument("--adapt-word-count", action="store_true", help="启用字数适配（自动调整到目标字数）")
@@ -332,12 +343,14 @@ def main() -> int:
     p_compile.add_argument("--run-id", required=True, help="run_id")
     p_compile.add_argument("--new", required=True, help="新项目根目录")
     p_compile.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录（用于隔离输出/测试）")
+    p_compile.add_argument("--profile", default=None, help="可选：应用配置预设（默认支持 quick/balanced/thorough）")
     p_compile.set_defaults(func=cmd_compile)
 
     p_restore = sub.add_parser("restore", help="将 new 项目恢复到 apply 前快照")
     p_restore.add_argument("--run-id", required=True, help="run_id")
     p_restore.add_argument("--new", required=True, help="新项目根目录")
     p_restore.add_argument("--runs-root", default=None, help="可选：指定 runs 根目录（用于隔离输出/测试）")
+    p_restore.add_argument("--profile", default=None, help="可选：应用配置预设（默认支持 quick/balanced/thorough）")
     p_restore.set_defaults(func=cmd_restore)
 
     args = parser.parse_args()

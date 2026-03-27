@@ -1,11 +1,12 @@
 # transfer-old-latex-to-new 技能配置文件
 # version: 2.0.0
-# last_updated: 2026-03-27
+# last_updated: 2026-03-28
 #
 # 说明：
 # - 当前 skill 的主心智已升级为“适配 ChineseResearchLaTeX 当前结构的 AI 迁移/重构编排”
 # - 本文件仍主要服务 legacy CLI 与可选脚本入口
 # - 输入/输出的主约束不再由这里硬编码决定，而由 AI 按任务自主托管
+# - 带有 NSFC 年份/章节假设的节点属于 legacy 增强模块，不代表整个 skill 只服务 NSFC
 
 skill_info:
   name: transfer-old-latex-to-new
@@ -70,7 +71,7 @@ migration:
   backup_mode: "snapshot"          # 备份模式: snapshot(快照)/copy(复制)/none(跳过)
   backup_location: "runs"          # 备份位置: runs(默认，输出到 runs/<run_id>/backup/)/custom(自定义路径)
   keep_backup_days: 30             # 自动清理备份保留天数
-  fine_grained_rollback: true      # 细粒度回滚（支持单文件恢复，v1.3.0）
+  fine_grained_rollback: true      # 细粒度回滚（支持单文件恢复）
 
   # legacy CLI 的默认策略（主工作流仍以 AI 自主判断为准）
   default_strategy: "smart"        # smart(智能)/conservative(保守)/aggressive(激进)
@@ -134,7 +135,7 @@ compilation:
   total_timeout: 600               # 总编译超时(秒)
 
 # =============================================================================
-# 缓存配置（v1.3.0 新增）
+# 缓存配置
 # =============================================================================
 cache:
   enabled: true                    # 启用缓存
@@ -152,7 +153,7 @@ ai:
   fallback_model: "claude-sonnet-4-5"  # 降级模型（用于简单任务）
   embedding_model: "text-embedding-3-small"  # 嵌入模型（用于相似度计算）
 
-  # 批量调用配置（v1.3.0 新增）
+  # 批量调用配置
   batch_mode: true                 # 启用批量模式
   batch_size: 10                   # 每批处理数量
   max_concurrent_batches: 3        # 最大并发批次数
@@ -363,7 +364,7 @@ risk_assessment:
 # 技能集成配置
 # =============================================================================
 skill_integration:
-  # 可调用的NSFC写作技能
+  # 可调用的 legacy NSFC 增强技能
   available_skills:
     nsfc-writing-core:
       purpose: "统一术语、检查一致性"
@@ -411,13 +412,13 @@ debug:
   save_intermediate_json: true       # 保存所有中间JSON文件
   log_ai_decisions: true             # 记录AI决策过程
   verbose_error_messages: true       # 详细错误信息
-  performance_profiling: true        # 性能分析（v1.3.0 启用）
+  performance_profiling: true        # 性能分析
 
 # =============================================================================
 # 版本兼容性
 # =============================================================================
 compatibility:
-  # 支持的NSFC模板版本
+  # legacy NSFC 增强模块支持的模板版本
   supported_versions:
     - "2025"
     - "2026"
@@ -433,12 +434,12 @@ compatibility:
   # 不兼容的版本对
   incompatible_pairs: []
 
-  # 自动版本检测（v1.3.0 新增）
+  # 自动版本检测
   auto_detect: true                 # 自动检测项目版本
   warn_on_unsupported: true         # 遇到不支持版本时警告
 
 # =============================================================================
-# 插件系统（v1.3.0 新增）
+# 插件系统
 # =============================================================================
 plugins:
   enabled: false                    # 插件系统开关（默认关闭）
@@ -446,7 +447,7 @@ plugins:
   auto_load: true                   # 自动加载插件
 
 # =============================================================================
-# 写作风格评分（v1.3.0 新增）
+# 写作风格评分
 # =============================================================================
 style_scoring:
   enabled: true                     # 启用写作风格评分
@@ -458,7 +459,7 @@ style_scoring:
   threshold: 0.75                   # 最低质量阈值（低于此值会警告）
 
 # =============================================================================
-# 字数自动适配（v1.3.0 新增）
+# 字数自动适配（legacy NSFC 增强模块）
 # =============================================================================
 word_count_adaptation:
   enabled: true                     # 启用字数自动适配
@@ -468,7 +469,7 @@ word_count_adaptation:
   priority_strategy: "skill_first"  # 优先策略: skill_first(优先调用技能)/ai_direct(直接AI)
 
 # =============================================================================
-# 引用强制保护（v1.3.0 新增）
+# 引用强制保护
 # =============================================================================
 reference_protection:
   enabled: true                     # 启用引用强制保护
@@ -477,7 +478,7 @@ reference_protection:
   log_violations: true              # 记录引用违规
 
 # =============================================================================
-# AI 内容智能优化（v1.3.0 新增）
+# AI 内容智能优化
 # =============================================================================
 content_optimization:
   enabled: true                     # 启用 AI 内容优化
@@ -497,9 +498,9 @@ content_optimization:
 # =============================================================================
 metadata:
   skill_name: "transfer-old-latex-to-new"
-  skill_version: "1.3.0"
+  skill_version: "2.0.0"
   created_at: "2026-01-05"
-  last_updated: "2026-01-08"
+  last_updated: "2026-03-28"
   author: "Bensz Conan"
   license: "MIT"
 

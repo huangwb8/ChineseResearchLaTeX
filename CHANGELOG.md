@@ -12,7 +12,9 @@
 
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：将 NJU 硕士论文封面“论文题目”区恢复为稳定的 `tabular + m` 对齐骨架，并为右侧双行题目块新增独立视觉下移量，使其更接近官方示例的标签/题目相对位置，同时避免影响其它 thesis 模板
 - 同步 `skills/make-latex-model/` 与 `skills/transfer-old-latex-to-new/` 的对外名称、README/索引链接与示例命令，统一改为当前连字符命名，并保留旧别名的兼容说明。
-- 按两个 skill 当前 `SKILL.md` frontmatter 回写版本号：`make-latex-model` 统一为 `v3.0.0`，`transfer-old-latex-to-new` 统一为 `v2.0.0`；相关 `config.yaml`、Skill README、Skill CHANGELOG 与根级 README 已同步。
+- 按两个 skill 当前 `SKILL.md` frontmatter 回写版本号：`make-latex-model` 统一为 `v3.0.1`，`transfer-old-latex-to-new` 统一为 `v2.0.0`；相关 `config.yaml`、Skill README、Skill CHANGELOG 与根级 README 已同步。
+- 优化 `skills/make-latex-model/`：将产品线判定与 legacy 脚本边界下沉到 `references/`，把 `check_state.py` 改为按 `config.yaml` 的 `product_line_rules` 判断 `NSFC / paper / thesis / cv` 初始化状态与官方构建命令，并将该 skill 版本提升到 `v3.0.1`
+- 优化 `skills/transfer-old-latex-to-new/` 的 legacy CLI 与质量校验链路：修复 `scripts/validate_config.py` 默认配置路径错误，为 `scripts/run.py` 的 `analyze/apply/compile/restore` 接入 `--profile`，新增 `skill_info.version` / `metadata.skill_version` 一致性校验，并清除 `tests/test_smoke.py` 的 pytest warning；同时补充该 skill 本轮 auto-test 的 A/B 轮计划与测试记录。
 
 ### Added（新增）
 

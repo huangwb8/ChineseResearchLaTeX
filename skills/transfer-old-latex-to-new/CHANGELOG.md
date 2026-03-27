@@ -4,10 +4,18 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- 修复 `scripts/validate_config.py` 默认读取 `config.yaml` 的路径错误：`python scripts/validate_config.py` 现在会正确指向 skill 根目录配置，不再误读 `scripts/config.yaml` 并开箱失败。
+- 修复 `tests/test_smoke.py` 在 pytest 环境下返回布尔值导致的 `PytestReturnNotNoneWarning`：现改为纯断言式测试，`pytest skills/transfer-old-latex-to-new/tests -q` 恢复为无 warning 通过。
+
 ### Changed
 
 - 统一对外名称为 `transfer-old-latex-to-new`，README / 索引 / 示例命令同步保留 `migrating-latex-templates` 的兼容说明。
 - 将版本号按 `SKILL.md` 同步回 `config.yaml`、`README.md` 与项目级索引，当前统一为 `v2.0.0`。
+- 优化 legacy CLI 与配置校验链路：`scripts/run.py` 现在明确标注为 `ChineseResearchLaTeX` 模板迁移 legacy CLI，并为 `analyze/apply/compile/restore` 正式接入 `--profile`；`scripts/validate_config.py` 也新增未知 profile 拦截与 `skill_info.version` / `metadata.skill_version` 一致性校验。
+- 收紧 skill 内部口径：`config.yaml` 为 legacy NSFC 增强节点补充作用域说明，`scripts/README.md` 与 `scripts/core/README.md` 明确区分主 workflow、legacy CLI 与 NSFC 倾向模块。
+- 新增 auto-test 优化记录：补充 `plans/v202603280647.md`、`tests/v202603280647/`、`plans/B轮-v202603280653.md` 与 `tests/B轮-v202603280653/`，沉淀本次 A 轮 / B 轮审查与验证证据。
 
 ## [v2.0.0] - 2026-03-27
 
