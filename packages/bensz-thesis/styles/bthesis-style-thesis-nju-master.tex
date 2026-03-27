@@ -1,5 +1,5 @@
 \ProvidesFile{bthesis-style-thesis-nju-master.tex}
-  [2026/03/27 v1.1.0 Thesis style: thesis-nju-master]
+  [2026/03/27 v1.1.1 Thesis style: thesis-nju-master]
 
 \RequirePackage{geometry}
 \RequirePackage{setspace}
@@ -92,9 +92,9 @@
 \newcommand{\njuCoverTitleFont}{\njuKai\bfseries\fontsize{24bp}{32bp}\selectfont}
 \newcommand{\njuCoverDegreeFont}{\njuKai\bfseries\fontsize{22bp}{30bp}\selectfont}
 \newcommand{\njuCoverLabelFont}{\njuKai\bfseries\fontsize{14bp}{20bp}\selectfont}
-\newcommand{\njuCoverValueFont}{\njuKai\fontsize{14bp}{20bp}\selectfont}
-\newcommand{\njuCoverFieldLabelFont}{\njuKai\bfseries\fontsize{14bp}{18bp}\selectfont}
-\newcommand{\njuCoverFieldValueFont}{\njuKai\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\njuCoverValueFont}{\njuKai\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\njuCoverFieldLabelFont}{\njuKai\bfseries\fontsize{14bp}{17bp}\selectfont}
+\newcommand{\njuCoverFieldValueFont}{\njuKai\fontsize{14bp}{17bp}\selectfont}
 \newcommand{\njuFrontHeadingFont}{\njuHei\bfseries\fontsize{15bp}{20bp}\selectfont}
 \newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{20bp}\selectfont}
 \newcommand{\njuSectionFont}{\njuHei\bfseries\fontsize{14bp}{18bp}\selectfont}
@@ -238,6 +238,7 @@
 \ExplSyntaxOn
 \seq_new:N \l__nju_cover_title_lines_seq
 \tl_new:N \l__nju_cover_title_text_tl
+\newcommand{\njuCoverTitleLineGap}{0.38em}
 \cs_new_protected:Npn \nju_render_cover_title_lines:nn #1#2
   {
     \tl_set:Nx \l__nju_cover_title_text_tl {#2}
@@ -251,7 +252,7 @@
               \makebox[#1][c]{\njuCoverValueFont \strut ##1}%
             }%
           }%
-          \kern0.9em
+          \kern\njuCoverTitleLineGap
         }
     }
     \endgroup
@@ -262,9 +263,10 @@
   }
 \ExplSyntaxOff
 
-\newcommand{\njuCoverFieldRowGap}{0.18em}
-\newcommand{\njuCoverFieldRuleGap}{0.14em}
-\newcommand{\njuCoverFieldContentHeight}{1.08\baselineskip}
+\newcommand{\njuCoverFieldRowGap}{0.02em}
+\newcommand{\njuCoverFieldRuleGap}{0.05em}
+\newcommand{\njuCoverFieldContentHeight}{0.74\baselineskip}
+\newdimen\njuCoverFieldMeasuredHeight
 
 \newcommand{\njuCoverFieldWithHeight}[3]{%
   \par\vspace*{\njuCoverFieldRowGap}%
@@ -272,14 +274,25 @@
   \hspace{0.9em}%
   \parbox[t]{6.4cm}{%
     \centering
+    \begingroup
+    \setbox0=\vbox{%
+      \hsize=\linewidth
+      \centering
+      \njuCoverFieldValueFont \strut #3\par
+    }%
+    \njuCoverFieldMeasuredHeight=\dimexpr\ht0+\dp0\relax
+    \ifdim\njuCoverFieldMeasuredHeight<#2\relax
+      \njuCoverFieldMeasuredHeight=#2\relax
+    \fi
     \vbox{%
-      \begin{minipage}[b][#2][b]{\linewidth}%
+      \begin{minipage}[b][\njuCoverFieldMeasuredHeight][b]{\linewidth}%
         \centering
         \njuCoverFieldValueFont \strut #3\par
       \end{minipage}%
       \kern\njuCoverFieldRuleGap
       \hrule height 0.35pt
     }%
+    \endgroup
   }%
 }
 
@@ -306,10 +319,10 @@
       \fi
       \par
     }
-    \vspace{1.55cm}
+    \vspace{1.10cm}
     \begin{center}
     \begin{minipage}{9.8cm}
-      \par\vspace*{0.35em}%
+      \par\vspace*{0.12em}%
       \makebox[2.4cm][s]{\njuCoverLabelFont 论文题目}%
       \hspace{0.9em}%
       \ifstrempty{\njuCoverTitleLinesValue}{%
@@ -328,7 +341,7 @@
     \end{minipage}
     \end{center}
     \par
-    \vspace{0.95cm}
+    \vspace{2.45cm}
     \centering
     {\njuCoverValueFont \njuDateValue\par}
   \end{titlepage}
