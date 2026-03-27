@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+import yaml
+
 SCRIPT_DIR = Path(__file__).parent
 SKILL_DIR = SCRIPT_DIR.parent
 REPO_ROOT = SKILL_DIR.parent.parent
@@ -20,9 +22,60 @@ sys.path.insert(0, str(SKILL_DIR))
 from scripts.core.workspace_manager import WorkspaceManager
 
 
+def load_skill_config() -> dict:
+    """读取 skill 配置。"""
+    config_path = SKILL_DIR / "config.yaml"
+    if not config_path.exists():
+        return {}
+    try:
+        return yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+
+
+def detect_product_line(project_path: Path, config: dict) -> str:
+    """根据 config.yaml 的规则识别产品线。"""
+    rules = config.get("product_line_rules") or {}
+    haystacks = [project_path.name.lower()]
+    try:
+        haystacks.append(str(project_path.relative_to(PROJECTS_ROOT)).lower())
+    except Exception:
+        pass
+
+    for product_line, rule in rules.items():
+        for pattern in rule.get("detect_patterns", []):
+            pattern_lc = str(pattern).lower()
+            if any(pattern_lc in haystack for haystack in haystacks):
+                return product_line
+    return "unknown"
+
+
+def get_required_markers(config: dict, product_line: str) -> list[str]:
+    rules = config.get("product_line_rules") or {}
+    rule = rules.get(product_line) or {}
+    return [str(marker) for marker in rule.get("required_markers", [])]
+
+
+def get_official_build_command(project_path: Path, config: dict, product_line: str) -> str:
+    rules = config.get("product_line_rules") or {}
+    commands = config.get("official_build_commands") or {}
+    rule = rules.get(product_line) or {}
+    command_key = rule.get("official_build_key", product_line)
+    command = commands.get(command_key)
+    if not command:
+        return ""
+    return command.replace("<project>", str(project_path.relative_to(REPO_ROOT)))
+
+
 def check_project_state(project_path: Path) -> dict:
     """检查项目当前状态"""
     project_path = project_path.resolve()
+    config = load_skill_config()
+    product_line = detect_product_line(project_path, config)
+    required_markers = get_required_markers(config, product_line)
+    marker_status = {marker: (project_path / marker).exists() for marker in required_markers}
+    official_build_command = get_official_build_command(project_path, config, product_line)
+
     state = {
         "project_path": str(project_path),
         "check_time": datetime.now().isoformat(),
@@ -33,11 +86,19 @@ def check_project_state(project_path: Path) -> dict:
     ws_manager = WorkspaceManager(SKILL_DIR)
     ws_root = ws_manager.get_project_workspace(project_path)
 
-    # 1. 检查项目是否已初始化
-    config_file = project_path / "extraTex" / "@config.tex"
-    state["status"]["initialized"] = config_file.exists()
+    # 1. 检查项目是否已初始化（按产品线规则，而不是硬编码 NSFC）
+    state["status"]["product_line"] = product_line
+    state["status"]["required_markers"] = marker_status
+    state["status"]["official_build_command"] = official_build_command
+    state["status"]["initialized"] = all(marker_status.values()) if marker_status else (project_path / "main.tex").exists()
     if not state["status"]["initialized"]:
-        state["recommendations"].append("项目未初始化，请先创建 @config.tex")
+        missing_markers = [marker for marker, exists in marker_status.items() if not exists]
+        if missing_markers:
+            state["recommendations"].append(
+                f"项目初始化标记不完整（产品线: {product_line}），缺少: {', '.join(missing_markers)}"
+            )
+        else:
+            state["recommendations"].append("项目未初始化，请先补齐该产品线的入口文件")
 
     # 2. 检查是否有 PDF 基准（推荐 baseline.pdf；兼容 word.pdf）
     baseline_dir = ws_root / "baselines"
@@ -62,8 +123,10 @@ def check_project_state(project_path: Path) -> dict:
             )
 
     if not state["status"]["has_baseline"]:
+        preferred_candidates = config.get("baseline", {}).get("preferred_candidates", [])
+        preferred_text = "、".join(preferred_candidates) if preferred_candidates else "template/baseline.pdf"
         state["recommendations"].append(
-            "缺少 PDF 基准，请将基金委 PDF（或 Word 导出 PDF）放到 projects/{project}/template/baseline.pdf（推荐），或复制到 projects/{project}/.make_latex_model/baselines/baseline.pdf"
+            f"缺少 PDF 基准。可优先提供官方 PDF / Word 导出 PDF / 已验收 baseline PDF，并放到 `{preferred_text}` 之一；旧版 `word.pdf` 路径仍兼容。"
         )
 
     # 3. 检查编译状态
@@ -75,7 +138,10 @@ def check_project_state(project_path: Path) -> dict:
         state["status"]["compilation_status"] = "success"  # 简化判断
     else:
         state["status"]["compilation_status"] = "not_compiled"
-        state["recommendations"].append("项目未编译，建议先执行编译测试")
+        if official_build_command:
+            state["recommendations"].append(f"项目未编译，建议先执行官方构建命令：{official_build_command}")
+        else:
+            state["recommendations"].append("项目未编译，建议先执行该产品线的官方构建测试")
 
     # 4. 检查是否有 PDF 分析结果
     analysis_files = list(baseline_dir.glob("*_analysis.json")) if baseline_dir.exists() else []
@@ -85,8 +151,9 @@ def check_project_state(project_path: Path) -> dict:
         latest_analysis = max(analysis_files, key=lambda p: p.stat().st_mtime)
         state["status"]["latest_analysis"] = str(latest_analysis.name)
     else:
+        analysis_cmd = config.get("baseline", {}).get("analysis_command", "python skills/make-latex-model/scripts/analyze_pdf.py <baseline.pdf>")
         state["recommendations"].append(
-            "缺少 PDF 分析结果，建议执行: python scripts/analyze_pdf.py <baseline.pdf>"
+            f"缺少 PDF 分析结果，建议执行: {analysis_cmd}"
         )
 
     return state
@@ -114,6 +181,10 @@ def print_report(state: dict):
     print(f"{'='*60}")
     print(f"项目路径: {state['project_path']}")
     print(f"检查时间: {state['check_time']}")
+    print(f"产品线: {state.get('status', {}).get('product_line', 'unknown')}")
+    build_cmd = state.get("status", {}).get("official_build_command")
+    if build_cmd:
+        print(f"官方构建命令: {build_cmd}")
     print(f"\n状态概览:")
 
     status_map = {
@@ -135,6 +206,12 @@ def print_report(state: dict):
     if baseline_source:
         print(f"\n基准来源: {baseline_source}")
         print(f"基准质量: {state.get('status', {}).get('baseline_quality', 'unknown')}")
+
+    required_markers = state.get("status", {}).get("required_markers", {})
+    if required_markers:
+        print("\n初始化标记:")
+        for marker, exists in required_markers.items():
+            print(f"  {'✅' if exists else '❌'} {marker}")
 
     if state["recommendations"]:
         print(f"\n建议:")

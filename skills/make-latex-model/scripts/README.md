@@ -24,10 +24,10 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project
 快速看项目是否有 baseline、是否已有 `.make_latex_model/` 工作区，适合作为辅助预检查。
 
 ```bash
-python3 skills/make-latex-model/scripts/check_state.py projects/NSFC_Young
+python3 skills/make-latex-model/scripts/check_state.py projects/thesis-nju-master
 ```
 
-注意：它更偏向旧版 NSFC 目录假设，对 `paper / thesis / cv` 的判断仅供参考。
+注意：`check_state.py` 现会按 `config.yaml` 的产品线规则识别 `NSFC / paper / thesis / cv`，但其它 legacy 脚本仍可能偏向旧版 NSFC 目录假设。
 
 ### `analyze_pdf.py`
 

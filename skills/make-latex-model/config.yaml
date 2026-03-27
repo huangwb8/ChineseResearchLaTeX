@@ -7,7 +7,7 @@
 
 skill_info:
   name: make-latex-model
-  version: 3.0.0
+  version: 3.0.1
   description: ChineseResearchLaTeX 模板落地与高保真对齐 skill，适配 NSFC / paper / thesis / cv 四条产品线；优先使用 make-latex-model 触发，也兼容旧写法 make_latex_model；先按 packages/ 与 projects/ 的真实分层判断修改范围，再依据官方构建入口完成样式对齐、基线比对和验收，旧版 NSFC 专用脚本仅作可选辅助。
   author: "Bensz Conan"
   category: normal
@@ -69,9 +69,9 @@ parameters:
   word_template_year:
     type: string
     required: false
-    description: legacy 参数，仅供旧版 Word/NSFC 工作流参考
+    description: legacy 参数，仅供旧版 Word/NSFC 辅助脚本参考；不应再作为默认决策依据
     pattern: "^\\d{4}$"
-    default: "2026"
+    default: null
 
   optimization_level:
     type: string
@@ -143,6 +143,41 @@ official_build_commands:
   thesis: "python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <project>"
   cv: "python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project> --variant all"
 
+product_line_rules:
+  nsfc:
+    display_name: "NSFC"
+    detect_patterns:
+      - "NSFC_"
+      - "nsfc_"
+    required_markers:
+      - "main.tex"
+      - "extraTex/@config.tex"
+    official_build_key: nsfc
+  paper:
+    display_name: "Paper"
+    detect_patterns:
+      - "paper-"
+    required_markers:
+      - "main.tex"
+      - "extraTex"
+    official_build_key: paper
+  thesis:
+    display_name: "Thesis"
+    detect_patterns:
+      - "thesis-"
+    required_markers:
+      - "main.tex"
+      - "template.json"
+    official_build_key: thesis
+  cv:
+    display_name: "CV"
+    detect_patterns:
+      - "cv-"
+    required_markers:
+      - "main-zh.tex"
+      - "main-en.tex"
+    official_build_key: cv
+
 validation:
   max_iterations: 3
   required_checks:
@@ -208,11 +243,16 @@ iteration:
       - page_margins
 
 baseline:
+  preferred_candidates:
+    - "template/baseline.pdf"
+    - ".make_latex_model/baselines/baseline.pdf"
+    - ".make_latex_model/baselines/word.pdf"
+  analysis_command: "python skills/make-latex-model/scripts/analyze_pdf.py <baseline.pdf>"
   converter_priority:
     - word
     - libreoffice
     - quicklook
 
 legacy_helpers:
-  nsfc_first: true
-  note: "validate.sh、templates/nsfc/*.yaml、config_loader 等入口主要服务旧版 NSFC 辅助工作流；与当前仓库真实结构冲突时，应直接跳过。"
+  nsfc_only: true
+  note: "validate.sh、templates/nsfc/*.yaml、config_loader 等入口主要服务旧版 NSFC 辅助工作流；只有在目标明确属于 NSFC 且需要旧链路能力时才考虑使用。"

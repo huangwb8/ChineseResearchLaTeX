@@ -4,10 +4,16 @@
 
 ## [Unreleased]
 
+### Fixed（修复）
+
+- 修复 `scripts/check_state.py` 仍把所有项目都按 `NSFC + extraTex/@config.tex` 初始化的误判问题：现改为从 `config.yaml` 的 `product_line_rules` 读取产品线识别、初始化标记与官方构建命令，`paper / thesis / cv` 不再被错误标记为“未初始化”。
+- 修复基线与建议文案过度绑定基金委/`word.pdf` 的问题：`config.yaml` 新增 `baseline.preferred_candidates` 与 `analysis_command` 作为单一真相来源，状态检查输出改为通用 PDF 基线口径，同时继续兼容 legacy `word.pdf`。
+
 ### Changed（变更）
 
 - 统一对外名称为 `make-latex-model`，README / 索引 / 示例命令同步保留对旧写法 `make_latex_model` 的兼容提示。
-- 将版本号按 `SKILL.md` 同步回 `config.yaml`、`README.md` 与项目级索引，当前统一为 `v3.0.0`。
+- 将版本号按 `SKILL.md` 同步回 `config.yaml`、`README.md` 与项目级索引，当前统一为 `v3.0.1`。
+- 将产品线判定与 legacy 脚本边界从 `SKILL.md` 下沉到 `references/PRODUCT_LINE_RULES.md` 与 `references/LEGACY_SCRIPT_SCOPE.md`，减少核心工作文档冗余，并把当前版本提升为 `v3.0.1`。
 
 ## [3.0.0] - 2026-03-27
 

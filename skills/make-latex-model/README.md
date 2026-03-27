@@ -1,6 +1,6 @@
 # make-latex-model - ChineseResearchLaTeX 模板落地与高保真对齐
 
-本 README 面向使用者：如何触发并正确使用 `make-latex-model`。当前版本：`v3.0.0`。执行边界与硬性规范见 `SKILL.md`，默认参数见 `config.yaml`。兼容旧写法 `make_latex_model`，但后续文档统一使用连字符名称。
+本 README 面向使用者：如何触发并正确使用 `make-latex-model`。当前版本：`v3.0.1`。执行边界与硬性规范见 `SKILL.md`，默认参数见 `config.yaml`。兼容旧写法 `make_latex_model`，但后续文档统一使用连字符名称。
 
 ## 现在它是干什么的
 
@@ -79,13 +79,13 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects
 如果你只是需要 PDF 参数提取、标题比对或像素比对，也可以单独用辅助脚本：
 
 ```bash
-python3 skills/make-latex-model/scripts/check_state.py projects/NSFC_Young
+python3 skills/make-latex-model/scripts/check_state.py projects/thesis-nju-master
 python3 skills/make-latex-model/scripts/analyze_pdf.py <baseline.pdf> --project projects/NSFC_Young
 python3 skills/make-latex-model/scripts/compare_headings.py <baseline.pdf> <main.tex>
 python3 skills/make-latex-model/scripts/compare_pdf_pixels.py <baseline.pdf> <rendered.pdf>
 ```
 
-这些脚本现在更适合做“辅助分析”，尤其偏向 NSFC 风格项目；它们不应替代各产品线官方构建链路。
+这些脚本现在更适合做“辅助分析”。其中 `check_state.py` 已支持按产品线识别入口和官方构建命令；其余部分脚本仍偏 legacy NSFC 场景，不应替代各产品线官方构建链路。
 
 ## 重要边界
 
@@ -101,4 +101,6 @@ python3 skills/make-latex-model/scripts/compare_pdf_pixels.py <baseline.pdf> <re
 - 工作流：`skills/make-latex-model/docs/WORKFLOW.md`
 - 常见问题：`skills/make-latex-model/docs/FAQ.md`
 - 基线制作：`skills/make-latex-model/docs/BASELINE_GUIDE.md`
+- 产品线规则：`skills/make-latex-model/references/PRODUCT_LINE_RULES.md`
+- legacy 边界：`skills/make-latex-model/references/LEGACY_SCRIPT_SCOPE.md`
 - 辅助脚本：`skills/make-latex-model/scripts/README.md`

@@ -1,6 +1,6 @@
 ---
 name: make-latex-model
-version: 3.0.0
+version: 3.0.1
 author: Bensz Conan
 metadata:
   author: Bensz Conan
@@ -47,7 +47,6 @@ compatibility:
     - thesis
     - cv
     - generic
-last_updated: 2026-03-27
 changelog: CHANGELOG.md
 ---
 
@@ -67,6 +66,8 @@ changelog: CHANGELOG.md
   - `docs/for-developers/thesis-template-standard.md`
   - `docs/for-developers/cv-template-standard.md`
 - 本 skill 的执行口径：`skills/make-latex-model/docs/WORKFLOW.md`
+- 产品线判定与初始化规则：`skills/make-latex-model/references/PRODUCT_LINE_RULES.md`
+- legacy 脚本边界：`skills/make-latex-model/references/LEGACY_SCRIPT_SCOPE.md`
 - 本 skill 的辅助脚本说明：`skills/make-latex-model/scripts/README.md`
 - 如需从 Word 导出 PDF 基准：`skills/make-latex-model/docs/BASELINE_GUIDE.md`
 
@@ -93,16 +94,10 @@ changelog: CHANGELOG.md
 - 在需要时做像素级 PDF 比对、标题对齐、参数抽取、回归验收
 - 把“按要求做出好模板”作为第一目标，而不是机械坚持旧脚本流程
 
-## 产品线判定矩阵
+## 产品线判定
 
-| 产品线 | 项目层常见入口 | 共享层常见入口 | 官方验证命令 |
-|------|------|------|------|
-| `nsfc` | `projects/NSFC_*/main.tex`、`extraTex/@config.tex` | `packages/bensz-nsfc/` | `python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir <项目路径>` |
-| `paper` | `projects/paper-*/main.tex`、`extraTex/**/*.tex`、`artifacts/` | `packages/bensz-paper/` | `python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir <项目路径>` |
-| `thesis` | `projects/thesis-*/main.tex`、`baseline.tex`、`editable.tex`、`extraTex/`、`template.json` | `packages/bensz-thesis/profiles/`、`packages/bensz-thesis/styles/` | `python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <项目路径>` |
-| `cv` | `projects/cv-*/main-zh.tex`、`main-en.tex` | `packages/bensz-cv/` | `python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <项目路径> --variant all` |
-
-如果一个问题会影响多个项目共享的版式、字体接入、profile、统一构建逻辑或对齐策略，优先改 `packages/bensz-*`，不要把同一份逻辑复制回各个 `projects/*`。
+- 具体的产品线识别、初始化标记与官方命令矩阵见 `references/PRODUCT_LINE_RULES.md`
+- 如果一个问题会影响多个项目共享的版式、字体接入、profile、统一构建逻辑或对齐策略，优先改 `packages/bensz-*`，不要把同一份逻辑复制回各个 `projects/*`
 
 ## 工作流
 
@@ -184,8 +179,8 @@ changelog: CHANGELOG.md
 
 ## Legacy 脚本约定
 
-- `validate.sh`、`benchmark.sh`、`templates/nsfc/*.yaml`、`config_loader` 一类能力仍然保留，但它们主要是旧版 NSFC 风格的辅助链路
-- 如果目标是 `paper` / `thesis` / `cv`，或项目结构已经明显不符合 `main.tex + extraTex/@config.tex + Word 模板目录` 的旧假设，应直接跳过这些 legacy 入口
+- 具体哪些脚本是通用辅助，哪些仍然偏 NSFC legacy，请直接看 `references/LEGACY_SCRIPT_SCOPE.md`
+- 如果目标是 `paper` / `thesis` / `cv`，或项目结构已经明显不符合旧版 `main.tex + extraTex/@config.tex + Word 模板目录` 假设，应直接跳过 legacy 入口
 - 当前仓库的权威来源永远是：真实目录结构、真实源码、真实官方构建脚本
 
 ## 验收标准
