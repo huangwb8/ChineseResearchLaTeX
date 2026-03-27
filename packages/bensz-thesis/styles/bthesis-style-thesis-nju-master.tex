@@ -93,6 +93,8 @@
 \newcommand{\njuCoverDegreeFont}{\njuKai\bfseries\fontsize{22bp}{30bp}\selectfont}
 \newcommand{\njuCoverLabelFont}{\njuKai\bfseries\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\njuCoverValueFont}{\njuKai\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\njuCoverFieldLabelFont}{\njuKai\bfseries\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\njuCoverFieldValueFont}{\njuKai\fontsize{14bp}{18bp}\selectfont}
 \newcommand{\njuFrontHeadingFont}{\njuHei\bfseries\fontsize{15bp}{20bp}\selectfont}
 \newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{20bp}\selectfont}
 \newcommand{\njuSectionFont}{\njuHei\bfseries\fontsize{14bp}{18bp}\selectfont}
@@ -260,25 +262,29 @@
   }
 \ExplSyntaxOff
 
+\newcommand{\njuCoverFieldRowGap}{0.18em}
+\newcommand{\njuCoverFieldRuleGap}{0.14em}
+\newcommand{\njuCoverFieldContentHeight}{1.08\baselineskip}
+
 \newcommand{\njuCoverFieldWithHeight}[3]{%
-  \par\vspace*{0.35em}%
-  \makebox[2.4cm][s]{\njuCoverLabelFont #1}%
+  \par\vspace*{\njuCoverFieldRowGap}%
+  \makebox[2.4cm][s]{\njuCoverFieldLabelFont \strut #1}%
   \hspace{0.9em}%
   \parbox[t]{6.4cm}{%
     \centering
     \vbox{%
       \begin{minipage}[b][#2][b]{\linewidth}%
         \centering
-        \njuCoverValueFont #3\par
+        \njuCoverFieldValueFont \strut #3\par
       \end{minipage}%
-      \kern0.22em
+      \kern\njuCoverFieldRuleGap
       \hrule height 0.35pt
     }%
   }%
 }
 
 \newcommand{\njuCoverField}[2]{%
-  \njuCoverFieldWithHeight{#1}{1.25\baselineskip}{#2}%
+  \njuCoverFieldWithHeight{#1}{\njuCoverFieldContentHeight}{#2}%
 }
 
 \newcommand{\njuMakeCover}{%
