@@ -6,7 +6,7 @@
 
 - 真正的构建与验收，应优先走各产品线官方脚本
 - 本目录脚本更适合做 PDF 参数提取、标题比对、像素差异分析
-- 其中不少入口带有明显的旧版 NSFC 假设，使用前要先判断是否匹配当前项目结构
+- 一部分脚本是跨产品线通用辅助工具，另一部分是 NSFC 专项参数工具，使用前先判断职责是否匹配当前任务
 
 ## 官方构建入口
 
@@ -19,6 +19,17 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project
 
 ## 推荐保留使用的脚本
 
+### `plan_package_regression.py`
+
+当你判断“这次必须改 `packages/bensz-*`”时，先用它生成受影响模板与官方回归命令。
+
+```bash
+python3 skills/make-latex-model/scripts/plan_package_regression.py packages/bensz-thesis
+python3 skills/make-latex-model/scripts/plan_package_regression.py packages/bensz-fonts
+```
+
+这是当前 skill 里约束“包层改动不能伤到其它现有模板”的确定性入口。建议先跑这个脚本，再真正编辑公共包。
+
 ### `check_state.py`
 
 快速看项目是否有 baseline、是否已有 `.make_latex_model/` 工作区，适合作为辅助预检查。
@@ -27,7 +38,7 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project
 python3 skills/make-latex-model/scripts/check_state.py projects/thesis-nju-master
 ```
 
-注意：`check_state.py` 现会按 `config.yaml` 的产品线规则识别 `NSFC / paper / thesis / cv`，但其它 legacy 脚本仍可能偏向旧版 NSFC 目录假设。
+注意：`check_state.py` 现会按 `config.yaml` 的产品线规则识别 `NSFC / paper / thesis / cv`；其余脚本是否适用，取决于它属于跨产品线辅助工具还是 NSFC 专项参数工具。
 
 ### `analyze_pdf.py`
 
@@ -61,27 +72,33 @@ python3 skills/make-latex-model/scripts/compare_pdf_pixels.py <baseline.pdf> <re
 python3 skills/make-latex-model/scripts/optimize_heading_linebreaks.py <main.tex> --pdf-baseline <baseline.pdf>
 ```
 
-## 带明显 legacy 假设的入口
+## NSFC 专项工具
 
-以下能力仍然保留，但主要服务旧版 NSFC 流程：
+以下能力主要服务 NSFC 参数对齐、批量校验或基于 `templates/nsfc/*.yaml` 的专项任务：
 
 - `validate.sh` / `validate.bat`
 - `benchmark.sh` / `benchmark.bat`
+- `optimize.sh` / `optimize.bat`
+- `optimize.py`
+- `enhanced_optimize.py`
+- `run_ai_optimizer.py`
+- `intelligent_adjust.py`
+- `sync_config.py`
 - `templates/nsfc/*.yaml`
 - `core/config_loader.py`
-- 一些围绕 `main.tex + extraTex/@config.tex + Word 模板目录` 展开的自动化逻辑
 
 如果你的目标是：
 
 - `projects/paper-*`
 - `projects/thesis-*`
 - `projects/cv-*`
-- 或者一个已经明显脱离旧版 NSFC 目录模型的项目
+- 或者一个不需要 NSFC 参数调优链路的项目
 
-那么这些 legacy 入口通常不应作为主流程。
+那么这些 NSFC 专项工具通常不应作为主流程。
 
 ## 推荐使用顺序
 
 1. 先用官方构建脚本确认真实入口
-2. 再视需要用这里的脚本补充分析
-3. 不要让这里的脚本覆盖掉当前仓库的真实分层判断
+2. 如果需要改 `packages/bensz-*`，先跑 `plan_package_regression.py`
+3. 再视需要用这里的脚本补充分析
+4. 不要让这里的脚本覆盖掉当前仓库的真实分层判断

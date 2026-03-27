@@ -80,8 +80,9 @@ graph LR
 
 **技能特点**：
 - 先判断 `projects/*` 还是 `packages/bensz-*` 才是正确修改层
+- 如果必须改公共包，会先生成回归矩阵并要求回归该包覆盖的现有模板
 - 默认走各产品线官方构建入口验收
-- 旧版 NSFC 辅助脚本仅作补充，不再充当唯一工作流
+- 对 `validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等脚本按 NSFC 专项工具处理，不把整个 skill 叙述成它们的延伸
 - 触发时优先使用 `make-latex-model`，也兼容旧写法 `make_latex_model`
 
 [详细文档 →](make-latex-model/SKILL.md)

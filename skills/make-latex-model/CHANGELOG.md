@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- 新增 `scripts/plan_package_regression.py`：可按 `config.yaml` 的公共包回归规则输出受影响项目、官方 build 命令，以及在可用时附带 compare 建议，作为修改 `packages/bensz-*` 前的确定性安全门禁。
+- 新增 `references/SCRIPT_SCOPE.md`：按“跨产品线辅助脚本 / NSFC 专项工具”重新整理脚本职责矩阵，不再用 legacy 叙事描述当前 skill 的能力边界。
+
+### Changed（变更）
+
+- 将 `make-latex-model` 升级到 `v3.1.1`，把 `SKILL.md`、`README.md`、`docs/WORKFLOW.md`、`docs/FAQ.md`、`docs/BASELINE_GUIDE.md`、`scripts/README.md` 与根级索引里的历史过渡口径改写为“当前状态直述”：`validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等脚本统一定义为 NSFC 专项工具，而不是把当前 skill 表述成旧版 NSFC 流程的改良或继承。
+
 ### Fixed（修复）
 
 - 修复 `scripts/check_state.py` 仍把所有项目都按 `NSFC + extraTex/@config.tex` 初始化的误判问题：现改为从 `config.yaml` 的 `product_line_rules` 读取产品线识别、初始化标记与官方构建命令，`paper / thesis / cv` 不再被错误标记为“未初始化”。
@@ -13,7 +22,7 @@
 
 - 统一对外名称为 `make-latex-model`，README / 索引 / 示例命令同步保留对旧写法 `make_latex_model` 的兼容提示。
 - 将版本号按 `SKILL.md` 同步回 `config.yaml`、`README.md` 与项目级索引，当前统一为 `v3.0.1`。
-- 将产品线判定与 legacy 脚本边界从 `SKILL.md` 下沉到 `references/PRODUCT_LINE_RULES.md` 与 `references/LEGACY_SCRIPT_SCOPE.md`，减少核心工作文档冗余，并把当前版本提升为 `v3.0.1`。
+- 将产品线判定与脚本边界从 `SKILL.md` 下沉到 `references/PRODUCT_LINE_RULES.md` 与后续统一收口的脚本职责文档，减少核心工作文档冗余，并把当前版本提升为 `v3.0.1`。
 
 ## [3.0.0] - 2026-03-27
 

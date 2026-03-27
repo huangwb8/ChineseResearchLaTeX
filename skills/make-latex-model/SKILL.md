@@ -1,13 +1,13 @@
 ---
 name: make-latex-model
-version: 3.0.1
+version: 3.1.1
 author: Bensz Conan
 metadata:
   author: Bensz Conan
 maintainer: project-maintainers
 status: stable
 category: normal
-description: 当用户明确要求“LaTeX 模板优化”“样式参数对齐”“像素级比对”“make-latex-model”或旧写法“make_latex_model”，或要把 ChineseResearchLaTeX 里的某个项目做成高质量模板时使用。适配 NSFC / paper / thesis / cv 四条产品线；先依据 packages/ 与 projects/ 的真实分层判断改项目层还是公共包，再用各产品线官方构建入口验收。旧版 NSFC 专用脚本仅作辅助，不应凌驾于当前仓库结构之上。
+description: 当用户明确要求“LaTeX 模板优化”“样式参数对齐”“像素级比对”“make-latex-model”或旧写法“make_latex_model”，或要把 ChineseResearchLaTeX 里的某个项目做成高质量模板时使用。适配 NSFC / paper / thesis / cv 四条产品线；先依据 packages/ 与 projects/ 的真实分层判断改项目层还是公共包，再用各产品线官方构建入口验收。若必须修改 packages 下公共包，需先生成受影响模板回归计划并完成相关回归；NSFC 专项工具仅在明确属于 NSFC 参数对齐场景时按需使用。
 tags:
   - latex
   - template
@@ -26,7 +26,7 @@ dependencies:
       purpose: PDF 样式参数提取
     - name: python-docx
       version: ">=0.8.11"
-      purpose: Word 标题提取（legacy 辅助，可选）
+      purpose: Word 标题提取（可选）
     - name: Pillow
       version: ">=9.0.0"
       purpose: 图像处理和像素对比
@@ -67,16 +67,17 @@ changelog: CHANGELOG.md
   - `docs/for-developers/cv-template-standard.md`
 - 本 skill 的执行口径：`skills/make-latex-model/docs/WORKFLOW.md`
 - 产品线判定与初始化规则：`skills/make-latex-model/references/PRODUCT_LINE_RULES.md`
-- legacy 脚本边界：`skills/make-latex-model/references/LEGACY_SCRIPT_SCOPE.md`
+- 脚本职责矩阵：`skills/make-latex-model/references/SCRIPT_SCOPE.md`
 - 本 skill 的辅助脚本说明：`skills/make-latex-model/scripts/README.md`
 - 如需从 Word 导出 PDF 基准：`skills/make-latex-model/docs/BASELINE_GUIDE.md`
 
 ## 核心定位
 
-这个 skill 的目标已经不是“只改 `projects/NSFC_*` 的 `extraTex/@config.tex`”，而是：
+这个 skill 的目标是：
 
 - 让 ChineseResearchLaTeX 里的目标项目按当前真实架构做成高质量模板
 - 在 `projects/` 与 `packages/` 之间选对修改层级
+- 若必须改 `packages/`，先识别所有直接受影响的现有模板并完成回归
 - 在需要时做 PDF / Word / baseline 对齐
 - 始终通过各产品线的官方构建入口验收
 
@@ -92,7 +93,7 @@ changelog: CHANGELOG.md
 - 发现当前问题其实属于共享样式、profile、构建脚本，改到 `packages/bensz-*`
 - 新增或重构 thesis / paper / cv / nsfc 模板时，帮助确定“项目层 vs 公共包层”边界
 - 在需要时做像素级 PDF 比对、标题对齐、参数抽取、回归验收
-- 把“按要求做出好模板”作为第一目标，而不是机械坚持旧脚本流程
+- 把“按要求做出好模板”作为第一目标，而不是被某一种单一路径绑住
 
 ## 产品线判定
 
@@ -137,9 +138,26 @@ changelog: CHANGELOG.md
 
 除非用户明确要求改正文语义内容，否则默认聚焦模板、版式、结构入口、构建链路和验收资产。
 
+### 3.5 包层安全门禁
+
+当你判断“这次必须改 `packages/`”时，额外执行以下动作：
+
+1. 默认先证明项目层方案为什么不够；只有共享问题才升级到包层
+2. 先运行 `python3 skills/make-latex-model/scripts/plan_package_regression.py <packages/bensz-*>`
+3. 优先把改动收敛到最窄的模板专属 `profile / style / template` 文件
+4. 只有在前述路径都不够时，才修改共享核心宏、公共入口或字体 API
+5. 改完先验证当前目标项目，再回归该公共包直接覆盖的全部现有项目
+6. 若某个受影响项目已有 baseline，优先补跑官方 compare；没有 compare 入口时至少完成官方 build
+
+不要做这些事：
+
+- 没有回归计划就直接改共享包
+- 为了省事把共享逻辑复制回单个项目
+- 在未验证其它现有模板前宣称“不会影响别的模板”
+
 ### 4. 官方入口验证
 
-验证时，不要让 legacy 脚本盖过当前官方构建链路：
+验证时，始终以当前官方构建链路为准：
 
 - NSFC：`nsfc_project_tool.py`
 - Paper：`paper_project_tool.py`
@@ -156,8 +174,9 @@ changelog: CHANGELOG.md
 - `compare_headings.py`：对比标题文本或格式
 - `compare_pdf_pixels.py`：像素级 PDF 比对
 - `optimize_heading_linebreaks.py`：按 PDF 基线优化标题换行
+- `plan_package_regression.py`：为包层修改生成“受影响模板 + 官方回归命令”计划
 
-这些工具对“单入口 + PDF 基线”场景尤其有用，但不应强迫 thesis / paper / cv 全部套进旧版 NSFC 流程。
+这些工具对“单入口 + PDF 基线”场景尤其有用；其中部分脚本属于 NSFC 专项参数对齐工具，不应被拿来替代 `paper / thesis / cv` 的官方工作流。
 
 ## 修改边界
 
@@ -177,10 +196,10 @@ changelog: CHANGELOG.md
 - 为了追求像素对齐而牺牲当前仓库的真实分层与长期可维护性
 - 默认改写用户正文语义内容
 
-## Legacy 脚本约定
+## 脚本职责约定
 
-- 具体哪些脚本是通用辅助，哪些仍然偏 NSFC legacy，请直接看 `references/LEGACY_SCRIPT_SCOPE.md`
-- 如果目标是 `paper` / `thesis` / `cv`，或项目结构已经明显不符合旧版 `main.tex + extraTex/@config.tex + Word 模板目录` 假设，应直接跳过 legacy 入口
+- 具体哪些脚本是跨产品线辅助工具，哪些属于 NSFC 专项工具，请直接看 `references/SCRIPT_SCOPE.md`
+- 如果目标是 `paper` / `thesis` / `cv`，默认不要切到 NSFC 专项工具链；只有它们能补充 PDF 参数分析或标题比对时才按需单独调用通用脚本
 - 当前仓库的权威来源永远是：真实目录结构、真实源码、真实官方构建脚本
 
 ## 验收标准
@@ -190,8 +209,9 @@ changelog: CHANGELOG.md
 1. 改动落在正确层级，没有把共享逻辑散落回项目层
 2. 通过对应产品线的官方构建入口
 3. 若有 warning，需要说明是已有 warning 还是新增 warning
-4. 若用户提供 baseline，则完成必要的 compare / 像素比对 / 结构比对
-5. `paper` 场景默认同时关注 PDF 与 DOCX；`cv` 默认关注中英文双入口；`thesis` 默认关注 profile/style 与项目入口的一致性
+4. 若发生包层改动，必须说明回归了哪些现有模板；若没法全量回归，要明确剩余风险
+5. 若用户提供 baseline，则完成必要的 compare / 像素比对 / 结构比对
+6. `paper` 场景默认同时关注 PDF 与 DOCX；`cv` 默认关注中英文双入口；`thesis` 默认关注 profile/style 与项目入口的一致性
 
 ## 输出要求
 

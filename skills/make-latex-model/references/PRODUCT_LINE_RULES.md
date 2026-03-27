@@ -27,9 +27,29 @@
 其中：
 
 - `baseline.pdf` 是当前推荐命名。
-- `word.pdf` 仅作为 legacy 兼容路径，不应再作为文档默认口径。
+- `word.pdf` 仅作为兼容旧命名的兜底路径，不应再作为文档默认口径。
 
 ## 维护约束
 
 - 新增产品线时，先更新 `config.yaml`，再同步本文件与 `SKILL.md` 的摘要说明。
 - 不要再把“是否初始化完成”的判定硬编码为 `extraTex/@config.tex` 是否存在。
+
+## 公共包改动的默认回归范围
+
+如果任务已经明确需要修改 `packages/` 下公共包，默认按下表规划受影响项目：
+
+| 公共包 | 默认回归范围 |
+|------|------|
+| `packages/bensz-fonts/` | `projects/NSFC_*`、`projects/paper-*`、`projects/thesis-*`、`projects/cv-*` |
+| `packages/bensz-nsfc/` | 全部 `projects/NSFC_*` |
+| `packages/bensz-paper/` | 全部 `projects/paper-*` |
+| `packages/bensz-thesis/` | 全部 `projects/thesis-*` |
+| `packages/bensz-cv/` | 全部 `projects/cv-*` |
+
+推荐先运行：
+
+```bash
+python3 skills/make-latex-model/scripts/plan_package_regression.py packages/bensz-thesis
+```
+
+该脚本会从 `config.yaml` 读取单一真相来源，输出受影响项目、官方 build 命令，以及在可用时附带 compare 建议。

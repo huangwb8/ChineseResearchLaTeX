@@ -1,14 +1,14 @@
 # make-latex-model 默认配置
 #
 # 说明：
-# 1. 当前仓库的权威工作流是各产品线官方构建脚本，而不是本 skill 自带的 legacy NSFC 脚本。
+# 1. 当前仓库的权威工作流是各产品线官方构建脚本。
 # 2. 本文件既服务于 skill 元信息，也兼容保留的辅助脚本。
 # 3. 如脚本能力与当前 packages/ + projects/ 真实结构冲突，以真实结构为准。
 
 skill_info:
   name: make-latex-model
-  version: 3.0.1
-  description: ChineseResearchLaTeX 模板落地与高保真对齐 skill，适配 NSFC / paper / thesis / cv 四条产品线；优先使用 make-latex-model 触发，也兼容旧写法 make_latex_model；先按 packages/ 与 projects/ 的真实分层判断修改范围，再依据官方构建入口完成样式对齐、基线比对和验收，旧版 NSFC 专用脚本仅作可选辅助。
+  version: 3.1.1
+  description: ChineseResearchLaTeX 模板落地与高保真对齐 skill，适配 NSFC / paper / thesis / cv 四条产品线；优先使用 make-latex-model 触发，也兼容旧写法 make_latex_model；先按 packages/ 与 projects/ 的真实分层判断修改范围，再依据官方构建入口完成样式对齐、基线比对和验收；若必须修改 packages 下公共包，需先生成受影响模板回归计划并完成相关回归；NSFC 专项工具仅在明确属于 NSFC 参数对齐场景时按需使用。
   author: "Bensz Conan"
   category: normal
 
@@ -63,13 +63,13 @@ parameters:
   template:
     type: string
     required: false
-    description: legacy 参数，主要供旧版 NSFC 辅助脚本使用；留空则自动检测
+    description: NSFC 专项参数模板名；主要供 `templates/nsfc/*.yaml` 与相关专项脚本使用；留空则自动检测
     default: null
 
   word_template_year:
     type: string
     required: false
-    description: legacy 参数，仅供旧版 Word/NSFC 辅助脚本参考；不应再作为默认决策依据
+    description: NSFC Word 基线年份提示；仅供专项参数脚本参考，不作为默认决策依据
     pattern: "^\\d{4}$"
     default: null
 
@@ -143,6 +143,9 @@ official_build_commands:
   thesis: "python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <project>"
   cv: "python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir <project> --variant all"
 
+official_compare_commands:
+  thesis: "python packages/bensz-thesis/scripts/thesis_project_tool.py compare --project-dir <project> --baseline-pdf <baseline>"
+
 product_line_rules:
   nsfc:
     display_name: "NSFC"
@@ -169,6 +172,7 @@ product_line_rules:
       - "main.tex"
       - "template.json"
     official_build_key: thesis
+    official_compare_key: thesis
   cv:
     display_name: "CV"
     detect_patterns:
@@ -177,6 +181,65 @@ product_line_rules:
       - "main-zh.tex"
       - "main-en.tex"
     official_build_key: cv
+
+package_change_policy:
+  require_regression_plan_before_edit: true
+  project_layer_bias: true
+  escalation_rules:
+    - "仅当问题确属共享样式、共享字体、profile 或统一构建逻辑时，才从项目层升级到包层。"
+    - "若项目层修复只会复制共享逻辑，应改包层；但要先缩小到最具体的 style / profile / template 文件，而不是直接改共享核心入口。"
+    - "若无法精确判断影响范围，默认扩大回归范围，而不是假设只影响当前模板。"
+  preferred_isolation_order:
+    - "新增或调整模板专属 profile / style 文件。"
+    - "在共享包中增加仅对目标模板生效的条件分支。"
+    - "最后才修改共享核心入口、跨模板通用宏或字体 API。"
+  verification_rules:
+    - "先验证当前目标项目，确认改动确实解决了本次问题。"
+    - "再回归该公共包直接覆盖的全部现有项目。"
+    - "若某个项目已有 baseline，优先补跑官方 compare；没有 compare 入口时至少完成官方 build。"
+    - "未完成相关回归前，不得宣称包层改动安全。"
+  forbidden_actions:
+    - "在没有回归计划的情况下直接修改 packages 下的共享实现。"
+    - "为了赶进度而把共享逻辑复制回单个项目。"
+    - "在未验证其它现有模板前宣称不会产生副作用。"
+  shared_packages:
+    bensz-fonts:
+      project_globs:
+        - "projects/NSFC_*"
+        - "projects/paper-*"
+        - "projects/thesis-*"
+        - "projects/cv-*"
+      prefer_paths:
+        - "packages/bensz-fonts/"
+      rationale: "字体 API 与字体资源会跨 NSFC / paper / thesis / cv 多条产品线生效；若影响范围无法再缩小，默认回归全部现有项目。"
+    bensz-nsfc:
+      project_globs:
+        - "projects/NSFC_*"
+      prefer_paths:
+        - "packages/bensz-nsfc/profiles/"
+        - "packages/bensz-nsfc/templates/"
+      rationale: "NSFC 公共包直接服务三套 NSFC 项目；包层改动默认回归全部现有 NSFC 项目。"
+    bensz-paper:
+      project_globs:
+        - "projects/paper-*"
+      prefer_paths:
+        - "packages/bensz-paper/profiles/"
+        - "packages/bensz-paper/"
+      rationale: "论文公共包负责 PDF / DOCX 共享样式与导出链路；回归时至少验证全部现有 paper 项目。"
+    bensz-thesis:
+      project_globs:
+        - "projects/thesis-*"
+      prefer_paths:
+        - "packages/bensz-thesis/profiles/"
+        - "packages/bensz-thesis/styles/"
+      rationale: "毕业论文公共包同时服务多所学校模板；优先把改动收敛到模板专属 profile / style，再回归全部现有 thesis 项目。"
+    bensz-cv:
+      project_globs:
+        - "projects/cv-*"
+      prefer_paths:
+        - "packages/bensz-cv/profiles/"
+        - "packages/bensz-cv/"
+      rationale: "简历公共包影响中英文双入口与共享样式；包层改动后需回归所有现有 cv 项目。"
 
 validation:
   max_iterations: 3
@@ -253,6 +316,6 @@ baseline:
     - libreoffice
     - quicklook
 
-legacy_helpers:
-  nsfc_only: true
-  note: "validate.sh、templates/nsfc/*.yaml、config_loader 等入口主要服务旧版 NSFC 辅助工作流；只有在目标明确属于 NSFC 且需要旧链路能力时才考虑使用。"
+nsfc_specialized_tools:
+  enabled: true
+  note: "validate.sh、templates/nsfc/*.yaml、config_loader、optimize.py 等入口主要服务 NSFC 参数对齐与专项分析；只有在任务明确属于 NSFC 专项场景时才考虑使用。"

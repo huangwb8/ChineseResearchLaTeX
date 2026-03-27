@@ -1,15 +1,16 @@
 # make-latex-model - ChineseResearchLaTeX 模板落地与高保真对齐
 
-本 README 面向使用者：如何触发并正确使用 `make-latex-model`。当前版本：`v3.0.1`。执行边界与硬性规范见 `SKILL.md`，默认参数见 `config.yaml`。兼容旧写法 `make_latex_model`，但后续文档统一使用连字符名称。
+本 README 面向使用者：如何触发并正确使用 `make-latex-model`。当前版本：`v3.1.1`。执行边界与硬性规范见 `SKILL.md`，默认参数见 `config.yaml`。兼容旧写法 `make_latex_model`，但后续文档统一使用连字符名称。
 
 ## 现在它是干什么的
 
-`make-latex-model` 已从“NSFC 专用 `@config.tex` 微调器”升级为“面向整个 ChineseResearchLaTeX 的模板落地 skill”：
+`make-latex-model` 当前是面向整个 ChineseResearchLaTeX 的模板落地与高保真对齐 skill：
 
 - 支持 `NSFC / paper / thesis / cv` 四条产品线
 - 会先判断应该改 `projects/*` 还是 `packages/bensz-*`
+- 若必须改 `packages/bensz-*`，会先生成受影响模板回归计划，避免把其它现有模板带偏
 - 默认走各产品线官方构建入口验收
-- 自带的旧脚本现在只是辅助工具，不再是唯一工作流
+- 对 `validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 这类脚本，统一按“NSFC 专项工具”理解，而不是把整个 skill 视为它们的延伸
 
 ## 推荐用法
 
@@ -39,6 +40,7 @@
 请使用 make-latex-model skill 处理 projects/thesis-nju-master。
 输入：学校 Word/PDF 模板、当前 baseline、现有 style 文件
 输出：把需要共享的版式沉淀到 packages/bensz-thesis/styles/ 或 profiles/，并验证 thesis_project_tool.py 构建通过。
+如果必须改 `packages/bensz-thesis/`，先生成回归计划并逐个验证现有 thesis 项目。
 ```
 
 ### 3. 论文模板 PDF / DOCX 一起对齐
@@ -65,6 +67,14 @@
 | 影响多个项目共享的样式、profile、构建逻辑、字体接入 | `packages/bensz-*` |
 | 既有项目入口问题，也有共享样式问题 | 项目层 + 包层联动 |
 
+如果判断必须改公共包，额外增加一条硬规则：
+
+```bash
+python3 skills/make-latex-model/scripts/plan_package_regression.py packages/bensz-thesis
+```
+
+先用这个脚本生成“受影响模板 + 官方回归命令”列表，再真正编辑 `packages/`。没有完成这些回归前，不应把结果表述成“不会影响其它模板”。
+
 ## 官方验证命令
 
 ```bash
@@ -80,17 +90,19 @@ python packages/bensz-cv/scripts/cv_project_tool.py build --project-dir projects
 
 ```bash
 python3 skills/make-latex-model/scripts/check_state.py projects/thesis-nju-master
+python3 skills/make-latex-model/scripts/plan_package_regression.py packages/bensz-thesis
 python3 skills/make-latex-model/scripts/analyze_pdf.py <baseline.pdf> --project projects/NSFC_Young
 python3 skills/make-latex-model/scripts/compare_headings.py <baseline.pdf> <main.tex>
 python3 skills/make-latex-model/scripts/compare_pdf_pixels.py <baseline.pdf> <rendered.pdf>
 ```
 
-这些脚本现在更适合做“辅助分析”。其中 `check_state.py` 已支持按产品线识别入口和官方构建命令；其余部分脚本仍偏 legacy NSFC 场景，不应替代各产品线官方构建链路。
+这些脚本现在更适合做“辅助分析”或“NSFC 专项参数任务”。其中 `check_state.py` 已支持按产品线识别入口和官方构建命令；`validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等脚本只应在明确属于 NSFC 专项参数对齐时使用，不应替代各产品线官方构建链路。
 
 ## 重要边界
 
 - 不要默认把所有模板问题都塞回 `extraTex/@config.tex`
 - 不要把共享实现从 `packages/bensz-*` 复制回项目层
+- 改公共包前先生成回归计划，并回归该包覆盖的现有模板
 - `paper` 场景要记得 PDF 与 DOCX 一起看
 - `cv` 场景要记得中文与英文双入口一起看
 - 如果没有用户要求，默认不重写正文语义内容
@@ -102,5 +114,5 @@ python3 skills/make-latex-model/scripts/compare_pdf_pixels.py <baseline.pdf> <re
 - 常见问题：`skills/make-latex-model/docs/FAQ.md`
 - 基线制作：`skills/make-latex-model/docs/BASELINE_GUIDE.md`
 - 产品线规则：`skills/make-latex-model/references/PRODUCT_LINE_RULES.md`
-- legacy 边界：`skills/make-latex-model/references/LEGACY_SCRIPT_SCOPE.md`
+- 脚本职责矩阵：`skills/make-latex-model/references/SCRIPT_SCOPE.md`
 - 辅助脚本：`skills/make-latex-model/scripts/README.md`

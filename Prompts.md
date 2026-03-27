@@ -989,6 +989,16 @@ PlanName = 第三方约束-优化-v202602221613
 
 # make_latex_model
 
+---
+
+skills/make-latex-model 优化：
+
+- 在制作模板时，./packages 里的包应该慎重改，因为很多其它的模板可能会依赖它； 因此，如果当前模板要改packages包的某些部分，千万不能影响其它已经存在的模板。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 目前，projects 里项目的性质已经发生很大的变化， skills/make_latex_model 也要随之变化。 总之，能按要求做出好的模板就行。 你调一下 skills/make_latex_model， 让它适应ChineseResearchLaTeX的变化。 版本号要剧烈变化。
 
 ---
