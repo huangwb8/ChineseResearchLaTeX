@@ -269,20 +269,22 @@
 \newcommand{\njuCoverFieldLabelWidth}{2.2cm}
 \newcommand{\njuCoverTitleWidth}{6.35cm}
 \newcommand{\njuCoverFieldLabelGap}{0.55em}
-\newcommand{\njuCoverTitleVerticalShift}{0.12em}
+\newcommand{\njuCoverTitleVerticalShift}{0.32em}
 \newcommand{\njuCoverFieldRowGap}{0.02em}
 \newcommand{\njuCoverFieldRuleGap}{0.05em}
 \newcommand{\njuCoverFieldContentHeight}{0.74\baselineskip}
 \newdimen\njuCoverFieldMeasuredHeight
 
 \newcommand{\njuCoverTitleBlock}[1]{%
-  \makebox[\njuCoverFieldLabelWidth][s]{\njuCoverLabelFont \strut 论文题目}%
-  \hspace{\njuCoverFieldLabelGap}%
-  \parbox[t]{\njuCoverTitleWidth}{%
-    \vspace*{\njuCoverTitleVerticalShift}%
-    \centering
-    \njuRenderCoverTitleLines{\njuCoverTitleWidth}{#1}%
-  }%
+  \begingroup
+  \setlength{\tabcolsep}{0pt}%
+  \begin{tabular}[t]{@{}>{\centering\arraybackslash}m{\njuCoverFieldLabelWidth}@{\hspace{\njuCoverFieldLabelGap}}>{\centering\arraybackslash}m{\njuCoverTitleWidth}@{}}
+    \njuCoverLabelFont \strut 论文题目 &
+    \raisebox{-\njuCoverTitleVerticalShift}[0pt][0pt]{%
+      \njuRenderCoverTitleLines{\njuCoverTitleWidth}{#1}%
+    }
+  \end{tabular}%
+  \endgroup
 }
 
 \newcommand{\njuCoverFieldWithHeight}[3]{%
