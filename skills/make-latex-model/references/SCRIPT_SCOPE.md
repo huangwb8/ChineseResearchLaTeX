@@ -34,7 +34,7 @@
 - `scripts/run_ai_optimizer.py`
 - `scripts/intelligent_adjust.py`
 - `scripts/sync_config.py`
-- `templates/nsfc/*.yaml`
+- `scripts/core/template_catalog.py`
 - `core/config_loader.py`
 
 这些工具适合下列场景：

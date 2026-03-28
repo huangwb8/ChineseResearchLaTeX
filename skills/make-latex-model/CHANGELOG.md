@@ -12,6 +12,7 @@
 ### Changed（变更）
 
 - 将 `make-latex-model` 升级到 `v3.1.1`，把 `SKILL.md`、`README.md`、`docs/WORKFLOW.md`、`docs/FAQ.md`、`docs/BASELINE_GUIDE.md`、`scripts/README.md` 与根级索引里的历史过渡口径改写为“当前状态直述”：`validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等脚本统一定义为 NSFC 专项工具，而不是把当前 skill 表述成旧版 NSFC 流程的改良或继承。
+- 将 `make-latex-model` 升级到 `v3.1.2`：删除 `templates/nsfc/*.yaml` 这层按年度固化 NSFC 标题文字的模板设计，改为由 `scripts/core/template_catalog.py` 提供稳定结构默认值；`config_loader.py`、`extract_headings.py`、`setup_wizard.py` 与相关 README/索引同步去除对这些 YAML 的硬依赖，项目级 `.template.yaml` 仍可保留局部覆盖能力。
 
 ### Fixed（修复）
 

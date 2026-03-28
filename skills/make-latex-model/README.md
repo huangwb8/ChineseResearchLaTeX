@@ -1,6 +1,6 @@
 # make-latex-model - ChineseResearchLaTeX 模板落地与高保真对齐
 
-本 README 面向使用者：如何触发并正确使用 `make-latex-model`。当前版本：`v3.1.1`。执行边界与硬性规范见 `SKILL.md`，默认参数见 `config.yaml`。兼容旧写法 `make_latex_model`，但后续文档统一使用连字符名称。
+本 README 面向使用者：如何触发并正确使用 `make-latex-model`。当前版本：`v3.1.2`。执行边界与硬性规范见 `SKILL.md`，默认参数见 `config.yaml`。兼容旧写法 `make_latex_model`，但后续文档统一使用连字符名称。
 
 ## 现在它是干什么的
 
@@ -10,7 +10,7 @@
 - 会先判断应该改 `projects/*` 还是 `packages/bensz-*`
 - 若必须改 `packages/bensz-*`，会先生成受影响模板回归计划，避免把其它现有模板带偏
 - 默认走各产品线官方构建入口验收
-- 对 `validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 这类脚本，统一按“NSFC 专项工具”理解，而不是把整个 skill 视为它们的延伸
+- 对 `validate.sh`、`optimize.py`、`core/template_catalog.py` 这类脚本，统一按“NSFC 专项工具”理解，而不是把整个 skill 视为它们的延伸
 
 ## 推荐用法
 
@@ -96,7 +96,7 @@ python3 skills/make-latex-model/scripts/compare_headings.py <baseline.pdf> <main
 python3 skills/make-latex-model/scripts/compare_pdf_pixels.py <baseline.pdf> <rendered.pdf>
 ```
 
-这些脚本现在更适合做“辅助分析”或“NSFC 专项参数任务”。其中 `check_state.py` 已支持按产品线识别入口和官方构建命令；`validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等脚本只应在明确属于 NSFC 专项参数对齐时使用，不应替代各产品线官方构建链路。
+这些脚本现在更适合做“辅助分析”或“NSFC 专项参数任务”。其中 `check_state.py` 已支持按产品线识别入口和官方构建命令；`validate.sh`、`optimize.py`、`core/template_catalog.py` 等脚本只应在明确属于 NSFC 专项参数对齐时使用，不应替代各产品线官方构建链路。
 
 ## 重要边界
 

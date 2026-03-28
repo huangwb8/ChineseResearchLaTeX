@@ -205,7 +205,7 @@ class NSFCTemplate(TemplateBase):
 
         heading_texts = self.style_reference.get("heading_texts", {})
         if not heading_texts:
-            result.add_warning("No heading texts defined in template config")
+            result.add_warning("No built-in heading texts defined; compare against a real Word/PDF baseline instead")
             return result
 
         headings = self.extract_headings(source_file)

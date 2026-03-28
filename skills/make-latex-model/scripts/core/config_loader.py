@@ -5,7 +5,7 @@
 
 支持三层配置合并（优先级从低到高）:
 1. 技能默认配置 (skills/make-latex-model/config.yaml)
-2. 模板基础配置 (templates/{template}/{template}.yaml)
+2. 内置模板默认值（代码内稳定默认结构，不固化年度文案）
 3. 项目本地配置 (projects/{project}/.template.yaml)
 """
 
@@ -13,6 +13,12 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import copy
+
+from .template_catalog import (
+    detect_template_name,
+    get_template_defaults,
+    normalize_template_name,
+)
 
 
 class ConfigLoader:
@@ -29,11 +35,10 @@ class ConfigLoader:
         """
         self.skill_dir = Path(skill_dir)
         self.project_path = Path(project_path) if project_path else None
-        self.template_name = template_name
+        self.template_name = normalize_template_name(template_name)
 
         # 配置文件路径
         self.default_config_path = self.skill_dir / "config.yaml"
-        self.templates_dir = self.skill_dir / "templates"
 
     def load(self) -> Dict[str, Any]:
         """
@@ -44,7 +49,7 @@ class ConfigLoader:
         """
         # 加载三层配置
         default_config = self._load_default_config()
-        template_config = self._load_template_config()
+        template_config = self._load_template_defaults()
         local_config = self._load_local_config()
 
         # 合并配置（优先级：local > template > default）
@@ -68,44 +73,15 @@ class ConfigLoader:
         """加载技能默认配置"""
         return self._load_yaml(self.default_config_path)
 
-    def _load_template_config(self) -> Dict[str, Any]:
-        """加载模板配置"""
+    def _load_template_defaults(self) -> Dict[str, Any]:
+        """加载内置模板默认值。"""
         if not self.template_name:
-            # 尝试自动检测模板
             self.template_name = self._detect_template()
 
         if not self.template_name:
             return {}
 
-        # 支持两种格式: "nsfc/young" 或 "nsfc.young"
-        template_path = self.template_name.replace(".", "/")
-        config_path = self.templates_dir / f"{template_path}.yaml"
-
-        if not config_path.exists():
-            print(f"Warning: Template config not found: {config_path}")
-            return {}
-
-        config = self._load_yaml(config_path)
-
-        # 处理配置继承
-        if "template" in config and "inherits" in config["template"]:
-            parent_template = config["template"]["inherits"]
-            parent_config = self._load_inherited_template(parent_template)
-            # 子配置覆盖父配置
-            return self._merge_configs([parent_config, config])
-
-        return config
-
-    def _load_inherited_template(self, parent_template: str) -> Dict[str, Any]:
-        """加载继承的父模板配置"""
-        parent_path = parent_template.replace(".", "/")
-        config_path = self.templates_dir / f"{parent_path}.yaml"
-
-        if not config_path.exists():
-            print(f"Warning: Parent template config not found: {config_path}")
-            return {}
-
-        return self._load_yaml(config_path)
+        return get_template_defaults(self.template_name)
 
     def _load_local_config(self) -> Dict[str, Any]:
         """加载项目本地配置"""
@@ -176,19 +152,14 @@ class ConfigLoader:
         local_config_path = self.project_path / ".template.yaml"
         if local_config_path.exists():
             config = self._load_yaml(local_config_path)
-            if "template" in config and "name" in config["template"]:
-                return config["template"]["name"]
+            template_block = config.get("template") or {}
+            if template_block.get("name"):
+                return normalize_template_name(template_block["name"])
+            project_block = config.get("project") or {}
+            if project_block.get("template"):
+                return normalize_template_name(project_block["template"])
 
-        # 方法2: 根据项目目录名推断
-        project_name = self.project_path.name
-        if "NSFC_Young" in project_name or "nsfc_young" in project_name.lower():
-            return "nsfc/young"
-        elif "NSFC_General" in project_name or "nsfc_general" in project_name.lower():
-            return "nsfc/general"
-        elif "NSFC_Local" in project_name or "nsfc_local" in project_name.lower():
-            return "nsfc/local"
-
-        return None
+        return detect_template_name(self.project_path)
 
 
 def load_config(skill_dir: Path, project_path: Optional[Path] = None, template_name: Optional[str] = None) -> Dict[str, Any]:

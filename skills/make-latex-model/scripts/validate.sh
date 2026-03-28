@@ -220,7 +220,7 @@ echo ""
 
 # 检查行距设置
 if grep -q "baselinestretch.*1\.5" "$CONFIG"; then
-  pass "行距设置: baselinestretch{1.5} (符合 Word 2026 模板标准)"
+  pass "行距设置: baselinestretch{1.5} (符合常见 NSFC 基线)"
 elif grep -q "baselinestretch" "$CONFIG"; then
   LINE_STRETCH=$(grep "baselinestretch" "$CONFIG" | sed 's/.*{\(.*\)}.*/\1/')
   warn "行距设置: baselinestretch{$LINE_STRETCH} (建议为 1.5)"
@@ -334,7 +334,7 @@ if grep -q "\\\\setlength{\\\\NSFCTitleIndent}{28pt}" "$CONFIG"; then
 elif grep -q "\\\\setlength{\\\\NSFCTitleIndent}" "$CONFIG"; then
   info "Section 标题缩进: 已检测到 NSFCTitleIndent（需人工核对具体值）"
 elif grep -q "titleformat.*section.*hspace.*1.45em" "$CONFIG"; then
-  pass "Section 标题缩进: 1.45em (符合 2026 模板)"
+  pass "Section 标题缩进: 1.45em (符合常见 NSFC 基线)"
 elif grep -q "titleformat.*section" "$CONFIG"; then
   info "Section 标题缩进: 需人工检查"
 else
@@ -423,7 +423,7 @@ echo ""
 info "视觉相似度检查需要人工对比 PDF 与 Word 模板"
 echo ""
 echo "建议步骤:"
-echo "  1. 在 Microsoft Word 中打开 2026 年模板"
+echo "  1. 在 Microsoft Word 中打开当前验收基线对应的 Word 模板"
 echo "  2. 导出为 PDF (不能使用 QuickLook)"
 echo "  3. 对比 LaTeX 生成的 PDF 与 Word PDF"
 echo "  4. 检查每行字数、换行位置是否一致"

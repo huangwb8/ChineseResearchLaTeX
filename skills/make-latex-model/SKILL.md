@@ -1,6 +1,6 @@
 ---
 name: make-latex-model
-version: 3.1.1
+version: 3.1.2
 author: Bensz Conan
 metadata:
   author: Bensz Conan

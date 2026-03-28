@@ -8,16 +8,16 @@
     # 从 Word 文档提取
     python scripts/extract_headings.py word --file template.docx
 
-    # 从 LaTeX 文件提取（使用默认配置）
+    # 从 LaTeX 文件提取
     python scripts/extract_headings.py latex --file main.tex
 
-    # 从 LaTeX 文件提取（指定模板配置）
-    python scripts/extract_headings.py latex --file main.tex --config templates/nsfc/young.yaml
+    # 从 LaTeX 文件提取（指定额外配置）
+    python scripts/extract_headings.py latex --file main.tex --config custom_extract.yaml
 
     # 输出为 JSON
     python scripts/extract_headings.py latex --file main.tex --format json
 
-    # 指定项目路径（自动检测模板）
+    # 指定项目路径（自动识别结构默认值）
     python scripts/extract_headings.py latex --file main.tex --project projects/NSFC_Young
 """
 
@@ -35,8 +35,90 @@ sys.path.insert(0, str(SKILL_DIR))
 
 try:
     from scripts.core.config_loader import ConfigLoader
+    from scripts.core.latex_format_parser import LatexFormatParser
 except ImportError:
     ConfigLoader = None
+    LatexFormatParser = None
+
+
+def _extract_heading_argument(line: str, command: str) -> Optional[str]:
+    """从单行中提取位于行首的标题命令参数，支持嵌套花括号。"""
+    match = re.match(rf'^\s*\{{?\s*\\{command}\*?\s*', line)
+    if not match:
+        return None
+
+    brace_index = match.end()
+    while brace_index < len(line) and line[brace_index].isspace():
+        brace_index += 1
+
+    if brace_index >= len(line) or line[brace_index] != "{":
+        return None
+
+    if LatexFormatParser:
+        extracted, end_index = LatexFormatParser._extract_braced_arg(line, brace_index)
+        if end_index > brace_index:
+            return extracted
+        return None
+
+    depth = 1
+    cursor = brace_index + 1
+    start = cursor
+    while cursor < len(line) and depth > 0:
+        char = line[cursor]
+        if char == "\\" and cursor + 1 < len(line):
+            cursor += 2
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        cursor += 1
+
+    if depth != 0:
+        return None
+    return line[start:cursor - 1]
+
+
+def _unwrap_texorpdfstring(text: str) -> str:
+    """将 \\texorpdfstring{A}{B} 还原为正文可见部分 A。"""
+    token = r"\texorpdfstring"
+    cursor = 0
+
+    while True:
+        start = text.find(token, cursor)
+        if start == -1:
+            return text
+
+        first_open = start + len(token)
+        while first_open < len(text) and text[first_open].isspace():
+            first_open += 1
+
+        if first_open >= len(text) or text[first_open] != "{":
+            cursor = start + len(token)
+            continue
+
+        if LatexFormatParser:
+            first_arg, first_end = LatexFormatParser._extract_braced_arg(text, first_open)
+        else:
+            first_arg, first_end = "", first_open
+        if first_end <= first_open:
+            cursor = start + len(token)
+            continue
+
+        second_open = first_end
+        while second_open < len(text) and text[second_open].isspace():
+            second_open += 1
+
+        if second_open < len(text) and text[second_open] == "{":
+            if LatexFormatParser:
+                _, second_end = LatexFormatParser._extract_braced_arg(text, second_open)
+            else:
+                second_end = second_open
+        else:
+            second_end = second_open
+
+        text = text[:start] + first_arg + text[second_end:]
+        cursor = start + len(first_arg)
 
 
 def extract_from_latex(tex_file: Path, config: Optional[Dict] = None) -> Dict[str, str]:
@@ -50,65 +132,30 @@ def extract_from_latex(tex_file: Path, config: Optional[Dict] = None) -> Dict[st
     Returns:
         标题字典，如 {"section_1": "（一）立项依据与研究内容", "subsection_1_1": "1. 项目的立项依据"}
     """
-    headings = {}
+    headings: Dict[str, str] = {}
 
     with open(tex_file, 'r', encoding='utf-8') as f:
-        content = f.read()
+        lines = f.readlines()
 
-    # 如果提供了配置，使用配置中的提取规则
-    if config and "heading_structure" in config:
-        extraction_rules = config["heading_structure"].get("extraction", {})
-        patterns = extraction_rules.get("patterns", {})
+    section_num = 0
+    subsection_num = 0
 
-        # 使用配置的正则表达式
-        section_pattern = patterns.get("section", r'\\section\*?\{([^}]+)\}')
-        subsection_pattern = patterns.get("subsection", r'\\subsection\*?\{([^}]+)\}')
-    else:
-        # 默认模式
-        section_pattern = r'\\section\{([^}]+)\}'
-        subsection_pattern = r'\\subsection\{([^}]+)\}'
+    for line in lines:
+        section_text = _extract_heading_argument(line, "section")
+        if section_text is not None:
+            section_num += 1
+            subsection_num = 0
+            section_clean = clean_latex_text(section_text)
+            headings[f'section_{section_num}'] = section_clean
+            continue
 
-    # 提取 \section{} 标题
-    sections = re.findall(section_pattern, content)
-
-    for i, section in enumerate(sections, start=1):
-        # 清理格式标记
-        section_clean = clean_latex_text(section)
-        headings[f'section_{i}'] = section_clean
-
-    # 提取 \subsection{} 标题
-    subsections = re.findall(subsection_pattern, content)
-
-    section_num = 1
-    subsection_num = 1
-
-    for subsection in subsections:
-        subsection_clean = clean_latex_text(subsection)
-
-        # 判断属于哪个 section（根据 LaTeX 文件顺序）
-        # 如果有配置，使用配置中的 max_subsections
-        if config:
-            max_subsections = 5  # 默认值
-            heading_structure = config.get("heading_structure", {})
-            sections_config = heading_structure.get("sections", [])
-
-            # 尝试找到对应的 section 配置
-            for section_config in sections_config:
-                if section_config.get("id") == f"section_{section_num}":
-                    max_subsections = section_config.get("max_subsections", 5)
-                    break
-
-            if subsection_num > max_subsections:
-                section_num += 1
-                subsection_num = 1
-        else:
-            # 简化处理：假设每个 section 最多 5 个 subsection
-            if subsection_num > 5:
-                section_num += 1
-                subsection_num = 1
-
-        headings[f'subsection_{section_num}_{subsection_num}'] = subsection_clean
-        subsection_num += 1
+        subsection_text = _extract_heading_argument(line, "subsection")
+        if subsection_text is not None:
+            if section_num == 0:
+                section_num = 1
+            subsection_num += 1
+            subsection_clean = clean_latex_text(subsection_text)
+            headings[f'subsection_{section_num}_{subsection_num}'] = subsection_clean
 
     return headings
 
@@ -123,9 +170,16 @@ def clean_latex_text(text: str) -> str:
     Returns:
         清理后的纯文本
     """
+    text = _unwrap_texorpdfstring(text)
+    text = re.sub(r'\\punctstyle\{[^}]*\}', '', text)
+
     # 移除常见的 LaTeX 格式标记
-    text = re.sub(r'\\[a-zA-Z]+', '', text)  # 移除命令
-    text = re.sub(r'\{|\}', '', text)  # 移除花括号
+    if LatexFormatParser:
+        text = LatexFormatParser.clean_latex_text(text)
+    else:
+        text = re.sub(r'\\[a-zA-Z]+', '', text)  # 移除命令
+        text = re.sub(r'\{|\}', '', text)  # 移除花括号
+
     text = re.sub(r'\s+', ' ', text)  # 合并空白字符
     text = text.strip()
 
@@ -161,7 +215,7 @@ def extract_from_word(doc_file: Path) -> Dict[str, str]:
 
     section_num = 1
     subsection_num = 1
-    section_count = 1
+    section_count = 0
 
     for paragraph in doc.paragraphs:
         style_name = paragraph.style.name
@@ -193,10 +247,10 @@ def main():
   # 从 LaTeX 文件提取
   %(prog)s latex --file main.tex
 
-  # 指定模板配置
-  %(prog)s latex --file main.tex --config templates/nsfc/young.yaml
+  # 指定额外配置
+  %(prog)s latex --file main.tex --config custom_extract.yaml
 
-  # 指定项目（自动检测模板）
+  # 指定项目（自动识别结构默认值）
   %(prog)s latex --file main.tex --project projects/NSFC_Young
         """
     )
@@ -207,8 +261,8 @@ def main():
     parser.add_argument('--output', type=Path, help='输出文件路径（可选）')
 
     # 新增参数
-    parser.add_argument('--config', type=Path, help='模板配置文件路径（YAML）')
-    parser.add_argument('--project', type=Path, help='项目路径（用于自动检测模板）')
+    parser.add_argument('--config', type=Path, help='额外 YAML 配置文件路径（可用于自定义提取正则）')
+    parser.add_argument('--project', type=Path, help='项目路径（用于自动识别模板类型）')
 
     args = parser.parse_args()
 

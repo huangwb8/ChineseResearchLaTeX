@@ -15,11 +15,15 @@
 """
 
 import argparse
-import json
-import shutil
 import sys
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+
+SCRIPT_DIR = Path(__file__).parent
+SKILL_DIR = SCRIPT_DIR.parent
+sys.path.insert(0, str(SKILL_DIR))
+
+from scripts.core.template_catalog import get_template_catalog
 
 
 class SetupWizard:
@@ -28,9 +32,9 @@ class SetupWizard:
     def __init__(self, base_dir: Path):
         self.base_dir = base_dir
         self.skill_dir = base_dir / "skills" / "make-latex-model"
-        self.templates_dir = self.skill_dir / "templates"
         self.projects_dir = base_dir / "projects"
         self.answers = {}
+        self.template_catalog = get_template_catalog()
 
     def print_header(self, title: str):
         """打印标题"""
@@ -100,32 +104,17 @@ class SetupWizard:
 
         print("\n请选择要使用的 LaTeX 模板:")
 
-        templates = []
-        if self.templates_dir.exists():
-            for yaml_file in self.templates_dir.glob("*/*.yaml"):
-                template_name = yaml_file.parent.name + "/" + yaml_file.stem
-                templates.append(template_name)
+        templates = sorted(self.template_catalog.keys())
 
         if not templates:
             print("⚠️  未找到可用模板")
             return None
 
-        # 读取模板信息
-        template_info = {}
-        for template in templates:
-            yaml_file = self.templates_dir / template.replace("/", "/") + ".yaml"
-            if yaml_file.exists():
-                try:
-                    import yaml
-                    with open(yaml_file, "r", encoding="utf-8") as f:
-                        config = yaml.safe_load(f)
-                        display_name = config.get("template", {}).get("display_name", template)
-                        template_info[template] = display_name
-                except:
-                    template_info[template] = template
-
-        # 显示选项
-        options = [template_info.get(t, t) for t in templates]
+        template_info = {
+            template: self.template_catalog.get(template, {}).get("template", {}).get("display_name", template)
+            for template in templates
+        }
+        options = [template_info[t] for t in templates]
         selected_display = self.ask("选择模板", default=options[0], options=options)
 
         # 返回模板名称
@@ -239,16 +228,6 @@ class SetupWizard:
         (project_path / "template").mkdir(parents=True, exist_ok=True)
         (project_path / ".make_latex_model" / "baselines").mkdir(parents=True, exist_ok=True)
 
-        # 复制模板文件
-        template = config["project"]["template"]
-        template_dir = self.templates_dir / template.replace("/", "/")
-
-        if template_dir.exists():
-            # 复制模板配置文件
-            for file in template_dir.glob("*"):
-                if file.is_file() and not file.name.startswith("."):
-                    shutil.copy2(file, project_path / file.name)
-
         # 创建 .template.yaml
         import yaml
         with open(project_path / ".template.yaml", "w", encoding="utf-8") as f:
@@ -269,9 +248,9 @@ class SetupWizard:
 
         print(f"\n项目路径: {project_path}")
         print("\n下一步:")
-        print("  1. 将 Word 模板放入 template/ 目录")
-        print("  2. 运行优化: ./scripts/optimize.sh --project " + config['project']['name'])
-        print("  3. 编辑 extraTex/*.tex 文件添加内容")
+        print("  1. 将 baseline PDF 或 Word 模板放入 template/ 目录")
+        print("  2. 先运行对应产品线的官方构建脚本确认入口可用")
+        print("  3. 再按需使用 make-latex-model 的辅助脚本补充分析")
 
 
 def main():

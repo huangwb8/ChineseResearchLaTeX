@@ -987,7 +987,15 @@ PlanName = 第三方约束-优化-v202602221613
 请你联网调研一下日本演员佐佐木希的发展路程。假设你要以此为题材填写 projects/NSFC_Young 。 请使用 skills/complete_example 辅助工作。 最后的排版，PDF要紧凑、美观，大致维持在8页左右。
 ```
 
-# make_latex_model
+# make-latex-model
+
+---
+
+skills/make-latex-model 优化：
+
+- skills/make-latex-model/templates/nsfc 这里的设计没必要； 因为每年nsfc的文字都可能不一样。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 

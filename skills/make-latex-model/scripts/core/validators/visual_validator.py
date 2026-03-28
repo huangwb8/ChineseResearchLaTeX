@@ -133,7 +133,7 @@ class VisualValidator(ValidatorBase):
 
                 # 提供视觉对比建议
                 result.add_warning("⚠️ 需要人工对比 Word 模板:")
-                result.add_warning("  1. 在 Microsoft Word 中打开 2026 年模板")
+                result.add_warning("  1. 在 Microsoft Word 中打开当前验收基线对应的 Word 模板")
                 result.add_warning("  2. 导出为 PDF (不能使用 QuickLook)")
                 result.add_warning("  3. 对比 LaTeX 生成的 PDF 与 Word PDF")
                 result.add_warning("  4. 检查每行字数、换行位置是否一致")

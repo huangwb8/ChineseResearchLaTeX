@@ -7,7 +7,7 @@
 
 skill_info:
   name: make-latex-model
-  version: 3.1.1
+  version: 3.1.2
   description: ChineseResearchLaTeX 模板落地与高保真对齐 skill，适配 NSFC / paper / thesis / cv 四条产品线；优先使用 make-latex-model 触发，也兼容旧写法 make_latex_model；先按 packages/ 与 projects/ 的真实分层判断修改范围，再依据官方构建入口完成样式对齐、基线比对和验收；若必须修改 packages 下公共包，需先生成受影响模板回归计划并完成相关回归；NSFC 专项工具仅在明确属于 NSFC 参数对齐场景时按需使用。
   author: "Bensz Conan"
   category: normal
@@ -63,7 +63,7 @@ parameters:
   template:
     type: string
     required: false
-    description: NSFC 专项参数模板名；主要供 `templates/nsfc/*.yaml` 与相关专项脚本使用；留空则自动检测
+    description: 模板标识；主要供专项脚本选择内置结构默认值与项目级 `.template.yaml` 覆盖，留空则自动检测
     default: null
 
   word_template_year:
@@ -318,4 +318,4 @@ baseline:
 
 nsfc_specialized_tools:
   enabled: true
-  note: "validate.sh、templates/nsfc/*.yaml、config_loader、optimize.py 等入口主要服务 NSFC 参数对齐与专项分析；只有在任务明确属于 NSFC 专项场景时才考虑使用。"
+  note: "validate.sh、core/template_catalog.py、config_loader、optimize.py 等入口主要服务 NSFC 参数对齐与专项分析；其中内置模板目录只保留稳定结构信息，不再固化年度标题文案。"

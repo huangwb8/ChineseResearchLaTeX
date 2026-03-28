@@ -13,6 +13,7 @@
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：将 NJU 硕士论文封面“论文题目”区恢复为稳定的 `tabular + m` 对齐骨架，并为右侧双行题目块新增独立视觉下移量，使其更接近官方示例的标签/题目相对位置，同时避免影响其它 thesis 模板
 - 优化 `skills/make-latex-model/` 到 `v3.1.0`：新增 `scripts/plan_package_regression.py` 作为公共包修改前的确定性回归计划入口，并把“先生成受影响模板回归矩阵、优先收敛到模板专属 style/profile、再回归该公共包覆盖的全部现有模板”的包层安全门禁同步到 Skill 文档、配置与根级索引
 - 继续优化 `skills/make-latex-model/` 到 `v3.1.1`：删除“当前 skill 是旧版 NSFC 脚本改良/继承”的叙事，新增 `references/SCRIPT_SCOPE.md` 用当前职责矩阵重写脚本边界，并将 `validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等入口统一定义为 NSFC 专项工具
+- 继续优化 `skills/make-latex-model/` 到 `v3.1.2`：移除 `templates/nsfc/*.yaml` 这层按年度固化 NSFC 标题文字的设计，新增 `scripts/core/template_catalog.py` 作为稳定结构默认值来源，并同步重构 `config_loader.py`、`extract_headings.py`、`setup_wizard.py` 与根级索引，避免 skill 再依赖易过期文案
 - 同步 `skills/make-latex-model/` 与 `skills/transfer-old-latex-to-new/` 的对外名称、README/索引链接与示例命令，统一改为当前连字符命名，并保留旧别名的兼容说明。
 - 按两个 skill 当前 `SKILL.md` frontmatter 回写版本号：`make-latex-model` 统一为 `v3.0.1`，`transfer-old-latex-to-new` 统一为 `v2.0.0`；相关 `config.yaml`、Skill README、Skill CHANGELOG 与根级 README 已同步。
 - 优化 `skills/make-latex-model/`：将产品线判定与 legacy 脚本边界下沉到 `references/`，把 `check_state.py` 改为按 `config.yaml` 的 `product_line_rules` 判断 `NSFC / paper / thesis / cv` 初始化状态与官方构建命令，并将该 skill 版本提升到 `v3.0.1`

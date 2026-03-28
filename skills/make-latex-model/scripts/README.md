@@ -74,7 +74,7 @@ python3 skills/make-latex-model/scripts/optimize_heading_linebreaks.py <main.tex
 
 ## NSFC 专项工具
 
-以下能力主要服务 NSFC 参数对齐、批量校验或基于 `templates/nsfc/*.yaml` 的专项任务：
+以下能力主要服务 NSFC 参数对齐、批量校验或基于内置 NSFC 结构默认值的专项任务：
 
 - `validate.sh` / `validate.bat`
 - `benchmark.sh` / `benchmark.bat`
@@ -84,7 +84,7 @@ python3 skills/make-latex-model/scripts/optimize_heading_linebreaks.py <main.tex
 - `run_ai_optimizer.py`
 - `intelligent_adjust.py`
 - `sync_config.py`
-- `templates/nsfc/*.yaml`
+- `core/template_catalog.py`
 - `core/config_loader.py`
 
 如果你的目标是：
