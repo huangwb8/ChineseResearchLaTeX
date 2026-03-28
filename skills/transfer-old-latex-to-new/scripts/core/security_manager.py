@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 
 class SecurityError(Exception):
@@ -27,7 +27,8 @@ class SecurityManager:
     """
     迁移技能安全管理：
     - 禁止修改系统文件：main.tex、extraTex/@config.tex、*.cls、*.sty
-    - 仅允许写入：extraTex/*.tex(排除@config)、references/*.bib、以及本 skill runs/**
+    - 默认仅允许写入：extraTex/*.tex(排除@config)、references/*.bib、以及本 skill runs/**
+    - packages/ 公共包源码与 projects/ 模板骨架一律视为只读
     """
 
     SYSTEM_BLACKLIST_REL = {
@@ -49,17 +50,42 @@ class SecurityManager:
         return False
 
     @staticmethod
-    def for_new_project(new_project: Path, runs_root: Path) -> "SecurityManager":
+    def _allowed_patterns_from_config(config: Optional[Dict[str, Any]]) -> List[re.Pattern[str]]:
+        default_patterns = [
+            re.compile(r"^extraTex/(?!@config\.tex$).+\.tex$"),
+            re.compile(r"^references/.+\.bib$"),
+        ]
+        if not isinstance(config, dict):
+            return default_patterns
+
+        protection = config.get("template_protection") or {}
+        if not isinstance(protection, dict):
+            return default_patterns
+
+        raw_patterns = protection.get("allowed_write_patterns")
+        if not isinstance(raw_patterns, list) or not raw_patterns:
+            return default_patterns
+
+        compiled: List[re.Pattern[str]] = []
+        for item in raw_patterns:
+            if not isinstance(item, str) or not item.strip():
+                continue
+            compiled.append(re.compile(item))
+        return compiled or default_patterns
+
+    @staticmethod
+    def for_new_project(
+        new_project: Path,
+        runs_root: Path,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> "SecurityManager":
         new_project = new_project.resolve()
         runs_root = runs_root.resolve()
         return SecurityManager(
             allowed_writes=[
                 AllowedWrite(
                     root=new_project,
-                    patterns=[
-                        re.compile(r"^extraTex/(?!@config\.tex$).+\.tex$"),
-                        re.compile(r"^references/.+\.bib$"),
-                    ],
+                    patterns=SecurityManager._allowed_patterns_from_config(config),
                 ),
                 AllowedWrite(
                     root=runs_root,
@@ -80,7 +106,7 @@ class SecurityManager:
             rel_str = str(rel).replace("\\", "/")
             if self._is_blacklisted(rel_str):
                 raise SystemFileModificationError(
-                    f"禁止写入系统文件: {allowed.root}/{rel_str}（只允许修改 extraTex/*.tex(排除@config.tex)、references/*.bib）"
+                    f"禁止写入系统文件: {allowed.root}/{rel_str}（只允许修改正文内容层，如 extraTex/*.tex(排除@config.tex)、references/*.bib）"
                 )
 
             if any(p.match(rel_str) for p in allowed.patterns):
@@ -89,5 +115,5 @@ class SecurityManager:
         raise SecurityError(
             "写入路径不在白名单中: "
             f"{file_path}\n"
-            "允许范围：new_project/extraTex/*.tex(排除@config.tex)、new_project/references/*.bib、以及 runs/**。"
+            "允许范围：new_project 正文内容层（默认 extraTex/*.tex 排除 @config.tex、references/*.bib）以及 runs/**。"
         )

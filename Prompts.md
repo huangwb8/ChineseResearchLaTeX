@@ -1028,6 +1028,16 @@ skills/make-latex-model 优化：
 
 # transfer_old_latex_to_new
 
+---
+
+skills/transfer-old-latex-to-new 优化
+
+- 本skill工作的时候，绝不能修改packages/projects 里的latex包的源代码或模板的样式，只是把正文内容放到合适的部位； 目前可能没有类似的约束。
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。要保证最终成品能正常、稳定、高效地工作。然后，使用 auto-test-skills skill对本skill进行优化。
+
+---
+
 目前，projects 里项目的性质已经发生很大的变化， skills/transfer_old_latex_to_new 也要随之变化。 总之，能按要求做出好的模板就行。 你调一下 skills/transfer_old_latex_to_new， 让它适应ChineseResearchLaTeX的变化。 版本号要剧烈变化。我还有一些要求：
 
 - 对于输入和输出不要做什么特别的限制，完全由ai来托管。 我希望skill可以适应任何类型的输入； 并且输出时，由ai完全决定该怎么输出。

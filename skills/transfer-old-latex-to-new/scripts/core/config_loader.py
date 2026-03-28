@@ -9,6 +9,16 @@ from typing import Any, Dict, List, Optional
 
 
 DEFAULT_CONFIG: Dict[str, Any] = {
+    "template_protection": {
+        "forbid_package_source_edits": True,
+        "forbid_project_template_edits": True,
+        "on_template_gap": "report_instead_of_patch",
+        "allow_resource_writes": False,
+        "allowed_write_patterns": [
+            r"^extraTex/(?!@config\.tex$).+\.tex$",
+            r"^references/.+\.bib$",
+        ],
+    },
     "migration": {
         "max_rounds": 5,
         "min_rounds": 3,
@@ -18,6 +28,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             "method": "placeholder",
             "placeholder_text": "\\textbf{[此部分内容需要补充]}",
         },
+        "figure_handling": "skip",
     },
     "quality_thresholds": {
         "min_similarity": 0.7,

@@ -1,26 +1,35 @@
 # transfer-old-latex-to-new 技能配置文件
-# version: 2.0.0
+# version: 2.1.0
 # last_updated: 2026-03-28
 #
 # 说明：
-# - 当前 skill 的主心智已升级为“适配 ChineseResearchLaTeX 当前结构的 AI 迁移/重构编排”
+# - 当前 skill 的主心智已收敛为“把旧材料内容迁移到现有模板项目的内容层”
 # - 本文件仍主要服务 legacy CLI 与可选脚本入口
-# - 输入/输出的主约束不再由这里硬编码决定，而由 AI 按任务自主托管
+# - 核心安全边界：不得修改 packages/ 公共包源码，也不得修改 projects/ 内模板骨架或样式
 # - 带有 NSFC 年份/章节假设的节点属于 legacy 增强模块，不代表整个 skill 只服务 NSFC
 
 skill_info:
   name: transfer-old-latex-to-new
-  version: 2.0.0
-  description: "将旧项目、旧模板或多源材料迁移/整理/重构到当前 ChineseResearchLaTeX 的合适结构中；优先使用 transfer-old-latex-to-new 触发，也兼容旧别名 migrating-latex-templates；AI 自主判断输入解析、目标落层与输出形态，legacy CLI 仅作为可选后备"
+  version: 2.1.0
+  description: "将旧项目、旧模板或多源材料中的正文内容迁移到当前 ChineseResearchLaTeX 现有模板项目的内容层；优先使用 transfer-old-latex-to-new 触发，也兼容旧别名 migrating-latex-templates；只允许写入正文与参考文献文件，绝不能修改 packages/ 公共包源码或 projects/ 模板样式骨架"
   author: "Bensz Conan"
   category: writing
 
 orchestration:
   input_contract: "flexible"         # 任意合理输入皆可，由 AI 自主归并理解
-  output_contract: "ai_managed"      # 交付物不设固定清单，由 AI 根据任务决定
+  output_contract: "content_only"    # 交付物仅限内容层与必要说明，不做模板重构
   source_edit_policy: "read_only_by_default"  # 默认不原地改写用户源材料
-  repo_awareness: "current_packages_projects" # 以当前 packages/ 与 projects/ 真实分层为准
+  repo_awareness: "existing_project_content_slots" # 以现有项目的正文承载位点为准
   legacy_cli_mode: "optional"        # run.py / migrate.sh 仅作为可选硬编码后备
+
+template_protection:
+  forbid_package_source_edits: true
+  forbid_project_template_edits: true
+  on_template_gap: "report_instead_of_patch"
+  allow_resource_writes: false
+  allowed_write_patterns:
+    - "^extraTex/(?!@config\\.tex$).+\\.tex$"
+    - "^references/.+\\.bib$"
 
 # =============================================================================
 # 预设模板（简化配置使用）
@@ -85,11 +94,11 @@ migration:
   reference_handling: "preserve"   # preserve(保留原样)/update(更新编号)/recreate(重建)
 
   # 图片与附件处理
-  figure_handling: "copy"           # copy(复制)/link(软链接)/skip(跳过)
+  figure_handling: "skip"           # copy(复制)/link(软链接)/skip(跳过)
   # 说明：
-  # - copy: 将旧项目的资源文件（图片、代码等）复制到新项目（默认，推荐）
-  # - link: 在新项目中创建指向旧项目资源的软链接
-  # - skip: 跳过资源文件处理，只迁移 .tex 内容文件
+  # - copy: 将旧项目的资源文件复制到新项目（仅在明确放开内容资源写入时使用）
+  # - link: 在新项目中创建指向旧项目资源的软链接（同样受模板保护策略约束）
+  # - skip: 跳过资源文件处理，只迁移正文与参考文献（默认，推荐）
 
 # =============================================================================
 # 质量阈值配置
@@ -223,13 +232,13 @@ decision_rules:
   strategy_decision:
     conservative:
       condition: "high_risk_issues == 0"  # 无高风险问题
-      description: "保守策略：优先保持原结构，最小化改动"
+      description: "保守策略：优先保持现有模板骨架不变，只迁移内容"
     smart:
       condition: "one_to_many_ratio + many_to_one_ratio >= 0.2"  # 存在复杂映射
-      description: "智能策略：AI自主决策拆分/合并策略"
+      description: "智能策略：AI只在正文内容层做拆分/合并映射"
     aggressive:
       condition: "new_added_count >= 5"  # 大量新增内容
-      description: "激进策略：大胆重组，最大化内容优化"
+      description: "激进策略：仅在单个正文文件内部做较大幅度内容整编，仍不触碰模板骨架"
 
   # 备份决策
   backup_decision:
@@ -297,10 +306,10 @@ mapping:
       description: "顺序拼接，添加过渡段"
       priority: 1
     semantic_reorder:
-      description: "按语义重新排序后合并"
+      description: "仅在目标正文文件内部按语义重新排序后合并"
       priority: 2
     smart_merge:
-      description: "AI智能重组内容"
+      description: "AI 在正文文件内部做智能整编"
       priority: 3
 
 # =============================================================================
@@ -319,7 +328,7 @@ optimization:
       focus: ["content_depth", "evidence_quality"]
       tools: ["nsfc-rationale-writer", "nsfc-innovation-writer"]
     - round: 4
-      focus: ["formatting", "latex_compilation"]
+      focus: ["reference_integrity", "latex_compilation"]
       tools: ["latex_compiler", "linter"]
     - round: 5
       focus: ["readability", "final_polish"]
@@ -342,22 +351,22 @@ optimization:
 risk_assessment:
   # 高风险定义
   high_risk_indicators:
-    - "one_to_many拆分涉及核心章节（立项依据、研究内容）"
-    - "many_to_one合并导致逻辑跳跃"
-    - "新增关键章节（如研究基础、可行性）"
-    - "删除核心章节"
+    - "目标内容必须修改 main.tex/@config/模板样式 才能落位"
+    - "迁移诉求要求修改 packages/ 公共包源码"
+    - "many_to_one合并导致核心论证断裂"
+    - "删除核心正文内容"
 
   # 中风险定义
   medium_risk_indicators:
     - "合并章节需要添加过渡段"
     - "引用标签需要全局更新"
-    - "LaTeX宏包不兼容"
-    - "图表引用失效"
+    - "当前模板内容位点与旧材料语义错位"
+    - "图表资源缺失但不允许写入模板资源目录"
 
   # 低风险定义
   low_risk_indicators:
     - "简单一对一映射"
-    - "格式微调"
+    - "正文润色"
     - "非核心章节迁移"
 
 # =============================================================================
@@ -489,7 +498,6 @@ content_optimization:
     - "logic"                       # 改进逻辑
     - "evidence"                    # 补充证据
     - "clarity"                     # 提高清晰度
-    - "structure"                   # 重组结构
   preserve_references: true         # 优化时保护引用
   max_optimization_passes: 3        # 每轮最大优化次数
 
@@ -498,7 +506,7 @@ content_optimization:
 # =============================================================================
 metadata:
   skill_name: "transfer-old-latex-to-new"
-  skill_version: "2.0.0"
+  skill_version: "2.1.0"
   created_at: "2026-01-05"
   last_updated: "2026-03-28"
   author: "Bensz Conan"

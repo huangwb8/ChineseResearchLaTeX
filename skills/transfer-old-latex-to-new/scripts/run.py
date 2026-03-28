@@ -213,7 +213,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
         raise FileNotFoundError(f"未找到迁移计划: {plan_path}（请先运行 analyze）")
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
 
-    security = SecurityManager.for_new_project(new_project, runs_root)
+    security = SecurityManager.for_new_project(new_project, runs_root, config)
     import asyncio
     result = asyncio.run(
         apply_plan(
