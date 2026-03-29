@@ -7,6 +7,7 @@ metadata:
   author: Bensz Conan
   short-description: ChineseResearchLaTeX 内容层迁移编排
   keywords:
+    - transfer-old-latex-to-new
     - latex
     - content migration
     - repository adaptation

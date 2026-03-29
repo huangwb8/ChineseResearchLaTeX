@@ -21,400 +21,142 @@ metadata:
 - 若 AI 仍可通过 workaround 继续完成用户任务，应先记录 bug，再继续完成当前任务。
 - 当用户明确要求“report bensz skills bugs”等公开上报动作时，调用本地 `gh` 与 `bensz-collect-bugs`，仅上传新增 bug 到 `huangwb8/bensz-bugs`；不要 pull / clone 整个 bug 仓库。
 
+## 定位
 
-## 重要声明（非官方）
-
-- 本技能仅用于科研写作与可视化表达优化，不代表任何官方评审口径或资助结论。
-
-## 安全与隐私（硬规则）
-
-- 默认将标书内容视为敏感信息：仅处理用户明确提供的文件或目录。
-- 输出图中仅保留科研必要术语，避免写入无关个人信息。
-- 默认不联网抓取素材；如用户要求联网补充，应先说明风险。
+- 把机制链、算法架构、模块关系或实验闭环画成可编辑、可嵌入的科研图。
+- 默认使用 `drawio` 生成 `drawio/pdf/svg/png`；只有用户明确要求 Nano Banana/Gemini 时才允许切到 PNG-only。
+- 仅用于科研写作与表达优化，不代表评审口径。
 
 ## 输入
 
-用户至少提供其一：
+至少提供其一：
 
-- `spec_file`：结构化图规格文件（推荐，最可控）
-- `proposal_file`：单个标书文件（如 `main.tex` 或 `extraTex/*.tex`）
-- `proposal_path`：标书目录（自动搜索 `.tex`）
+- `spec_file`：结构化图规格文件，优先。
+- `proposal_file`：单个标书文件。
+- `proposal_path`：标书目录。
 
 可选：
 
-- `rounds`：优化轮次（默认见 `config.yaml:evaluation.max_rounds`）
-- `renderer`：渲染后端（默认 `drawio`；仅当用户主动提及 Nano Banana/Gemini 图片模型时才允许使用 `nano_banana`，该模式仅输出 PNG）
-- `output_dir`：输出目录（可选；默认使用 `config.yaml:output.dirname`，相对当前工作目录）
-- `config`：配置文件路径（可选；默认使用技能自带 `nsfc-schematic/config.yaml`；用于为某个项目单独覆盖 `output.hide_intermediate` 等参数）
-- `style_ref_images`：可选：风格参考图片（可多张；仅 `renderer=nano_banana` 生效；脚本参数为 `--style-ref` 可多次提供；支持 png/jpg/jpeg/webp；最多使用前 4 张；用于让生成图的配色/线条/质感尽量贴近参考图，但不照抄其内容结构）
-- `context`：自然语言机制描述（仅用于“规划模式”；由 `plan_schematic.py` 生成规划草案与 spec 草案）
-- `template_ref`：图类型模板 id/family（高级选项；默认“纯 AI 规划”不需要也不建议设置）
+- `rounds`
+- `renderer`
+- `output_dir`
+- `config`
+- `style_ref_images`
+- `context`：自然语言机制描述，供规划模式生成草案
+- `template_ref`
 
 ## 输出
 
-在 `output_dir` 下生成（每次运行会创建隔离的 `run_*/round_*`，避免历史残留混入）：
+默认交付：
 
-- `schematic.drawio`：可编辑源文件
-- `schematic.pdf`：推荐用于 LaTeX/Word 嵌入（优先矢量；无 draw.io CLI 时降级为 PNG→PDF 栅格）
-- `schematic.svg`：矢量图（更适合网页/幻灯片；draw.io SVG 可能包含 foreignObject，部分工具链会丢字）
-- `schematic.png`：预览图
-- Nano Banana / Gemini PNG-only 模式：交付 **4K** `schematic.png` + 体积显著更小的 `schematic_compacted.png`（默认将 4K 图下采样并压缩，适合嵌入标书 PDF；不生成 `.drawio/.svg/.pdf`）
-- `.nsfc-schematic/`：中间产物目录（默认开启隐藏；目录名可配置）
-  - `optimization_report.md`：latest 优化记录（每次运行覆盖更新）
-  - `spec_latest.yaml`：latest 使用的 spec（便于复现/追溯）
-  - `config_used_best.yaml` / `evaluation_best.json`：latest 最佳轮次复现证据
-  - `runs/run_YYYYMMDDHHMMSS(__tag)/`：本次运行目录（含 `round_*`、每轮评估与渲染产物；当使用 `--run-tag` 时会附加 `__tag`）
-  - `ai/`：`stop_strategy=ai_critic` 的闭环工作区（`ACTIVE_RUN.txt`、`{run}/ai_pack_round_XX/`、`ai_critic_request.md`、`ai_critic_response.yaml`）
-  - `legacy/`：自动迁移/收纳的历史残留（如旧版输出的 `run_*`、`spec*.yaml`、`config_*.yaml`、`evaluation_*.json` 等）
+- `schematic.drawio`
+- `schematic.pdf`
+- `schematic.svg`
+- `schematic.png`
 
-默认情况下，`output_dir` 根目录**只保留交付文件**（drawio/svg/png/pdf）与隐藏目录 `.nsfc-schematic/`，避免中间文件污染用户工作目录。
+隐藏中间产物写入 `output_dir/.nsfc-schematic/`：
 
-兼容模式：
-- 如需恢复旧行为（中间文件与 `run_*` 直接写在 `output_dir` 根目录），设置 `config.yaml:output.hide_intermediate=false`。
+- `optimization_report.md`
+- `spec_latest.yaml`
+- `config_used_best.yaml`
+- `evaluation_best.json`
+- `runs/run_*/round_*`
+- `ai/`：`stop_strategy=ai_critic` 工作区
+- `legacy/`：历史残留收纳区
 
-每个 `round_*/` 默认会生成以下“可追溯证据”（可通过 `config.yaml:evaluation.*` 关闭）：
-- `evaluation.json`：主评估器结果（含 `score_base/score_penalty/score_total`）
-- `layout_debug.json`：布局诊断（节点/分组几何信息）
-- `edge_debug.json`：连线诊断（edge id、kind、route、waypoints）
-- `measurements.json`：主评估的纯度量证据
-- `dimension_measurements.json`：结构/视觉/可读性维度证据（由 critique 汇总）
-- `critique_structure.json / critique_visual.json / critique_readability.json`：多维度批判性自检证据（`evaluation.multi_round_self_check`；仅在启发式评估或 AI 回退路径下生成，避免与 AI 口径重复扣分）
-- `_candidates/`：每轮有限候选对比（`evaluation.exploration.candidates_per_round`）
+Nano Banana / Gemini 模式仅交付：
 
-当 `config.yaml:evaluation.evaluation_mode=ai` 时（可选增强），脚本会输出离线协议文件（脚本不在本地调用外部模型）：
-- `round_*/_candidates/cand_*/ai_eval_request.md` + `ai_eval_response.json`：AI 评估请求/响应（主评估）
-- `run_*/ai_tex_request.md` + `ai_tex_response.json`：当输入来自 TEX 且未提供 spec_file 时，用于“AI 直接读 TEX → 生成 spec 草案”的离线请求/响应（如未响应则自动降级为正则抽取）
+- `schematic.png`
+- `schematic_compacted.png`
 
-规划模式交付：
-- `output_dir/schematic-plan.md`：规划草案（由宿主 AI 写入；脚本负责生成请求协议并在复跑时做合法性校验）
-- （可选）`schematic-plan.md`：如需额外复制一份到**当前工作目录**便于审阅，使用 `plan_schematic.py --also-write-workspace-plan`
+## 硬规则
 
-## Spec v2（兼容旧版）
+- 开始前强制读取 `config.yaml`，以 `renderer`、`layout`、`color_scheme`、`evaluation`、`planning`、`output` 为单一真相来源。
+- 默认仅处理用户明确提供的文件或目录，不联网抓素材。
+- 默认保持 `drawio` 流程；未被用户点名时，不要切到图片模型。
+- 拥挤优先改 `spec`，不要优先缩字号；只有出现 overflow 风险时才减字号。
+- 配色问题优先改 `kind` 分配或结构，不用黑白方案掩盖结构错误。
 
-- `node.id` 现在为可选：缺失时脚本按 `group + label + index` 生成稳定 id（可复现）。
-- `schematic.edges` 支持显式边协议：
+## 主流程
 
-```yaml
-edges:
-  - id: e_input_core
-    from: input_layer.data_input   # 支持 group.node 路径引用
-    to: process_layer.core_module
-    kind: main                     # main|aux|risk|validate
-    route: orthogonal              # orthogonal|straight|auto
-    label: 输入数据
-```
+### 1. 规划
 
-- 渲染优先级：
-  - 提供 `edges`：严格按显式边输出；
-  - 未提供 `edges`：回退到 `layout.auto_edges`（`minimal|off`）。
+- 推荐首次使用时先走“规划 → 审阅 → 生成”。
+- 默认 `planning_mode=ai`：
+  1. `plan_schematic.py` 生成规划请求
+  2. 宿主 AI 产出 `schematic-plan.md` 和 `spec_draft.yaml`
+  3. 复跑脚本做合法性校验
+- 若用户只给自然语言描述，也可直接以 `--context` 启动规划。
 
-## 纠偏原则
-
-- 拥挤优先改 spec（缩短文案/合并节点/减少节点），不要靠缩字号硬过阈值。
-- 只有 overflow 风险时才减字号；若字号偏小且无 overflow，应增字号。
-- 配色干扰优先改 kind 分配，不用黑白方案掩盖结构问题。
-
-
-## 工作流
-
-### 读取配置（强制）
-
-开始前读取 `config.yaml`，以此作为执行单一真相来源：
-
-- `renderer`：画布尺寸、字体、渲染行为
-- `renderer.drawio`：draw.io CLI 缺失时的提示/（可选）自动安装策略
-- `layout`：自动布局参数
-- `layout.auto_edges`：未提供显式 edges 时的自动连线策略（`minimal|off`）
-- `layout.template_ref`：图类型模板（高级选项；默认不启用；模型画廊仅用于学习，见 `references/models/templates.yaml`）
-- `layout.title`：图内标题开关与顶部预留（默认关闭图内标题，推荐外部图注）
-- `layout.text_fit`：节点文案“自动扩容”策略（避免导出后文字溢出/遮挡）
-- `layout.auto_expand_canvas`：当节点/分组被自动扩容后，是否自动扩展画布以避免越界
-- `layout.canvas_fit`：画布拟合策略（可选按内容边界收缩；并可将内容 bbox 居中以减少单侧留白；当用户显式指定 canvas 且 `renderer.canvas.lock_aspect_ratio=true` 时，不再独立收缩宽/高破坏比例）
-- `layout.routing`：路由避让参数（更保守的障碍 padding、避让分组标题栏）
-- `layout.font.edge_label_size`：连线标签字号（edge label 不会自动跟随 `node_label_size`，需单独配置）
-- `color_scheme`：配色方案
-- `evaluation`：评分阈值、停止策略（stop_strategy）、权重与多轮探索参数
-- `evaluation.evaluation_mode`：评估模式（默认 `heuristic`；`ai` 为可选增强：输出离线 AI 协议文件并消费宿主 AI 响应；无响应则自动降级）
-- `evaluation.thresholds.min_edge_font_px/warn_edge_font_px`：连线标签字号门禁阈值（含缩印等效字号检查）
-- `evaluation.spec_variants`：Spec 安全变体（默认关闭；只对 label 做 wrap/truncate/candidates，用于缓解长文案导致的拥挤/溢出）
-- `output.hide_intermediate` / `output.intermediate_dir`：中间文件隐藏策略与目录名
-- `output.max_history_runs`：最多保留最近 N 次 `run_*`（仅在 hide_intermediate=true 时生效）
-- `output_dir/.nsfc-schematic/config_local.yaml`：实例级覆盖（白名单：`renderer.canvas/stroke/drawio.cli_path/internal_routing`、`layout.direction/font/auto_edges/canvas_fit.center_content/auto{margin,gap,max_cols}`、`color_scheme.name`、`evaluation.stop_strategy/max_rounds/spec_variants/exploration{seed,candidates_per_round,enabled}`；当设置 `renderer.canvas.width_px/height_px` 时，当前宽高比会在后续多轮优化中保持锁定）
-- `planning.models_file`：图类型模板库路径（默认 `references/models/templates.yaml`）
-- `planning.planning_mode`：规划模式（`ai|template`；默认 `ai`：纯 AI 规划协议）
-
-### 规划模式（推荐首次使用）
-
-当用户首次为标书生成原理图时，推荐先“规划 → 审阅 → 再生成”：
-
-1. 调查标书并生成“规划请求协议”（脚本会综合提取“立项依据 + 研究内容/技术路线”，并生成模型画廊供学习；**不要求选模板**）：
-
-```bash
-python3 nsfc-schematic/scripts/plan_schematic.py \
-  --proposal /path/to/proposal/ \
-  --output ./schematic_plan/
-```
-
-（兼容旧流程）如需让脚本按确定性规则直接生成草案（模板规划），使用：
-
-```bash
-python3 nsfc-schematic/scripts/plan_schematic.py \
-  --mode template \
-  --proposal /path/to/proposal/ \
-  --output ./schematic_plan/
-```
-
-或使用自然语言描述：
-
-```bash
-python3 nsfc-schematic/scripts/plan_schematic.py \
-  --context "用一句话/一段话描述机制与模块关系..." \
-  --output ./schematic_plan/
-```
-
-2. 宿主 AI 纯规划：根据 `./schematic_plan/.nsfc-schematic/planning/plan_request.md` 的要求，写出：
-
-- `./schematic_plan/schematic-plan.md`
-- `./schematic_plan/spec_draft.yaml`
-
-（视觉学习可选）规划脚本会（尽力）在 `--output` 目录下生成“模型画廊”（用于学习优秀结构/风格）：
-
-- `./schematic_plan/.nsfc-schematic/planning/models_simple_contact_sheet.png`：骨架/模式图（推荐优先看）
-- `./schematic_plan/.nsfc-schematic/planning/models_contact_sheet.png`：完整参考图（用于风格与细节补全）
-
-3. 再次运行规划脚本进行合法性校验（脚本将校验 spec 结构，并给出 P0/WARN 提示）：
-
-```bash
-python3 nsfc-schematic/scripts/plan_schematic.py \
-  --proposal /path/to/proposal/ \
-  --output ./schematic_plan/
-```
-
-4. 审阅 `schematic_plan/schematic-plan.md` 与 `schematic_plan/spec_draft.yaml`：确认模块划分、节点清单、连接关系与布局建议是否合理。
-   - 如需手动起草规划草案，可参考：`nsfc-schematic/references/plan_template.md`
-5. 用 `generate_schematic.py` 进入多轮生成与优化：
+### 2. 生成
 
 ```bash
 python3 nsfc-schematic/scripts/generate_schematic.py \
   --spec-file ./schematic_plan/spec_draft.yaml \
-  --output-dir ./schematic_output/ \
-  --rounds 5
-```
-
-### 生成流程（默认入口）
-
-```bash
-python3 nsfc-schematic/scripts/generate_schematic.py \
-  --spec-file nsfc-schematic/references/spec_examples/ccs_framework.yaml \
   --output-dir ./schematic_output \
   --rounds 5
 ```
 
-流程拆解：
+- 流程包括：解析 spec、生成 draw.io XML、XML 预检、渲染、主评估、多维度自检、导出 best round。
+- 如提供显式 `edges`，渲染器必须优先复现；否则按 `layout.auto_edges` 自动连线。
 
-1. 解析 spec（`spec_parser.py`）并自动补全布局。
-2. 生成 draw.io XML（`schematic_writer.py`）。
-3. **预检（P0）**：对 `.drawio` 做 XML well-formed 校验；失败则立即停止并给出可读错误。
-4. 渲染 SVG/PNG/PDF（`render_schematic.py`）。
-5. 评估图质量（`evaluate_schematic.py`），并增强“近空白渲染/内容丢失”的识别与分级。
-6. 多维度自检（`evaluate_dimension.py`）：结构/视觉/可读性独立证据落盘，并按缺陷线性扣分得到 `score_total`。
-7. 记录每轮结果并导出 best round。
+### 3. 评估与优化
 
-### 生成流程（Nano Banana / Gemini PNG-only，仅当用户主动要求）
+- 默认最多 5 轮，阈值与停止策略只看 `config.yaml:evaluation`。
+- 每轮至少输出：
+  - `evaluation.json`
+  - `layout_debug.json`
+  - `edge_debug.json`
+  - `measurements.json`
+  - `dimension_measurements.json`
+  - `critique_structure.json`
+  - `critique_visual.json`
+  - `critique_readability.json`
 
-硬规则：**只有当用户明确提出要用 Nano Banana/Gemini 图片模型**（例如用户说“用 Nano Banana”“用 Gemini 出图”“不用 draw.io”）时，才允许启用该模式；否则必须保持默认 draw.io 流程。
+### 4. 可选：AI 自主闭环
 
-前置条件：在项目根目录 `.env`（或系统环境变量）配置并可连通：
+- 当需要宿主 AI 根据证据包决定下一轮时，启用 `evaluation.stop_strategy: ai_critic`。
+- 协议文件位于 `.nsfc-schematic/ai/`，主要包括：
+  - `ai_critic_request.md`
+  - `ai_critic_response.yaml`
+  - `ai_pack_round_XX/`
 
-- `GEMINI_BASE_URL`（示例：`https://generativelanguage.googleapis.com/v1beta`）
-- `GEMINI_API`（Gemini API Key）
-- `GEMINI_MODEL`（示例：`gemini-3.1-flash-image-preview`）
+### 5. 可选：Nano Banana / Gemini PNG-only
 
-建议先做连通性检查（不会输出图片）：
+- 只有用户明确要求时启用。
+- 先做连通性检查：
 
 ```bash
 python3 nsfc-schematic/scripts/nano_banana_check.py
 ```
 
-如你不是在项目根目录执行，可显式指定 `.env`：
-
-```bash
-python3 nsfc-schematic/scripts/nano_banana_check.py --dotenv /path/to/.env
-```
-
-生成 PNG（默认 `--rounds 5`；仅输出 `schematic.png`）：
+- 再执行 PNG-only 生成：
 
 ```bash
 python3 nsfc-schematic/scripts/generate_schematic.py \
   --renderer nano_banana \
-  --dotenv /path/to/.env \
   --spec-file ./schematic_plan/spec_draft.yaml \
-  --output-dir ./schematic_output/ \
-  --rounds 5 \
-  --style-ref ./path/to/style_ref_1.png \
-  --style-ref ./path/to/style_ref_2.jpg
+  --output-dir ./schematic_output \
+  --rounds 5
 ```
 
-说明：
-
-- Nano Banana 模式下脚本会自动关闭 SVG/PDF 导出，并在每轮只生成 1 个候选（避免成本乘法）；多方案对比请用 `parallel-vibe` 多线程并行。
-- 该模式的 prompt 会从 spec（分组/节点/edges）**确定性构建**，并包含“打印级文字排版”硬约束（禁止文字扭曲/旋转/艺术字等）；优化时优先改 spec 的标签长度、分组边界与边关系，保证“缩印可读”。
-
-### 评估-优化循环（默认：AI 闭环）
-
-- 默认配置：`evaluation.stop_strategy=ai_critic`
-- 脚本行为：
-  - 每次运行只推进 1 轮，生成证据包后暂停，等待宿主 AI 响应
-  - 自动打分与落盘证据（`evaluation.json` + `*_debug.json` + `measurements*.json`）
-  - 宿主 AI 写回 `ai_critic_response.yaml` 后，resume 即推进下一轮；写 `action: stop` 则导出最终交付文件
-- 如需无人值守的自动收敛，可在 `config_local.yaml` 覆盖为 `stop_strategy: plateau`
-
-### 多方案并行优化（parallel-vibe，可选，推荐用于“开很多 run 反复对比”）
-
-适用：当你需要同时尝试不同的优化策略（画布/字号/间距/路由/探索种子等），避免在同一 `output_dir` 内来回改 `config_local.yaml` 导致 run 混淆。
-
-核心策略：用 `parallel-vibe` 创建多个**隔离工作区**，每个线程各自维护一份 `output_dir/.nsfc-schematic/config_local.yaml`（仅白名单字段），并用 `--run-tag` 标记本次运行来源。
-
-默认建议开 **5 个线程**（与 `evaluation.max_rounds=5` 的“默认轮次”对齐；也更方便 1 轮就筛掉明显不优方案）。
-
-推荐线程（示例，按常见痛点拆分）：
-
-- thread_1（结构与留白）：增大 `layout.auto.group_gap_y/node_gap_y`，必要时增大画布
-- thread_2（可读性优先）：增大 `layout.font.node_label_size/edge_label_size`，必要时增大画布
-- thread_3（连线与可解释性）：切换 `renderer.internal_routing=straight` 或关闭 `layout.auto_edges`
-- thread_4（跳出局部最优）：保持结构不变，仅改 `evaluation.exploration.seed`（让探索抖动走另一条轨迹）
-
-每个线程建议先跑小轮次快速筛选（如 `--rounds 3`），择优后再回到主工作区用更高轮次精修（如 `--rounds 7`）。
-
-### AI 自主闭环（ai_critic，离线协议）
-
-默认模式。每次运行只推进 1 轮，由宿主 AI 评价证据包并决定下一步。如需回退到无人值守的自动收敛，可在 `config_local.yaml` 中覆盖 `stop_strategy: plateau`。
-
-1) 运行生成脚本（每次只推进 1 轮）：
+## 常用命令
 
 ```bash
-python3 nsfc-schematic/scripts/generate_schematic.py \
-  --spec-file ./schematic_plan/spec_draft.yaml \
-  --output-dir ./schematic_output/
+# 规划
+python3 nsfc-schematic/scripts/plan_schematic.py --proposal /path/to/proposal --output ./schematic_plan
+
+# 生成
+python3 nsfc-schematic/scripts/generate_schematic.py --spec-file ./schematic_plan/spec_draft.yaml --output-dir ./schematic_output --rounds 5
+
+# 连通性检查
+python3 nsfc-schematic/scripts/nano_banana_check.py
 ```
 
-3) 找到 request 与证据包（脚本会提示路径；默认在隐藏目录内）：
+## 参考材料
 
-- `output_dir/.nsfc-schematic/ai/ACTIVE_RUN.txt`：当前闭环 run（用于 resume）
-- `output_dir/.nsfc-schematic/ai/<run>/ai_critic_request.md`：宿主 AI 的指令
-- `output_dir/.nsfc-schematic/ai/<run>/ai_pack_round_XX/`：证据包（含 `schematic.png` + `evaluation.json` 等；若 `renderer=nano_banana` 还会包含 `nano_banana_prompt.md`）
-
-4) 宿主 AI 写回响应：
-
-按 `ai_critic_request.md` 的协议写入：
-
-- `output_dir/.nsfc-schematic/ai/<run>/ai_critic_response.yaml`
-
-Nano Banana（Gemini PNG-only）+ ai_critic 额外约定：
-
-- 宿主 AI 应以 **直接读图（`schematic.png`）的视觉判断** 为主；`evaluation.json/*_debug.json` 仅作参考。
-- 宿主 AI 需要判断当前“整体风格”（构图/线条/配色/质感）是否已经足够好：
-  - 若足够好：写 `style_continuity: true`；下一轮会把上一轮 `schematic.png` 作为参考图传入 Gemini，保证风格延续。
-  - 若仍需大改：写 `style_continuity: false`；下一轮不传参考图（避免把坏风格固化）。
-- 若认为配色仍需优化，可写 `nano_banana_color_advice`；脚本会自动拼到下一轮 prompt 里。
-- 无论 `nano_banana_prompt.mode` 使用 `full` 还是 `patch`，脚本都会在真正发给 Gemini 的 prompt 中自动补齐“字体与文字排版”硬约束，避免多轮优化时字体规则丢失。
-- Nano Banana 模式严禁在图内生成总标题/图题；若标书需要图题，应由正文图注承担，而不是画进 PNG。
-
-最小示例（通用）：
-
-```yaml
-version: 1
-based_on_round: 1
-action: config_only  # spec_only|config_only|both|stop
-reason: "一句话说明为什么这样改"
-config_local:
-  layout:
-    font:
-      node_label_size: 28
-```
-
-最小示例（仅 Nano Banana，可选字段）：
-
-```yaml
-version: 1
-based_on_round: 1
-action: nano_banana_prompt_only  # spec_only|config_only|both|nano_banana_prompt_only|stop
-reason: "风格已满意，锁定风格并微调配色"
-style_continuity: true
-nano_banana_color_advice: |
-  - 主色不超过 2-3 个；风险/对照用点缀色
-  - 保证文本对比度（深色字 + 浅色填充）
-```
-
-5) Resume：
-
-再次运行 `generate_schematic.py` 即可自动消费响应、推进下一轮；当写入 `action: stop` 后脚本会清除 `ACTIVE_RUN.txt` 并导出最终交付文件。
-
-### 脚本职责
-
-- `scripts/spec_parser.py`：解析/校验 spec，补全自动布局，校验边。
-- `scripts/schematic_writer.py`：将规范化 spec 转为 draw.io XML。
-- `scripts/render_schematic.py`：优先 draw.io CLI 渲染；缺失时内部兜底渲染。
-- `scripts/ai_evaluate.py`：生成/消费 AI 评估离线协议（ai_eval_request.md / ai_eval_response.json），不在脚本内调用外部模型。
-- `scripts/ai_extract_tex.py`：生成/消费 AI TEX 提取离线协议（ai_tex_request.md / ai_tex_response.json），不在脚本内调用外部模型。
-- `scripts/measure_schematic.py`：主评估的“纯度量采集层”（几何/路由/像素 proxy），保留用于启发式评估与降级兜底。
-- `scripts/measure_dimension.py`：多维度自检的“纯度量采集层”（structure/visual/readability），保留用于启发式自检与降级兜底。
-- `scripts/evaluate_schematic.py`：启发式评估（兜底）；启用 `evaluation_mode=ai` 时输出离线 AI 协议并消费宿主 AI 的评审响应（缺失时自动回退启发式）。
-- `scripts/evaluate_dimension.py`：启发式多维度自检（用于 penalty 扣分；当 AI 主评估生效时默认跳过，避免口径重复）。
-- `scripts/routing.py`：确定性正交路由（waypoints），用于渲染兜底、drawio 写入与评估口径对齐。
-- `scripts/extract_from_tex.py`：从 TEX 抽取术语用于初版 spec 填充。
-- `scripts/generate_schematic.py`：一键编排多轮迭代。
-- `scripts/env_utils.py`：`.env` 解析与向上查找（用于 Nano Banana/Gemini 模式读取 GEMINI_* 配置）。
-- `scripts/nano_banana_client.py`：Gemini REST 调用封装（连通性检查 + PNG 生成 + 限流重试）。
-- `scripts/nano_banana_check.py`：Nano Banana 连通性检查 CLI（不生成图片）。
-- `scripts/nano_banana_generate_png.py`：Nano Banana PNG 生成 CLI（便于单独调试 prompt）。
-
-## 评估标准
-
-重点检查 6 个维度：
-
-- 文字可读性（字号阈值）
-- 节点重叠（交叠比例）
-- 箭头完整性（端点有效、交叉数量）
-- 画布溢出（越界/贴边）
-- 视觉平衡（重心偏移）
-- 整体美观（基于渲染产物的本地代理评估）
-
-硬门槛（必须满足，否则视为 P0）：
-
-- **文字不得溢出/被遮挡**：节点文案不应超出节点边界，也不应被连线覆盖（通过 draw.io 元素层级：分组底层、连线中层、节点顶层 来降低风险）。
-
-额外增强维度（更贴近“缩印可读性/审稿人观感”）：
-
-- 长对角线连线惩罚（鼓励更清晰的层次与对齐）
-- 连线穿越/贴近节点惩罚（减少穿字/贴字风险）
-- 连线标签缩印可读性门禁（edge label 的字号与缩印后等效字号）
-- 节点文案拥挤度 proxy（提示缩短文案或增大节点）
-
-AI 自主评估模式（离线协议）
-
-- 触发：设置 `config.yaml:evaluation.evaluation_mode=ai`
-- 行为：脚本输出 `ai_eval_request.md` + `ai_eval_response.json`（以及 TEX 场景下的 `ai_tex_request.md` + `ai_tex_response.json`）模板；宿主 AI 可基于 spec+config+PNG/TEX 做语义判定并写回 response；若 response 缺失或不合法，脚本自动回退到启发式评估，保证流程可跑通。
-
-## 失败处理
-
-- draw.io CLI 不可用时：
-  - 可在 `config.yaml:renderer.drawio.cli_path` 显式指定 draw.io CLI 可执行文件路径（或可被 PATH 解析的命令名）；
-  - 默认使用内部渲染兜底并给出强提示（内部渲染可用，但最终交付质量通常不如 CLI 导出）；
-  - 若 `config.yaml:renderer.allow_internal_fallback=false`，则直接失败并提示安装 draw.io。
-- spec 校验失败时：立即返回错误，指出字段路径。
-
-## 维护者自检
-
-- 版本号仅记录在 `config.yaml:skill_info.version`。
-- 修改脚本后至少运行 1 组示例（`references/spec_examples/*.yaml`）。
-- 新增/调整输出字段时同步更新 README 与 CHANGELOG。
-
-## 交付与自检（交付前必须过）
-
-- A4/屏幕可读（不依赖放大）
-- 主流向清晰（上→下 或 左→右）
-- 配色 ≤ 3 种主色调（允许辅助灰）
-- 节点命名与正文一致
-- 输出包含 `schematic.drawio` 与至少一种可嵌入格式（svg 或 png）
-- 连线标签可读（缩印后等效字号 ≥ 10px）
+- `config.yaml`
+- `references/plan_template.md`
+- `references/design_principles.md`
+- `references/models/templates.yaml`
+- `references/spec_examples/`
