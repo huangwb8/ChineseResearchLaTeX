@@ -18,10 +18,10 @@ metadata:
     - 生成示例
     - complete example
     - 补充示例内容
-config: skills/complete_example/config.yaml
+config: skills/complete-example/config.yaml
 ---
 
-# complete_example Skill
+# complete-example Skill
 
 ## 与 bensz-collect-bugs 的协作约定
 

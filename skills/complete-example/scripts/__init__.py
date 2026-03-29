@@ -1,5 +1,5 @@
 """
-complete_example skill - 工具函数模块
+complete-example skill - 工具函数模块
 """
 
 from .llm_client import LLMClient

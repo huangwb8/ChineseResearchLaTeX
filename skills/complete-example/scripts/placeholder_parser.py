@@ -1,5 +1,5 @@
 """
-Placeholder parsing utilities for complete_example.
+Placeholder parsing utilities for complete-example.
 
 We keep this logic hard-coded and deterministic: AI outputs placeholders, and
 the code replaces them with safe LaTeX blocks.
@@ -95,4 +95,3 @@ def replace_spans(text: str, replacements: list[tuple[int, int, str]]) -> str:
     for start, end, rep in sorted(replacements, key=lambda x: x[0], reverse=True):
         out = out[:start] + rep + out[end:]
     return out
-

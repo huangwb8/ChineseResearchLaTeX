@@ -89,7 +89,7 @@ graph LR
 
 ---
 
-### 2. complete_example - 智能示例生成
+### 2. complete-example - 智能示例生成
 
 **类型**：🔧 开发
 
@@ -100,10 +100,10 @@ graph LR
 **推荐 Prompt 模板**：
 
 ```
-请你联网调研一下某研究主题，假设你要以此为题材填写 projects/NSFC_Young，请使用 complete_example 这个 skill 辅助工作。最后的排版，PDF 要紧凑、美观，大致维持在 8 页左右。
+请你联网调研一下某研究主题，假设你要以此为题材填写 projects/NSFC_Young，请使用 complete-example 这个 skill 辅助工作。最后的排版，PDF 要紧凑、美观，大致维持在 8 页左右。
 ```
 
-[详细文档 →](complete_example/SKILL.md)
+[详细文档 →](complete-example/SKILL.md)
 
 ---
 
@@ -591,7 +591,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 | 工具 | 调用方式 | 示例 |
 |------|----------|------|
 | **Claude Code** | 自然语言描述 | "请将 NSFC_Young 对齐到 2026 Word 样式" |
-| **OpenAI Codex CLI** | `/skill-name` 参数 | `/complete_example NSFC_Young --content-density moderate` |
+| **OpenAI Codex CLI** | `/skill-name` 参数 | `/complete-example NSFC_Young --content-density moderate` |
 
 ## 技能类型说明
 

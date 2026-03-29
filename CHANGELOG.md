@@ -10,9 +10,9 @@
 
 ### Changed（变更）
 
-- 压缩 `skills/systematic-literature-review/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/nsfc-reviewers/`、`skills/complete_example/`、`skills/nsfc-qc/`、`skills/nsfc-justification-writer/`、`skills/check-review-alignment/`、`skills/nsfc-humanization/`、`skills/make-latex-model/`、`skills/get-review-theme/` 的 `SKILL.md`：保留触发语义、输入输出契约、关键路径与脚本入口，删除重复角色铺垫、长示例与低价值展开，便于降低 `./skills` 的工作类 Markdown 上下文开销
+- 压缩 `skills/systematic-literature-review/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/nsfc-reviewers/`、`skills/complete-example/`、`skills/nsfc-qc/`、`skills/nsfc-justification-writer/`、`skills/check-review-alignment/`、`skills/nsfc-humanization/`、`skills/make-latex-model/`、`skills/get-review-theme/` 的 `SKILL.md`：保留触发语义、输入输出契约、关键路径与脚本入口，删除重复角色铺垫、长示例与低价值展开，便于降低 `./skills` 的工作类 Markdown 上下文开销
 - 继续压缩 `skills/transfer-old-latex-to-new/`、`skills/systematic-literature-review/`、`skills/get-review-theme/`、`skills/nsfc-justification-writer/` 下体积最大的工作型 `references/*.md`：将 legacy 评审记录、长 Prompt、冗长模板与重复示例收敛为最小可执行规则、决策表和输出契约，进一步降低 `./skills` 的工作类参考文档上下文开销
-- 继续压缩第二梯队工作型 `references/*.md`：将 `skills/complete_example/`、`skills/transfer-old-latex-to-new/`、`skills/nsfc-justification-writer/`、`skills/nsfc-humanization/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/systematic-literature-review/`、`skills/nsfc-reviewers/`、`skills/nsfc-research-content-writer/` 中的中等体积参考文档收敛为短规则、短模板和速记说明，减少历史总结、长示例与重复背景说明
+- 继续压缩第二梯队工作型 `references/*.md`：将 `skills/complete-example/`、`skills/transfer-old-latex-to-new/`、`skills/nsfc-justification-writer/`、`skills/nsfc-humanization/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/systematic-literature-review/`、`skills/nsfc-reviewers/`、`skills/nsfc-research-content-writer/` 中的中等体积参考文档收敛为短规则、短模板和速记说明，减少历史总结、长示例与重复背景说明
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：将 NJU 硕士论文封面“论文题目”区恢复为稳定的 `tabular + m` 对齐骨架，并为右侧双行题目块新增独立视觉下移量，使其更接近官方示例的标签/题目相对位置，同时避免影响其它 thesis 模板
 - 优化 `skills/make-latex-model/` 到 `v3.1.0`：新增 `scripts/plan_package_regression.py` 作为公共包修改前的确定性回归计划入口，并把“先生成受影响模板回归矩阵、优先收敛到模板专属 style/profile、再回归该公共包覆盖的全部现有模板”的包层安全门禁同步到 Skill 文档、配置与根级索引
 - 继续优化 `skills/make-latex-model/` 到 `v3.1.1`：删除“当前 skill 是旧版 NSFC 脚本改良/继承”的叙事，新增 `references/SCRIPT_SCOPE.md` 用当前职责矩阵重写脚本边界，并将 `validate.sh`、`optimize.py`、`templates/nsfc/*.yaml` 等入口统一定义为 NSFC 专项工具
@@ -740,7 +740,7 @@
   - **项目隔离**：所有中间文件存储在目标项目的 `.complete_example` 隐藏目录中
   - **硬编码保证**：通过硬编码方式确保所有运行时文件（备份、日志、分析结果等）都存放在项目级目录
   - **路径变更**：
-    - 旧路径：`skills/complete_example/runs/<run_id>/`
+    - 旧路径：`skills/complete-example/runs/<run_id>/`
     - 新路径：`{project_path}/.complete_example/<run_id>/`
   - **配置更新**：`config.yaml` 中 `run_management.runs_root` 改为 `{project_path}/.complete_example`
   - **代码更新**：
@@ -980,7 +980,7 @@
 - 更新 `skills/nsfc-justification-writer/SKILL.md`、`skills/nsfc-justification-writer/README.md`：补充 `style.mode` 使用说明
 
 - 更新 [README.md](README.md)：删除"快速开始指南"章节，保持文档简洁（详细使用示例请查阅各技能的 README.md）
-- 更新 [README.md](README.md)：技能表格从 7 个扩展到 10 个，新增 nsfc-bib-manager、get-review-theme、guide-updater、complete_example
+- 更新 [README.md](README.md)：技能表格从 7 个扩展到 10 个，新增 nsfc-bib-manager、get-review-theme、guide-updater、complete-example
 - 更新 [README.md](README.md)：修正技能状态：nsfc-bib-manager、get-review-theme、nsfc-justification-writer 均为 🚧 开发中
 - 更新 [README.md](README.md)：更新 systematic-literature-review、nsfc-bib-manager、get-review-theme 版本号为 v1.0.0
 - 更新 [skills/README.md](skills/README.md)：修正技能状态：nsfc-bib-manager、get-review-theme、nsfc-justification-writer 均为 🚧 开发中；guide-updater 为 ✅ 稳定（v1.0.0）
@@ -1268,7 +1268,7 @@
 - **complete_example v1.0.0** - AI 增强版 LaTeX 示例智能生成器
   - **核心功能**：AI 驱动的示例内容生成，支持用户自定义叙事提示
   - **用户提示机制**：允许通过 `narrative_hint` 参数指定研究主题、方法、场景，AI 根据提示编造合理的示例内容
-  - **运行目录隔离**：所有运行输出（备份、日志、分析结果）放在 `skills/complete_example/runs/<run_id>/` 目录中，完全不对项目目录造成污染
+  - **运行目录隔离**：所有运行输出（备份、日志、分析结果）放在 `skills/complete-example/runs/<run_id>/` 目录中，完全不对项目目录造成污染
   - **架构设计**：AI 负责"语义理解"，硬编码负责"结构保护"，有机协作
   - **核心模块**：
     - `SemanticAnalyzer`：AI 语义分析器（章节主题理解、资源相关性推理）

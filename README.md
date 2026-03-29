@@ -438,12 +438,12 @@ git clone https://github.com/huangwb8/skills.git &&
 
 #### 🔧 模板开发阶段（开发者专用，普通用户可忽略）
 - **make-latex-model**：模板落地与高保真对齐（支持 `NSFC / paper / thesis / cv` 四条产品线，先按当前 `packages/ + projects/` 分层选对修改位置；若必须改公共包，会先生成受影响模板回归计划；NSFC 专项工具仅在明确的 NSFC 参数对齐任务中按需使用）
-- **complete_example**：示例生成（智能示例生成和补全）
+- **complete-example**：示例生成（智能示例生成和补全）
 
 | 技能 | 版本 | 类型 | 功能 | 状态 |
 |------|------|------|------|------|
 | [make-latex-model](skills/make-latex-model/) | v3.1.2 | 🔧 开发 | 面向 ChineseResearchLaTeX 全仓库的模板落地与高保真对齐（正式名；兼容旧写法 `make_latex_model`） | ✅ 稳定 |
-| [complete_example](skills/complete_example/) | v1.4.1 | 🔧 开发 | 智能示例生成和补全 | ✅ 稳定 |
+| [complete-example](skills/complete-example/) | v1.4.1 | 🔧 开发 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer-old-latex-to-new](skills/transfer-old-latex-to-new/) | v2.0.0 | 📝 日常 | 模板迁移与重构编排，支持任意输入并由 AI 自主决定输出（正式名；兼容 `migrating-latex-templates`） | ✅ 稳定 |
 | [systematic-literature-review](skills/systematic-literature-review/) | v1.0.9 | 📝 日常 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
 | [check-review-alignment](skills/check-review-alignment/) | v1.0.2 | 📝 日常 | 综述引用语义一致性检查 | ✅ 稳定 |

@@ -17,7 +17,7 @@ class CompleteExampleSkill:
 
     def __init__(self, config: Dict[str, Any], project_path: Path = None):
         self.config = config
-        self.skill_root = Path(config.get("skill_root", "skills/complete_example"))
+        self.skill_root = Path(config.get("skill_root", "skills/complete-example"))
 
         # 🆕 支持项目级隐藏目录（在 execute 时动态设置）
         self.project_path = project_path

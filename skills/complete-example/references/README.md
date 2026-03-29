@@ -1,10 +1,10 @@
-# complete_example 参考说明
+# complete-example 参考说明
 
 > 本目录只保留对执行仍有帮助的补充说明；主流程与边界以 `SKILL.md` 和 `config.yaml` 为准。
 
 ## 核心定位
 
-- `complete_example` 用来补“示例内容”，不是写真实科研结论
+- `complete-example` 用来补“示例内容”，不是写真实科研结论
 - AI 负责语义理解和叙事生成
 - 硬编码负责结构保护、备份、格式验证和回滚
 
