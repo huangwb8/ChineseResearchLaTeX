@@ -259,3 +259,56 @@ def test_fix_docx_spacing_keeps_title_centered_and_left_aligns_section_headings(
 
     assert title_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.CENTER
     assert section_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.LEFT
+
+
+def test_paper_sci_01_csl_keeps_three_authors_before_et_al(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                (
+                    "  author = {Alpha, Alice and Beta, Bob and Gamma, Carol and "
+                    "Delta, David and Epsilon, Erin and Zeta, Frank},"
+                ),
+                "  title = {Synthetic Reference for CSL Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  volume = {12},",
+                "  pages = {34--56},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    docx_path = tmp_path / "bibliography.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.run_cmd(
+        [
+            manuscript_tool.resolve_executable("pandoc"),
+            "-",
+            "-f",
+            "markdown",
+            "--citeproc",
+            "--csl",
+            str(csl_path),
+            "--bibliography",
+            str(bib_path),
+            "--reference-doc",
+            str(reference_doc),
+            "-o",
+            str(docx_path),
+        ],
+        input_text="Body text with a citation [@Demo2026].\n",
+    )
+
+    doc = Document(docx_path)
+    bibliography_para = next(para for para in doc.paragraphs if "Synthetic reference for CSL regression" in para.text)
+
+    assert "Alpha, A. et al." not in bibliography_para.text
+    assert "Alpha, A., Beta, B., Gamma, C." in bibliography_para.text
+    assert "et al." in bibliography_para.text
+    assert "Delta, D." not in bibliography_para.text
