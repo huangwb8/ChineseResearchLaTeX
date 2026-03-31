@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-03-31
+
+### Changed
+
+- 将 `SKILL.md` 重构为“触发语义 + 主流程骨架 + 边界约束”的轻量主文件，大段执行细则下沉到新增的 `references/execution-guards.md`，减少主技能文档长度与上下文负担
+- `SKILL.md` 现通过“按需读取参考文件”的方式指向 `execution-guards`、风格文件与审查模板，避免在主文件中重复展开章节职责、`.tex` 可读性、数字审查、缩写守卫和逻辑审查的细节
+- `config.yaml` 版本从 `0.11.0` 升至 `0.11.1`
+
+## [0.11.0] - 2026-03-31
+
+### Changed
+
+- 强化缩写一致性规则为“整篇论文级硬约束”：`SKILL.md` 现明确要求先建立全文 `abbreviation-inventory`，再按全部正文 `.tex` 联合判断首次定义、后续统一写法与结束前复扫，不再允许只在当前编辑文件内自洽
+- `README.md`、`references/writing-style-guide.md`、`references/styles/general-01.md`、`references/styles/bensz-01.md` 与 `references/styles/style-template.md` 同步改为“全文所有正文 tex 联合检查”的口径，覆盖 Abstract、Figure Legends 与 Supplementary Materials
+- `config.yaml` 新增 `abbreviation_check` 配置节、`analysis/abbreviation-inventory.md` 产物路径，并将版本从 `0.10.0` 升至 `0.11.0`
+
 ## [0.10.0] - 2026-03-29
 
 ### Added

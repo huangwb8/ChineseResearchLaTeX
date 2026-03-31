@@ -15,6 +15,8 @@
 
 ### Changed（变更）
 
+- 精简 `skills/paper-write-sci/` 的主技能文档：将章节职责、`.tex` 可读性、数字审查、全文缩写守卫和逻辑审查等长规则块下沉到新增的 `skills/paper-write-sci/references/execution-guards.md`，`SKILL.md` 改为保留触发语义、主流程骨架、边界约束和按需读取入口，降低上下文开销
+- 强化 `skills/paper-write-sci/` 的缩写一致性规则：新增全文级 `abbreviation_check` 配置，要求先建立 `analysis/abbreviation-inventory.md`，并按整篇论文所有正文 `.tex` 联合判断首次定义与统一写法；相关 `SKILL.md`、Skill README、风格参考与说明文档已同步，避免把缩写检查误降级为“当前 tex 文件内自洽”
 - 压缩 `skills/systematic-literature-review/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/nsfc-reviewers/`、`skills/complete-example/`、`skills/nsfc-qc/`、`skills/nsfc-justification-writer/`、`skills/check-review-alignment/`、`skills/nsfc-humanization/`、`skills/make-latex-model/`、`skills/get-review-theme/` 的 `SKILL.md`：保留触发语义、输入输出契约、关键路径与脚本入口，删除重复角色铺垫、长示例与低价值展开，便于降低 `./skills` 的工作类 Markdown 上下文开销
 - 继续压缩 `skills/transfer-old-latex-to-new/`、`skills/systematic-literature-review/`、`skills/get-review-theme/`、`skills/nsfc-justification-writer/` 下体积最大的工作型 `references/*.md`：将 legacy 评审记录、长 Prompt、冗长模板与重复示例收敛为最小可执行规则、决策表和输出契约，进一步降低 `./skills` 的工作类参考文档上下文开销
 - 继续压缩第二梯队工作型 `references/*.md`：将 `skills/complete-example/`、`skills/transfer-old-latex-to-new/`、`skills/nsfc-justification-writer/`、`skills/nsfc-humanization/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/systematic-literature-review/`、`skills/nsfc-reviewers/`、`skills/nsfc-research-content-writer/` 中的中等体积参考文档收敛为短规则、短模板和速记说明，减少历史总结、长示例与重复背景说明

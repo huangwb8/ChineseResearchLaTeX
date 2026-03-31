@@ -38,6 +38,7 @@
 
 - 直接修改目标正文 tex 文件
 - 自动做数字审查、章节职责审查和逻辑审查
+- 自动按“整篇论文所有正文 tex”而不是“当前文件”检查缩写首次定义与全文统一
 - 默认遵守 `.tex` 的“分段分点”策略：新段落用空行，同段内多个点优先逐行写，方便回源定位
 - 其余中间文件统一进入本轮运行目录 `<paper_dir>/.paper-write-sci/run_{timestamp}/`
 - 如果项目有可用构建链，会尝试重新渲染 PDF/Word
@@ -184,6 +185,15 @@ skill 会维护一棵论文逻辑树，反复检查：
 
 相关中间文件在 `<paper_dir>/.paper-write-sci/run_{timestamp}/logic-check/`，逻辑树主文件在 `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/logic-tree.md`。
 
+### 缩写一致性审查
+
+skill 不把“缩写首次定义是否完整且全文统一”理解为单个 tex 文件内自洽，而是默认按整篇论文所有正文 tex 联合检查。
+
+- 会先建立全文缩写清单，再开始局部修改
+- 首次出现位置以全篇为准，不以当前正在编辑的文件为准
+- Abstract、Figure Legends、Supplementary Materials 里的缩写也要回到全文口径统一判断
+- 相关中间文件默认写入 `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/abbreviation-inventory.md` 与 `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/consistency-check.md`
+
 ## 输出文件
 
 默认输出位置如下：
@@ -193,8 +203,10 @@ skill 会维护一棵论文逻辑树，反复检查：
 | `<paper_dir>/plans/WritePaperSCI_{topic}_{run_id}.md` | 协作模式计划文件 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/paper-structure.md` | 本轮章节路径映射 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/figures-tables.md` | 本轮图表与论点梳理 |
+| `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/abbreviation-inventory.md` | 本轮全文缩写清单与首次出现位置 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/logic-tree.md` | 本轮逻辑树 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/reference-style.md` | 本轮参考作者材料提炼结果 |
+| `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/consistency-check.md` | 本轮全文一致性与缩写复核记录 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/analysis/runtime-context.json` | 本轮运行清单 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/number-check/` | 本轮数字审查中间文件 |
 | `<paper_dir>/.paper-write-sci/run_{timestamp}/section-role-check/` | 本轮章节职责审查与 `Discussion audit` 中间文件 |
@@ -216,6 +228,8 @@ skill 会维护一棵论文逻辑树，反复检查：
 | `number_check.parallel_vibe.threads` | `5` | 数字审查并行线程数 |
 | `section_role_check.parallel_vibe.threads` | `5` | 章节职责审查并行线程数 |
 | `section_role_check.discussion.max_quantitative_anchor_per_paragraph` | `1` | `Discussion` 每段默认允许的核心定量锚点上限 |
+| `abbreviation_check.scope` | `full_manuscript_all_editable_tex` | 缩写检查默认按整篇论文所有正文 tex 联合执行 |
+| `abbreviation_check.require_global_rescan_before_finish` | `true` | 结束前必须做一次全文缩写复扫，不能只看当前文件 |
 | `logic_check.parallel_vibe.threads` | `5` | 逻辑审查并行线程数 |
 | `logic_check.max_iterations` | `3` | 逻辑审查最大轮次 |
 

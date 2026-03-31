@@ -1,6 +1,6 @@
 skill_info:
   name: paper-write-sci
-  version: 0.10.0
+  version: 0.11.1
   category: academic-writing
   author: Bensz Conan
   description: SCI 期刊论文写作与修订助手
@@ -53,6 +53,7 @@ analysis_files:
   logic_tree: analysis/logic-tree.md
   reference_style: analysis/reference-style.md
   render_plan: analysis/render-plan.md
+  abbreviation_inventory: analysis/abbreviation-inventory.md
   consistency_check: analysis/consistency-check.md
 
 mode:
@@ -144,6 +145,30 @@ section_role_check:
     threads: 5
     runners_per_thread: 1
     sdk: codex
+
+abbreviation_check:
+  enabled: true
+  scope: full_manuscript_all_editable_tex
+  require_inventory_before_edit: true
+  require_global_rescan_before_finish: true
+  inventory_file: analysis/abbreviation-inventory.md
+  consistency_report_file: analysis/consistency-check.md
+  include_section_paths:
+    - abstract
+    - introduction
+    - methods
+    - results
+    - discussion
+    - conclusion
+    - additional-information
+    - figure-legends
+    - supplementary-materials
+  rules:
+    first_definition_scope: whole_manuscript
+    require_full_form_on_first_occurrence: true
+    require_consistent_surface_form_after_definition: true
+    forbid_local_file_only_pass: true
+    prefer_no_new_abbreviation_without_reuse_gain: true
 
 logic_check:
   enabled: true
