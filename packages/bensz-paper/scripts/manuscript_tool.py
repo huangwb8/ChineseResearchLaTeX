@@ -118,6 +118,19 @@ def _replace_latex_citations_with_tokens(latex_text: str) -> tuple[str, dict[str
     return CITATION_PATTERN.sub(repl, latex_text), placeholder_map
 
 
+_SUP_TAG_RE = re.compile(r"<sup>(.*?)</sup>", re.DOTALL)
+
+
+def _convert_sup_tags_to_superscript(md_text: str) -> str:
+    """Convert HTML <sup> tags to pandoc native ^superscript^ syntax."""
+
+    def _replace_sup(match: re.Match[str]) -> str:
+        content = match.group(1).replace("\\*", "*")
+        return f"^{content}^"
+
+    return _SUP_TAG_RE.sub(_replace_sup, md_text)
+
+
 def _normalize_frontmatter_markdown(md_text: str) -> str:
     lines = [line for line in md_text.splitlines() if line.strip() not in {"<div class=\"center\">", "</div>"}]
     normalized: list[str] = []
@@ -142,6 +155,7 @@ def pandoc_latex_to_markdown(latex_text: str) -> str:
     ).strip()
     for token, replacement in placeholder_map.items():
         markdown = markdown.replace(token, replacement)
+    markdown = _convert_sup_tags_to_superscript(markdown)
     return markdown.strip() + "\n" if markdown.strip() else ""
 
 
@@ -447,7 +461,7 @@ def build_project(project_dir: Path) -> None:
         resolve_executable("pandoc"),
         "-",
         "-f",
-        "markdown+raw_html",
+        "markdown+raw_html+superscript",
         "--citeproc",
         *reference_doc_arg,
         "--csl",
