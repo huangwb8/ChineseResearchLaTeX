@@ -12,6 +12,14 @@ if str(PACKAGE_SCRIPTS_DIR) not in sys.path:
 import manuscript_tool
 
 
+def test_package_version_matches_cli_version():
+    scripts_init = PACKAGE_SCRIPTS_DIR / "__init__.py"
+    namespace: dict[str, str] = {}
+    exec(scripts_init.read_text(encoding="utf-8"), namespace)
+
+    assert namespace["__version__"] == manuscript_tool.VERSION
+
+
 def test_collect_extra_tex_inputs_follows_main_tex_order(tmp_path):
     project_dir = tmp_path / "paper-demo"
     (project_dir / "extraTex" / "front").mkdir(parents=True)

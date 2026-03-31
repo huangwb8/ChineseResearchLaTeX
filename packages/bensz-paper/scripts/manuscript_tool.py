@@ -19,7 +19,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import Pt
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 PROJECT_ROOT_MARKERS = ("main.tex",)
 EXTRA_TEX_INPUT_PATTERN = re.compile(r"\\input\{(extraTex/[^}]+)\}")
 CITATION_PATTERN = re.compile(

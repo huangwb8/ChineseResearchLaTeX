@@ -1,5 +1,5 @@
 """
-Python utilities bundled with benszmanuscriptlatex.
+Python utilities bundled with bensz-paper.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.3.1"
