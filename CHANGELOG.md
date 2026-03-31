@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### Fixed（修复）
+
+- 为 `packages/bensz-paper/tests/test_manuscript_tool.py` 补充 DOCX frontmatter 上标回归测试：新增对 `\textsuperscript{}` 到 Pandoc 原生 `^...^` 语法的断言，以及从 `build_markdown_for_docx()` 到实际 DOCX 产物的 round-trip 验证，确保 `projects/paper-sci-01` 及其派生论文项目中的作者机构编号、等贡献符号和通讯作者星号在 Word 导出中继续保持右上角上标表现，不回退成普通基线文本
+
 ### Changed（变更）
 
 - 压缩 `skills/systematic-literature-review/`、`skills/nsfc-roadmap/`、`skills/nsfc-schematic/`、`skills/nsfc-reviewers/`、`skills/complete-example/`、`skills/nsfc-qc/`、`skills/nsfc-justification-writer/`、`skills/check-review-alignment/`、`skills/nsfc-humanization/`、`skills/make-latex-model/`、`skills/get-review-theme/` 的 `SKILL.md`：保留触发语义、输入输出契约、关键路径与脚本入口，删除重复角色铺垫、长示例与低价值展开，便于降低 `./skills` 的工作类 Markdown 上下文开销

@@ -23,6 +23,7 @@ import shutil
 import sys
 from pathlib import Path
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 from docx.enum.text import WD_LINE_SPACING
 
@@ -193,6 +194,7 @@ def fix_docx_spacing(docx_path: Path) -> None:
     in_no_indent_section = False  # True for Abstract, Figure legends, Supplementary materials
     prev_was_heading     = True   # 文档起始视为 heading 后，首段不缩进
     seen_section_heading = False  # 见到第一个 H2+ 之前（frontmatter）不缩进
+    seen_title_heading   = False  # 首个 Heading 1 是论文标题，保持居中
 
     for para in doc.paragraphs:
         total_paragraphs += 1
@@ -206,6 +208,11 @@ def fix_docx_spacing(docx_path: Path) -> None:
         pf.space_before = DOCX_SPACE_BEFORE
 
         if is_heading:
+            if style_name == "Heading 1" and not seen_title_heading:
+                pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                seen_title_heading = True
+            else:
+                pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
             if style_name != "Heading 1":
                 seen_section_heading = True
             in_no_indent_section = para.text.strip() in NO_INDENT_SECTIONS

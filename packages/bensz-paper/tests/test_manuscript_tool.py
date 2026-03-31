@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_SCRIPTS_DIR = REPO_ROOT / "packages" / "bensz-paper" / "scripts"
@@ -87,6 +89,24 @@ def test_pandoc_latex_to_markdown_preserves_headings_and_citations():
     assert "`inline code`" in markdown
 
 
+def test_pandoc_latex_to_markdown_preserves_frontmatter_superscripts():
+    latex = "\n".join(
+        [
+            r"Author One\textsuperscript{1†}, Author Two\textsuperscript{2*}",
+            r"\noindent\textsuperscript{1}Department A",
+            r"\noindent\textsuperscript{2}Department B",
+            "",
+        ]
+    )
+
+    markdown = manuscript_tool.pandoc_latex_to_markdown(latex)
+    normalized = " ".join(markdown.split())
+
+    assert "Author One^1†^, Author Two^2*^" in normalized
+    assert "^1^Department A" in normalized
+    assert "^2^Department B" in normalized
+
+
 def test_build_markdown_for_docx_reads_extra_tex_without_source_manifest(tmp_path):
     project_dir = tmp_path / "paper-demo"
     (project_dir / "extraTex" / "front").mkdir(parents=True)
@@ -150,6 +170,65 @@ def test_build_markdown_for_docx_reads_extra_tex_without_source_manifest(tmp_pat
     assert "# Figure legends" in markdown
 
 
+def test_build_markdown_for_docx_frontmatter_superscripts_survive_docx_roundtrip(tmp_path):
+    project_dir = tmp_path / "paper-demo"
+    (project_dir / "extraTex" / "front").mkdir(parents=True)
+
+    (project_dir / "main.tex").write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\begin{document}",
+                r"\input{extraTex/front/frontmatter.tex}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project_dir / "extraTex" / "front" / "frontmatter.tex").write_text(
+        "\n".join(
+            [
+                r"\begin{center}",
+                r"\textbf{Template Example}",
+                "",
+                r"Author One\textsuperscript{1†}, Author Two\textsuperscript{2*}",
+                r"\end{center}",
+                "",
+                r"\noindent\textsuperscript{1}Department A\par",
+                r"\noindent\textsuperscript{2}Department B\par",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    markdown = manuscript_tool.build_markdown_for_docx(project_dir)
+    docx_path = tmp_path / "frontmatter.docx"
+    manuscript_tool.run_cmd(
+        [
+            manuscript_tool.resolve_executable("pandoc"),
+            "-",
+            "-f",
+            "markdown+raw_html+superscript",
+            "-o",
+            str(docx_path),
+        ],
+        input_text=markdown,
+    )
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    doc = Document(docx_path)
+    author_para = next(para for para in doc.paragraphs if "Author One" in para.text)
+    affiliation_para = next(para for para in doc.paragraphs if "Department A" in para.text)
+    second_affiliation_para = next(para for para in doc.paragraphs if "Department B" in para.text)
+
+    assert any(run.text == "1†" and run.font.superscript for run in author_para.runs)
+    assert any(run.text == "2*" and run.font.superscript for run in author_para.runs)
+    assert any(run.text == "1" and run.font.superscript for run in affiliation_para.runs)
+    assert any(run.text == "2" and run.font.superscript for run in second_affiliation_para.runs)
+
+
 def test_remove_legacy_docx_intermediates_cleans_old_cache(tmp_path):
     cache_dir = tmp_path / ".latex-cache"
     (cache_dir / "extraTex" / "body").mkdir(parents=True)
@@ -160,3 +239,23 @@ def test_remove_legacy_docx_intermediates_cleans_old_cache(tmp_path):
 
     assert not (cache_dir / "main.md").exists()
     assert not (cache_dir / "extraTex").exists()
+
+
+def test_fix_docx_spacing_keeps_title_centered_and_left_aligns_section_headings(tmp_path):
+    docx_path = tmp_path / "heading-alignment.docx"
+    doc = Document()
+    doc.styles["Heading 1"].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc.add_paragraph("Template Example Title", style="Heading 1")
+    doc.add_paragraph("Template author list", style="Normal")
+    doc.add_paragraph("Introduction", style="Heading 1")
+    doc.add_paragraph("Body paragraph.", style="Normal")
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    fixed_doc = Document(docx_path)
+    title_para = fixed_doc.paragraphs[0]
+    section_para = fixed_doc.paragraphs[2]
+
+    assert title_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.CENTER
+    assert section_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.LEFT

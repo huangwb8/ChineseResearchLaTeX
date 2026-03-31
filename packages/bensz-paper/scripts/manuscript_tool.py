@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import Pt
 
@@ -240,6 +241,7 @@ def fix_docx_spacing(docx_path: Path) -> None:
     in_no_indent_section = False
     prev_was_heading = True
     seen_section_heading = False
+    seen_title_heading = False
 
     for para in doc.paragraphs:
         style_name = para.style.name if para.style else ""
@@ -252,6 +254,11 @@ def fix_docx_spacing(docx_path: Path) -> None:
         pf.space_before = Pt(0)
 
         if is_heading:
+            if style_name == "Heading 1" and not seen_title_heading:
+                pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                seen_title_heading = True
+            else:
+                pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
             if style_name != "Heading 1":
                 seen_section_heading = True
             in_no_indent_section = para.text.strip() in no_indent_sections
