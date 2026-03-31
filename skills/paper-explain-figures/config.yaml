@@ -1,0 +1,66 @@
+skill_info:
+  name: paper-explain-figures
+  version: 0.2.0
+  description: "解读论文 Figure 的含义并输出一份人类可读性很强的 Markdown 报告；自动将 figure 转成 jpg 做视觉理解，并尝试从图片附近检索生成该图的源代码作为解读依据；通过 worker 脚本以 `codex exec`/`claude -p` 进程级隔离解读每张图（并发上限默认 3）。⚠️ 全程只读：严禁修改图片与源代码。"
+  author: "Bensz Conan"
+  category: "paper-reading"
+
+defaults:
+  execution: "serial"  # serial|parallel（默认串行，减少限流/封禁风险）
+  max_parallel: 3
+  sleep_between_starts_sec: 2.0
+  timeout_seconds: 0  # 0 表示不超时（如需可填 900 等）
+
+  # Runner：默认用 codex（更可能支持本地文件读取/视觉理解）
+  runner_type: "codex"  # codex|claude|local
+  runner_profile: "deep"  # default|fast|deep
+  runner_model: ""  # 为空表示使用 CLI 默认模型
+
+  # 源代码检索：为避免扫到过大的目录，默认只向上搜索 2 层父目录
+  code_search_max_parent_depth: 2
+  code_search_max_files: 2000
+  code_search_max_file_bytes: 200000  # 单文件最多读取字节数（防止巨文件拖慢）
+  code_search_min_stem_len: 8  # stem 过短会导致大量误匹配；小于该长度时只用完整文件名做匹配
+  code_search_exts:
+    - ".R"
+    - ".Rmd"
+    - ".qmd"
+    - ".py"
+    - ".ipynb"
+    - ".jl"
+    - ".m"
+    - ".tex"
+    - ".sh"
+
+cli:
+  codex:
+    cmd: ["codex"]
+    # 目标：非交互运行不阻塞；并把 runner 的写入约束在当前 job 工作区（脚本会设置 cwd=job_dir）
+    global_args: ["--ask-for-approval", "never", "--sandbox", "workspace-write"]
+    exec_subcommand: ["exec"]
+    subcommand_args: []
+    model_flag: "-m"
+    profile_args:
+      default: []
+      fast: ["-c", 'reasoning_effort="low"']
+      deep: ["-c", 'reasoning_effort="medium"']
+  claude:
+    cmd: ["claude"]
+    global_args: ["--dangerously-skip-permissions", "--no-session-persistence"]
+    print_subcommand: ["-p"]
+    subcommand_args: []
+    model_flag: "--model"
+    profile_args:
+      default: []
+      fast: ["--effort", "low"]
+      deep: ["--effort", "medium"]
+
+models:
+  codex:
+    default: ""
+    fast: ""
+    deep: ""
+  claude:
+    default: ""
+    fast: ""
+    deep: ""

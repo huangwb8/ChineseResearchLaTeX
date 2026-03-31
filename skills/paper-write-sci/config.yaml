@@ -1,0 +1,208 @@
+skill_info:
+  name: paper-write-sci
+  version: 0.10.0
+  category: academic-writing
+  author: Bensz Conan
+  description: SCI 期刊论文写作与修订助手
+
+directories:
+  plans: plans
+  tests: tests
+
+runtime_outputs:
+  collaborative_plan_dir: plans
+  collaborative_plan_pattern: "WritePaperSCI_{topic}_{run_id}.md"
+  timestamp_format: "%Y%m%d%H%M%S"
+  run_dir_pattern: "run_{timestamp}"
+  topic_slug:
+    fallback: paper
+    max_length: 48
+    separator: "-"
+  runtime_manifest: analysis/runtime-context.json
+
+scripts:
+  prepare_workspace: scripts/prepare_workspace.py
+
+input_validation:
+  paper_dir:
+    must_exist: true
+    must_be_directory: true
+  reference_materials:
+    must_exist: true
+    allow_files: true
+    allow_directories: true
+
+workspace:
+  hidden_dir: .paper-write-sci
+  legacy_hidden_dirs:
+    - .write-paper-sci
+    - .write-paper
+  keep_intermediates_inside_hidden_dir: true
+  subdirs:
+    - analysis
+    - number-check
+    - section-role-check
+    - logic-check
+    - render
+  build_log: render/build-log.txt
+  word_build_log: render/word-build-log.txt
+
+analysis_files:
+  paper_structure: analysis/paper-structure.md
+  figures_tables: analysis/figures-tables.md
+  logic_tree: analysis/logic-tree.md
+  reference_style: analysis/reference-style.md
+  render_plan: analysis/render-plan.md
+  consistency_check: analysis/consistency-check.md
+
+mode:
+  default: autonomous
+  options:
+    - autonomous
+    - collaborative
+  aliases:
+    autonomous:
+      - auto
+      - ai-autonomous
+      - AI自主
+      - AI 自主
+    collaborative:
+      - human-in-the-loop
+      - 人机协作
+      - 协作模式
+
+style:
+  default: bensz-01
+  directory: references/styles
+  schema_file: references/styles/style-template.md
+  allow_reference_material_adaptation: true
+  discussion_guard:
+    baseline_style: general-01
+    allow_author_style_overlay: true
+    apply_when:
+      - optimize-discussion
+      - rewrite-discussion
+      - full-manuscript-polish
+  selection_order:
+    - explicit_user_choice
+    - user_reference_material
+    - default
+  available:
+    - name: bensz-01
+      file: references/styles/bensz-01.md
+      domain: 生物医学
+      description: 基于作者手稿提炼的人类作者风格，强调问题导向、方法命名、关键数字、详尽且对非领域读者友好的图注与诚实局限
+    - name: general-01
+      file: references/styles/general-01.md
+      domain: 通用 SCI
+      description: 综合官方 SCI 写作建议形成的稳健通用风格
+
+tex_readability:
+  paragraph_strategy: blank_line_for_new_paragraph
+  point_strategy: one_point_per_line_without_blank_line
+  point_definition: parallel-evidence-or-panel-or-limitation-unit
+  only_for_natural_language_blocks: true
+  preferred_scenarios:
+    - multi-figure-or-table-evidence
+    - multi-group-comparisons
+    - panel-by-panel-legends
+    - sequential-viewpoints-or-limitations
+  avoid_mechanical_line_breaks: true
+  skip_line_sensitive_structures: true
+
+number_check:
+  enabled: true
+  require_for_inserted_numbers: true
+  require_source_backtrace: true
+  reject_on_any_blocker: true
+  consensus_rule: unanimous_pass
+  template: references/templates/number-check-template.md
+  output_dir: number-check
+  report_pattern: report_{timestamp}.md
+  parallel_vibe:
+    threads: 5
+    runners_per_thread: 1
+    sdk: codex
+
+section_role_check:
+  enabled: true
+  review_template: references/templates/section-role-check-template.md
+  discussion_review_template: references/templates/discussion-role-check-template.md
+  output_dir: section-role-check
+  round_pattern: round-{iteration}-{timestamp}.md
+  discussion_audit_pattern: discussion-audit-{timestamp}.md
+  require_before_logic_check: true
+  discussion:
+    max_quantitative_anchor_per_paragraph: 1
+    trigger_keywords:
+      - 优化讨论
+      - 讨论像结果
+      - discussion 太像 results
+      - 减少重复
+      - 更像人写的 discussion
+  parallel_vibe:
+    threads: 5
+    runners_per_thread: 1
+    sdk: codex
+
+logic_check:
+  enabled: true
+  max_iterations: 3
+  logic_tree_template: references/templates/logic-tree-template.md
+  review_template: references/templates/logic-check-template.md
+  output_dir: logic-check
+  round_pattern: round-{iteration}-{timestamp}.md
+  exit_rule: all_clear_latest_round
+  parallel_vibe:
+    threads: 5
+    runners_per_thread: 1
+    sdk: codex
+
+entry_candidates:
+  - main.tex
+  - source/main.tex
+
+section_paths:
+  abstract: extraTex/front/abstract.tex
+  introduction: extraTex/body/introduction.tex
+  methods: extraTex/body/methods.tex
+  results: extraTex/body/results.tex
+  discussion: extraTex/body/discussion.tex
+  conclusion: extraTex/body/conclusion.tex
+  additional-information: extraTex/back/additional-information.tex
+  figure-legends: extraTex/back/figure-legends.tex
+  supplementary-materials: extraTex/back/supplementary-materials.tex
+
+protected_paths:
+  - artifacts/
+  - "*.sty"
+  - "*.cls"
+  - "*.bst"
+  - "*.bbx"
+  - "*.cbx"
+  - latexmkrc
+  - main.tex
+
+render_detection:
+  word_keywords:
+    - docx
+    - word
+    - export
+  pdf_output_patterns:
+    - main.pdf
+    - .latex-cache/main.pdf
+    - artifacts/*.pdf
+  word_output_patterns:
+    - main.docx
+    - artifacts/*.docx
+    - output/*.docx
+
+build_tools:
+  - pattern: scripts/manuscript_tool.py
+    command: "python scripts/manuscript_tool.py build"
+  - pattern: Makefile
+    command: "make"
+  - pattern: latexmkrc
+    command: "latexmk"
+  - pattern: main.tex
+    command: "xelatex -interaction=nonstopmode main.tex"
