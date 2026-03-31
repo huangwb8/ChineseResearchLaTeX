@@ -556,6 +556,71 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
+### 18. paper-write-sci - SCI 论文写作与修订
+
+**状态**：🚧 开发中（v0.10.0）
+
+**类型**：📝 日常
+
+**功能**：根据 LaTeX 论文项目撰写、修订和润色 SCI 期刊论文正文，默认 AI 自主模式，也支持人机协作仅输出审查计划
+
+**使用场景**：
+- 从零撰写 SCI 论文各章节（Introduction / Methods / Results / Discussion / Conclusion）
+- 修订或润色已有 SCI 论文稿件
+- 数字事实核验（检测插入数字的来源追溯）
+- 逻辑树多轮审查（结构化检查论证链完整性）
+
+**推荐 Prompt 模板**：
+
+```
+请使用 paper-write-sci：
+目标项目：projects/paper-sci-01
+模式：autonomous（AI 自主）/ collaborative（人机协作）
+```
+
+**技能特点**：
+- 支持作者风格化写作（可从用户手稿提炼写作风格）
+- 数字事实核验：多线程并行审查所有插入数字的来源与一致性
+- 章节角色检查：确保每个章节承担正确的叙事角色（如 Discussion 不重复 Results）
+- 逻辑树多轮审查：结构化检查论证链完整性，最多 3 轮迭代
+- PDF + Word 双格式渲染闭环
+
+[详细文档 →](paper-write-sci/SKILL.md)
+
+---
+
+### 19. paper-explain-figures - 论文 Figure 解读
+
+**状态**：🚧 开发中（v0.2.0）
+
+**类型**：📝 日常
+
+**功能**：解读论文 Figure 的含义并输出一份"教会人类如何读图"的高可读性 Markdown 报告
+
+**使用场景**：
+- 快速理解论文中复杂图表的含义
+- 辅助论文阅读与文献调研
+- 为 Figure 生成人类可读的解读说明
+
+**推荐 Prompt 模板**：
+
+```
+请使用 paper-explain-figures 解读以下论文图表：
+图片路径：/path/to/figure1.pdf（支持多个文件）
+（可选）人工提示：这张图展示的是 XXX 实验的结果
+```
+
+**技能特点**：
+- 自动将 Figure 转为 JPG 做视觉理解
+- 自动从图片附近检索生成该图的源代码作为解读依据
+- 三重交叉解读：视觉理解 + 源代码 + 人工提示
+- 通过 `codex exec`/`claude -p` 进程级隔离解读每张图（并发上限默认 3）
+- 全程只读：不修改图片与源代码
+
+[详细文档 →](paper-explain-figures/SKILL.md)
+
+---
+
 ## 技能依赖关系
 
 某些技能依赖其他技能的输出，形成完整的工作流：
@@ -569,6 +634,8 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - **nsfc-budget**：基于完整正文与补充材料生成预算说明书（通常放在正文接近完成后）
 - **nsfc-roadmap / nsfc-schematic**：基于写作内容生成技术路线图与原理图
 - **nsfc-reviewers**：标书完成后模拟专家评审（依赖标书完整正文）
+- **paper-write-sci**：SCI 论文写作与修订（依赖 LaTeX 论文项目结构）
+- **paper-explain-figures**：论文 Figure 解读（可与 paper-write-sci 配合使用）
 
 ### 推荐使用顺序
 

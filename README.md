@@ -429,6 +429,10 @@ git clone https://github.com/huangwb8/skills.git &&
 - **nsfc-code**：申请代码推荐（只读读取标书正文 + 2026 申请代码推荐库，输出 5 组主/次代码与理由，写入 `NSFC-CODE-vYYYYMMDDHHmm.md`）。写完标书时再用。 
 - **nsfc-budget**：根据标书正文与补充材料生成预算说明书 LaTeX 项目与 `budget.pdf`，默认将所有中间过程隔离在工作目录 `.nsfc-budget/` 下
 
+#### 📝 SCI 论文写作阶段
+- **paper-write-sci**：SCI 期刊论文写作与修订（支持风格化写作、数字事实核验、逻辑树多轮审查与 PDF/Word 渲染闭环）
+- **paper-explain-figures**：解读论文 Figure 含义，生成高可读性 Markdown 报告（视觉理解 + 源代码检索 + 人工解读三重交叉）
+
 #### 🎯 质量保障
 - **nsfc-qc**：标书只读质量控制（多线程并行检查文风生硬、引用真伪与一致性、篇幅与结构分布、逻辑清晰度等；缩写预检按实际渲染顺序做全文级注册表检查，输出标准化 QC 报告）
 - **nsfc-ref-alignment**：参考文献与正文引用一致性核查（只读），检查 bibkey 是否存在、BibTeX 字段完备性与格式，并生成结构化输入供 AI 逐条评估"引用-语义"是否匹配
@@ -462,6 +466,8 @@ git clone https://github.com/huangwb8/skills.git &&
 | [nsfc-reviewers](skills/nsfc-reviewers/) | v1.4.0 | 📝 日常 | NSFC 标书多专家多维度评审模拟（默认 3 组、最多 5 组，含函评/会评给不过判断与资助约束识别） | ✅ 稳定 |
 | [nsfc-length-aligner](skills/nsfc-length-aligner/) | v0.3.1 | 📝 日常 | NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标） | 🚧 开发中 |
 | [nsfc-humanization](skills/nsfc-humanization/) | v1.0.0 | 📝 日常 | 去 AI 机器味，使标书读起来像专家亲笔撰写 | ✅ 稳定 |
+| [paper-write-sci](skills/paper-write-sci/) | v0.10.0 | 📝 日常 | SCI 期刊论文写作与修订（风格化写作、数字审查、逻辑审查、PDF/Word 渲染闭环） | 🚧 开发中 |
+| [paper-explain-figures](skills/paper-explain-figures/) | v0.2.0 | 📝 日常 | 解读论文 Figure 含义，生成高可读性 Markdown 报告（视觉理解 + 源代码检索 + 人工解读） | 🚧 开发中 |
 
 ---
 

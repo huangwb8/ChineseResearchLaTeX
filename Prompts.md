@@ -2,11 +2,17 @@
 
 ---
 
-创建tag v4.0.9 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
+创建tag v4.0.10 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
 
 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 # 日常
+
+---
+
+/Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/plans/fix-docx-bib-et-al.md  这个bug 在 projects/paper-sci-01 里也有。 你修一下。
+
+---
 
 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/plans/fix-docx-heading-center.md 这个bug 在 projects/paper-sci-01 里也有。 你修一下。
 

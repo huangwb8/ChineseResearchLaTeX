@@ -10,6 +10,7 @@
 
 ### Fixed（修复）
 
+- 修复 `projects/paper-sci-01/artifacts/manuscript.csl` 的 DOCX 参考文献作者截断口径：将 bibliography 的 `et-al-min / et-al-use-first` 从 `6 / 1` 调整为 `4 / 3`，使 `paper-sci-01` 的 Word 导出与 PDF 侧 `biblatex` 的三作者口径一致；同时为 `packages/bensz-paper/tests/test_manuscript_tool.py` 新增基于 Pandoc citeproc 的回归测试，防止再次回退成“仅首位作者 + et al.”
 - 为 `packages/bensz-paper/tests/test_manuscript_tool.py` 补充 DOCX frontmatter 上标回归测试：新增对 `\textsuperscript{}` 到 Pandoc 原生 `^...^` 语法的断言，以及从 `build_markdown_for_docx()` 到实际 DOCX 产物的 round-trip 验证，确保 `projects/paper-sci-01` 及其派生论文项目中的作者机构编号、等贡献符号和通讯作者星号在 Word 导出中继续保持右上角上标表现，不回退成普通基线文本
 
 ### Changed（变更）
