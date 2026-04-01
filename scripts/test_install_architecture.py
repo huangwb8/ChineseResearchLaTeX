@@ -197,7 +197,7 @@ def test_pack_project_preserves_ucas_thesis_project_files(tmp_path: Path):
     assert "bibs/references.bib" in names
     assert "template.json" in names
     assert "source-baseline.pdf" not in names
-    assert "scripts/export_docx.py" not in names
+    assert "scripts/export_docx.py" in names
 
 
 def test_add_cv_runtime_bundle_includes_shared_cv_fonts(tmp_path: Path):

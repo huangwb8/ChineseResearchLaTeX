@@ -10,6 +10,7 @@
 
 ### Fixed（修复）
 
+- 修复 `.github/workflows/update-template-list.yml` 经常被无关回归测试拦截的问题：README 模板列表同步工作流现在只运行与模板列表/Issue 链接直接相关的测试，不再因为 `scripts/pack_release.py` 的 release 架构回归而整条自动同步链路失败；同时为 `scripts/pack_release.py` 补回 `add_*_runtime_bundle()` 兼容入口，并同步更新 `scripts/test_install_architecture.py` 对 `thesis-ucas-doctor` 标准包内容的断言
 - 修复 `projects/paper-sci-01/artifacts/manuscript.csl` 的 DOCX 参考文献作者截断口径：将 bibliography 的 `et-al-min / et-al-use-first` 从 `6 / 1` 调整为 `4 / 3`，使 `paper-sci-01` 的 Word 导出与 PDF 侧 `biblatex` 的三作者口径一致；同时为 `packages/bensz-paper/tests/test_manuscript_tool.py` 新增基于 Pandoc citeproc 的回归测试，防止再次回退成“仅首位作者 + et al.”
 - 为 `packages/bensz-paper/tests/test_manuscript_tool.py` 补充 DOCX frontmatter 上标回归测试：新增对 `\textsuperscript{}` 到 Pandoc 原生 `^...^` 语法的断言，以及从 `build_markdown_for_docx()` 到实际 DOCX 产物的 round-trip 验证，确保 `projects/paper-sci-01` 及其派生论文项目中的作者机构编号、等贡献符号和通讯作者星号在 Word 导出中继续保持右上角上标表现，不回退成普通基线文本
 

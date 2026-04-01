@@ -370,6 +370,25 @@ def copy_fonts_runtime_bundle(target_dir: Path, font_files: set[str]) -> None:
         copy_file(font_path, target_dir / "fonts" / font_name)
 
 
+def add_runtime_directory_to_zip(zf: zipfile.ZipFile, runtime_dir: Path) -> None:
+    for file in iter_tree_files(runtime_dir):
+        zf.write(file, arcname=file.relative_to(runtime_dir))
+
+
+def build_legacy_runtime_zip(
+    zf: zipfile.ZipFile,
+    builder: callable,
+    project_dir: Path,
+    prefix: str,
+) -> None:
+    staging_root = TESTS_DIR / ".pack_release_tmp"
+    staging_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f"{prefix}-legacy-runtime-", dir=staging_root) as temp_dir:
+        runtime_dir = Path(temp_dir)
+        builder(runtime_dir, project_dir)
+        add_runtime_directory_to_zip(zf, runtime_dir)
+
+
 def build_nsfc_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
     for file_name in NSFC_SHARED_RUNTIME_FILES:
         file_path = NSFC_PACKAGE_DIR / file_name
@@ -574,6 +593,42 @@ def build_cv_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
         copy_file(file_path, runtime_dir / file_name)
 
     copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
+
+
+def add_nsfc_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
+    build_legacy_runtime_zip(
+        zf,
+        build_nsfc_runtime_bundle,
+        project_dir or (PROJECTS_DIR / "NSFC_General"),
+        "nsfc",
+    )
+
+
+def add_paper_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
+    build_legacy_runtime_zip(
+        zf,
+        build_paper_runtime_bundle,
+        project_dir or (PROJECTS_DIR / "paper-sci-01"),
+        "paper",
+    )
+
+
+def add_thesis_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
+    build_legacy_runtime_zip(
+        zf,
+        build_thesis_runtime_bundle,
+        project_dir or (PROJECTS_DIR / "thesis-smu-master"),
+        "thesis",
+    )
+
+
+def add_cv_runtime_bundle(zf: zipfile.ZipFile, project_dir: Path | None = None) -> None:
+    build_legacy_runtime_zip(
+        zf,
+        build_cv_runtime_bundle,
+        project_dir or (PROJECTS_DIR / "cv-01"),
+        "cv",
+    )
 
 
 def rewrite_tex_command_target(content: str, command: str, original: str, replacement: str) -> str:
