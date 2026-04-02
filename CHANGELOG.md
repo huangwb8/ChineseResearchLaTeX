@@ -10,6 +10,13 @@
 
 ### Fixed（修复）
 
+- 修复 `bensz-paper` 的 PDF 参考文献 DOI/URL 冗余与 DOCX 默认表格横线缺失问题：`packages/bensz-paper/bml-bibliography.sty` 现默认保留 DOI 并抑制 URL，同时在 item 级清理 `url/urldate` 字段，避免 `paper-sci-01` 等论文项目的 PDF 参考文献重复显示 `https://doi.org/... + DOI: ...`；`packages/bensz-paper/scripts/manuscript_tool.py` 与 `packages/bensz-paper/scripts/fix_docx_spacing.py` 现会为 Pandoc 生成且尚无显式边框的 `Normal Table` 自动补上可见横向边框，同时保持已有自定义表格边框不被覆盖；`projects/paper-sci-01/main.tex` 与 `projects/paper-sci-01/artifacts/manuscript.csl` 也同步收口为 DOI 优先、`doi.org` URL 不重复打印的项目级护栏；`packages/bensz-paper/tests/test_manuscript_tool.py` 进一步补上 bibliography 口径、LaTeX 表格转 Markdown 与表格边框回归测试，`projects/paper-sci-01/` 还清理了示例 `.bib` 中的 DOI 镜像 URL 并补入最小演示表格
+- 修复 `bensz-paper` 的 DOCX 数学公式退化为源码文本问题：`packages/bensz-paper/scripts/manuscript_tool.py` 的 LaTeX→Markdown 阶段现改为输出标准 Pandoc Markdown 数学语法，避免 `gfm` 把公式包进反引号；DOCX 导出则改为先通过 `html5 --mathml` 生成带 MathML 的中间态，再写入 `main.docx`，确保 Word 中生成原生 OMML 公式对象；`packages/bensz-paper/tests/test_manuscript_tool.py` 新增数学语法与 OMML 回归测试，`projects/paper-sci-01/extraTex/body/results.tex` 也同步补入最小行内/陈列数学示例以覆盖真实构建链
+
+### Changed（变更）
+
+- 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 中的包版本号：由于本轮已连续修改 `bensz-paper` 的 bibliography、DOCX 表格、DOCX 数学公式链路与 `paper-sci-01` 示例配套能力，公共包版本现从 `p_v20260322` 升级为 `p_v20260402`
+- 扩充 `projects/paper-sci-01/extraTex/body/results.tex` 中的公式审查样例：由最小数学片段升级为一组更适合人工验收的代表性公式，覆盖行内希腊字母、上下标、分式、求和、带约束条件、分段函数与数学环境中的正文说明，便于直接审查当前模板在 PDF / DOCX 中的公式支持效果；`projects/paper-sci-01/README.md` 也同步更新了示例定位说明
 - 修复 `.github/workflows/update-template-list.yml` 经常被无关回归测试拦截的问题：README 模板列表同步工作流现在只运行与模板列表/Issue 链接直接相关的测试，不再因为 `scripts/pack_release.py` 的 release 架构回归而整条自动同步链路失败；同时为 `scripts/pack_release.py` 补回 `add_*_runtime_bundle()` 兼容入口，并同步更新 `scripts/test_install_architecture.py` 对 `thesis-ucas-doctor` 标准包内容的断言
 - 修复 `projects/paper-sci-01/artifacts/manuscript.csl` 的 DOCX 参考文献作者截断口径：将 bibliography 的 `et-al-min / et-al-use-first` 从 `6 / 1` 调整为 `4 / 3`，使 `paper-sci-01` 的 Word 导出与 PDF 侧 `biblatex` 的三作者口径一致；同时为 `packages/bensz-paper/tests/test_manuscript_tool.py` 新增基于 Pandoc citeproc 的回归测试，防止再次回退成“仅首位作者 + et al.”
 - 为 `packages/bensz-paper/tests/test_manuscript_tool.py` 补充 DOCX frontmatter 上标回归测试：新增对 `\textsuperscript{}` 到 Pandoc 原生 `^...^` 语法的断言，以及从 `build_markdown_for_docx()` 到实际 DOCX 产物的 round-trip 验证，确保 `projects/paper-sci-01` 及其派生论文项目中的作者机构编号、等贡献符号和通讯作者星号在 Word 导出中继续保持右上角上标表现，不回退成普通基线文本

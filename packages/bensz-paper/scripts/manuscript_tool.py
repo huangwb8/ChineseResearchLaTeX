@@ -14,12 +14,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.text import WD_LINE_SPACING
-from docx.shared import Pt
+from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.1"
+VERSION = "1.3.3"
 PROJECT_ROOT_MARKERS = ("main.tex",)
 EXTRA_TEX_INPUT_PATTERN = re.compile(r"\\input\{(extraTex/[^}]+)\}")
 CITATION_PATTERN = re.compile(
@@ -43,7 +40,6 @@ TOOL_CANDIDATES = {
         "/usr/local/bin/soffice",
     ),
 }
-
 
 def run_cmd(args: list[str], cwd: Path | None = None, input_text: str | None = None) -> str:
     result = subprocess.run(
@@ -150,8 +146,16 @@ def _normalize_frontmatter_markdown(md_text: str) -> str:
 
 def pandoc_latex_to_markdown(latex_text: str) -> str:
     prepared_text, placeholder_map = _replace_latex_citations_with_tokens(latex_text)
+    # Use Pandoc's native markdown dialect instead of GFM so TeX math stays
+    # as `$...$` / `$$...$$` and can be promoted into MathML/OMML later.
     markdown = run_cmd(
-        [resolve_executable("pandoc"), "-f", "latex", "-t", "gfm+raw_html"],
+        [
+            resolve_executable("pandoc"),
+            "-f",
+            "latex",
+            "-t",
+            "markdown+raw_html",
+        ],
         input_text=prepared_text,
     ).strip()
     for token, replacement in placeholder_map.items():
@@ -160,125 +164,42 @@ def pandoc_latex_to_markdown(latex_text: str) -> str:
     return markdown.strip() + "\n" if markdown.strip() else ""
 
 
-def _add_references_heading_if_missing(doc: "Document", heading_text: str = "References") -> None:
-    first_bib = next((p for p in doc.paragraphs if p.style.name == "Bibliography"), None)
-    if first_bib is None:
-        return
-
-    already_exists = any(
-        p.style.name.startswith("Heading") and p.text.strip().lower() == heading_text.lower()
-        for p in doc.paragraphs
-    )
-    if already_exists:
-        return
-
-    heading = doc.add_heading(heading_text, level=2)
-    heading_elem = heading._element
-    heading_elem.getparent().remove(heading_elem)
-    first_bib._element.addprevious(heading_elem)
-
-
-def _reorder_references_before_figure_legends(
-    doc: "Document",
-    references_heading: str = "References",
-    figure_legends_heading: str = "Figure legends",
+def build_docx_from_markdown(
+    manuscript_md: str,
+    docx_path: Path,
+    csl_path: Path,
+    bibliography_path: Path,
+    reference_doc: Path | None = None,
 ) -> None:
-    paras = doc.paragraphs
-    ref_heading_para = next(
-        (
-            p
-            for p in paras
-            if p.style.name.startswith("Heading")
-            and p.text.strip().lower() == references_heading.lower()
-        ),
-        None,
-    )
-    if ref_heading_para is None:
-        return
+    pandoc = resolve_executable("pandoc")
+    with tempfile.TemporaryDirectory(prefix="paper-docx-html-") as tmp_dir:
+        html_path = Path(tmp_dir) / "manuscript.html"
+        # Pandoc's DOCX writer in our current toolchain does not reliably
+        # promote TeX math from markdown into OMML. Converting through
+        # HTML5 + MathML yields native Word equations while preserving CSL output.
+        html_cmd = [
+            pandoc,
+            "-",
+            "-f",
+            "markdown+raw_html+superscript",
+            "-t",
+            "html5",
+            "--mathml",
+            "--citeproc",
+            "--csl",
+            str(csl_path),
+            "--bibliography",
+            str(bibliography_path),
+            "-o",
+            str(html_path),
+        ]
+        run_cmd(html_cmd, input_text=manuscript_md)
 
-    fig_legends_para = next(
-        (
-            p
-            for p in paras
-            if p.style.name.startswith("Heading")
-            and p.text.strip().lower() == figure_legends_heading.lower()
-        ),
-        None,
-    )
-    if fig_legends_para is None:
-        return
-
-    bib_elements = [p._element for p in paras if p.style.name == "Bibliography"]
-    if not bib_elements:
-        return
-
-    body_elem = ref_heading_para._element.getparent()
-    children = list(body_elem)
-    fig_idx = children.index(fig_legends_para._element)
-    ref_idx = children.index(ref_heading_para._element)
-    all_before = ref_idx < fig_idx and all(children.index(e) < fig_idx for e in bib_elements)
-    if all_before:
-        return
-
-    ref_block = [ref_heading_para._element] + bib_elements
-    for elem in ref_block:
-        body_elem.remove(elem)
-
-    anchor = fig_legends_para._element
-    for elem in ref_block:
-        anchor.addprevious(elem)
-
-
-def fix_docx_spacing(docx_path: Path) -> None:
-    body_indent = Pt(18)
-    no_indent = Pt(0)
-    no_indent_sections = {"Abstract", "Figure legends", "Supplementary materials"}
-
-    doc = Document(docx_path)
-    _add_references_heading_if_missing(doc)
-    _reorder_references_before_figure_legends(doc)
-
-    in_no_indent_section = False
-    prev_was_heading = True
-    seen_section_heading = False
-    seen_title_heading = False
-
-    for para in doc.paragraphs:
-        style_name = para.style.name if para.style else ""
-        is_heading = style_name.startswith("Heading")
-        is_bibliography = style_name == "Bibliography"
-
-        pf = para.paragraph_format
-        pf.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
-        pf.space_after = Pt(4)
-        pf.space_before = Pt(0)
-
-        if is_heading:
-            if style_name == "Heading 1" and not seen_title_heading:
-                pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                seen_title_heading = True
-            else:
-                pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
-            if style_name != "Heading 1":
-                seen_section_heading = True
-            in_no_indent_section = para.text.strip() in no_indent_sections
-            prev_was_heading = True
-            pf.first_line_indent = no_indent
-        elif is_bibliography:
-            pf.first_line_indent = no_indent
-            pf.left_indent = no_indent
-            for run in para.runs:
-                if "\t" in run.text:
-                    run.text = run.text.replace("\t", "")
-            prev_was_heading = False
-        else:
-            if not seen_section_heading or in_no_indent_section or prev_was_heading:
-                pf.first_line_indent = no_indent
-            else:
-                pf.first_line_indent = body_indent
-            prev_was_heading = False
-
-    doc.save(docx_path)
+        docx_cmd = [pandoc, str(html_path), "-f", "html"]
+        if reference_doc is not None and reference_doc.exists():
+            docx_cmd.extend(["--reference-doc", str(reference_doc)])
+        docx_cmd.extend(["-o", str(docx_path)])
+        run_cmd(docx_cmd)
 
 
 def is_project_root(path: Path) -> bool:
@@ -457,28 +378,19 @@ def build_project(project_dir: Path) -> None:
     manuscript_md = build_markdown_for_docx(project_dir)
 
     reference_doc = project_dir / "artifacts" / "reference.docx"
-    reference_doc_arg = ["--reference-doc", str(reference_doc)] if reference_doc.exists() else []
 
     csl_path = project_dir / "artifacts" / "manuscript.csl"
     if not csl_path.exists():
         raise FileNotFoundError(f"Missing CSL file: {csl_path}")
 
     docx_path = project_dir / "main.docx"
-    pandoc_cmd = [
-        resolve_executable("pandoc"),
-        "-",
-        "-f",
-        "markdown+raw_html+superscript",
-        "--citeproc",
-        *reference_doc_arg,
-        "--csl",
-        str(csl_path),
-        "--bibliography",
-        str(project_dir / "references" / "refs.bib"),
-        "-o",
-        str(docx_path),
-    ]
-    run_cmd(pandoc_cmd, cwd=project_dir, input_text=manuscript_md)
+    build_docx_from_markdown(
+        manuscript_md=manuscript_md,
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=project_dir / "references" / "refs.bib",
+        reference_doc=reference_doc,
+    )
     print(f"✓ DOCX generated: {docx_path}")
 
     print("Fixing DOCX spacing...")

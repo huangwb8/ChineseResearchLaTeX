@@ -20,3 +20,21 @@ DOCX rendering uses Pandoc with the bundled \texttt{reference.docx} and
 CSL file, after which a post-processing step normalizes line spacing,
 paragraph spacing, and bibliography placement so that the Word output
 remains visually close to the LaTeX PDF.
+
+To keep the PDF and DOCX outputs exercising the same table-rendering
+path, the demo manuscript also includes one compact resource table built
+directly from the LaTeX source of truth.
+
+\begin{table}[htbp]
+\centering
+\caption{Public resources used in the demo build pipeline}
+\begin{tabular}{ll}
+\hline
+Resource & Role \\
+\hline
+Article metadata and abstract & Demo manuscript narrative \\
+\texttt{references/refs.bib} & Shared citation data \\
+\texttt{reference.docx + manuscript.csl} & DOCX export styling \\
+\hline
+\end{tabular}
+\end{table}

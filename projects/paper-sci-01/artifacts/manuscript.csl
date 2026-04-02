@@ -40,7 +40,7 @@
   </macro>
   <macro name="access">
     <choose>
-      <if variable="volume" type="article dataset software" match="any"/>
+      <if type="dataset software" match="any"/>
       <else-if variable="DOI">
         <text variable="DOI" prefix="doi:"/>
       </else-if>
@@ -48,9 +48,7 @@
   </macro>
   <macro name="access-data">
     <choose>
-      <if type="dataset software" match="any">
-        <text variable="DOI" prefix="https://doi.org/"/>
-      </if>
+      <if type="dataset software" match="any"/>
     </choose>
   </macro>
   <macro name="issuance">
@@ -76,15 +74,6 @@
               <text term="preprint" text-case="capitalize-first"/>
             </else>
           </choose>
-          <text term="at"/>
-          <choose>
-            <if variable="DOI" match="any">
-              <text variable="DOI" prefix="https://doi.org/"/>
-            </if>
-            <else>
-              <text variable="URL"/>
-            </else>
-          </choose>
           <date date-parts="year" form="text" variable="issued" prefix="(" suffix=")"/>
         </group>
       </else-if>
@@ -103,18 +92,6 @@
       </else-if>
       <else-if type="article-journal" match="any">
         <group delimiter=" ">
-          <choose>
-            <if match="none" variable="volume page">
-              <choose>
-                <if match="any" variable="DOI">
-                  <text variable="DOI" prefix="https://doi.org/"/>
-                </if>
-                <else>
-                  <text variable="URL"/>
-                </else>
-              </choose>
-            </if>
-          </choose>
           <date date-parts="year" form="text" variable="issued" prefix="(" suffix=")"/>
         </group>
       </else-if>

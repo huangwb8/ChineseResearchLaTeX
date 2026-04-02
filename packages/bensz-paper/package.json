@@ -1,6 +1,6 @@
 {
   "name": "bensz-paper",
-  "version": "p_v20260322",
+  "version": "p_v20260402",
   "description": "ChineseResearchLaTeX SCI 论文公共包（支持 PDF / DOCX 双输出与统一构建脚本）",
   "author": "ChineseResearchLaTeX Contributors",
   "license": "MIT",

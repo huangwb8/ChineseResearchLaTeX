@@ -1,8 +1,11 @@
 from pathlib import Path
 import sys
+from zipfile import ZipFile
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_SCRIPTS_DIR = REPO_ROOT / "packages" / "bensz-paper" / "scripts"
@@ -10,6 +13,11 @@ if str(PACKAGE_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(PACKAGE_SCRIPTS_DIR))
 
 import manuscript_tool
+
+
+def _read_document_xml(docx_path: Path) -> str:
+    with ZipFile(docx_path) as archive:
+        return archive.read("word/document.xml").decode("utf-8", errors="replace")
 
 
 def test_package_version_matches_cli_version():
@@ -110,9 +118,50 @@ def test_pandoc_latex_to_markdown_preserves_frontmatter_superscripts():
     markdown = manuscript_tool.pandoc_latex_to_markdown(latex)
     normalized = " ".join(markdown.split())
 
-    assert "Author One^1†^, Author Two^2*^" in normalized
+    assert "Author One^1†^, Author Two^2\\*^" in normalized
     assert "^1^Department A" in normalized
     assert "^2^Department B" in normalized
+
+
+def test_pandoc_latex_to_markdown_converts_simple_tables():
+    latex = "\n".join(
+        [
+            r"\section{Methods}",
+            r"\begin{table}[htbp]",
+            r"\centering",
+            r"\caption{Demo table}",
+            r"\begin{tabular}{ll}",
+            r"\hline",
+            r"Item & Value \\",
+            r"\hline",
+            r"A & 1 \\",
+            r"B & 2 \\",
+            r"\hline",
+            r"\end{tabular}",
+            r"\end{table}",
+            "",
+        ]
+    )
+
+    markdown = manuscript_tool.pandoc_latex_to_markdown(latex)
+
+    assert "# Methods" in markdown
+    assert "Item   Value" in markdown
+    assert "A      1" in markdown
+    assert "Demo table" in markdown
+
+
+def test_pandoc_latex_to_markdown_keeps_standard_math_syntax():
+    latex = r"Inline $\rho$ and $\Delta$. Display: $$\log_{10}(x+1)$$."
+
+    markdown = manuscript_tool.pandoc_latex_to_markdown(latex)
+
+    assert "$`\\rho`$" not in markdown
+    assert "$`\\Delta`$" not in markdown
+    assert "``` math" not in markdown
+    assert r"$\rho$" in markdown
+    assert r"$\Delta$" in markdown
+    assert r"$$\log_{10}(x+1)$$" in markdown
 
 
 def test_build_markdown_for_docx_reads_extra_tex_without_source_manifest(tmp_path):
@@ -237,6 +286,53 @@ def test_build_markdown_for_docx_frontmatter_superscripts_survive_docx_roundtrip
     assert any(run.text == "2" and run.font.superscript for run in second_affiliation_para.runs)
 
 
+def test_build_docx_from_markdown_promotes_math_to_omml(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                "  author = {Alpha, Alice and Beta, Bob},",
+                "  title = {Synthetic Math Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  doi = {10.1234/demo.2026.002},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    docx_path = tmp_path / "math.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+    markdown = "\n".join(
+        [
+            "Body text with a citation [@Demo2026]. Inline $\\rho$ and $\\Delta$.",
+            "",
+            "Display:",
+            "$$\\log_{10}(x+1)$$",
+            "",
+        ]
+    )
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md=markdown,
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=bib_path,
+        reference_doc=reference_doc,
+    )
+
+    document_xml = _read_document_xml(docx_path)
+    assert document_xml.count("<m:oMath") >= 3
+    assert "\\rho" not in document_xml
+    assert "\\Delta" not in document_xml
+    assert "\\log_{10}(x+1)" not in document_xml
+    assert "`" not in document_xml
+
+
 def test_remove_legacy_docx_intermediates_cleans_old_cache(tmp_path):
     cache_dir = tmp_path / ".latex-cache"
     (cache_dir / "extraTex" / "body").mkdir(parents=True)
@@ -320,3 +416,149 @@ def test_paper_sci_01_csl_keeps_three_authors_before_et_al(tmp_path):
     assert "Alpha, A., Beta, B., Gamma, C." in bibliography_para.text
     assert "et al." in bibliography_para.text
     assert "Delta, D." not in bibliography_para.text
+
+
+def test_paper_sci_01_csl_prints_single_doi_without_duplicate_url(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                "  author = {Alpha, Alice and Beta, Bob and Gamma, Carol},",
+                "  title = {Synthetic DOI Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  doi = {10.1234/demo.2026.001},",
+                "  url = {https://doi.org/10.1234/demo.2026.001},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    docx_path = tmp_path / "bibliography.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.run_cmd(
+        [
+            manuscript_tool.resolve_executable("pandoc"),
+            "-",
+            "-f",
+            "markdown",
+            "--citeproc",
+            "--csl",
+            str(csl_path),
+            "--bibliography",
+            str(bib_path),
+            "--reference-doc",
+            str(reference_doc),
+            "-o",
+            str(docx_path),
+        ],
+        input_text="Body text with a citation [@Demo2026].\n",
+    )
+
+    bibliography_para = next(
+        para
+        for para in Document(docx_path).paragraphs
+        if "synthetic doi regression" in para.text.lower()
+    )
+
+    assert "doi:10.1234/demo.2026.001" in bibliography_para.text.replace(" ", "").lower()
+    assert "https://doi.org/10.1234/demo.2026.001" not in bibliography_para.text.lower()
+
+
+def test_fix_docx_spacing_adds_visible_horizontal_borders_to_normal_tables(tmp_path):
+    docx_path = tmp_path / "table.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.run_cmd(
+        [
+            manuscript_tool.resolve_executable("pandoc"),
+            "-",
+            "-f",
+            "markdown",
+            "--reference-doc",
+            str(reference_doc),
+            "--csl",
+            str(csl_path),
+            "-o",
+            str(docx_path),
+        ],
+        input_text="| A | B |\n| --- | --- |\n| 1 | 2 |\n",
+    )
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    xml = _read_document_xml(docx_path)
+    assert "<w:tblBorders>" in xml
+    assert '<w:top w:val="single"' in xml
+    assert '<w:bottom w:val="single"' in xml
+    assert '<w:insideH w:val="single"' in xml
+    assert '<w:left w:val="nil"' in xml
+    assert '<w:right w:val="nil"' in xml
+    assert '<w:insideV w:val="nil"' in xml
+
+
+def test_fix_docx_spacing_preserves_existing_table_border_overrides(tmp_path):
+    docx_path = tmp_path / "custom-table.docx"
+    doc = Document()
+    table = doc.add_table(rows=2, cols=2)
+    table.style = "Table Grid"
+    table.cell(0, 0).text = "A"
+    table.cell(0, 1).text = "B"
+    table.cell(1, 0).text = "1"
+    table.cell(1, 1).text = "2"
+
+    tbl_pr = table._tbl.tblPr
+    borders = OxmlElement("w:tblBorders")
+    for edge, value in (
+        ("top", "double"),
+        ("bottom", "double"),
+        ("left", "single"),
+        ("right", "single"),
+        ("insideH", "double"),
+        ("insideV", "single"),
+    ):
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), value)
+        borders.append(element)
+    tbl_pr.append(borders)
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    xml = _read_document_xml(docx_path)
+    assert '<w:top w:val="double"' in xml
+    assert '<w:bottom w:val="double"' in xml
+    assert '<w:insideH w:val="double"' in xml
+    assert '<w:insideV w:val="single"' in xml
+    assert '<w:left w:val="single"' in xml
+    assert '<w:right w:val="single"' in xml
+
+
+def test_bml_bibliography_prefers_doi_without_printing_urls():
+    bibliography_style = (REPO_ROOT / "packages" / "bensz-paper" / "bml-bibliography.sty").read_text(
+        encoding="utf-8"
+    )
+
+    assert "url=false" in bibliography_style
+    assert "doi=true" in bibliography_style
+    assert r"\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}" in bibliography_style
+
+
+def test_paper_sci_01_main_tex_keeps_project_level_doi_only_guard():
+    main_tex = (REPO_ROOT / "projects" / "paper-sci-01" / "main.tex").read_text(encoding="utf-8")
+
+    assert r"\ExecuteBibliographyOptions{url=false, doi=true}" in main_tex
+    assert r"\AtEveryBibitem{\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}" in main_tex
+
+
+def test_paper_sci_01_bib_data_drops_doi_mirror_urls():
+    refs_bib = (REPO_ROOT / "projects" / "paper-sci-01" / "references" / "refs.bib").read_text(
+        encoding="utf-8"
+    )
+
+    assert "https://doi.org/" not in refs_bib

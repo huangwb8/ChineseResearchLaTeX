@@ -7,6 +7,40 @@ Compared with adult brain and solid tumors, most pediatric solid cancers
 carried substantially fewer structural variants, whereas hematological
 malignancies showed a much closer burden profile.
 
+To make formula support easier to review by eye, the demo manuscript now
+includes a compact set of representative expressions. Let $\rho$ denote
+a rank-based association summary, let $\Delta$ denote a between-group
+burden shift, let $\hat{\lambda}$ denote an estimated scaling factor,
+and let $n_{\mathrm{SV},i}$ denote the structural-variation count for
+sample $i$. A log-scaled burden summary can then be written as
+\[
+B_i = \log_{10}\!\left(n_{\mathrm{SV},i} + 1\right).
+\]
+Using cohort-level mean $\mu_B$ and standard deviation $\sigma_B$, the
+standardized burden score is
+\[
+z_i = \frac{B_i - \mu_B}{\sigma_B}.
+\]
+If multiple signature-derived components are combined into a single
+review score, one convenient weighted summary is
+\[
+S_i = \sum_{k=1}^{K} w_k x_{ik},
+\qquad
+\sum_{k=1}^{K} w_k = 1.
+\]
+For a simple threshold-based flag, the indicator variable can be
+expressed as
+\[
+I_i =
+\begin{cases}
+1, & z_i \geq 2, \\
+0, & \text{otherwise}.
+\end{cases}
+\]
+Together, these examples cover inline Greek letters, subscripts,
+superscripts, fractions, summation, delimiters, and a piecewise
+definition in both PDF and DOCX export.
+
 The same analysis ranked genes disrupted by structural variants and
 found that the highest-priority events aligned with recognized pediatric
 cancer drivers, while adult cohorts were enriched for disruptions

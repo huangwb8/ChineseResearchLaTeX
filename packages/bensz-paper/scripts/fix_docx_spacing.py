@@ -24,8 +24,10 @@ import sys
 from pathlib import Path
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Pt
 from docx.enum.text import WD_LINE_SPACING
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
 
 PROJECT_ROOT_MARKERS = ("main.tex",)
 
@@ -45,6 +47,15 @@ ABSTRACT_HEADING = "Abstract"
 REFERENCES_HEADING = "References"
 # Section headings whose body paragraphs should all be flush left (no first-line indent)
 NO_INDENT_SECTIONS = {ABSTRACT_HEADING, "Figure legends", "Supplementary materials"}
+DEFAULT_DOCX_TABLE_STYLES = {"Normal Table"}
+DEFAULT_DOCX_TABLE_BORDERS = {
+    "top": {"val": "single", "sz": "8", "space": "0", "color": "auto"},
+    "bottom": {"val": "single", "sz": "8", "space": "0", "color": "auto"},
+    "insideH": {"val": "single", "sz": "8", "space": "0", "color": "auto"},
+    "left": {"val": "nil"},
+    "right": {"val": "nil"},
+    "insideV": {"val": "nil"},
+}
 
 
 def configure_windows_stdio_utf8() -> None:
@@ -176,6 +187,37 @@ def _reorder_references_before_figure_legends(
     print(f"✓ 已将 References 节移动到 '{figure_legends_heading}' 前")
 
 
+def _find_table_borders_element(table) -> OxmlElement | None:
+    tbl_pr = table._tbl.tblPr
+    if tbl_pr is None:
+        return None
+
+    for child in tbl_pr.iterchildren():
+        if child.tag == qn("w:tblBorders"):
+            return child
+    return None
+
+
+def _ensure_default_horizontal_table_borders(table) -> None:
+    style_name = table.style.name if table.style else ""
+    if style_name not in DEFAULT_DOCX_TABLE_STYLES:
+        return
+    if _find_table_borders_element(table) is not None:
+        return
+
+    tbl_pr = table._tbl.tblPr
+    if tbl_pr is None:
+        return
+
+    borders = OxmlElement("w:tblBorders")
+    for edge, attrs in DEFAULT_DOCX_TABLE_BORDERS.items():
+        element = OxmlElement(f"w:{edge}")
+        for attr_name, value in attrs.items():
+            element.set(qn(f"w:{attr_name}"), value)
+        borders.append(element)
+    tbl_pr.append(borders)
+
+
 def fix_docx_spacing(docx_path: Path) -> None:
     """修复 DOCX 文件的行间距和段间距。"""
     print(f"正在修复: {docx_path}")
@@ -237,6 +279,9 @@ def fix_docx_spacing(docx_path: Path) -> None:
             prev_was_heading = False
 
         fixed_paragraphs += 1
+
+    for table in doc.tables:
+        _ensure_default_horizontal_table_borders(table)
 
     doc.save(docx_path)
 

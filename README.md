@@ -343,6 +343,8 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir proj
 适用于 `projects/paper-*`，支持 PDF + DOCX 双输出：
 
 - 正文默认维护在 `extraTex/**/*.tex`；DOCX 导出只在运行期临时生成 Markdown，不再保存第二份正文源文件
+- DOCX 后处理会为 Pandoc 默认表格补上稳定可见的横向边框；示例项目 `paper-sci-01` 的 PDF / DOCX 参考文献默认优先保留 DOI，不重复打印 `doi.org` URL
+- DOCX 数学公式会经 HTML5 + MathML 中间态落成 Word 原生公式对象，避免 `$\\gamma$` 这类源码形式直接泄漏到投稿文档
 
 ```bash
 python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01

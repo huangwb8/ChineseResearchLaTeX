@@ -7,7 +7,10 @@
 - 依赖公共包 [`packages/bensz-paper`](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper)
 - 正文只维护在 `extraTex/**/*.tex`
 - DOCX 构建时仅在运行期临时生成 Markdown，不再持久化正文 `.md`
+- 示例正文包含一个最小资源表，用于同时演示 PDF / DOCX 表格输出
+- 示例正文包含一组代表性数学公式，用于人工审查 PDF / DOCX 对公式的支持程度
 - 同一份正文可同时输出 `main.pdf` 与 `main.docx`
+- PDF / DOCX 参考文献默认优先保留 DOI，不重复打印 `doi.org` URL
 
 ## 内容来源说明
 
@@ -36,6 +39,8 @@ python scripts/paper_build.py
 - `main.pdf`
 - `main.docx`
 - `.latex-cache/`
+
+其中 DOCX 构建链会为 Pandoc 默认生成的 `Normal Table` 补上可见横向边框，并通过 HTML5 + MathML 中间态把示例中的数学公式转换为 Word 原生公式对象，避免在 Word 中退化成源码文本。
 
 ## 结构
 

@@ -17,7 +17,7 @@
   gbpub=false,%
   gbtype=true,%
   gbpunctin=true,%
-  url=true,%
+  url=false,%
   doi=true,%
   maxbibnames=\bml@bibmaxnames,%
   minbibnames=\bml@bibminnames,%
@@ -26,9 +26,9 @@
 }
 \expandafter\RequirePackage\expandafter[\bml@bib@pkgopts]{biblatex}
 
-% Hide access-date fields (urlyear / urlmonth / urlday)
+% Prefer DOI as the canonical resolver and suppress URL/date fallbacks.
 \AtEveryBibitem{%
-  \clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}%
+  \clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}%
 }
 
 % Spacing and font
