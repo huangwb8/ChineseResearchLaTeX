@@ -3,6 +3,7 @@ import sys
 from zipfile import ZipFile
 
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -365,6 +366,56 @@ def test_fix_docx_spacing_keeps_title_centered_and_left_aligns_section_headings(
     assert section_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.LEFT
 
 
+def test_fix_docx_spacing_reorders_references_before_figure_titles_and_legends(tmp_path):
+    docx_path = tmp_path / "references-order.docx"
+    doc = Document()
+    doc.styles.add_style("Bibliography", WD_STYLE_TYPE.PARAGRAPH)
+    doc.add_paragraph("Introduction", style="Heading 1")
+    doc.add_paragraph("Body paragraph.", style="Normal")
+    doc.add_paragraph("Figure titles and legends", style="Heading 1")
+    doc.add_paragraph("Figure legend paragraph.", style="Normal")
+    doc.add_paragraph("[1]\tReference one.", style="Bibliography")
+    doc.add_paragraph("[2]\tReference two.", style="Bibliography")
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    fixed_doc = Document(docx_path)
+    paragraphs = [para for para in fixed_doc.paragraphs if para.text.strip()]
+    paragraph_texts = [para.text.strip() for para in paragraphs]
+    first_bibliography_index = next(
+        index for index, para in enumerate(paragraphs) if para.style.name == "Bibliography"
+    )
+    last_bibliography_index = max(
+        index for index, para in enumerate(paragraphs) if para.style.name == "Bibliography"
+    )
+
+    assert paragraph_texts.index("References") < paragraph_texts.index("Figure titles and legends")
+    assert paragraph_texts.index("References") < first_bibliography_index
+    assert last_bibliography_index < paragraph_texts.index("Figure titles and legends")
+
+
+def test_fix_docx_spacing_keeps_alias_tail_sections_flush_left(tmp_path):
+    docx_path = tmp_path / "tail-alias-indent.docx"
+    doc = Document()
+    doc.add_paragraph("Title", style="Heading 1")
+    doc.add_paragraph("Front matter", style="Normal")
+    doc.add_paragraph("Figure titles and legends", style="Heading 1")
+    doc.add_paragraph("Figure legend paragraph.", style="Normal")
+    doc.add_paragraph("Supplemental information titles and legends", style="Heading 1")
+    doc.add_paragraph("Supplement paragraph.", style="Normal")
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    fixed_doc = Document(docx_path)
+    figure_para = next(para for para in fixed_doc.paragraphs if para.text == "Figure legend paragraph.")
+    supplement_para = next(para for para in fixed_doc.paragraphs if para.text == "Supplement paragraph.")
+
+    assert figure_para.paragraph_format.first_line_indent.pt == 0
+    assert supplement_para.paragraph_format.first_line_indent.pt == 0
+
+
 def test_paper_sci_01_csl_keeps_three_authors_before_et_al(tmp_path):
     bib_path = tmp_path / "refs.bib"
     bib_path.write_text(
@@ -554,6 +605,8 @@ def test_paper_sci_01_main_tex_keeps_project_level_doi_only_guard():
 
     assert r"\ExecuteBibliographyOptions{url=false, doi=true}" in main_tex
     assert r"\AtEveryBibitem{\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}" in main_tex
+    assert r"\section{References}" in main_tex
+    assert r"\printbibliography[heading=none]" in main_tex
 
 
 def test_paper_sci_01_bib_data_drops_doi_mirror_urls():

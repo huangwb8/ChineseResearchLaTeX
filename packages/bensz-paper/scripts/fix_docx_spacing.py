@@ -45,8 +45,19 @@ DOCX_SPACE_BEFORE = Pt(0)
 ABSTRACT_HEADING = "Abstract"
 # References section heading text — inserted before Bibliography paragraphs if absent
 REFERENCES_HEADING = "References"
+FIGURE_LEGENDS_HEADINGS = ("Figure legends", "Figure titles and legends")
+SUPPLEMENTARY_HEADINGS = ("Supplementary materials", "Supplemental information titles and legends")
+
+
+def _normalize_heading_text(value: str) -> str:
+    return " ".join(value.split()).strip().lower()
+
+
 # Section headings whose body paragraphs should all be flush left (no first-line indent)
-NO_INDENT_SECTIONS = {ABSTRACT_HEADING, "Figure legends", "Supplementary materials"}
+NO_INDENT_SECTIONS = {
+    _normalize_heading_text(heading)
+    for heading in (ABSTRACT_HEADING, *FIGURE_LEGENDS_HEADINGS, *SUPPLEMENTARY_HEADINGS)
+}
 DEFAULT_DOCX_TABLE_STYLES = {"Normal Table"}
 DEFAULT_DOCX_TABLE_BORDERS = {
     "top": {"val": "single", "sz": "8", "space": "0", "color": "auto"},
@@ -125,10 +136,23 @@ def _add_references_heading_if_missing(
     print(f"✓ 已插入 '{heading_text}' 标题")
 
 
+def _find_heading_paragraph(doc: "Document", headings: tuple[str, ...] | list[str] | set[str]):
+    normalized_headings = {_normalize_heading_text(heading) for heading in headings}
+    return next(
+        (
+            para
+            for para in doc.paragraphs
+            if para.style.name.startswith("Heading")
+            and _normalize_heading_text(para.text) in normalized_headings
+        ),
+        None,
+    )
+
+
 def _reorder_references_before_figure_legends(
     doc: "Document",
     references_heading: str = REFERENCES_HEADING,
-    figure_legends_heading: str = "Figure legends",
+    figure_legends_headings: tuple[str, ...] = FIGURE_LEGENDS_HEADINGS,
 ) -> None:
     """将 References 节（标题 + 所有 Bibliography 段落）移动到 Figure legends 前。
 
@@ -138,20 +162,12 @@ def _reorder_references_before_figure_legends(
     paras = doc.paragraphs
 
     # Locate the References heading
-    ref_heading_para = next(
-        (p for p in paras
-         if p.style.name.startswith("Heading") and p.text.strip().lower() == references_heading.lower()),
-        None,
-    )
+    ref_heading_para = _find_heading_paragraph(doc, (references_heading,))
     if ref_heading_para is None:
         return  # Nothing to move
 
     # Locate the Figure legends heading
-    fig_legends_para = next(
-        (p for p in paras
-         if p.style.name.startswith("Heading") and p.text.strip().lower() == figure_legends_heading.lower()),
-        None,
-    )
+    fig_legends_para = _find_heading_paragraph(doc, figure_legends_headings)
     if fig_legends_para is None:
         return  # No Figure legends section found
 
@@ -184,7 +200,7 @@ def _reorder_references_before_figure_legends(
     for elem in ref_block:
         anchor.addprevious(elem)
 
-    print(f"✓ 已将 References 节移动到 '{figure_legends_heading}' 前")
+    print(f"✓ 已将 References 节移动到 '{fig_legends_para.text.strip()}' 前")
 
 
 def _find_table_borders_element(table) -> OxmlElement | None:
@@ -257,7 +273,7 @@ def fix_docx_spacing(docx_path: Path) -> None:
                 pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
             if style_name != "Heading 1":
                 seen_section_heading = True
-            in_no_indent_section = para.text.strip() in NO_INDENT_SECTIONS
+            in_no_indent_section = _normalize_heading_text(para.text) in NO_INDENT_SECTIONS
             prev_was_heading = True
             pf.first_line_indent = DOCX_NO_INDENT
         elif is_bibliography:

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.3"
+VERSION = "1.3.4"
 PROJECT_ROOT_MARKERS = ("main.tex",)
 EXTRA_TEX_INPUT_PATTERN = re.compile(r"\\input\{(extraTex/[^}]+)\}")
 CITATION_PATTERN = re.compile(
