@@ -21,6 +21,22 @@ def _read_document_xml(docx_path: Path) -> str:
         return archive.read("word/document.xml").decode("utf-8", errors="replace")
 
 
+def _build_docx_via_production_pipeline(markdown: str, docx_path: Path, tmp_path: Path) -> None:
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text("", encoding="utf-8")
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md=markdown,
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=bib_path,
+        reference_doc=reference_doc,
+    )
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+
 def test_package_version_matches_cli_version():
     scripts_init = PACKAGE_SCRIPTS_DIR / "__init__.py"
     namespace: dict[str, str] = {}
@@ -122,6 +138,14 @@ def test_pandoc_latex_to_markdown_preserves_frontmatter_superscripts():
     assert "Author One^1†^, Author Two^2\\*^" in normalized
     assert "^1^Department A" in normalized
     assert "^2^Department B" in normalized
+
+
+def test_convert_sup_tags_to_superscript_preserves_escaped_asterisk():
+    markdown = manuscript_tool._convert_sup_tags_to_superscript(
+        r"<sup>\*</sup>Correspondence: template.author@example.org."
+    )
+
+    assert markdown == r"^\*^Correspondence: template.author@example.org."
 
 
 def test_pandoc_latex_to_markdown_converts_simple_tables():
@@ -263,18 +287,7 @@ def test_build_markdown_for_docx_frontmatter_superscripts_survive_docx_roundtrip
 
     markdown = manuscript_tool.build_markdown_for_docx(project_dir)
     docx_path = tmp_path / "frontmatter.docx"
-    manuscript_tool.run_cmd(
-        [
-            manuscript_tool.resolve_executable("pandoc"),
-            "-",
-            "-f",
-            "markdown+raw_html+superscript",
-            "-o",
-            str(docx_path),
-        ],
-        input_text=markdown,
-    )
-    manuscript_tool.fix_docx_spacing(docx_path)
+    _build_docx_via_production_pipeline(markdown, docx_path, tmp_path)
 
     doc = Document(docx_path)
     author_para = next(para for para in doc.paragraphs if "Author One" in para.text)
@@ -285,6 +298,48 @@ def test_build_markdown_for_docx_frontmatter_superscripts_survive_docx_roundtrip
     assert any(run.text == "2*" and run.font.superscript for run in author_para.runs)
     assert any(run.text == "1" and run.font.superscript for run in affiliation_para.runs)
     assert any(run.text == "2" and run.font.superscript for run in second_affiliation_para.runs)
+
+
+def test_build_markdown_for_docx_correspondence_asterisk_survives_docx_roundtrip(tmp_path):
+    project_dir = tmp_path / "paper-demo"
+    (project_dir / "extraTex" / "front").mkdir(parents=True)
+
+    (project_dir / "main.tex").write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\begin{document}",
+                r"\input{extraTex/front/frontmatter.tex}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project_dir / "extraTex" / "front" / "frontmatter.tex").write_text(
+        "\n".join(
+            [
+                r"\begin{center}",
+                r"\textbf{Template Example}",
+                r"\end{center}",
+                "",
+                r"\noindent\textsuperscript{*}Correspondence: template.author@example.org.\par",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    markdown = manuscript_tool.build_markdown_for_docx(project_dir)
+    docx_path = tmp_path / "correspondence.docx"
+    _build_docx_via_production_pipeline(markdown, docx_path, tmp_path)
+
+    correspondence_para = next(
+        para for para in Document(docx_path).paragraphs if "Correspondence:" in para.text
+    )
+
+    assert "^*^" not in correspondence_para.text
+    assert any(run.text == "*" and run.font.superscript for run in correspondence_para.runs)
 
 
 def test_build_docx_from_markdown_promotes_math_to_omml(tmp_path):

@@ -122,7 +122,7 @@ def _convert_sup_tags_to_superscript(md_text: str) -> str:
     """Convert HTML <sup> tags to pandoc native ^superscript^ syntax."""
 
     def _replace_sup(match: re.Match[str]) -> str:
-        content = match.group(1).replace("\\*", "*")
+        content = match.group(1)
         return f"^{content}^"
 
     return _SUP_TAG_RE.sub(_replace_sup, md_text)
