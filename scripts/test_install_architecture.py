@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -119,6 +120,114 @@ def test_cmd_install_passes_force_to_package_installers(monkeypatch: pytest.Monk
 
     assert ("bensz-paper", True) in calls
     assert ("bensz-nsfc", True) in calls
+
+
+def test_delegate_install_skips_before_downloading_installer_when_versions_match(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.setattr(
+        install_script,
+        "_fetch_remote_package_metadata",
+        lambda package_name, ref, mirror: ({"version": "v1.2.3"}, "github"),
+    )
+    monkeypatch.setattr(install_script, "_installed_package_version", lambda *args, **kwargs: "v1.2.3")
+
+    def fail_if_downloading(*args, **kwargs):
+        raise AssertionError("命中快速跳过后不应再下载委托安装器")
+
+    monkeypatch.setattr(install_script, "_try_fetch_text", fail_if_downloading)
+
+    install_script._install_delegated_package(
+        "bensz-paper",
+        "v1.2.3",
+        [],
+        "github",
+    )
+
+    captured = capsys.readouterr()
+    assert "跳过重复安装" in captured.out
+    assert "下载 bensz-paper 安装器" not in captured.out
+
+
+def test_delegate_install_force_bypasses_fast_skip_and_downloads_installer(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    installer_dir = tmp_path / "delegate-installer"
+    installer_dir.mkdir()
+    monkeypatch.setattr(
+        install_script,
+        "_fetch_remote_package_metadata",
+        lambda package_name, ref, mirror: ({"version": "v1.2.3"}, "github"),
+    )
+    monkeypatch.setattr(install_script, "_installed_package_version", lambda *args, **kwargs: "v1.2.3")
+    monkeypatch.setattr(install_script, "_download_delegate_support_files", lambda *args, **kwargs: None)
+    monkeypatch.setattr(tempfile, "mkdtemp", lambda prefix="": str(installer_dir))
+    monkeypatch.setattr(
+        install_script,
+        "iter_remote_repos",
+        lambda mirror: [install_script.build_remote_repo("github")],
+    )
+    monkeypatch.setattr(install_script, "_try_fetch_text", lambda url: "print('installer')\n")
+
+    calls: list[list[str]] = []
+
+    def fake_subprocess_run(cmd, check, env):
+        calls.append(cmd)
+        return None
+
+    monkeypatch.setattr(install_script.subprocess, "run", fake_subprocess_run)
+
+    install_script._install_delegated_package(
+        "bensz-paper",
+        "v1.2.3",
+        [],
+        "github",
+        force=True,
+    )
+
+    captured = capsys.readouterr()
+    assert "下载 bensz-paper 安装器" in captured.out
+    assert calls, "force=True 时应继续执行委托安装器"
+
+
+def test_delegate_install_falls_back_to_installer_when_remote_metadata_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    installer_dir = tmp_path / "delegate-installer"
+    installer_dir.mkdir()
+    monkeypatch.setattr(install_script, "_fetch_remote_package_metadata", lambda *args, **kwargs: None)
+    monkeypatch.setattr(install_script, "_download_delegate_support_files", lambda *args, **kwargs: None)
+    monkeypatch.setattr(tempfile, "mkdtemp", lambda prefix="": str(installer_dir))
+    monkeypatch.setattr(
+        install_script,
+        "iter_remote_repos",
+        lambda mirror: [install_script.build_remote_repo("github")],
+    )
+    monkeypatch.setattr(install_script, "_try_fetch_text", lambda url: "print('installer')\n")
+
+    calls: list[list[str]] = []
+
+    def fake_subprocess_run(cmd, check, env):
+        calls.append(cmd)
+        return None
+
+    monkeypatch.setattr(install_script.subprocess, "run", fake_subprocess_run)
+
+    install_script._install_delegated_package(
+        "bensz-paper",
+        "main",
+        [],
+        "github",
+    )
+
+    captured = capsys.readouterr()
+    assert "下载 bensz-paper 安装器" in captured.out
+    assert calls, "metadata 拉取失败时应降级到原有委托安装流程"
 
 
 def test_version_managed_packages_use_delegate_install_mode():

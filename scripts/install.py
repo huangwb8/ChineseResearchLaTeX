@@ -415,6 +415,26 @@ def _fetch_remote_package_metadata(package_name: str, ref: str, mirror: str) -> 
     return None
 
 
+def _check_skip_reinstall(
+    package_name: str,
+    ref: str,
+    mirror: str,
+    *,
+    texmfhome_override: str | None = None,
+    force: bool = False,
+) -> tuple[str, str] | None:
+    remote_metadata_result = _fetch_remote_package_metadata(package_name, ref, mirror)
+    if remote_metadata_result is None:
+        return None
+
+    remote_metadata, metadata_mirror = remote_metadata_result
+    target_version = remote_metadata.get("version")
+    installed_version = _installed_package_version(package_name, texmfhome_override)
+    if not should_skip_reinstall(installed_version, target_version, force=force):
+        return None
+    return installed_version, metadata_mirror
+
+
 def _download_delegate_support_files(package_name: str, temp_dir: Path, mirror: str) -> None:
     support_files = SUPPORTED_PACKAGES[package_name].get("delegate_support_files", [])
     if not support_files:
@@ -440,6 +460,21 @@ def _install_delegated_package(
     texmfhome: str | None = None,
     force: bool = False,
 ) -> None:
+    skip_result = _check_skip_reinstall(
+        package_name,
+        ref,
+        mirror,
+        texmfhome_override=texmfhome,
+        force=force,
+    )
+    if skip_result is not None:
+        installed_version, metadata_mirror = skip_result
+        print(
+            "  ⏭️  检测到已安装相同版本："
+            f"{package_name} {installed_version}（ref={ref}, source={metadata_mirror}），跳过重复安装"
+        )
+        return
+
     installer_path = SUPPORTED_PACKAGES[package_name]["installer_path"]
     content = None
     chosen_repo = None
@@ -525,17 +560,20 @@ def _install_texmf_package(
     force: bool = False,
 ) -> None:
     texmfhome = _texmfhome(texmfhome_override)
-    remote_metadata_result = _fetch_remote_package_metadata(package_name, ref, mirror)
-    if remote_metadata_result is not None:
-        remote_metadata, metadata_mirror = remote_metadata_result
-        target_version = remote_metadata.get("version")
-        installed_version = _installed_package_version(package_name, texmfhome_override)
-        if should_skip_reinstall(installed_version, target_version, force=force):
-            print(
-                "  ⏭️  检测到已安装相同版本："
-                f"{package_name} {installed_version}（ref={ref}, source={metadata_mirror}），跳过重复安装"
-            )
-            return
+    skip_result = _check_skip_reinstall(
+        package_name,
+        ref,
+        mirror,
+        texmfhome_override=texmfhome_override,
+        force=force,
+    )
+    if skip_result is not None:
+        installed_version, metadata_mirror = skip_result
+        print(
+            "  ⏭️  检测到已安装相同版本："
+            f"{package_name} {installed_version}（ref={ref}, source={metadata_mirror}），跳过重复安装"
+        )
+        return
 
     print(f"  📥 下载仓库快照（{ref}）…")
     tmp_dir, pkg_src, actual_mirror = _download_repo_snapshot(package_name, ref, mirror)
