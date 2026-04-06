@@ -735,3 +735,139 @@ class VersionedPackageManager:
             "kpsewhich": kpsewhich_result,
             "details": self.status_details(),
         }
+
+    def check(self) -> dict[str, Any]:
+        state = self._state().get("current")
+        if not state:
+            return {"status": "no_active_version", "active": None}
+        target_dir = self._target_install_dir()
+        if not target_dir.exists():
+            return {"status": "mismatch", "reason": "安装目录不存在", "active": state}
+        return {"status": "match", "active": state}
+
+    def list_cached(self) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        if not self.cache_root.exists():
+            return items
+        for commit_dir in sorted(self.cache_root.iterdir(), key=lambda d: d.name):
+            metadata_file = commit_dir / "metadata.json"
+            if metadata_file.exists():
+                items.append(self._json_load(metadata_file, {}))
+        return items
+
+    def prune(self, *, dry_run: bool = False) -> dict[str, Any]:
+        state = self._state()
+        current = state.get("current") or {}
+        keep = {item for item in [current.get("commit")] + list(state.get("history") or []) if item}
+        removed: list[str] = []
+        if not self.cache_root.exists():
+            return {"kept": sorted(keep), "removed": removed}
+        for commit_dir in self.cache_root.iterdir():
+            if commit_dir.name in keep:
+                continue
+            removed.append(commit_dir.name)
+            if not dry_run:
+                shutil.rmtree(commit_dir, ignore_errors=True)
+        return {"kept": sorted(keep), "removed": sorted(removed)}
+
+
+class ProjectLockMixin:
+    """可混入 VersionedPackageManager 的项目级版本锁定能力。"""
+
+    lockfile_name: str
+    template_ids: tuple[str, ...] = ()
+
+    def _find_project_root(self) -> Path:
+        for candidate in [self.cwd, *self.cwd.parents]:  # type: ignore[attr-defined]
+            if (candidate / self.lockfile_name).exists():
+                return candidate
+            if (candidate / "main.tex").exists() and (candidate / "extraTex" / "@config.tex").exists():
+                return candidate
+        return self.cwd  # type: ignore[attr-defined]
+
+    def _lockfile_path(self) -> Path:
+        return self._find_project_root() / self.lockfile_name
+
+    def _detect_template_id(self, project_root: Path) -> str:
+        return ""
+
+    def read_lockfile(self) -> dict[str, Any]:
+        lockfile = self._lockfile_path()
+        if not lockfile.exists():
+            raise InstallError(f"当前目录未锁定版本：{lockfile}")
+        return self._json_load(lockfile, {})  # type: ignore[attr-defined]
+
+    def pin(self, ref: str | None = None, *, dry_run: bool = False) -> dict[str, Any]:
+        project_root = self._find_project_root()
+        state = self._state().get("current")  # type: ignore[attr-defined]
+        metadata: dict[str, Any]
+        if ref:
+            metadata = self._cached_ref(ref) or self.install(ref=ref, activate=False, dry_run=dry_run)  # type: ignore[attr-defined]
+        elif state:
+            metadata = self._cache_metadata(state["commit"])  # type: ignore[attr-defined]
+        else:
+            raise InstallError("当前没有激活版本，也没有提供 --ref")
+
+        template_id = self._detect_template_id(project_root)
+        template_meta = metadata.get("templates", {}).get(template_id, {}) if template_id else {}
+        payload: dict[str, Any] = {
+            "ref": ref or metadata.get("requested_ref"),
+            "commit": metadata["resolved_commit"],
+            "package_name": metadata.get("package_name", self.spec.package_name),  # type: ignore[attr-defined]
+            "package_version": metadata.get("package_version"),
+        }
+        if template_id:
+            payload["template_id"] = template_id
+            payload["template_version"] = template_meta.get("template_version")
+        if not dry_run:
+            self._json_dump(self._lockfile_path(), payload)  # type: ignore[attr-defined]
+        return payload
+
+    def sync(self, *, dry_run: bool = False) -> dict[str, Any]:
+        lock = self.read_lockfile()
+        commit = lock.get("commit")
+        if not commit:
+            raise InstallError("锁文件缺少 commit")
+        if self._cache_root_for(commit).exists():  # type: ignore[attr-defined]
+            activation = self._activate_commit(commit, dry_run=dry_run)  # type: ignore[attr-defined]
+            return {"lockfile": lock, "activation": activation}
+        requested = lock.get("ref") or commit
+        return self.install(ref=requested, activate=True, dry_run=dry_run)  # type: ignore[attr-defined]
+
+    def unpin(self, *, dry_run: bool = False) -> dict[str, Any]:
+        lockfile = self._lockfile_path()
+        if not lockfile.exists():
+            return {"removed": False, "path": str(lockfile)}
+        if not dry_run:
+            lockfile.unlink()
+        return {"removed": True, "path": str(lockfile)}
+
+    def check(self) -> dict[str, Any]:
+        state = self._state().get("current")  # type: ignore[attr-defined]
+        lockfile = self._lockfile_path()
+        if not lockfile.exists():
+            return {"status": "unlocked", "active": state}
+        lock = self._json_load(lockfile, {})  # type: ignore[attr-defined]
+        if not state:
+            return {"status": "mismatch", "reason": "未激活任何版本", "lockfile": lock}
+
+        commit_match = state.get("commit") == lock.get("commit")
+        package_match = state.get("package_version") == lock.get("package_version")
+        template_match = True
+        template_id = lock.get("template_id")
+        if template_id:
+            cached = self._cache_metadata(lock["commit"]) if self._cache_root_for(lock["commit"]).exists() else None  # type: ignore[attr-defined]
+            if cached:
+                template_match = cached.get("templates", {}).get(template_id, {}).get("template_version") == lock.get("template_version")
+
+        status = "match" if commit_match and package_match and template_match else "mismatch"
+        return {
+            "status": status,
+            "active": state,
+            "lockfile": lock,
+            "checks": {
+                "commit": commit_match,
+                "package_version": package_match,
+                "template_version": template_match,
+            },
+        }

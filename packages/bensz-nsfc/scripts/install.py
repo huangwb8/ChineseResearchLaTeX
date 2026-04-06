@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+[DEPRECATED] 本文件已弃用。请使用 packages/bensz-nsfc/scripts/package/install.py。
+该入口仅作为向后兼容保留，自动转发到新安装器。
+"""
 from __future__ import annotations
 
 import argparse
@@ -912,6 +916,19 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    import warnings
+
+    warnings.warn(
+        "packages/bensz-nsfc/scripts/install.py 已弃用，请使用 "
+        "packages/bensz-nsfc/scripts/package/install.py",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    print(
+        "⚠️  注意：本入口已弃用，推荐使用 "
+        "packages/bensz-nsfc/scripts/package/install.py",
+        file=sys.stderr,
+    )
     parser = build_parser()
     args = parser.parse_args()
     manager = NSFCPackageManager(texmfhome_override=args.texmfhome)

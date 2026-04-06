@@ -80,6 +80,7 @@ SUPPORTED_PACKAGES: dict[str, dict] = {
         "description": "NSFC 公共包——三套国自然模板的共享样式基础",
         "install_mode": "delegate",
         "dependencies": ["bensz-fonts"],
+        "delegate_support_files": ["scripts/package_version_manager.py"],
     },
     "bensz-paper": {
         "installer_path": "packages/bensz-paper/scripts/package/install.py",
