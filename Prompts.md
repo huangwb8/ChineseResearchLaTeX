@@ -12,6 +12,14 @@
 
 ---
 
+基于 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/Cover-Letter.docx 构建一个新模板： paper-coverletter-01 。
+
+---
+
+/Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/plans/fix-docx-author-alignment-v20260406.md 这个bug 在 packages/bensz-paper 和 projects/paper-sci-01 里也有。 你修一下。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 请在不改python代码的情况增强注释，让ai更加了解这个脚本怎么用。 脚本包括 ./packages 里和 ./scripts 里的python脚本。 注意，只优化注释，千万不要修改源码。
 
 ---

@@ -252,6 +252,29 @@ def test_build_markdown_for_docx_reads_extra_tex_without_source_manifest(tmp_pat
     assert "# Figure legends" in markdown
 
 
+def test_normalize_frontmatter_markdown_marks_centered_author_block():
+    markdown = "\n".join(
+        [
+            "::: center",
+            "**Template Example**",
+            "",
+            "Author One^1^, Author Two^2^",
+            ":::",
+            "",
+            "^1^Department A",
+            "",
+        ]
+    )
+
+    normalized = manuscript_tool._normalize_frontmatter_markdown(markdown)
+
+    assert normalized.splitlines()[0] == "# Template Example"
+    assert manuscript_tool.DOCX_FRONTMATTER_CENTER_START in normalized
+    assert "Author One^1^, Author Two^2^" in normalized
+    assert manuscript_tool.DOCX_FRONTMATTER_CENTER_END in normalized
+    assert "^1^Department A" in normalized
+
+
 def test_build_markdown_for_docx_frontmatter_superscripts_survive_docx_roundtrip(tmp_path):
     project_dir = tmp_path / "paper-demo"
     (project_dir / "extraTex" / "front").mkdir(parents=True)
@@ -294,6 +317,15 @@ def test_build_markdown_for_docx_frontmatter_superscripts_survive_docx_roundtrip
     affiliation_para = next(para for para in doc.paragraphs if "Department A" in para.text)
     second_affiliation_para = next(para for para in doc.paragraphs if "Department B" in para.text)
 
+    assert author_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.CENTER
+    assert affiliation_para.paragraph_format.alignment != WD_ALIGN_PARAGRAPH.CENTER
+    assert second_affiliation_para.paragraph_format.alignment != WD_ALIGN_PARAGRAPH.CENTER
+    assert manuscript_tool.DOCX_FRONTMATTER_CENTER_START not in "\n".join(
+        para.text for para in doc.paragraphs
+    )
+    assert manuscript_tool.DOCX_FRONTMATTER_CENTER_END not in "\n".join(
+        para.text for para in doc.paragraphs
+    )
     assert any(run.text == "1†" and run.font.superscript for run in author_para.runs)
     assert any(run.text == "2*" and run.font.superscript for run in author_para.runs)
     assert any(run.text == "1" and run.font.superscript for run in affiliation_para.runs)

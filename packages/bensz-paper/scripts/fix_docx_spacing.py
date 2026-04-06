@@ -55,6 +55,8 @@ REFERENCES_HEADING = "References"
 REFERENCES_HEADING_STYLE = "Heading 1"
 FIGURE_LEGENDS_HEADINGS = ("Figure legends", "Figure titles and legends")
 SUPPLEMENTARY_HEADINGS = ("Supplementary materials", "Supplemental information titles and legends")
+DOCX_FRONTMATTER_CENTER_START = "BENSZ_DOCX_FRONTMATTER_CENTER_START"
+DOCX_FRONTMATTER_CENTER_END = "BENSZ_DOCX_FRONTMATTER_CENTER_END"
 
 
 def _normalize_heading_text(value: str) -> str:
@@ -256,6 +258,50 @@ def _ensure_default_horizontal_table_borders(table) -> None:
     tbl_pr.append(borders)
 
 
+def _remove_paragraph(para) -> None:
+    """从文档中移除指定段落。"""
+    para._element.getparent().remove(para._element)
+
+
+def _center_frontmatter_author_blocks(doc: "Document") -> None:
+    """将 frontmatter 中显式标记的作者块设为居中，并删除中间标记段落。"""
+    search_from = 0
+
+    while True:
+        paragraphs = list(doc.paragraphs)
+        start_index = next(
+            (
+                index
+                for index in range(search_from, len(paragraphs))
+                if paragraphs[index].text.strip() == DOCX_FRONTMATTER_CENTER_START
+            ),
+            None,
+        )
+        if start_index is None:
+            return
+
+        end_index = next(
+            (
+                index
+                for index in range(start_index + 1, len(paragraphs))
+                if paragraphs[index].text.strip() == DOCX_FRONTMATTER_CENTER_END
+            ),
+            None,
+        )
+        if end_index is None:
+            return
+
+        for para in paragraphs[start_index + 1 : end_index]:
+            if not para.text.strip():
+                continue
+            para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            para.paragraph_format.first_line_indent = DOCX_NO_INDENT
+
+        _remove_paragraph(paragraphs[end_index])
+        _remove_paragraph(paragraphs[start_index])
+        search_from = start_index
+
+
 def fix_docx_spacing(docx_path: Path) -> None:
     """修复 DOCX 文件的行间距、段间距和首行缩进。
 
@@ -279,6 +325,7 @@ def fix_docx_spacing(docx_path: Path) -> None:
 
     # Move References section before Figure legends (matches PDF layout)
     _reorder_references_before_figure_legends(doc)
+    _center_frontmatter_author_blocks(doc)
 
     total_paragraphs = 0
     fixed_paragraphs = 0

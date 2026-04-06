@@ -39,7 +39,9 @@ from pathlib import Path
 
 from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.5"
+VERSION = "1.3.6"
+DOCX_FRONTMATTER_CENTER_START = "BENSZ_DOCX_FRONTMATTER_CENTER_START"
+DOCX_FRONTMATTER_CENTER_END = "BENSZ_DOCX_FRONTMATTER_CENTER_END"
 # 用于判定目录是否为项目根的标记文件
 PROJECT_ROOT_MARKERS = ("main.tex",)
 # 匹配 main.tex 中的 \input{extraTex/...} 引用，用于收集 DOCX 所需的正文片段
@@ -182,25 +184,103 @@ def _convert_sup_tags_to_superscript(md_text: str) -> str:
 
 
 def _normalize_frontmatter_markdown(md_text: str) -> str:
-    """清理 frontmatter.tex 转出的 Markdown，去除居中 div 标签并将标题行提升为 H1。
+    """清理 frontmatter.tex 转出的 Markdown，并为作者居中块植入显式 DOCX 标记。
 
-    LaTeX frontmatter 中的标题通常用 \\begin{center} 包裹，
-    pandoc 会将其转出为 <div class="center"> 和粗体文本。
-    本函数移除这些 div 标签，并将首个粗体行转为 Markdown H1 标题。
+    现有 Pandoc 链路会把 LaTeX 的 center 环境保留成 fenced div（::: center）
+    或旧式 HTML div，但 HTML→DOCX 这一步不会自动把容器映射成 Word 段落居中。
+    因此这里将 center 环境中的首段提升为 H1 标题，并把其余居中段落包裹为显式
+    标记，供 fix_docx_spacing() 在最终 DOCX 中精准写入段落级居中属性。
     """
-    lines = [line for line in md_text.splitlines() if line.strip() not in {"<div class=\"center\">", "</div>"}]
-    normalized: list[str] = []
+
+    def _split_markdown_paragraphs(lines: list[str]) -> list[str]:
+        paragraphs: list[str] = []
+        current: list[str] = []
+
+        for line in lines:
+            if line.strip():
+                current.append(line.rstrip())
+                continue
+            if current:
+                paragraphs.append("\n".join(current).strip())
+                current = []
+        if current:
+            paragraphs.append("\n".join(current).strip())
+        return paragraphs
+
+    normalized_blocks: list[str] = []
+    buffered_lines: list[str] = []
     title_promoted = False
+    source_lines = md_text.splitlines()
+    index = 0
 
-    for line in lines:
-        stripped = line.strip()
-        if not title_promoted and stripped.startswith("**") and stripped.endswith("**") and len(stripped) > 4:
-            normalized.append("# " + stripped[2:-2].strip())
+    def _emit_regular_lines(lines: list[str]) -> None:
+        nonlocal title_promoted
+        for paragraph in _split_markdown_paragraphs(lines):
+            collapsed = " ".join(paragraph.split())
+            if (
+                not title_promoted
+                and collapsed.startswith("**")
+                and collapsed.endswith("**")
+                and len(collapsed) > 4
+            ):
+                normalized_blocks.append("# " + collapsed[2:-2].strip())
+                title_promoted = True
+            else:
+                normalized_blocks.append(paragraph)
+
+    def _emit_center_block(lines: list[str]) -> None:
+        nonlocal title_promoted
+        paragraphs = _split_markdown_paragraphs(lines)
+        if not paragraphs:
+            return
+
+        first_paragraph = " ".join(paragraphs[0].split())
+        if (
+            not title_promoted
+            and first_paragraph.startswith("**")
+            and first_paragraph.endswith("**")
+            and len(first_paragraph) > 4
+        ):
+            normalized_blocks.append("# " + first_paragraph[2:-2].strip())
             title_promoted = True
-            continue
-        normalized.append(line)
+            remaining_paragraphs = paragraphs[1:]
+        else:
+            normalized_blocks.append(paragraphs[0])
+            remaining_paragraphs = paragraphs[1:]
 
-    return "\n".join(normalized).strip()
+        if remaining_paragraphs:
+            normalized_blocks.append(DOCX_FRONTMATTER_CENTER_START)
+            normalized_blocks.extend(remaining_paragraphs)
+            normalized_blocks.append(DOCX_FRONTMATTER_CENTER_END)
+
+    while index < len(source_lines):
+        stripped = source_lines[index].strip()
+        if stripped in {"::: center", "<div class=\"center\">"}:
+            if buffered_lines:
+                _emit_regular_lines(buffered_lines)
+                buffered_lines = []
+
+            closing_marker = ":::" if stripped.startswith(":::") else "</div>"
+            center_lines: list[str] = []
+            index += 1
+            while index < len(source_lines) and source_lines[index].strip() != closing_marker:
+                center_lines.append(source_lines[index])
+                index += 1
+            _emit_center_block(center_lines)
+            index += 1
+            continue
+
+        if stripped in {":::", "</div>"}:
+            index += 1
+            continue
+
+        buffered_lines.append(source_lines[index])
+        index += 1
+
+    if buffered_lines:
+        _emit_regular_lines(buffered_lines)
+
+    return "\n\n".join(block for block in normalized_blocks if block.strip()).strip()
 
 
 def pandoc_latex_to_markdown(latex_text: str) -> str:
