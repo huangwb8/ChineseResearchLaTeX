@@ -40,6 +40,10 @@ LATEX_WORKSHOP_LAUNCHER_TEMPLATE = TEMPLATES_DIR / "latex_workshop_build.lua"
 
 
 def infer_project_profile(project_name: str) -> str | None:
+    """根据项目目录名前缀推断项目类型（nsfc / paper / thesis / cv）。
+
+    无法识别的前缀返回 None，该类项目会被同步流程跳过。
+    """
     if project_name.startswith("NSFC_"):
         return "nsfc"
     if project_name.startswith("paper-"):
@@ -52,14 +56,24 @@ def infer_project_profile(project_name: str) -> str | None:
 
 
 def discover_projects() -> list[Path]:
+    """扫描 ``projects/`` 目录下的所有子目录并按名称排序。"""
     return sorted(path for path in PROJECTS_DIR.iterdir() if path.is_dir())
 
 
 def load_template(path: Path) -> str:
+    """加载模板文件内容，去除尾部空行后统一追加一个换行符。"""
     return path.read_text(encoding="utf-8").rstrip() + "\n"
 
 
 def ensure_text(path: Path, content: str, check_only: bool) -> bool:
+    """确保文件内容与预期一致。
+
+    若文件已存在且内容相同则不做任何操作；若内容不同，check_only 模式下
+    返回 True 表示有差异，非 check_only 模式下直接写入。
+
+    Returns:
+        True 表示文件内容有差异（已更新或检测到漂移），False 表示内容一致
+    """
     current = path.read_text(encoding="utf-8") if path.exists() else None
     if current == content:
         return False
@@ -71,6 +85,20 @@ def ensure_text(path: Path, content: str, check_only: bool) -> bool:
 
 
 def sync_project(project_dir: Path, *, check_only: bool) -> list[str]:
+    """将模板配置同步到单个项目目录。
+
+    同步的三个目标文件：
+    1. ``<project>/<project>.code-workspace`` - 工作区定义
+    2. ``<project>/.vscode/settings.json`` - LaTeX Workshop 配置
+    3. ``<project>/scripts/latex_workshop_build.lua`` - 构建 launcher
+
+    Args:
+        project_dir: 项目目录路径
+        check_only: 若为 True，只检测漂移不实际写入
+
+    Returns:
+        操作消息列表（SKIP / MISMATCH / UPDATED / OK）
+    """
     profile = infer_project_profile(project_dir.name)
     if profile is None:
         return [f"SKIP {project_dir.relative_to(REPO_ROOT)} (unknown profile)"]
@@ -117,6 +145,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def resolve_selected_projects(selected_names: list[str]) -> list[Path]:
+    """根据命令行参数解析要同步的项目目录列表。未指定时返回全部项目。"""
     projects = {path.name: path for path in discover_projects()}
     if not selected_names:
         return list(projects.values())
@@ -128,6 +157,13 @@ def resolve_selected_projects(selected_names: list[str]) -> list[Path]:
 
 
 def main() -> int:
+    """脚本主入口：解析参数 -> 选定项目 -> 逐个同步 -> 汇报结果。
+
+    在 ``--check`` 模式下，如果任何项目存在配置漂移，返回退出码 1。
+
+    Returns:
+        0 表示成功（或无漂移），1 表示存在漂移或参数错误
+    """
     args = parse_args()
     try:
         selected_projects = resolve_selected_projects(args.project)

@@ -295,6 +295,7 @@ def print_status(manager: PaperPackageManager) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """命令行入口：分发到对应子命令并输出结果 JSON。"""
     package_version_manager.configure_windows_stdio_utf8()
     args = parse_args(argv)
     manager = build_manager(args)

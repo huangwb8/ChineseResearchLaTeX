@@ -22,6 +22,10 @@ from pathlib import Path
 
 
 def normalize_repo(repo: str) -> str:
+    """将各种格式的 Gitee 仓库标识归一化为 ``owner/name`` 形式。
+
+    支持的输入格式包括 SSH URL、HTTPS URL 和 ``owner/name`` 简写。
+    """
     value = repo.strip()
     prefixes = (
         "git@gitee.com:",
@@ -42,10 +46,12 @@ def normalize_repo(repo: str) -> str:
 
 
 def build_gitee_remote_url(repo: str, host: str = "gitee.com") -> str:
+    """构建 Gitee SSH 远程 URL（``git@<host>:<owner>/<name>.git``）。"""
     return f"git@{host}:{normalize_repo(repo)}.git"
 
 
 def build_refspecs(branch: str, tag: str | None) -> list[str]:
+    """构建 git push 的 refspec 列表。总是包含分支，tag 非空时追加 tag。"""
     refspecs = [f"HEAD:refs/heads/{branch}"]
     if tag:
         refspecs.append(f"refs/tags/{tag}:refs/tags/{tag}")
@@ -53,6 +59,7 @@ def build_refspecs(branch: str, tag: str | None) -> list[str]:
 
 
 def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    """执行 git 子命令并返回 CompletedProcess（不检查返回码）。"""
     return subprocess.run(
         ["git", *args],
         cwd=cwd,
@@ -63,12 +70,14 @@ def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
 
 
 def ensure_git_repo(repo_root: Path) -> None:
+    """验证指定路径位于一个有效的 git 工作区内。"""
     result = run_git(["rev-parse", "--is-inside-work-tree"], repo_root)
     if result.returncode != 0 or result.stdout.strip() != "true":
         raise RuntimeError(f"Not a git repository: {repo_root}")
 
 
 def ensure_remote(repo_root: Path, remote_name: str, remote_url: str) -> None:
+    """确保 git remote 存在且 URL 正确。已存在则更新 URL，不存在则添加。"""
     result = run_git(["remote", "get-url", remote_name], repo_root)
     if result.returncode == 0:
         current_url = result.stdout.strip()
@@ -84,6 +93,7 @@ def ensure_remote(repo_root: Path, remote_name: str, remote_url: str) -> None:
 
 
 def infer_latest_tag(repo_root: Path) -> str | None:
+    """获取本地仓库的最新 tag 名称（基于 ``git describe --tags --abbrev=0``）。"""
     result = run_git(["describe", "--tags", "--abbrev=0"], repo_root)
     if result.returncode != 0:
         return None
@@ -92,6 +102,7 @@ def infer_latest_tag(repo_root: Path) -> str | None:
 
 
 def resolve_local_ref(repo_root: Path, ref: str) -> str:
+    """解析本地 git ref 为完整的 SHA-1 哈希值。"""
     result = run_git(["rev-parse", ref], repo_root)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip() or f"Unable to resolve {ref}")
@@ -99,6 +110,7 @@ def resolve_local_ref(repo_root: Path, ref: str) -> str:
 
 
 def resolve_remote_ref(repo_root: Path, remote_name: str, ref: str) -> str | None:
+    """通过 ``git ls-remote`` 查询远端 ref 的 SHA-1 哈希值。远端不存在该 ref 时返回 None。"""
     result = run_git(["ls-remote", remote_name, ref], repo_root)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip())
@@ -109,12 +121,14 @@ def resolve_remote_ref(repo_root: Path, remote_name: str, ref: str) -> str | Non
 
 
 def branch_needs_sync(repo_root: Path, remote_name: str, branch: str) -> bool:
+    """判断远端分支是否与本地 HEAD 一致，不一致则说明需要同步。"""
     local_sha = resolve_local_ref(repo_root, "HEAD")
     remote_sha = resolve_remote_ref(repo_root, remote_name, f"refs/heads/{branch}")
     return remote_sha != local_sha
 
 
 def tag_needs_sync(repo_root: Path, remote_name: str, tag: str | None) -> bool:
+    """判断远端 tag 是否与本地一致。tag 为 None 时直接返回 False。"""
     if not tag:
         return False
     local_sha = resolve_local_ref(repo_root, f"refs/tags/{tag}")
@@ -131,6 +145,19 @@ def push_with_retry(
     retries: int,
     delay_seconds: int,
 ) -> None:
+    """带重试机制的 git push。在指定次数内反复尝试推送，每次失败后等待指定秒数。
+
+    Args:
+        repo_root: 本地仓库根目录
+        remote_name: 远程名称（如 ``gitee``）
+        refspecs: 要推送的 refspec 列表
+        force: 是否使用 ``--force`` 强制推送
+        retries: 最大重试次数
+        delay_seconds: 每次重试之间的等待秒数
+
+    Raises:
+        RuntimeError: 所有重试均失败后抛出最后一次的错误信息
+    """
     base_cmd = ["push"]
     if force:
         base_cmd.append("--force")
@@ -149,6 +176,20 @@ def push_with_retry(
 
 
 def verify_remote_refs_match(repo_root: Path, remote_name: str, branch: str, tag: str | None) -> None:
+    """推送后验证远端分支和 tag 的 SHA-1 是否与本地一致。
+
+    通过 ``git ls-remote`` 查询远端实际状态，与本地 HEAD / tag 进行比较。
+    如果不一致则抛出 RuntimeError，说明推送可能未成功生效。
+
+    Args:
+        repo_root: 本地仓库根目录
+        remote_name: 远程名称
+        branch: 要验证的分支名
+        tag: 要验证的 tag 名，None 表示不验证 tag
+
+    Raises:
+        RuntimeError: 远端引用与本地不一致时
+    """
     local_branch_sha = resolve_local_ref(repo_root, "HEAD")
     remote_branch_sha = resolve_remote_ref(repo_root, remote_name, f"refs/heads/{branch}")
     if remote_branch_sha != local_branch_sha:
@@ -182,6 +223,21 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """脚本主入口：解析参数 -> 确保远端 -> 检测同步需求 -> 推送 -> 验证。
+
+    执行流程：
+    1. 解析命令行参数和环境变量
+    2. 验证本地是有效的 git 仓库
+    3. 构建 Gitee 远程 URL（优先使用显式参数，其次从 ``GITEE_REPO`` 环境变量推导）
+    4. 若 ``--dry-run`` 则打印计划后退出
+    5. 确保远程存在且 URL 正确
+    6. 检测分支和 tag 是否需要同步
+    7. 带重试地推送到 Gitee
+    8. 验证远端引用与本地一致
+
+    Returns:
+        0 表示成功，非零表示失败
+    """
     args = parse_args()
     repo_root = args.repo_root.expanduser().resolve()
     ensure_git_repo(repo_root)

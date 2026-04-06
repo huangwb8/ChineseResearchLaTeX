@@ -2,7 +2,13 @@
 """打包 bensz-nsfc 为 TDS（TeX Directory Structure）兼容 ZIP。
 
 将 ``packages/bensz-nsfc/`` 和 ``packages/bensz-fonts/`` 中的运行时文件
-按 TDS 目录布局打包为可分发的 zip 文件，供用户手动安装到 TEXMFHOME。
+按 TDS 目录布局打包为可分发的 zip 文件，主要用于 CTAN 发布或供用户手动安装到 TEXMFHOME。
+
+TDS 目录映射规则：
+- ``examples/`` 下的文件 → ``doc/latex/bensz-nsfc/``
+- ``README.md`` 和 ``package.json`` → ``doc/latex/bensz-nsfc/``
+- 其余文件（.sty、.def、.bst、字体等） → ``tex/latex/bensz-nsfc/``
+- bensz-fonts 包同理映射到 ``tex/latex/bensz-fonts/``（文档类文件到 ``doc/latex/bensz-fonts/``）
 
 典型用法::
 
@@ -25,6 +31,7 @@ FONTS_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-fonts"
 
 
 def main() -> int:
+    """CLI 入口：读取 package.json 版本号，遍历 bensz-nsfc 和 bensz-fonts 包文件，按 TDS 布局写入 zip。默认输出到 ``dist/bensz-nsfc-{version}-tds.zip``。"""
     parser = argparse.ArgumentParser(description="打包 bensz-nsfc TDS zip")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()

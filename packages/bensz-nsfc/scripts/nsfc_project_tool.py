@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""NSFC 项目统一构建工具。
+"""NSFC 项目统一 TeX→PDF 渲染工具。
 
 提供 NSFC 标书项目的 PDF 构建、缓存清理与辅助功能。
-编译链路为 XeLaTeX -> BibTeX -> XeLaTeX x2，中间文件隔离到 ``.latex-cache/`` 目录。
+编译链路为 ``xelatex → bibtex → xelatex → xelatex``（四遍编译，确保交叉引用与参考文献完全解析）。
+中间文件隔离到项目内 ``.latex-cache/`` 目录，保持项目根目录整洁。
+
+核心特性：
+- 自动生成运行时路径文件 ``bensz-nsfc-runtime.def``，供 LaTeX 定位包资源
+- 支持 SyncTeX 正/逆搜索（``.synctex.gz`` 保留在缓存目录）
+- 自动清理项目根目录的 LaTeX 中间产物
 
 子命令：
   build    渲染 PDF（自动执行完整编译链路）
@@ -30,27 +36,29 @@ FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 PROJECT_ROOT_MARKERS = ("main.tex", "extraTex/@config.tex")
 # LaTeX 中间产物缓存目录名，放在项目根目录下
 CACHE_DIRNAME = ".latex-cache"
+# 需要从项目根目录清理的 LaTeX 中间文件 glob 模式
 ROOT_ARTIFACT_PATTERNS = (
-    "*.aux",
-    "*.log",
-    "*.out",
-    "*.toc",
-    "*.lof",
-    "*.lot",
-    "*.bbl",
-    "*.blg",
-    "*.fls",
-    "*.fdb_latexmk",
-    "*.bcf",
-    "*.run.xml",
-    "*.nav",
-    "*.snm",
-    "*.vrb",
-    "*.synctex.gz",
-    "*.synctex(busy)",
-    "*.dvi",
-    "*.xdv",
+    "*.aux",              # 辅助文件（交叉引用等）
+    "*.log",              # 编译日志
+    "*.out",              # hyperref 书签文件
+    "*.toc",              # 目录文件
+    "*.lof",              # 图目录
+    "*.lot",              # 表目录
+    "*.bbl",              # BibTeX 生成的参考文献列表
+    "*.blg",              # BibTeX 日志
+    "*.fls",              # LaTeX 文件列表（用于依赖追踪）
+    "*.fdb_latexmk",      # latexmk 文件数据库
+    "*.bcf",              # biblatex 控制文件
+    "*.run.xml",          # biblatex 运行记录
+    "*.nav",              # beamer 导航文件
+    "*.snm",              # beamer 节文件
+    "*.vrb",              # beamer 逐字文件
+    "*.synctex.gz",       # SyncTeX 同步数据（根目录副本，正式数据在 .latex-cache/）
+    "*.synctex(busy)",    # SyncTeX 临时锁文件
+    "*.dvi",              # DVI 中间格式
+    "*.xdv",              # XDV 中间格式（XeLaTeX 生成）
 )
+# 常见 TeX 发行版中 xelatex / bibtex 的候选路径，用于 PATH 中找不到时的兜底搜索
 TOOL_CANDIDATES = {
     "xelatex": (
         "/Library/TeX/texbin/xelatex",
@@ -66,10 +74,12 @@ TOOL_CANDIDATES = {
 
 
 class BuildError(RuntimeError):
+    """构建过程中出现的错误（如 PDF 未生成、主文件不在根目录等）。"""
     pass
 
 
 def configure_windows_stdio_utf8() -> None:
+    """在 Windows 平台将 stdout/stderr 重新配置为 UTF-8 编码，避免中文输出乱码。"""
     if sys.platform != "win32":
         return
     for stream_name in ("stdout", "stderr"):
@@ -79,10 +89,12 @@ def configure_windows_stdio_utf8() -> None:
 
 
 def is_project_root(path: Path) -> bool:
+    """判断给定路径是否为 NSFC 项目根目录（需同时包含 ``main.tex`` 和 ``extraTex/@config.tex``）。"""
     return all((path / marker).exists() for marker in PROJECT_ROOT_MARKERS)
 
 
 def find_project_root(start: Path | None = None) -> Path:
+    """从起始路径向上搜索，定位 NSFC 项目根目录。未找到时抛出 FileNotFoundError。"""
     origin = (start or Path.cwd()).expanduser().resolve()
     for candidate in [origin, *origin.parents]:
         if is_project_root(candidate):
@@ -93,6 +105,7 @@ def find_project_root(start: Path | None = None) -> Path:
 
 
 def resolve_project_dir(project_dir: Path | None) -> Path:
+    """解析并验证项目目录路径。支持 None（自动搜索）、文件路径（取父目录）和目录路径。"""
     if project_dir is None:
         return find_project_root()
     candidate = project_dir.expanduser().resolve()
@@ -106,6 +119,7 @@ def resolve_project_dir(project_dir: Path | None) -> Path:
 
 
 def resolve_tex_file(project_dir: Path, tex_file: str) -> Path:
+    """定位并验证主 TeX 文件。要求文件存在且位于项目根目录下。"""
     candidate = (project_dir / tex_file).resolve()
     if not candidate.exists():
         raise FileNotFoundError(f"TeX 主文件不存在：{candidate}")
@@ -115,6 +129,7 @@ def resolve_tex_file(project_dir: Path, tex_file: str) -> Path:
 
 
 def resolve_executable(name: str) -> str:
+    """查找 TeX 可执行文件：先 PATH，再 TOOL_CANDIDATES 中的候选路径。找不到时抛出 FileNotFoundError。"""
     resolved = shutil.which(name)
     if resolved:
         return resolved
@@ -125,6 +140,7 @@ def resolve_executable(name: str) -> str:
 
 
 def build_texinputs(prefixes: list[Path], existing: str) -> str:
+    """构建 TEXINPUTS 环境变量值，将指定目录以递归搜索（``//``）模式注入，保留原有值。"""
     normalized = [f"{path.resolve()}//" for path in prefixes]
     normalized.append("")
     if existing:
@@ -133,6 +149,10 @@ def build_texinputs(prefixes: list[Path], existing: str) -> str:
 
 
 def write_runtime_file(cache_dir: Path) -> Path:
+    """在缓存目录生成 ``bensz-nsfc-runtime.def``，写入包根目录、资源目录、字体目录与 BibTeX 样式的绝对路径。
+
+    该文件在每次构建前重新生成，确保 LaTeX 编译时能正确定位包内资源。
+    """
     runtime_path = cache_dir / "bensz-nsfc-runtime.def"
     package_root = PACKAGE_DIR.resolve().as_posix() + "/"
     assets_dir = package_root + "assets/"
@@ -158,6 +178,7 @@ def write_runtime_file(cache_dir: Path) -> Path:
 
 
 def sync_reference_inputs(cache_dir: Path, project_dir: Path) -> None:
+    """将项目 ``references/`` 目录链接或复制到缓存目录中，使 BibTeX 在缓存目录内也能找到 ``.bib`` 文件。优先创建符号链接以节省空间。"""
     source = project_dir / "references"
     target = cache_dir / "references"
     if target.exists() or target.is_symlink():
@@ -173,6 +194,7 @@ def sync_reference_inputs(cache_dir: Path, project_dir: Path) -> None:
 
 
 def clean_root_artifacts(project_dir: Path, tex_stem: str) -> None:
+    """删除项目根目录下匹配 ROOT_ARTIFACT_PATTERNS 的中间文件，但保留 PDF 产物。"""
     for pattern in ROOT_ARTIFACT_PATTERNS:
         for path in project_dir.glob(pattern):
             if path.name == f"{tex_stem}.pdf":
@@ -182,6 +204,7 @@ def clean_root_artifacts(project_dir: Path, tex_stem: str) -> None:
 
 
 def summarize_process_output(label: str, result: subprocess.CompletedProcess[str]) -> str:
+    """将子进程的 stdout + stderr 合并后取最后 30 行，附带退出码，用于构建失败的诊断输出。"""
     lines = [line for line in (result.stdout + "\n" + result.stderr).splitlines() if line.strip()]
     tail = "\n".join(lines[-30:]) if lines else "(no output)"
     return f"[{label}] exit={result.returncode}\n{tail}"
@@ -193,6 +216,7 @@ def run_best_effort(
     cwd: Path,
     env: dict[str, str],
 ) -> subprocess.CompletedProcess[str]:
+    """执行子进程命令，捕获输出但不检查退出码（best-effort），允许后续步骤继续尝试。"""
     return subprocess.run(
         args,
         cwd=cwd,
@@ -204,6 +228,24 @@ def run_best_effort(
 
 
 def build_project(project_dir: Path, tex_file: str) -> None:
+    """执行完整的 NSFC 项目 PDF 构建流程。
+
+    构建步骤：
+    1. 创建 ``.latex-cache/`` 缓存目录
+    2. 生成运行时路径文件 ``bensz-nsfc-runtime.def``
+    3. 同步 ``references/`` 目录到缓存
+    4. 清理根目录旧中间文件
+    5. 执行四遍编译：``xelatex → bibtex → xelatex → xelatex``
+    6. 将 PDF 从缓存目录复制到项目根目录
+    7. 再次清理根目录中间文件
+
+    Args:
+        project_dir: NSFC 项目根目录路径
+        tex_file: 主 TeX 文件名（通常为 ``main.tex``）
+
+    Raises:
+        BuildError: PDF 渲染失败（未找到输出文件）
+    """
     tex_path = resolve_tex_file(project_dir, tex_file)
     tex_stem = tex_path.stem
     cache_dir = project_dir / CACHE_DIRNAME
@@ -270,6 +312,18 @@ def build_project(project_dir: Path, tex_file: str) -> None:
 
 
 def clean_project(project_dir: Path, tex_file: str, remove_pdf: bool) -> None:
+    """清理项目的构建缓存和中间文件。
+
+    清理内容：
+    - 项目根目录下匹配 ROOT_ARTIFACT_PATTERNS 的中间文件（保留 PDF）
+    - ``.latex-cache/`` 缓存目录（全部删除）
+    - 若 ``remove_pdf=True``，同时删除根目录下的 PDF 产物
+
+    Args:
+        project_dir: NSFC 项目根目录路径
+        tex_file: 主 TeX 文件名（用于确定 PDF 文件名）
+        remove_pdf: 是否一并删除根目录 PDF
+    """
     tex_path = resolve_tex_file(project_dir, tex_file)
     tex_stem = tex_path.stem
     clean_root_artifacts(project_dir, tex_stem)
@@ -284,6 +338,7 @@ def clean_project(project_dir: Path, tex_file: str, remove_pdf: bool) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """解析命令行参数，支持 build 和 clean 两个子命令。"""
     parser = argparse.ArgumentParser(description="NSFC 项目统一 TeX→PDF 渲染工具")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -322,6 +377,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """CLI 入口：解析子命令并分发到 build_project / clean_project。"""
     configure_windows_stdio_utf8()
     args = parse_args()
     project_dir = resolve_project_dir(getattr(args, "project_dir", None))

@@ -969,6 +969,7 @@ class NSFCPackageManager:
         return {"removed": True, "path": str(lockfile)}
 
     def prune(self, dry_run: bool = False) -> dict[str, Any]:
+        """清理不再需要的本地缓存版本。保留当前激活版本、上一版本以及所有项目锁文件引用的版本。"""
         state = self._state()
         keep = {
             item
@@ -995,6 +996,7 @@ class NSFCPackageManager:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """构建命令行参数解析器，支持 install / use / pin / sync / check / rollback 等子命令。"""
     parser = argparse.ArgumentParser(description="NSFC 公共包安装/切换/锁定工具")
     parser.add_argument(
         "--texmfhome",
@@ -1048,6 +1050,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """CLI 入口：解析命令行参数，分发到 NSFCPackageManager 对应方法，输出 JSON 结果。
+
+    启动时会发出 DeprecationWarning，提示用户迁移到 ``package/install.py``。
+    """
     import warnings
 
     warnings.warn(

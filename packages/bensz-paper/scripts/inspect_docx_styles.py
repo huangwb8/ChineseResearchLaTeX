@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""
-检查 DOCX 文件的样式设置，特别是行间距和段间距。
+"""DOCX 样式检查工具（bensz-paper 公共包配套脚本）。
+
+检查 DOCX 文件的段落样式设置（行距、段间距、首行缩进等），
+用于验证 fix_docx_spacing.py 的修复效果或诊断 DOCX 排版问题。
 
 LaTeX profile 参照值（bml-profile-bensz-manu-01.def）：
   行距:      ONE_POINT_FIVE  (setstretch = 1.5)
   段首缩进:  0 pt            (parindent  = 0pt)
   段后间距:  ~4 pt           (parskip    = 0.2\baselineskip ≈ 3.6pt)
   段前间距:  0 pt
+
+用法：
+  python inspect_docx_styles.py --project-dir <项目路径>
+  python inspect_docx_styles.py --docx <DOCX文件路径>
 """
 
 from __future__ import annotations
@@ -15,6 +21,7 @@ import argparse
 from pathlib import Path
 from docx import Document
 
+# 用于判定目录是否为项目根的标记文件
 PROJECT_ROOT_MARKERS = ("main.tex",)
 
 
@@ -51,7 +58,10 @@ def resolve_project_dir(project_dir: Path | None) -> Path:
 
 
 def inspect_docx(docx_path: Path) -> None:
-    """检查 DOCX 文件的样式设置。"""
+    """检查 DOCX 文件中所有样式和前 5 个段落的实际格式设置。
+
+    输出包括：样式名、行距规则、行距值、段后/段前间距、首行缩进。
+    """
     print(f"检查文件: {docx_path}\n")
 
     doc = Document(docx_path)
@@ -113,7 +123,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """主函数。"""
+    """命令行入口：依次检查 reference.docx 和 main.docx 的样式设置。"""
     args = parse_args()
     project_dir = resolve_project_dir(args.project_dir)
     reference_doc = (args.reference_doc or project_dir / "artifacts" / "reference.docx").expanduser().resolve()

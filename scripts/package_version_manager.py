@@ -999,18 +999,33 @@ class ProjectLockMixin:
         return self.cwd  # type: ignore[attr-defined]
 
     def _lockfile_path(self) -> Path:
+        """返回锁文件的完整路径。"""
         return self._find_project_root() / self.lockfile_name
 
     def _detect_template_id(self, project_root: Path) -> str:
+        """检测项目使用的模板标识，子类可覆盖。默认返回空字符串。"""
         return ""
 
     def read_lockfile(self) -> dict[str, Any]:
+        """读取并解析锁文件内容。锁文件不存在时抛出 InstallError。"""
         lockfile = self._lockfile_path()
         if not lockfile.exists():
             raise InstallError(f"当前目录未锁定版本：{lockfile}")
         return self._json_load(lockfile, {})  # type: ignore[attr-defined]
 
     def pin(self, ref: str | None = None, *, dry_run: bool = False) -> dict[str, Any]:
+        """将指定版本锁定到项目目录下的锁文件。
+
+        如果提供了 ref，则查找或安装该 ref 的缓存版本；否则使用当前激活版本。
+        锁文件写入后，团队成员可通过 ``sync`` 命令恢复到相同版本。
+
+        Args:
+            ref: 要锁定的版本标识，None 表示锁定当前激活版本
+            dry_run: 若为 True，只返回预览信息不写入锁文件
+
+        Returns:
+            锁文件内容字典
+        """
         project_root = self._find_project_root()
         state = self._state().get("current")  # type: ignore[attr-defined]
         metadata: dict[str, Any]
@@ -1037,6 +1052,14 @@ class ProjectLockMixin:
         return payload
 
     def sync(self, *, dry_run: bool = False) -> dict[str, Any]:
+        """根据锁文件同步安装版本。若缓存中已有对应 commit 则直接激活，否则重新安装。
+
+        Args:
+            dry_run: 若为 True，只返回预览信息
+
+        Returns:
+            包含 lockfile 和 activation 的结果字典
+        """
         lock = self.read_lockfile()
         commit = lock.get("commit")
         if not commit:
@@ -1048,6 +1071,7 @@ class ProjectLockMixin:
         return self.install(ref=requested, activate=True, dry_run=dry_run)  # type: ignore[attr-defined]
 
     def unpin(self, *, dry_run: bool = False) -> dict[str, Any]:
+        """删除项目目录下的版本锁文件。"""
         lockfile = self._lockfile_path()
         if not lockfile.exists():
             return {"removed": False, "path": str(lockfile)}
@@ -1056,6 +1080,14 @@ class ProjectLockMixin:
         return {"removed": True, "path": str(lockfile)}
 
     def check(self) -> dict[str, Any]:
+        """校验当前激活版本与锁文件的一致性。
+
+        比较维度包括 commit、package_version 和可选的 template_version。
+        返回的 status 字段含义：
+        - ``unlocked``：项目未锁定版本
+        - ``match``：当前激活版本与锁文件完全一致
+        - ``mismatch``：存在不一致或未激活任何版本
+        """
         state = self._state().get("current")  # type: ignore[attr-defined]
         lockfile = self._lockfile_path()
         if not lockfile.exists():

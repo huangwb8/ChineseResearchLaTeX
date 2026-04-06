@@ -55,6 +55,16 @@ def validate_required_files() -> list[str]:
 
 
 def compile_project(project_name: str) -> dict[str, object]:
+    """调用 thesis_project_tool.py 构建指定论文项目的 PDF。
+
+    Args:
+        project_name: 项目目录名（如 ``thesis-smu-master``），
+            对应 ``projects/`` 下的子目录。
+
+    Returns:
+        包含编译结果的字典，字段包括 returncode、stdout（截取后 4000 字符）、
+        stderr 和执行命令。
+    """
     cmd = [
         sys.executable,
         str(PACKAGE_DIR / "scripts" / "thesis_project_tool.py"),
@@ -72,6 +82,11 @@ def compile_project(project_name: str) -> dict[str, object]:
 
 
 def main() -> int:
+    """CLI 入口：依次执行文件完整性检查和（可选）四校编译验证。
+
+    Returns:
+        0 表示校验通过，1 表示存在缺失文件或编译失败。
+    """
     parser = argparse.ArgumentParser(description="校验 bensz-thesis 公共包")
     parser.add_argument("--skip-compile", action="store_true")
     args = parser.parse_args()

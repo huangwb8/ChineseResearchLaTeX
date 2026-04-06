@@ -2,6 +2,13 @@
 """NSFC 公共包结构校验与编译验证工具。
 
 检查 ``packages/bensz-nsfc/`` 的目录结构完整性、版本号一致性和编译可用性。
+
+校验维度：
+1. **必需文件检查**：验证 .sty 文件、profile、bst、示例等关键文件是否齐全
+2. **字体包检查**：验证 bensz-fonts 共享字体包的存在性
+3. **版本号一致性**：比对 package.json 与 ``\\ProvidesPackage`` 中声明的版本号
+4. **编译验证**（可选）：在临时目录中复制包文件并编译示例，验证功能正确性
+
 可跳过编译步骤仅做结构校验（``--skip-compile``）。
 
 典型用法::
@@ -29,6 +36,11 @@ FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 
 
 def parse_provides_package(style_file: Path) -> tuple[str, str]:
+    """从 .sty 文件中解析 ``\\ProvidesPackage`` 声明，提取日期和版本号。
+
+    Returns:
+        (日期字符串, 版本号字符串) 的二元组，如 ``("2025/01/15", "v3.5.1")``
+    """
     content = style_file.read_text(encoding="utf-8")
     match = re.search(
         r"\\ProvidesPackage\{bensz-nsfc-common\}\[(\d{4}/\d{2}/\d{2})\s+([^\s]+)",
@@ -40,6 +52,11 @@ def parse_provides_package(style_file: Path) -> tuple[str, str]:
 
 
 def validate_required_files() -> list[str]:
+    """检查 bensz-nsfc 公共包和 bensz-fonts 字体包的必需文件是否齐全。
+
+    Returns:
+        缺失文件的相对路径列表；为空表示全部文件存在。
+    """
     required = [
         "bensz-nsfc-common.sty",
         "bensz-nsfc-core.sty",
@@ -69,6 +86,7 @@ def validate_required_files() -> list[str]:
 
 
 def _compile_command(command: list[str], cwd: Path, env: dict[str, str]) -> tuple[int, str]:
+    """执行单个编译命令，返回 (退出码, 输出末尾 4000 字符)。"""
     result = subprocess.run(
         command,
         cwd=cwd,
@@ -82,6 +100,7 @@ def _compile_command(command: list[str], cwd: Path, env: dict[str, str]) -> tupl
 
 
 def _write_runtime_file(package_dir: Path) -> None:
+    """在临时包目录中生成运行时路径文件，供编译时的 LaTeX 引擎定位资源。"""
     package_root = package_dir.resolve().as_posix() + "/"
     assets_dir = package_root + "assets/"
     fonts_package_dir = package_dir.parent / "bensz-fonts"
@@ -107,6 +126,7 @@ def _write_runtime_file(package_dir: Path) -> None:
 
 @contextmanager
 def _package_copy() -> Path:
+    """上下文管理器：将 bensz-nsfc 和 bensz-fonts 包文件复制到临时目录，生成运行时文件后 yield 临时根路径。退出时自动清理。"""
     with tempfile.TemporaryDirectory(prefix="bensz-nsfc-validate-") as temp_dir:
         temp_root = Path(temp_dir)
         temp_package_dir = temp_root / "bensz-nsfc"
@@ -118,6 +138,7 @@ def _package_copy() -> Path:
 
 
 def _example_env(temp_root: Path) -> dict[str, str]:
+    """构建编译示例所需的 TEXINPUTS 环境变量，指向临时目录中的包文件。"""
     env = dict(**os.environ)
     texinputs = str(temp_root / "bensz-nsfc") + "//" + os.pathsep + str(temp_root / "bensz-fonts") + "//" + os.pathsep
     if env.get("TEXINPUTS"):
@@ -127,6 +148,11 @@ def _example_env(temp_root: Path) -> dict[str, str]:
 
 
 def compile_example() -> dict[str, str | int]:
+    """在临时目录中编译 ``examples/basic-usage.tex``，验证基础样式可加载。
+
+    Returns:
+        包含 returncode 和 stdout 的结果字典。
+    """
     with _package_copy() as temp_root:
         example_dir = temp_root / "bensz-nsfc" / "examples"
         env = _example_env(temp_root)
@@ -139,6 +165,11 @@ def compile_example() -> dict[str, str | int]:
 
 
 def compile_bibliography_example() -> dict[str, str | int]:
+    """在临时目录中编译 ``examples/basic-bibliography.tex``，执行完整的 xelatex→bibtex→xelatex×2 链路，验证参考文献功能。
+
+    Returns:
+        包含 returncode、stdout 和（失败时）failed_command 的结果字典。
+    """
     with _package_copy() as temp_root:
         example_dir = temp_root / "bensz-nsfc" / "examples"
         env = _example_env(temp_root)
@@ -158,6 +189,7 @@ def compile_bibliography_example() -> dict[str, str | int]:
 
 
 def main() -> int:
+    """CLI 入口：依次执行必需文件检查、版本号比对、（可选）编译验证，输出 JSON 格式的校验结果。"""
     parser = argparse.ArgumentParser(description="校验 bensz-nsfc 公共包")
     parser.add_argument("--skip-compile", action="store_true")
     args = parser.parse_args()

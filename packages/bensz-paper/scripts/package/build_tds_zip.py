@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
-"""
-将 `packages/bensz-paper/` 打包为 TDS（TeX Directory Structure）兼容 ZIP。
+"""将 bensz-paper 公共包打包为 TDS（TeX Directory Structure）兼容 ZIP。
+
+生成的 ZIP 文件可直接解压到用户级 texmf 树（如 ~/texmf/），
+然后运行 mktexlsr 使 kpathsea 识别新安装的包文件。
+
+ZIP 内部结构遵循 TDS 规范：
+  tex/latex/bensz-paper/   — bensz-paper 公共包所有文件
+  tex/latex/bensz-fonts/   — bensz-fonts 依赖包（仅 sty 文件）
+
+自动排除 __pycache__、.pyc、.DS_Store 等非发布文件。
 """
 
 from __future__ import annotations
@@ -10,10 +18,12 @@ import sys
 import zipfile
 from pathlib import Path
 
+# bensz-paper 的运行时依赖包列表，打包时会一并包含这些包的 sty 文件
 DEPENDENCY_PACKAGE_NAMES = ("bensz-fonts",)
 
 
 def configure_windows_stdio_utf8() -> None:
+    """在 Windows 上将 stdout/stderr 重编码为 UTF-8，避免中文输出乱码。"""
     if sys.platform != "win32":
         return
     for stream_name in ("stdout", "stderr"):
@@ -22,6 +32,7 @@ def configure_windows_stdio_utf8() -> None:
             stream.reconfigure(encoding="utf-8", errors="replace")
 
 def looks_like_distribution_root(path: Path) -> bool:
+    """判断给定路径是否为 TDS 源码根（仓库根、texmf 根或直接包含 .sty 的目录）。"""
     repo_package = path / "packages" / "bensz-paper"
     installed_package = path / "tex" / "latex" / "bensz-paper"
     direct_package = path / "bensz-paper.sty"
@@ -41,6 +52,13 @@ def find_distribution_root(start: Path | None = None) -> Path:
 
 
 def resolve_texmf_source(project_dir: Path) -> Path:
+    """从项目根目录中定位 bensz-paper 包源码目录。
+
+    按优先级探测三个候选位置：
+    1. 仓库内 packages/bensz-paper/
+    2. texmf 树内 tex/latex/bensz-paper/
+    3. 直接包含 bensz-paper.sty 的目录
+    """
     repo_package = project_dir / "packages" / "bensz-paper"
     if repo_package.exists():
         return repo_package
@@ -56,6 +74,7 @@ def resolve_texmf_source(project_dir: Path) -> Path:
 
 
 def resolve_dependency_sources(project_dir: Path) -> list[tuple[str, Path]]:
+    """查找依赖包的源码目录，返回 (包名, 路径) 列表。用于将依赖包一并打入 TDS ZIP。"""
     sources: list[tuple[str, Path]] = []
     for dependency in DEPENDENCY_PACKAGE_NAMES:
         candidates = (
@@ -70,7 +89,12 @@ def resolve_dependency_sources(project_dir: Path) -> list[tuple[str, Path]]:
 
 
 def build_tds_zip(project_dir: Path, output_path: Path) -> None:
-    """Build a TDS-compliant zip from the local package directory."""
+    """构建 TDS 兼容 ZIP 文件。
+
+    将 bensz-paper 包和所有依赖包的文件按 TDS 路径规范写入 ZIP。
+    输出结构：tex/latex/<包名>/<文件>。
+    自动跳过 __pycache__、.pyc、.DS_Store。
+    """
     package_src = resolve_texmf_source(project_dir)
     dependency_sources = resolve_dependency_sources(project_dir)
 
@@ -105,6 +129,7 @@ def build_tds_zip(project_dir: Path, output_path: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """解析命令行参数，支持 --output 和 --project-dir 选项。"""
     parser = argparse.ArgumentParser(
         description='Package bensz-paper as a TDS zip.'
     )
@@ -124,6 +149,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """命令行入口：定位源码根目录并生成 TDS ZIP。"""
     configure_windows_stdio_utf8()
     args = parse_args()
     project_dir = find_distribution_root(args.project_dir)
