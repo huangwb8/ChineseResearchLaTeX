@@ -374,6 +374,72 @@ def test_build_markdown_for_docx_correspondence_asterisk_survives_docx_roundtrip
     assert any(run.text == "*" and run.font.superscript for run in correspondence_para.runs)
 
 
+def test_build_markdown_for_docx_expands_simple_newcommand_metadata_across_fragments(tmp_path):
+    project_dir = tmp_path / "paper-coverletter-demo"
+    (project_dir / "extraTex" / "front").mkdir(parents=True)
+    (project_dir / "extraTex" / "body").mkdir(parents=True)
+
+    (project_dir / "main.tex").write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\begin{document}",
+                r"\input{extraTex/front/metadata.tex}",
+                r"\input{extraTex/body/letter.tex}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project_dir / "extraTex" / "front" / "metadata.tex").write_text(
+        "\n".join(
+            [
+                r"\newcommand{\CoverLetterDate}{31 March 2026}",
+                r"\newcommand{\CoverLetterRecipient}{Editors of [Target Journal]}",
+                r"\newcommand{\CoverLetterSalutation}{Dear Editors,}",
+                r"\newcommand{\CoverLetterManuscriptTitle}{Template Example: A Multi-Cohort Translational Oncology Study}",
+                r"\newcommand{\CoverLetterJournal}{[Target Journal]}",
+                r"\newcommand{\CoverLetterClosingName}{Feng BaoBao}",
+                r"\newcommand{\CoverLetterClosingRole}{Corresponding Author}",
+                r"\newcommand{\CoverLetterClosingAffiliation}{Department of Translational Medicine, Example Research University}",
+                r"\newcommand{\CoverLetterClosingEmail}{feng.baobao@example.edu}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project_dir / "extraTex" / "body" / "letter.tex").write_text(
+        "\n".join(
+            [
+                r"\noindent \CoverLetterDate\par",
+                r"\noindent \CoverLetterRecipient\par",
+                r"\noindent \CoverLetterSalutation\par",
+                r"\noindent We are pleased to submit our manuscript, entitled ``\CoverLetterManuscriptTitle,'' for consideration at \CoverLetterJournal.",
+                r"\noindent Sincerely,\par",
+                r"\noindent \CoverLetterClosingName\par",
+                r"\noindent \CoverLetterClosingRole\par",
+                r"\noindent \CoverLetterClosingAffiliation\par",
+                r"\noindent \CoverLetterClosingEmail\par",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    markdown = manuscript_tool.build_markdown_for_docx(project_dir)
+
+    assert "31 March 2026" in markdown
+    assert "Editors of \\[Target Journal\\]" in markdown
+    assert "Dear Editors," in markdown
+    assert "Template Example: A" in markdown
+    assert "Multi-Cohort Translational Oncology Study" in markdown
+    assert "Feng BaoBao" in markdown
+    assert "Corresponding Author" in markdown
+    assert "feng.baobao@example.edu" in markdown
+    assert r"\CoverLetter" not in markdown
+
+
 def test_build_docx_from_markdown_promotes_math_to_omml(tmp_path):
     bib_path = tmp_path / "refs.bib"
     bib_path.write_text(

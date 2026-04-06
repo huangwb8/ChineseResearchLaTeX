@@ -39,7 +39,7 @@ from pathlib import Path
 
 from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.7"
+VERSION = "1.3.8"
 DOCX_FRONTMATTER_CENTER_START = "BENSZ_DOCX_FRONTMATTER_CENTER_START"
 DOCX_FRONTMATTER_CENTER_END = "BENSZ_DOCX_FRONTMATTER_CENTER_END"
 # 用于判定目录是否为项目根的标记文件
@@ -54,6 +54,9 @@ CITATION_PATTERN = re.compile(
 )
 BIBLIOGRAPHY_COMMAND_PATTERN = re.compile(
     r"\\(addbibresource|printbibliography|bibliography|bibliographystyle)\b"
+)
+SIMPLE_NEWCOMMAND_PATTERN = re.compile(
+    r"\\newcommand\{\\([A-Za-z@]+)\}\{((?:[^{}]|\{[^{}]*\})*)\}"
 )
 # 外部工具的候选路径：当 PATH 中找不到时，按此列表逐一探测。
 # 主要覆盖 macOS（TeX Live、Homebrew）和 Linux（TeX Live）的常见安装位置。
@@ -144,6 +147,41 @@ def collect_extra_tex_inputs(project_dir: Path) -> list[Path]:
             raise FileNotFoundError(f"Missing extraTex source referenced by main.tex: {source_path}")
         ordered_inputs.append(rel_path)
     return ordered_inputs
+
+
+def extract_simple_newcommands(latex_text: str) -> tuple[dict[str, str], str]:
+    """提取无参数 \\newcommand 宏，并移除对应定义。
+
+    仅处理形如 ``\\newcommand{\\MacroName}{value}`` 的简单宏，
+    用于 cover letter 元数据这类跨片段复用文本。
+    """
+
+    macros: dict[str, str] = {}
+
+    def _replace(match: re.Match[str]) -> str:
+        macros[match.group(1)] = match.group(2).strip()
+        return ""
+
+    stripped_text = SIMPLE_NEWCOMMAND_PATTERN.sub(_replace, latex_text)
+    return macros, stripped_text
+
+
+def expand_simple_newcommands(latex_text: str, macros: dict[str, str]) -> str:
+    """展开无参数 LaTeX 宏，并兼容 ``\\Macro\\ `` 控制空格写法。"""
+
+    expanded_text = latex_text
+    for macro_name, macro_value in sorted(macros.items(), key=lambda item: len(item[0]), reverse=True):
+        pattern = re.compile(
+            rf"\\{re.escape(macro_name)}(?:\\(?=\s)|(?=[^A-Za-z@]|$))"
+        )
+        expanded_text = pattern.sub(macro_value, expanded_text)
+    return expanded_text
+
+
+def normalize_docx_source_latex(latex_text: str) -> str:
+    """在进入 Pandoc 前清理对 DOCX 语义无益、且会干扰转换的 LaTeX 指令。"""
+
+    return re.sub(r"\\noindent\b\s*", "", latex_text)
 
 
 def _replace_latex_citations_with_tokens(latex_text: str) -> tuple[str, dict[str, str]]:
@@ -491,10 +529,19 @@ def build_markdown_for_docx(project_dir: Path) -> str:
     4. 用空行拼接所有片段，返回完整的 Markdown 正文。
     """
     parts: list[str] = []
+    simple_macros: dict[str, str] = {}
 
     for rel_path in collect_extra_tex_inputs(project_dir):
         source_text = (project_dir / rel_path).read_text(encoding="utf-8").strip()
         if not source_text:
+            continue
+        source_text = expand_simple_newcommands(source_text, simple_macros)
+        discovered_macros, source_text = extract_simple_newcommands(source_text)
+        if discovered_macros:
+            simple_macros.update(discovered_macros)
+            source_text = expand_simple_newcommands(source_text, simple_macros)
+        source_text = normalize_docx_source_latex(source_text)
+        if not source_text.strip():
             continue
         markdown = pandoc_latex_to_markdown(source_text).strip()
         if not markdown:
