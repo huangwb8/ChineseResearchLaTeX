@@ -45,6 +45,7 @@ DOCX_SPACE_BEFORE = Pt(0)
 ABSTRACT_HEADING = "Abstract"
 # References section heading text — inserted before Bibliography paragraphs if absent
 REFERENCES_HEADING = "References"
+REFERENCES_HEADING_STYLE = "Heading 1"
 FIGURE_LEGENDS_HEADINGS = ("Figure legends", "Figure titles and legends")
 SUPPLEMENTARY_HEADINGS = ("Supplementary materials", "Supplemental information titles and legends")
 
@@ -113,27 +114,31 @@ def resolve_project_dir(project_dir: Path | None) -> Path:
 def _add_references_heading_if_missing(
     doc: "Document", heading_text: str = REFERENCES_HEADING
 ) -> None:
-    """在第一个 Bibliography 段落前插入 Heading 2 'References'（若已存在则跳过）。"""
+    """确保 References 在 DOCX 中始终是 Heading 1，并位于第一个 Bibliography 段落前。"""
     first_bib = next(
         (p for p in doc.paragraphs if p.style.name == "Bibliography"), None
     )
     if first_bib is None:
         return
 
-    # Skip if a References heading already exists anywhere in the document
-    already_exists = any(
-        p.style.name.startswith("Heading") and p.text.strip().lower() == heading_text.lower()
-        for p in doc.paragraphs
-    )
-    if already_exists:
-        return
+    heading = _find_heading_paragraph(doc, (heading_text,))
+    if heading is None:
+        heading = doc.add_heading(heading_text, level=1)
+        heading_elem = heading._element
+        heading_elem.getparent().remove(heading_elem)
+        first_bib._element.addprevious(heading_elem)
+        print(f"✓ 已插入 '{heading_text}' 标题")
+    else:
+        body_elem = first_bib._element.getparent()
+        children = list(body_elem)
+        if children.index(heading._element) > children.index(first_bib._element):
+            body_elem.remove(heading._element)
+            first_bib._element.addprevious(heading._element)
+            print(f"✓ 已将现有 '{heading_text}' 标题移动到参考文献前")
 
-    # Add heading at end of document, then relocate before the first Bibliography
-    heading = doc.add_heading(heading_text, level=2)
-    heading_elem = heading._element
-    heading_elem.getparent().remove(heading_elem)
-    first_bib._element.addprevious(heading_elem)
-    print(f"✓ 已插入 '{heading_text}' 标题")
+    if heading.style.name != REFERENCES_HEADING_STYLE:
+        heading.style = doc.styles[REFERENCES_HEADING_STYLE]
+        print(f"✓ 已将 '{heading_text}' 标题样式统一为 {REFERENCES_HEADING_STYLE}")
 
 
 def _find_heading_paragraph(doc: "Document", headings: tuple[str, ...] | list[str] | set[str]):

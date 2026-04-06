@@ -11,6 +11,7 @@
 - 示例正文包含一组代表性数学公式，用于人工审查 PDF / DOCX 对公式的支持程度
 - 同一份正文可同时输出 `main.pdf` 与 `main.docx`
 - PDF / DOCX 参考文献默认优先保留 DOI，不重复打印 `doi.org` URL
+- DOCX 参考文献区默认保持 `References` 一级标题，并避免把编号与正文拆成两段
 
 ## 内容来源说明
 
@@ -40,7 +41,7 @@ python scripts/paper_build.py
 - `main.docx`
 - `.latex-cache/`
 
-其中 DOCX 构建链会为 Pandoc 默认生成的 `Normal Table` 补上可见横向边框，并通过 HTML5 + MathML 中间态把示例中的数学公式转换为 Word 原生公式对象，避免在 Word 中退化成源码文本。
+其中 DOCX 构建链会为 Pandoc 默认生成的 `Normal Table` 补上可见横向边框，通过 HTML5 + MathML 中间态把示例中的数学公式转换为 Word 原生公式对象，避免在 Word 中退化成源码文本，并保持参考文献区为单段编号列表而不是“编号单独一行、正文另起一行”。
 
 ## 结构
 

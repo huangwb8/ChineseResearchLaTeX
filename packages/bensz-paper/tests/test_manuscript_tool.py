@@ -444,10 +444,30 @@ def test_fix_docx_spacing_reorders_references_before_figure_titles_and_legends(t
     last_bibliography_index = max(
         index for index, para in enumerate(paragraphs) if para.style.name == "Bibliography"
     )
+    references_heading = next(para for para in paragraphs if para.text.strip() == "References")
 
     assert paragraph_texts.index("References") < paragraph_texts.index("Figure titles and legends")
     assert paragraph_texts.index("References") < first_bibliography_index
     assert last_bibliography_index < paragraph_texts.index("Figure titles and legends")
+    assert references_heading.style.name == "Heading 1"
+
+
+def test_fix_docx_spacing_promotes_existing_references_heading_to_heading_1(tmp_path):
+    docx_path = tmp_path / "references-heading-level.docx"
+    doc = Document()
+    doc.styles.add_style("Bibliography", WD_STYLE_TYPE.PARAGRAPH)
+    doc.add_paragraph("Introduction", style="Heading 1")
+    doc.add_paragraph("Body paragraph.", style="Normal")
+    doc.add_paragraph("References", style="Heading 2")
+    doc.add_paragraph("1. Reference one.", style="Bibliography")
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    fixed_doc = Document(docx_path)
+    references_heading = next(para for para in fixed_doc.paragraphs if para.text.strip() == "References")
+
+    assert references_heading.style.name == "Heading 1"
 
 
 def test_fix_docx_spacing_keeps_alias_tail_sections_flush_left(tmp_path):
@@ -573,6 +593,49 @@ def test_paper_sci_01_csl_prints_single_doi_without_duplicate_url(tmp_path):
 
     assert "doi:10.1234/demo.2026.001" in bibliography_para.text.replace(" ", "").lower()
     assert "https://doi.org/10.1234/demo.2026.001" not in bibliography_para.text.lower()
+
+
+def test_paper_sci_01_csl_keeps_reference_number_and_text_in_single_paragraph(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                (
+                    "  author = {Alpha, Alice and Beta, Bob and Gamma, Carol and "
+                    "Delta, David},"
+                ),
+                "  title = {Synthetic Reference Layout Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  volume = {12},",
+                "  pages = {34--56},",
+                "  doi = {10.1234/demo.2026.123},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    docx_path = tmp_path / "bibliography-layout.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md="Body text with a citation [@Demo2026].\n",
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=bib_path,
+        reference_doc=reference_doc,
+    )
+
+    bibliography_paragraphs = [
+        para for para in Document(docx_path).paragraphs if para.style.name == "Bibliography" and para.text.strip()
+    ]
+
+    assert len(bibliography_paragraphs) == 1
+    assert bibliography_paragraphs[0].text.startswith("1. ")
+    assert "Synthetic reference layout regression" in bibliography_paragraphs[0].text
 
 
 def test_fix_docx_spacing_adds_visible_horizontal_borders_to_normal_tables(tmp_path):
