@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""NSFC 公共包结构校验与编译验证工具。
+
+检查 ``packages/bensz-nsfc/`` 的目录结构完整性、版本号一致性和编译可用性。
+可跳过编译步骤仅做结构校验（``--skip-compile``）。
+
+典型用法::
+
+    python validate_package.py                  # 完整校验（含编译）
+    python validate_package.py --skip-compile   # 仅结构校验
+"""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +22,9 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 
+# bensz-nsfc 公共包根目录（packages/bensz-nsfc）
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+# bensz-fonts 共享字体包根目录（packages/bensz-fonts）
 FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
 
 

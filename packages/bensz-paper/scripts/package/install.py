@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
-"""
-bensz-paper 版本管理安装器
+"""bensz-paper 版本管理安装器。
+
+基于 ``scripts/package_version_manager.py`` 提供的 VersionedPackageManager 框架，
+实现 bensz-paper 公共包的安装、卸载、版本切换、回退与状态查询。
+
+也可通过根级统一安装器 ``scripts/install.py`` 以 delegate 模式间接调用。
+
+子命令：install / uninstall / use / rollback / check / clean / list
+
+典型用法::
+
+    python install.py install --ref v1.3.5
+    python install.py install --ref main --mirror gitee
+    python install.py rollback
 """
 
 from __future__ import annotations
@@ -15,6 +27,11 @@ from pathlib import Path
 
 
 def _load_shared_module():
+    """动态加载 package_version_manager 模块。
+
+    优先尝试 import，失败后沿父目录向上搜索 scripts/package_version_manager.py。
+    这使得 install.py 既可以在仓库内直接运行，也可以作为独立脚本分发。
+    """
     try:
         import package_version_manager as module
 
@@ -33,11 +50,14 @@ def _load_shared_module():
 package_version_manager = _load_shared_module()
 
 PACKAGE_NAME = "bensz-paper"
+# 包源码根目录：install.py 位于 scripts/package/ 下，向上两级即为 packages/bensz-paper/
 PACKAGE_DIR = Path(__file__).resolve().parents[2]
+# 命令行 launcher 名称，安装后用户可通过 bpaper 命令调用构建工具
 PRIMARY_LAUNCHER = "bpaper"
 
 
 def get_bin_dir(override: str | None = None) -> Path:
+    """解析 launcher 安装目标目录。优先使用 override 参数，否则按平台选择默认路径。"""
     if override:
         return Path(override).expanduser().resolve()
     if platform.system() == "Windows":
@@ -46,6 +66,11 @@ def get_bin_dir(override: str | None = None) -> Path:
 
 
 def install_python_deps(dest: Path, dry_run: bool, skip: bool) -> None:
+    """检查并安装 bensz-paper 所需的 Python 依赖（pyyaml、python-docx）。
+
+    仅当 requirements.txt 存在且 importlib 检测到缺失模块时才执行 pip install。
+    在非虚拟环境中自动添加 --user 标志。
+    """
     if skip:
         print("  Skipping Python dependency installation (--skip-python-deps)")
         return
@@ -73,6 +98,11 @@ def install_python_deps(dest: Path, dry_run: bool, skip: bool) -> None:
 
 
 def install_launcher(dest: Path, bin_dir: Path, dry_run: bool) -> None:
+    """创建 bpaper 命令行 launcher。
+
+    macOS/Linux：创建符号链接 bin_dir/bpaper -> dest/bpaper。
+    Windows：生成 .cmd 批处理文件，优先使用 py -3 启动器。
+    """
     launcher_src = dest / PRIMARY_LAUNCHER
     if platform.system() == "Windows":
         launcher_dest = bin_dir / f"{PRIMARY_LAUNCHER}.cmd"
@@ -110,6 +140,7 @@ def install_launcher(dest: Path, bin_dir: Path, dry_run: bool) -> None:
 
 
 def remove_launcher(bin_dir: Path, dry_run: bool) -> None:
+    """移除 bpaper launcher（符号链接和 .cmd 文件都会清理）。"""
     for name in (PRIMARY_LAUNCHER, f"{PRIMARY_LAUNCHER}.cmd"):
         launcher = bin_dir / name
         if launcher.exists() or launcher.is_symlink():
@@ -121,6 +152,15 @@ def remove_launcher(bin_dir: Path, dry_run: bool) -> None:
 
 
 class PaperPackageManager(package_version_manager.VersionedPackageManager):
+    """bensz-paper 专用版本管理器。
+
+    继承 VersionedPackageManager 基类，实现以下扩展：
+    - after_activate：安装完成后创建 launcher 和安装 Python 依赖。
+    - after_uninstall：卸载后清理 launcher。
+    - status_details：报告 launcher 状态和 Python 依赖满足情况。
+
+    包依赖声明：bensz-paper 依赖 bensz-fonts 字体包。
+    """
     def __init__(
         self,
         *,
@@ -143,15 +183,18 @@ class PaperPackageManager(package_version_manager.VersionedPackageManager):
         self.skip_python_deps = skip_python_deps
 
     def after_activate(self, commit: str, dry_run: bool = False) -> None:
+        """安装激活后的钩子：创建命令行 launcher 并检查 Python 依赖。"""
         dest = self._target_install_dir()
         bin_dir = get_bin_dir(self.bin_dir_override)
         install_launcher(dest, bin_dir, dry_run)
         install_python_deps(dest, dry_run, self.skip_python_deps)
 
     def after_uninstall(self, dry_run: bool = False) -> None:
+        """卸载后的钩子：移除命令行 launcher。"""
         remove_launcher(get_bin_dir(self.bin_dir_override), dry_run)
 
     def status_details(self) -> list[str]:
+        """返回额外的状态信息行，用于 status/check 子命令的输出。"""
         lines: list[str] = []
         launcher = get_bin_dir(self.bin_dir_override) / PRIMARY_LAUNCHER
         lines.append(
@@ -169,6 +212,7 @@ class PaperPackageManager(package_version_manager.VersionedPackageManager):
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """构建命令行参数解析器，定义 install/use/status/check/rollback/uninstall 六个子命令。"""
     parser = argparse.ArgumentParser(description="bensz-paper 版本管理安装器")
     parser.add_argument("--texmfhome", metavar="PATH")
     parser.add_argument("--bin-dir", metavar="PATH")
@@ -202,6 +246,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """解析命令行参数，兼容旧版 --status / --uninstall 标志式调用。
+
+    无参数时默认执行 install --source local（仓库内开发模式）。
+    """
     argv = list(sys.argv[1:] if argv is None else argv)
     commands = {"install", "use", "status", "check", "rollback", "uninstall"}
     if "--status" in argv:
@@ -224,6 +272,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def build_manager(args: argparse.Namespace) -> PaperPackageManager:
+    """根据命令行参数构建 PaperPackageManager 实例。"""
     return PaperPackageManager(
         cwd=Path.cwd(),
         texmfhome_override=getattr(args, "texmfhome", None),
@@ -233,6 +282,7 @@ def build_manager(args: argparse.Namespace) -> PaperPackageManager:
 
 
 def print_status(manager: PaperPackageManager) -> None:
+    """打印 bensz-paper 的安装状态摘要（路径、版本、kpsewhich 结果、launcher 状态）。"""
     status = manager.status()
     print("bensz-paper — status")
     print()

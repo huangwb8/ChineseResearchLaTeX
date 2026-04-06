@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""打包 bensz-fonts 为 TDS（TeX Directory Structure）兼容 ZIP。
+
+将 ``packages/bensz-fonts/`` 中的字体资产按 TDS 目录布局打包为可分发的 zip 文件。
+
+典型用法::
+
+    python build_tds_zip.py            # 输出到 dist/bensz-fonts-{version}-tds.zip
+    python build_tds_zip.py --out /tmp/bensz-fonts.zip
+"""
 from __future__ import annotations
 
 import argparse

@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+"""NSFC 项目统一构建工具。
+
+提供 NSFC 标书项目的 PDF 构建、缓存清理与辅助功能。
+编译链路为 XeLaTeX -> BibTeX -> XeLaTeX x2，中间文件隔离到 ``.latex-cache/`` 目录。
+
+子命令：
+  build    渲染 PDF（自动执行完整编译链路）
+  clean    清理缓存与中间文件
+
+典型用法::
+
+    python nsfc_project_tool.py build --project-dir projects/NSFC_General
+    python nsfc_project_tool.py clean --project-dir projects/NSFC_General
+"""
 from __future__ import annotations
 
 import argparse
@@ -8,9 +22,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+# bensz-nsfc 公共包根目录（packages/bensz-nsfc）
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+# bensz-fonts 共享字体包根目录（packages/bensz-fonts），用于注入 TEXINPUTS
 FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
+# 用于识别 NSFC 项目根目录的标志性文件组合
 PROJECT_ROOT_MARKERS = ("main.tex", "extraTex/@config.tex")
+# LaTeX 中间产物缓存目录名，放在项目根目录下
 CACHE_DIRNAME = ".latex-cache"
 ROOT_ARTIFACT_PATTERNS = (
     "*.aux",

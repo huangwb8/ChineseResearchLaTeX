@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+"""bensz-thesis 版本管理安装器。
+
+基于 ``scripts/package_version_manager.py`` 提供的 VersionedPackageManager 框架，
+实现 bensz-thesis 公共包的安装、卸载、版本切换、回退与状态查询。
+
+也可通过根级统一安装器 ``scripts/install.py`` 以 delegate 模式间接调用。
+
+子命令：install / uninstall / use / rollback / check / clean / list
+
+典型用法::
+
+    python install.py install --ref v2.0.0
+    python install.py rollback
+    python install.py check
+"""
 from __future__ import annotations
 
 import argparse
@@ -8,6 +23,11 @@ from pathlib import Path
 
 
 def _load_shared_module():
+    """加载共享的 package_version_manager 模块。
+
+    优先尝试直接 import；失败后沿父目录向上搜索 scripts/ 子目录，
+    找到 package_version_manager.py 后将其加入 sys.path 再导入。
+    """
     try:
         import package_version_manager as module
 
@@ -30,6 +50,16 @@ PACKAGE_DIR = Path(__file__).resolve().parents[2]
 
 
 class ThesisPackageManager(package_version_manager.VersionedPackageManager):
+    """bensz-thesis 公共包版本管理器。
+
+    继承自 VersionedPackageManager，负责：
+    - 将 bensz-thesis 包安装到用户的 TEXMFHOME 目录
+    - 管理 bensz-fonts 依赖关系
+    - 支持多版本缓存、切换与回退
+
+    包标识通过 ``bensz-thesis.sty`` 文件的存在性来判断。
+    """
+
     def __init__(self, *, cwd: Path | None = None, texmfhome_override: str | None = None) -> None:
         super().__init__(
             spec=package_version_manager.PackageSpec(
@@ -44,6 +74,7 @@ class ThesisPackageManager(package_version_manager.VersionedPackageManager):
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """构建命令行参数解析器，定义 install / use / status / check / rollback / uninstall 子命令。"""
     parser = argparse.ArgumentParser(description="bensz-thesis 版本管理安装器")
     parser.add_argument("--texmfhome", metavar="PATH")
     subparsers = parser.add_subparsers(dest="command")
@@ -75,6 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """解析命令行参数，支持旧式 --status / --uninstall 短选项的自动转换。"""
     argv = list(sys.argv[1:] if argv is None else argv)
     commands = {"install", "use", "status", "check", "rollback", "uninstall"}
     if "--status" in argv:
@@ -93,10 +125,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def build_manager(args: argparse.Namespace) -> ThesisPackageManager:
+    """根据命令行参数构建 ThesisPackageManager 实例。"""
     return ThesisPackageManager(cwd=Path.cwd(), texmfhome_override=getattr(args, "texmfhome", None))
 
 
 def print_status(manager: ThesisPackageManager) -> None:
+    """以人类可读格式打印 bensz-thesis 的安装状态信息。"""
     status = manager.status()
     print("bensz-thesis — status")
     print()
@@ -107,6 +141,7 @@ def print_status(manager: ThesisPackageManager) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """CLI 入口：解析参数并根据子命令分发到对应的版本管理操作。"""
     package_version_manager.configure_windows_stdio_utf8()
     args = parse_args(argv)
     manager = build_manager(args)

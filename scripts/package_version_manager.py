@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+"""公共包版本管理共享框架。
+
+本模块为 bensz-nsfc、bensz-paper、bensz-thesis、bensz-cv 等 LaTeX 公共包提供统一的
+版本管理基础设施。各包的 install.py 通过组合 VersionedPackageManager 与可选的
+ProjectLockMixin 来获得完整的安装、切换、回退、清理和项目级版本锁定能力。
+
+典型用法::
+
+    from package_version_manager import VersionedPackageManager, PackageSpec
+
+    spec = PackageSpec(package_name="bensz-nsfc", source_marker="bensz-nsfc-common.sty")
+    manager = VersionedPackageManager(spec)
+    manager.install(ref="v3.5.1")
+"""
+
 from __future__ import annotations
 
 import json
@@ -17,17 +32,30 @@ from pathlib import Path
 from typing import Any
 
 
+# GitHub 仓库归属信息，用于拼接远程下载 URL
 REPO_OWNER = "huangwb8"
 REPO_NAME = "ChineseResearchLaTeX"
+
+# 复制文件树时跳过的目录和文件名
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 
 
 class InstallError(RuntimeError):
+    """安装过程中的业务异常，用于向用户报告可读的错误信息。"""
     pass
 
 
 @dataclass(frozen=True)
 class PackageSpec:
+    """公共包的规格描述，定义包名、安装路径和依赖关系。
+
+    Attributes:
+        package_name: 包名，如 ``bensz-nsfc``
+        source_marker: 用于 kpsewhich 检测的源文件标识，如 ``bensz-nsfc-common.sty``
+        dependency_package_names: 该包依赖的其他包名（会随主包一起安装到 TEXMFHOME）
+        package_subpath: 安装到 TEXMFHOME 下的子路径；默认为 ``tex/latex/<package_name>``
+        state_dir_name: 状态目录名；默认与 package_name 相同
+    """
     package_name: str
     source_marker: str
     dependency_package_names: tuple[str, ...] = ()
@@ -44,10 +72,12 @@ class PackageSpec:
 
 
 def get_project_state_home() -> Path:
+    """返回项目级状态根目录 ``~/.ChineseResearchLaTeX/``。"""
     return Path.home() / ".ChineseResearchLaTeX"
 
 
 def configure_windows_stdio_utf8() -> None:
+    """在 Windows 平台上将 stdout/stderr 重编码为 UTF-8，避免中文乱码。"""
     import sys
 
     if sys.platform != "win32":
@@ -64,10 +94,12 @@ def should_skip_reinstall(
     *,
     force: bool,
 ) -> bool:
+    """判断是否可以跳过重复安装。当已安装版本与目标版本相同且未指定 force 时返回 True。"""
     return bool(installed_version and target_version and installed_version == target_version and not force)
 
 
 def unique_existing_dirs(paths: list[Path]) -> list[Path]:
+    """对路径列表去重并过滤掉不存在的目录，Windows 下路径比较不区分大小写。"""
     unique: list[Path] = []
     seen: set[str] = set()
     for path in paths:
@@ -85,6 +117,7 @@ def unique_existing_dirs(paths: list[Path]) -> list[Path]:
 
 
 def candidate_tex_bin_dirs() -> list[Path]:
+    """收集系统中所有可能存在 TeX 可执行文件的目录（PATH + 常见安装路径）。"""
     candidates: list[Path] = []
     path_env = os.environ.get("PATH", "")
     candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
@@ -132,6 +165,7 @@ def candidate_tex_bin_dirs() -> list[Path]:
 
 
 def resolve_executable(*names: str) -> str | None:
+    """按优先级在 PATH 和 TeX 专属目录中查找可执行文件，返回绝对路径或 None。"""
     for name in names:
         resolved = shutil.which(name)
         if resolved:
@@ -145,6 +179,7 @@ def resolve_executable(*names: str) -> str | None:
 
 
 def get_texmfhome(override: str | None = None) -> Path:
+    """解析 TEXMFHOME 路径。优先级：显式参数 > 环境变量 > kpsewhich 查询 > 平台默认值。"""
     if override:
         return Path(override).expanduser().resolve()
     env_val = os.environ.get("TEXMFHOME")
@@ -171,6 +206,11 @@ def get_texmfhome(override: str | None = None) -> Path:
 
 
 def run_mktexlsr(texmfhome: Path, dry_run: bool) -> tuple[str, str | None]:
+    """运行 mktexlsr / texhash / initexmf 刷新 TeX 文件名数据库。
+
+    Returns:
+        (status, command) 元组。status 为 ``"ok"``、``"dry-run"``、``"failed"`` 或 ``"missing"``。
+    """
     if dry_run:
         return ("dry-run", "mktexlsr")
     for command in ("mktexlsr", "texhash"):
@@ -193,6 +233,7 @@ def run_mktexlsr(texmfhome: Path, dry_run: bool) -> tuple[str, str | None]:
 
 
 def copy_tree(src: Path, dest: Path, dry_run: bool = False) -> int:
+    """递归复制文件树，跳过 __pycache__、.DS_Store 和 .pyc 文件。返回复制的文件数。"""
     copied = 0
     for file_path in sorted(src.rglob("*")):
         if not file_path.is_file():
@@ -208,6 +249,7 @@ def copy_tree(src: Path, dest: Path, dry_run: bool = False) -> int:
 
 
 def hash_directory(directory: Path) -> str:
+    """计算目录内容的 SHA-256 摘要，用于生成缓存提交标识。"""
     import hashlib
 
     digest = hashlib.sha256()
@@ -220,6 +262,7 @@ def hash_directory(directory: Path) -> str:
 
 
 def prefer_gitee_for_auto() -> bool:
+    """根据系统 locale 环境变量推断是否应优先使用 Gitee 镜像。"""
     locale_hint = " ".join(
         value
         for value in (
@@ -234,6 +277,7 @@ def prefer_gitee_for_auto() -> bool:
 
 
 def iter_mirrors(mirror: str) -> tuple[str, ...]:
+    """将镜像策略展开为有序镜像列表。``auto`` 会根据 locale 排序。"""
     if mirror in {"github", "gitee"}:
         return (mirror,)
     if mirror == "auto":
@@ -242,6 +286,7 @@ def iter_mirrors(mirror: str) -> tuple[str, ...]:
 
 
 def mirror_archive_url(mirror: str, ref: str) -> str:
+    """根据镜像类型拼接仓库快照的 zip 下载地址。"""
     quoted_ref = urllib.parse.quote(ref, safe="")
     if mirror == "github":
         return f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/zipball/{quoted_ref}"
@@ -251,6 +296,7 @@ def mirror_archive_url(mirror: str, ref: str) -> str:
 
 
 def mirror_raw_url(mirror: str, ref: str, path: str) -> str:
+    """根据镜像类型拼接单个文件的 raw 下载地址。"""
     quoted_ref = urllib.parse.quote(ref, safe="")
     normalized_path = path.lstrip("/")
     if mirror == "github":
@@ -261,6 +307,48 @@ def mirror_raw_url(mirror: str, ref: str, path: str) -> str:
 
 
 class VersionedPackageManager:
+    """带缓存与版本历史管理的公共包安装器基类。
+
+    各 bensz-* 包的 install.py 通过实例化此类并传入对应的 PackageSpec 来获得完整的
+    版本管理能力。核心命令包括：
+
+    - ``install``：从 GitHub / Gitee / 本地路径下载并激活指定版本
+    - ``use``：激活已缓存的版本（若未缓存则自动安装）
+    - ``rollback``：回退到上一次激活的版本
+    - ``prune``：清理不再需要的缓存版本
+    - ``status`` / ``check``：查询当前安装状态
+
+    缓存目录结构::
+
+        ~/.ChineseResearchLaTeX/<package>/
+        ├── state.json              # 全局状态（当前激活版本 + 历史列表）
+        ├── cache/
+        │   ├── commits/
+        │   │   └── <commit>/       # 每个缓存版本一个目录
+        │   │       ├── package/    # 包文件副本
+        │   │       ├── dependencies/  # 依赖包副本
+        │   │       └── metadata.json  # 版本元数据
+        │   └── refs/
+        │       └── <ref>.json      # ref -> commit 的映射
+        └── ...
+
+    metadata.json 主要字段::
+
+        package_name     包名
+        requested_ref    用户请求的 ref（如 v3.5.1 或 main）
+        resolved_commit  解析后的缓存标识
+        source           来源（github / gitee / local）
+        package_version  package.json 中的 version 字段
+        cached_at        缓存创建时间（ISO 8601）
+        package_dir      缓存目录中包文件的路径
+        dependency_dirs  依赖包路径字典
+
+    state.json 主要字段::
+
+        current          当前激活版本信息（commit、ref、source、package_version、install_path）
+        history          历史激活版本的 commit 列表（最多 20 条）
+    """
+
     def __init__(
         self,
         spec: PackageSpec,
@@ -290,21 +378,26 @@ class VersionedPackageManager:
         self.refs_root.mkdir(parents=True, exist_ok=True)
 
     def _timestamp(self) -> str:
+        """返回当前 UTC 时间的 ISO 8601 字符串（秒精度）。"""
         return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     def _safe_ref_name(self, ref: str) -> str:
+        """将 ref 转换为文件系统安全的名称（URL 编码后替换 % 为 _）。"""
         return urllib.parse.quote(ref, safe="").replace("%", "_")
 
     def _json_load(self, path: Path, default: Any) -> Any:
+        """从 JSON 文件加载数据，文件不存在时返回 default。"""
         if not path.exists():
             return default
         return json.loads(path.read_text(encoding="utf-8"))
 
     def _json_dump(self, path: Path, payload: Any) -> None:
+        """将数据以 UTF-8 缩进格式写入 JSON 文件，自动创建父目录。"""
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     def _github_headers(self) -> dict[str, str]:
+        """构建 GitHub API 请求头，若环境变量中有 token 则自动附加认证。"""
         headers = {
             "Accept": "application/vnd.github+json",
             "User-Agent": "ChineseResearchLaTeX-install.py",
@@ -315,6 +408,7 @@ class VersionedPackageManager:
         return headers
 
     def _download_file(self, url: str, destination: Path) -> None:
+        """下载文件到指定路径，附带 GitHub API 认证头。"""
         request = urllib.request.Request(url, headers=self._github_headers())
         try:
             with urllib.request.urlopen(request) as response:
@@ -325,6 +419,7 @@ class VersionedPackageManager:
             raise InstallError(f"无法下载资源：{url}") from exc
 
     def _try_fetch_text(self, url: str) -> str | None:
+        """尝试下载文本内容，网络异常时返回 None 而非抛出异常。"""
         request = urllib.request.Request(url, headers=self._github_headers())
         try:
             with urllib.request.urlopen(request) as response:
@@ -333,6 +428,7 @@ class VersionedPackageManager:
             return None
 
     def _locate_repo_root(self, extract_dir: Path) -> Path:
+        """从解压后的快照目录中定位仓库根目录（支持单子目录或带 packages/ 的结构）。"""
         children = [path for path in extract_dir.iterdir() if path.is_dir()]
         if len(children) == 1:
             return children[0]
@@ -342,6 +438,7 @@ class VersionedPackageManager:
         raise InstallError(f"无法从快照中定位仓库根目录：{extract_dir}")
 
     def _resolve_local_package_dir(self, source_path: Path) -> Path:
+        """从本地路径（包目录或仓库根目录）定位包含 package.json 的包目录。"""
         source_path = source_path.resolve()
         if (source_path / "package.json").exists():
             return source_path
@@ -351,15 +448,18 @@ class VersionedPackageManager:
         raise InstallError(f"无法从本地路径定位包目录：{source_path}")
 
     def _load_package_metadata(self, package_dir: Path) -> dict[str, Any]:
+        """读取并解析包目录下的 package.json 元数据文件。"""
         package_json = package_dir / "package.json"
         if not package_json.exists():
             raise InstallError(f"未找到包元数据：{package_json}")
         return json.loads(package_json.read_text(encoding="utf-8"))
 
     def _target_install_dir(self) -> Path:
+        """返回 TEXMFHOME 下该包的目标安装路径。"""
         return get_texmfhome(self.texmfhome_override) / self.spec.resolved_package_subpath()
 
     def _find_dependency_dirs(self, package_dir: Path) -> dict[str, Path]:
+        """在包的兄弟目录中查找依赖包（如 bensz-fonts）的路径。"""
         found: dict[str, Path] = {}
         packages_root = package_dir.parent
         for slug in self.spec.dependency_package_names:
@@ -369,12 +469,15 @@ class VersionedPackageManager:
         return found
 
     def _state(self) -> dict[str, Any]:
+        """加载全局状态（当前激活版本 + 历史列表）。"""
         return self._json_load(self.state_file, {})
 
     def _save_state(self, payload: dict[str, Any]) -> None:
+        """持久化全局状态到 state.json。"""
         self._json_dump(self.state_file, payload)
 
     def _installed_package_version(self) -> str | None:
+        """检测当前已安装的包版本。优先从 TEXMFHOME 下的 package.json 读取，其次从 state.json 推断。"""
         target_install_dir = self._target_install_dir().resolve()
         package_json = target_install_dir / "package.json"
         if package_json.exists():
@@ -399,6 +502,7 @@ class VersionedPackageManager:
         return None
 
     def _fetch_remote_package_version(self, ref: str, mirror: str) -> str | None:
+        """从远程镜像获取指定 ref 对应的 package.json version 字段。"""
         raw_path = f"packages/{self.spec.package_name}/package.json"
         for current_mirror in iter_mirrors(mirror):
             content = self._try_fetch_text(mirror_raw_url(current_mirror, ref, raw_path))
@@ -414,6 +518,7 @@ class VersionedPackageManager:
         return None
 
     def _download_snapshot(self, ref: str, mirror: str) -> tuple[Path, Path, str]:
+        """下载仓库快照并解压，返回 (临时目录, 包目录, 实际使用的镜像名)。"""
         last_error = None
         for current_mirror in iter_mirrors(mirror):
             temp_dir = Path(tempfile.mkdtemp(prefix=f"{self.spec.package_name}-"))
@@ -434,9 +539,11 @@ class VersionedPackageManager:
         raise InstallError(f"无法下载 {self.spec.package_name}（ref={ref}, mirror={mirror}）。最后错误：{last_error}")
 
     def _cache_root_for(self, commit: str) -> Path:
+        """返回指定 commit 对应的缓存根目录。"""
         return self.cache_root / commit
 
     def _cache_metadata(self, commit: str) -> dict[str, Any]:
+        """加载指定 commit 的缓存元数据（metadata.json）。"""
         return self._json_load(self._cache_root_for(commit) / "metadata.json", {})
 
     def _cache_package(
@@ -448,6 +555,21 @@ class VersionedPackageManager:
         source: str,
         dependency_dirs: dict[str, Path],
     ) -> dict[str, Any]:
+        """将包文件及依赖写入本地缓存并生成 metadata.json。
+
+        如果该 commit 的缓存已存在，会先清除再重新写入。同时会在 refs/ 下
+        创建 ref -> commit 的映射文件，供后续 ``use`` 命令快速查找。
+
+        Args:
+            package_dir: 包文件的源目录
+            requested_ref: 用户请求的 ref（如 ``v3.5.1``）
+            resolved_commit: 解析后的缓存提交标识
+            source: 来源标识（``github`` / ``gitee`` / ``local``）
+            dependency_dirs: 依赖包路径字典 {slug: path}
+
+        Returns:
+            缓存元数据字典（与 metadata.json 内容一致）
+        """
         cache_root = self._cache_root_for(resolved_commit)
         if cache_root.exists():
             shutil.rmtree(cache_root)
@@ -488,6 +610,7 @@ class VersionedPackageManager:
         source: str,
         dependency_dirs: dict[str, Path],
     ) -> dict[str, Any]:
+        """在 dry-run 模式下生成预览元数据（不写入磁盘）。"""
         return {
             "package_name": self.spec.package_name,
             "requested_ref": requested_ref,
@@ -501,15 +624,34 @@ class VersionedPackageManager:
         }
 
     def after_activate(self, commit: str, dry_run: bool = False) -> None:
+        """激活后的钩子方法，子类可覆盖以执行额外操作（如写入 .nsfc-version）。"""
         return None
 
     def after_uninstall(self, dry_run: bool = False) -> None:
+        """卸载后的钩子方法，子类可覆盖以执行额外清理操作。"""
         return None
 
     def status_details(self) -> list[str]:
+        """返回额外的状态信息行，子类可覆盖。"""
         return []
 
     def _activate_commit(self, commit: str, dry_run: bool = False) -> dict[str, Any]:
+        """将缓存的包文件激活（复制）到 TEXMFHOME 目标目录。
+
+        激活流程：
+        1. 读取 commit 对应的缓存元数据
+        2. 清空目标安装目录并复制包文件
+        3. 复制依赖包到 TEXMFHOME 对应子目录
+        4. 运行 mktexlsr 刷新 TeX 文件名数据库
+        5. 更新 state.json（current + history）
+
+        Args:
+            commit: 要激活的缓存提交标识
+            dry_run: 若为 True，只返回预览信息不实际操作
+
+        Returns:
+            激活操作结果字典（包含 action、commit、install_path 等字段）
+        """
         metadata = self._cache_metadata(commit)
         if not metadata:
             raise InstallError(f"未找到缓存版本：{commit}")
@@ -569,6 +711,7 @@ class VersionedPackageManager:
         return activation
 
     def _preview_activation(self, commit: str) -> dict[str, Any]:
+        """在 dry-run 模式下预览激活操作的结果。"""
         target_dir = self._target_install_dir()
         self.after_activate(commit, dry_run=True)
         return {
@@ -579,6 +722,7 @@ class VersionedPackageManager:
         }
 
     def _cached_ref(self, ref: str) -> dict[str, Any] | None:
+        """查找 ref 对应的缓存元数据。先查 refs 映射，再直接尝试 commit 目录。"""
         data = self._json_load(self.refs_root / f"{self._safe_ref_name(ref)}.json", None)
         if data and self._cache_root_for(data["resolved_commit"]).exists():
             return self._cache_metadata(data["resolved_commit"])
@@ -597,6 +741,26 @@ class VersionedPackageManager:
         force: bool = False,
         path: str | None = None,
     ) -> dict[str, Any]:
+        """安装指定版本的公共包。
+
+        安装流程：
+        1. 根据 source 参数决定从本地路径或远程仓库获取包文件
+        2. 对比已安装版本与目标版本，相同则跳过（除非 force=True）
+        3. 将包文件写入本地缓存（commit 级别）
+        4. 若 activate=True，将缓存文件复制到 TEXMFHOME 并刷新 TeX 数据库
+
+        Args:
+            ref: 目标版本标识（tag 名或分支名），默认 ``main``
+            source: 来源类型，``local`` 从本地路径，其余走远程下载
+            mirror: 镜像策略（``github`` / ``gitee`` / ``auto``）
+            activate: 是否在缓存后立即激活到 TEXMFHOME
+            dry_run: 若为 True，只返回预览信息不实际操作
+            force: 强制重新安装，即使版本相同
+            path: 当 source=local 时指定的本地路径
+
+        Returns:
+            安装结果字典（包含 requested_ref、package_version、activation 等字段）
+        """
         if source == "local":
             package_dir = self._resolve_local_package_dir(Path(path or self.package_dir))
             target_version = self._load_package_metadata(package_dir).get("version")
@@ -678,6 +842,15 @@ class VersionedPackageManager:
         return metadata
 
     def use(self, ref: str, dry_run: bool = False) -> dict[str, Any]:
+        """激活已缓存的版本。若该 ref 未缓存，则自动触发安装后再激活。
+
+        Args:
+            ref: 目标版本标识
+            dry_run: 若为 True，只返回预览信息
+
+        Returns:
+            包含 activation 信息的结果字典
+        """
         cached = self._cached_ref(ref)
         if cached is None:
             return self.install(ref=ref, source="github", mirror="github", activate=True, dry_run=dry_run)
@@ -687,6 +860,17 @@ class VersionedPackageManager:
         return cached
 
     def rollback(self, dry_run: bool = False) -> dict[str, Any]:
+        """回退到上一次激活的版本（从 state.json 的 history 列表取第一个）。
+
+        Args:
+            dry_run: 若为 True，只返回预览信息
+
+        Returns:
+            包含 rolled_back_to 和 activation 的结果字典
+
+        Raises:
+            InstallError: 当没有可回退的历史版本时
+        """
         state = self._state()
         history = list(state.get("history") or [])
         if not history:
@@ -696,6 +880,7 @@ class VersionedPackageManager:
         return {"rolled_back_to": previous, "activation": activation}
 
     def uninstall(self, dry_run: bool = False) -> dict[str, Any]:
+        """从 TEXMFHOME 中卸载当前包并清除激活状态。"""
         target_dir = self._target_install_dir()
         result = {"target": str(target_dir), "removed": target_dir.exists(), "dry_run": dry_run}
         if target_dir.exists() and not dry_run:
@@ -712,6 +897,7 @@ class VersionedPackageManager:
         return result
 
     def status(self) -> dict[str, Any]:
+        """查询当前安装状态，包括安装目录是否存在、当前激活版本和 kpsewhich 检测结果。"""
         target_dir = self._target_install_dir()
         kpsewhich = resolve_executable("kpsewhich")
         kpsewhich_result = None
@@ -737,6 +923,7 @@ class VersionedPackageManager:
         }
 
     def check(self) -> dict[str, Any]:
+        """校验当前激活版本的一致性（状态记录与安装目录是否匹配）。"""
         state = self._state().get("current")
         if not state:
             return {"status": "no_active_version", "active": None}
@@ -746,6 +933,7 @@ class VersionedPackageManager:
         return {"status": "match", "active": state}
 
     def list_cached(self) -> list[dict[str, Any]]:
+        """列出所有已缓存版本的元数据。"""
         items: list[dict[str, Any]] = []
         if not self.cache_root.exists():
             return items
@@ -756,6 +944,14 @@ class VersionedPackageManager:
         return items
 
     def prune(self, *, dry_run: bool = False) -> dict[str, Any]:
+        """清理不再需要的缓存版本。仅保留当前激活版本和历史列表中的版本。
+
+        Args:
+            dry_run: 若为 True，只返回将被清理的列表但不实际删除
+
+        Returns:
+            包含 kept（保留列表）和 removed（已清理列表）的结果字典
+        """
         state = self._state()
         current = state.get("current") or {}
         keep = {item for item in [current.get("commit")] + list(state.get("history") or []) if item}
@@ -772,12 +968,29 @@ class VersionedPackageManager:
 
 
 class ProjectLockMixin:
-    """可混入 VersionedPackageManager 的项目级版本锁定能力。"""
+    """可混入 VersionedPackageManager 的项目级版本锁定能力。
 
-    lockfile_name: str
-    template_ids: tuple[str, ...] = ()
+    项目级版本锁定允许单个 LaTeX 项目（如 projects/NSFC_Young/）将其依赖的公共包版本
+    固定到特定 commit，确保团队协作和 CI 环境下的一致性。
+
+    锁定机制通过项目根目录下的锁文件（如 ``.nsfc-version``）实现。锁文件是 JSON 格式，
+    记录了 ref、commit、package_name、package_version 等字段。
+
+    提供的命令：
+    - ``pin``：将当前激活版本写入锁文件
+    - ``sync``：根据锁文件安装并激活指定版本
+    - ``check``：校验当前激活版本与锁文件是否一致
+    - ``unpin``：删除锁文件
+
+    子类需要设置 ``lockfile_name`` 属性（如 ``".nsfc-version"``）和可选的
+    ``template_ids`` 属性。
+    """
+
+    lockfile_name: str  # 锁文件名，如 ".nsfc-version"
+    template_ids: tuple[str, ...] = ()  # 支持的模板标识列表
 
     def _find_project_root(self) -> Path:
+        """从当前工作目录向上搜索，定位包含锁文件或 LaTeX 入口文件的项目根目录。"""
         for candidate in [self.cwd, *self.cwd.parents]:  # type: ignore[attr-defined]
             if (candidate / self.lockfile_name).exists():
                 return candidate

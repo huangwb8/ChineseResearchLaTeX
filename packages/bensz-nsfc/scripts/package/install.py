@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""bensz-nsfc 版本管理安装器（统一框架薄封装）"""
+"""bensz-nsfc 版本管理安装器（统一框架薄封装）。
+
+基于 ``scripts/package_version_manager.py`` 提供的 VersionedPackageManager 框架，
+实现 bensz-nsfc 公共包的安装、卸载、版本切换、回退与状态查询。
+
+子命令：install / uninstall / use / rollback / check / clean / list
+
+典型用法::
+
+    python install.py install --ref v3.5.1
+    python install.py install --ref v3.5.1 --mirror gitee
+    python install.py rollback
+    python install.py check
+"""
 
 from __future__ import annotations
 

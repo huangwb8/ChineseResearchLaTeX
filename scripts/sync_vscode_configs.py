@@ -1,20 +1,41 @@
 #!/usr/bin/env python3
+"""VS Code 工作区与 LaTeX Workshop 配置同步工具。
+
+将 ``scripts/vscode/`` 下按项目类型（nsfc / paper / thesis / cv）维护的固定配置模板
+同步到 ``projects/`` 下各子项目中，确保所有项目具有一致的 VS Code 工程配置。
+
+同步内容：
+  - ``*.code-workspace`` ：VS Code 工作区定义文件
+  - ``.vscode/settings.json`` ：LaTeX Workshop 等扩展配置
+  - LaTeX Workshop launcher 脚本（通过 ``texlua`` 转调项目级 Python wrapper）
+
+典型用法::
+
+    python sync_vscode_configs.py                # 同步所有项目
+    python sync_vscode_configs.py --project NSFC_General  # 仅同步指定项目
+"""
 from __future__ import annotations
 
 import argparse
 import sys
 from pathlib import Path
 
+# 仓库根目录
 REPO_ROOT = Path(__file__).resolve().parents[1]
+# projects/ 目录
 PROJECTS_DIR = REPO_ROOT / "projects"
+# VS Code 配置模板目录（scripts/vscode/）
 TEMPLATES_DIR = Path(__file__).resolve().parent / "vscode"
+# 通用工作区模板
 WORKSPACE_TEMPLATE = TEMPLATES_DIR / "project.code-workspace.json"
+# 按项目类型分级的 .vscode/settings.json 模板
 SETTINGS_TEMPLATES = {
     "nsfc": TEMPLATES_DIR / "nsfc.settings.json",
     "paper": TEMPLATES_DIR / "paper.settings.json",
     "thesis": TEMPLATES_DIR / "thesis.settings.json",
     "cv": TEMPLATES_DIR / "cv.settings.json",
 }
+# LaTeX Workshop 构建 launcher 模板（texlua 脚本，跨平台转调 Python wrapper）
 LATEX_WORKSHOP_LAUNCHER_TEMPLATE = TEMPLATES_DIR / "latex_workshop_build.lua"
 
 

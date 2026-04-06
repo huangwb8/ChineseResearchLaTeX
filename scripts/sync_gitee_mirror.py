@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Sync the canonical GitHub repository state to a Gitee mirror."""
+"""将 GitHub 仓库默认分支最新 commit 同步推送到 Gitee 镜像仓库。
+
+支持推送指定 tag 或默认分支的最新 commit。用于 GitHub Actions 自动化流程
+（``.github/workflows/sync-gitee-mirror.yml``）和手动同步。
+
+典型用法::
+
+    python sync_gitee_mirror.py                          # 推送默认分支最新 commit
+    python sync_gitee_mirror.py --tag v4.0.10            # 同时推送指定 tag
+    python sync_gitee_mirror.py --repo huangwb8/ChineseResearchLaTeX
+"""
 
 from __future__ import annotations
 

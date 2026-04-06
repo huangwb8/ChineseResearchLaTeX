@@ -1,6 +1,29 @@
 #!/usr/bin/env python3
-"""
-SCI manuscript build tool bundled with bensz-paper.
+"""SCI 论文构建工具核心模块（bensz-paper 公共包配套脚本）。
+
+支持 PDF + DOCX 双输出：
+
+PDF 构建流程：
+  XeLaTeX → Biber → XeLaTeX → XeLaTeX
+  中间文件隔离到 .latex-cache/，最终 PDF 复制到项目根目录。
+
+DOCX 构建流程（多步转换管线）：
+  LaTeX → Markdown（pandoc）
+    ↓ 先转 Markdown 是为了让 pandoc 的 --citeproc + CSL 处理
+      引用格式（如 Nature、Science 等期刊特有格式）。
+  Markdown → HTML5+MathML（pandoc --mathml --citeproc）
+    ↓ HTML5 中间步骤的目的是让数学公式转为 MathML，
+      再由 pandoc 从 HTML 生成 DOCX 时自动转为 OMML（Office MathML），
+      这比直接从 Markdown/LaTeX 转 DOCX 的公式兼容性好得多。
+  HTML5 → DOCX（pandoc，可选 reference.docx 样式模板）
+    ↓ 最后调用 fix_docx_spacing() 修复行距/段间距/缩进，
+      使其尽量接近 LaTeX PDF 版式。
+
+外部依赖：
+- xelatex：TeX 排版引擎（TeX Live）
+- biber：参考文献处理
+- pandoc：格式转换核心
+- soffice（可选）：LibreOffice 命令行，用于从 DOCX 生成 Word 风格 PDF
 """
 
 from __future__ import annotations
@@ -17,11 +40,18 @@ from pathlib import Path
 from fix_docx_spacing import fix_docx_spacing
 
 VERSION = "1.3.5"
+# 用于判定目录是否为项目根的标记文件
 PROJECT_ROOT_MARKERS = ("main.tex",)
+# 匹配 main.tex 中的 \input{extraTex/...} 引用，用于收集 DOCX 所需的正文片段
 EXTRA_TEX_INPUT_PATTERN = re.compile(r"\\input\{(extraTex/[^}]+)\}")
+# 匹配 LaTeX 引用命令（supercite/cite/autocite 等）及其花括号内的 citation keys。
+# 在 LaTeX→Markdown 转换前，将引用替换为占位符，避免 pandoc 误解析；
+# 转换完成后再将占位符还原为 CSL 可识别的 [@key] 格式。
 CITATION_PATTERN = re.compile(
     r"\\(supercite|cite|autocite|parencite|textcite|citep|citet)\{([^}]*)\}"
 )
+# 外部工具的候选路径：当 PATH 中找不到时，按此列表逐一探测。
+# 主要覆盖 macOS（TeX Live、Homebrew）和 Linux（TeX Live）的常见安装位置。
 TOOL_CANDIDATES = {
     "xelatex": (
         "/Library/TeX/texbin/xelatex",
@@ -42,6 +72,7 @@ TOOL_CANDIDATES = {
 }
 
 def run_cmd(args: list[str], cwd: Path | None = None, input_text: str | None = None) -> str:
+    """执行外部命令并返回 stdout。命令失败时抛出 subprocess.CalledProcessError。"""
     result = subprocess.run(
         args,
         cwd=cwd,
@@ -54,6 +85,7 @@ def run_cmd(args: list[str], cwd: Path | None = None, input_text: str | None = N
 
 
 def configure_windows_stdio_utf8() -> None:
+    """在 Windows 上将 stdout/stderr 重编码为 UTF-8，避免中文输出乱码。"""
     if sys.platform != "win32":
         return
     for stream_name in ("stdout", "stderr"):
@@ -67,6 +99,7 @@ def run_best_effort(
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    """执行外部命令但不检查返回码。用于 xelatex/biber 等可能产生非零退出码但仍生成有效输出的工具。"""
     return subprocess.run(
         args,
         cwd=cwd,
@@ -78,6 +111,11 @@ def run_best_effort(
 
 
 def collect_extra_tex_inputs(project_dir: Path) -> list[Path]:
+    """从 main.tex 中提取 \\input{extraTex/...} 引用的文件路径列表（按出现顺序）。
+
+    遍历 main.tex 每一行，跳过 TeX 注释后，用正则匹配 \\input{extraTex/xxx}，
+    确保引用的文件实际存在。返回相对路径列表，供 DOCX 管线逐文件转换。
+    """
     main_tex = project_dir / "main.tex"
     if not main_tex.exists():
         raise FileNotFoundError(f"Missing main.tex: {main_tex}")
@@ -104,6 +142,17 @@ def collect_extra_tex_inputs(project_dir: Path) -> list[Path]:
 
 
 def _replace_latex_citations_with_tokens(latex_text: str) -> tuple[str, dict[str, str]]:
+    """将 LaTeX 引用命令替换为占位符，返回 (处理后的文本, 占位符映射表)。
+
+    占位符生成规则：
+    - 格式为 CITETOKEN{序号}，序号从 0001 开始零填充为 4 位。
+    - 每个 \\cite{key1,key2} 被替换为一个占位符。
+    - 映射表值为 CSL 格式的引用标记 [@key1]; [@key2]，
+      在 pandoc 转换完成后再替换回去，使 --citeproc 能正确处理。
+
+    这样做是因为 pandoc 直接处理 LaTeX 引用时容易与数学模式等语法冲突，
+    先替换为纯文本占位符可以避免干扰。
+    """
     placeholder_map: dict[str, str] = {}
 
     def repl(match: re.Match[str]) -> str:
@@ -119,7 +168,11 @@ _SUP_TAG_RE = re.compile(r"<sup>(.*?)</sup>", re.DOTALL)
 
 
 def _convert_sup_tags_to_superscript(md_text: str) -> str:
-    """Convert HTML <sup> tags to pandoc native ^superscript^ syntax."""
+    """将 HTML <sup> 标签转换为 pandoc 原生上标语法 ^text^。
+
+    pandoc 从 LaTeX 转 Markdown 时，上标内容可能被输出为 <sup>...</sup>，
+    需要转回 pandoc 原生语法才能在后续 HTML5→DOCX 步骤中正确处理。
+    """
 
     def _replace_sup(match: re.Match[str]) -> str:
         content = match.group(1)
@@ -129,6 +182,12 @@ def _convert_sup_tags_to_superscript(md_text: str) -> str:
 
 
 def _normalize_frontmatter_markdown(md_text: str) -> str:
+    """清理 frontmatter.tex 转出的 Markdown，去除居中 div 标签并将标题行提升为 H1。
+
+    LaTeX frontmatter 中的标题通常用 \\begin{center} 包裹，
+    pandoc 会将其转出为 <div class="center"> 和粗体文本。
+    本函数移除这些 div 标签，并将首个粗体行转为 Markdown H1 标题。
+    """
     lines = [line for line in md_text.splitlines() if line.strip() not in {"<div class=\"center\">", "</div>"}]
     normalized: list[str] = []
     title_promoted = False
@@ -145,6 +204,20 @@ def _normalize_frontmatter_markdown(md_text: str) -> str:
 
 
 def pandoc_latex_to_markdown(latex_text: str) -> str:
+    """将 LaTeX 源码转为 Markdown，保留数学公式和引用占位符。
+
+    为何先转 Markdown 而不是直接转 DOCX：
+    - Markdown 作为中间格式，让 pandoc 的 --citeproc 和 --csl 能正确处理
+      各种期刊的引用格式（Nature、Science 等 CSL 样式表）。
+    - 使用 pandoc 原生 Markdown 方言（而非 GFM），使 TeX 数学公式保持
+      $...$ / $$...$$ 形式，不会被 pandoc 过早渲染为其他格式。
+
+    流程：
+    1. 将 LaTeX 引用命令替换为占位符（避免 pandoc 误解析）。
+    2. pandoc latex → markdown+raw_html。
+    3. 将占位符还原为 [@key] 格式。
+    4. 将 <sup> 标签转为 pandoc 上标语法。
+    """
     prepared_text, placeholder_map = _replace_latex_citations_with_tokens(latex_text)
     # Use Pandoc's native markdown dialect instead of GFM so TeX math stays
     # as `$...$` / `$$...$$` and can be promoted into MathML/OMML later.
@@ -171,6 +244,22 @@ def build_docx_from_markdown(
     bibliography_path: Path,
     reference_doc: Path | None = None,
 ) -> None:
+    """从 Markdown 生成 DOCX，采用 Markdown→HTML5+MathML→DOCX 两步管线。
+
+    为何不直接 Markdown→DOCX：
+    - pandoc 的 DOCX writer 在当前工具链中不能可靠地将 TeX 数学公式
+      提升为 OMML（Office MathML）。
+    - 通过 HTML5 + MathML 中间步骤，pandoc 先将公式转为 MathML，
+      再从 HTML 输入读取时自动将 MathML 转为 DOCX 原生 OMML 公式，
+      转换可靠度显著提高。
+
+    参数：
+        manuscript_md: 合并后的 Markdown 正文（含 [@key] 引用标记）
+        docx_path: 输出 DOCX 文件路径
+        csl_path: CSL 引用样式表路径（如 nature.csl）
+        bibliography_path: BibTeX 参考文献数据库路径
+        reference_doc: 可选的 Word 参考模板（reference.docx），用于继承样式
+    """
     pandoc = resolve_executable("pandoc")
     with tempfile.TemporaryDirectory(prefix="paper-docx-html-") as tmp_dir:
         html_path = Path(tmp_dir) / "manuscript.html"
@@ -203,10 +292,12 @@ def build_docx_from_markdown(
 
 
 def is_project_root(path: Path) -> bool:
+    """判断目录是否为项目根（依据是否存在 main.tex 标记文件）。"""
     return any((path / marker).exists() for marker in PROJECT_ROOT_MARKERS)
 
 
 def find_project_root(start: Path | None = None) -> Path:
+    """从给定路径向上遍历，找到包含 main.tex 的项目根目录。"""
     origin = (start or Path.cwd()).expanduser().resolve()
     for candidate in [origin, *origin.parents]:
         if is_project_root(candidate):
@@ -218,6 +309,7 @@ def find_project_root(start: Path | None = None) -> Path:
 
 
 def resolve_project_dir(project_dir: Path | None) -> Path:
+    """从 CLI 参数或当前工作目录解析出有效的项目根目录。"""
     if project_dir is None:
         return find_project_root()
 
@@ -232,6 +324,7 @@ def resolve_project_dir(project_dir: Path | None) -> Path:
 
 
 def resolve_executable(name: str) -> str:
+    """查找外部工具的可执行路径。优先使用 PATH（shutil.which），再按 TOOL_CANDIDATES 逐一探测。"""
     resolved = shutil.which(name)
     if resolved:
         return resolved
@@ -242,6 +335,7 @@ def resolve_executable(name: str) -> str:
 
 
 def build_texinputs(prefixes: list[Path], existing: str) -> str:
+    """构建 TEXINPUTS 环境变量值，将指定目录前缀和已有值拼接为 TeX 搜索路径。"""
     normalized = [f"{path.resolve()}//" for path in prefixes]
     normalized.append("")
     if existing:
@@ -250,6 +344,13 @@ def build_texinputs(prefixes: list[Path], existing: str) -> str:
 
 
 def resolve_tex_search_roots(project_dir: Path) -> list[Path]:
+    """解析 TeX 搜索路径根目录列表，用于设置 TEXINPUTS 环境变量。
+
+    按优先级探测三个来源：
+    1. 项目内 texmf/tex/latex（项目本地 texmf 树）
+    2. bensz-paper 公共包源码目录（包含 bml-core.sty 等）
+    3. bensz-fonts 字体包目录（包含 bensz-fonts.sty）
+    """
     roots: list[Path] = []
 
     project_tex_root = project_dir / "texmf" / "tex" / "latex"
@@ -268,12 +369,14 @@ def resolve_tex_search_roots(project_dir: Path) -> list[Path]:
 
 
 def summarize_process_output(label: str, result: subprocess.CompletedProcess[str]) -> str:
+    """将子进程的 stdout/stderr 合并后取最后 20 行，用于构建编译失败时的诊断摘要。"""
     lines = [line for line in (result.stdout + "\n" + result.stderr).splitlines() if line.strip()]
     tail = "\n".join(lines[-20:]) if lines else "(no output)"
     return f"[{label}] exit={result.returncode}\n{tail}"
 
 
 def remove_legacy_docx_intermediates(cache_dir: Path) -> None:
+    """清理旧版构建流程遗留的 DOCX 中间文件（main.md 和 extraTex/ 目录）。"""
     legacy_markdown = cache_dir / "main.md"
     legacy_extra_tex = cache_dir / "extraTex"
 
@@ -284,6 +387,14 @@ def remove_legacy_docx_intermediates(cache_dir: Path) -> None:
 
 
 def build_markdown_for_docx(project_dir: Path) -> str:
+    """将项目 extraTex/ 下所有 LaTeX 正文片段转为 Markdown 并合并为单一文档。
+
+    流程：
+    1. 从 main.tex 收集 \\input{extraTex/...} 的有序文件列表。
+    2. 逐文件调用 pandoc_latex_to_markdown() 转为 Markdown。
+    3. 对 frontmatter.tex 特殊处理（去除 div 标签、提升标题）。
+    4. 用空行拼接所有片段，返回完整的 Markdown 正文。
+    """
     parts: list[str] = []
 
     for rel_path in collect_extra_tex_inputs(project_dir):
@@ -304,6 +415,17 @@ def build_markdown_for_docx(project_dir: Path) -> str:
 
 
 def build_project(project_dir: Path) -> None:
+    """完整的 PDF + DOCX 构建入口。
+
+    构建流程：
+    1. PDF 构建：xelatex → biber → xelatex → xelatex，中间文件隔离到 .latex-cache/。
+    2. DOCX 构建：
+       a. 收集 extraTex/ 下所有正文片段，转为 Markdown。
+       b. 通过 HTML5+MathML 中间步骤生成 DOCX（含 CSL 引用处理和 OMML 公式）。
+       c. 调用 fix_docx_spacing() 修复行距/段间距/缩进。
+    3. Word 风格 PDF（可选）：如果检测到 soffice，从 DOCX 生成一份 Word 排版 PDF
+       保存到 .latex-cache/main.word.pdf。
+    """
     print(f"Building project: {project_dir}")
 
     main_tex = project_dir / "main.tex"
@@ -428,6 +550,7 @@ def build_project(project_dir: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """解析命令行参数。支持 build 子命令和 --project-dir 选项。"""
     parser = argparse.ArgumentParser(description="Build manuscript PDF and DOCX from local sources.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
     parser.add_argument("command", choices=["build"], help="Command to execute")
@@ -441,6 +564,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """命令行入口：解析参数后执行 build 子命令。"""
     configure_windows_stdio_utf8()
     args = parse_args()
     if args.command == "build":

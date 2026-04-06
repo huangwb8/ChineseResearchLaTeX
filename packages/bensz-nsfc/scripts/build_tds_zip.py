@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""打包 bensz-nsfc 为 TDS（TeX Directory Structure）兼容 ZIP。
+
+将 ``packages/bensz-nsfc/`` 和 ``packages/bensz-fonts/`` 中的运行时文件
+按 TDS 目录布局打包为可分发的 zip 文件，供用户手动安装到 TEXMFHOME。
+
+典型用法::
+
+    python build_tds_zip.py            # 输出到 dist/bensz-nsfc-{version}-tds.zip
+    python build_tds_zip.py --out /tmp/bensz-nsfc.zip
+"""
 from __future__ import annotations
 
 import argparse
@@ -6,8 +16,11 @@ import json
 import zipfile
 from pathlib import Path
 
+# bensz-nsfc 公共包根目录（packages/bensz-nsfc）
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+# 仓库根目录
 REPO_ROOT = PACKAGE_DIR.parents[1]
+# bensz-fonts 共享字体包根目录（packages/bensz-fonts）
 FONTS_PACKAGE_DIR = REPO_ROOT / "packages" / "bensz-fonts"
 
 

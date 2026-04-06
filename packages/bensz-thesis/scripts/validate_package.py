@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""bensz-thesis 公共包结构校验工具。
+
+检查 ``packages/bensz-thesis/`` 的必要文件完整性和版本号一致性，
+并可选执行编译验证。
+
+典型用法::
+
+    python validate_package.py                  # 完整校验
+    python validate_package.py --skip-compile   # 仅结构校验
+"""
 from __future__ import annotations
 
 import argparse
@@ -7,11 +17,21 @@ import subprocess
 import sys
 from pathlib import Path
 
+# bensz-thesis 公共包根目录（packages/bensz-thesis）
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+# 仓库根目录
 REPO_ROOT = PACKAGE_DIR.parents[1]
 
 
 def validate_required_files() -> list[str]:
+    """检查 bensz-thesis 公共包中必需的文件是否齐全。
+
+    校验范围包括：核心 .sty 文件、各院校 profile 定义、各院校样式文件、
+    UCAS 子目录文档类、README 以及构建/安装/打包脚本。
+
+    Returns:
+        缺失文件路径的列表；若列表为空则表示所有必需文件均存在。
+    """
     required = [
         "bensz-thesis.sty",
         "bthesis-core.sty",

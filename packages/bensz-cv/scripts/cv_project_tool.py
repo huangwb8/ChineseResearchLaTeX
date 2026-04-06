@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""中英文简历项目统一构建工具。
+
+支持 zh/en 双语变体的 XeLaTeX -> BibTeX -> XeLaTeX x2 编译流程，
+并提供基于 Pillow 的像素级 PDF 比较验收能力，用于简历版式回归检测。
+
+子命令：
+  build    渲染 PDF（支持 --variant all/zh/en）
+  clean    清理缓存与中间文件
+  compare  与基线 PDF 做像素级比较
+"""
 from __future__ import annotations
 
 import argparse
@@ -11,9 +21,13 @@ import sys
 import tempfile
 from pathlib import Path
 
+# bensz-cv 公共包根目录（packages/bensz-cv）
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+# bensz-fonts 共享字体包根目录（packages/bensz-fonts），用于注入 TEXINPUTS
 FONTS_PACKAGE_DIR = PACKAGE_DIR.parent / "bensz-fonts"
+# LaTeX 中间产物缓存目录名，放在项目根目录下
 CACHE_DIRNAME = ".latex-cache"
+# 项目根目录下需要清理的 LaTeX 中间文件扩展名
 ROOT_ARTIFACT_PATTERNS = (
     "*.aux",
     "*.log",
@@ -35,6 +49,7 @@ ROOT_ARTIFACT_PATTERNS = (
     "*.dvi",
     "*.xdv",
 )
+# 语种变体到 TeX 主文件的映射：zh -> main-zh.tex，en -> main-en.tex
 VARIANT_TO_TEX = {
     "zh": "main-zh.tex",
     "en": "main-en.tex",
@@ -58,10 +73,12 @@ TOOL_CANDIDATES = {
 
 
 class BuildError(RuntimeError):
+    """简历构建过程中的错误，如编译失败或文件缺失。"""
     pass
 
 
 def configure_windows_stdio_utf8() -> None:
+    """在 Windows 上将 stdout/stderr 编码切换为 UTF-8，避免中文乱码。"""
     if sys.platform != "win32":
         return
     for stream_name in ("stdout", "stderr"):
@@ -71,10 +88,12 @@ def configure_windows_stdio_utf8() -> None:
 
 
 def is_project_root(path: Path) -> bool:
+    """判断路径是否为合法的 CV 项目根目录（需同时包含 main-zh.tex 和 main-en.tex）。"""
     return (path / "main-zh.tex").exists() and (path / "main-en.tex").exists()
 
 
 def find_project_root(start: Path | None = None) -> Path:
+    """从给定路径向上逐级搜索 CV 项目根目录。"""
     origin = (start or Path.cwd()).expanduser().resolve()
     for candidate in [origin, *origin.parents]:
         if is_project_root(candidate):
@@ -85,6 +104,7 @@ def find_project_root(start: Path | None = None) -> Path:
 
 
 def resolve_project_dir(project_dir: Path | None) -> Path:
+    """解析项目目录：显式指定时直接验证，否则从 cwd 向上自动搜索。"""
     if project_dir is None:
         return find_project_root()
     candidate = project_dir.expanduser().resolve()
@@ -98,6 +118,7 @@ def resolve_project_dir(project_dir: Path | None) -> Path:
 
 
 def resolve_tex_file(project_dir: Path, tex_file: str | None, variant: str) -> Path:
+    """根据变体名或显式文件名定位 TeX 主文件，并校验其位于项目根目录下。"""
     if tex_file is not None:
         candidate = (project_dir / tex_file).resolve()
     else:
@@ -112,6 +133,7 @@ def resolve_tex_file(project_dir: Path, tex_file: str | None, variant: str) -> P
 
 
 def resolve_executable(name: str) -> str:
+    """查找可执行文件：先 PATH，再 TOOL_CANDIDATES 硬编码路径。"""
     resolved = shutil.which(name)
     if resolved:
         return resolved
@@ -122,6 +144,7 @@ def resolve_executable(name: str) -> str:
 
 
 def build_texinputs(prefixes: list[Path], existing: str) -> str:
+    """构建 TEXINPUTS 环境变量值，将公共包和字体目录注入 TeX 搜索路径。"""
     normalized = [f"{path.resolve()}//" for path in prefixes]
     normalized.append("")
     if existing:
@@ -130,6 +153,7 @@ def build_texinputs(prefixes: list[Path], existing: str) -> str:
 
 
 def clean_root_artifacts(project_dir: Path, tex_stem: str) -> None:
+    """清理项目根目录下的 LaTeX 中间文件（跳过同名 PDF）。"""
     for pattern in ROOT_ARTIFACT_PATTERNS:
         for path in project_dir.glob(pattern):
             if path.name == f"{tex_stem}.pdf":
@@ -139,6 +163,7 @@ def clean_root_artifacts(project_dir: Path, tex_stem: str) -> None:
 
 
 def sync_optional_tree(cache_dir: Path, project_dir: Path, name: str) -> None:
+    """将项目目录下的可选子目录（如 references/）同步到缓存目录，优先用符号链接。"""
     source = project_dir / name
     if not source.exists():
         return
@@ -158,6 +183,7 @@ def sync_optional_tree(cache_dir: Path, project_dir: Path, name: str) -> None:
 
 
 def normalize_bibtex_aux(cache_dir: Path, tex_stem: str) -> None:
+    """清理 .aux 文件中 \\bibstyle 命令里多余的 .bst 后缀，避免 bibtex 找不到样式文件。"""
     aux_path = cache_dir / f"{tex_stem}.aux"
     if not aux_path.exists():
         return
@@ -167,12 +193,14 @@ def normalize_bibtex_aux(cache_dir: Path, tex_stem: str) -> None:
 
 
 def summarize_process_output(label: str, result: subprocess.CompletedProcess[str]) -> str:
+    """将子进程的 stdout/stderr 合并后截取末尾 30 行，用于构建错误报告。"""
     lines = [line for line in (result.stdout + "\n" + result.stderr).splitlines() if line.strip()]
     tail = "\n".join(lines[-30:]) if lines else "(no output)"
     return f"[{label}] exit={result.returncode}\n{tail}"
 
 
 def log_has_fatal_errors(log_path: Path) -> bool:
+    """扫描 LaTeX .log 文件是否包含致命错误标记。"""
     if not log_path.exists():
         return False
     content = log_path.read_text(encoding="utf-8", errors="ignore")
@@ -191,6 +219,7 @@ def run_best_effort(
     cwd: Path,
     env: dict[str, str],
 ) -> subprocess.CompletedProcess[str]:
+    """以 best-effort 模式运行子进程，不抛异常，由调用方检查返回码。"""
     return subprocess.run(
         args,
         cwd=cwd,
@@ -202,6 +231,22 @@ def run_best_effort(
 
 
 def build_single(project_dir: Path, tex_path: Path) -> Path:
+    """单语种完整构建流程。
+
+    编译链路：xelatex -> bibtex -> xelatex -> xelatex。
+    中间产物隔离到 .latex-cache/<tex_stem>/ 目录下，
+    最终 PDF 复制回项目根目录，并保留 SyncTeX 文件以支持编辑器跳转。
+
+    Args:
+        project_dir: CV 项目根目录。
+        tex_path: TeX 主文件路径（需位于项目根目录下）。
+
+    Returns:
+        生成的 PDF 文件路径。
+
+    Raises:
+        BuildError: 编译失败或 BibTeX 出错时抛出，附带各 pass 日志。
+    """
     tex_stem = tex_path.stem
     cache_dir = project_dir / CACHE_DIRNAME / tex_stem
     if cache_dir.exists():
@@ -258,6 +303,19 @@ def build_single(project_dir: Path, tex_path: Path) -> Path:
 
 
 def build_project(project_dir: Path, variant: str, tex_file: str | None) -> list[Path]:
+    """项目级构建入口，支持 --variant all/zh/en。
+
+    - variant="all" 时依次构建 zh 和 en 两个变体；
+    - 指定 tex_file 时直接编译该文件，忽略 variant。
+
+    Args:
+        project_dir: CV 项目根目录。
+        variant: 语种变体（all/zh/en）。
+        tex_file: 显式指定的 TeX 主文件名，优先于 variant。
+
+    Returns:
+        所有成功生成的 PDF 路径列表。
+    """
     if tex_file is not None:
         return [build_single(project_dir, resolve_tex_file(project_dir, tex_file, variant))]
     variants = ["zh", "en"] if variant == "all" else [variant]
@@ -265,6 +323,7 @@ def build_project(project_dir: Path, variant: str, tex_file: str | None) -> list
 
 
 def clean_project(project_dir: Path, variant: str, tex_file: str | None, remove_pdf: bool) -> None:
+    """清理指定变体的缓存目录和根目录中间文件；可选删除最终 PDF。"""
     tex_paths: list[Path]
     if tex_file is not None:
         tex_paths = [resolve_tex_file(project_dir, tex_file, variant)]
@@ -287,6 +346,7 @@ def clean_project(project_dir: Path, variant: str, tex_file: str | None, remove_
 
 
 def rasterize_pdf(pdf_path: Path, out_dir: Path, prefix: str, dpi: int) -> list[Path]:
+    """使用 pdftoppm 将 PDF 逐页光栅化为 PNG 图片，用于后续像素级比较。"""
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / prefix
     subprocess.run(
@@ -306,6 +366,21 @@ def compare_pdfs(
     keep_rasters: bool,
     output_dir: Path | None,
 ) -> dict[str, object]:
+    """将项目 PDF 与基线 PDF 做像素级比较，用于简历版式回归验收。
+
+    流程：两份 PDF 分别用 pdftoppm 光栅化为 PNG，再用 Pillow 逐页
+    做 ImageChops.difference 差异检测。结果写入 compare-report.json。
+
+    Args:
+        project_pdf: 待验收的项目 PDF 路径。
+        baseline_pdf: 基线（参考）PDF 路径。
+        dpi: 光栅化分辨率，默认 144。
+        keep_rasters: 是否保留中间 PNG 图片。
+        output_dir: 比较输出目录，为 None 时使用临时目录。
+
+    Returns:
+        包含 identical、mismatches、report 等字段的比较结果字典。
+    """
     try:
         from PIL import Image, ImageChops
     except ImportError as exc:
@@ -384,6 +459,7 @@ def compare_pdfs(
 
 
 def parse_args() -> argparse.Namespace:
+    """解析命令行参数，支持 build/clean/compare 三个子命令。"""
     parser = argparse.ArgumentParser(description="简历项目统一 TeX→PDF 渲染工具")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -412,6 +488,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """CLI 入口：根据子命令分发到 build/clean/compare 处理函数。"""
     configure_windows_stdio_utf8()
     args = parse_args()
     project_dir = resolve_project_dir(getattr(args, "project_dir", None))

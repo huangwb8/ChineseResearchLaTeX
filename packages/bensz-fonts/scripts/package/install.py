@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""bensz-fonts 字体基础包安装器。
+
+将 ``packages/bensz-fonts/`` 中的字体资产安装到用户本地 TEXMFHOME 目录。
+采用 texmfhome 模式（直接复制文件），不依赖 package_version_manager 框架。
+
+字体包是其他 bensz-* 包的基础依赖，通常应最先安装。
+
+典型用法::
+
+    python install.py install           # 从本地仓库安装
+    python install.py install --ref v4.0.0  # 从远程仓库安装指定版本
+"""
 from __future__ import annotations
 
 import argparse
@@ -10,11 +22,14 @@ import sys
 from pathlib import Path
 
 PACKAGE_NAME = "bensz-fonts"
+# 安装到 TEXMFHOME 下的子路径
 PACKAGE_SUBPATH = Path("tex") / "latex" / PACKAGE_NAME
+# 复制文件树时跳过的目录和文件名
 EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
 
 
 def unique_existing_dirs(paths: list[Path]) -> list[Path]:
+    """对路径列表去重并过滤不存在的目录，Windows 下不区分大小写。"""
     unique: list[Path] = []
     seen: set[str] = set()
     for path in paths:
@@ -32,6 +47,11 @@ def unique_existing_dirs(paths: list[Path]) -> list[Path]:
 
 
 def candidate_tex_bin_dirs() -> list[Path]:
+    """收集系统中所有可能的 TeX 可执行文件目录候选。
+
+    搜索来源包括：PATH 环境变量、TEXBIN/TEXLIVE_BIN/MIKTEX_BIN 环境变量、
+    以及各平台（macOS/Windows/Linux）的常见 TeX 发行版安装路径。
+    """
     candidates: list[Path] = []
     path_env = os.environ.get("PATH", "")
     candidates.extend(Path(item) for item in path_env.split(os.pathsep) if item)
@@ -79,6 +99,7 @@ def candidate_tex_bin_dirs() -> list[Path]:
 
 
 def resolve_executable(*names: str) -> str | None:
+    """在 PATH 和 candidate_tex_bin_dirs 中查找可执行文件，返回第一个匹配的完整路径。"""
     for name in names:
         resolved = shutil.which(name)
         if resolved:
@@ -92,6 +113,7 @@ def resolve_executable(*names: str) -> str | None:
 
 
 def find_package_source() -> Path:
+    """定位 bensz-fonts 源码根目录（从本脚本向上三级，即 packages/bensz-fonts/）。"""
     pkg_dir = Path(__file__).resolve().parent.parent.parent
     if not (pkg_dir / f"{PACKAGE_NAME}.sty").exists():
         raise FileNotFoundError(f"Package source not found at: {pkg_dir}")
@@ -99,6 +121,7 @@ def find_package_source() -> Path:
 
 
 def get_texmfhome(override: str | None = None) -> Path:
+    """解析 TEXMFHOME 路径，优先级：显式参数 > 环境变量 > kpsewhich 查询 > 平台默认值。"""
     if override:
         return Path(override).expanduser().resolve()
     env_val = os.environ.get("TEXMFHOME")
@@ -125,6 +148,7 @@ def get_texmfhome(override: str | None = None) -> Path:
 
 
 def run_mktexlsr(texmfhome: Path, dry_run: bool) -> None:
+    """刷新 TeX 文件名数据库，依次尝试 mktexlsr、texhash（TeX Live）或 initexmf（MiKTeX）。"""
     if dry_run:
         print(f"  [dry-run] mktexlsr {texmfhome}")
         return
@@ -139,6 +163,10 @@ def run_mktexlsr(texmfhome: Path, dry_run: bool) -> None:
 
 
 def install_tree(src: Path, dest: Path, dry_run: bool) -> None:
+    """将源码目录树递归复制到目标路径，排除 __pycache__、.DS_Store 和 .pyc 文件。
+
+    dry-run 模式下仅打印将要复制的文件列表。
+    """
     if dry_run:
         for file_path in sorted(src.rglob("*")):
             if not file_path.is_file():
@@ -160,6 +188,14 @@ def install_tree(src: Path, dest: Path, dry_run: bool) -> None:
 
 
 def do_install(args: argparse.Namespace) -> int:
+    """执行安装：将 bensz-fonts 源码复制到 TEXMFHOME 并刷新文件名数据库。
+
+    Args:
+        args: 命令行参数，包含 texmfhome（可选覆盖路径）和 dry_run 标志。
+
+    Returns:
+        退出码，0 表示成功。
+    """
     src = find_package_source()
     texmfhome = get_texmfhome(args.texmfhome)
     dest = texmfhome / PACKAGE_SUBPATH
@@ -177,6 +213,14 @@ def do_install(args: argparse.Namespace) -> int:
 
 
 def do_status(args: argparse.Namespace) -> int:
+    """检查 bensz-fonts 安装状态：目标目录是否存在、kpsewhich 是否能发现 .sty 文件。
+
+    Args:
+        args: 命令行参数，包含 texmfhome（可选覆盖路径）。
+
+    Returns:
+        退出码，0 表示成功。
+    """
     texmfhome = get_texmfhome(args.texmfhome)
     dest = texmfhome / PACKAGE_SUBPATH
     print("bensz-fonts — status")
@@ -196,6 +240,14 @@ def do_status(args: argparse.Namespace) -> int:
 
 
 def do_uninstall(args: argparse.Namespace) -> int:
+    """卸载 bensz-fonts：删除 TEXMFHOME 下的安装目录并刷新文件名数据库。
+
+    Args:
+        args: 命令行参数，包含 texmfhome（可选覆盖路径）和 dry_run 标志。
+
+    Returns:
+        退出码，0 表示成功。
+    """
     texmfhome = get_texmfhome(args.texmfhome)
     dest = texmfhome / PACKAGE_SUBPATH
     print("bensz-fonts — uninstall")
@@ -213,6 +265,7 @@ def do_uninstall(args: argparse.Namespace) -> int:
 
 
 def parse_args() -> argparse.Namespace:
+    """解析命令行参数：默认执行安装，--status 查看状态，--uninstall 卸载。"""
     parser = argparse.ArgumentParser(description="bensz-fonts 本地安装工具")
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--status", action="store_true", help="检查安装状态")
@@ -223,6 +276,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """CLI 入口：根据参数分发到 install/status/uninstall 操作。"""
     args = parse_args()
     if args.status:
         sys.exit(do_status(args))
