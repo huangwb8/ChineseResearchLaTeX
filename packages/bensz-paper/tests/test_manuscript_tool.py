@@ -421,6 +421,62 @@ def test_build_docx_from_markdown_promotes_math_to_omml(tmp_path):
     assert "`" not in document_xml
 
 
+def test_build_docx_from_markdown_supports_projects_without_bibliography(tmp_path):
+    docx_path = tmp_path / "cover-letter.docx"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+    markdown = "\n".join(
+        [
+            "31 March 2026",
+            "",
+            "Dear Editors,",
+            "",
+            "We are pleased to submit our anonymized manuscript.",
+            "",
+            "Sincerely,",
+            "",
+            "Feng BaoBao",
+            "",
+        ]
+    )
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md=markdown,
+        docx_path=docx_path,
+        reference_doc=reference_doc,
+    )
+
+    assert docx_path.exists()
+    assert "Feng BaoBao" in "\n".join(para.text for para in Document(docx_path).paragraphs)
+
+
+def test_main_tex_uses_bibliography_detects_biblatex_commands():
+    assert manuscript_tool.main_tex_uses_bibliography(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\addbibresource{references/refs.bib}",
+                r"\begin{document}",
+                r"\printbibliography[heading=none]",
+                r"\end{document}",
+            ]
+        )
+    )
+
+
+def test_main_tex_uses_bibliography_returns_false_for_plain_cover_letter():
+    assert not manuscript_tool.main_tex_uses_bibliography(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\begin{document}",
+                r"\input{extraTex/front/metadata.tex}",
+                r"\input{extraTex/body/letter.tex}",
+                r"\end{document}",
+            ]
+        )
+    )
+
+
 def test_remove_legacy_docx_intermediates_cleans_old_cache(tmp_path):
     cache_dir = tmp_path / ".latex-cache"
     (cache_dir / "extraTex" / "body").mkdir(parents=True)

@@ -95,9 +95,9 @@
   \InputIfFileExists{profiles/bml-profile-\bml@template.def}{}{%
     \PackageError{benszmanuscriptlatex}%
       {Profile '\bml@template' not found}%
-      {Check that profiles/bml-profile-\bml@template.def exists
+       {Check that profiles/bml-profile-\bml@template.def exists
        in the package profiles/ directory.
-       Available built-in profiles: paper-sci-01, bensz-manu-01}%
+       Available built-in profiles: paper-sci-01, paper-coverletter-01, bensz-manu-01}%
   }%
   % Pass 2: user keys override profile defaults
   \setkeys{bml}{#1}%

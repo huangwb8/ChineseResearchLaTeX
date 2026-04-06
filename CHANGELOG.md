@@ -8,8 +8,14 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- 新增 `projects/paper-coverletter-01/`、`projects/paper-coverletter-01/AGENTS.md`、`projects/paper-coverletter-01/CLAUDE.md`、`projects/paper-coverletter-01/scripts/paper_build.py` 与匿名化 `extraTex/` 示例正文：基于真实 Word cover letter 的结构抽象出首个投稿信模板项目，默认复用 `bensz-paper` 公共包、不新增专门 cover letter 包，并以 `Feng BaoBao` 作为公开示例中的通讯作者占位名
+- 新增 `packages/bensz-paper/profiles/bml-profile-paper-coverletter-01.def`：为投稿信项目补充 US Letter、1 英寸页边距、无首行缩进、禁用行号的轻量 profile，使 `bensz-paper` 除正文论文外也能稳定承载 cover letter 场景
+
 ### Fixed（修复）
 
+- 修复 `bensz-paper` 对“无参考文献的轻量文档”支持不足的问题：`packages/bensz-paper/scripts/manuscript_tool.py` 现会根据 `main.tex` 自动识别是否声明参考文献命令；若未声明，则 PDF 构建跳过 `biber`、DOCX 构建跳过 citeproc，从而让 `paper-coverletter-01` 这类投稿信项目无需伪造 `.bib`/`.csl` 也能稳定导出 PDF 与 Word；`packages/bensz-paper/tests/test_manuscript_tool.py` 同步补充无文献 DOCX 与命令检测回归测试
 - 修复 `bensz-paper` / `projects/paper-sci-01` 的 DOCX 首页作者左对齐回归：`packages/bensz-paper/scripts/manuscript_tool.py` 现会把 Pandoc front matter 中 `::: center` 产生的作者区块显式标记为 DOCX 居中块，再由 `packages/bensz-paper/scripts/fix_docx_spacing.py` 在最终 Word 文件里只对该块写入段落级居中并移除中间标记，从而让 `paper-sci-01` 的标题保持居中、作者名单恢复居中、单位/等贡献/通讯作者/running title 继续保持左对齐；`packages/bensz-paper/tests/test_manuscript_tool.py` 同步补充 fenced div 归一化与 DOCX round-trip 对齐回归测试，防止再次退回“作者行左对齐”
 - 修复根级 `scripts/install.py` 在 `delegate` 模式下重复安装检测偏慢的问题：现将远程 `package.json` 轻量版本比对前移到 `_install_delegated_package()` 入口，并提炼为公共 `_check_skip_reinstall()`；当 `bensz-nsfc`、`bensz-paper`、`bensz-thesis`、`bensz-cv` 已安装同版本且未传 `--force` 时，根级安装器会像 `bensz-fonts` 一样在一次 metadata 请求后直接跳过，不再先下载安装器脚本、辅助模块并启动子进程；同时 `scripts/test_install_architecture.py` 新增“快速跳过 / force 重装 / metadata 失败降级”三条回归测试，确保不破坏各包独立安装器与现有 CLI 行为
 - 修复 `bensz-paper` 与 `projects/paper-sci-01` 的 DOCX references 缺陷：`packages/bensz-paper/scripts/fix_docx_spacing.py` 现会把缺失或层级错误的 `References` 标题统一修正为与正文主章节一致的 `Heading 1`，并确保它位于首条参考文献前；`projects/paper-sci-01/artifacts/manuscript.csl` 则移除了会触发 citeproc 左右双栏拆段的 `second-field-align="flush"`，同时把编号后缀改为 `". "`，从而让 Word 中的参考文献保持单段编号排版；`packages/bensz-paper/tests/test_manuscript_tool.py` 同步新增标题层级与单段 bibliography 回归测试，防止再次回退
@@ -20,6 +26,8 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-paper/package.json` 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮新增 cover letter profile 并补齐“无参考文献文档”构建能力，公共包版本现从 `p_v20260406.1` 升级为 `p_v20260407`，CLI 脚本版本同步从 `1.3.6` 升级为 `1.3.7`
+- 更新 `scripts/update_readme_template_list.py`、`projects/README.md`、`packages/bensz-paper/README.md`、根级 `README.md` 与 `AGENTS.md`：`paper-*` 模板列表现改为自动发现，不再把 `paper-sci-01` 写死在模板列表脚本里；文档口径也同步扩展为“SCI 正文 + 投稿信”两类 `bensz-paper` 示例链路
 - 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮继续修复 `bensz-paper` 的 DOCX front matter 作者对齐问题，公共包版本现从 `p_v20260406` 升级为 `p_v20260406.1`，CLI 脚本版本同步从 `1.3.5` 升级为 `1.3.6`
 - 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮继续修复 `bensz-paper` 的 DOCX references 标题层级与 bibliography 单段排版问题，公共包版本现从 `p_v20260405` 升级为 `p_v20260406`，CLI 脚本版本同步从 `1.3.4` 升级为 `1.3.5`
 - 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 中的包版本号：由于本轮已连续修改 `bensz-paper` 的 bibliography、DOCX 表格、DOCX 数学公式链路与 `paper-sci-01` 示例配套能力，公共包版本现从 `p_v20260322` 升级为 `p_v20260402`

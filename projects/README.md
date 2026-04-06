@@ -38,13 +38,14 @@
 说明：
 
 - 这一组项目共享 [`packages/bensz-paper/`](../packages/bensz-paper/) 公共包
-- 当前已落地的是首个可验证示例链路，重点展示“`extraTex/**/*.tex` 单一正文来源 + PDF/DOCX 双输出”
+- 当前已落地论文正文与投稿信两条可验证示例链路，重点展示“`extraTex/**/*.tex` 单一正文来源 + PDF/DOCX 双输出”
 
 | 项目 | 用途 | 适用场景 |
 |------|------|----------|
 | [`paper-sci-01/`](./paper-sci-01/) | SCI 论文示例项目 | 写英文论文、投稿前排版、需要同时交付 `main.pdf` 与 `main.docx` |
+| [`paper-coverletter-01/`](./paper-coverletter-01/) | 投稿信示例项目 | 已有 cover letter Word 稿件，想迁移到可维护的 LaTeX + DOCX 双输出模板 |
 
-如果你的目标是期刊论文而不是基金申请书，请直接从 `paper-sci-01/` 开始，不必进入 NSFC 项目。
+如果你的目标是期刊论文正文或投稿信，而不是基金申请书，请直接从对应的 `paper-*` 项目开始，不必进入 NSFC 项目。
 
 ## 毕业论文
 
@@ -88,7 +89,8 @@
 ## 选型建议
 
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
-- 写 SCI 论文：进入 `paper-sci-01/`
+- 写 SCI 论文正文：进入 `paper-sci-01/`
+- 写投稿 cover letter：进入 `paper-coverletter-01/`
 - 写毕业论文：进入与你学校和学位最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
 - 写中英文简历：进入 `cv-01/`
 

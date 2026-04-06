@@ -97,7 +97,7 @@ ISSUE_FORM_FILENAMES = {
     "thesis-customization": "thesis-template-customization.yml",
 }
 
-# 静态定义的模板规格（NSFC 和 paper 项目）
+# 静态定义的模板规格（NSFC 项目）
 BASE_TEMPLATE_SPECS = (
     TemplateSpec(
         category="nsfc",
@@ -117,13 +117,28 @@ BASE_TEMPLATE_SPECS = (
         local_path="projects/NSFC_Local/",
         asset_prefix="NSFC_Local",
     ),
-    TemplateSpec(
-        category="paper",
-        display_name="paper-sci-01",
-        local_path="projects/paper-sci-01/",
-        asset_prefix="paper-sci-01",
-    ),
 )
+
+
+def discover_paper_template_specs() -> tuple[TemplateSpec, ...]:
+    """扫描 projects/ 下所有 ``paper-*`` 目录，自动生成论文模板规格列表。"""
+    if not PROJECTS_DIR.exists():
+        return ()
+
+    paper_projects = sorted(
+        project_dir.name
+        for project_dir in PROJECTS_DIR.iterdir()
+        if project_dir.is_dir() and project_dir.name.startswith("paper-")
+    )
+    return tuple(
+        TemplateSpec(
+            category="paper",
+            display_name=project_name,
+            local_path=f"projects/{project_name}/",
+            asset_prefix=project_name,
+        )
+        for project_name in paper_projects
+    )
 
 
 def discover_cv_template_specs() -> tuple[TemplateSpec, ...]:
@@ -233,7 +248,12 @@ def discover_thesis_template_specs() -> tuple[TemplateSpec, ...]:
 
 def get_template_specs() -> tuple[TemplateSpec, ...]:
     """合并静态规格和动态发现的规格，返回完整的模板规格列表。"""
-    return BASE_TEMPLATE_SPECS + discover_thesis_template_specs() + discover_cv_template_specs()
+    return (
+        BASE_TEMPLATE_SPECS
+        + discover_paper_template_specs()
+        + discover_thesis_template_specs()
+        + discover_cv_template_specs()
+    )
 
 
 def get_category_description(category: str, specs: tuple[TemplateSpec, ...]) -> str:

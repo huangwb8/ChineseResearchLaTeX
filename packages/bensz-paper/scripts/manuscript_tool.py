@@ -39,7 +39,7 @@ from pathlib import Path
 
 from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.6"
+VERSION = "1.3.7"
 DOCX_FRONTMATTER_CENTER_START = "BENSZ_DOCX_FRONTMATTER_CENTER_START"
 DOCX_FRONTMATTER_CENTER_END = "BENSZ_DOCX_FRONTMATTER_CENTER_END"
 # 用于判定目录是否为项目根的标记文件
@@ -51,6 +51,9 @@ EXTRA_TEX_INPUT_PATTERN = re.compile(r"\\input\{(extraTex/[^}]+)\}")
 # 转换完成后再将占位符还原为 CSL 可识别的 [@key] 格式。
 CITATION_PATTERN = re.compile(
     r"\\(supercite|cite|autocite|parencite|textcite|citep|citet)\{([^}]*)\}"
+)
+BIBLIOGRAPHY_COMMAND_PATTERN = re.compile(
+    r"\\(addbibresource|printbibliography|bibliography|bibliographystyle)\b"
 )
 # 外部工具的候选路径：当 PATH 中找不到时，按此列表逐一探测。
 # 主要覆盖 macOS（TeX Live、Homebrew）和 Linux（TeX Live）的常见安装位置。
@@ -320,8 +323,8 @@ def pandoc_latex_to_markdown(latex_text: str) -> str:
 def build_docx_from_markdown(
     manuscript_md: str,
     docx_path: Path,
-    csl_path: Path,
-    bibliography_path: Path,
+    csl_path: Path | None = None,
+    bibliography_path: Path | None = None,
     reference_doc: Path | None = None,
 ) -> None:
     """从 Markdown 生成 DOCX，采用 Markdown→HTML5+MathML→DOCX 两步管线。
@@ -336,8 +339,8 @@ def build_docx_from_markdown(
     参数：
         manuscript_md: 合并后的 Markdown 正文（含 [@key] 引用标记）
         docx_path: 输出 DOCX 文件路径
-        csl_path: CSL 引用样式表路径（如 nature.csl）
-        bibliography_path: BibTeX 参考文献数据库路径
+        csl_path: 可选的 CSL 引用样式表路径（如 nature.csl）
+        bibliography_path: 可选的 BibTeX 参考文献数据库路径
         reference_doc: 可选的 Word 参考模板（reference.docx），用于继承样式
     """
     pandoc = resolve_executable("pandoc")
@@ -354,14 +357,21 @@ def build_docx_from_markdown(
             "-t",
             "html5",
             "--mathml",
-            "--citeproc",
-            "--csl",
-            str(csl_path),
-            "--bibliography",
-            str(bibliography_path),
             "-o",
             str(html_path),
         ]
+        if csl_path is not None or bibliography_path is not None:
+            if csl_path is None or bibliography_path is None:
+                raise ValueError("csl_path and bibliography_path must be provided together")
+            html_cmd.extend(
+                [
+                    "--citeproc",
+                    "--csl",
+                    str(csl_path),
+                    "--bibliography",
+                    str(bibliography_path),
+                ]
+            )
         run_cmd(html_cmd, input_text=manuscript_md)
 
         docx_cmd = [pandoc, str(html_path), "-f", "html"]
@@ -455,6 +465,11 @@ def summarize_process_output(label: str, result: subprocess.CompletedProcess[str
     return f"[{label}] exit={result.returncode}\n{tail}"
 
 
+def main_tex_uses_bibliography(main_tex_text: str) -> bool:
+    """判断 main.tex 是否声明了参考文献链路。"""
+    return bool(BIBLIOGRAPHY_COMMAND_PATTERN.search(main_tex_text))
+
+
 def remove_legacy_docx_intermediates(cache_dir: Path) -> None:
     """清理旧版构建流程遗留的 DOCX 中间文件（main.md 和 extraTex/ 目录）。"""
     legacy_markdown = cache_dir / "main.md"
@@ -511,6 +526,8 @@ def build_project(project_dir: Path) -> None:
     main_tex = project_dir / "main.tex"
     if not main_tex.exists():
         raise FileNotFoundError(f"Missing main.tex: {main_tex}")
+    main_tex_text = main_tex.read_text(encoding="utf-8")
+    bibliography_enabled = main_tex_uses_bibliography(main_tex_text)
 
     print("Building PDF...")
     cache_dir = project_dir / ".latex-cache"
@@ -535,18 +552,20 @@ def build_project(project_dir: Path) -> None:
     ]
 
     xelatex_run_1 = run_best_effort(xelatex_cmd, cwd=project_dir, env=tex_env)
-    biber_run = run_best_effort(
-        [
-            resolve_executable("biber"),
-            "--input-directory",
-            str(cache_dir),
-            "--output-directory",
-            str(cache_dir),
-            "main",
-        ],
-        cwd=project_dir,
-        env=tex_env,
-    )
+    biber_run: subprocess.CompletedProcess[str] | None = None
+    if bibliography_enabled:
+        biber_run = run_best_effort(
+            [
+                resolve_executable("biber"),
+                "--input-directory",
+                str(cache_dir),
+                "--output-directory",
+                str(cache_dir),
+                "main",
+            ],
+            cwd=project_dir,
+            env=tex_env,
+        )
     xelatex_run_2 = run_best_effort(xelatex_cmd, cwd=project_dir, env=tex_env)
     xelatex_run_3 = run_best_effort(xelatex_cmd, cwd=project_dir, env=tex_env)
 
@@ -555,7 +574,9 @@ def build_project(project_dir: Path) -> None:
         compiler_logs = "\n\n".join(
             [
                 summarize_process_output("xelatex pass 1", xelatex_run_1),
-                summarize_process_output("biber", biber_run),
+                summarize_process_output("biber", biber_run)
+                if biber_run is not None
+                else "[biber] skipped (no bibliography commands found in main.tex)",
                 summarize_process_output("xelatex pass 2", xelatex_run_2),
                 summarize_process_output("xelatex pass 3", xelatex_run_3),
             ]
@@ -564,12 +585,15 @@ def build_project(project_dir: Path) -> None:
             f"PDF compilation failed. Expected output not found: {pdf_source}\n\n{compiler_logs}"
         )
 
-    for label, result in (
+    process_results: list[tuple[str, subprocess.CompletedProcess[str]]] = [
         ("xelatex pass 1", xelatex_run_1),
-        ("biber", biber_run),
         ("xelatex pass 2", xelatex_run_2),
         ("xelatex pass 3", xelatex_run_3),
-    ):
+    ]
+    if biber_run is not None:
+        process_results.insert(1, ("biber", biber_run))
+
+    for label, result in process_results:
         if result.returncode != 0:
             print(f"Warning: {label} exited with code {result.returncode}; output PDF was still generated.")
 
@@ -582,15 +606,22 @@ def build_project(project_dir: Path) -> None:
     reference_doc = project_dir / "artifacts" / "reference.docx"
 
     csl_path = project_dir / "artifacts" / "manuscript.csl"
-    if not csl_path.exists():
-        raise FileNotFoundError(f"Missing CSL file: {csl_path}")
+    bibliography_path = project_dir / "references" / "refs.bib"
+    if bibliography_enabled:
+        if not csl_path.exists():
+            raise FileNotFoundError(f"Missing CSL file: {csl_path}")
+        if not bibliography_path.exists():
+            raise FileNotFoundError(f"Missing bibliography file: {bibliography_path}")
+    else:
+        csl_path = None
+        bibliography_path = None
 
     docx_path = project_dir / "main.docx"
     build_docx_from_markdown(
         manuscript_md=manuscript_md,
         docx_path=docx_path,
         csl_path=csl_path,
-        bibliography_path=project_dir / "references" / "refs.bib",
+        bibliography_path=bibliography_path,
         reference_doc=reference_doc,
     )
     print(f"✓ DOCX generated: {docx_path}")

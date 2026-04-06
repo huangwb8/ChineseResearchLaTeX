@@ -1,6 +1,6 @@
 # 中国科研常用 LaTeX 模板集 - 项目指令
 
-本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，仓库已经引入 `packages/bensz-fonts/` 作为跨产品线共享字体基础包，`bensz-paper` 已落地首个可验证的 SCI 示例链路（`packages/bensz-paper/` + `projects/paper-sci-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-nju-master/` + `projects/thesis-sysu-doctor/` + `projects/thesis-ucas-doctor/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
+本项目已从早期的“模板仓库”演进为一个以 NSFC 为主线的 **LaTeX 模板 + 公共包源码 + 安装/构建脚本 + AI Skills** 协作仓库。当前最成熟、最稳定的主线仍是 NSFC 系列模板；同时，仓库已经引入 `packages/bensz-fonts/` 作为跨产品线共享字体基础包，`bensz-paper` 已落地首批可验证的论文链路（`packages/bensz-paper/` + `projects/paper-sci-01/` + `projects/paper-coverletter-01/`），`bensz-thesis` 已落地首批毕业论文链路（`packages/bensz-thesis/` + `projects/thesis-smu-master/` + `projects/thesis-nju-master/` + `projects/thesis-sysu-doctor/` + `projects/thesis-ucas-doctor/`），`bensz-cv` 也已落地首个中英文学术简历链路（`packages/bensz-cv/` + `projects/cv-01/`）。
 
 一般建议优先使用最新的 [Release](https://github.com/huangwb8/ChineseResearchLaTeX/releases)。仓库主分支可以包含重构中的源码、脚本和技能，处理任务时要以“当前真实目录结构 + 当前脚本接口 + 当前 README/CHANGELOG”作为判断依据，而不是沿用旧版记忆。
 
@@ -11,7 +11,7 @@
 - 维护可直接使用的 NSFC LaTeX 模板与 Release 交付物
 - 维护 `packages/bensz-nsfc/` 公共包源码，避免三套 NSFC 项目重复堆叠样式逻辑
 - 维护 `packages/bensz-fonts/` 共享字体基础包源码，统一托管字体文件并为其它 `bensz-*` 包提供字体引用 API
-- 维护 `packages/bensz-paper/` 公共包源码与 `projects/paper-sci-01/` 示例项目，支撑 SCI 论文写作模板的 PDF/DOCX 双输出
+- 维护 `packages/bensz-paper/` 公共包源码与 `projects/paper-sci-01/`、`projects/paper-coverletter-01/` 示例项目，支撑 SCI 论文正文与投稿信模板的 PDF/DOCX 双输出
 - 维护 `packages/bensz-thesis/` 公共包源码与 `projects/thesis-smu-master/`、`projects/thesis-nju-master/`、`projects/thesis-sysu-doctor/`、`projects/thesis-ucas-doctor/` 示例项目，支撑硕士/博士论文模板的 PDF 输出与像素级验收
 - 维护 `packages/bensz-cv/` 公共包源码与 `projects/cv-01/` 示例项目，支撑中英文简历模板的 PDF 输出、像素级验收与去隐私公开演示
 - 维护 `packages/bensz-nsfc/scripts/` 下的 NSFC 官方脚本入口，包括安装、构建、校验与 TDS 打包
@@ -36,6 +36,7 @@ ChineseResearchLaTeX/
 │   ├── NSFC_Local/          # 地区项目薄封装 + 示例正文
 │   ├── NSFC_Young/          # 青年项目薄封装 + 示例正文
 │   ├── paper-sci-01/        # SCI 论文示例项目（PDF + DOCX）
+│   ├── paper-coverletter-01/ # 投稿 cover letter 示例项目（PDF + DOCX）
 │   ├── thesis-smu-master/   # 南方医科大学硕士论文示例项目
 │   ├── thesis-nju-master/   # 南京大学工程管理硕士论文示例项目
 │   ├── thesis-sysu-doctor/  # 中山大学博士论文示例项目
@@ -70,6 +71,7 @@ ChineseResearchLaTeX/
 - `packages/bensz-cv/`：中英文简历共享样式、字体配置、统一 PDF 构建与像素比对脚本
 - `projects/NSFC_*`：项目示例内容、项目类型差异、最薄的一层入口封装
 - `projects/paper-sci-01/`：SCI 论文示例正文、`extraTex/**/*.tex` 单一真相来源、项目级 wrapper
+- `projects/paper-coverletter-01/`：投稿 cover letter 示例正文、匿名化元信息与项目级 wrapper
 - `projects/thesis-smu-master/` / `projects/thesis-nju-master/` / `projects/thesis-sysu-doctor/` / `projects/thesis-ucas-doctor/`：毕业论文示例正文、项目级 wrapper 与公开演示资产
 - `projects/thesis-*/template.json`：毕业论文项目元数据，至少记录 `project_name`、`school`、`degree`，供 README 模板列表等脚本识别院校与学位来源；`degree` 当前统一使用英文枚举 `bachelor` / `master` / `doctor`
 - `projects/cv-01/`：中英文简历示例正文、公开演示头像与项目级 wrapper
@@ -135,8 +137,9 @@ ChineseResearchLaTeX/
 #### SCI 论文模板问题
 
 - 公共样式、profile、DOCX 对齐逻辑优先修改 `packages/bensz-paper/`
-- 示例正文优先维护 `projects/paper-sci-01/extraTex/`，不要再把同一份正文拆成持久化 Markdown 与 LaTeX 双份
-- 优先使用 `python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01` 验证 PDF + DOCX 双输出
+- 论文正文优先维护 `projects/paper-sci-01/extraTex/`，投稿信正文优先维护 `projects/paper-coverletter-01/extraTex/`
+- 不要再把同一份正文拆成持久化 Markdown 与 LaTeX 双份
+- 优先使用 `python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir <project-dir>` 验证 PDF + DOCX 双输出
 
 #### 毕业论文模板问题
 
@@ -382,11 +385,11 @@ skill_info:
 - 变更 `skills/` 目录内容时，检查 `skills/README.md` 与根级 `README.md` 是否需要同步
 - 变更 `packages/bensz-fonts/` 时，不要把共享字体文件重新复制回 `packages/bensz-nsfc/`、`packages/bensz-cv/` 或各 `projects/` 目录
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
-- 变更 `packages/bensz-paper/` 时，不要重新引入持久化正文 Markdown 副本；优先保持 `projects/paper-sci-01/extraTex/**/*.tex` 为 PDF / DOCX 的唯一真相来源
+- 变更 `packages/bensz-paper/` 时，不要重新引入持久化正文 Markdown 副本；优先保持 `projects/paper-sci-01/extraTex/**/*.tex` 与 `projects/paper-coverletter-01/extraTex/**/*.tex` 为 PDF / DOCX 的唯一真相来源
 - 变更 `projects/thesis-*` 时，不要遗漏项目根目录 `template.json`；新增学校模板或重命名 thesis 项目时，必须同步更新其中的 `project_name`、`school`、`degree`，且 `degree` 保持 `bachelor` / `master` / `doctor` 这组统一枚举
 - 变更 `packages/bensz-cv/` 时，不要把私有简历正文、私有头像或验收阶段的私有对比图重新留在 `projects/cv-01/`；公开示例必须保持去隐私状态
 - 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径
-- 变更 `packages/bensz-paper/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-paper/README.md` 与 `projects/paper-sci-01/README.md`
+- 变更 `packages/bensz-paper/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-paper/README.md`、`projects/paper-sci-01/README.md` 与 `projects/paper-coverletter-01/README.md`
 - 变更 `packages/bensz-cv/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-cv/README.md` 与 `projects/cv-01/README.md`
 - 变更 `scripts/sync_vscode_configs.py` 或 `scripts/vscode/` 时，应同步检查根级 `README.md`、`projects/README.md`、`AGENTS.md` 与各项目落地的 `*.code-workspace` / `.vscode/settings.json`
 - 变更根目录 `scripts/pack_release.py` 时，应同步检查 Release 流程文档与 `CHANGELOG.md`
