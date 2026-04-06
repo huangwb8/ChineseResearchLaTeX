@@ -10,6 +10,18 @@
 
 ---
 
+（待完成）根据 plans/optimize-delegate-skip.md 优化安装检测机制，保证实现快速检测本地latex包是否需要更新。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
+目前，bensz-cvbensz-nsfcbensz-paperbensz-thesis等包，如果发现远程版本和本地版本是一致且安装模式不是force的时候，一般会像 bensz-fonts 那样路过安装。 请问，这些包的跳过机制和 bensz-fonts 一样吗？我总感觉没有 bensz-fonts 的跳过那么快速，这让我怀疑脚本是不是完全下载包后再检测版本是否对应。
+
+---
+
+/Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/plans/bensz-paper-docx-references-defects-v20260406.md 这个bug 在 packages/bensz-paper 和 projects/paper-sci-01 里也有。 你修一下。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/plans/fix-docx-correspondence-superscript-v20260405.md 这个bug 在 projects/paper-sci-01 里也有。 你修一下。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
