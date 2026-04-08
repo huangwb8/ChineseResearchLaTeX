@@ -47,17 +47,18 @@
 
 如果你的目标是期刊论文正文或投稿信，而不是基金申请书，请直接从对应的 `paper-*` 项目开始，不必进入 NSFC 项目。
 
-## 毕业论文
+## 学位论文与博士后研究报告
 
 适合人群：
 
-- 正在撰写硕士或博士毕业论文的学生
-- 需要对齐学校论文格式要求的导师、实验室或模板维护者
+- 正在撰写硕士、博士学位论文的学生
+- 需要提交博士后出站研究报告、并希望直接使用 LaTeX 维护封面、题名页、摘要、目录和正文的研究人员
+- 需要在统一构建链路内维护学位论文或博士后长文档的模板维护者
 
 说明：
 
-- 这一组项目共享 [`packages/bensz-thesis/`](../packages/bensz-thesis/) 公共包
-- 当前示例项目按**学校 + 学位类型**区分，重点展示 PDF 输出与版式验收能力
+- 这一组项目统一共享 [`packages/bensz-thesis/`](../packages/bensz-thesis/) 公共包
+- `thesis-*` 项目的 `template.json` 当前可用 `bachelor / master / doctor / postdoc` 四种类型，分别对应学士、硕士、博士和博士后研究报告
 
 | 项目 | 用途 | 适用场景 |
 |------|------|----------|
@@ -65,8 +66,9 @@
 | [`thesis-nju-master/`](./thesis-nju-master/) | 南京大学工程管理硕士论文示例项目 | 需要 NJU 工程管理硕士论文版式模板，且希望默认 `main.tex` 就是可编辑入口，同时保留公开基线验收文件 |
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |
+| [`thesis-smu-postdoc/`](./thesis-smu-postdoc/) | 南方医科大学博士后研究报告示例项目 | 需要按博士后研究报告规范组织封面、题名页、中英文摘要、正文与后置材料 |
 
-如果你当前的核心需求是毕业论文排版，请优先进入与你学校和学位最接近的 thesis 项目。
+如果你的目标是博士后出站研究报告，请优先进入 `thesis-smu-postdoc/`；如果你的目标是学位论文，请进入学校和类型最接近的其他 `thesis-*` 项目。
 
 ## 简历（CV）
 
@@ -91,7 +93,8 @@
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`
-- 写毕业论文：进入与你学校和学位最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
+- 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
+- 写博士后研究报告：进入 `thesis-smu-postdoc/`
 - 写中英文简历：进入 `cv-01/`
 
 若你的问题涉及共享样式、公共宏、构建脚本或安装逻辑，再回到 `packages/` 目录定位对应公共包。

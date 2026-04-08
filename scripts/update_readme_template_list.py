@@ -69,7 +69,7 @@ class TemplateSpec:
 CATEGORY_TITLES = {
     "nsfc": "NSFC 模板",
     "paper": "SCI 论文模板",
-    "thesis": "毕业论文模板",
+    "thesis": "学位论文 / 博士后模板",
     "cv": "简历模板",
 }
 
@@ -85,11 +85,12 @@ CATEGORY_DESCRIPTIONS = {
 THESIS_TEMPLATE_METADATA_NAME = "template.json"
 # template.json 中必须包含的字段
 THESIS_TEMPLATE_REQUIRED_FIELDS = ("project_name", "school", "degree")
-# 学位英文枚举到中文的映射
+# 类型英文枚举到中文的映射
 THESIS_DEGREE_LABELS = {
     "bachelor": "学士",
     "master": "硕士",
     "doctor": "博士",
+    "postdoc": "博士后",
 }
 # Issue 表单文件名映射，用于在模板列表中生成定制需求链接
 ISSUE_FORM_FILENAMES = {
@@ -285,7 +286,7 @@ def get_category_support_notes(category: str, repo: str) -> tuple[str, ...]:
             repo, ISSUE_FORM_FILENAMES["thesis-customization"]
         )
         return (
-            "> 毕业论文模板通常需要按学校、学院或学位规范做个性化定制；"
+            "> 毕业论文/博士后模板通常需要按学校、学院或类型规范做个性化定制；"
             f"如有这类需求，建议提交 [毕业论文模板定制需求]({thesis_issue_url})。",
         )
     return ()
@@ -399,7 +400,7 @@ def build_status(
 
 
 def format_thesis_degree(degree: str) -> str:
-    """将学位英文枚举转换为中文显示文字。"""
+    """将类型英文枚举转换为中文显示文字。"""
     return THESIS_DEGREE_LABELS.get(degree.strip().lower(), degree.strip())
 
 
@@ -420,14 +421,14 @@ def build_row_values(
 ) -> list[str]:
     """构建表格中单行的单元格值列表。
 
-    thesis 类型的行包含院校和学位列；其他类型包含状态列。
+    thesis 类型的行包含院校和类型列；其他类型包含状态列。
     """
     template_link = f"[{spec.display_name}]({spec.local_path})"
     if category == "thesis" and spec.asset_prefix:
         if not spec.school:
             raise RuntimeError(f"毕业论文模板缺少院校元数据：{spec.local_path}")
         if not spec.degree:
-            raise RuntimeError(f"毕业论文模板缺少学位元数据：{spec.local_path}")
+            raise RuntimeError(f"毕业论文模板缺少类型元数据：{spec.local_path}")
         return [
             template_link,
             spec.school,
@@ -452,7 +453,7 @@ def render_category_table(
 ) -> str:
     """渲染单个分类的完整 Markdown 表格（含标题、描述、表头和数据行）。"""
     if category == "thesis" and any(spec.asset_prefix for spec in specs):
-        header = "| 模板 | 院校 | 学位 | 标准包 | Overleaf 包 |"
+        header = "| 模板 | 院校 | 类型 | 标准包 | Overleaf 包 |"
         separator = "|------|------|------|--------|-------------|"
     else:
         header = "| 模板 | 状态 | 标准包 | Overleaf 包 |"

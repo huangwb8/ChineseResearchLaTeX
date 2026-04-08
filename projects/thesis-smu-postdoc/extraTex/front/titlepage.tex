@@ -1,0 +1,39 @@
+% 题名页
+\thispagestyle{empty}
+
+\begingroup
+\setstretch{1.0}
+\setlength{\parindent}{0pt}
+\enlargethispage{1.5\baselineskip}
+
+\vspace*{1.4cm}
+\begin{center}
+  {\zihao{-4}\postdocSchoolLine\par}
+
+  \vspace*{1.5cm}
+  {\bfseries\zihao{3}\postdocTitleZh\par}
+  \vspace*{0.5cm}
+  {\bfseries\fontsize{14pt}{18pt}\selectfont\postdocTitleEn\par}
+
+  \vspace*{1.5cm}
+  \zihao{-4}
+  \renewcommand{\arraystretch}{1.75}
+  \begin{tabular}{@{}p{9em}p{18em}@{}}
+    博士后姓名 & \postdocAuthorZh \\
+    合作导师 & \postdocSupervisorZh \\
+    流动站（一级学科）名称 & \postdocStation \\
+    专业（二级学科）名称 & \postdocMajor \\
+    研究工作起始时间 & \postdocStartDate \\
+    研究工作期满时间 & \postdocEndDate \\
+    单位名称 & \postdocUnit \\
+    报告提交日期 & \postdocSubmitDate \\
+  \end{tabular}
+\end{center}
+
+\vfill
+\begin{center}
+  {\zihao{-4}\postdocUnit\par}
+  \vspace*{0.4cm}
+  {\zihao{-4}\postdocReportDate\quad \postdocCity\par}
+\end{center}
+\endgroup

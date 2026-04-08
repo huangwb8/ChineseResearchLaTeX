@@ -12,6 +12,10 @@
 
 ---
 
+结合/Volumes/2T01/winE/我的坚果云/珠江医院/定岗博士后/南方医科大学博士后2026出站所需表格/附件1-博士后研究报告编写规范.doc 的建议（特别是封面），以 projects/thesis-sysu-doctor 为蓝图，新建一个南方医生大学博士后研究报告的latex模板。不需要新建latex包，用packages/bensz-thesis即可。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 基于 /Volumes/2T01/winE/iProjects/Manuscripts/CCS/paper/Cover-Letter.docx 构建一个新模板： paper-coverletter-01 。当然，模板里的敏感内容，比如论文题目、作者之类的要匿名； 通讯作者可以用Feng BaoBao。因为Cover Letter的结构比较简单，也许不需要专门依赖某个包（如果需要，我觉得bensz-paper包应该已经足够； 不需要再专门设计一个Cover letter的latex包）。使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---

@@ -1,0 +1,26 @@
+\chapter{讨论与局限}
+
+\section{讨论}
+
+本项目刻意不新建 \texttt{bensz-postdoc} 一类公共包，原因有二。第一，当前真正稳定、已被多套项目验证的仍是 \texttt{bensz-thesis} 的构建链路和页面样式能力；第二，博士后研究报告的差异主要集中在项目前置页和结尾页，而不是共享底层宏包本身。把差异先控制在项目层，能更好地避免对现有 thesis 模板造成连带风险。
+
+\section{当前公开示例的边界}
+
+本模板仍然是公开演示项目，因此存在明确边界：
+
+\begin{enumerate}
+  \item 不包含任何真实患者数据、私有统计结果或未公开研究发现；
+  \item 不承诺已经对齐某一年度所有院内细则，仅优先吸收全国统一规则与封面核心字段；
+  \item 不主动引入 Word 到 DOCX 的双向导出链路，当前交付重点是稳定 PDF。
+\end{enumerate}
+
+\section{适用建议}
+
+实际使用时，建议优先替换以下内容：
+
+\begin{enumerate}
+  \item \texttt{extraTex/meta.tex} 中的封面与题名页元信息；
+  \item \texttt{extraTex/front/abstract\_*.tex} 中的摘要内容；
+  \item \texttt{extraTex/body/} 中各章正文；
+  \item \texttt{extraTex/back/} 中的附录、简历、成果和通信地址。
+\end{enumerate}

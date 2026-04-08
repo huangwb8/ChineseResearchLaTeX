@@ -42,7 +42,7 @@ def test_render_template_section_includes_thesis_release_assets():
 
     rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
 
-    assert "| 模板 | 院校 | 学位 | 标准包 | Overleaf 包 |" in rendered
+    assert "| 模板 | 院校 | 类型 | 标准包 | Overleaf 包 |" in rendered
     assert "[thesis-smu-master](projects/thesis-smu-master/)" in rendered
     assert "[thesis-sysu-doctor](projects/thesis-sysu-doctor/)" in rendered
     assert "| [thesis-smu-master](projects/thesis-smu-master/) | 南方医科大学 | 硕士 |" in rendered
@@ -134,7 +134,7 @@ def test_render_template_section_includes_thesis_customization_issue_hint():
 
     rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
 
-    assert "### 毕业论文模板" in rendered
+    assert "### 学位论文 / 博士后模板" in rendered
     assert "如有这类需求，建议提交 [毕业论文模板定制需求]" in rendered
     assert "?template=thesis-template-customization.yml" in rendered
 
@@ -209,3 +209,41 @@ def test_render_template_section_formats_bachelor_degree(tmp_path, monkeypatch):
     rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
 
     assert "| [thesis-demo-bachelor](projects/thesis-demo-bachelor/) | 示例学院 | 学士 |" in rendered
+
+
+def test_render_template_section_formats_postdoc_degree(tmp_path, monkeypatch):
+    thesis_dir = tmp_path / "thesis-demo-postdoc"
+    thesis_dir.mkdir()
+    (thesis_dir / "template.json").write_text(
+        (
+            "{\n"
+            '  "project_name": "thesis-demo-postdoc",\n'
+            '  "school": "示例医科大学",\n'
+            '  "degree": "postdoc"\n'
+            "}\n"
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(updater, "PROJECTS_DIR", tmp_path)
+
+    release = {
+        "tag_name": "v4.0.12",
+        "published_at": "2026-04-08T09:00:00Z",
+        "assets": [
+            {
+                "name": "thesis-demo-postdoc-v4.0.12.zip",
+                "size": 123456,
+                "browser_download_url": "https://example.com/thesis-demo-postdoc-v4.0.12.zip",
+            },
+            {
+                "name": "thesis-demo-postdoc-Overleaf-v4.0.12.zip",
+                "size": 234567,
+                "browser_download_url": "https://example.com/thesis-demo-postdoc-Overleaf-v4.0.12.zip",
+            },
+        ],
+    }
+
+    rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
+
+    assert "| [thesis-demo-postdoc](projects/thesis-demo-postdoc/) | 示例医科大学 | 博士后 |" in rendered

@@ -12,6 +12,7 @@
 
 - 新增 `projects/paper-coverletter-01/`、`projects/paper-coverletter-01/AGENTS.md`、`projects/paper-coverletter-01/CLAUDE.md`、`projects/paper-coverletter-01/scripts/paper_build.py` 与匿名化 `extraTex/` 示例正文：基于真实 Word cover letter 的结构抽象出首个投稿信模板项目，默认复用 `bensz-paper` 公共包、不新增专门 cover letter 包，并以 `Feng BaoBao` 作为公开示例中的通讯作者占位名
 - 新增 `packages/bensz-paper/profiles/bml-profile-paper-coverletter-01.def`：为投稿信项目补充 US Letter、1 英寸页边距、无首行缩进、禁用行号的轻量 profile，使 `bensz-paper` 除正文论文外也能稳定承载 cover letter 场景
+- 新增 `projects/thesis-smu-postdoc/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md`、`main.tex`、`extraTex/`、`references/refs.bib`、`template.json` 与 `assets/nfmu_calligraphy_raw.png`：基于《博士后研究报告编写规则》中的封面与题名页要求，复用 `bensz-thesis` 构建链路落地首个南方医科大学博士后研究报告公开示例项目，不新增专门公共包，并通过 `degree=postdoc` 并入 `thesis-*` 元数据链路
 
 ### Fixed（修复）
 
@@ -29,6 +30,7 @@
 
 - 更新 `packages/bensz-paper/package.json` 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮继续修复 `paper-coverletter-01` 的 DOCX 与 PDF 内容对齐问题，公共包版本现从 `p_v20260407` 升级为 `p_v20260407.1`，CLI 脚本版本同步从 `1.3.7` 升级为 `1.3.8`
 - 更新 `scripts/update_readme_template_list.py`、`projects/README.md`、`packages/bensz-paper/README.md`、根级 `README.md` 与 `AGENTS.md`：`paper-*` 模板列表现改为自动发现，不再把 `paper-sci-01` 写死在模板列表脚本里；文档口径也同步扩展为“SCI 正文 + 投稿信”两类 `bensz-paper` 示例链路
+- 更新 `scripts/sync_vscode_configs.py`、`scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、`projects/README.md`、根级 `README.md` 与 `AGENTS.md`：将博士后研究报告示例统一重命名为 `thesis-smu-postdoc`，并把 `projects/thesis-*/template.json` 的 `degree` 枚举扩展为 `postdoc`；README 模板列表现改为以“类型”列展示 `学士 / 硕士 / 博士 / 博士后`
 - 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮继续修复 `bensz-paper` 的 DOCX front matter 作者对齐问题，公共包版本现从 `p_v20260406` 升级为 `p_v20260406.1`，CLI 脚本版本同步从 `1.3.5` 升级为 `1.3.6`
 - 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮继续修复 `bensz-paper` 的 DOCX references 标题层级与 bibliography 单段排版问题，公共包版本现从 `p_v20260405` 升级为 `p_v20260406`，CLI 脚本版本同步从 `1.3.4` 升级为 `1.3.5`
 - 更新 [packages/bensz-paper/package.json](/Volumes/2T01/Github/ChineseResearchLaTeX/packages/bensz-paper/package.json) 中的包版本号：由于本轮已连续修改 `bensz-paper` 的 bibliography、DOCX 表格、DOCX 数学公式链路与 `paper-sci-01` 示例配套能力，公共包版本现从 `p_v20260322` 升级为 `p_v20260402`
