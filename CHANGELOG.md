@@ -28,6 +28,7 @@
 
 ### Changed（变更）
 
+- 更新根级 `README.md`：在 LaTeX 包远程安装说明中补充直接从 Gitee 镜像拉取 `scripts/install.py` 的 macOS / Linux / Windows 命令示例，并补充 Gitee 克隆仓库入口，避免无法访问 GitHub 的用户在“脚本下载”这一步就被阻塞
 - 更新 `packages/bensz-paper/package.json` 与 `packages/bensz-paper/scripts/` 中的版本号：由于本轮继续修复 `paper-coverletter-01` 的 DOCX 与 PDF 内容对齐问题，公共包版本现从 `p_v20260407` 升级为 `p_v20260407.1`，CLI 脚本版本同步从 `1.3.7` 升级为 `1.3.8`
 - 更新 `scripts/update_readme_template_list.py`、`projects/README.md`、`packages/bensz-paper/README.md`、根级 `README.md` 与 `AGENTS.md`：`paper-*` 模板列表现改为自动发现，不再把 `paper-sci-01` 写死在模板列表脚本里；文档口径也同步扩展为“SCI 正文 + 投稿信”两类 `bensz-paper` 示例链路
 - 更新 `scripts/sync_vscode_configs.py`、`scripts/update_readme_template_list.py`、`scripts/test_update_readme_template_list.py`、`projects/README.md`、根级 `README.md` 与 `AGENTS.md`：将博士后研究报告示例统一重命名为 `thesis-smu-postdoc`，并把 `projects/thesis-*/template.json` 的 `degree` 枚举扩展为 `postdoc`；README 模板列表现改为以“类型”列展示 `学士 / 硕士 / 博士 / 博士后`
