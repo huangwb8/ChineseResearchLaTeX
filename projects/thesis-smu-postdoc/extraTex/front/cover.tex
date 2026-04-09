@@ -12,13 +12,34 @@
   \renewcommand{\arraystretch}{1.95}
   \setlength{\tabcolsep}{0pt}
   \newcommand{\postdocCoverTopLabel}[1]{{\fontsize{13.5pt}{13.5pt}\selectfont #1}}
-  \begin{tabularx}{\textwidth}{@{}p{2.6cm}X@{\hspace{1.2cm}}p{2.0cm}@{}}
-    \postdocCoverTopLabel{分类号} & \mmedUnderlinedFieldL{\postdocClassNo}{\linewidth} &
-    \makebox[2.0cm][l]{\postdocCoverTopLabel{密级}\ \mmedUnderlinedFieldL{\postdocSecretLevel}{1.1cm}} \\
-    \makebox[2.6cm][l]{\postdocCoverTopLabel{U\kern0.35em D\kern0.35em C}} &
+  \newlength{\postdocCoverTopLeftLabelWidth}
+  \newlength{\postdocCoverTopRightLabelWidth}
+  \newlength{\postdocCoverTopLabelGapWidth}
+  \newlength{\postdocCoverTopGroupGapWidth}
+  \newlength{\postdocCoverTopFieldWidth}
+  \setlength{\postdocCoverTopLeftLabelWidth}{2.4cm}
+  \setlength{\postdocCoverTopRightLabelWidth}{1.3cm}
+  \setlength{\postdocCoverTopLabelGapWidth}{0.28cm}
+  \setlength{\postdocCoverTopGroupGapWidth}{0.9cm}
+  \setlength{\postdocCoverTopFieldWidth}{%
+    \dimexpr
+      (\textwidth
+      - \postdocCoverTopLeftLabelWidth
+      - \postdocCoverTopRightLabelWidth
+      - 2\postdocCoverTopLabelGapWidth
+      - \postdocCoverTopGroupGapWidth)/2
+    \relax
+  }
+  \begin{tabular}{@{}>{\raggedleft\arraybackslash}p{\postdocCoverTopLeftLabelWidth}@{\hspace{\postdocCoverTopLabelGapWidth}}p{\postdocCoverTopFieldWidth}@{\hspace{\postdocCoverTopGroupGapWidth}}>{\raggedleft\arraybackslash}p{\postdocCoverTopRightLabelWidth}@{\hspace{\postdocCoverTopLabelGapWidth}}p{\postdocCoverTopFieldWidth}@{}}
+    \postdocCoverTopLabel{分类号} &
+      \mmedUnderlinedFieldL{\postdocClassNo}{\linewidth} &
+      \postdocCoverTopLabel{密级} &
+      \mmedUnderlinedFieldL{\postdocSecretLevel}{\linewidth} \\
+    \postdocCoverTopLabel{U\kern0.35em D\kern0.35em C} &
       \mmedUnderlinedFieldL{\postdocUDC}{\linewidth} &
-      \makebox[2.0cm][l]{\postdocCoverTopLabel{编号}\ \mmedUnderlinedFieldL{\postdocNo}{1.1cm}} \\
-  \end{tabularx}
+      \postdocCoverTopLabel{编号} &
+      \mmedUnderlinedFieldL{\postdocNo}{\linewidth} \\
+  \end{tabular}
 \endgroup
 
 \vspace*{1.2cm}

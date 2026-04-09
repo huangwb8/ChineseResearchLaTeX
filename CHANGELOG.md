@@ -16,6 +16,7 @@
 
 ### Fixed（修复）
 
+- 修复并优化 `projects/thesis-smu-postdoc/extraTex/front/cover.tex` 顶部档案字段布局：将原先把“右侧标签+字段”压缩进单个窄列的 `tabularx` 改为四列定宽布局，并用 `\dimexpr` 自动计算两侧等长填写线，同时统一标签文字与填写线之间的固定间距，从而让分类号 / UDC 下划线不再过长，`密级` 与 `编号` 字段完整落在版心内，整体版面更均衡，且不影响其它 `bensz-thesis` 模板项目
 - 修复 `projects/paper-coverletter-01` 的 DOCX 正文与 PDF 明显不一致问题：`packages/bensz-paper/scripts/manuscript_tool.py` 现会在 DOCX 片段转换前顺序提取并展开 cover letter 中这类无参数 `\newcommand` 元数据宏，同时移除会让 Pandoc 吞掉日期前导数字的 `\noindent`，从而让 `metadata.tex` 中的日期、收件人、稿件标题、期刊名和署名信息稳定写入 `main.docx`；`packages/bensz-paper/tests/test_manuscript_tool.py` 同步补充跨片段宏展开回归测试
 - 修复 `bensz-paper` 对“无参考文献的轻量文档”支持不足的问题：`packages/bensz-paper/scripts/manuscript_tool.py` 现会根据 `main.tex` 自动识别是否声明参考文献命令；若未声明，则 PDF 构建跳过 `biber`、DOCX 构建跳过 citeproc，从而让 `paper-coverletter-01` 这类投稿信项目无需伪造 `.bib`/`.csl` 也能稳定导出 PDF 与 Word；`packages/bensz-paper/tests/test_manuscript_tool.py` 同步补充无文献 DOCX 与命令检测回归测试
 - 修复 `bensz-paper` / `projects/paper-sci-01` 的 DOCX 首页作者左对齐回归：`packages/bensz-paper/scripts/manuscript_tool.py` 现会把 Pandoc front matter 中 `::: center` 产生的作者区块显式标记为 DOCX 居中块，再由 `packages/bensz-paper/scripts/fix_docx_spacing.py` 在最终 Word 文件里只对该块写入段落级居中并移除中间标记，从而让 `paper-sci-01` 的标题保持居中、作者名单恢复居中、单位/等贡献/通讯作者/running title 继续保持左对齐；`packages/bensz-paper/tests/test_manuscript_tool.py` 同步补充 fenced div 归一化与 DOCX round-trip 对齐回归测试，防止再次退回“作者行左对齐”
