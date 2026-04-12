@@ -27,6 +27,7 @@
 
 ```bash
 python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01
+python packages/bensz-paper/scripts/paper_project_tool.py count-words projects/paper-sci-01/extraTex/body/introduction.tex projects/paper-sci-01/extraTex/body/results.tex projects/paper-sci-01/extraTex/body/discussion.tex
 ```
 
 若只打开了项目子目录，可执行：
@@ -42,6 +43,8 @@ python scripts/paper_build.py
 - `.latex-cache/`
 
 其中 DOCX 构建链会为 Pandoc 默认生成的 `Normal Table` 补上可见横向边框，通过 HTML5 + MathML 中间态把示例中的数学公式转换为 Word 原生公式对象，避免在 Word 中退化成源码文本，并保持参考文献区为单段编号列表而不是“编号单独一行、正文另起一行”。
+
+若需在投稿前快速核对正文字数，可直接对对应的 `extraTex/**/*.tex` 运行 `count-words`；脚本会忽略 LaTeX 命令名、引用 keys 与数学公式源码，只统计渲染后可见文本。
 
 ## 结构
 

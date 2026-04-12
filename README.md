@@ -370,10 +370,12 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir proj
 - DOCX 后处理会为 Pandoc 默认表格补上稳定可见的横向边框；示例项目 `paper-sci-01` 的 PDF / DOCX 参考文献默认优先保留 DOI，不重复打印 `doi.org` URL
 - DOCX 数学公式会经 HTML5 + MathML 中间态落成 Word 原生公式对象，避免 `$\\gamma$` 这类源码形式直接泄漏到投稿文档
 - 若项目未声明参考文献命令，构建链会自动跳过 `biber` 与 citeproc，适合 `paper-coverletter-01` 这类投稿信项目
+- `count-words` 支持对一个或多个 `.tex` 做可见字数统计；若传入 `main.tex`，会递归跟随 `\input` / `\include` 链，并自动忽略 LaTeX 命令名、引用 keys 与数学公式源码
 
 ```bash
 python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-sci-01
 python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-coverletter-01
+python packages/bensz-paper/scripts/paper_project_tool.py count-words projects/paper-sci-01/extraTex/body/introduction.tex projects/paper-sci-01/extraTex/body/results.tex
 ```
 
 ### 学位论文 / 博士后研究报告模板

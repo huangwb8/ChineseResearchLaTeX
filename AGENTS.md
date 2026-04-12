@@ -79,7 +79,7 @@ ChineseResearchLaTeX/
 - `projects/cv-01/`：中英文简历示例正文、公开演示头像与项目级 wrapper
 - `packages/bensz-nsfc/scripts/install.py`：安装、锁定、同步、回退、状态检查
 - `packages/bensz-nsfc/scripts/nsfc_project_tool.py`：统一 PDF 构建与缓存清理
-- `packages/bensz-paper/scripts/paper_project_tool.py` / `packages/bensz-paper/scripts/manuscript_tool.py`：SCI 论文 PDF + DOCX 统一构建入口
+- `packages/bensz-paper/scripts/paper_project_tool.py` / `packages/bensz-paper/scripts/manuscript_tool.py`：SCI 论文 PDF + DOCX 统一构建入口，并提供 `.tex` 可见字数统计命令
 - `packages/bensz-thesis/scripts/thesis_project_tool.py`：毕业论文 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-cv/scripts/cv_project_tool.py`：中英文简历 PDF 构建、缓存清理与像素级 PDF 比对入口
 - `packages/bensz-nsfc/scripts/validate_package.py` / `packages/bensz-nsfc/scripts/build_tds_zip.py`：NSFC 公共包校验与 TDS 打包
@@ -142,6 +142,7 @@ ChineseResearchLaTeX/
 - 论文正文优先维护 `projects/paper-sci-01/extraTex/`，投稿信正文优先维护 `projects/paper-coverletter-01/extraTex/`
 - 不要再把同一份正文拆成持久化 Markdown 与 LaTeX 双份
 - 优先使用 `python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir <project-dir>` 验证 PDF + DOCX 双输出
+- 需要统计 abstract / introduction / methods / results / discussion 等章节字数时，优先使用 `python packages/bensz-paper/scripts/paper_project_tool.py count-words <tex...>`；若传入 `main.tex`，脚本会递归跟随 `\input` / `\include` 链，并按渲染后可见文本口径忽略 LaTeX 命令名、引用 keys 与数学公式源码
 
 #### 毕业论文模板问题
 

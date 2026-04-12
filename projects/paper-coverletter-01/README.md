@@ -27,6 +27,7 @@
 
 ```bash
 python packages/bensz-paper/scripts/paper_project_tool.py build --project-dir projects/paper-coverletter-01
+python packages/bensz-paper/scripts/paper_project_tool.py count-words projects/paper-coverletter-01/extraTex/body/letter.tex
 ```
 
 若只打开了项目子目录，可执行：
@@ -42,6 +43,8 @@ python scripts/paper_build.py
 - `.latex-cache/`
 
 当前项目不依赖参考文献文件；`bensz-paper` 的构建脚本会自动识别这是一个“无参考文献的轻量文档”，跳过 `biber` 与 citeproc 步骤，同时保留 PDF / DOCX 双输出链路。
+
+若期刊对 cover letter 正文长度有额外要求，也可直接对 `extraTex/body/letter.tex` 运行 `count-words`，按渲染后可见文本口径快速查看当前字数。
 
 ## 结构
 

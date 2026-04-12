@@ -148,6 +148,106 @@ def test_convert_sup_tags_to_superscript_preserves_escaped_asterisk():
     assert markdown == r"^\*^Correspondence: template.author@example.org."
 
 
+def test_count_visible_words_ignores_latex_commands_and_math(tmp_path):
+    tex_path = tmp_path / "section.tex"
+    tex_path.write_text(
+        "\n".join(
+            [
+                r"\section{Introduction}",
+                r"Visible \textbf{bold text} and \emph{emphasis}.",
+                r"Citation \cite{Key2026} and inline math $\alpha + \beta$ stay out.",
+                r"\label{sec:intro}",
+                r"\begin{figure}",
+                r"\includegraphics[width=\textwidth]{figure-1.png}",
+                r"\caption{Figure caption words.}",
+                r"\end{figure}",
+                r"% commented words should disappear",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    summary = manuscript_tool.count_words_for_tex_sources([tex_path])
+
+    assert summary.total_words == 15
+    assert summary.file_counts == [(tex_path, 15)]
+
+
+def test_count_visible_words_follows_input_chain_and_simple_macros(tmp_path):
+    project_dir = tmp_path / "paper-demo"
+    (project_dir / "extraTex" / "body").mkdir(parents=True)
+
+    main_tex = project_dir / "main.tex"
+    intro_tex = project_dir / "extraTex" / "body" / "introduction.tex"
+    results_tex = project_dir / "extraTex" / "body" / "results.tex"
+
+    main_tex.write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\newcommand{\JournalName}{Nature Medicine}",
+                r"\begin{document}",
+                r"\input{extraTex/body/introduction}",
+                r"\input{extraTex/body/results.tex}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    intro_tex.write_text(
+        "\n".join(
+            [
+                r"\section{Introduction}",
+                r"We submitted to \JournalName.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    results_tex.write_text(
+        "\n".join(
+            [
+                r"\section{Results}",
+                r"Observed robust treatment benefit.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    summary = manuscript_tool.count_words_for_tex_sources([main_tex])
+
+    assert summary.total_words == 11
+    assert summary.file_counts == [(main_tex, 11)]
+
+
+def test_count_words_cli_prints_per_file_and_total(tmp_path, monkeypatch, capsys):
+    first_tex = tmp_path / "abstract.tex"
+    second_tex = tmp_path / "discussion.tex"
+    first_tex.write_text(r"\section*{Abstract}Short abstract text.", encoding="utf-8")
+    second_tex.write_text(r"\section{Discussion}Discussion text only.", encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "paper_project_tool.py",
+            "count-words",
+            str(first_tex),
+            str(second_tex),
+        ],
+    )
+
+    manuscript_tool.main()
+
+    captured = capsys.readouterr()
+    assert f"{first_tex}: 4" in captured.out
+    assert f"{second_tex}: 4" in captured.out
+    assert "Total visible words: 8" in captured.out
+
+
 def test_pandoc_latex_to_markdown_converts_simple_tables():
     latex = "\n".join(
         [

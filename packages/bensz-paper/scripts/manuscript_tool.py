@@ -35,11 +35,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.8"
+VERSION = "1.3.9"
 DOCX_FRONTMATTER_CENTER_START = "BENSZ_DOCX_FRONTMATTER_CENTER_START"
 DOCX_FRONTMATTER_CENTER_END = "BENSZ_DOCX_FRONTMATTER_CENTER_END"
 # 用于判定目录是否为项目根的标记文件
@@ -79,6 +80,90 @@ TOOL_CANDIDATES = {
     ),
 }
 
+TEX_INPUT_COMMANDS = {"input", "include"}
+SIMPLE_MACRO_DEFINITION_COMMANDS = {"newcommand", "renewcommand", "providecommand"}
+WORD_COUNT_DISCARD_COMMANDS = {
+    "addbibresource",
+    "affil",
+    "author",
+    "bibliography",
+    "bibliographystyle",
+    "cite",
+    "citeauthor",
+    "citet",
+    "citep",
+    "date",
+    "documentclass",
+    "eqref",
+    "footnotemark",
+    "graphicspath",
+    "includegraphics",
+    "institute",
+    "keywords",
+    "label",
+    "maketitle",
+    "pageref",
+    "printbibliography",
+    "ref",
+    "supercite",
+    "thanks",
+    "textcite",
+    "title",
+    "urlstyle",
+    "usepackage",
+}
+WORD_COUNT_WHITESPACE_COMMANDS = {
+    "\\",
+    "bigskip",
+    "clearpage",
+    "hfill",
+    "item",
+    "linebreak",
+    "medskip",
+    "newpage",
+    "newline",
+    "par",
+    "quad",
+    "qquad",
+    "smallskip",
+}
+WORD_COUNT_TEXT_COMMANDS = {
+    "BibTeX": "BibTeX",
+    "LaTeX": "LaTeX",
+    "TeX": "TeX",
+    "XeLaTeX": "XeLaTeX",
+}
+WORD_COUNT_ARGUMENT_SELECTIONS = {
+    "href": (-1,),
+    "hyperref": (-1,),
+    "texorpdfstring": (0,),
+}
+WORD_COUNT_NONVISIBLE_ENVIRONMENTS = {
+    "comment",
+    "displaymath",
+    "equation",
+    "equation*",
+    "align",
+    "align*",
+    "aligned",
+    "gather",
+    "gather*",
+    "multline",
+    "multline*",
+    "math",
+    "thebibliography",
+}
+VISIBLE_WORD_PATTERN = re.compile(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*")
+CJK_CHARACTER_PATTERN = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]")
+
+
+@dataclass(frozen=True)
+class WordCountSummary:
+    """字数统计结果。"""
+
+    total_words: int
+    file_counts: list[tuple[Path, int]]
+
 def run_cmd(args: list[str], cwd: Path | None = None, input_text: str | None = None) -> str:
     """执行外部命令并返回 stdout。命令失败时抛出 subprocess.CalledProcessError。"""
     result = subprocess.run(
@@ -116,6 +201,371 @@ def run_best_effort(
         capture_output=True,
         check=False,
     )
+
+
+def strip_tex_comments(latex_text: str) -> str:
+    """移除 TeX 注释，保留被反斜杠转义的 `%`。"""
+
+    stripped_lines: list[str] = []
+    for line in latex_text.splitlines():
+        comment_index = None
+        for index, char in enumerate(line):
+            if char == "%" and (index == 0 or line[index - 1] != "\\"):
+                comment_index = index
+                break
+        stripped_lines.append(line if comment_index is None else line[:comment_index])
+    return "\n".join(stripped_lines)
+
+
+def _skip_whitespace(text: str, index: int) -> int:
+    while index < len(text) and text[index].isspace():
+        index += 1
+    return index
+
+
+def _find_matching_delimiter(text: str, start_index: int, open_char: str, close_char: str) -> int:
+    if start_index >= len(text) or text[start_index] != open_char:
+        raise ValueError(f"Expected delimiter {open_char!r} at index {start_index}")
+
+    depth = 0
+    index = start_index
+    while index < len(text):
+        char = text[index]
+        if char == "\\":
+            index += 2
+            continue
+        if char == open_char:
+            depth += 1
+        elif char == close_char:
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    raise ValueError(f"Unmatched delimiter {open_char!r} in LaTeX source.")
+
+
+def _read_delimited_argument(
+    text: str,
+    start_index: int,
+    open_char: str,
+    close_char: str,
+) -> tuple[str | None, int]:
+    index = _skip_whitespace(text, start_index)
+    if index >= len(text) or text[index] != open_char:
+        return None, start_index
+    end_index = _find_matching_delimiter(text, index, open_char, close_char)
+    return text[index + 1 : end_index], end_index + 1
+
+
+def _consume_optional_arguments(text: str, start_index: int) -> tuple[list[str], int]:
+    options: list[str] = []
+    index = _skip_whitespace(text, start_index)
+    while index < len(text) and text[index] == "[":
+        option_text, next_index = _read_delimited_argument(text, index, "[", "]")
+        if option_text is None:
+            break
+        options.append(option_text)
+        index = _skip_whitespace(text, next_index)
+    return options, index
+
+
+def _parse_control_sequence(text: str, index: int) -> tuple[str, int]:
+    if index >= len(text) or text[index] != "\\":
+        raise ValueError("Control sequence must start with backslash.")
+    if index + 1 >= len(text):
+        return "", index + 1
+
+    next_char = text[index + 1]
+    if next_char.isalpha() or next_char == "@":
+        end_index = index + 2
+        while end_index < len(text) and (text[end_index].isalpha() or text[end_index] == "@"):
+            end_index += 1
+        if end_index < len(text) and text[end_index] == "*":
+            end_index += 1
+        return text[index + 1 : end_index], end_index
+    return next_char, index + 2
+
+
+def _resolve_tex_input_path(source_path: Path, raw_target: str) -> Path:
+    target = raw_target.strip()
+    if not target:
+        raise FileNotFoundError(f"Empty \\input target in {source_path}")
+
+    candidate = Path(target)
+    if not candidate.is_absolute():
+        candidate = source_path.parent / candidate
+
+    if candidate.exists():
+        return candidate.resolve()
+    if candidate.suffix != ".tex":
+        with_tex_suffix = candidate.with_suffix(".tex")
+        if with_tex_suffix.exists():
+            return with_tex_suffix.resolve()
+    raise FileNotFoundError(f"Missing TeX source referenced by {source_path}: {raw_target}")
+
+
+def _parse_simple_macro_definition(
+    text: str,
+    start_index: int,
+    known_macros: dict[str, str],
+) -> tuple[str | None, str | None, int]:
+    macro_name_text, index = _read_delimited_argument(text, start_index, "{", "}")
+    if macro_name_text is None:
+        return None, None, start_index
+
+    macro_match = re.fullmatch(r"\\([A-Za-z@]+)", macro_name_text.strip())
+    if macro_match is None:
+        return None, None, index
+
+    optional_arguments, index = _consume_optional_arguments(text, index)
+    if optional_arguments:
+        try:
+            argument_count = int(optional_arguments[0].strip())
+        except ValueError:
+            argument_count = 0
+        if argument_count != 0:
+            replacement_text, next_index = _read_delimited_argument(text, index, "{", "}")
+            return None, None, next_index if replacement_text is not None else index
+
+    replacement_text, next_index = _read_delimited_argument(text, index, "{", "}")
+    if replacement_text is None:
+        return None, None, index
+
+    return macro_match.group(1), expand_simple_newcommands(replacement_text, known_macros), next_index
+
+
+def _expand_tex_source(
+    source_path: Path,
+    known_macros: dict[str, str] | None = None,
+    stack: tuple[Path, ...] | None = None,
+) -> str:
+    macros = known_macros if known_macros is not None else {}
+    traversal_stack = stack or ()
+    resolved_path = source_path.resolve()
+    if resolved_path in traversal_stack:
+        cycle = " -> ".join(str(path) for path in (*traversal_stack, resolved_path))
+        raise RuntimeError(f"Cyclic TeX input chain detected: {cycle}")
+
+    source_text = strip_tex_comments(resolved_path.read_text(encoding="utf-8"))
+    output: list[str] = []
+    index = 0
+    while index < len(source_text):
+        char = source_text[index]
+        if char != "\\":
+            output.append(char)
+            index += 1
+            continue
+
+        command, command_end = _parse_control_sequence(source_text, index)
+        command_base = command.rstrip("*")
+        cursor = _skip_whitespace(source_text, command_end)
+
+        if command_base in SIMPLE_MACRO_DEFINITION_COMMANDS:
+            macro_name, replacement_text, next_index = _parse_simple_macro_definition(source_text, cursor, macros)
+            if macro_name is not None and replacement_text is not None:
+                macros[macro_name] = replacement_text
+            index = next_index
+            continue
+
+        if command_base in TEX_INPUT_COMMANDS:
+            target_text, next_index = _read_delimited_argument(source_text, cursor, "{", "}")
+            if target_text is None:
+                output.append(source_text[index:command_end])
+                index = command_end
+                continue
+            output.append(_expand_tex_source(_resolve_tex_input_path(resolved_path, target_text), macros, (*traversal_stack, resolved_path)))
+            index = next_index
+            continue
+
+        macro_value = macros.get(command) or macros.get(command_base)
+        if macro_value is not None:
+            output.append(macro_value)
+            index = command_end
+            if index + 1 < len(source_text) and source_text[index] == "\\" and source_text[index + 1].isspace():
+                index += 2
+            continue
+
+        output.append(source_text[index:command_end])
+        index = command_end
+
+    return "".join(output)
+
+
+def _strip_math_expressions(latex_text: str) -> str:
+    """删除行内/陈列数学公式，避免把变量名误计为正文词数。"""
+
+    stripped: list[str] = []
+    index = 0
+    while index < len(latex_text):
+        if latex_text.startswith("\\(", index):
+            end_index = latex_text.find("\\)", index + 2)
+            if end_index == -1:
+                break
+            stripped.append(" ")
+            index = end_index + 2
+            continue
+        if latex_text.startswith("\\[", index):
+            end_index = latex_text.find("\\]", index + 2)
+            if end_index == -1:
+                break
+            stripped.append(" ")
+            index = end_index + 2
+            continue
+        if latex_text.startswith("$$", index):
+            end_index = latex_text.find("$$", index + 2)
+            if end_index == -1:
+                break
+            stripped.append(" ")
+            index = end_index + 2
+            continue
+        if latex_text[index] == "$":
+            end_index = index + 1
+            while end_index < len(latex_text):
+                if latex_text[end_index] == "$" and latex_text[end_index - 1] != "\\":
+                    break
+                end_index += 1
+            if end_index >= len(latex_text):
+                break
+            stripped.append(" ")
+            index = end_index + 1
+            continue
+
+        stripped.append(latex_text[index])
+        index += 1
+
+    if index < len(latex_text):
+        stripped.append(latex_text[index:])
+
+    cleaned = "".join(stripped)
+    for environment in sorted(WORD_COUNT_NONVISIBLE_ENVIRONMENTS, key=len, reverse=True):
+        cleaned = re.sub(
+            rf"\\begin\{{{re.escape(environment)}\}}.*?\\end\{{{re.escape(environment)}\}}",
+            " ",
+            cleaned,
+            flags=re.DOTALL,
+        )
+    return cleaned
+
+
+def _visible_text_from_latex(latex_text: str) -> str:
+    """提取 LaTeX 中实际可见的正文文本。"""
+
+    text = _strip_math_expressions(latex_text)
+    visible_parts: list[str] = []
+    index = 0
+
+    while index < len(text):
+        char = text[index]
+        if char == "~":
+            visible_parts.append(" ")
+            index += 1
+            continue
+        if char != "\\":
+            visible_parts.append(char)
+            index += 1
+            continue
+
+        command, command_end = _parse_control_sequence(text, index)
+        command_base = command.rstrip("*")
+        cursor = command_end
+
+        if command in {"%", "&", "#", "_", "$", "{", "}"}:
+            visible_parts.append(command)
+            index = command_end
+            continue
+        if command in WORD_COUNT_TEXT_COMMANDS:
+            visible_parts.append(WORD_COUNT_TEXT_COMMANDS[command])
+            index = command_end
+            continue
+        if command in WORD_COUNT_WHITESPACE_COMMANDS or command_base in WORD_COUNT_WHITESPACE_COMMANDS:
+            visible_parts.append(" ")
+            index = command_end
+            continue
+        if command_base in {"begin", "end"}:
+            _, next_index = _read_delimited_argument(text, _skip_whitespace(text, command_end), "{", "}")
+            index = next_index
+            continue
+
+        optional_arguments, cursor = _consume_optional_arguments(text, cursor)
+        if command_base in WORD_COUNT_DISCARD_COMMANDS:
+            while True:
+                _, next_index = _read_delimited_argument(text, cursor, "{", "}")
+                if next_index == cursor:
+                    break
+                cursor = _skip_whitespace(text, next_index)
+            index = cursor
+            continue
+
+        arguments: list[str] = []
+        while True:
+            argument_text, next_index = _read_delimited_argument(text, cursor, "{", "}")
+            if argument_text is None:
+                break
+            arguments.append(argument_text)
+            cursor = _skip_whitespace(text, next_index)
+            _, peek_index = _consume_optional_arguments(text, cursor)
+            if peek_index != cursor:
+                cursor = peek_index
+
+        selected_indexes = WORD_COUNT_ARGUMENT_SELECTIONS.get(command_base)
+        selected_arguments: list[str] = []
+        if selected_indexes is None:
+            selected_arguments = arguments
+        else:
+            for selected_index in selected_indexes:
+                resolved_index = selected_index if selected_index >= 0 else len(arguments) + selected_index
+                if 0 <= resolved_index < len(arguments):
+                    selected_arguments.append(arguments[resolved_index])
+
+        appended_text = False
+        for selected_argument in selected_arguments:
+            rendered_argument = _visible_text_from_latex(selected_argument)
+            if rendered_argument:
+                visible_parts.append(rendered_argument)
+                visible_parts.append(" ")
+                appended_text = True
+
+        if not arguments and optional_arguments and command_base in WORD_COUNT_ARGUMENT_SELECTIONS:
+            visible_parts.append(" ")
+            appended_text = True
+
+        index = cursor if cursor != command_end else command_end
+        if appended_text and index < len(text) and not text[index].isspace() and text[index] not in ".,;:!?)]}":
+            visible_parts.append(" ")
+
+    return "".join(visible_parts)
+
+
+def count_visible_words(text: str) -> int:
+    """统计可见文本中的英文词与 CJK 字符数。"""
+
+    normalized_text = " ".join(text.split())
+    latin_words = VISIBLE_WORD_PATTERN.findall(normalized_text)
+    cjk_chars = CJK_CHARACTER_PATTERN.findall(normalized_text)
+    return len(latin_words) + len(cjk_chars)
+
+
+def count_words_for_tex_sources(tex_paths: list[Path]) -> WordCountSummary:
+    """统计一个或多个 TeX 文件渲染后的可见词数。"""
+
+    file_counts: list[tuple[Path, int]] = []
+    for raw_path in tex_paths:
+        resolved_path = raw_path.resolve()
+        if not resolved_path.exists():
+            raise FileNotFoundError(f"Missing TeX source: {resolved_path}")
+        expanded_source = _expand_tex_source(resolved_path)
+        visible_text = _visible_text_from_latex(expanded_source)
+        file_counts.append((resolved_path, count_visible_words(visible_text)))
+    return WordCountSummary(
+        total_words=sum(count for _, count in file_counts),
+        file_counts=file_counts,
+    )
+
+
+def print_word_count_summary(summary: WordCountSummary) -> None:
+    for path, count in summary.file_counts:
+        print(f"{path}: {count}")
+    print(f"Total visible words: {summary.total_words}")
 
 
 def collect_extra_tex_inputs(project_dir: Path) -> list[Path]:
@@ -708,26 +1158,44 @@ def build_project(project_dir: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    """解析命令行参数。支持 build 子命令和 --project-dir 选项。"""
-    parser = argparse.ArgumentParser(description="Build manuscript PDF and DOCX from local sources.")
+    """解析命令行参数。"""
+    parser = argparse.ArgumentParser(
+        description="Build manuscript artifacts or count visible words from TeX sources."
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
-    parser.add_argument("command", choices=["build"], help="Command to execute")
-    parser.add_argument(
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    build_parser = subparsers.add_parser("build", help="Build manuscript PDF and DOCX outputs.")
+    build_parser.add_argument(
         "--project-dir",
         type=Path,
         default=None,
         help="Project directory. Defaults to the nearest parent containing main.tex.",
     )
+
+    count_parser = subparsers.add_parser(
+        "count-words",
+        help="Count visible words from one or more TeX files, excluding LaTeX command text.",
+    )
+    count_parser.add_argument(
+        "tex_paths",
+        nargs="+",
+        type=Path,
+        help="One or more .tex files. main.tex wrappers are supported and will follow \\input chains.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
-    """命令行入口：解析参数后执行 build 子命令。"""
+    """命令行入口。"""
     configure_windows_stdio_utf8()
     args = parse_args()
     if args.command == "build":
         project_dir = resolve_project_dir(args.project_dir)
         build_project(project_dir)
+        return
+    if args.command == "count-words":
+        print_word_count_summary(count_words_for_tex_sources(args.tex_paths))
         return
     raise ValueError(f"Unsupported command: {args.command}")
 
