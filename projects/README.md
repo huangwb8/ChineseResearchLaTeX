@@ -59,6 +59,7 @@
 
 - 这一组项目统一共享 [`packages/bensz-thesis/`](../packages/bensz-thesis/) 公共包
 - `thesis-*` 项目的 `template.json` 当前可用 `bachelor / master / doctor / postdoc` 四种类型，分别对应学士、硕士、博士和博士后研究报告
+- 每个 `thesis-*` 项目都应在 `packages/bensz-thesis/` 中拥有独立的 `template/profile/style` 身份，避免项目之间互相借用模板 ID
 
 | 项目 | 用途 | 适用场景 |
 |------|------|----------|

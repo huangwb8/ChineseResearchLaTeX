@@ -4,6 +4,7 @@
 
 - `projects/thesis-smu-master/`
 - `projects/thesis-nju-master/`
+- `projects/thesis-smu-postdoc/`
 - `projects/thesis-sysu-doctor/`
 - `projects/thesis-ucas-doctor/`
 - `packages/bensz-thesis/`
@@ -76,7 +77,7 @@ projects/thesis-school-degree/
 - 在导言区通过 `extraTex/@config.tex` 或 `extraTex/config-pre.tex` 接入 `bensz-thesis`
 - 章节、摘要、附录、致谢等按项目需要用 `\input` 组织
 
-当前两套 thesis 项目虽然细节不同，但都遵循同一条核心约定：
+当前 thesis / postdoc 项目虽然细节不同，但都遵循同一条核心约定：
 
 ```latex
 \usepackage{bensz-thesis}
@@ -87,6 +88,7 @@ projects/thesis-school-degree/
 
 - `thesis-smu-master`：`extraTex/@config.tex`
 - `thesis-nju-master`：`extraTex/@config.tex`（`main.tex` 为默认可编辑入口，额外提供 `baseline.tex` 公开基线验收入口与 `editable.tex` 兼容别名）
+- `thesis-smu-postdoc`：`extraTex/config-pre.tex`
 - `thesis-sysu-doctor`：`extraTex/config-pre.tex`
 - `thesis-ucas-doctor`：`extraTex/config-pre.tex`
 
@@ -106,7 +108,7 @@ projects/thesis-school-degree/
 
 - `project_name` 必须与目录名一致
 - `school` 使用院校名称
-- `degree` 目前只允许：`bachelor`、`master`、`doctor`
+- `degree` 目前只允许：`bachelor`、`master`、`doctor`、`postdoc`
 
 如果新增、复制、重命名 thesis 项目，没有同步更新 `template.json`，就不符合当前标准。
 

@@ -12,6 +12,10 @@
 
 ---
 
+我自己更加倾向于， thesis-smu-postdoc 是一个独立于 thesis-smu-master 的模板。 如果 thesis-smu-master 里有一些资源被 thesis-smu-postdoc 使用，那么正确的方式应该是直接copy过去； 而不是形成代码上的引用。 我打个比方： 有个用户它可能仅下载  thesis-smu-postdoc ； 而根本不会下载、也不关心 thesis-smu-master  怎么样。 因此，我希望在逻辑、业务上，它们彻底地独立开来（尽管很多resources看上去是一样的）。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 projects/paper-sci-01 优化：
 
 - pdf/docx的书签里，应该到 subsection 层级

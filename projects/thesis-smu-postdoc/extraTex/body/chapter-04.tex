@@ -2,7 +2,7 @@
 
 \section{讨论}
 
-本项目刻意不新建 \texttt{bensz-postdoc} 一类公共包，原因有二。第一，当前真正稳定、已被多套项目验证的仍是 \texttt{bensz-thesis} 的构建链路和页面样式能力；第二，博士后研究报告的差异主要集中在项目前置页和结尾页，而不是共享底层宏包本身。把差异先控制在项目层，能更好地避免对现有 thesis 模板造成连带风险。
+本项目没有另起一套 \texttt{bensz-postdoc} 公共包，而是选择在现有 \texttt{bensz-thesis} 产品线内注册独立的 \texttt{thesis-smu-postdoc} template/profile/style。这样做有两个好处：第一，继续复用已经稳定、已被多套项目验证的构建链路和页面样式能力；第二，既保证博士后研究报告在业务和打包层面独立成立，又避免为高度相近的底层排版能力重复维护第二套公共包。
 
 \section{当前公开示例的边界}
 

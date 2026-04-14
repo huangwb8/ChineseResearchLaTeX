@@ -345,9 +345,8 @@ def detect_paper_template_id(project_dir: Path) -> str:
 def detect_thesis_template_id(project_dir: Path) -> str:
     """毕业论文模板 ID：优先从 tex 文件中解析 ``\\BenszThesisSetup{template=xxx}``。
 
-    部分项目（如 ``thesis-smu-postdoc``）复用其他模板的 profile/style，
-    其 ``template=`` 值与目录名不同。扫描 ``main.tex`` 和 ``extraTex/`` 下
-    所有 tex 文件以获取真实模板 ID；若未找到，回退到目录名。
+    少数项目可能显式指定与目录名不同的 ``template=`` 值；扫描 ``main.tex``
+    和 ``extraTex/`` 下所有 tex 文件以获取真实模板 ID；若未找到，回退到目录名。
     """
     search_files = [project_dir / "main.tex"]
     extratex_dir = project_dir / "extraTex"

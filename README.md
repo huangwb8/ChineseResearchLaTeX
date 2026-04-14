@@ -382,6 +382,8 @@ python packages/bensz-paper/scripts/paper_project_tool.py count-words projects/p
 
 适用于 `projects/thesis-*`：
 
+- 每个 thesis 项目都应在 `packages/bensz-thesis/` 中拥有独立的 `template/profile/style`；`thesis-smu-postdoc` 现已独立于 `thesis-smu-master`，仅共享同一公共包基础设施
+
 ```bash
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-nju-master
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-nju-master --tex-file baseline.tex

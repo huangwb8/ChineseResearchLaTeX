@@ -2,7 +2,7 @@
 
 \section{结论}
 
-本示例完成了一套可编译、可扩展、边界清晰的南方医科大学博士后研究报告 LaTeX 模板。它以现有 \texttt{bensz-thesis} 构建基础设施为底座，在项目层实现了博士后研究报告特有的封面、题名页和结尾部分，从而避免了对其他毕业论文模板的破坏。
+本示例完成了一套可编译、可扩展、边界清晰的南方医科大学博士后研究报告 LaTeX 模板。它以现有 \texttt{bensz-thesis} 构建基础设施为底座，在包级注册独立的 \texttt{thesis-smu-postdoc} template/profile/style，并在项目层实现博士后研究报告特有的封面、题名页和结尾部分，从而避免了对其他毕业论文模板的破坏。
 
 \section{后续使用建议}
 
@@ -10,6 +10,6 @@
 
 \begin{enumerate}
   \item 共享能力优先留在 \texttt{packages/bensz-thesis/}，项目差异优先放在 \texttt{projects/thesis-smu-postdoc/}；
-  \item 若未来出现多套博士后报告模板且共享逻辑明显增多，再评估是否需要新增 profile 或公共样式；
+  \item 若未来出现多套博士后报告模板且共享逻辑明显增多，应继续在当前独立 template 基础上抽象 postdoc 共用层，而不是回退为引用其他模板 ID；
   \item 每次调整封面或题名页后，都优先通过官方 \texttt{thesis\_project\_tool.py} 重建 PDF 验证。
 \end{enumerate}

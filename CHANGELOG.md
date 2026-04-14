@@ -37,6 +37,7 @@
 
 ### Changed（变更）
 
+- 更新 `packages/bensz-thesis/package.json`、`packages/bensz-thesis/profiles/bthesis-profile-thesis-smu-postdoc.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-smu-postdoc.tex`、`projects/thesis-smu-postdoc/extraTex/config-pre.tex`、`packages/bensz-thesis/scripts/validate_package.py`、`scripts/pack_release.py`、`scripts/test_install_architecture.py`、`packages/bensz-thesis/README.md`、`projects/thesis-smu-postdoc/README.md`、根级 `README.md`、`projects/README.md`、`docs/for-developers/README.md`、`docs/for-developers/thesis-template-standard.md` 与 `AGENTS.md`：将 `thesis-smu-postdoc` 从原先借用 `thesis-smu-master` 模板 ID 的状态升级为 `bensz-thesis` 包内的独立 template/profile/style，并把公共包版本从 `p_v20260322` 升级到 `p_v20260414`，同步收敛打包、校验、开发文档与示例文本口径，确保用户单独获取 `thesis-smu-postdoc` 时也具备完整、自洽的模板身份，且安装器不会因版本号未变而误跳过更新
 - 更新根级 `README.md`：在 LaTeX 包远程安装说明中补充直接从 Gitee 镜像拉取 `scripts/install.py` 的 macOS / Linux / Windows 命令示例，并补充 Gitee 克隆仓库入口，避免无法访问 GitHub 的用户在“脚本下载”这一步就被阻塞
 - 更新 `packages/bensz-paper/package.json`、`packages/bensz-paper/scripts/__init__.py` 与 `packages/bensz-paper/scripts/manuscript_tool.py` 中的版本号：由于本轮为论文/投稿信模板补齐可见字数统计命令，公共包版本现从 `p_v20260407.1` 升级为 `p_v20260412`，CLI 脚本版本同步从 `1.3.8` 升级为 `1.3.9`
 - 更新 `packages/bensz-paper/package.json`、`packages/bensz-paper/scripts/__init__.py` 与 `packages/bensz-paper/scripts/manuscript_tool.py` 中的版本号：由于本轮继续收敛 `paper-sci-01` 的 PDF / DOCX 题目、作者与参考文献关键样式，公共包版本现从 `p_v20260412` 升级为 `p_v20260414`，CLI 脚本版本同步从 `1.3.9` 升级为 `1.3.10`

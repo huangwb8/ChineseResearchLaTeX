@@ -155,7 +155,7 @@ ChineseResearchLaTeX/
 #### 博士后研究报告模板问题
 
 - 当前博士后研究报告项目统一纳入 `thesis-*` 产品线管理，使用 `degree=postdoc` 标识类型，并继续复用 `packages/bensz-thesis/` 的统一构建链路
-- `projects/thesis-smu-postdoc/` 这类项目优先在项目层维护封面、题名页、摘要、正文与后置材料；只有当多个 postdoc 项目出现共享样式时，才考虑上收 `packages/bensz-thesis/`
+- `projects/thesis-smu-postdoc/` 当前已在 `packages/bensz-thesis/` 中拥有独立的 `template/profile/style` 身份；项目层仍优先维护封面、题名页、摘要、正文与后置材料，跨多个 postdoc 项目的稳定共享样式或宏逻辑再继续上收公共包
 - 优先使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-smu-postdoc` 验证 PDF 输出
 
 #### 简历模板问题
@@ -184,7 +184,7 @@ ChineseResearchLaTeX/
 - NSFC 模板变更后，应优先通过官方构建链路完成验证
 - SCI 模板变更后，应优先通过 `paper_project_tool.py` 完成 PDF + DOCX 联合验证
 - 毕业论文模板变更后，应优先通过 `thesis_project_tool.py` 完成 PDF 构建验证；若涉及版式迁移，再执行像素级 PDF 比对
-- 博士后研究报告模板变更后，应优先通过 `thesis_project_tool.py` 完成 PDF 构建验证；当前以 `degree=postdoc` 形式挂在 `projects/thesis-*` 链路中，是否进入 Release 资产仍以打包策略和用户需求为准
+- 博士后研究报告模板变更后，应优先通过 `thesis_project_tool.py` 完成 PDF 构建验证；当前以 `degree=postdoc` 形式挂在 `projects/thesis-*` 链路中，并已在 `packages/bensz-thesis/` 内拥有独立模板身份；是否进入 Release 资产仍以打包策略和用户需求为准
 - 简历模板变更后，应优先通过 `cv_project_tool.py` 完成中英双语 PDF 构建验证；若涉及样式迁移，再执行像素级 PDF 比对
 - 编译结果以“无错误”为底线；若仍有 warning，需明确说明是否为已有 warning 或新增 warning
 - 新增共享逻辑时，优先沉淀到公共包或脚本，不要把重复资源重新散落回各项目目录

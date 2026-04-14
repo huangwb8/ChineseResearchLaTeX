@@ -309,6 +309,24 @@ def test_pack_project_preserves_ucas_thesis_project_files(tmp_path: Path):
     assert "scripts/export_docx.py" in names
 
 
+def test_detect_thesis_template_id_prefers_postdoc_template_identity():
+    project_dir = REPO_ROOT / "projects" / "thesis-smu-postdoc"
+
+    assert pack_release.detect_thesis_template_id(project_dir) == "thesis-smu-postdoc"
+
+
+def test_build_thesis_runtime_bundle_uses_independent_postdoc_profile_and_style(tmp_path: Path):
+    runtime_dir = tmp_path / "thesis-runtime"
+    project_dir = REPO_ROOT / "projects" / "thesis-smu-postdoc"
+
+    pack_release.build_thesis_runtime_bundle(runtime_dir, project_dir)
+
+    assert (runtime_dir / "profiles" / "bthesis-profile-thesis-smu-postdoc.def").exists()
+    assert (runtime_dir / "bthesis-style-thesis-smu-postdoc.tex").exists()
+    assert not (runtime_dir / "profiles" / "bthesis-profile-thesis-smu-master.def").exists()
+    assert not (runtime_dir / "bthesis-style-thesis-smu-master.tex").exists()
+
+
 def test_add_cv_runtime_bundle_includes_shared_cv_fonts(tmp_path: Path):
     zip_path = tmp_path / "cv-runtime.zip"
 

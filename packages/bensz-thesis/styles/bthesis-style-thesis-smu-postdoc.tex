@@ -1,0 +1,333 @@
+% SMU 博士后研究报告模板样式配置（独立模板副本，避免再引用 thesis-smu-master）
+
+%------------------------ 基础宏包 ------------------------%
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{xcolor}
+\RequirePackage{colortbl} % 提供 \arrayrulecolor（封面横线颜色微调）
+\RequirePackage{calc} % 支持带小数的长度计算（pandoc longtable 使用 \real{...}）
+\RequirePackage{graphicx}
+\RequirePackage{newunicodechar} % 将 Word 导出的少量 Unicode 符号映射到可编译形式
+\RequirePackage{float}
+\RequirePackage[section]{placeins} % 避免浮动体跨越章节
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{tabularx}
+\RequirePackage{multirow}
+\RequirePackage{caption}
+\RequirePackage{amsmath,amssymb,bm}
+\RequirePackage{titlesec} % 精细控制标题：用于实现“编号/标题分行”的节标题
+\RequirePackage{enumitem}
+\RequirePackage{hyperref}
+\RequirePackage{fancyhdr}
+\RequirePackage{etoolbox}
+\RequirePackage[
+  backend=biber,
+  style=gb7714-2015,
+  sorting=none
+]{biblatex}
+
+%------------------------ 颜色（对齐 Word 的 MsBlue） ------------------------%
+% 说明：
+% - Word 常用蓝色：RGB(0,112,192)
+% - 在 XeLaTeX + xcolor 下，RGB(0,112,192) 在 PDF 中可能被量化为 (0,111,192)；
+%   为了让最终 PDF 提取/显示更贴近 Word 的观感，这里将 G 分量 +1。
+\definecolor{MsBlue}{RGB}{0,113,192}
+% 兼容用户口头习惯写法（MSBlue / MsBlue）
+\colorlet{MSBlue}{MsBlue}
+
+% pandoc 生成的 longtable 可能会设置 \LTcaptype{none}；这里提供一个空计数器避免报错
+\newcounter{none}
+
+% 常见符号：避免字体缺字导致编译警告/断字
+\newunicodechar{⁹}{\textsuperscript{9}}
+\newunicodechar{△}{\(\Delta\)}
+\newunicodechar{☑}{\(\checkmark\)}
+\newunicodechar{‐}{-}
+
+%------------------------ 页面尺寸（A4） ------------------------%
+% 说明：
+% - 左/右：约 3.2cm（与 Word 模板一致）
+% - 上/下：此处先采用 2.7cm（当前更贴近现有 docx->PDF 的版心与页数）；如需更高保真，可再迭代微调。
+\geometry{left=3.2cm,right=3.2cm,top=2.7cm,bottom=2.7cm,headheight=14pt,headsep=10pt}
+
+%------------------------ 字体 ------------------------%
+% 英文：优先 Times New Roman；若不存在则回退到 TeX Gyre Termes
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+% 中文：优先 宋体（macOS 的 Songti SC）；若不存在则回退到 STSong
+\IfFontExistsTF{Songti SC}{
+  \setCJKmainfont{Songti SC}
+}{
+  \setCJKmainfont{STSong}
+}
+
+\IfFontExistsTF{Heiti SC}{
+  \setCJKsansfont{Heiti SC}
+}{}
+
+% 避免 xeCJK “Unknown CJK family \\CJKttdefault” 警告
+\IfFontExistsTF{Songti SC}{
+  \setCJKmonofont{Songti SC}
+}{}
+
+%------------------------ 段落与行距 ------------------------%
+\setstretch{1.5}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\RequirePackage{indentfirst}
+
+%------------------------ 目录标题 ------------------------%
+% Word 模板常见为“目 录”（中间留空）；这里保留空隙以贴近观感
+\renewcommand{\contentsname}{目\hspace{1em}录}
+
+%------------------------ 超链接 ------------------------%
+% 说明：
+% - 正文中的 cite 引用（citecolor）与 URL 链接（urlcolor）使用 MsBlue
+% - 目录中的页码/标题链接（linkcolor）默认也为 MsBlue，但在目录输出时局部覆盖为黑色
+%   → 在 main.tex 的 \tableofcontents 前后各加一行 \hypersetup 即可（见下方工具宏）
+\hypersetup{
+  colorlinks=true,
+  hypertexnames=false, % 避免多次 \pagenumbering 导致 PDF 书签重复锚点（Object @page.* already defined）
+  linkcolor=MsBlue,
+  citecolor=MsBlue,
+  urlcolor=MsBlue,
+  CJKbookmarks=true
+}
+
+% 目录局部颜色控制宏（在 main.tex 中包裹 \tableofcontents 使用）
+% 用法：
+%   \mmedTOCBlackLinks
+%   \tableofcontents
+%   \mmedTOCRestoreLinks
+\newcommand{\mmedTOCBlackLinks}{%
+  \hypersetup{linkcolor=black}%
+}
+\newcommand{\mmedTOCRestoreLinks}{%
+  \hypersetup{linkcolor=MsBlue}%
+}
+
+%------------------------ 图表编号（避免手写序号） ------------------------%
+% 说明：
+% - 统一采用“章号-序号”的形式（如 3-1），便于与常见医学论文/毕业论文格式保持一致
+% - 显式使用 arabic，避免 ctex 章节标题使用中文数字时影响图表计数显示
+\renewcommand{\thefigure}{\arabic{chapter}-\arabic{figure}}
+\renewcommand{\thetable}{\arabic{chapter}-\arabic{table}}
+
+%------------------------ 图表标题 ------------------------%
+\captionsetup{
+  font={small,stretch=1.0},
+  labelfont=bf,
+  labelsep=space,
+  justification=centering,
+  singlelinecheck=false
+}
+
+%------------------------ 列表（贴近医学论文常用风格） ------------------------%
+\setlist[enumerate]{
+  leftmargin=2.5em,
+  itemsep=0.3em,
+  topsep=0.3em
+}
+\setlist[itemize]{
+  leftmargin=2.5em,
+  itemsep=0.3em,
+  topsep=0.3em
+}
+
+%------------------------ 页眉页脚 ------------------------%
+\newcommand{\mmedHeaderFont}{\zihao{-5}}
+\newcommand{\mmedHeaderTextMain}{博士后研究工作报告}
+
+%------------------------ 摘要首页微调 ------------------------%
+% 说明：
+% - Word 原稿的“摘要首页”在页眉横线（headrule）下方通常会留出更大的空白，
+%   以便与题名区块形成明确的视觉分隔。
+% - 这里将该留白参数化，避免通过全局 geometry/headsep 影响所有页面。
+\newlength{\mmedAbstractTopGap}
+\setlength{\mmedAbstractTopGap}{0.08cm}
+
+\fancypagestyle{mmed-main}{
+  \fancyhf{}
+  \fancyhead[C]{\mmedHeaderFont \mmedHeaderTextMain}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{mmed-abstract-zh}{
+  \fancyhf{}
+  \fancyhead[C]{\mmedHeaderFont 摘\hspace{0.5em}要}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{mmed-abstract-en}{
+  \fancyhf{}
+  \fancyhead[C]{\mmedHeaderFont ABSTRACT}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+%------------------------ 章节标题（尽量贴近 Word） ------------------------%
+\ctexset{
+  chapter = {
+    name = {第,章},
+    number = \chinese{chapter},
+    format = \centering\bfseries\zihao{3},
+    % Word 常见：章号与章名分两行居中显示
+    aftername = \par\vspace*{0.3em},
+    beforeskip = 14pt,
+    afterskip = 14pt
+  },
+  section = {
+    format = \bfseries\zihao{4},
+    beforeskip = 8pt,
+    afterskip = 6pt
+  },
+  subsection = {
+    format = \bfseries\zihao{4},
+    beforeskip = 10pt,
+    afterskip = 4pt
+  }
+}
+
+%------------------------ 小节标题样式 ------------------------%
+% 说明：
+% - 不能通过 ctexset 的 number/aftername 直接插入 \par（会污染 mark，导致 fancyhdr 报错）
+% - 用 titlesec 仅改变”渲染外观”，不影响目录/书签/页眉的标记逻辑
+% - 序号与标题在同一行，序号后空一格
+\titleformat{\section}[block]
+  {\bfseries\zihao{4}}
+  {\thesection}
+  {1em}
+  {}
+\titlespacing*{\section}{0pt}{8pt}{6pt}
+
+%------------------------ 工具宏 ------------------------%
+\newcommand{\mmedTOCAddChapter}[1]{%
+  \phantomsection%
+  \addcontentsline{toc}{chapter}{#1}%
+}
+
+% 压缩“中文-西文/数字”之间的自动间距（主要用于封面填写字段，贴近 Word 原稿）。
+% 说明：仅在 XeLaTeX + xeCJK 环境生效；其他引擎下安全降级为原样输出。
+\newcommand{\mmedTightCJK}[1]{%
+  \begingroup
+    \ifcsname xeCJKsetup\endcsname
+      \xeCJKsetup{CJKecglue=\hspace{0pt}}%
+    \fi
+    #1%
+  \endgroup
+}
+
+% 带下划线的“可填写字段”（封面用）：空值则保持空白下划线
+\newcommand{\mmedUnderlinedField}[2]{%
+  \underline{\makebox[#2][c]{\ifstrempty{#1}{}{#1}}}%
+}
+
+% 封面用：带下划线的“填写字段”（左对齐，并在内容后自动补齐下划线）
+% - 典型用法：\mmedUnderlinedFieldL{张三}{\linewidth}
+\newcommand{\mmedUnderlinedFieldL}[2]{%
+  \underline{\hbox to #2{\ifstrempty{#1}{}{#1}\hfil}}%
+}
+
+% 封面用（带左内边距）：用于底部“导师/专业/培养类型/提交日期”等字段，
+% 避免在紧凑列间距下出现“内容贴边/视觉上像与标签重叠”的问题。
+\newcommand{\mmedUnderlinedFieldLPad}[2]{%
+  \underline{\hbox to #2{%
+    \ifstrempty{#1}{}{%
+      % 字段内容略向右缩进，避免“内容贴住标签”造成视觉拥挤
+      % 继续增大间隙（在上一版基础上约 +80%），让底部字段更接近原始模板留白
+      \hspace*{1.44em}\strut#1%
+    }%
+    \hfil%
+  }}%
+}
+
+% 封面标题多行分隔符（默认仅换行；cover.tex 内会局部重定义为“换行+横线”以贴近 Word）
+\newcommand{\mmedCoverLinebreak}{\\}
+
+% 摘要区块：左侧粗体标签 + 正文
+\newcommand{\mmedAbsLabel}[1]{\noindent\textbf{#1}\ }
+
+% 中英双语图表说明（用于 docx 转换后的“表3-1 ... / Table3-1 ...”这类文本说明）
+% 说明：
+% - 旧版实现为“纯文本说明行”（不参与 table 计数），容易导致图表序号需要手工维护
+% - 新版改为 captionof(table)，由 LaTeX 自动编号；可选传入 label 以支持超链接引用
+% - 用法示例：
+%   \mmedBiCaption[tab:demo]{纳入患者的一般临床资料（n=174）}{General clinical data of included patients (n=174)}
+\newcommand{\mmedZhCaption}[2][]{%
+  \begingroup
+    \captionsetup{type=table}%
+    \captionof{table}{#2}%
+    \ifstrempty{#1}{}{\label{#1}}%
+  \endgroup
+}
+\newcommand{\mmedBiCaption}[3][]{%
+  \begingroup
+    \captionsetup{type=table}%
+    \captionof{table}{#2}%
+    \ifstrempty{#1}{}{\label{#1}}%
+    \caption*{Table~\thetable~#3}%
+  \endgroup
+}
+
+%------------------------ 参考文献样式（可调参数） ------------------------%
+% 说明：
+% - 以下参数均有默认值，可在 main.tex 的 \printbibliography 前按需覆盖。
+% - 字号：\renewcommand{\mmedBibFontCmd}{\zihao{-5}}
+% - 行距：\renewcommand{\mmedBibStretch}{1.5}
+% - 条目间距：\setlength{\mmedBibItemSep}{4pt}
+% - 条目内段间距：\setlength{\mmedBibParsep}{0pt}
+
+% 字号（默认小六 = 6.5pt，约为正文小五的 75%）
+\newcommand{\mmedBibFontCmd}{\zihao{-6}}
+% 行距倍数（默认 1.0 = 单倍行距）
+\newcommand{\mmedBibStretch}{1.0}
+% 条目间额外间距（biblatex \bibitemsep）
+\newlength{\mmedBibItemSep}
+\setlength{\mmedBibItemSep}{1pt}
+% 条目内段落间距（biblatex \bibparsep）
+\newlength{\mmedBibParsep}
+\setlength{\mmedBibParsep}{0pt}
+
+% 在参考文献列表开始时自动应用上述参数
+\AtBeginBibliography{%
+  \mmedBibFontCmd
+  \setstretch{\mmedBibStretch}%
+  \setlength\bibitemsep{\mmedBibItemSep}%
+  \setlength\bibparsep{\mmedBibParsep}%
+}
+
+% 有 DOI 时不再重复显示 URL（避免"已有 DOI 又展示 https 链接"的冗余）
+\AtEveryBibitem{%
+  \iffieldundef{doi}{}{\clearfield{url}\clearfield{urldate}}%
+}
+
+%------------------------ 参考文献引用（位置与间距） ------------------------%
+% 说明：
+% - 推荐写法：把 \cite 放在中文标点之前，例如：……发病与死亡负担长期居于前列\cite{xxx}。
+% - XeLaTeX + xeCJK 默认会在 CJK 与 ASCII（如 \cite 输出的 [1]）之间插入间距，导致“前列 [1]”；
+%   这里在常用 cite 命令开头加入 \unskip，移除紧邻其前的空格/胶水，得到“前列[1]”。
+\ifcsdef{cite}{\pretocmd{\cite}{\unskip}{}{}}{}
+\ifcsdef{parencite}{\pretocmd{\parencite}{\unskip}{}{}}{}
+\ifcsdef{textcite}{\pretocmd{\textcite}{\unskip}{}{}}{}
+\ifcsdef{autocite}{\pretocmd{\autocite}{\unskip}{}{}}{}
+\ifcsdef{footcite}{\pretocmd{\footcite}{\unskip}{}{}}{}
+\ifcsdef{supercite}{\pretocmd{\supercite}{\unskip}{}{}}{}
+
+%------------------------ 常用引用宏（正文写作更省心） ------------------------%
+% 说明：用 \hyperref 让“图/表/节”等完整短语都可点击（而不仅仅是编号）
+\newcommand{\figref}[1]{\hyperref[#1]{图~\ref*{#1}}}
+\newcommand{\tabref}[1]{\hyperref[#1]{表~\ref*{#1}}}
+\newcommand{\secref}[1]{\hyperref[#1]{\ref*{#1}节}}
+\newcommand{\chapref}[1]{\hyperref[#1]{第~\ref*{#1}~章}}
