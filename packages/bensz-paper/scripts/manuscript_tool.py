@@ -40,7 +40,7 @@ from pathlib import Path
 
 from fix_docx_spacing import fix_docx_spacing
 
-VERSION = "1.3.9"
+VERSION = "1.3.13"
 DOCX_FRONTMATTER_CENTER_START = "BENSZ_DOCX_FRONTMATTER_CENTER_START"
 DOCX_FRONTMATTER_CENTER_END = "BENSZ_DOCX_FRONTMATTER_CENTER_END"
 # 用于判定目录是否为项目根的标记文件

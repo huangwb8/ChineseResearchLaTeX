@@ -3,12 +3,37 @@
 
 \usepackage{bensz-paper}
 \BenszPaperSetup{
-  template = paper-sci-01
+  template = paper-sci-01,
+  bibliography-style = vancouver
 }
+\DeclareCiteCommand{\supercite}[\mkbibsuperscript]
+  {\textcolor{blue}{\bibopenbracket}%
+   \iffieldundef{prenote}
+     {}
+     {\BibliographyWarning{Ignoring prenote argument}}%
+   \iffieldundef{postnote}
+     {}
+     {\BibliographyWarning{Ignoring postnote argument}}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{cite}}
+  {\textcolor{blue}{\supercitedelim}}
+  {\textcolor{blue}{\bibclosebracket}}
 
 \addbibresource{references/refs.bib}
-\ExecuteBibliographyOptions{url=false, doi=true}
-\AtEveryBibitem{\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}
+\ExecuteBibliographyOptions{url=true, doi=true}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue,
+  bookmarksdepth=subsection
+}
+\AtBeginBibliography{\fontsize{11.5pt}{16.5pt}\selectfont}
+\AtEveryBibitem{%
+  \iffieldundef{doi}
+    {}
+    {\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}%
+}
 
 \begin{document}
 \input{extraTex/front/frontmatter.tex}

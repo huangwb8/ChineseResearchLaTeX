@@ -12,12 +12,14 @@
 
 \RequirePackage{keyval}
 \RequirePackage{etoolbox}
+\RequirePackage{currfile}
 
 % ── Internal parameter defaults ──────────────────────────────────
 % Set by profile files; user \BenszManuscriptSetup keys override.
 
 % Template selection
 \def\bml@template{paper-sci-01}
+\edef\bml@packageroot{\currfiledir}
 
 % Layout
 \def\bml@papersize{a4paper}
@@ -92,10 +94,11 @@
   % Pass 1: capture template= selection
   \setkeys{bml}{#1}%
   % Load profile
-  \InputIfFileExists{profiles/bml-profile-\bml@template.def}{}{%
+  \InputIfFileExists{\bml@packageroot% 
+profiles/bml-profile-\bml@template.def}{}{%
     \PackageError{benszmanuscriptlatex}%
       {Profile '\bml@template' not found}%
-       {Check that profiles/bml-profile-\bml@template.def exists
+       {Check that \bml@packageroot profiles/bml-profile-\bml@template.def exists
        in the package profiles/ directory.
        Available built-in profiles: paper-sci-01, paper-coverletter-01, bensz-manu-01}%
   }%

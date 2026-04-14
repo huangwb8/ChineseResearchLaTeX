@@ -367,7 +367,7 @@ python packages/bensz-nsfc/scripts/nsfc_project_tool.py build --project-dir proj
 适用于 `projects/paper-*`，支持 PDF + DOCX 双输出：
 
 - 正文默认维护在 `extraTex/**/*.tex`；DOCX 导出只在运行期临时生成 Markdown，不再保存第二份正文源文件
-- DOCX 后处理会为 Pandoc 默认表格补上稳定可见的横向边框；示例项目 `paper-sci-01` 的 PDF / DOCX 参考文献默认优先保留 DOI，不重复打印 `doi.org` URL
+- DOCX 后处理会为 Pandoc 默认表格补上稳定可见的横向边框；示例项目 `paper-sci-01` 当前已切到更接近 `CCS/paper` 的 Vancouver/JITC 参考文献口径，并进一步按当前 LaTeX profile 统一 Word 侧的标题、作者与参考文献关键样式
 - DOCX 数学公式会经 HTML5 + MathML 中间态落成 Word 原生公式对象，避免 `$\\gamma$` 这类源码形式直接泄漏到投稿文档
 - 若项目未声明参考文献命令，构建链会自动跳过 `biber` 与 citeproc，适合 `paper-coverletter-01` 这类投稿信项目
 - `count-words` 支持对一个或多个 `.tex` 做可见字数统计；若传入 `main.tex`，会递归跟随 `\input` / `\include` 链，并自动忽略 LaTeX 命令名、引用 keys 与数学公式源码

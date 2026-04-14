@@ -2,13 +2,27 @@
 
 ---
 
-创建tag v4.0.10 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
+创建tag v4.0.12 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
 
 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 将 ./packages 里的latex包安装到本地设备。
 
 # 日常
+
+---
+
+projects/paper-sci-01 优化：
+
+- pdf/docx的书签里，应该到 subsection 层级
+
+---
+
+projects/paper-sci-01 优化：
+
+- 本项目里，tex会分别出pdf、docx。 我希望，特别在论文题目样式、论文作者样式、正文参考文献样式、参考文献条目等上面，pdf和docx应该高度一致，并共享同一基础源。因为，用户非常希望pdf和docx的样式尽可能一致，特别是上述关键部位的样式。
+
+ 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 

@@ -11,25 +11,41 @@
 
 % Build biblatex option string with expanded macros so that
 % profile values are correctly substituted at load time.
-\edef\bml@bib@pkgopts{%
+\edef\bml@bib@pkgoptsbase{%
   backend=biber,%
   style=\bml@bibstyle,%
-  gbpub=false,%
-  gbtype=true,%
-  gbpunctin=true,%
-  url=false,%
+  url=true,%
   doi=true,%
   maxbibnames=\bml@bibmaxnames,%
-  minbibnames=\bml@bibminnames,%
-  gbnamefmt=lowercase,%
-  gbbiblabel=bracket%
+  minbibnames=\bml@bibminnames%
+}
+\ifdefstring{\bml@bibstyle}{gb7714-2015}{%
+  \edef\bml@bib@pkgopts{%
+    \bml@bib@pkgoptsbase,%
+    gbpub=false,%
+    gbtype=true,%
+    gbpunctin=true,%
+    gbnamefmt=lowercase,%
+    gbbiblabel=bracket%
+  }%
+}{%
+  \edef\bml@bib@pkgopts{%
+    \bml@bib@pkgoptsbase,%
+    sorting=none%
+  }%
 }
 \expandafter\RequirePackage\expandafter[\bml@bib@pkgopts]{biblatex}
 
-% Prefer DOI as the canonical resolver and suppress URL/date fallbacks.
+% Prefer DOI as the canonical resolver and only fall back to URLs when needed.
 \AtEveryBibitem{%
-  \clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}%
+  \iffieldundef{doi}
+    {}
+    {\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}%
 }
+
+\ifdefstring{\bml@bibstyle}{vancouver}{%
+  \DeclareFieldFormat{doi}{doi:\space\href{https://doi.org/#1}{\nolinkurl{#1}}}
+}{}
 
 % Spacing and font
 \setlength{\bibitemsep}{\bml@bibitemsep}

@@ -1,12 +1,15 @@
+import re
 from pathlib import Path
 import sys
 from zipfile import ZipFile
 
+import pytest
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from docx.shared import Pt
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_SCRIPTS_DIR = REPO_ROOT / "packages" / "bensz-paper" / "scripts"
@@ -675,6 +678,41 @@ def test_fix_docx_spacing_keeps_title_centered_and_left_aligns_section_headings(
     assert section_para.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.LEFT
 
 
+def test_fix_docx_spacing_normalizes_frontmatter_title_and_author_fonts(tmp_path):
+    docx_path = tmp_path / "frontmatter-style.docx"
+    doc = Document()
+
+    title_para = doc.add_paragraph("Template Example Title", style="Heading 1")
+    title_para.runs[0].font.size = Pt(30)
+    title_para.runs[0].font.bold = False
+
+    doc.add_paragraph(manuscript_tool.DOCX_FRONTMATTER_CENTER_START, style="Normal")
+    author_para = doc.add_paragraph(
+        "Template Author One1†, Template Author Two2*",
+        style="Normal",
+    )
+    author_para.runs[0].font.size = Pt(8)
+    author_para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    doc.add_paragraph(manuscript_tool.DOCX_FRONTMATTER_CENTER_END, style="Normal")
+
+    doc.add_paragraph("Introduction", style="Heading 1")
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    fixed_doc = Document(docx_path)
+    fixed_title = fixed_doc.paragraphs[0]
+    fixed_author = next(
+        para for para in fixed_doc.paragraphs if "Template Author One" in para.text
+    )
+
+    assert fixed_title.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.CENTER
+    assert fixed_title.runs[0].font.bold is True
+    assert fixed_title.runs[0].font.size.pt == pytest.approx(15.0, abs=0.01)
+    assert fixed_author.paragraph_format.alignment == WD_ALIGN_PARAGRAPH.CENTER
+    assert fixed_author.runs[0].font.size.pt == pytest.approx(12.0, abs=0.01)
+
+
 def test_fix_docx_spacing_reorders_references_before_figure_titles_and_legends(tmp_path):
     docx_path = tmp_path / "references-order.docx"
     doc = Document()
@@ -704,6 +742,37 @@ def test_fix_docx_spacing_reorders_references_before_figure_titles_and_legends(t
     assert paragraph_texts.index("References") < first_bibliography_index
     assert last_bibliography_index < paragraph_texts.index("Figure titles and legends")
     assert references_heading.style.name == "Heading 1"
+
+
+def test_fix_docx_spacing_matches_pdf_like_bibliography_labels_and_hanging_indent(tmp_path):
+    docx_path = tmp_path / "references-layout.docx"
+    doc = Document()
+    doc.styles.add_style("Bibliography", WD_STYLE_TYPE.PARAGRAPH)
+    doc.add_paragraph("Introduction", style="Heading 1")
+    doc.add_paragraph("Body paragraph.", style="Normal")
+    first_ref = doc.add_paragraph("1. Reference one.", style="Bibliography")
+    second_ref = doc.add_paragraph("2. Reference two.", style="Bibliography")
+    first_ref.paragraph_format.left_indent = Pt(0)
+    first_ref.paragraph_format.first_line_indent = Pt(0)
+    second_ref.paragraph_format.left_indent = Pt(0)
+    second_ref.paragraph_format.first_line_indent = Pt(0)
+    doc.save(docx_path)
+
+    manuscript_tool.fix_docx_spacing(docx_path)
+
+    fixed_doc = Document(docx_path)
+    bibliography_paragraphs = [
+        para for para in fixed_doc.paragraphs if para.style.name == "Bibliography"
+    ]
+
+    assert bibliography_paragraphs[0].text == "[1] Reference one."
+    assert bibliography_paragraphs[1].text == "[2] Reference two."
+    assert bibliography_paragraphs[0].paragraph_format.left_indent.pt == pytest.approx(
+        19.44, abs=0.02
+    )
+    assert bibliography_paragraphs[0].paragraph_format.first_line_indent.pt == pytest.approx(
+        -19.44, abs=0.02
+    )
 
 
 def test_fix_docx_spacing_promotes_existing_references_heading_to_heading_1(tmp_path):
@@ -792,10 +861,11 @@ def test_paper_sci_01_csl_keeps_three_authors_before_et_al(tmp_path):
     doc = Document(docx_path)
     bibliography_para = next(para for para in doc.paragraphs if "Synthetic reference for CSL regression" in para.text)
 
-    assert "Alpha, A. et al." not in bibliography_para.text
-    assert "Alpha, A., Beta, B., Gamma, C." in bibliography_para.text
+    assert bibliography_para.text.startswith("1. ")
+    assert "Alpha A et al" not in bibliography_para.text
+    assert "Alpha A, Beta B, Gamma C, et al." in bibliography_para.text
     assert "et al." in bibliography_para.text
-    assert "Delta, D." not in bibliography_para.text
+    assert "Delta D" not in bibliography_para.text
 
 
 def test_paper_sci_01_csl_prints_single_doi_without_duplicate_url(tmp_path):
@@ -892,6 +962,188 @@ def test_paper_sci_01_csl_keeps_reference_number_and_text_in_single_paragraph(tm
     assert "Synthetic reference layout regression" in bibliography_paragraphs[0].text
 
 
+def test_paper_sci_01_final_docx_bibliography_text_tracks_pdf_style(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                (
+                    "  author = {Alpha, Alice and Beta, Bob and Gamma, Carol and "
+                    "Delta, David},"
+                ),
+                "  title = {Synthetic Reference Layout Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  volume = {12},",
+                "  number = {3},",
+                "  pages = {34--56},",
+                "  doi = {10.1234/demo.2026.123},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    docx_path = tmp_path / "bibliography-final.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md="Body text with a citation [@Demo2026].\n",
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=bib_path,
+        reference_doc=reference_doc,
+    )
+    project_dir = tmp_path / "paper-sci-01"
+    project_dir.mkdir()
+    (project_dir / "main.tex").write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\usepackage{bensz-paper}",
+                r"\BenszPaperSetup{template = paper-sci-01, bibliography-style = vancouver}",
+                r"\begin{document}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    manuscript_tool.fix_docx_spacing(docx_path, project_dir=project_dir)
+
+    bibliography_para = next(
+        para for para in Document(docx_path).paragraphs if para.style.name == "Bibliography"
+    )
+    normalized = " ".join(bibliography_para.text.split())
+
+    assert normalized.startswith("1. ")
+    assert "[J]." not in normalized
+    assert re.search(
+        r"Journal of Regression Tests\. 2026(?: [A-Za-z]+)?;12\(3\):34[-–]56\.",
+        normalized,
+    )
+    assert "doi: 10.1234/demo.2026.123" in normalized
+    assert "DOI:" not in normalized
+
+
+def test_paper_sci_01_final_docx_bibliography_drops_doi_hyperlink_and_inline_emphasis(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                "  author = {Alpha, Alice and Beta, Bob and Gamma, Carol},",
+                "  title = {Synthetic DOI Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  volume = {12},",
+                "  number = {3},",
+                "  pages = {34--56},",
+                "  doi = {10.1234/demo.2026.001},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    docx_path = tmp_path / "bibliography-no-hyperlink.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md="Body text with a citation [@Demo2026].\n",
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=bib_path,
+        reference_doc=reference_doc,
+    )
+    project_dir = tmp_path / "paper-sci-01"
+    project_dir.mkdir()
+    (project_dir / "main.tex").write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\usepackage{bensz-paper}",
+                r"\BenszPaperSetup{template = paper-sci-01, bibliography-style = vancouver}",
+                r"\begin{document}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    manuscript_tool.fix_docx_spacing(docx_path, project_dir=project_dir)
+
+    bibliography_para = next(
+        para for para in Document(docx_path).paragraphs if para.style.name == "Bibliography"
+    )
+    with ZipFile(docx_path) as archive:
+        document_rels = archive.read("word/_rels/document.xml.rels").decode("utf-8", errors="replace")
+
+    assert all(run.font.italic in (None, False) for run in bibliography_para.runs)
+    assert all(run.font.bold in (None, False) for run in bibliography_para.runs)
+    assert "https://doi.org/10.1234/demo.2026.001" in document_rels
+
+
+def test_fix_docx_spacing_vancouver_adds_blue_hyperlinked_in_text_citations(tmp_path):
+    bib_path = tmp_path / "refs.bib"
+    bib_path.write_text(
+        "\n".join(
+            [
+                "@article{Demo2026,",
+                "  author = {Alpha, Alice and Beta, Bob and Gamma, Carol},",
+                "  title = {Synthetic Citation Hyperlink Regression},",
+                "  journal = {Journal of Regression Tests},",
+                "  year = {2026},",
+                "  volume = {12},",
+                "  number = {3},",
+                "  pages = {34--56},",
+                "  doi = {10.1234/demo.2026.001},",
+                "}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    docx_path = tmp_path / "citation-hyperlinks.docx"
+    csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
+    reference_doc = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "reference.docx"
+
+    manuscript_tool.build_docx_from_markdown(
+        manuscript_md="Body text with grouped citations [@Demo2026; @Demo2026].\n",
+        docx_path=docx_path,
+        csl_path=csl_path,
+        bibliography_path=bib_path,
+        reference_doc=reference_doc,
+    )
+    project_dir = tmp_path / "paper-sci-01"
+    project_dir.mkdir()
+    (project_dir / "main.tex").write_text(
+        "\n".join(
+            [
+                r"\documentclass{article}",
+                r"\usepackage{bensz-paper}",
+                r"\BenszPaperSetup{template = paper-sci-01, bibliography-style = vancouver}",
+                r"\begin{document}",
+                r"\end{document}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    manuscript_tool.fix_docx_spacing(docx_path, project_dir=project_dir)
+
+    document_xml = _read_document_xml(docx_path)
+
+    assert 'w:bookmarkStart' in document_xml
+    assert 'w:name="ref-1"' in document_xml
+    assert 'w:hyperlink w:anchor="ref-1"' in document_xml
+    assert '<w:color w:val="0000FF"/>' in document_xml
+    assert '<w:vertAlign w:val="superscript"/>' in document_xml
+
+
 def test_fix_docx_spacing_adds_visible_horizontal_borders_to_normal_tables(tmp_path):
     docx_path = tmp_path / "table.docx"
     csl_path = REPO_ROOT / "projects" / "paper-sci-01" / "artifacts" / "manuscript.csl"
@@ -967,18 +1219,43 @@ def test_bml_bibliography_prefers_doi_without_printing_urls():
         encoding="utf-8"
     )
 
-    assert "url=false" in bibliography_style
+    assert "url=true" in bibliography_style
     assert "doi=true" in bibliography_style
+    assert r"\iffieldundef{doi}" in bibliography_style
     assert r"\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}" in bibliography_style
+    assert r"\ifdefstring{\bml@bibstyle}{vancouver}" in bibliography_style
 
 
-def test_paper_sci_01_main_tex_keeps_project_level_doi_only_guard():
+def test_paper_sci_01_main_tex_uses_vancouver_reference_style():
     main_tex = (REPO_ROOT / "projects" / "paper-sci-01" / "main.tex").read_text(encoding="utf-8")
 
-    assert r"\ExecuteBibliographyOptions{url=false, doi=true}" in main_tex
-    assert r"\AtEveryBibitem{\clearfield{url}\clearfield{urlyear}\clearfield{urlmonth}\clearfield{urlday}}" in main_tex
+    assert "bibliography-style = vancouver" in main_tex
+    assert r"\ExecuteBibliographyOptions{url=true, doi=true}" in main_tex
+    assert r"\DeclareCiteCommand{\supercite}[\mkbibsuperscript]" in main_tex
+    assert "colorlinks=true" in main_tex
+    assert "citecolor=blue" in main_tex
+    assert "urlcolor=blue" in main_tex
+    assert r"\iffieldundef{doi}" in main_tex
     assert r"\section{References}" in main_tex
     assert r"\printbibliography[heading=none]" in main_tex
+
+
+def test_bml_core_loads_profile_from_repo_package_root():
+    bml_core = (REPO_ROOT / "packages" / "bensz-paper" / "bml-core.sty").read_text(encoding="utf-8")
+
+    assert r"\RequirePackage{currfile}" in bml_core
+    assert r"\edef\bml@packageroot{\currfiledir}" in bml_core
+    assert r"\InputIfFileExists{\bml@packageroot" in bml_core
+    assert r"profiles/bml-profile-\bml@template.def}{}{%" in bml_core
+
+
+def test_paper_sci_01_profile_sets_shared_bibliography_size():
+    profile_text = (
+        REPO_ROOT / "packages" / "bensz-paper" / "profiles" / "bml-profile-paper-sci-01.def"
+    ).read_text(encoding="utf-8")
+
+    assert r"\def\bml@bibfontsize{10.5pt}" in profile_text
+    assert r"\def\bml@bibledaing{15pt}" in profile_text
 
 
 def test_paper_sci_01_bib_data_drops_doi_mirror_urls():
