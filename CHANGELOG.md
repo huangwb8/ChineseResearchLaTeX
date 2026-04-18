@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `projects/thesis-just-bachelor/`、`projects/thesis-ahnu-master/`、对应项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-just-bachelor.def`、`packages/bensz-thesis/profiles/bthesis-profile-thesis-ahnu-master.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-just-bachelor.tex`、`packages/bensz-thesis/styles/bthesis-style-thesis-ahnu-master.tex`：基于 issue #40 / #41 的公开材料为 `bensz-thesis` 产品线新增江苏科技大学学士论文与安徽师范大学硕士论文两套独立模板身份，并保持源码、构建链路与项目示例分层清晰
 - 新增 `projects/paper-coverletter-01/`、`projects/paper-coverletter-01/AGENTS.md`、`projects/paper-coverletter-01/CLAUDE.md`、`projects/paper-coverletter-01/scripts/paper_build.py` 与匿名化 `extraTex/` 示例正文：基于真实 Word cover letter 的结构抽象出首个投稿信模板项目，默认复用 `bensz-paper` 公共包、不新增专门 cover letter 包，并以 `Feng BaoBao` 作为公开示例中的通讯作者占位名
 - 新增 `packages/bensz-paper/profiles/bml-profile-paper-coverletter-01.def`：为投稿信项目补充 US Letter、1 英寸页边距、无首行缩进、禁用行号的轻量 profile，使 `bensz-paper` 除正文论文外也能稳定承载 cover letter 场景
 - 新增 `projects/thesis-smu-postdoc/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md`、`main.tex`、`extraTex/`、`references/refs.bib`、`template.json` 与 `assets/nfmu_calligraphy_raw.png`：基于《博士后研究报告编写规则》中的封面与题名页要求，复用 `bensz-thesis` 构建链路落地首个南方医科大学博士后研究报告公开示例项目，不新增专门公共包，并通过 `degree=postdoc` 并入 `thesis-*` 元数据链路
@@ -37,6 +38,7 @@
 
 ### Changed（变更）
 
+- 更新根级 `README.md`、`projects/README.md`、`packages/bensz-thesis/README.md` 与 `packages/bensz-thesis/scripts/validate_package.py`：将 `thesis-just-bachelor`、`thesis-ahnu-master` 纳入 thesis 产品线清单、结构校验和仓库入口说明，并在未创建 release 前明确标记为“开发中（未发布）”
 - 更新 `packages/bensz-thesis/package.json`、`packages/bensz-thesis/profiles/bthesis-profile-thesis-smu-postdoc.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-smu-postdoc.tex`、`projects/thesis-smu-postdoc/extraTex/config-pre.tex`、`packages/bensz-thesis/scripts/validate_package.py`、`scripts/pack_release.py`、`scripts/test_install_architecture.py`、`packages/bensz-thesis/README.md`、`projects/thesis-smu-postdoc/README.md`、根级 `README.md`、`projects/README.md`、`docs/for-developers/README.md`、`docs/for-developers/thesis-template-standard.md` 与 `AGENTS.md`：将 `thesis-smu-postdoc` 从原先借用 `thesis-smu-master` 模板 ID 的状态升级为 `bensz-thesis` 包内的独立 template/profile/style，并把公共包版本从 `p_v20260322` 升级到 `p_v20260414`，同步收敛打包、校验、开发文档与示例文本口径，确保用户单独获取 `thesis-smu-postdoc` 时也具备完整、自洽的模板身份，且安装器不会因版本号未变而误跳过更新
 - 更新根级 `README.md`：在 LaTeX 包远程安装说明中补充直接从 Gitee 镜像拉取 `scripts/install.py` 的 macOS / Linux / Windows 命令示例，并补充 Gitee 克隆仓库入口，避免无法访问 GitHub 的用户在“脚本下载”这一步就被阻塞
 - 更新 `packages/bensz-paper/package.json`、`packages/bensz-paper/scripts/__init__.py` 与 `packages/bensz-paper/scripts/manuscript_tool.py` 中的版本号：由于本轮为论文/投稿信模板补齐可见字数统计命令，公共包版本现从 `p_v20260407.1` 升级为 `p_v20260412`，CLI 脚本版本同步从 `1.3.8` 升级为 `1.3.9`

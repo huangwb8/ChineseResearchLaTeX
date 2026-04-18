@@ -1,0 +1,255 @@
+\ProvidesFile{bthesis-style-thesis-just-bachelor.tex}
+  [2026/04/18 v1.0.0 Thesis style: thesis-just-bachelor]
+
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+
+\geometry{
+  a4paper,
+  left=3cm,
+  right=3cm,
+  top=3cm,
+  bottom=3.7cm,
+  headheight=14pt,
+  headsep=0.45cm,
+  footskip=0.95cm
+}
+
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{SimSun}{
+  \setCJKmainfont{SimSun}
+  \newCJKfontfamily\justSong{SimSun}
+}{
+  \IfFontExistsTF{Songti SC}{
+    \setCJKmainfont{Songti SC}
+    \newCJKfontfamily\justSong{Songti SC}
+  }{
+    \setCJKmainfont{FandolSong-Regular}
+    \newCJKfontfamily\justSong{FandolSong-Regular}
+  }
+}
+
+\IfFontExistsTF{SimHei}{
+  \newCJKfontfamily\justHei{SimHei}
+}{
+  \IfFontExistsTF{Heiti SC}{
+    \newCJKfontfamily\justHei{Heiti SC}
+  }{
+    \newCJKfontfamily\justHei{FandolHei-Regular}
+  }
+}
+
+\AtBeginDocument{%
+  \justSong
+  \fontsize{14bp}{18bp}\selectfont
+}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setstretch{1.28}
+\xeCJKsetup{PunctStyle=plain}
+
+\hypersetup{
+  colorlinks=false,
+  hidelinks,
+  hypertexnames=false,
+  CJKbookmarks=true
+}
+
+\newcommand{\justBodyFont}{\justSong\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\justHeaderFont}{\justSong\fontsize{10.5bp}{12bp}\selectfont}
+\newcommand{\justChapterFont}{\justHei\bfseries\fontsize{22bp}{28bp}\selectfont}
+\newcommand{\justSectionFont}{\justHei\bfseries\fontsize{16bp}{20bp}\selectfont}
+\newcommand{\justSubsectionFont}{\justSong\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\justFrontTitleFont}{\justHei\bfseries\fontsize{20bp}{26bp}\selectfont}
+\newcommand{\justCoverTypeFont}{\justHei\bfseries\fontsize{33bp}{38bp}\selectfont}
+\newcommand{\justCoverTitleFont}{\justHei\fontsize{22bp}{28bp}\selectfont}
+\newcommand{\justCoverLabelFont}{\justHei\bfseries\fontsize{16bp}{18bp}\selectfont}
+\newcommand{\justCoverValueFont}{\justSong\bfseries\fontsize{16bp}{18bp}\selectfont}
+
+\renewcommand{\contentsname}{目\quad 录}
+\setcounter{tocdepth}{2}
+\titlecontents{chapter}[0pt]
+  {\justSong\fontsize{14bp}{18bp}\selectfont}
+  {\contentslabel{6.2em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{section}[2.9em]
+  {\justSong\fontsize{14bp}{18bp}\selectfont}
+  {\contentslabel{3.4em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[5.8em]
+  {\justSong\fontsize{14bp}{18bp}\selectfont}
+  {\contentslabel{4.4em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+
+\ctexset{
+  chapter = {
+    name = {第,章},
+    number = \arabic{chapter},
+    format = \centering\justChapterFont,
+    aftername = \quad,
+    beforeskip = 18bp,
+    afterskip = 24bp
+  },
+  section = {
+    format = \justSectionFont,
+    beforeskip = 18bp,
+    afterskip = 10bp
+  },
+  subsection = {
+    format = \justSubsectionFont,
+    beforeskip = 10bp,
+    afterskip = 8bp
+  }
+}
+
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.2em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.2em,topsep=0.2em}
+
+\fancypagestyle{just-main}{
+  \fancyhf{}
+  \fancyhead[C]{\justHeaderFont 江苏科技大学本科毕业设计（论文）}
+  \fancyfoot[C]{\justHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{just-empty}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[C]{\justHeaderFont 江苏科技大学本科毕业设计（论文）}
+  \fancyfoot[C]{\justHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\captionsetup{
+  font={stretch=1.0},
+  textfont=normalfont,
+  labelfont=normalfont,
+  justification=centering,
+  singlelinecheck=false
+}
+
+\providecommand{\justHeaderImagePath}{assets/branding/just_header.png}
+\providecommand{\justLogoImagePath}{assets/branding/just_logo.png}
+\providecommand{\justTitleZh}{毕业论文题目}
+\providecommand{\justTitleEn}{English Title}
+\providecommand{\justAuthor}{作者姓名}
+\providecommand{\justMajor}{专业}
+\providecommand{\justStudentId}{学号}
+\providecommand{\justSupervisor}{指导教师}
+\providecommand{\justCollege}{学院}
+\providecommand{\justDateZh}{二〇二六年六月}
+\providecommand{\justDateNum}{2026 年 6 月}
+\providecommand{\justKeywordsZh}{关键词 1；关键词 2；关键词 3}
+\providecommand{\justKeywordsEn}{keyword 1; keyword 2; keyword 3}
+
+\newcommand{\justCoverFieldLineWidth}{6.60cm}
+\newcommand{\justCoverFieldCenterX}{12.12cm}
+\newcommand{\justCoverFieldLabelX}{6.00cm}
+
+\newcommand{\justCoverFieldRow}[3]{%
+  \node[anchor=west,inner sep=0pt]
+    at ([xshift=\justCoverFieldLabelX,yshift=-#1]current page.north west)
+    {{\justCoverLabelFont #2}};
+  \draw[line width=0.4pt]
+    ([xshift=8.82cm,yshift=\dimexpr-#1-0.06cm\relax]current page.north west) --
+    ([xshift=\dimexpr8.82cm+\justCoverFieldLineWidth\relax,yshift=\dimexpr-#1-0.06cm\relax]current page.north west);
+  \node[anchor=center,inner sep=0pt]
+    at ([xshift=\justCoverFieldCenterX,yshift=\dimexpr-#1-0.02cm\relax]current page.north west)
+    {{\justCoverValueFont #3}};
+}
+
+\newcommand{\justMakeCover}{%
+  \thispagestyle{just-empty}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,inner sep=0pt]
+      at ([xshift=3.75cm,yshift=-2.76cm]current page.north west)
+      {\includegraphics[width=12.85cm]{\justHeaderImagePath}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-6.60cm]current page.north)
+      {{\justCoverTypeFont 本科毕业设计（论文）}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-8.25cm]current page.north)
+      {\includegraphics[width=5.85cm]{\justLogoImagePath}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=11.2cm]
+      at ([yshift=-14.75cm]current page.north)
+      {{\justCoverTitleFont \justTitleZh}};
+    \justCoverFieldRow{18.50cm}{学生姓名：}{\justAuthor}
+    \justCoverFieldRow{19.82cm}{专\hspace{2em}业：}{\justMajor}
+    \justCoverFieldRow{21.15cm}{学\hspace{2em}号：}{\justStudentId}
+    \justCoverFieldRow{22.47cm}{指导教师：}{\justSupervisor}
+    \justCoverFieldRow{23.80cm}{学\hspace{2em}院：}{\justCollege}
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-25.62cm]current page.north)
+      {{\justHei\fontsize{18bp}{22bp}\selectfont \justDateZh}};
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
+
+\newcommand{\justMakeTitlePage}{%
+  \thispagestyle{just-empty}%
+  \begingroup
+  \centering
+  \vspace*{3.0cm}
+  {\justHei\fontsize{18bp}{22bp}\selectfont 江苏科技大学\par}
+  \vspace{0.4cm}
+  {\justHei\fontsize{24bp}{30bp}\selectfont 本科毕业设计（论文）\par}
+  \vspace{3.0cm}
+  {\justHei\bfseries\fontsize{20bp}{24bp}\selectfont \justTitleZh\par}
+  \vspace{0.5cm}
+  {\justSong\fontsize{14bp}{18bp}\selectfont \parbox{11.6cm}{\centering \justTitleEn}\par}
+  \vspace{3.0cm}
+  \renewcommand{\arraystretch}{1.6}
+  \begin{tabular}{>{\raggedleft\arraybackslash}p{4.4cm}p{7.4cm}}
+    学生姓名： & \justAuthor \\
+    专\hspace{2em}业： & \justMajor \\
+    学\hspace{2em}号： & \justStudentId \\
+    指导教师： & \justSupervisor \\
+    学\hspace{2em}院： & \justCollege \\
+  \end{tabular}\par
+  \vfill
+  {\justSong\fontsize{16bp}{20bp}\selectfont \justDateNum\par}
+  \endgroup
+}
+
+\newcommand{\justFrontHeading}[1]{%
+  \thispagestyle{just-empty}%
+  \begin{center}
+    \vspace*{2.1cm}
+    {\justFrontTitleFont #1\par}
+  \end{center}
+  \vspace{1.0cm}
+}

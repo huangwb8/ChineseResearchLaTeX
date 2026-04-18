@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-just-bachelor.def}
+  [2026/04/18 v1.0.0 Thesis profile: thesis-just-bachelor]
+
+\makeatletter
+\def\bthesis@template{thesis-just-bachelor}
+\def\bthesis@templateversion{t_v20260418}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-just-bachelor.tex}
+\makeatother

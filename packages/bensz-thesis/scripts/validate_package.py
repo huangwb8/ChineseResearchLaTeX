@@ -37,11 +37,15 @@ def validate_required_files() -> list[str]:
         "bthesis-core.sty",
         "profiles/bthesis-profile-thesis-smu-master.def",
         "profiles/bthesis-profile-thesis-nju-master.def",
+        "profiles/bthesis-profile-thesis-just-bachelor.def",
+        "profiles/bthesis-profile-thesis-ahnu-master.def",
         "profiles/bthesis-profile-thesis-smu-postdoc.def",
         "profiles/bthesis-profile-thesis-sysu-doctor.def",
         "profiles/bthesis-profile-thesis-ucas-doctor.def",
         "styles/bthesis-style-thesis-smu-master.tex",
         "styles/bthesis-style-thesis-nju-master.tex",
+        "styles/bthesis-style-thesis-just-bachelor.tex",
+        "styles/bthesis-style-thesis-ahnu-master.tex",
         "styles/bthesis-style-thesis-smu-postdoc.tex",
         "styles/bthesis-style-thesis-sysu-doctor.tex",
         "styles/bthesis-style-thesis-ucas-doctor.tex",
@@ -84,7 +88,7 @@ def compile_project(project_name: str) -> dict[str, object]:
 
 
 def main() -> int:
-    """CLI 入口：依次执行文件完整性检查和（可选）五个示例项目的编译验证。
+    """CLI 入口：依次执行文件完整性检查和（可选）七个示例项目的编译验证。
 
     Returns:
         0 表示校验通过，1 表示存在缺失文件或编译失败。
@@ -106,6 +110,8 @@ def main() -> int:
         for project_name in (
             "thesis-smu-master",
             "thesis-nju-master",
+            "thesis-just-bachelor",
+            "thesis-ahnu-master",
             "thesis-smu-postdoc",
             "thesis-sysu-doctor",
             "thesis-ucas-doctor",

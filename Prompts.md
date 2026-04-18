@@ -12,6 +12,21 @@
 
 ---
 
+这两个issue: https://github.com/huangwb8/ChineseResearchLaTeX/issues/40  和  https://github.com/huangwb8/ChineseResearchLaTeX/issues/41 要求制作2个新的毕业论文模板。 请你：
+
+- 彻底理解用户意图。下载必要的原始材料（比如，模板论文； 论文格式要求/规范等文件）
+- 了解 projects/thesis-* 类的模板； 了解系统设定。彻底规范要怎么做才能又快又好地做模板
+- 制作新的latex模板，命名要合乎规范。初步验收目标： 渲染的PDF和源PDF样式像素级一致（你可以通过将pdf页面转化为jpg，通过视觉智能比较jpg的差别; 要求pdf里每一行的文字、缩进外观都完全一样【这是模板是否优秀的重要标志】）
+- 通过初步验收后，模板可以填回原来的佐佐木希的正文，这样就可以完成脱敏
+- 注意
+  - 模板文献是保密级，不能通过任何方式公开在网上
+  - 本次任务中，不要产生任何向github的commit或release。 要先给我看过
+
+
+使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 我自己更加倾向于， thesis-smu-postdoc 是一个独立于 thesis-smu-master 的模板。 如果 thesis-smu-master 里有一些资源被 thesis-smu-postdoc 使用，那么正确的方式应该是直接copy过去； 而不是形成代码上的引用。 我打个比方： 有个用户它可能仅下载  thesis-smu-postdoc ； 而根本不会下载、也不关心 thesis-smu-master  怎么样。 因此，我希望在逻辑、业务上，它们彻底地独立开来（尽管很多resources看上去是一样的）。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---

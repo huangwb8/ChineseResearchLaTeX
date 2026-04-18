@@ -65,6 +65,8 @@
 |------|------|----------|
 | [`thesis-smu-master/`](./thesis-smu-master/) | 南方医科大学硕士论文示例项目 | 需要 SMU 硕士论文版式模板 |
 | [`thesis-nju-master/`](./thesis-nju-master/) | 南京大学工程管理硕士论文示例项目 | 需要 NJU 工程管理硕士论文版式模板，且希望默认 `main.tex` 就是可编辑入口，同时保留公开基线验收文件 |
+| [`thesis-just-bachelor/`](./thesis-just-bachelor/) | 江苏科技大学本科毕业设计（论文）示例项目 | 需要 JUST 本科毕业设计（论文）版式模板 |
+| [`thesis-ahnu-master/`](./thesis-ahnu-master/) | 安徽师范大学硕士论文示例项目 | 需要 AHNU 硕士论文版式模板 |
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |
 | [`thesis-smu-postdoc/`](./thesis-smu-postdoc/) | 南方医科大学博士后研究报告示例项目 | 需要按博士后研究报告规范组织封面、题名页、中英文摘要、正文与后置材料 |

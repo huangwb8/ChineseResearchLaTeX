@@ -1,0 +1,276 @@
+\ProvidesFile{bthesis-style-thesis-ahnu-master.tex}
+  [2026/04/18 v1.0.0 Thesis style: thesis-ahnu-master]
+
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+
+\geometry{
+  a4paper,
+  left=3cm,
+  right=3cm,
+  top=3cm,
+  bottom=3.7cm,
+  headheight=14pt,
+  headsep=0.45cm,
+  footskip=0.95cm
+}
+
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{SimSun}{
+  \setCJKmainfont{SimSun}
+  \newCJKfontfamily\ahnuSong{SimSun}
+}{
+  \IfFontExistsTF{Songti SC}{
+    \setCJKmainfont{Songti SC}
+    \newCJKfontfamily\ahnuSong{Songti SC}
+  }{
+    \setCJKmainfont{FandolSong-Regular}
+    \newCJKfontfamily\ahnuSong{FandolSong-Regular}
+  }
+}
+
+\IfFontExistsTF{SimHei}{
+  \newCJKfontfamily\ahnuHei{SimHei}
+}{
+  \IfFontExistsTF{Heiti SC}{
+    \newCJKfontfamily\ahnuHei{Heiti SC}
+  }{
+    \newCJKfontfamily\ahnuHei{FandolHei-Regular}
+  }
+}
+
+\AtBeginDocument{%
+  \ahnuSong
+  \fontsize{14bp}{18bp}\selectfont
+}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setstretch{1.28}
+\xeCJKsetup{PunctStyle=plain}
+
+\hypersetup{
+  colorlinks=false,
+  hidelinks,
+  hypertexnames=false,
+  CJKbookmarks=true
+}
+
+\newcommand{\ahnuBodyFont}{\ahnuSong\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\ahnuHeaderFont}{\ahnuSong\fontsize{10.5bp}{12bp}\selectfont}
+\newcommand{\ahnuChapterFont}{\ahnuHei\bfseries\fontsize{24bp}{28bp}\selectfont}
+\newcommand{\ahnuSectionFont}{\ahnuHei\bfseries\fontsize{18bp}{22bp}\selectfont}
+\newcommand{\ahnuSubsectionFont}{\ahnuSong\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\ahnuFrontTitleFont}{\ahnuHei\bfseries\fontsize{22bp}{28bp}\selectfont}
+\newcommand{\ahnuCoverTopFont}{\ahnuSong\fontsize{18bp}{20bp}\selectfont}
+\newcommand{\ahnuCoverTypeFont}{\ahnuSong\bfseries\fontsize{28bp}{34bp}\selectfont}
+\newcommand{\ahnuCoverLabelFont}{\ahnuHei\bfseries\fontsize{16bp}{18bp}\selectfont}
+\newcommand{\ahnuCoverValueFont}{\ahnuSong\fontsize{15bp}{18bp}\selectfont}
+\newcommand{\ahnuCoverValueEnFont}{\fontsize{12.5bp}{17bp}\selectfont}
+\newcommand{\ahnuCoverTitleValueFont}{\ahnuSong\fontsize{12.8bp}{16bp}\selectfont}
+\newcommand{\ahnuCoverTitleEnFont}{\ahnuSong\fontsize{10.8bp}{15bp}\selectfont}
+
+\renewcommand{\contentsname}{目\quad 录}
+\setcounter{tocdepth}{2}
+\titlecontents{chapter}[0pt]
+  {\ahnuSong\fontsize{14bp}{18bp}\selectfont}
+  {\contentslabel{5.8em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{section}[2.6em]
+  {\ahnuSong\fontsize{14bp}{18bp}\selectfont}
+  {\contentslabel{3.4em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[5.5em]
+  {\ahnuSong\fontsize{14bp}{18bp}\selectfont}
+  {\contentslabel{4.2em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+
+\ctexset{
+  chapter = {
+    name = {第,章},
+    number = \chinese{chapter},
+    format = \centering\ahnuChapterFont,
+    aftername = \quad,
+    beforeskip = 18bp,
+    afterskip = 24bp
+  },
+  section = {
+    format = \ahnuSectionFont,
+    beforeskip = 18bp,
+    afterskip = 10bp
+  },
+  subsection = {
+    format = \ahnuSubsectionFont,
+    beforeskip = 10bp,
+    afterskip = 8bp
+  }
+}
+
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.2em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.2em,topsep=0.2em}
+
+\fancypagestyle{ahnu-main}{
+  \fancyhf{}
+  \fancyfoot[C]{\ahnuHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{ahnu-front}{
+  \fancyhf{}
+  \fancyfoot[C]{\ahnuHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{ahnu-cover}{
+  \fancyhf{}
+  \fancyfoot[C]{\ahnuHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\ahnuHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\captionsetup{
+  font={stretch=1.0},
+  textfont=normalfont,
+  labelfont=normalfont,
+  justification=centering,
+  singlelinecheck=false
+}
+
+\providecommand{\ahnuCalligraphyPath}{assets/branding/ahnu_calligraphy.png}
+\providecommand{\ahnuClassNo}{}
+\providecommand{\ahnuTitleZh}{硕士学位论文题目}
+\providecommand{\ahnuTitleEn}{English Title}
+\providecommand{\ahnuMajor}{学科专业}
+\providecommand{\ahnuResearchDirection}{研究方向}
+\providecommand{\ahnuAuthor}{作者姓名}
+\providecommand{\ahnuSupervisor}{指导教师}
+\providecommand{\ahnuSubmitDate}{2026 年 4 月 12 日}
+\providecommand{\ahnuDegreeDate}{}
+\providecommand{\ahnuBottomLine}{安徽师范大学硕士学位论文}
+\providecommand{\ahnuBottomDate}{（二〇二六年五月）}
+\providecommand{\ahnuKeywordsZh}{关键词 1；关键词 2；关键词 3}
+\providecommand{\ahnuKeywordsEn}{keyword 1; keyword 2; keyword 3}
+
+\newcommand{\ahnuCoverField}[4]{%
+  \node[anchor=west,inner sep=0pt]
+    at ([xshift=#2,yshift=-#1]current page.north west)
+    {{\ahnuCoverLabelFont #3}};
+  \draw[line width=0.4pt]
+    ([xshift=7.95cm,yshift=\dimexpr-#1-0.04cm\relax]current page.north west) --
+    ([xshift=17.02cm,yshift=\dimexpr-#1-0.04cm\relax]current page.north west);
+  \node[anchor=center,inner sep=0pt,align=center,text width=8.8cm]
+    at ([xshift=12.49cm,yshift=\dimexpr-#1+0.02cm\relax]current page.north west)
+    {{\ahnuCoverValueFont #4}};
+}
+
+\newcommand{\ahnuCoverFieldEn}[3]{%
+  \node[anchor=west,inner sep=0pt]
+    at ([xshift=4.80cm,yshift=-#1]current page.north west)
+    {{\ahnuCoverLabelFont #2}};
+  \draw[line width=0.4pt]
+    ([xshift=6.64cm,yshift=\dimexpr-#1-1.14cm\relax]current page.north west) --
+    ([xshift=17.72cm,yshift=\dimexpr-#1-1.14cm\relax]current page.north west);
+  \node[anchor=north west,inner sep=0pt,align=center,text width=11.05cm]
+    at ([xshift=6.83cm,yshift=\dimexpr-#1+0.10cm\relax]current page.north west)
+    {{\ahnuSong\ahnuCoverValueEnFont #3}};
+}
+
+\newcommand{\ahnuMakeCover}{%
+  \thispagestyle{ahnu-cover}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=2.75cm,yshift=-3.10cm]current page.north west)
+      {{\ahnuCoverTopFont 分类号：\ahnuClassNo}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-5.00cm]current page.north)
+      {\includegraphics[width=6.95cm]{\ahnuCalligraphyPath}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-8.75cm]current page.north)
+      {{\ahnuCoverTypeFont 硕\quad 士\quad 学\quad 位\quad 论\quad 文}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=4.20cm,yshift=-12.15cm]current page.north west)
+      {{\ahnuCoverLabelFont 题\hspace{2em}目：}};
+    \draw[line width=0.4pt]
+      ([xshift=6.64cm,yshift=-13.01cm]current page.north west) --
+      ([xshift=17.72cm,yshift=-13.01cm]current page.north west);
+    \node[anchor=center,inner sep=0pt,align=center,text width=11.05cm]
+      at ([xshift=12.18cm,yshift=-12.43cm]current page.north west)
+      {{\ahnuCoverTitleValueFont \ahnuTitleZh}};
+    \ahnuCoverFieldEn{14.10cm}{Title:}{{\ahnuCoverTitleEnFont \ahnuTitleEn}}
+    \ahnuCoverField{18.45cm}{4.25cm}{学 科、专业：}{\ahnuMajor}
+    \ahnuCoverField{19.80cm}{4.25cm}{研 究 方 向：}{\ahnuResearchDirection}
+    \ahnuCoverField{21.15cm}{4.25cm}{作 者 姓 名：}{\ahnuAuthor}
+    \ahnuCoverField{22.50cm}{4.25cm}{导师及职称：}{\ahnuSupervisor}
+    \ahnuCoverField{23.85cm}{4.25cm}{论文提交日：}{\ahnuSubmitDate}
+    \ahnuCoverField{25.20cm}{4.25cm}{授予学位期：}{\ahnuDegreeDate}
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
+
+\newcommand{\ahnuMakeTitlePage}{%
+  \thispagestyle{ahnu-cover}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \draw[line width=0.4pt]
+      ([xshift=2.92cm,yshift=-2.84cm]current page.north west) rectangle
+      ([xshift=18.12cm,yshift=-26.95cm]current page.north west);
+    \node[anchor=north,inner sep=0pt,align=center,text width=12.8cm]
+      at ([yshift=-5.95cm]current page.north)
+      {{\ahnuHei\bfseries\fontsize{22bp}{30bp}\selectfont \ahnuTitleZh}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-10.15cm]current page.north)
+      {{\ahnuSong\fontsize{18bp}{24bp}\selectfont \ahnuAuthor}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-24.50cm]current page.north)
+      {{\ahnuSong\fontsize{18bp}{24bp}\selectfont \ahnuBottomLine}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-25.72cm]current page.north)
+      {{\ahnuSong\fontsize{18bp}{24bp}\selectfont \ahnuBottomDate}};
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
+
+\newcommand{\ahnuFrontHeading}[1]{%
+  \thispagestyle{ahnu-front}%
+  \begin{center}
+    \vspace*{1.6cm}
+    {\ahnuFrontTitleFont #1\par}
+  \end{center}
+  \vspace{0.8cm}
+}
