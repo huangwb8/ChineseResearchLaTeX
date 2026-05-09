@@ -19,6 +19,7 @@
 
 ### Fixed（修复）
 
+- 修复 `projects/GDNSF_General/` 报告正文页标题字体过黑、加粗观感与 Word 模板不一致的问题：将标题、提纲提示与各级条目从黑体/NotoSansSC-Bold 叠加伪粗调整为更接近原模板的宋体加粗体系，标题字号同步对齐为 18pt，并让“参照以下提纲撰写，”保留局部加粗、后续说明恢复常规宋体。
 - 修复 `skills/nsfc-research-foundation-writer/SKILL.md` frontmatter 混入 Markdown 正文导致 Codex 技能加载器 YAML 解析失败的问题，并增强该 skill 自检脚本的 frontmatter YAML 解析校验
 
 - 调整 `paper-sci-01` 的 PDF 参考文献可读性：在 [main.tex](/Volumes/2T01/Github/ChineseResearchLaTeX/projects/paper-sci-01/main.tex) 中为 bibliography 增加项目级 `\AtBeginBibliography{\fontsize{11.5pt}{16.5pt}\selectfont}` 覆盖，使 PDF 端参考文献条目在当前 Vancouver/JITC 风格下不再显得过小，同时不影响 DOCX 端和其它模板

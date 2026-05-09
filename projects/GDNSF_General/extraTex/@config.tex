@@ -46,8 +46,9 @@
 
 \newcommand{\GDNSFSetupBundledFonts}{%
   \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{SimSun.ttf}%
+  \setCJKfamilyfont{zhsong}[Path={\BenszFontsDir},AutoFakeBold=2.5]{SimSun.ttf}%
   \setCJKsansfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
-  \setCJKfamilyfont{zhhei}[Path={\BenszFontsDir},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhhei}[Path={\BenszFontsDir}]{AdobeHeitiStd-Regular.otf}%
   \setCJKfamilyfont{zhkai}[Path={\BenszFontsDir},AutoFakeBold=2.5]{Kaiti.ttf}%
   \setCJKfamilyfont{zhfs}[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
   \BenszFontsSetMainTimesFallback%
@@ -55,8 +56,9 @@
 
 \newcommand{\GDNSFSetupLocalFontFiles}[1]{%
   \setCJKmainfont[Path={#1},AutoFakeBold=2.5]{SimSun.ttf}%
+  \setCJKfamilyfont{zhsong}[Path={#1},AutoFakeBold=2.5]{SimSun.ttf}%
   \setCJKsansfont[Path={#1},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
-  \setCJKfamilyfont{zhhei}[Path={#1},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhhei}[Path={#1}]{AdobeHeitiStd-Regular.otf}%
   \setCJKfamilyfont{zhkai}[Path={#1},AutoFakeBold=2.5]{Kaiti.ttf}%
   \setCJKfamilyfont{zhfs}[Path={#1},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
   \setmainfont[Path={#1},Extension=.ttf,AutoFakeBold=5,AutoFakeSlant=0.2]{TimesNewRoman}%
@@ -72,6 +74,7 @@
     }{%
       \setmainfont{Times New Roman}%
       \setCJKmainfont[AutoFakeBold=2.5]{SimSun}%
+      \setCJKfamilyfont{zhsong}[AutoFakeBold=2.5]{SimSun}%
       \setCJKsansfont[AutoFakeBold=2.5]{SimHei}%
       \setCJKfamilyfont{zhhei}[AutoFakeBold=2.5]{SimHei}%
       \setCJKfamilyfont{zhkai}[AutoFakeBold=2.5]{KaiTi}%
@@ -82,10 +85,12 @@
 }
 \GDNSFSetupFonts
 
+\newcommand{\songti}{\CJKfamily{zhsong}}
 \newcommand{\heiti}{\CJKfamily{zhhei}}
 \newcommand{\kaishu}{\CJKfamily{zhkai}}
 \newcommand{\fangsong}{\CJKfamily{zhfs}}
 
+\newcommand{\xiaoer}{\fontsize{18pt}{24pt}\selectfont}
 \newcommand{\sanhao}{\fontsize{16pt}{22pt}\selectfont}
 \newcommand{\xiaosan}{\fontsize{15pt}{22pt}\selectfont}
 \newcommand{\sihao}{\fontsize{14pt}{24pt}\selectfont}
@@ -127,33 +132,33 @@
 \newcommand{\GDNSFReportTitle}{%
   \begin{center}
     \vspace*{-0.5em}
-    {\sanhao\heiti\bfseries 广东省自然科学基金面上项目\par}
+    {\xiaoer\songti\bfseries 广东省自然科学基金面上项目\par}
     \vspace{0.15em}
-    {\sanhao\heiti\bfseries 报告正文\par}
+    {\xiaoer\songti\bfseries 报告正文\par}
   \end{center}
   \vspace{0.3em}
 }
 
-\newcommand{\GDNSFGuidance}[1]{%
-  {\sihao\heiti\bfseries #1}\par
+\newcommand{\GDNSFGuidance}[2]{%
+  {\sihao\songti\bfseries #1}{\sihao\songti #2}\par
   \vspace{0.2em}
 }
 
 \newcommand{\GDNSFPart}[1]{%
   \par\vspace{0.15em}%
-  {\sihao\heiti\bfseries #1}\par
+  {\sihao\songti\bfseries #1}\par
   \vspace{0.1em}%
 }
 
 \newcommand{\GDNSFItem}[2]{%
   \par
-  {\sihao\heiti\bfseries #1}%
-  {\sihao #2}\par
+  {\sihao\songti\bfseries #1}%
+  {\sihao\songti #2}\par
 }
 
 \newcommand{\GDNSFSubheading}[1]{%
   \par\vspace{0.1em}%
-  {\xiaosi\heiti\bfseries #1}\par
+  {\xiaosi\songti\bfseries #1}\par
 }
 
 \newenvironment{GDNSFParagraphs}{%
@@ -163,6 +168,7 @@
 }
 
 \pdfstringdefDisableCommands{%
+  \def\songti{}%
   \def\heiti{}%
   \def\kaishu{}%
   \def\fangsong{}%
