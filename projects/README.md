@@ -28,6 +28,22 @@
 
 如果你是第一次接触本仓库，且当前任务是写国自然标书，通常从与你申报类型一致的 `NSFC_*` 项目进入即可。
 
+## 广东省自然科学基金（GDNSF）
+
+适合人群：
+
+- 正在准备广东省自然科学基金面上项目报告正文的科研人员
+- 需要将广东省基金 Word 提纲迁移到可维护 LaTeX 项目的用户
+
+说明：
+
+- 当前 `GDNSF_General/` 是项目层独立模板，优先复用共享字体资源，但不修改 `packages/bensz-nsfc/`
+- 构建入口为项目内 `python scripts/gdnsf_build.py build --project-dir .`
+
+| 项目 | 用途 | 适用场景 |
+|------|------|----------|
+| [`GDNSF_General/`](./GDNSF_General/) | 广东省自然科学基金面上项目报告正文模板 | 准备广东省自然科学基金面上项目正文上传材料 |
+
 ## SCI 论文
 
 适合人群：
@@ -94,6 +110,7 @@
 ## 选型建议
 
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
+- 写广东省自然科学基金面上项目报告正文：进入 `GDNSF_General/`
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`
 - 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）

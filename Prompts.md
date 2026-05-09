@@ -12,6 +12,10 @@
 
 ---
 
+projects/GDNSF_General/template/附件6：2025年广东省自然科学基金-面上项目申请书模板.docx 的第6页有个报告正文； 你做个latex模板。设计上，可以适当参考nsfc系列。尽量复用现有的资源；但如果必须重新造轮子也可以接收。 使用 awesome-code skill 辅助规划、优化。可以适当使用 make-latex-model skill 的能力。 所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+
+---
+
 这两个issue: https://github.com/huangwb8/ChineseResearchLaTeX/issues/40  和  https://github.com/huangwb8/ChineseResearchLaTeX/issues/41 要求制作2个新的毕业论文模板。 请你：
 
 - 彻底理解用户意图。下载必要的原始材料（比如，模板论文； 论文格式要求/规范等文件）

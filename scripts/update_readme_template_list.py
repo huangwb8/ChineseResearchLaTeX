@@ -4,7 +4,7 @@
 本脚本从以下数据源读取信息并渲染为 Markdown 表格：
 1. ``projects/*/template.json``：毕业论文项目的院校、学位等元数据
 2. GitHub Release API：获取最新 Release 的 tag、发布时间和资产下载链接
-3. 项目目录前缀（``NSFC_*`` / ``paper-*`` / ``thesis-*`` / ``cv-*``）：自动分类
+3. 项目目录前缀（``NSFC_*`` / ``GDNSF_*`` / ``paper-*`` / ``thesis-*`` / ``cv-*``）：自动分类
 
 渲染后的内容替换 README.md 中 ``<!-- TEMPLATE-LIST:START -->`` 和
 ``<!-- TEMPLATE-LIST:END -->`` 之间的区块。通常由 GitHub Actions 自动定时执行，
@@ -50,7 +50,7 @@ class TemplateSpec:
     """模板规格描述，对应 README 模板列表表格中的一行。
 
     Attributes:
-        category: 模板分类（nsfc / paper / thesis / cv）
+        category: 模板分类（nsfc / gdnsf / paper / thesis / cv）
         display_name: 表格中显示的模板名称
         local_path: 模板在仓库中的相对路径
         asset_prefix: Release 资产文件名前缀；None 表示该模板尚无 Release 资产
@@ -68,6 +68,7 @@ class TemplateSpec:
 # 各分类在 README 表格中的标题
 CATEGORY_TITLES = {
     "nsfc": "NSFC 模板",
+    "gdnsf": "广东省自然科学基金模板",
     "paper": "SCI 论文模板",
     "thesis": "学位论文 / 博士后模板",
     "cv": "简历模板",
@@ -76,6 +77,7 @@ CATEGORY_TITLES = {
 # 各分类在 README 表格中的描述文字
 CATEGORY_DESCRIPTIONS = {
     "nsfc": "当前主线，优先面向正式申报与 Overleaf 打包分发。",
+    "gdnsf": "项目层独立模板，面向广东省自然科学基金面上项目报告正文。",
     "paper": "公共包 + 示例项目已落地，支持 PDF / DOCX 双输出。",
     "thesis": "公共包 + 示例项目已落地，支持 PDF 输出与像素级验收。",
     "cv": "公共包 + 示例项目已落地，支持中英文 PDF 输出与像素级验收。",
@@ -117,6 +119,12 @@ BASE_TEMPLATE_SPECS = (
         display_name="地区",
         local_path="projects/NSFC_Local/",
         asset_prefix="NSFC_Local",
+    ),
+    TemplateSpec(
+        category="gdnsf",
+        display_name="广东省面上",
+        local_path="projects/GDNSF_General/",
+        asset_prefix="GDNSF_General",
     ),
 )
 
@@ -511,7 +519,7 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
         "",
     ]
 
-    for category in ("nsfc", "paper", "thesis", "cv"):
+    for category in ("nsfc", "gdnsf", "paper", "thesis", "cv"):
         category_specs = tuple(spec for spec in template_specs if spec.category == category)
         if not category_specs:
             continue

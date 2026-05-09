@@ -1,0 +1,169 @@
+% 广东省自然科学基金面上项目报告正文项目级配置。
+% 本文件保持项目层独立，不修改 NSFC 公共包，避免影响其它模板。
+
+\usepackage[english]{babel}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{setspace}
+\usepackage{ragged2e}
+\usepackage{indentfirst}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{etoolbox}
+\usepackage{ifthen}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{eso-pic}
+
+% 页面参数按 Word 导出 PDF 的报告正文页估算，并保留较宽正文区。
+\geometry{left=2.20cm,right=2.00cm,top=2.55cm,bottom=2.70cm}
+
+\definecolor{GDNSFBlue}{RGB}{0,0,0}
+\definecolor{GDNSFRed}{RGB}{255,0,0}
+\definecolor{GDNSFWatermark}{RGB}{210,210,210}
+
+\hypersetup{
+  colorlinks=true,
+  urlcolor=GDNSFBlue,
+  linkcolor=black,
+  anchorcolor=black,
+  citecolor=black,
+  CJKbookmarks=true
+}
+
+\newif\ifGDNSFUseSampleWatermark
+\GDNSFUseSampleWatermarkfalse
+
+\newcommand{\GDNSFSetupBundledFonts}{%
+  \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{SimSun.ttf}%
+  \setCJKsansfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhhei}[Path={\BenszFontsDir},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhkai}[Path={\BenszFontsDir},AutoFakeBold=2.5]{Kaiti.ttf}%
+  \setCJKfamilyfont{zhfs}[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \BenszFontsSetMainTimesFallback%
+}
+
+\newcommand{\GDNSFSetupLocalFontFiles}[1]{%
+  \setCJKmainfont[Path={#1},AutoFakeBold=2.5]{SimSun.ttf}%
+  \setCJKsansfont[Path={#1},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhhei}[Path={#1},AutoFakeBold=2.5]{NotoSansSC-Bold.otf}%
+  \setCJKfamilyfont{zhkai}[Path={#1},AutoFakeBold=2.5]{Kaiti.ttf}%
+  \setCJKfamilyfont{zhfs}[Path={#1},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setmainfont[Path={#1},Extension=.ttf,AutoFakeBold=5,AutoFakeSlant=0.2]{TimesNewRoman}%
+}
+
+\newcommand{\GDNSFSetupFonts}{%
+  \IfFileExists{styles/fonts/SimSun.ttf}{%
+    \GDNSFSetupLocalFontFiles{styles/fonts/}%
+  }{%
+    \IfFileExists{bensz-fonts.sty}{%
+      \usepackage{bensz-fonts}%
+      \GDNSFSetupBundledFonts%
+    }{%
+      \setmainfont{Times New Roman}%
+      \setCJKmainfont[AutoFakeBold=2.5]{SimSun}%
+      \setCJKsansfont[AutoFakeBold=2.5]{SimHei}%
+      \setCJKfamilyfont{zhhei}[AutoFakeBold=2.5]{SimHei}%
+      \setCJKfamilyfont{zhkai}[AutoFakeBold=2.5]{KaiTi}%
+      \setCJKfamilyfont{zhfs}[AutoFakeBold=2.5]{FangSong}%
+    }%
+  }%
+  \xeCJKsetup{PunctStyle=quanjiao}%
+}
+\GDNSFSetupFonts
+
+\newcommand{\heiti}{\CJKfamily{zhhei}}
+\newcommand{\kaishu}{\CJKfamily{zhkai}}
+\newcommand{\fangsong}{\CJKfamily{zhfs}}
+
+\newcommand{\sanhao}{\fontsize{16pt}{22pt}\selectfont}
+\newcommand{\xiaosan}{\fontsize{15pt}{22pt}\selectfont}
+\newcommand{\sihao}{\fontsize{14pt}{24pt}\selectfont}
+\newcommand{\xiaosi}{\fontsize{12pt}{22pt}\selectfont}
+\newcommand{\wuhao}{\fontsize{10.5pt}{18pt}\selectfont}
+
+\AtBeginDocument{\xiaosi}
+\pagestyle{empty}
+\renewcommand{\baselinestretch}{1.0}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\XeTeXlinebreaklocale "zh"
+\justifying
+
+\captionsetup{font={footnotesize,stretch=1.15},labelsep=period,labelfont=bf}
+\setlist{nosep,leftmargin=2em}
+
+\newcommand{\GDNSFBodyText}{%
+  \xiaosi
+  \setlength{\parindent}{2em}%
+  \setlength{\parskip}{0pt}%
+  \justifying
+}
+
+\newcommand{\GDNSFBlankPara}{\par\vspace*{\baselineskip}}
+
+\newcommand{\GDNSFMakeSampleWatermark}{%
+  \ifGDNSFUseSampleWatermark
+    \AddToShipoutPictureBG*{%
+      \AtPageCenter{%
+        \rotatebox{0}{%
+          \scalebox{7.5}{\textcolor{GDNSFWatermark}{\bfseries 申报书样本}}%
+        }%
+      }%
+    }%
+  \fi
+}
+
+\newcommand{\GDNSFReportTitle}{%
+  \begin{center}
+    \vspace*{-0.5em}
+    {\sanhao\heiti\bfseries 广东省自然科学基金面上项目\par}
+    \vspace{0.15em}
+    {\sanhao\heiti\bfseries 报告正文\par}
+  \end{center}
+  \vspace{0.3em}
+}
+
+\newcommand{\GDNSFGuidance}[1]{%
+  {\sihao\heiti\bfseries #1}\par
+  \vspace{0.2em}
+}
+
+\newcommand{\GDNSFPart}[1]{%
+  \par\vspace{0.15em}%
+  {\sihao\heiti\bfseries #1}\par
+  \vspace{0.1em}%
+}
+
+\newcommand{\GDNSFItem}[2]{%
+  \par
+  {\sihao\heiti\bfseries #1}%
+  {\sihao #2}\par
+}
+
+\newcommand{\GDNSFSubheading}[1]{%
+  \par\vspace{0.1em}%
+  {\xiaosi\heiti\bfseries #1}\par
+}
+
+\newenvironment{GDNSFParagraphs}{%
+  \GDNSFBodyText
+}{%
+  \par
+}
+
+\pdfstringdefDisableCommands{%
+  \def\heiti{}%
+  \def\kaishu{}%
+  \def\fangsong{}%
+}
