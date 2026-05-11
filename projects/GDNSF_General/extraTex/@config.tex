@@ -25,8 +25,8 @@
 \usepackage{tikz}
 \usepackage{eso-pic}
 
-% 页面参数按 Word 导出 PDF 的报告正文页估算，并保留较宽正文区。
-\geometry{left=2.20cm,right=2.00cm,top=2.55cm,bottom=2.70cm}
+% 报告正文节在 Word 原件中四边页边距约为 851 twips，即 1.50cm。
+\geometry{left=1.50cm,right=1.50cm,top=1.50cm,bottom=1.50cm}
 
 \definecolor{GDNSFBlue}{RGB}{0,0,0}
 \definecolor{GDNSFRed}{RGB}{255,0,0}
@@ -140,25 +140,30 @@
 }
 
 \newcommand{\GDNSFGuidance}[2]{%
-  {\sihao\songti\bfseries #1}{\sihao\songti #2}\par
+  {\raggedright{\sihao\songti\bfseries #1}{\sihao\songti #2}\par}%
   \vspace{0.2em}
 }
 
 \newcommand{\GDNSFPart}[1]{%
   \par\vspace{0.15em}%
-  {\sihao\songti\bfseries #1}\par
+  {\raggedright\sihao\songti\bfseries #1\par}%
   \vspace{0.1em}%
 }
 
 \newcommand{\GDNSFItem}[2]{%
   \par
-  {\sihao\songti\bfseries #1}%
-  {\sihao\songti #2}\par
+  {\raggedright{\sihao\songti\bfseries #1}%
+  {\sihao\songti #2}\par}%
+}
+
+\newcommand{\GDNSFItemFull}[1]{%
+  \par
+  {\raggedright\sihao\songti\bfseries #1\par}%
 }
 
 \newcommand{\GDNSFSubheading}[1]{%
   \par\vspace{0.1em}%
-  {\xiaosi\songti\bfseries #1}\par
+  {\raggedright\xiaosi\songti\bfseries #1\par}%
 }
 
 \newenvironment{GDNSFParagraphs}{%
