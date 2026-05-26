@@ -25,18 +25,30 @@ python packages/bensz-thesis/scripts/thesis_project_tool.py build \
 
 DOCX 导出（UCAS 资环 Word 对齐链路）：
 
-```bash
-python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
-  --project-dir projects/thesis-ucas-doctor
-```
+前置依赖：
 
-如果模板文件不在项目根目录，再显式指定：
+- `pandoc`：`portable` 和 `strict` 模式均需要
+- `python-docx`：`strict` 模式和 DOCX 后处理需要
+- Microsoft Word 与 `powershell` / `pwsh`：仅 `--word-update-fields` 增强项需要
 
 ```bash
-python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
+python projects/thesis-ucas-doctor/scripts/export_docx.py \
   --project-dir projects/thesis-ucas-doctor \
-  --reference-doc <path-to-reference.docx>
+  --reference-doc projects/thesis-ucas-doctor/docs/official/中国科学院大学资环学科群研究生学位论文word模板.docx \
+  --mode portable
 ```
+
+正式导出前可先执行 TeX 预处理，并使用 `strict` 模式启用更完整的 DOCX 结构检查：
+
+```bash
+python projects/thesis-ucas-doctor/scripts/export_docx.py \
+  --project-dir projects/thesis-ucas-doctor \
+  --reference-doc projects/thesis-ucas-doctor/docs/official/中国科学院大学资环学科群研究生学位论文word模板.docx \
+  --prepare-tex \
+  --mode strict
+```
+
+`--word-update-fields` 可在具备 Word 自动化能力的本机环境中更新目录和图表目录域；公开 CI 不默认依赖该增强项。
 
 该脚本会生成：
 
@@ -46,7 +58,8 @@ python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
 
 说明：
 
-- 脚本默认会优先寻找 `docs/official/` 下由用户自行放置的官方 Word 模板（其次兼容项目根目录与 `docs/`）
+- 脚本默认会优先寻找 `docs/official/` 下的官方 Word 模板（其次兼容项目根目录与 `docs/`）
+- 若 `strict` 模式需要指定带 `python-docx` 的解释器，请直接用该解释器运行脚本；`BENSZ_DOCX_PYTHON` 仅用于前置检查失败时显示推荐命令
 - 该链路优先对齐正文、摘要、标题层级与版面参数
 - 图表、算法和代码环境仍会按“人工整理”思路降级处理
 - 当前 DOCX 导出为 `thesis-ucas-doctor` 项目级对齐能力，仅用于资环模板结构与版式参考；该链路尚不完善，不构成 `bensz-thesis` 通用 DOCX 支持，复杂对象（图表/算法/代码环境/交叉引用等）仍需人工复核与整理，后续将持续优化
@@ -58,9 +71,9 @@ python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
 
 说明：
 
-- 仓库不直接分发 UCAS 官方 `.doc/.docx` 原件；请按 [`docs/official/README.md`](docs/official/README.md) 中的来源页面自行下载，并放入 `docs/official/`
-- `export_docx.py` 只依赖 Word 模板 `.docx`；“撰写具体要” `.doc` 仅用于人工核对条款与验收口径
-- 下载后可用 `sha256sum -c docs/official/SHA256SUMS.txt` 校验完整性
+- 仓库随 `thesis-ucas-doctor` 提供 UCAS 资环官方 Word 参考模板 `.docx` 与“撰写具体要” `.doc`
+- `export_docx.py` 自动导出只依赖 Word 模板 `.docx`；“撰写具体要” `.doc` 仅用于人工核对条款与验收口径
+- 可用 `sha256sum -c docs/official/SHA256SUMS.txt` 校验完整性
 
 资环一致性验收：
 
@@ -73,7 +86,10 @@ python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
 ```bash
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-ucas-doctor
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-ucas-doctor --tex-file spine.tex
-python3 projects/thesis-ucas-doctor/scripts/export_docx.py --project-dir projects/thesis-ucas-doctor
+python projects/thesis-ucas-doctor/scripts/export_docx.py \
+  --project-dir projects/thesis-ucas-doctor \
+  --reference-doc projects/thesis-ucas-doctor/docs/official/中国科学院大学资环学科群研究生学位论文word模板.docx \
+  --mode portable
 ```
 
 `main_from_tex_资环模板_质量报告.md` 中以下项应为 PASS：
