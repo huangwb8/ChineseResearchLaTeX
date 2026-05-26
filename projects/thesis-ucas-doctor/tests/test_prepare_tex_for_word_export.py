@@ -12,10 +12,11 @@ SCRIPTS_DIR = PROJECT_DIR / "scripts"
 
 
 def _load_module(module_name: str, path: Path):
-    spec = importlib.util.spec_from_file_location(module_name, path)
+    test_module_name = f"ucas_tests_{module_name}"
+    spec = importlib.util.spec_from_file_location(test_module_name, path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
-    sys.modules[module_name] = module
+    sys.modules[test_module_name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -35,6 +36,15 @@ class PrepareTexForWordExportTests(unittest.TestCase):
             "prepare_tex_for_word_export",
             SCRIPTS_DIR / "prepare_tex_for_word_export.py",
         )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        for module_name in (
+            "ucas_tests_normalize_time_unit_spacing",
+            "ucas_tests_fix_spacing",
+            "ucas_tests_prepare_tex_for_word_export",
+        ):
+            sys.modules.pop(module_name, None)
 
     def test_normalize_text_handles_trailing_chinese_after_d(self) -> None:
         normalized, hits, _ = self.normalize_module._normalize_text(

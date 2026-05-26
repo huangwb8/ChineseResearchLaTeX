@@ -18,9 +18,10 @@ MATH_PATTERNS = [
     re.compile(r"\\\((?:[^\\]|\\.)*?\\\)"),
     re.compile(r"\\\[(?:[^\\]|\\.)*?\\\]", re.DOTALL),
 ]
-UNIT_SPACING_TARGETS = ("d", "rpm", "g", "mg/kg")
+UNIT_SPACING_TARGETS = ("mg/kg", "rpm", "d", "g")
+UNIT_SPACING_UNITS_RE = "|".join(re.escape(unit) for unit in UNIT_SPACING_TARGETS)
 UNIT_SPACING_PATTERN = re.compile(
-    r"(?P<num>\d+(?:\.\d+)?)[ \t]+(?P<unit>mg/kg|rpm|d|g)(?=$|[^A-Za-z/])"
+    rf"(?P<num>\d+(?:\.\d+)?)[ \t]+(?P<unit>{UNIT_SPACING_UNITS_RE})(?=$|[^A-Za-z/])"
 )
 
 

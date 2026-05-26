@@ -162,7 +162,10 @@ def _v_attr(key: str) -> str:
 
 def discover_reference_doc(project_dir: Path, explicit: Optional[Path]) -> Path:
     if explicit is not None:
-        return explicit.resolve()
+        expanded = explicit.expanduser()
+        if expanded.is_absolute() or expanded.exists():
+            return expanded.resolve()
+        return (project_dir / expanded).resolve()
 
     candidates: List[Path] = []
     for name in DEFAULT_REFERENCE_DOC_NAMES:

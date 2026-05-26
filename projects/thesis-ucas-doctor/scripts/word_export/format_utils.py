@@ -479,7 +479,6 @@ def latex_inline_to_text(text: str) -> str:
     # 将形如 Ca$^{2+}$、SO$_4^{2-}$ 的“纯上下标数学块”转为普通文本，
     # 并将简单 pH 阈值、统计符号转成非 OMML 文本。
     text = re.sub(r"\$([^$\n]+)\$", _plain_inline_math_repl, text)
-    text = _normalize_soil_notation(text)
     text = re.sub(r"\\url\{([^{}]*)\}", r"<\1>", text)
     text = re.sub(r"\\path\{([^{}]*)\}", r"`\1`", text)
     text = re.sub(r"\\verb(.)(.*?)\1", r"`\2`", text)
