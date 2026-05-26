@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -13,10 +14,10 @@ SCRIPT_PATH = PROJECT_DIR / "scripts" / "export_docx.py"
 
 
 def _load_export_module():
-    spec = importlib.util.spec_from_file_location("ucas_export_docx_public", SCRIPT_PATH)
+    spec = importlib.util.spec_from_file_location("ucas_tests_export_docx_public", SCRIPT_PATH)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
-    sys.modules["ucas_export_docx_public"] = module
+    sys.modules["ucas_tests_export_docx_public"] = module
     spec.loader.exec_module(module)
     return module
 
@@ -26,6 +27,10 @@ class ExportDocxPublicTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.export_module = _load_export_module()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        sys.modules.pop("ucas_tests_export_docx_public", None)
+
     def test_discover_reference_doc_finds_official_template(self) -> None:
         reference_doc = self.export_module.discover_reference_doc(PROJECT_DIR, None)
 
@@ -34,7 +39,7 @@ class ExportDocxPublicTests(unittest.TestCase):
         self.assertTrue(reference_doc.exists())
 
     def test_explicit_reference_doc_can_be_relative_to_project(self) -> None:
-        explicit = PROJECT_DIR / "docs/official/中国科学院大学资环学科群研究生学位论文word模板.docx"
+        explicit = Path("docs/official/中国科学院大学资环学科群研究生学位论文word模板.docx")
         reference_doc = self.export_module.discover_reference_doc(
             PROJECT_DIR,
             explicit,
@@ -84,9 +89,11 @@ class ExportDocxPublicTests(unittest.TestCase):
             target = Path(tmp) / "output.docx"
             target.write_bytes(b"placeholder")
 
-            self.export_module._ensure_target_writable(target)
+            with patch.object(Path, "replace", side_effect=PermissionError(13, "locked")):
+                with self.assertRaises(PermissionError) as context:
+                    self.export_module._ensure_target_writable(target)
 
-        self.assertTrue(True)
+        self.assertIn("output.docx", str(context.exception))
 
 
 if __name__ == "__main__":

@@ -39,11 +39,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="实际写回文件；默认仅 dry-run",
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="显式执行 dry-run（与默认行为一致）。",
-    )
     return parser.parse_args()
 
 
@@ -109,10 +104,6 @@ def main() -> int:
         return 1
     if not normalize_script.exists():
         print(f"[ERROR] normalize_time_unit_spacing.py 不存在：{normalize_script}")
-        return 1
-
-    if args.apply and args.dry_run:
-        print("[ERROR] `--apply` 与 `--dry-run` 不能同时使用。")
         return 1
 
     mode = "apply" if args.apply else "dry-run"
