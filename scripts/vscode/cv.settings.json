@@ -4,6 +4,10 @@
   "latex-workshop.latex.outDir": ".latex-cache/%DOCFILE%",
   "latex-workshop.latex.auxDir": ".latex-cache/%DOCFILE%",
 
+  // Keep tracked LaTeX sources aligned with `.gitattributes`.
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+
   // Prevent magic comments from bypassing the unified Python render pipeline.
   "latex-workshop.latex.build.enableMagicComments": false,
   "latex-workshop.latex.build.forceRecipeUsage": true,

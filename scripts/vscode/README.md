@@ -27,4 +27,4 @@ python scripts/sync_vscode_configs.py --check
 
 原则上应先修改本目录模板，再同步到具体项目；不要只改单个 `projects/*/.vscode/settings.json`、单个 `*.code-workspace` 或单个项目里的 `scripts/latex_workshop_build.lua`，否则后续容易再次漂移。
 
-当前模板默认不再依赖 `bash -lc "python3 ..."` 这类偏 Unix 的写法，而是让 LaTeX Workshop 调用 `texlua` 执行项目内同步下发的 `scripts/latex_workshop_build.lua`。这样在 TeX 与 Python 均已安装的前提下，macOS / Linux / Windows 都可以复用同一份 `.vscode/settings.json`。
+当前模板默认不再依赖 `bash -lc "python3 ..."` 这类偏 Unix 的写法，而是让 LaTeX Workshop 调用 `texlua` 执行项目内同步下发的 `scripts/latex_workshop_build.lua`。这样在 TeX 与 Python 均已安装的前提下，macOS / Linux / Windows 都可以复用同一份 `.vscode/settings.json`。launcher 会优先读取 `BENSZ_VSCODE_PYTHON`，再尝试当前虚拟环境或 Conda 环境，最后回退到当前会话可用的 `python3` / `python` / `py -3`。如需绑定本机特定解释器，请在本地环境变量中配置 `BENSZ_VSCODE_PYTHON`，不要把绝对路径写入仓库模板。

@@ -1,0 +1,16 @@
+skill_info:
+  name: thesis-writing-workflow
+  version: 0.1.0
+  description: "学位论文写作流程编排：将扫描、裁定、回填、验证和交付记录组织为可复现流程；不保存真实正文、工具名、模型名或私有执行历史"
+  author: "ChineseResearchLaTeX contributors"
+  category: "writing"
+
+workflow:
+  stages:
+    - scan
+    - adjudicate
+    - apply
+    - verify
+    - deliver
+  truth_source: "project_latex_sources"
+  record_policy: "templates_only"

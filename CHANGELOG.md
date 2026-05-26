@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 [docs/for-developers/thesis-writing-workflow.md](docs/for-developers/thesis-writing-workflow.md) 与 `skills/thesis-writing-workflow/`：将毕业论文长期写作中的扫描、裁定、回填、验证和交付记录抽象为公开流程与空模板，强调正式 LaTeX 源文件是唯一正文真相源，且不公开真实正文、真实运行记录、具体工具名、模型名或私有信息。
 - 新增 `projects/GDNSF_General/`：基于 `projects/GDNSF_General/template/附件6：2025年广东省自然科学基金-面上项目申请书模板.docx` 的报告正文提纲，落地广东省自然科学基金面上项目报告正文 LaTeX 模板；项目层独立维护 `main.tex`、`extraTex/`、`references/`、VS Code 配置与 `scripts/gdnsf_build.py` 构建入口，默认复用 `bensz-fonts` 字体资源且不修改 `packages/bensz-nsfc/`，避免影响现有 NSFC 模板；同步扩展 `scripts/pack_release.py`、`scripts/sync_vscode_configs.py` 与 `scripts/update_readme_template_list.py` 的 `GDNSF_` 项目识别，确保 VS Code 同步、首页模板列表与 Overleaf 字体运行时打包不会遗漏该模板
 - 新增 `projects/thesis-just-bachelor/`、`projects/thesis-ahnu-master/`、对应项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-just-bachelor.def`、`packages/bensz-thesis/profiles/bthesis-profile-thesis-ahnu-master.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-just-bachelor.tex`、`packages/bensz-thesis/styles/bthesis-style-thesis-ahnu-master.tex`：基于 issue #40 / #41 的公开材料为 `bensz-thesis` 产品线新增江苏科技大学学士论文与安徽师范大学硕士论文两套独立模板身份，并保持源码、构建链路与项目示例分层清晰
 - 新增 `projects/paper-coverletter-01/`、`projects/paper-coverletter-01/AGENTS.md`、`projects/paper-coverletter-01/CLAUDE.md`、`projects/paper-coverletter-01/scripts/paper_build.py` 与匿名化 `extraTex/` 示例正文：基于真实 Word cover letter 的结构抽象出首个投稿信模板项目，默认复用 `bensz-paper` 公共包、不新增专门 cover letter 包，并以 `Feng BaoBao` 作为公开示例中的通讯作者占位名
@@ -120,6 +121,7 @@
   - `skills/transfer-old-latex-to-new/scripts/README.md`：将 `run.py`、`migrate.sh` 等脚本降级为可选 legacy CLI 后备说明
   - 新增 `skills/transfer-old-latex-to-new/CHANGELOG.md`：为该 skill 建立独立版本记录
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：进一步收紧 NJU 硕士论文封面中“论文题目 / 作者姓名 / 专业名称 / 研究方向 / 指导教师”字段的专用行距、字段盒高度、题目双行间距与字段区上下留白，并下移日期位置，使左侧标签和右侧填写内容的纵向节奏更贴近公开示例
+- 更新 `packages/bensz-thesis/scripts/thesis_project_tool.py`、`packages/bensz-thesis/styles/ucas/ucasDissertation.cls`、`packages/bensz-fonts/bensz-fonts.sty` 与 `scripts/vscode/`：收口 UCAS 博士论文模板的本地构建锁、缓存清理、字体路径、参考文献/题注样式与 VS Code/LaTeX Workshop 跨平台 launcher 口径，并保持既有毕业论文直通 PDF 构建能力兼容。
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：修正 NJU 硕士论文封面字段的排版顺序，将值文字恢复到横线上方、横线改为下划线语义，避免首页出现“上面一条线、下面一行字”的错误布局
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：收紧 NJU 硕士论文封面字段的标签盒宽度与标签到填写线的间距，统一“论文题目 / 作者姓名 / 专业名称 / 研究方向 / 指导教师”左侧标签的字距与横线起点，使信息区更贴近公开基线封面
 - 更新 `packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex`：将 NJU 硕士论文封面题目区改为按整块高度垂直对齐，并移除双行题目块末尾的额外留白，使“论文题目”标签与双行题目填写区的相对位置更贴近公开样张

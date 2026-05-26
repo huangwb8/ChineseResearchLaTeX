@@ -15,7 +15,6 @@
 \DeclareBoolOption[false]{print} % 印刷版/电子版 (电子版非另页右页, 仅另页), 默认为电子版
 \DeclareBoolOption[false]{colorlinks} % 超链接是否彩色, 默认false, 此时为黑色无边框
 \DeclareBoolOption[false]{bibBackref} % 是否在参考文献列表中显示文献引用页, 默认false, 此时为不显示
-\DeclareBoolOption[false]{resourceenv} % 资环学科群三级标题约束
 \DeclareVoidOption{draft}{
     \special{xdvipdfmx:config z 0} % 将pdf压缩等级设为0, 缩短生成时间 (但会导致pdf更大)
     \PassOptionsToClass{draft}{ctexbook}
@@ -89,7 +88,14 @@
 % 默认字体 ---------------------------------------------------------------------
 % ctex默认衬线字体为宋体, 无衬线字体 (\sffamily) 为黑体
 \RequirePackage{fontspec}
-\setmainfont{Times New Roman} % 设置英文及阿拉伯数字字体
+\setmainfont{Times New Roman}[%
+    BoldFont = * Bold,%
+    ItalicFont = * Italic,%
+    BoldItalicFont = * Bold Italic%
+] % 设置英文及阿拉伯数字字体
+\ifdefined\xeCJKsetup
+  \xeCJKsetup{AutoFakeBold=2,AutoFakeSlant=0.2}
+\fi
 
 % 按文档结构设置样式 ------------------------------------------------------------
 \renewcommand{\frontmatter}{
@@ -259,8 +265,10 @@
             \parbox{0.84\textheight}{
                 \centering
                 \heiti\zihao{-3}\UCAS@title@cn\par
-                \vspace{1.2\baselineskip}
-                \heiti\zihao{4}\UCAS@author@cn
+                \vfill
+                \heiti\zihao{4}\UCAS@author@cn\par
+                \vfill
+                \heiti\zihao{4}中国科学院大学
             }
         }
     \end{center}
@@ -289,7 +297,8 @@
         摘\quad 要
     }
     \UCAS@abstract@cn\par
-    \vspace{\baselineskip}\par % 关键词与摘要间空一行
+    % 用显式空白段落保证“摘要末尾与关键词间空一行”在不同分页场景下稳定生效
+    \noindent\mbox{}\par
     \noindent\textbf{关键词:}\ \UCAS@keywords@cn
 
     \ifUCAS@print\cleardoublepage\else\clearpage\fi
@@ -299,7 +308,8 @@
         Abstract
     }
     \UCAS@abstract@en\par
-    \vspace{\baselineskip}\par
+    % 用显式空白段落保证“英文摘要末尾与Key Words间空一行”稳定生效
+    \noindent\mbox{}\par
     \noindent\textbf{Key Words:}\ \UCAS@keywords@en
 
     \global\let\makeAbstract\relax % 销毁该命令, 防止重复调用
@@ -457,57 +467,53 @@
 }
 % 文档默认样式即段落文字样式
 
-\ctexset{secnumdepth=subsubsection} % 正文中对最多四级的标题编号, 更深的标题不编号
+\ctexset{secnumdepth=subsection} % 正文中仅对最多三级标题编号
+\setcounter{tocdepth}{2} % 目录中最多显示到三级标题
 
-\ifUCAS@resourceenv
-    \ctexset{secnumdepth=subsection} % 资环口径中正文仅对最多三级标题编号
-    \setcounter{tocdepth}{2} % 目录中最多显示到三级标题
+% 资环口径要求最多到三级标题：四级及更深层级不阻断，但给出告警并降级为非正式标题
+\newcommand{\UCAS@warnDeepHeading}[1]{
+    \PackageWarningNoLine{styles/ucas/ucasDissertation}{
+        Detected \string#1.\MessageBreak
+        UCAS resource-environment guideline allows at most level-3 headings.\MessageBreak
+        The heading is downgraded to unnumbered form and excluded from TOC.
+    }
+}
 
-    % 资环口径要求最多到三级标题：四级及更深层级不阻断，但给出告警并降级为非正式标题
-    \newcommand{\UCAS@warnDeepHeading}[1]{
-        \PackageWarningNoLine{styles/ucas/ucasDissertation}{
-            Detected \string#1.\MessageBreak
-            UCAS resource-environment guideline allows at most level-3 headings.\MessageBreak
-            The heading is downgraded to unnumbered form and excluded from TOC.
-        }
-    }
+\let\UCAS@orig@subsubsection\subsubsection
+\renewcommand{\subsubsection}{\@ifstar{\UCAS@subsubsection@star}{\UCAS@subsubsection@nostar}}
+\newcommand{\UCAS@subsubsection@star}[1]{
+    \UCAS@warnDeepHeading{\subsubsection}
+    \UCAS@orig@subsubsection*{#1}
+}
+\newcommand{\UCAS@subsubsection@nostar}{\@dblarg\UCAS@subsubsection@nostar@i}
+\newcommand{\UCAS@subsubsection@nostar@i}[2]{
+    \UCAS@warnDeepHeading{\subsubsection}
+    \UCAS@orig@subsubsection*{#2}
+}
 
-    \let\UCAS@orig@subsubsection\subsubsection
-    \renewcommand{\subsubsection}{\@ifstar{\UCAS@subsubsection@star}{\UCAS@subsubsection@nostar}}
-    \newcommand{\UCAS@subsubsection@star}[1]{
-        \UCAS@warnDeepHeading{\subsubsection}
-        \UCAS@orig@subsubsection*{#1}
-    }
-    \newcommand{\UCAS@subsubsection@nostar}{\@dblarg\UCAS@subsubsection@nostar@i}
-    \newcommand{\UCAS@subsubsection@nostar@i}[2]{
-        \UCAS@warnDeepHeading{\subsubsection}
-        \UCAS@orig@subsubsection*{#2}
-    }
+\let\UCAS@orig@paragraph\paragraph
+\renewcommand{\paragraph}{\@ifstar{\UCAS@paragraph@star}{\UCAS@paragraph@nostar}}
+\newcommand{\UCAS@paragraph@star}[1]{
+    \UCAS@warnDeepHeading{\paragraph}
+    \UCAS@orig@paragraph*{#1}
+}
+\newcommand{\UCAS@paragraph@nostar}{\@dblarg\UCAS@paragraph@nostar@i}
+\newcommand{\UCAS@paragraph@nostar@i}[2]{
+    \UCAS@warnDeepHeading{\paragraph}
+    \UCAS@orig@paragraph*{#2}
+}
 
-    \let\UCAS@orig@paragraph\paragraph
-    \renewcommand{\paragraph}{\@ifstar{\UCAS@paragraph@star}{\UCAS@paragraph@nostar}}
-    \newcommand{\UCAS@paragraph@star}[1]{
-        \UCAS@warnDeepHeading{\paragraph}
-        \UCAS@orig@paragraph*{#1}
-    }
-    \newcommand{\UCAS@paragraph@nostar}{\@dblarg\UCAS@paragraph@nostar@i}
-    \newcommand{\UCAS@paragraph@nostar@i}[2]{
-        \UCAS@warnDeepHeading{\paragraph}
-        \UCAS@orig@paragraph*{#2}
-    }
-
-    \let\UCAS@orig@subparagraph\subparagraph
-    \renewcommand{\subparagraph}{\@ifstar{\UCAS@subparagraph@star}{\UCAS@subparagraph@nostar}}
-    \newcommand{\UCAS@subparagraph@star}[1]{
-        \UCAS@warnDeepHeading{\subparagraph}
-        \UCAS@orig@subparagraph*{#1}
-    }
-    \newcommand{\UCAS@subparagraph@nostar}{\@dblarg\UCAS@subparagraph@nostar@i}
-    \newcommand{\UCAS@subparagraph@nostar@i}[2]{
-        \UCAS@warnDeepHeading{\subparagraph}
-        \UCAS@orig@subparagraph*{#2}
-    }
-\fi
+\let\UCAS@orig@subparagraph\subparagraph
+\renewcommand{\subparagraph}{\@ifstar{\UCAS@subparagraph@star}{\UCAS@subparagraph@nostar}}
+\newcommand{\UCAS@subparagraph@star}[1]{
+    \UCAS@warnDeepHeading{\subparagraph}
+    \UCAS@orig@subparagraph*{#1}
+}
+\newcommand{\UCAS@subparagraph@nostar}{\@dblarg\UCAS@subparagraph@nostar@i}
+\newcommand{\UCAS@subparagraph@nostar@i}[2]{
+    \UCAS@warnDeepHeading{\subparagraph}
+    \UCAS@orig@subparagraph*{#2}
+}
 
 %列表 --------------------------------------------------------------------------
 % 设置无序列表标签样式
@@ -548,6 +554,11 @@
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{unicode-math}
+\IfFontExistsTF{Times New Roman}{
+    \setmathrm{Times New Roman}
+}{
+    \setmathrm{TeX Gyre Termes}
+}
 \everydisplay{\zihao{5}} % 显示公式的表达式及右侧编号为五号Times New Roman
 \RequirePackage{gensymb} % 提供一些科学和数学中常用的通用符号，如单位符号
 
@@ -596,14 +607,18 @@
     skip=0pt, % 题注与上文及下文的距离 (其实是设置与下文间距为0)
     aboveskip=0.5em, % 题注与上文的距离
 }
+\DeclareCaptionLabelFormat{ucas-cn}{#1#2}
+\DeclareCaptionLabelFormat{ucas-en}{#1~#2}
 \DeclareCaptionFormat{cn}{\vspace{6pt}\songti\zihao{5}\bfseries\linespread{1.25}#1#2#3\par} % 中文图/表题样式: 宋体五号加粗1.25倍行距, 段前6pt段后0pt
 \DeclareCaptionFormat{en}{\zihao{5}\bfseries\linespread{1.25}#1#2#3\vspace{12pt}\par} % 英文图/表题样式: Times New Roman五号加粗1.25倍行距, 段前6pt段后0pt
 \captionsetup[bi-first]{format=cn, justification=raggedright, singlelinecheck=true}
 \captionsetup[bi-second]{format=en, justification=raggedright, singlelinecheck=true}
-\captionsetup[figure][bi-first]{name={图}}
-\captionsetup[table][bi-first]{name={表}}
-\captionsetup[listing][bi-first]{name={代码}}
-\captionsetup[listing][bi-second]{name={Code}}
+\captionsetup[figure][bi-first]{name={图}, labelformat=ucas-cn}
+\captionsetup[figure][bi-second]{name={Figure}, labelformat=ucas-en}
+\captionsetup[table][bi-first]{name={表}, labelformat=ucas-cn}
+\captionsetup[table][bi-second]{name={Table}, labelformat=ucas-en}
+\captionsetup[listing][bi-first]{name={代码}, labelformat=ucas-cn}
+\captionsetup[listing][bi-second]{name={Code}, labelformat=ucas-en}
 \renewcommand{\thefigure}{\thechapter-\arabic{figure}} % 图序号样式: 章节-序号
 \renewcommand{\thetable}{\thechapter-\arabic{table}}
 \renewcommand{\theequation}{\thechapter-\arabic{equation}}
@@ -630,12 +645,15 @@
 \RequirePackage[
     backend = biber,
     maxbibnames = 3,
-    style = gb7714-2015, % chktex 8 % biblatex-gb7714-2015宏包提供的顺序编码制
-    citestyle = gb7714-2015, % chktex 8
+    style = gb7714-2015ay, % chktex 8 % biblatex-gb7714-2015宏包提供的著者-出版年制
+    citestyle = gb7714-2015ay, % chktex 8
+    gbcitelocal=gb7714-2015, % 按条目语言自动区分本地化字符串：中文“等”/英文“et al.”
     gbnamefmt=lowercase, % 对于bib文件中的作者姓名的大小写不做改变
     gbpub=false, % 放弃国标的要求, 不使用"出版地不详"等补充信息
-    doi=false, % 不显示DOI
+    doi=true, % 对无明确页码的连续出版物保留 DOI 显示能力
     defernumbers=true, % 以允许\printbibliography{}的resetnumbers=true选项
+    uniquename=false, % 保持正文著者-年份引用为姓氏口径，不因同姓自动加入名首字母
+    uniquelist=false, % 保持 et al. 口径稳定，不因同第一作者同年自动展开作者列表
 ]{biblatex}
 
 % 修改\printbibliography页眉样式为和正文一样
@@ -645,6 +663,15 @@
         \addcontentsline{toc}{chapter}{#1}%
         #1%
     }%
+}
+
+% 参考文献段落格式与资环 Word 模板对齐：
+% 保持正文同字号/行距，不使用正文首行缩进，改为两字符悬挂缩进。
+\AtBeginBibliography{%
+    \setstretch{1.25}%
+    \setlength\bibitemsep{0pt}%
+    \setlength\bibparsep{0pt}%
+    \setlength\bibhang{2em}%
 }
 
 % 附录 -------------------------------------------------------------------------

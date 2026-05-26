@@ -1,10 +1,8 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{bensz-fonts}[2026/03/16 f_v20260316 ChineseResearchLaTeX Shared Fonts]
 
-\RequirePackage[abspath]{currfile}
-
-\getabspath{bensz-fonts.sty}
-\edef\BenszFontsPackageDir{\theabsdir}
+\RequirePackage{currfile}
+\edef\BenszFontsPackageDir{\currfiledir}
 
 \newcommand{\BenszFontsDir}{\BenszFontsPackageDir fonts/}
 \newcommand{\BenszFontsFile}[1]{\BenszFontsPackageDir fonts/#1}

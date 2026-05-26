@@ -61,6 +61,19 @@ local function quote(arg)
   return quote_posix(arg)
 end
 
+local function to_windows_path(path)
+  local drive, tail = tostring(path):match("^/mnt/([a-zA-Z])/(.+)$")
+  if drive ~= nil and tail ~= nil then
+    return drive:upper() .. ":\\" .. tail:gsub("/", "\\")
+  end
+  return tostring(path)
+end
+
+local function is_windows_python_executable(path)
+  local text = tostring(path)
+  return text:match("^%a:[/\\]") ~= nil or text:match("^/mnt/[a-zA-Z]/.+%.exe$") ~= nil
+end
+
 local function join_command(tokens)
   local quoted = {}
   for index, token in ipairs(tokens) do
@@ -164,13 +177,26 @@ if python_command == nil then
   os.exit(1)
 end
 
+local use_windows_python_path_mapping = (not is_windows) and is_windows_python_executable(python_command[1])
+
+local function normalize_runtime_arg(token)
+  if not use_windows_python_path_mapping then
+    return token
+  end
+  local text = tostring(token)
+  if text:sub(1, 1) == "-" then
+    return text
+  end
+  return to_windows_path(text)
+end
+
 local command = {}
 for _, token in ipairs(python_command) do
   command[#command + 1] = token
 end
-command[#command + 1] = script_path
+command[#command + 1] = normalize_runtime_arg(script_path)
 for index = 2, #arg do
-  command[#command + 1] = arg[index]
+  command[#command + 1] = normalize_runtime_arg(arg[index])
 end
 
 local ok, kind, code = os.execute(join_command(command))

@@ -559,7 +559,36 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 18. paper-write-sci - SCI 论文写作与修订
+### 18. thesis-writing-workflow - 学位论文写作流程编排
+
+**状态**：🚧 开发中（版本见 `skills/thesis-writing-workflow/config.yaml`）
+
+**类型**：📝 日常
+
+**功能**：将学位论文的扫描、裁定、回填、验证和交付记录组织为可追踪流程；只处理流程编排和门禁，不保存真实论文内容。
+
+**使用场景**：
+- 你需要开始一轮章节审阅、人工意见回流或交付前检查
+- 你希望先记录和裁定候选问题，再小批量回填正式 LaTeX 源文件
+- 你需要在图表变更后检查引用、标签和编号级联
+
+**推荐 Prompt 模板**：
+
+```text
+请使用 thesis-writing-workflow 处理本轮学位论文修改：
+project-dir: <project-dir>
+source-files: <chapter-file>
+review-input: <review-summary>
+run-log: <run-log-file>
+verification-command: <verification-command>
+要求：先扫描和裁定，再小批量回填；每批完成后记录验证结果。
+```
+
+[详细文档 →](thesis-writing-workflow/SKILL.md)
+
+---
+
+### 19. paper-write-sci - SCI 论文写作与修订
 
 **状态**：🚧 开发中（v0.11.1）
 
@@ -593,7 +622,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 19. paper-explain-figures - 论文 Figure 解读
+### 20. paper-explain-figures - 论文 Figure 解读
 
 **状态**：🚧 开发中（v0.2.0）
 
@@ -625,7 +654,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 20. paper-select-journal - SCI 投稿期刊筛选
+### 21. paper-select-journal - SCI 投稿期刊筛选
 
 **状态**：🚧 开发中（v0.3.1）
 
@@ -657,7 +686,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 21. nsfc-qc - NSFC 标书质量控制
+### 22. nsfc-qc - NSFC 标书质量控制
 
 **状态**：✅ 稳定（版本见 `skills/nsfc-qc/config.yaml`）
 
@@ -690,7 +719,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 22. nsfc-length-aligner - NSFC 标书篇幅对齐
+### 23. nsfc-length-aligner - NSFC 标书篇幅对齐
 
 **状态**：🚧 开发中（版本见 `skills/nsfc-length-aligner/config.yaml`）
 
@@ -721,7 +750,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 23. nsfc-humanization - 去 AI 机器味润色
+### 24. nsfc-humanization - 去 AI 机器味润色
 
 **状态**：✅ 稳定（版本见 `skills/nsfc-humanization/config.yaml`）
 
@@ -771,6 +800,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - **paper-write-sci**：SCI 论文写作与修订（依赖 LaTeX 论文项目结构）
 - **paper-explain-figures**：论文 Figure 解读（可与 paper-write-sci 配合使用）
 - **paper-select-journal**：论文接近成稿后做期刊筛选（可复用 paper-write-sci 产出的 manuscript）
+- **thesis-writing-workflow**：学位论文长周期修改的总入口，只负责编排扫描、裁定、回填、验证和交付门禁，并按问题类型转交写作修订、引用核查、资料整理或格式检查能力
 
 ### 推荐使用顺序
 
@@ -794,6 +824,13 @@ output_mode：preview（先预览）/ apply（确认后写入）
 1. **paper-write-sci** → 撰写、修订和结构化审查论文正文
 2. **paper-explain-figures** → 在复杂 Figure 场景下补足读图理解与叙事说明
 3. **paper-select-journal** → 基于接近定稿的 manuscript 做证据驱动的选刊排序
+
+对于学位论文长周期修改，建议按以下顺序使用技能：
+
+1. **thesis-writing-workflow** → 建立本轮任务范围、记录模板和验证门禁
+2. 按问题类型调用写作修订、引用核查、资料整理或格式检查能力，输出候选问题和处理建议
+3. **thesis-writing-workflow** → 裁定候选问题，小批量回填正式 LaTeX 源文件
+4. **thesis-writing-workflow** → 执行构建、diff、引用和图表级联检查，并形成交付摘要
 
 ---
 

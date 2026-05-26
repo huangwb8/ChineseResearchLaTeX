@@ -74,6 +74,7 @@ python scripts/sync_vscode_configs.py
 - [NSFC 模板标准](./nsfc-template-standard.md)
 - [SCI 论文模板标准](./paper-template-standard.md)
 - [毕业论文模板标准](./thesis-template-standard.md)
+- [毕业论文写作工作流](./thesis-writing-workflow.md)
 - [学术简历模板标准](./cv-template-standard.md)
 
 ## 贡献前自检清单
