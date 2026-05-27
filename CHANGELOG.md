@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 [docs/for-developers/fork-maintenance.md](docs/for-developers/fork-maintenance.md) 与 `scripts/test_fork_ci_adaptations.py`：记录并自动检查 `Tenstu/ChineseResearchLaTeX` fork 需要长期保留的 CI 适配，防止后续合并上游时无声覆盖 README 模板列表同步源和 Gitee 镜像未配置时的 no-op 行为。
 - 新增 [docs/for-developers/thesis-writing-workflow.md](docs/for-developers/thesis-writing-workflow.md) 与 `skills/thesis-writing-workflow/`：将毕业论文长期写作中的扫描、裁定、回填、验证和交付记录抽象为公开流程与空模板，强调正式 LaTeX 源文件是唯一正文真相源，且不公开真实正文、真实运行记录、具体工具名、模型名或私有信息。
 - 新增 `projects/thesis-ucas-doctor` 的公开 Word 导出链路：提交官方 Word 模板与撰写规范原件、LaTeX 预处理脚本、DOCX 导出脚本、公开格式检查清单和脱敏回归测试，支持通过官方 `.docx` 参考模板生成 UCAS 学位论文 Word 文档，同时避免引入私人正文、过程记录或生成产物
 - 新增 `projects/GDNSF_General/`：基于 `projects/GDNSF_General/template/附件6：2025年广东省自然科学基金-面上项目申请书模板.docx` 的报告正文提纲，落地广东省自然科学基金面上项目报告正文 LaTeX 模板；项目层独立维护 `main.tex`、`extraTex/`、`references/`、VS Code 配置与 `scripts/gdnsf_build.py` 构建入口，默认复用 `bensz-fonts` 字体资源且不修改 `packages/bensz-nsfc/`，避免影响现有 NSFC 模板；同步扩展 `scripts/pack_release.py`、`scripts/sync_vscode_configs.py` 与 `scripts/update_readme_template_list.py` 的 `GDNSF_` 项目识别，确保 VS Code 同步、首页模板列表与 Overleaf 字体运行时打包不会遗漏该模板

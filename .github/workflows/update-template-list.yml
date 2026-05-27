@@ -47,7 +47,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml
-          pytest -q scripts/test_update_readme_template_list.py scripts/test_issue_templates.py
+          pytest -q scripts/test_update_readme_template_list.py scripts/test_issue_templates.py scripts/test_fork_ci_adaptations.py
 
       - name: Update README template list
         env:
