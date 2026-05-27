@@ -30,7 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
-      TARGET_REPO: ${{ inputs.repo || github.repository }}
+      TARGET_REPO: ${{ inputs.repo || 'huangwb8/ChineseResearchLaTeX' }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
