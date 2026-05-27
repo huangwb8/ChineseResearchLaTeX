@@ -21,6 +21,7 @@
 
 ### Fixed（修复）
 
+- 修复 `Sync Gitee Mirror` 在 fork 仓库未配置 Gitee 镜像密钥或目标仓库时反复失败的问题：未设置 `GITEE_SSH_PRIVATE_KEY`、`GITEE_REPO` / `GITEE_REMOTE_URL` 时改为输出 notice 并跳过同步步骤，同时将 checkout、setup-python 与 ssh-agent 升级到当前版本，避免未配置镜像的 fork 在 push 或 schedule 事件中产生失败通知。
 - 修复 `Sync README Template List` 定时任务在 fork 仓库缺少 latest Release 时失败的问题：默认同步源改为上游 `huangwb8/ChineseResearchLaTeX`，同时将 `actions/checkout` 与 `actions/setup-python` 升级到 Node 24 兼容的 v6 主版本，避免定时任务因 fork 无 Release 返回 `HTTP 404 Not Found` 并消除 Node 20 弃用提示。
 - 修复 `projects/GDNSF_General/` 报告正文页标题字体过黑、加粗观感与 Word 模板不一致的问题：将标题、提纲提示与各级条目从黑体/NotoSansSC-Bold 叠加伪粗调整为更接近原模板的宋体加粗体系，标题字号同步对齐为 18pt，并让“参照以下提纲撰写，”保留局部加粗、后续说明恢复常规宋体。
 - 优化 `projects/GDNSF_General/` 报告正文提纲断行与字重：将正文节页边距对齐到 Word 原件约 1.50cm 的设置，补充分离“全标题加粗条目”和“标题词加粗、括号说明常规字重条目”的宏，并在长标题的自然语义边界显式使用 `\linebreak{}` 与局部左对齐标题段，避免短标题句号被错误降为常规字重、长标题被版心自动断在不稳定位置，同时保留参考文献格式中的字面双连字符。

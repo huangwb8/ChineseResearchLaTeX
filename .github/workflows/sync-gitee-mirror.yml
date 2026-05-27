@@ -37,46 +37,56 @@ jobs:
       GITEE_REMOTE_URL: ${{ vars.GITEE_REMOTE_URL }}
     steps:
       - name: Validate configuration
+        id: config
         env:
           GITEE_SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
         run: |
-          if [ -z "$GITEE_SSH_PRIVATE_KEY" ]; then
-            echo "Missing secret: GITEE_SSH_PRIVATE_KEY"
-            exit 1
-          fi
           if [ -z "$GITEE_REPO" ] && [ -z "$GITEE_REMOTE_URL" ]; then
-            echo "Missing repository target: configure GITEE_REPO or GITEE_REMOTE_URL"
-            exit 1
+            echo "::notice::Gitee mirror is not configured: set repository variable GITEE_REPO or GITEE_REMOTE_URL."
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          if [ "${{ inputs.dry_run }}" != "true" ] && [ -z "$GITEE_SSH_PRIVATE_KEY" ]; then
+            echo "::notice::Gitee mirror is not configured: set secret GITEE_SSH_PRIVATE_KEY."
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "should_sync=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        if: steps.config.outputs.should_sync == 'true'
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name || github.event.repository.default_branch }}
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        if: steps.config.outputs.should_sync == 'true'
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
+        if: steps.config.outputs.should_sync == 'true' && inputs.dry_run != 'true'
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
 
       - name: Trust Gitee host key
+        if: steps.config.outputs.should_sync == 'true' && inputs.dry_run != 'true'
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H gitee.com >> ~/.ssh/known_hosts
 
       - name: Run sync regression tests
+        if: steps.config.outputs.should_sync == 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
           pytest -q scripts/test_sync_gitee_mirror.py
 
       - name: Sync latest branch commit to Gitee
+        if: steps.config.outputs.should_sync == 'true'
         run: |
           cmd=(python scripts/sync_gitee_mirror.py --branch "$TARGET_BRANCH")
           if [ -n "${{ inputs.tag }}" ]; then
