@@ -285,9 +285,12 @@ def test_add_paper_runtime_bundle_includes_bensz_fonts(tmp_path: Path):
 
     with zipfile.ZipFile(zip_path) as zf:
         names = set(zf.namelist())
+        bml_core = zf.read("styles/bml-core.sty").decode("utf-8")
 
     assert "bensz-fonts.sty" not in names
     assert "fonts/TimesNewRoman.ttf" not in names
+    assert r"\InputIfFileExists{styles/profiles/bml-profile-\bml@template.def}{}{%" in bml_core
+    assert r"\InputIfFileExists{\bml@packageroot" not in bml_core
 
 
 def test_pack_project_preserves_ucas_thesis_project_files(tmp_path: Path):
@@ -307,6 +310,19 @@ def test_pack_project_preserves_ucas_thesis_project_files(tmp_path: Path):
     assert "template.json" in names
     assert "source-baseline.pdf" not in names
     assert "scripts/export_docx.py" in names
+
+
+def test_pack_ucas_overleaf_includes_shell_escape_latexmkrc(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "thesis-ucas-doctor"
+    zip_path = pack_release.pack_project_overleaf(project_dir, tmp_path, "v-test")
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = set(zf.namelist())
+        latexmkrc = zf.read(".latexmkrc").decode("utf-8")
+
+    assert ".latexmkrc" in names
+    assert "-shell-escape" in latexmkrc
+    assert "styles/fonts/TimesNewRoman.ttf" in names
 
 
 def test_detect_thesis_template_id_prefers_postdoc_template_identity():

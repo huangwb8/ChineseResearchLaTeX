@@ -19,6 +19,8 @@
 
 ### Fixed（修复）
 
+- 修复 `scripts/pack_release.py` 生成 `bensz-paper` Overleaf 包时未正确重写 profile 路径的问题：`styles/bml-core.sty` 现在会显式从压缩包内的 `styles/profiles/` 加载 `bml-profile-*.def`，避免在开发者本机已安装 `bensz-paper` 时误借用本地 TEXMF profile、而在干净 Overleaf/TEXMF 环境中报 `Profile not found`；同时补充打包回归断言，确保 `paper-sci-01` / `paper-coverletter-01` 这类小体积 Overleaf 包不再被本机环境假阳性掩盖。
+- 修复 `thesis-smu-master` 示例正文中未转义路径文本导致 Overleaf / 裸 `xelatex` 编译触发 `Missing $ inserted` 的问题，并让 `thesis-ucas-doctor` Overleaf 包自动携带 `.latexmkrc` 开启 `-shell-escape`，满足其 `minted` 代码高亮依赖；同时补充 UCAS Overleaf 打包回归断言，避免需要 shell escape 的模板 zip 缺少编译配置。
 - 修复 `projects/GDNSF_General/` 报告正文页标题字体过黑、加粗观感与 Word 模板不一致的问题：将标题、提纲提示与各级条目从黑体/NotoSansSC-Bold 叠加伪粗调整为更接近原模板的宋体加粗体系，标题字号同步对齐为 18pt，并让“参照以下提纲撰写，”保留局部加粗、后续说明恢复常规宋体。
 - 优化 `projects/GDNSF_General/` 报告正文提纲断行与字重：将正文节页边距对齐到 Word 原件约 1.50cm 的设置，补充分离“全标题加粗条目”和“标题词加粗、括号说明常规字重条目”的宏，并在长标题的自然语义边界显式使用 `\linebreak{}` 与局部左对齐标题段，避免短标题句号被错误降为常规字重、长标题被版心自动断在不稳定位置，同时保留参考文献格式中的字面双连字符。
 - 修复 `skills/nsfc-research-foundation-writer/SKILL.md` frontmatter 混入 Markdown 正文导致 Codex 技能加载器 YAML 解析失败的问题，并增强该 skill 自检脚本的 frontmatter YAML 解析校验
