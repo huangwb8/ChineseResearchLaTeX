@@ -15,8 +15,17 @@
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-smu-postdoc
 ```
 
+DOCX 初稿导出：
+
+```bash
+python packages/bensz-thesis/scripts/thesis_project_tool.py docx --project-dir projects/thesis-smu-postdoc
+```
+
+导出的 `main.docx` 是可编辑 Word draft，适合先进入 Word 继续编辑与送审沟通；复杂表格、成果清单、附录材料或特殊排版仍需结合 `.latex-cache/docx/main_docx_quality_report.md` 人工复核。若需对齐单位 Word 模板，可额外传入 `--reference-doc <path-to-reference.docx>`。
+
 只打开项目子目录时，可执行：
 
 ```bash
 python scripts/thesis_build.py
+python scripts/thesis_build.py docx
 ```

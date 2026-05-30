@@ -54,6 +54,7 @@ def validate_required_files() -> list[str]:
         "styles/ucas/ucasSilence.sty",
         "README.md",
         "scripts/thesis_project_tool.py",
+        "scripts/thesis_docx_tool.py",
         "scripts/package/install.py",
         "scripts/package/build_tds_zip.py",
     ]

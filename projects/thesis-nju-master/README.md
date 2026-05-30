@@ -15,6 +15,14 @@
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-nju-master
 ```
 
+DOCX 初稿导出：
+
+```bash
+python packages/bensz-thesis/scripts/thesis_project_tool.py docx --project-dir projects/thesis-nju-master
+```
+
+导出的 `main.docx` 是可编辑 Word draft，不承诺与 PDF 像素级一致；复杂表格、图表、算法和特殊宏会在 `.latex-cache/docx/main_docx_quality_report.md` 中列出人工复核提示。若需贴近学校 Word 附件样式，可额外传入 `--reference-doc <path-to-reference.docx>`。
+
 公开基线构建：
 
 ```bash
@@ -45,6 +53,7 @@ python packages/bensz-thesis/scripts/thesis_project_tool.py build \
 
 ```bash
 python scripts/thesis_build.py
+python scripts/thesis_build.py docx
 python scripts/thesis_build.py build --tex-file baseline.tex
 python scripts/thesis_build.py build --tex-file editable.tex
 ```

@@ -23,33 +23,33 @@ python packages/bensz-thesis/scripts/thesis_project_tool.py build \
   --tex-file spine.tex
 ```
 
-DOCX 导出（UCAS 资环 Word 对齐链路）：
+DOCX 初稿导出：
 
 ```bash
-python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
+python packages/bensz-thesis/scripts/thesis_project_tool.py docx \
   --project-dir projects/thesis-ucas-doctor
 ```
 
-如果模板文件不在项目根目录，再显式指定：
+如需套用学校 Word 模板，显式指定 `--reference-doc`：
 
 ```bash
-python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
+python packages/bensz-thesis/scripts/thesis_project_tool.py docx \
   --project-dir projects/thesis-ucas-doctor \
   --reference-doc <path-to-reference.docx>
 ```
 
-该脚本会生成：
+该命令会生成：
 
-- `main_from_tex_word_source.md`：源码转 Word 的中间稿
-- `main_from_tex_资环模板.docx`：按参考模板套样式后的 Word 初稿
-- `main_from_tex_资环模板_质量报告.md`：针对资环分委会版式要求的自动检查报告
+- `main.docx`：从 LaTeX 源生成的可编辑 Word draft
+- `.latex-cache/docx/main.md`：源码转 Word 的中间 Markdown
+- `.latex-cache/docx/main_docx_quality_report.md`：导出质量报告，包含缺失资源、降级对象、样式映射与人工复核提示
 
 说明：
 
-- 脚本默认会优先寻找 `docs/official/` 下由用户自行放置的官方 Word 模板（其次兼容项目根目录与 `docs/`）
-- 该链路优先对齐正文、摘要、标题层级与版面参数
-- 图表、算法和代码环境仍会按“人工整理”思路降级处理
-- 当前 DOCX 导出为 `thesis-ucas-doctor` 项目级对齐能力，仅用于资环模板结构与版式参考；该链路尚不完善，不构成 `bensz-thesis` 通用 DOCX 支持，复杂对象（图表/算法/代码环境/交叉引用等）仍需人工复核与整理，后续将持续优化
+- `bensz-thesis` 通用 DOCX 导出会按 `--reference-doc`、`artifacts/reference.docx`、`docs/official/*.docx`、`docs/*.docx` 的顺序发现参考 Word 模板；未找到时会使用 Pandoc 默认样式，并在质量报告中提示
+- 该链路定位为“可编辑 Word 初稿”，优先保留标题、正文、列表、图片、基础公式与基础引用，不承诺与 PDF 像素级一致
+- 图表、算法、代码环境、TikZ 与复杂宏仍会按“人工整理”思路降级处理，并把原始 LaTeX 保存到 `.latex-cache/docx/unsupported/`
+- `scripts/export_docx.py` 仍作为兼容旧命令的薄 wrapper 保留一个发布周期；新用法建议直接调用 `thesis_project_tool.py docx`
 
 官方参考资料（元数据与校验目录）：
 
@@ -73,17 +73,8 @@ python3 projects/thesis-ucas-doctor/scripts/export_docx.py \
 ```bash
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-ucas-doctor
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir projects/thesis-ucas-doctor --tex-file spine.tex
-python3 projects/thesis-ucas-doctor/scripts/export_docx.py --project-dir projects/thesis-ucas-doctor
+python packages/bensz-thesis/scripts/thesis_project_tool.py docx --project-dir projects/thesis-ucas-doctor
 ```
-
-`main_from_tex_资环模板_质量报告.md` 中以下项应为 PASS：
-
-- 纸张A4(210x297mm, 表3)
-- 页边距与页眉页脚距离(表3)
-- 正文样式字体(宋体+Times New Roman, 表7)
-- 正文样式行距/首行缩进(1.25倍/两字符, 表7)
-- 正文是否超过三级标题(0083)
-- 章节存在：摘要 / Abstract / 目录 / 图表目录 / 参考文献 / 致谢
 
 像素级比对（需自备基线 PDF）：
 

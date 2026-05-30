@@ -4,6 +4,8 @@
 支持功能：
 - **PDF 构建**：自动执行 xelatex + bibtex/biber + xelatex x2 编译链路，
   中间文件隔离到 ``.latex-cache/`` 目录，最终 PDF 输出到项目根目录。
+- **DOCX 导出**：从同一份 LaTeX 源生成可编辑 Word 初稿，复杂对象以占位符
+  和质量报告提示人工复核。
 - **缓存清理**：一键清除 ``.latex-cache/`` 及根目录下的 LaTeX 中间文件。
 - **像素级 PDF 比较**：将待测 PDF 与基线 PDF 逐页光栅化后做像素差异比对，
   适用于模板迁移后的版式回归验收。自动生成 diff 图片和 JSON 比较报告。
@@ -15,6 +17,9 @@
 
     # 清理编译缓存
     python thesis_project_tool.py clean --project-dir projects/thesis-smu-master
+
+    # 导出可编辑 Word 初稿
+    python thesis_project_tool.py docx --project-dir projects/thesis-smu-master
 
     # 与基线 PDF 做像素级比较验收
     python thesis_project_tool.py compare \\
@@ -33,6 +38,10 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 # bensz-thesis 公共包源码根目录（即 packages/bensz-thesis/）
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
@@ -93,6 +102,13 @@ TOOL_CANDIDATES = {
 class BuildError(RuntimeError):
     """PDF 渲染过程中出现的致命错误（编译失败、缺失工具等）。"""
     pass
+
+
+def export_docx_project(**kwargs):
+    """懒加载 DOCX 导出模块，避免 PDF 命令被 DOCX 文件缺失拖挂。"""
+    from thesis_docx_tool import export_docx_project as _export_docx_project
+
+    return _export_docx_project(**kwargs)
 
 
 def configure_windows_stdio_utf8() -> None:
@@ -553,13 +569,30 @@ def compare_pdfs(
 
 
 def parse_args() -> argparse.Namespace:
-    """解析命令行参数，支持 build / clean / compare 三个子命令。"""
-    parser = argparse.ArgumentParser(description="毕业论文项目统一 TeX→PDF 渲染工具")
+    """解析命令行参数，支持 build / docx / clean / compare 子命令。"""
+    parser = argparse.ArgumentParser(description="毕业论文项目统一构建工具")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     build_parser = subparsers.add_parser("build", help="渲染 PDF")
     build_parser.add_argument("--project-dir", type=Path, default=None, help="项目目录。")
     build_parser.add_argument("--tex-file", default="main.tex", help="主 TeX 文件名，默认 main.tex。")
+
+    docx_parser = subparsers.add_parser("docx", help="导出可编辑 Word 初稿")
+    docx_parser.add_argument("--project-dir", type=Path, default=None, help="项目目录。")
+    docx_parser.add_argument("--tex-file", default="main.tex", help="主 TeX 文件名，默认 main.tex。")
+    docx_parser.add_argument("--reference-doc", type=Path, default=None, help="参考 Word 模板 .docx。")
+    docx_parser.add_argument("--output", type=Path, default=None, help="DOCX 输出路径，默认项目根目录 main.docx。")
+    docx_parser.add_argument("--keep-markdown", action="store_true", help="将中间 Markdown 另存到项目根目录。")
+    docx_parser.add_argument(
+        "--skip-style-normalization",
+        action="store_true",
+        help="跳过 DOCX 段落样式归一化，仅生成质量报告。",
+    )
+    docx_parser.add_argument(
+        "--allow-external-output",
+        action="store_true",
+        help="允许 --output 写到项目目录外；默认禁止以避免误写。",
+    )
 
     clean_parser = subparsers.add_parser("clean", help="清理缓存与根目录中间文件")
     clean_parser.add_argument("--project-dir", type=Path, default=None, help="项目目录。")
@@ -579,13 +612,25 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """CLI 入口：根据子命令分发到 build / clean / compare 流程。"""
+    """CLI 入口：根据子命令分发到 build / docx / clean / compare 流程。"""
     configure_windows_stdio_utf8()
     args = parse_args()
     project_dir = resolve_project_dir(getattr(args, "project_dir", None))
 
     if args.command == "build":
         build_project(project_dir, args.tex_file)
+        return
+
+    if args.command == "docx":
+        export_docx_project(
+            project_dir=project_dir,
+            tex_file=args.tex_file,
+            output=args.output,
+            reference_doc=args.reference_doc,
+            keep_markdown=args.keep_markdown,
+            skip_style_normalization=args.skip_style_normalization,
+            allow_external_output=args.allow_external_output,
+        )
         return
 
     if args.command == "clean":
