@@ -1,7 +1,7 @@
 %!TEX program = xelatex
 
 % 广东省自然科学基金面上项目 - 报告正文 LaTeX 模板
-% 参考 projects/GDNSF_General/template/附件6：2025年广东省自然科学基金-面上项目申请书模板.docx
+% 参考 projects/GDNSF_General/template/2026年省自然模板.docx
 
 \documentclass[12pt,UTF8,AutoFakeBold=2.5,a4paper,fontset=none]{ctexart}
 
@@ -13,39 +13,24 @@
 
 \GDNSFReportTitle
 
-\GDNSFGuidance{参照以下提纲撰写，}{要求内容翔实、清晰，层次分明，标题突出。}
+\GDNSFGuidance{参照以下提纲撰写，要求内容翔实、清晰，层次分明，标题突出，}{申请书正文原则上不超过30页，鼓励简洁表达。除标题外，其余解释说明文字可根据实际情况删除。}
+
+\GDNSFAINotice{申请人应当对使用的生成内容负责，应当全面如实声明使用情况，按照《人工智能生成合成内容标识办法》《负责任研究行为规范指引(2023)》等国家有关规定对相关内容进行标识，标识的方式包括但不限于在文本的起始和末尾适当位置添加相应的文字提示等。不得使用由生成式人工智能直接生成的申请书，不得使用未经核实的生成内容。}
 
 \GDNSFPart{一、立论依据}
+\GDNSFInstruction{（为什么要开展此项研究，研究的科学技术价值如何）}
+\input{extraTex/1.立论依据.tex}
 
-\GDNSFItem{1、研究意义}{（对基础研究，着重结合国际科学发展趋势，论述项目的科学意义；\linebreak{}对应用基础研究，着重结合学科前沿、围绕国民经济和社会发展中的重要科技问题，\linebreak{}论述其应用前景）。}
-\input{extraTex/1.1.研究意义.tex}
+\GDNSFPart{二、研究内容}
+\GDNSFInstruction{（提纲不作限制，请按照研究工作的自身逻辑撰写。应提炼出研究目标、特色与创新点、年度研究计划。项目的研究活动、知识产权、成果等应主要在粤港澳地区。）}
+\input{extraTex/2.研究内容.tex}
 
-\GDNSFItemFull{2、国内外研究现状。}
-\input{extraTex/1.2.国内外研究现状.tex}
+\GDNSFPart{三、研究基础与条件}
 
-\GDNSFItem{3、主要参考文献及出处}{（格式：论文{-}{-}作者．题目．刊名．年份．\mbox{卷(期)}．页码／\linebreak{}专著{-}{-}作者．书名．出版者．年份）。}
-\input{references/reference.tex}
-
-\GDNSFPart{二、研究方案}
-
-\GDNSFItemFull{1、研究目标、研究内容和拟解决的关键问题。}
-\input{extraTex/2.1.目标内容关键问题.tex}
-
-\GDNSFItemFull{2、拟采取的研究方法、技术路线、实验方案及可行性分析。}
-\input{extraTex/2.2.研究方法技术路线.tex}
-
-\GDNSFItemFull{3、本项目的创新之处。}
-\input{extraTex/2.3.创新之处.tex}
-
-\GDNSFItemFull{4、年度研究计划及预期研究成果。}
-\input{extraTex/2.4.年度计划预期成果.tex}
-
-\GDNSFPart{三、研究条件与基础}
-
-\GDNSFItem{1、已取得的研究工作成绩及与本项目有关的研究工作积累}{\linebreak{}（请着重填写申请人近期的主要工作业绩以及与本项目相关的研究工作积累）。}
+\GDNSFItemMixed{1、已取得的研究工作成绩及与本项目有关的研究工作积累}{（请着重填写申请人近期的主要工作业绩以及与本项目相关的研究工作积累）}{。}
 \input{extraTex/3.1.研究工作基础.tex}
 
-\GDNSFItem{2、已具备的实验条件，尚缺少的实验条件和拟解决的途径}{\linebreak{}（包括利用国家重点实验室和部门开放实验室的\linebreak{}计划与落实情况）。}
+\GDNSFItemMixed{2、已具备的实验条件，尚缺少的实验条件和拟解决的途径}{（包括利用国家重点实验室和部门开放实验室的计划与落实情况）。}{}
 \input{extraTex/3.2.实验条件.tex}
 
 \end{document}

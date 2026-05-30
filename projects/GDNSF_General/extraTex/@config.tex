@@ -25,8 +25,8 @@
 \usepackage{tikz}
 \usepackage{eso-pic}
 
-% 报告正文节在 Word 原件中四边页边距约为 851 twips，即 1.50cm。
-\geometry{left=1.50cm,right=1.50cm,top=1.50cm,bottom=1.50cm}
+% 2026 年报告正文模板页边距：左 1587、右 1474、上 2098、下 1984 twips。
+\geometry{left=2.80cm,right=2.60cm,top=3.70cm,bottom=3.50cm}
 
 \definecolor{GDNSFBlue}{RGB}{0,0,0}
 \definecolor{GDNSFRed}{RGB}{255,0,0}
@@ -140,7 +140,12 @@
 }
 
 \newcommand{\GDNSFGuidance}[2]{%
-  {\raggedright{\sihao\songti\bfseries #1}{\sihao\songti #2}\par}%
+  {\raggedright{\sihao\songti\bfseries #1}{\sihao\songti\bfseries\textcolor{GDNSFRed}{#2}}\par}%
+  \vspace{0.2em}
+}
+
+\newcommand{\GDNSFAINotice}[1]{%
+  {\raggedright\sihao\songti\bfseries\textcolor{GDNSFRed}{#1}\par}%
   \vspace{0.2em}
 }
 
@@ -150,10 +155,22 @@
   \vspace{0.1em}%
 }
 
+\newcommand{\GDNSFInstruction}[1]{%
+  \par
+  {\raggedright\sihao\kaishu\textcolor{GDNSFRed}{#1}\par}%
+}
+
 \newcommand{\GDNSFItem}[2]{%
   \par
   {\raggedright{\sihao\songti\bfseries #1}%
   {\sihao\songti #2}\par}%
+}
+
+\newcommand{\GDNSFItemMixed}[3]{%
+  \par
+  {\raggedright{\sihao\songti\bfseries #1}%
+  {\sihao\songti\bfseries\textcolor{GDNSFRed}{#2}}%
+  {\sihao\songti\bfseries #3}\par}%
 }
 
 \newcommand{\GDNSFItemFull}[1]{%

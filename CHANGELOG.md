@@ -20,6 +20,7 @@
 
 ### Fixed（修复）
 
+- 更新 `projects/GDNSF_General/` 以对齐 `template/2026年省自然模板.docx`：将报告正文从 2025 细分提纲收敛为 2026 年“三段式”结构，新增 30 页上限提示与生成式 AI 使用声明，补齐红色说明文字样式、正文页边距与“研究基础与条件”标题口径，并同步清理项目层过期章节入口，保持 GDNSF 模板独立于 `packages/bensz-nsfc/` 与其它产品线。
 - 修复 `scripts/pack_release.py` 生成 `bensz-paper` Overleaf 包时未正确重写 profile 路径的问题：`styles/bml-core.sty` 现在会显式从压缩包内的 `styles/profiles/` 加载 `bml-profile-*.def`，避免在开发者本机已安装 `bensz-paper` 时误借用本地 TEXMF profile、而在干净 Overleaf/TEXMF 环境中报 `Profile not found`；同时补充打包回归断言，确保 `paper-sci-01` / `paper-coverletter-01` 这类小体积 Overleaf 包不再被本机环境假阳性掩盖。
 - 修复 `thesis-smu-master` 示例正文中未转义路径文本导致 Overleaf / 裸 `xelatex` 编译触发 `Missing $ inserted` 的问题，并让 `thesis-ucas-doctor` Overleaf 包自动携带 `.latexmkrc` 开启 `-shell-escape`，满足其 `minted` 代码高亮依赖；同时补充 UCAS Overleaf 打包回归断言，避免需要 shell escape 的模板 zip 缺少编译配置。
 - 修复 `projects/GDNSF_General/` 报告正文页标题字体过黑、加粗观感与 Word 模板不一致的问题：将标题、提纲提示与各级条目从黑体/NotoSansSC-Bold 叠加伪粗调整为更接近原模板的宋体加粗体系，标题字号同步对齐为 18pt，并让“参照以下提纲撰写，”保留局部加粗、后续说明恢复常规宋体。

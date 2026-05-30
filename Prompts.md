@@ -12,6 +12,10 @@
 
 ---
 
+/Volumes/2T01/winE/iProjects/SeqIntel/tmp/ChineseResearchLaTeX/projects/GDNSF_General/template/2026年省自然模板.docx 是新的模板，你需要根据它改一下latex模板。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。最后，回复并关闭 https://github.com/huangwb8/ChineseResearchLaTeX/issues/44 这个issue。 
+
+---
+
 基于 docs/plans/2026-05-29-thesis-docx-export.md 优化源代码。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
