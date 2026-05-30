@@ -117,6 +117,15 @@
 
 \newcommand{\GDNSFBlankPara}{\par\vspace*{\baselineskip}}
 
+\newcommand{\GDNSFTemplatePara}[1]{%
+  \par
+  \begingroup
+    \RaggedRight
+    \setlength{\parindent}{2em}%
+    #1\par
+  \endgroup
+}
+
 \newcommand{\GDNSFMakeSampleWatermark}{%
   \ifGDNSFUseSampleWatermark
     \AddToShipoutPictureBG*{%
@@ -140,42 +149,42 @@
 }
 
 \newcommand{\GDNSFGuidance}[2]{%
-  {\raggedright{\sihao\songti\bfseries #1}{\sihao\songti\bfseries\textcolor{GDNSFRed}{#2}}\par}%
+  \GDNSFTemplatePara{{\sihao\songti\bfseries #1}{\sihao\songti\bfseries\textcolor{GDNSFRed}{#2}}}%
   \vspace{0.2em}
 }
 
 \newcommand{\GDNSFAINotice}[1]{%
-  {\raggedright\sihao\songti\bfseries\textcolor{GDNSFRed}{#1}\par}%
+  \GDNSFTemplatePara{\sihao\songti\bfseries\textcolor{GDNSFRed}{#1}}%
   \vspace{0.2em}
 }
 
 \newcommand{\GDNSFPart}[1]{%
   \par\vspace{0.15em}%
-  {\raggedright\sihao\songti\bfseries #1\par}%
+  \GDNSFTemplatePara{\sihao\songti\bfseries #1}%
   \vspace{0.1em}%
 }
 
 \newcommand{\GDNSFInstruction}[1]{%
   \par
-  {\raggedright\sihao\kaishu\textcolor{GDNSFRed}{#1}\par}%
+  \GDNSFTemplatePara{\sihao\kaishu\textcolor{GDNSFRed}{#1}}%
 }
 
 \newcommand{\GDNSFItem}[2]{%
   \par
-  {\raggedright{\sihao\songti\bfseries #1}%
-  {\sihao\songti #2}\par}%
+  \GDNSFTemplatePara{{\sihao\songti\bfseries #1}%
+  {\sihao\songti #2}}%
 }
 
 \newcommand{\GDNSFItemMixed}[3]{%
   \par
-  {\raggedright{\sihao\songti\bfseries #1}%
+  \GDNSFTemplatePara{{\sihao\songti\bfseries #1}%
   {\sihao\songti\bfseries\textcolor{GDNSFRed}{#2}}%
-  {\sihao\songti\bfseries #3}\par}%
+  {\sihao\songti\bfseries #3}}%
 }
 
 \newcommand{\GDNSFItemFull}[1]{%
   \par
-  {\raggedright\sihao\songti\bfseries #1\par}%
+  \GDNSFTemplatePara{\sihao\songti\bfseries #1}%
 }
 
 \newcommand{\GDNSFSubheading}[1]{%

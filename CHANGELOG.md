@@ -20,6 +20,7 @@
 
 ### Fixed（修复）
 
+- 优化 `projects/GDNSF_General/` 报告正文提纲说明区的行首与断行分布：新增项目级 `\GDNSFTemplatePara` 段落宏，并在稳定语义边界使用 `\linebreak{}` 控制长提示语断行，让提示语、AI 使用声明、一级提纲和红色说明文字保留 Word 模板中的 2 字符首行缩进，同时继续左对齐并维持原有红黑混排，避免长说明段落行首过齐、换行观感偏离 `template/2026年省自然模板.docx`。
 - 更新 `projects/GDNSF_General/` 以对齐 `template/2026年省自然模板.docx`：将报告正文从 2025 细分提纲收敛为 2026 年“三段式”结构，新增 30 页上限提示与生成式 AI 使用声明，补齐红色说明文字样式、正文页边距与“研究基础与条件”标题口径，并同步清理项目层过期章节入口，保持 GDNSF 模板独立于 `packages/bensz-nsfc/` 与其它产品线。
 - 修复 `scripts/pack_release.py` 生成 `bensz-paper` Overleaf 包时未正确重写 profile 路径的问题：`styles/bml-core.sty` 现在会显式从压缩包内的 `styles/profiles/` 加载 `bml-profile-*.def`，避免在开发者本机已安装 `bensz-paper` 时误借用本地 TEXMF profile、而在干净 Overleaf/TEXMF 环境中报 `Profile not found`；同时补充打包回归断言，确保 `paper-sci-01` / `paper-coverletter-01` 这类小体积 Overleaf 包不再被本机环境假阳性掩盖。
 - 修复 `thesis-smu-master` 示例正文中未转义路径文本导致 Overleaf / 裸 `xelatex` 编译触发 `Missing $ inserted` 的问题，并让 `thesis-ucas-doctor` Overleaf 包自动携带 `.latexmkrc` 开启 `-shell-escape`，满足其 `minted` 代码高亮依赖；同时补充 UCAS Overleaf 打包回归断言，避免需要 shell escape 的模板 zip 缺少编译配置。
