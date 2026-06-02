@@ -1,0 +1,339 @@
+\ProvidesFile{bthesis-style-thesis-hit-doctor.tex}
+  [2026/06/02 v1.0.0 Thesis style: thesis-hit-doctor]
+
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+
+\geometry{
+  a4paper,
+  left=3cm,
+  right=2.5cm,
+  top=2.8cm,
+  bottom=2.5cm,
+  headheight=14pt,
+  headsep=0.55cm,
+  footskip=0.85cm
+}
+
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{Songti SC}{
+  \setCJKmainfont{Songti SC}
+  \newCJKfontfamily\hitSong{Songti SC}
+}{
+  \IfFontExistsTF{SimSun}{
+    \setCJKmainfont{SimSun}
+    \newCJKfontfamily\hitSong{SimSun}
+  }{
+    \setCJKmainfont{FandolSong-Regular}
+    \newCJKfontfamily\hitSong{FandolSong-Regular}
+  }
+}
+
+\IfFontExistsTF{Heiti SC}{
+  \newCJKfontfamily\hitHei{Heiti SC}
+}{
+  \IfFontExistsTF{SimHei}{
+    \newCJKfontfamily\hitHei{SimHei}
+  }{
+    \newCJKfontfamily\hitHei{FandolHei-Regular}
+  }
+}
+
+\IfFontExistsTF{Kaiti SC}{
+  \newCJKfontfamily\hitKai{Kaiti SC}
+}{
+  \IfFontExistsTF{KaiTi}{
+    \newCJKfontfamily\hitKai{KaiTi}
+  }{
+    \newCJKfontfamily\hitKai{FandolKai-Regular}
+  }
+}
+
+\AtBeginDocument{%
+  \hitSong
+  \fontsize{12bp}{20bp}\selectfont
+}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setstretch{1.45}
+\xeCJKsetup{PunctStyle=plain}
+
+\hypersetup{
+  colorlinks=false,
+  hidelinks,
+  hypertexnames=false,
+  CJKbookmarks=true
+}
+
+\newcommand{\hitBodyFont}{\hitSong\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\hitSmallFont}{\hitSong\fontsize{10.5bp}{13bp}\selectfont}
+\newcommand{\hitHeaderFont}{\hitSong\fontsize{9bp}{11bp}\selectfont}
+\newcommand{\hitChapterFont}{\hitHei\fontsize{15bp}{22bp}\selectfont}
+\newcommand{\hitSectionFont}{\hitHei\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\hitSubsectionFont}{\hitHei\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\hitFrontTitleFont}{\hitHei\fontsize{15bp}{22bp}\selectfont}
+\newcommand{\hitCoverDegreeFont}{\hitSong\bfseries\fontsize{26bp}{32bp}\selectfont}
+\newcommand{\hitCoverDegreeSubFont}{\hitSong\bfseries\fontsize{22bp}{28bp}\selectfont}
+\newcommand{\hitCoverTitleZhFont}{\hitHei\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\hitCoverTitleEnFont}{\bfseries\fontsize{20bp}{27bp}\selectfont}
+\newcommand{\hitCoverAuthorFont}{\hitSong\bfseries\fontsize{22bp}{28bp}\selectfont}
+\newcommand{\hitCoverSchoolFont}{\hitKai\bfseries\fontsize{22bp}{28bp}\selectfont}
+\newcommand{\hitCoverDateFont}{\hitSong\bfseries\fontsize{18bp}{24bp}\selectfont}
+\newcommand{\hitCoverMetaFont}{\hitSong\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\hitCoverInfoLabelFont}{\hitHei\fontsize{14bp}{21bp}\selectfont}
+\newcommand{\hitCoverInfoValueFont}{\hitSong\fontsize{14bp}{21bp}\selectfont}
+\newcommand{\hitCoverInfoEnFont}{\fontsize{13bp}{16bp}\selectfont}
+
+\renewcommand{\contentsname}{目\quad 录}
+\setcounter{tocdepth}{2}
+\titlecontents{chapter}[0pt]
+  {\hitSong\fontsize{12bp}{18bp}\selectfont}
+  {\contentslabel{4.8em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{section}[2.4em]
+  {\hitSong\fontsize{12bp}{18bp}\selectfont}
+  {\contentslabel{3.0em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[5.0em]
+  {\hitSong\fontsize{12bp}{18bp}\selectfont}
+  {\contentslabel{4.0em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+
+\ctexset{
+  chapter = {
+    name = {第,章},
+    number = \arabic{chapter},
+    format = \centering\hitChapterFont,
+    aftername = \quad,
+    beforeskip = 16bp,
+    afterskip = 18bp
+  },
+  section = {
+    format = \hitSectionFont,
+    beforeskip = 14bp,
+    afterskip = 8bp
+  },
+  subsection = {
+    format = \hitSubsectionFont,
+    beforeskip = 10bp,
+    afterskip = 6bp
+  }
+}
+
+\setlist[itemize]{leftmargin=2em,itemsep=0.2em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=2em,itemsep=0.2em,topsep=0.2em}
+
+\fancypagestyle{hit-cover}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{hit-front}{
+  \fancyhf{}
+  \fancyhead[C]{\hitHeaderFont 哈尔滨工业大学博士学位论文}
+  \fancyfoot[C]{\hitHeaderFont -\thepage-}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{hit-main}{
+  \fancyhf{}
+  \fancyhead[C]{\hitHeaderFont 哈尔滨工业大学博士学位论文}
+  \fancyfoot[C]{\hitHeaderFont -\thepage-}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[C]{\hitHeaderFont 哈尔滨工业大学博士学位论文}
+  \fancyfoot[C]{\hitHeaderFont -\thepage-}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\captionsetup{
+  font={small,stretch=1.0},
+  textfont=normalfont,
+  labelfont=normalfont,
+  justification=centering,
+  singlelinecheck=false,
+  labelsep=space
+}
+\captionsetup[table]{position=top}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+
+\providecommand{\hitTitleZh}{博士学位论文题目}
+\providecommand{\hitTitleEn}{English Dissertation Title}
+\providecommand{\hitAuthor}{作者姓名}
+\providecommand{\hitAuthorEn}{Candidate Name}
+\providecommand{\hitSupervisor}{导师姓名\quad 教授}
+\providecommand{\hitSupervisorEn}{Prof. Supervisor Name}
+\providecommand{\hitDegreeType}{学术学位论文}
+\providecommand{\hitDegreeAppliedZh}{工学博士}
+\providecommand{\hitDegreeAppliedEn}{Doctor of Engineering}
+\providecommand{\hitSpecialityZh}{能源与动力工程}
+\providecommand{\hitSpecialityEn}{Power Engineering and Engineering Thermophysics}
+\providecommand{\hitAffiliationZh}{能源科学与工程学院}
+\providecommand{\hitAffiliationEn}{School of Energy Science and Engineering}
+\providecommand{\hitDefenceDateZh}{2026 年 6 月}
+\providecommand{\hitDefenceDateEn}{June, 2026}
+\providecommand{\hitDegreeInstitutionZh}{哈尔滨工业大学}
+\providecommand{\hitDegreeInstitutionEn}{Harbin Institute of Technology}
+\providecommand{\hitClassifiedIndexZh}{TK01}
+\providecommand{\hitUdcZh}{620}
+\providecommand{\hitSchoolCode}{10213}
+\providecommand{\hitSecretLevel}{公开}
+\providecommand{\hitSubmitDateZh}{2026 年 6 月}
+\providecommand{\hitKeywordsZh}{关键词一；关键词二；关键词三}
+\providecommand{\hitKeywordsEn}{keyword one, keyword two, keyword three}
+
+\newcommand{\hitMakeFirstCover}{%
+  \thispagestyle{hit-cover}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-4.95cm]current page.north)
+      {{\hitCoverDegreeFont 博士学位论文}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-6.10cm]current page.north)
+      {{\hitCoverDegreeSubFont （\hitDegreeType）}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
+      at ([yshift=-9.10cm]current page.north)
+      {{\hitCoverTitleZhFont \hitTitleZh}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.8cm]
+      at ([yshift=-11.95cm]current page.north)
+      {{\hitCoverTitleEnFont \hitTitleEn}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-17.45cm]current page.north)
+      {{\hitCoverAuthorFont \hitAuthor}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-24.18cm]current page.north)
+      {{\hitCoverSchoolFont 哈尔滨工业大学}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-25.52cm]current page.north)
+      {{\hitCoverDateFont \hitSubmitDateZh}};
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
+
+\newcommand{\hitMakeTitlePageZh}{%
+  \thispagestyle{hit-cover}%
+  \begingroup
+  \vspace*{1.35cm}
+  \noindent
+  \begin{minipage}[t]{0.49\textwidth}
+    {\hitCoverMetaFont 国内图书分类号：\hitClassifiedIndexZh\\国际图书分类号：\hitUdcZh}
+  \end{minipage}%
+  \begin{minipage}[t]{0.49\textwidth}
+    \raggedleft{\hitCoverMetaFont 学校代码：\hitSchoolCode\\密级：\hitSecretLevel}
+  \end{minipage}
+
+  \vspace{3.15cm}
+  \begin{center}
+    {\hitCoverDegreeSubFont 博士学位论文\par}
+    \vspace{0.95cm}
+    {\hitCoverTitleZhFont \hitTitleZh\par}
+    \vspace{3.45cm}
+    \renewcommand{\arraystretch}{1.18}
+    \begin{tabular}{@{}>{\hitCoverInfoLabelFont}r@{\ ：\ }>{\hitCoverInfoValueFont}l@{}}
+      博士研究生 & \hitAuthor\\
+      导\hspace{2.8em}师 & \hitSupervisor\\
+      申请学位 & \hitDegreeAppliedZh\\
+      学\hspace{2.8em}科 & \hitSpecialityZh\\
+      所在单位 & \hitAffiliationZh\\
+      答辩日期 & \hitDefenceDateZh\\
+      授予学位单位 & \hitDegreeInstitutionZh
+    \end{tabular}
+  \end{center}
+  \endgroup
+}
+
+\newcommand{\hitMakeTitlePageEn}{%
+  \thispagestyle{hit-cover}%
+  \begingroup
+  \vspace*{1.00cm}
+  {\fontsize{12bp}{18bp}\selectfont Classified Index: \hitClassifiedIndexZh\\U.D.C: \hitUdcZh\par}
+
+  \vspace{2.55cm}
+  \begin{center}
+    {\fontsize{22bp}{28bp}\selectfont Dissertation for the Doctoral Degree\par}
+    \vspace{0.85cm}
+    {\hitCoverTitleEnFont \hitTitleEn\par}
+    \vspace{1.65cm}
+    \renewcommand{\arraystretch}{1.05}
+    \begin{tabular}{@{}>{\bfseries\hitCoverInfoEnFont}p{6.85cm}@{\quad}>{\hitCoverInfoEnFont}p{7.25cm}@{}}
+      Candidate: & \hitAuthorEn\\
+      Supervisor: & \hitSupervisorEn\\
+      Academic Degree Applied for: & \hitDegreeAppliedEn\\
+      Speciality: & \hitSpecialityEn\\
+      Affiliation: & \hitAffiliationEn\\
+      Date of Defence: & \hitDefenceDateEn\\
+      Degree-Conferring-Institution: & \hitDegreeInstitutionEn
+    \end{tabular}
+  \end{center}
+  \endgroup
+}
+
+\newcommand{\hitFrontHeading}[1]{%
+  \thispagestyle{hit-front}%
+  \begin{center}
+    \vspace*{0.7cm}
+    {\hitFrontTitleFont #1\par}
+  \end{center}
+  \vspace{0.7cm}
+}
+
+\newcommand{\hitKeywordsZhLine}{%
+  \vspace{0.8cm}
+  \noindent\textbf{关键词：}\hitKeywordsZh
+}
+
+\newcommand{\hitKeywordsEnLine}{%
+  \vspace{0.8cm}
+  \noindent\textbf{Keywords: }\hitKeywordsEn
+}
+
+\newcommand{\hitUnnumberedChapter}[1]{%
+  \clearpage
+  \chapter*{#1}
+  \addcontentsline{toc}{chapter}{#1}
+}
+
+\newcommand{\hitConclusion}{\hitUnnumberedChapter{结\quad 论}}
+\newcommand{\hitInnovativeAchievements}{\hitUnnumberedChapter{攻读博士学位期间取得创新性成果}}
+\newcommand{\hitReviewAndDefense}{\hitUnnumberedChapter{学位论文评阅人、答辩委员会名单及答辩决议}}
+\newcommand{\hitOriginalityStatement}{\hitUnnumberedChapter{哈尔滨工业大学学位论文原创性声明和使用权限}}
+\newcommand{\hitAcknowledgements}{\hitUnnumberedChapter{致\quad 谢}}
+\newcommand{\hitResume}{\hitUnnumberedChapter{个人简历}}

@@ -1,0 +1,42 @@
+\chapter{多源数据建模框架}
+
+\section{数据层次与质量控制}
+
+在实际能源系统中，不同数据源常常由不同平台采集，时间戳、单位和字段命名并不完全一致。为了提高模型输入的稳定性，示例将数据处理流程划分为来源登记、时间对齐、缺失修复、异常标记和特征汇总五个步骤。表 \ref{tab:hit-data-layer} 展示了一个简化的数据层次。
+
+\begin{table}[htbp]
+  \centering
+  \caption{多源数据层次示例}
+  \label{tab:hit-data-layer}
+  \begin{tabularx}{0.92\textwidth}{@{}lXX@{}}
+    \toprule
+    数据层次 & 典型字段 & 用途\\
+    \midrule
+    设备状态 & 温度、压力、功率、启停状态 & 描述设备运行边界\\
+    环境扰动 & 室外温度、湿度、辐照度 & 解释负荷变化\\
+    调度记录 & 负荷需求、价格信号、人工策略 & 形成优化约束\\
+    评价指标 & 能效、峰值负荷、风险评分 & 支撑结果复核\\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{特征组织与状态描述}
+
+特征组织需要保持可解释性。对于博士论文写作而言，模型精度并不是唯一目标，读者还需要理解输入变量和工程现象之间的关系。因此，示例将特征分为基础统计量、变化率、滞后变量和状态标签。基础统计量描述稳态水平，变化率刻画负荷爬升，滞后变量保留热惯性，状态标签则区分启动、稳定运行和停机过程。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][4.2cm][c]{0.78\textwidth}{\centering 多源数据建模流程示意图}}
+  \caption{多源数据建模流程}
+  \label{fig:hit-model-flow}
+\end{figure}
+
+图 \ref{fig:hit-model-flow} 使用占位图展示模板对图题、交叉引用和正文环绕的支持。正式写作时，用户可以将此处替换为真实实验流程图、系统架构图或算法框图。
+
+\section{模型评价指标}
+
+模型评价应同时考虑预测误差和工程约束。示例采用平均绝对误差、峰值误差和约束违反次数作为指标。对于第 $i$ 个样本，预测值与观测值分别记为 $\hat{y}_i$ 和 $y_i$，则平均绝对误差定义为
+\begin{equation}
+  \operatorname{MAE} = \frac{1}{n}\sum_{i=1}^{n}\left|\hat{y}_i-y_i\right|.
+\end{equation}
+该公式展示了 HIT 博士论文正文中常用的行间公式编号效果。
