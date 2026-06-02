@@ -39,13 +39,6 @@
 
 创作不易，如果这个项目对您有帮助，请转发、种草、 ⭐ Star、或者捐赠我们，感谢支持！
 
-<div align="center">
-
-<img src="logo/pay-1024x541.jpg" alt="捐赠码" width="400"/>
-
-</div>
-
-
 ---
 
 ## ✨ 概览
