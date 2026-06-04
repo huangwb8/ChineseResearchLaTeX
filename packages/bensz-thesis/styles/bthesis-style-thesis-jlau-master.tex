@@ -1,0 +1,397 @@
+\ProvidesFile{bthesis-style-thesis-jlau-master.tex}
+  [2026/06/03 v1.0.0 Thesis style: thesis-jlau-master]
+
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.3cm,
+  top=2.8cm,
+  bottom=2.3cm,
+  headheight=14pt,
+  headsep=0.58cm,
+  footskip=0.65cm
+}
+
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{SimSun}{
+  \setCJKmainfont{SimSun}
+  \newCJKfontfamily\jlauSong{SimSun}
+}{
+  \IfFontExistsTF{Songti SC}{
+    \setCJKmainfont{Songti SC}
+    \newCJKfontfamily\jlauSong{Songti SC}
+  }{
+    \setCJKmainfont{FandolSong-Regular}
+    \newCJKfontfamily\jlauSong{FandolSong-Regular}
+  }
+}
+
+\IfFontExistsTF{SimHei}{
+  \newCJKfontfamily\jlauHei{SimHei}
+}{
+  \IfFontExistsTF{Heiti SC}{
+    \newCJKfontfamily\jlauHei{Heiti SC}
+  }{
+    \newCJKfontfamily\jlauHei{FandolHei-Regular}
+  }
+}
+
+\IfFontExistsTF{KaiTi}{
+  \newCJKfontfamily\jlauKai{KaiTi}
+}{
+  \IfFontExistsTF{Kaiti SC}{
+    \newCJKfontfamily\jlauKai{Kaiti SC}
+  }{
+    \newCJKfontfamily\jlauKai{FandolKai-Regular}
+  }
+}
+
+\IfFontExistsTF{LiSu}{
+  \newCJKfontfamily\jlauCoverScript{LiSu}
+}{
+  \IfFontExistsTF{STLiti}{
+    \newCJKfontfamily\jlauCoverScript{STLiti}
+  }{
+    \IfFontExistsTF{KaiTi}{
+      \newCJKfontfamily\jlauCoverScript{KaiTi}
+    }{
+      \IfFontExistsTF{Kaiti SC}{
+        \newCJKfontfamily\jlauCoverScript{Kaiti SC}
+      }{
+        \newCJKfontfamily\jlauCoverScript{FandolKai-Regular}
+      }
+    }
+  }
+}
+
+\AtBeginDocument{%
+  \jlauBodyFont
+}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setstretch{1.0}
+\xeCJKsetup{PunctStyle=plain}
+
+\hypersetup{
+  colorlinks=false,
+  hidelinks,
+  hypertexnames=false,
+  CJKbookmarks=true
+}
+\pdfstringdefDisableCommands{%
+  \def\quad{ }%
+}
+
+\newcommand{\jlauBodyFont}{\jlauSong\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\jlauHeaderFont}{\jlauSong\fontsize{9bp}{11bp}\selectfont}
+\newcommand{\jlauReferenceFont}{\jlauSong\fontsize{10.5bp}{16bp}\selectfont}
+\newcommand{\jlauChapterFont}{\jlauHei\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\jlauSectionFont}{\jlauHei\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\jlauSubsectionFont}{\jlauHei\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\jlauFrontTitleFont}{\jlauHei\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\jlauCoverTopFont}{\jlauSong\fontsize{10.5bp}{15bp}\selectfont}
+\newcommand{\jlauCoverTypeFont}{\jlauCoverScript\fontsize{32bp}{40bp}\selectfont}
+\newcommand{\jlauCoverTitleZhFont}{\jlauHei\fontsize{16bp}{24bp}\selectfont}
+\newcommand{\jlauCoverTitleEnFont}{\bfseries\fontsize{15bp}{22bp}\selectfont}
+\newcommand{\jlauCoverInfoFont}{\jlauSong\bfseries\fontsize{14bp}{22bp}\selectfont}
+\newcommand{\jlauCoverDateFont}{\jlauSong\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\jlauThanksFont}{\jlauKai\fontsize{12bp}{20bp}\selectfont}
+
+\renewcommand{\contentsname}{目\quad 录}
+\setcounter{tocdepth}{2}
+\titlecontents{chapter}[0pt]
+  {\jlauSong\fontsize{12bp}{20bp}\selectfont}
+  {\contentslabel{5.6em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{section}[2em]
+  {\jlauSong\fontsize{12bp}{20bp}\selectfont}
+  {\contentslabel{3.0em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[4.2em]
+  {\jlauSong\fontsize{12bp}{20bp}\selectfont}
+  {\contentslabel{4.1em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+
+\ctexset{
+  chapter = {
+    name = {第,章},
+    number = \chinese{chapter},
+    format = \centering\jlauChapterFont,
+    aftername = \quad,
+    beforeskip = 18bp,
+    afterskip = 18bp
+  },
+  section = {
+    format = \jlauSectionFont,
+    beforeskip = 12bp,
+    afterskip = 8bp
+  },
+  subsection = {
+    format = \jlauSubsectionFont,
+    beforeskip = 10bp,
+    afterskip = 6bp
+  }
+}
+
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.15em,topsep=0.15em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.15em,topsep=0.15em}
+
+\fancypagestyle{jlau-cover}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{jlau-front}{
+  \fancyhf{}
+  \fancyfoot[C]{\jlauHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{jlau-main}{
+  \fancyhf{}
+  \fancyhead[L]{\jlauHeaderFont 吉林农业大学博（硕）士学位论文}
+  \fancyhead[R]{\jlauHeaderFont \leftmark}
+  \fancyfoot[C]{\jlauHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[L]{\jlauHeaderFont 吉林农业大学博（硕）士学位论文}
+  \fancyhead[R]{\jlauHeaderFont \leftmark}
+  \fancyfoot[C]{\jlauHeaderFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\captionsetup{
+  font={small,stretch=1.0},
+  textfont=normalfont,
+  labelfont=bf,
+  justification=centering,
+  singlelinecheck=false,
+  labelsep=space
+}
+\captionsetup[table]{position=top}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\bibname}{参考文献}
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+\numberwithin{equation}{chapter}
+
+\providecommand{\jlauEmblemPath}{assets/branding/jlau-emblem.jpg}
+\providecommand{\jlauClassNo}{S63}
+\providecommand{\jlauSchoolCode}{10193}
+\providecommand{\jlauSecretLevel}{公开}
+\providecommand{\jlauStudentId}{2026000000}
+\providecommand{\jlauDegreeKind}{academic}
+\providecommand{\jlauBlindReview}{false}
+\providecommand{\jlauTitleZh}{硕士学位论文题目}
+\providecommand{\jlauTitleEn}{English Thesis Title}
+\providecommand{\jlauAuthor}{作者姓名}
+\providecommand{\jlauDegreeCategory}{农学硕士}
+\providecommand{\jlauMajor}{作物遗传育种}
+\providecommand{\jlauResearchDirection}{智慧农业与作物表型}
+\providecommand{\jlauSupervisor}{导师姓名\quad 教授}
+\providecommand{\jlauCollege}{农学院}
+\providecommand{\jlauSubmitDate}{2026 年 6 月}
+\providecommand{\jlauKeywordsZh}{关键词一，关键词二，关键词三}
+\providecommand{\jlauKeywordsEn}{keyword one, keyword two, keyword three}
+
+\newcommand{\jlauThesisTypeText}{%
+  \ifdefstring{\jlauDegreeKind}{professional}{专业硕士学位论文}{硕士学位论文}%
+}
+
+\newcommand{\jlauMetaLine}[2]{%
+  {\jlauCoverInfoFont #1\hspace{0.6em}#2\par}%
+}
+
+\newcommand{\jlauMakeCover}{%
+  \thispagestyle{jlau-cover}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=2.35cm,yshift=-1.75cm]current page.north west)
+      {{\jlauCoverTopFont 分\hspace{0.7em}类\hspace{0.7em}号：\jlauClassNo}};
+    \node[anchor=east,inner sep=0pt]
+      at ([xshift=-2.35cm,yshift=-1.75cm]current page.north east)
+      {{\jlauCoverTopFont 单位代码：\jlauSchoolCode}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=2.35cm,yshift=-2.55cm]current page.north west)
+      {{\jlauCoverTopFont 密\hspace{2.1em}级：\jlauSecretLevel}};
+    \node[anchor=east,inner sep=0pt]
+      at ([xshift=-2.35cm,yshift=-2.55cm]current page.north east)
+      {{\jlauCoverTopFont 学\hspace{1.4em}号：\jlauStudentId}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-4.05cm]current page.north)
+      {\includegraphics[width=3cm,height=3cm,keepaspectratio]{\jlauEmblemPath}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-7.55cm]current page.north)
+      {{\jlauCoverTypeFont \jlauThesisTypeText}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
+      at ([yshift=-10.20cm]current page.north)
+      {{\jlauCoverTitleZhFont \jlauTitleZh}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
+      at ([yshift=-11.50cm]current page.north)
+      {{\jlauCoverTitleEnFont \jlauTitleEn}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=13.6cm]
+      at ([yshift=-14.40cm]current page.north)
+      {%
+        \ifdefstring{\jlauBlindReview}{true}{%
+          \jlauMetaLine{学位类别：}{\jlauDegreeCategory}
+          \jlauMetaLine{专业名称：}{\jlauMajor}
+          \jlauMetaLine{研究方向：}{\jlauResearchDirection}
+          \jlauMetaLine{所在学院：}{\jlauCollege}
+        }{%
+          \jlauMetaLine{作者姓名：}{\jlauAuthor}
+          \jlauMetaLine{学位类别：}{\jlauDegreeCategory}
+          \jlauMetaLine{专业名称：}{\jlauMajor}
+          \jlauMetaLine{研究方向：}{\jlauResearchDirection}
+          \jlauMetaLine{指导教师：}{\jlauSupervisor}
+          \jlauMetaLine{所在学院：}{\jlauCollege}
+        }%
+      };
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-25.10cm]current page.north)
+      {{\jlauCoverDateFont \jlauSubmitDate}};
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
+
+\newcommand{\jlauMakeStatement}{%
+  \thispagestyle{empty}%
+  \begingroup
+  \jlauBodyFont
+  \begin{center}
+    {\jlauFrontTitleFont 独\quad 创\quad 性\quad 声\quad 明\par}
+  \end{center}
+  \vspace{0.8cm}
+  本人郑重声明：所呈交的学位论文是本人在导师指导下，独立进行研究所取得的成果。尽我所知，除文中特别加以标注和致谢所列内容外，论文中不包含其他个人或集体已经发表或撰写过的研究成果，也不包含为获得吉林农业大学或其它教育机构的学位或证书而使用过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并表示了谢意。
+
+  本学位论文所有内容若有不实之处，本人愿意承担一切相关法律责任和后果。
+
+  \vspace{1.1cm}
+  \noindent 学位论文作者签名：\hfill 签字日期：\hspace{1.4cm}年\hspace{0.8cm}月\hspace{0.8cm}日
+
+  \vspace{1.1cm}
+  \begin{center}
+    {\jlauFrontTitleFont 关于学位论文使用授权的声明\par}
+  \end{center}
+  \vspace{0.6cm}
+  本人完全了解吉林农业大学有关保留和使用学位论文的规定，即：研究生在校攻读学位期间所完成的论文及相关成果的知识产权属吉林农业大学所有，并同意将本论文的版权授权给吉林农业大学，学校有权保留送交论文的复印件和磁盘，允许论文被查阅和借阅，可以采用影印、缩印或扫描等复制手段保存、汇编学位论文。
+
+  2、本人\hspace{2.6cm}（同意/不同意，务必打印后填写）吉林农业大学将本论文版权授权给不同媒体进行电子出版、多媒体出版、网络出版以及其他形式出版（涉密学位论文解密后应遵守此协议）。
+
+  3、本人声明毕业后若发表在攻读研究生学位期间完成的论文及相关的学术成果，必须以吉林农业大学作为第一署名单位。
+
+  \vspace{0.9cm}
+  \noindent 学位论文作者签名：\hfill 签字日期：\hspace{1.4cm}年\hspace{0.8cm}月\hspace{0.8cm}日
+
+  \vspace{0.65cm}
+  \noindent 指导教师签名：\hfill 签字日期：\hspace{1.4cm}年\hspace{0.8cm}月\hspace{0.8cm}日
+  \endgroup
+}
+
+\newcommand{\jlauFrontHeading}[1]{%
+  \thispagestyle{jlau-front}%
+  \begin{center}
+    \vspace*{0.8cm}
+    {\jlauFrontTitleFont #1\par}
+  \end{center}
+  \vspace{0.8cm}
+}
+
+\newcommand{\jlauKeywordsZhLine}{%
+  \vspace{0.8cm}
+  \noindent\textbf{关键词：}\jlauKeywordsZh
+}
+
+\newcommand{\jlauKeywordsEnLine}{%
+  \vspace{0.8cm}
+  \noindent\textbf{Key words: }\jlauKeywordsEn
+}
+
+\newcommand{\jlauUnnumberedChapter}[1]{%
+  \clearpage
+  \chapter*{#1}
+  \markboth{#1}{#1}
+  \addcontentsline{toc}{chapter}{#1}
+}
+
+\newcommand{\jlauPartHeading}[1]{%
+  \clearpage
+  \setcounter{chapter}{0}%
+  \phantomsection
+  \addcontentsline{toc}{chapter}{#1}%
+  \markboth{#1}{#1}%
+  \begin{center}
+    {\jlauChapterFont #1\par}
+  \end{center}
+  \vspace{0.8cm}
+}
+
+\newcommand{\jlauChapterAfterPart}[1]{%
+  \refstepcounter{chapter}%
+  \setcounter{section}{0}%
+  \setcounter{subsection}{0}%
+  \markboth{第\chinese{chapter}章\quad #1}{第\chinese{chapter}章\quad #1}%
+  \phantomsection
+  \addcontentsline{toc}{chapter}{第\chinese{chapter}章\quad #1}%
+  \begin{center}
+    {\jlauChapterFont 第\chinese{chapter}章\quad #1\par}
+  \end{center}
+  \vspace{0.8cm}
+}
+
+\newcommand{\jlauForeword}{\jlauUnnumberedChapter{前\quad 言}}
+\newcommand{\jlauConclusion}{\jlauUnnumberedChapter{结\quad 论}}
+\newcommand{\jlauReferences}{%
+  \clearpage
+  \phantomsection
+  \addcontentsline{toc}{chapter}{参考文献}%
+  \markboth{参考文献}{参考文献}%
+  \begingroup\jlauReferenceFont
+}
+\newcommand{\jlauEndReferences}{\endgroup}
+\newcommand{\jlauAppendix}{\jlauUnnumberedChapter{附\quad 录}}
+\newcommand{\jlauAuthorBio}{\jlauUnnumberedChapter{作者简介}}
+\newcommand{\jlauAcknowledgements}{%
+  \jlauUnnumberedChapter{致\quad 谢}%
+  \begingroup\jlauThanksFont
+}
+\newcommand{\jlauEndAcknowledgements}{\endgroup}
