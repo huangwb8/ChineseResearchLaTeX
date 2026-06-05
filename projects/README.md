@@ -85,6 +85,7 @@
 | [`thesis-just-bachelor/`](./thesis-just-bachelor/) | 江苏科技大学本科毕业设计（论文）示例项目 | 需要 JUST 本科毕业设计（论文）版式模板 |
 | [`thesis-ahnu-master/`](./thesis-ahnu-master/) | 安徽师范大学硕士论文示例项目 | 需要 AHNU 硕士论文版式模板 |
 | [`thesis-hit-doctor/`](./thesis-hit-doctor/) | 哈尔滨工业大学博士论文示例项目 | 需要 HIT 博士论文版式模板 |
+| [`thesis-jlau-doctor/`](./thesis-jlau-doctor/) | 吉林农业大学博士论文示例项目 | 需要 JLAU 博士论文版式模板 |
 | [`thesis-jlau-master/`](./thesis-jlau-master/) | 吉林农业大学硕士论文示例项目 | 需要 JLAU 硕士论文版式模板 |
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |

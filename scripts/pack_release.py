@@ -686,6 +686,11 @@ def build_thesis_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
             "\\makeatletter\n\\@ifundefined{benszthesislocalfontsloaded}{\\IfFileExists{styles/bensz-fonts.sty}{\\input{styles/bensz-fonts.sty}\\global\\let\\benszthesislocalfontsloaded\\@empty}{}}{}\n\\makeatother",
         )
     write_text_file(runtime_dir / style_name, style_content)
+    if template_id == "thesis-jlau-doctor":
+        copy_file(
+            THESIS_PACKAGE_DIR / "styles" / "bthesis-style-thesis-jlau-master.tex",
+            runtime_dir / "bthesis-style-thesis-jlau-master.tex",
+        )
     if template_id == "thesis-ucas-doctor":
         copy_tree_contents(THESIS_PACKAGE_DIR / "styles" / "ucas", runtime_dir / "ucas")
 

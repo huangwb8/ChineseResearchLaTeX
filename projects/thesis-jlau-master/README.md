@@ -7,7 +7,7 @@
 - 项目在 `packages/bensz-thesis/` 中注册了独立的 `thesis-jlau-master` template/profile/style
 - 默认示例按“学术型硕士、非盲审、理工农医类正文结构”组织，可在 `extraTex/meta.tex` 中切换 `\jlauDegreeKind` 与 `\jlauBlindReview`
 - issue 标题中包含“硕博”，但表单学位类型明确为“硕士”；本项目先交付硕士模板，博士模板应后续以独立 `thesis-jlau-doctor` 项目推进
-- 公开交付层只保留模板代码、校徽素材与可公开示例正文，不在项目目录中混入私有论文或比对截图
+- 公开交付层只保留模板代码、官方封面校徽/校名图素材与可公开示例正文，不在项目目录中混入私有论文或比对截图
 - 用于样式分析、原始资料下载和验收记录的文件统一留在 `tests/` 隔离工作区
 
 构建方式：

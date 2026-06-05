@@ -6,10 +6,11 @@
 
 ---
 
-## [Unreleased]
+## [4.0.16] - 2026-06-05
 
 ### Added（新增）
 
+- 新增 `projects/thesis-jlau-doctor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-jlau-doctor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-doctor.tex`：基于吉林农业大学官方博士学位论文装订封面附件，为 `bensz-thesis` 产品线新增 JLAU 博士论文独立模板身份；博士模板复用已校准的 JLAU 校徽、校名图、声明页、摘要、目录和理工农医类正文体系，并覆盖博士封面中的“学位授予单位及代码”“学科专业名称及代码”等字段口径；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605.3`，并让 Release 打包在博士模板 Overleaf 运行时中携带 JLAU 基础样式依赖。
 - 新增 `projects/thesis-jlau-master/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper / 官网校徽素材，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-jlau-master.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex`：基于 issue #47 与吉林农业大学研究生学位论文写作规范，为 `bensz-thesis` 产品线新增 JLAU 硕士论文独立模板身份，覆盖学术型/专业硕士封面、盲审封面开关、独创性声明、中英文摘要、理工农医类目录与正文、参考文献、附录、作者简介和致谢；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260603`，确保安装器不会因旧版本号跳过新增模板
 - 新增 `projects/thesis-hit-doctor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper / 官方资料记录，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-hit-doctor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-hit-doctor.tex`：基于 issue #45 与哈尔滨工业大学研究生院《博士研究生学位论文书写范例（理工类）》为 `bensz-thesis` 产品线新增 HIT 博士论文独立模板身份，覆盖中英文封面、题名页、摘要、目录、正文和后置材料；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260602`，确保安装器不会因旧版本号跳过新增模板
 - 新增 `packages/bensz-thesis/scripts/thesis_docx_tool.py` 与 `thesis_project_tool.py docx` 子命令：为所有 `projects/thesis-*` 提供通用 LaTeX 源到可编辑 Word draft 的 DOCX 导出链路，默认生成 `main.docx`，将中间 Markdown、复杂对象原始源码与质量报告隔离到 `.latex-cache/docx/`，并支持 `--reference-doc`、`--output`、`--keep-markdown` 与 `--skip-style-normalization`；`projects/thesis-ucas-doctor/scripts/export_docx.py` 现降级为兼容旧入口的薄 wrapper，文档同步强调 DOCX 为可编辑初稿且复杂对象需人工复核
@@ -22,6 +23,7 @@
 
 ### Fixed（修复）
 
+- 优化 `thesis-jlau-master` 封面与声明页对齐：从吉林农业大学官方 Word 封面附件中抽取干净校徽与“吉林农业大学”校名图，更新 `projects/thesis-jlau-master/assets/branding/` 并在 `packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 中新增校名图入口、重排封面标题区、将封面元信息改为官方样张的“标签 + 下划线填写区”，同时补回学位论文使用授权声明第一条的 `1、` 编号；`packages/bensz-thesis/package.json` 版本同步推进到 `p_v20260605.2`。
 - 修复 `thesis-jlau-master` 封面校徽出现黑色方框的问题：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现通过圆形裁切方式显示 `jlau-emblem.jpg`，保留原始校徽素材并去除 JPEG 四角黑底对封面的影响；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605.1`，避免安装器因旧版本号跳过此次样式修复。
 - 修复并优化 `thesis-jlau-master` 目录页层级样式：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现直接在目录正文起点输出章级 `\thecontentslabel`，避免原生 `\chapter{...}` 生成的章号外凸；同时右移 section / subsection 目录项，使“章 / 节 / 小节”从左到右稳定递进，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605`，避免安装器因旧版本号跳过此次样式修复。
 - 优化 `projects/GDNSF_General/` 报告正文提纲说明区的行首与断行分布：新增项目级 `\GDNSFTemplatePara` 段落宏，并在稳定语义边界使用 `\linebreak{}` 控制长提示语断行，让提示语、AI 使用声明、一级提纲和红色说明文字保留 Word 模板中的 2 字符首行缩进，同时继续左对齐并维持原有红黑混排，避免长说明段落行首过齐、换行观感偏离 `template/2026年省自然模板.docx`。

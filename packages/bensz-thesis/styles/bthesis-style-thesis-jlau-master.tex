@@ -1,5 +1,5 @@
 \ProvidesFile{bthesis-style-thesis-jlau-master.tex}
-  [2026/06/05 v1.0.2 Thesis style: thesis-jlau-master]
+  [2026/06/05 v1.0.3 Thesis style: thesis-jlau-master]
 
 \RequirePackage{geometry}
 \RequirePackage{setspace}
@@ -116,12 +116,12 @@
 \newcommand{\jlauSectionFont}{\jlauHei\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\jlauSubsectionFont}{\jlauHei\fontsize{12bp}{18bp}\selectfont}
 \newcommand{\jlauFrontTitleFont}{\jlauHei\fontsize{16bp}{22bp}\selectfont}
-\newcommand{\jlauCoverTopFont}{\jlauSong\fontsize{10.5bp}{15bp}\selectfont}
+\newcommand{\jlauCoverTopFont}{\jlauHei\fontsize{12bp}{17bp}\selectfont}
 \newcommand{\jlauCoverTypeFont}{\jlauCoverScript\fontsize{32bp}{40bp}\selectfont}
 \newcommand{\jlauCoverTitleZhFont}{\jlauHei\fontsize{16bp}{24bp}\selectfont}
 \newcommand{\jlauCoverTitleEnFont}{\bfseries\fontsize{15bp}{22bp}\selectfont}
 \newcommand{\jlauCoverInfoFont}{\jlauSong\bfseries\fontsize{14bp}{22bp}\selectfont}
-\newcommand{\jlauCoverDateFont}{\jlauSong\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\jlauCoverDateFont}{\jlauSong\bfseries\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\jlauThanksFont}{\jlauKai\fontsize{12bp}{20bp}\selectfont}
 
 \renewcommand{\contentsname}{目\quad 录}
@@ -214,6 +214,7 @@
 \numberwithin{equation}{chapter}
 
 \providecommand{\jlauEmblemPath}{assets/branding/jlau-emblem.jpg}
+\providecommand{\jlauWordmarkPath}{assets/branding/jlau-wordmark.png}
 \providecommand{\jlauClassNo}{S63}
 \providecommand{\jlauSchoolCode}{10193}
 \providecommand{\jlauSecretLevel}{公开}
@@ -237,15 +238,25 @@
 }
 
 \newcommand{\jlauMetaLine}[2]{%
-  {\jlauCoverInfoFont #1\hspace{0.6em}#2\par}%
+  {\jlauCoverInfoFont
+    \makebox[3.0cm][r]{#1}\hspace{0.42cm}%
+    \underline{\makebox[6.35cm][c]{#2}}\par}%
+  \vspace{0.24cm}%
 }
 
 \newcommand{\jlauCoverEmblemAt}[1]{%
   \begin{scope}[shift={(#1)}]
-    \clip (0,0) circle[radius=1.5cm];
+    \clip (0,0) circle[radius=1.38cm];
     \node[inner sep=0pt] at (0,0)
-      {\includegraphics[width=3.08cm,height=3.08cm]{\jlauEmblemPath}};
+      {\includegraphics[width=2.84cm,height=2.84cm]{\jlauEmblemPath}};
   \end{scope}%
+}
+
+\newcommand{\jlauCoverWordmarkAt}[1]{%
+  \IfFileExists{\jlauWordmarkPath}{%
+    \node[anchor=north,inner sep=0pt] at (#1)
+      {\includegraphics[width=8.2cm]{\jlauWordmarkPath}};
+  }{}%
 }
 
 \newcommand{\jlauMakeCover}{%
@@ -253,29 +264,30 @@
   \begingroup
   \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=west,inner sep=0pt]
-      at ([xshift=2.35cm,yshift=-1.75cm]current page.north west)
+      at ([xshift=2.55cm,yshift=-2.18cm]current page.north west)
       {{\jlauCoverTopFont 分\hspace{0.7em}类\hspace{0.7em}号：\jlauClassNo}};
     \node[anchor=east,inner sep=0pt]
-      at ([xshift=-2.35cm,yshift=-1.75cm]current page.north east)
+      at ([xshift=-2.75cm,yshift=-2.18cm]current page.north east)
       {{\jlauCoverTopFont 单位代码：\jlauSchoolCode}};
     \node[anchor=west,inner sep=0pt]
-      at ([xshift=2.35cm,yshift=-2.55cm]current page.north west)
+      at ([xshift=2.55cm,yshift=-2.98cm]current page.north west)
       {{\jlauCoverTopFont 密\hspace{2.1em}级：\jlauSecretLevel}};
     \node[anchor=east,inner sep=0pt]
-      at ([xshift=-2.35cm,yshift=-2.55cm]current page.north east)
+      at ([xshift=-2.75cm,yshift=-2.98cm]current page.north east)
       {{\jlauCoverTopFont 学\hspace{1.4em}号：\jlauStudentId}};
-    \jlauCoverEmblemAt{[yshift=-5.55cm]current page.north}
+    \jlauCoverEmblemAt{[yshift=-5.60cm]current page.north}
+    \jlauCoverWordmarkAt{[yshift=-7.16cm]current page.north}
     \node[anchor=north,inner sep=0pt]
-      at ([yshift=-7.55cm]current page.north)
+      at ([yshift=-9.12cm]current page.north)
       {{\jlauCoverTypeFont \jlauThesisTypeText}};
     \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
-      at ([yshift=-10.20cm]current page.north)
+      at ([yshift=-11.55cm]current page.north)
       {{\jlauCoverTitleZhFont \jlauTitleZh}};
     \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
-      at ([yshift=-11.50cm]current page.north)
+      at ([yshift=-12.90cm]current page.north)
       {{\jlauCoverTitleEnFont \jlauTitleEn}};
-    \node[anchor=north,inner sep=0pt,align=center,text width=13.6cm]
-      at ([yshift=-14.40cm]current page.north)
+    \node[anchor=north,inner sep=0pt,align=center,text width=11.4cm]
+      at ([yshift=-16.70cm]current page.north)
       {%
         \ifdefstring{\jlauBlindReview}{true}{%
           \jlauMetaLine{学位类别：}{\jlauDegreeCategory}
@@ -292,7 +304,7 @@
         }%
       };
     \node[anchor=north,inner sep=0pt]
-      at ([yshift=-25.10cm]current page.north)
+      at ([yshift=-25.18cm]current page.north)
       {{\jlauCoverDateFont \jlauSubmitDate}};
   \end{tikzpicture}%
   \null\vfill
@@ -319,7 +331,7 @@
     {\jlauFrontTitleFont 关于学位论文使用授权的声明\par}
   \end{center}
   \vspace{0.6cm}
-  本人完全了解吉林农业大学有关保留和使用学位论文的规定，即：研究生在校攻读学位期间所完成的论文及相关成果的知识产权属吉林农业大学所有，并同意将本论文的版权授权给吉林农业大学，学校有权保留送交论文的复印件和磁盘，允许论文被查阅和借阅，可以采用影印、缩印或扫描等复制手段保存、汇编学位论文。
+  1、本人完全了解吉林农业大学有关保留和使用学位论文的规定，即：研究生在校攻读学位期间所完成的论文及相关成果的知识产权属吉林农业大学所有，并同意将本论文的版权授权给吉林农业大学，学校有权保留送交论文的复印件和磁盘，允许论文被查阅和借阅，可以采用影印、缩印或扫描等复制手段保存、汇编学位论文。
 
   2、本人\hspace{2.6cm}（同意/不同意，务必打印后填写）吉林农业大学将本论文版权授权给不同媒体进行电子出版、多媒体出版、网络出版以及其他形式出版（涉密学位论文解密后应遵守此协议）。
 

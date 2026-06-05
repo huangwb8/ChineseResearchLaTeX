@@ -1,0 +1,64 @@
+\ProvidesFile{bthesis-style-thesis-jlau-doctor.tex}
+  [2026/06/05 v1.0.0 Thesis style: thesis-jlau-doctor]
+
+\input{styles/bthesis-style-thesis-jlau-master.tex}
+
+\renewcommand{\jlauThesisTypeText}{博士学位论文}
+
+\providecommand{\jlauDegreeInstitution}{吉林农业大学}
+\providecommand{\jlauDegreeInstitutionCode}{10193}
+\providecommand{\jlauSubjectCode}{090102}
+
+\renewcommand{\jlauMakeCover}{%
+  \thispagestyle{jlau-cover}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=2.55cm,yshift=-2.18cm]current page.north west)
+      {{\jlauCoverTopFont 分\hspace{0.7em}类\hspace{0.7em}号：\jlauClassNo}};
+    \node[anchor=east,inner sep=0pt]
+      at ([xshift=-2.75cm,yshift=-2.18cm]current page.north east)
+      {{\jlauCoverTopFont 单位代码：\jlauSchoolCode}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=2.55cm,yshift=-2.98cm]current page.north west)
+      {{\jlauCoverTopFont 密\hspace{2.1em}级：\jlauSecretLevel}};
+    \node[anchor=east,inner sep=0pt]
+      at ([xshift=-2.75cm,yshift=-2.98cm]current page.north east)
+      {{\jlauCoverTopFont 学\hspace{1.4em}号：\jlauStudentId}};
+    \jlauCoverEmblemAt{[yshift=-5.60cm]current page.north}
+    \jlauCoverWordmarkAt{[yshift=-7.16cm]current page.north}
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-9.12cm]current page.north)
+      {{\jlauCoverTypeFont \jlauThesisTypeText}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
+      at ([yshift=-11.55cm]current page.north)
+      {{\jlauCoverTitleZhFont \jlauTitleZh}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.6cm]
+      at ([yshift=-12.90cm]current page.north)
+      {{\jlauCoverTitleEnFont \jlauTitleEn}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=12.4cm]
+      at ([yshift=-15.68cm]current page.north)
+      {%
+        \ifdefstring{\jlauBlindReview}{true}{%
+          \jlauMetaLine{学位授予单位及代码：}{\jlauDegreeInstitution\quad （\jlauDegreeInstitutionCode）}
+          \jlauMetaLine{学科专业名称及代码：}{\jlauMajor\quad （\jlauSubjectCode）}
+          \jlauMetaLine{研究方向：}{\jlauResearchDirection}
+          \jlauMetaLine{学位类别：}{\jlauDegreeCategory}
+          \jlauMetaLine{所在学院：}{\jlauCollege}
+        }{%
+          \jlauMetaLine{学位授予单位及代码：}{\jlauDegreeInstitution\quad （\jlauDegreeInstitutionCode）}
+          \jlauMetaLine{学科专业名称及代码：}{\jlauMajor\quad （\jlauSubjectCode）}
+          \jlauMetaLine{作者姓名：}{\jlauAuthor}
+          \jlauMetaLine{指导教师：}{\jlauSupervisor}
+          \jlauMetaLine{研究方向：}{\jlauResearchDirection}
+          \jlauMetaLine{学位类别：}{\jlauDegreeCategory}
+          \jlauMetaLine{所在学院：}{\jlauCollege}
+        }%
+      };
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-25.18cm]current page.north)
+      {{\jlauCoverDateFont \jlauSubmitDate}};
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
