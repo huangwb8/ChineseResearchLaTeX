@@ -22,6 +22,7 @@
 
 ### Fixed（修复）
 
+- 修复并优化 `thesis-jlau-master` 目录页层级样式：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现直接在目录正文起点输出章级 `\thecontentslabel`，避免原生 `\chapter{...}` 生成的章号外凸；同时右移 section / subsection 目录项，使“章 / 节 / 小节”从左到右稳定递进，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605`，避免安装器因旧版本号跳过此次样式修复。
 - 优化 `projects/GDNSF_General/` 报告正文提纲说明区的行首与断行分布：新增项目级 `\GDNSFTemplatePara` 段落宏，并在稳定语义边界使用 `\linebreak{}` 控制长提示语断行，让提示语、AI 使用声明、一级提纲和红色说明文字保留 Word 模板中的 2 字符首行缩进，同时继续左对齐并维持原有红黑混排，避免长说明段落行首过齐、换行观感偏离 `template/2026年省自然模板.docx`。
 - 更新 `projects/GDNSF_General/` 以对齐 `template/2026年省自然模板.docx`：将报告正文从 2025 细分提纲收敛为 2026 年“三段式”结构，新增 30 页上限提示与生成式 AI 使用声明，补齐红色说明文字样式、正文页边距与“研究基础与条件”标题口径，并同步清理项目层过期章节入口，保持 GDNSF 模板独立于 `packages/bensz-nsfc/` 与其它产品线。
 - 修复 `scripts/pack_release.py` 生成 `bensz-paper` Overleaf 包时未正确重写 profile 路径的问题：`styles/bml-core.sty` 现在会显式从压缩包内的 `styles/profiles/` 加载 `bml-profile-*.def`，避免在开发者本机已安装 `bensz-paper` 时误借用本地 TEXMF profile、而在干净 Overleaf/TEXMF 环境中报 `Profile not found`；同时补充打包回归断言，确保 `paper-sci-01` / `paper-coverletter-01` 这类小体积 Overleaf 包不再被本机环境假阳性掩盖。
