@@ -22,6 +22,7 @@
 
 ### Fixed（修复）
 
+- 修复 `thesis-jlau-master` 封面校徽出现黑色方框的问题：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现通过圆形裁切方式显示 `jlau-emblem.jpg`，保留原始校徽素材并去除 JPEG 四角黑底对封面的影响；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605.1`，避免安装器因旧版本号跳过此次样式修复。
 - 修复并优化 `thesis-jlau-master` 目录页层级样式：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现直接在目录正文起点输出章级 `\thecontentslabel`，避免原生 `\chapter{...}` 生成的章号外凸；同时右移 section / subsection 目录项，使“章 / 节 / 小节”从左到右稳定递进，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605`，避免安装器因旧版本号跳过此次样式修复。
 - 优化 `projects/GDNSF_General/` 报告正文提纲说明区的行首与断行分布：新增项目级 `\GDNSFTemplatePara` 段落宏，并在稳定语义边界使用 `\linebreak{}` 控制长提示语断行，让提示语、AI 使用声明、一级提纲和红色说明文字保留 Word 模板中的 2 字符首行缩进，同时继续左对齐并维持原有红黑混排，避免长说明段落行首过齐、换行观感偏离 `template/2026年省自然模板.docx`。
 - 更新 `projects/GDNSF_General/` 以对齐 `template/2026年省自然模板.docx`：将报告正文从 2025 细分提纲收敛为 2026 年“三段式”结构，新增 30 页上限提示与生成式 AI 使用声明，补齐红色说明文字样式、正文页边距与“研究基础与条件”标题口径，并同步清理项目层过期章节入口，保持 GDNSF 模板独立于 `packages/bensz-nsfc/` 与其它产品线。

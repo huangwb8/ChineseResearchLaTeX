@@ -1,5 +1,5 @@
 \ProvidesFile{bthesis-style-thesis-jlau-master.tex}
-  [2026/06/05 v1.0.1 Thesis style: thesis-jlau-master]
+  [2026/06/05 v1.0.2 Thesis style: thesis-jlau-master]
 
 \RequirePackage{geometry}
 \RequirePackage{setspace}
@@ -240,6 +240,14 @@
   {\jlauCoverInfoFont #1\hspace{0.6em}#2\par}%
 }
 
+\newcommand{\jlauCoverEmblemAt}[1]{%
+  \begin{scope}[shift={(#1)}]
+    \clip (0,0) circle[radius=1.5cm];
+    \node[inner sep=0pt] at (0,0)
+      {\includegraphics[width=3.08cm,height=3.08cm]{\jlauEmblemPath}};
+  \end{scope}%
+}
+
 \newcommand{\jlauMakeCover}{%
   \thispagestyle{jlau-cover}%
   \begingroup
@@ -256,9 +264,7 @@
     \node[anchor=east,inner sep=0pt]
       at ([xshift=-2.35cm,yshift=-2.55cm]current page.north east)
       {{\jlauCoverTopFont 学\hspace{1.4em}号：\jlauStudentId}};
-    \node[anchor=north,inner sep=0pt]
-      at ([yshift=-4.05cm]current page.north)
-      {\includegraphics[width=3cm,height=3cm,keepaspectratio]{\jlauEmblemPath}};
+    \jlauCoverEmblemAt{[yshift=-5.55cm]current page.north}
     \node[anchor=north,inner sep=0pt]
       at ([yshift=-7.55cm]current page.north)
       {{\jlauCoverTypeFont \jlauThesisTypeText}};
