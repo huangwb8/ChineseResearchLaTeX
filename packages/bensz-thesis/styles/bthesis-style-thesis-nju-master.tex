@@ -123,26 +123,26 @@
   }
 }
 
-\newcommand{\njuTocFont}{\njuFangSong\fontsize{12bp}{20bp}\selectfont}
-\newcommand{\njuTocChapterFont}{\njuFangSong\bfseries\fontsize{12bp}{20bp}\selectfont}
-\newcommand{\njuTocLeader}{\titlerule*[0.45pc]{.}}
+\newcommand{\njuTocFont}{\njuFangSong\fontsize{12bp}{21bp}\selectfont}
+\newcommand{\njuTocChapterFont}{\njuFangSong\fontsize{12bp}{21bp}\selectfont}
+\newcommand{\njuTocLeader}{\titlerule*[0.66pc]{.}}
 \newcommand{\njuTocPage}[1]{\makebox[1.6em][r]{#1}}
 
-\titlecontents{chapter}[0em]
+\titlecontents{chapter}[4.2em]
   {\addvspace{3bp}\njuTocChapterFont}
-  {\contentslabel{4.0em}}
+  {\thecontentslabel\quad}
   {}
   {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
 
-\titlecontents{section}[4.0em]
+\titlecontents{section}[6.3em]
+  {\njuTocFont}
+  {\contentslabel{2.35em}}
+  {}
+  {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
+
+\titlecontents{subsection}[8.65em]
   {\njuTocFont}
   {\contentslabel{3.0em}}
-  {}
-  {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
-
-\titlecontents{subsection}[7.0em]
-  {\njuTocFont}
-  {\contentslabel{3.4em}}
   {}
   {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
 
