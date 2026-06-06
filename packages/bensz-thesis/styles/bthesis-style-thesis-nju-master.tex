@@ -1,5 +1,5 @@
 \ProvidesFile{bthesis-style-thesis-nju-master.tex}
-  [2026/06/06 v1.1.3 Thesis style: thesis-nju-master]
+  [2026/06/06 v1.1.4 Thesis style: thesis-nju-master]
 
 \RequirePackage{geometry}
 \RequirePackage{setspace}
@@ -96,11 +96,12 @@
 \newcommand{\njuCoverFieldLabelFont}{\njuFangSong\bfseries\fontsize{15.4bp}{18bp}\selectfont}
 \newcommand{\njuCoverFieldValueFont}{\njuFangSong\fontsize{15.4bp}{18bp}\selectfont}
 \newcommand{\njuFrontHeadingFont}{\njuFangSong\bfseries\fontsize{15bp}{20bp}\selectfont}
-\newcommand{\njuChapterFont}{\njuFangSong\bfseries\fontsize{16bp}{20bp}\selectfont}
+\newcommand{\njuChapterFont}{\njuFangSong\bfseries\fontsize{15bp}{20bp}\selectfont}
 \newcommand{\njuSectionFont}{\njuFangSong\bfseries\fontsize{14bp}{18bp}\selectfont}
-\newcommand{\njuSubsectionFont}{\njuFangSong\fontsize{12bp}{16bp}\selectfont}
+\newcommand{\njuSubsectionFont}{\njuFangSong\fontsize{12bp}{18bp}\selectfont}
 \newcommand{\njuHeaderFont}{\njuSong\fontsize{9bp}{11bp}\selectfont}
-\newcommand{\njuCaptionFont}{\njuFangSong\fontsize{10.5bp}{14bp}\selectfont}
+\newcommand{\njuCaptionFont}{\njuFangSong\fontsize{10.5bp}{15bp}\selectfont}
+\newcommand{\njuTableFont}{\njuFangSong\fontsize{10.5bp}{15bp}\selectfont}
 
 \ctexset{
   chapter = {
@@ -124,7 +125,7 @@
 }
 
 \newcommand{\njuTocFont}{\njuFangSong\fontsize{12bp}{21bp}\selectfont}
-\newcommand{\njuTocChapterFont}{\njuFangSong\fontsize{12bp}{21bp}\selectfont}
+\newcommand{\njuTocChapterFont}{\njuFangSong\bfseries\fontsize{12bp}{21bp}\selectfont}
 \newcommand{\njuTocLeader}{\titlerule*[0.66pc]{.}}
 \newcommand{\njuTocPage}[1]{\makebox[1.6em][r]{#1}}
 
@@ -158,8 +159,12 @@
   skip=6bp
 }
 \DeclareCaptionFont{nju}{\njuCaptionFont}
-\captionsetup[figure]{font=nju}
-\captionsetup[table]{font=nju}
+\captionsetup[figure]{font={nju,stretch=1.0},labelfont=nju,textfont=nju}
+\captionsetup[table]{font={nju,stretch=1.0},labelfont=nju,textfont=nju}
+
+\AtBeginEnvironment{tabular}{\njuTableFont}
+\AtBeginEnvironment{tabularx}{\njuTableFont}
+\AtBeginEnvironment{longtable}{\njuTableFont}
 
 \setlist[itemize]{leftmargin=2.4em,itemsep=0.2em,topsep=0.2em}
 \setlist[enumerate]{leftmargin=2.4em,itemsep=0.2em,topsep=0.2em}

@@ -12,6 +12,10 @@
 
 ---
 
+目前， /Volumes/2T01/Github/ChineseResearchLaTeX/projects/thesis-nju-master 的字体（比如字体类型、大小之类的）还有哪些不符合南京大学工程管理硕士学位论文规范要求（/Volumes/2T01/Download/2023.2.docx）的？
+
+---
+
 /Volumes/2T01/Github/ChineseResearchLaTeX/projects/thesis-nju-master 的样式还有没有需要改进的？ https://github.com/huangwb8/ChineseResearchLaTeX/issues/37 的需求是否已经满足以至可以关闭issue了？
 
 ---
