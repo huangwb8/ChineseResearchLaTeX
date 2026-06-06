@@ -1,5 +1,5 @@
 \ProvidesFile{bthesis-style-thesis-nju-master.tex}
-  [2026/03/27 v1.1.1 Thesis style: thesis-nju-master]
+  [2026/06/06 v1.1.2 Thesis style: thesis-nju-master]
 
 \RequirePackage{geometry}
 \RequirePackage{setspace}
@@ -123,23 +123,27 @@
   }
 }
 
+\newcommand{\njuTocFont}{\njuSong\fontsize{12bp}{22bp}\selectfont}
+\newcommand{\njuTocLeader}{\titlerule*[0.78pc]{.}}
+\newcommand{\njuTocPage}[1]{\makebox[1.8em][r]{#1}}
+
 \titlecontents{chapter}[0em]
-  {\njuSong\fontsize{12bp}{18bp}\selectfont}
-  {\contentslabel{5.2em}}
-  {}
-  {\titlerule*[0.6pc]{.}\contentspage}
+  {\addvspace{4bp}\njuTocFont}
+  {\makebox[4.4em][l]{\thecontentslabel}}
+  {\hspace*{4.4em}}
+  {\njuTocLeader\njuTocPage{\contentspage}}
 
-\titlecontents{section}[1.8em]
-  {\njuSong\fontsize{12bp}{18bp}\selectfont}
-  {\contentslabel{3.2em}}
+\titlecontents{section}[4.4em]
+  {\njuTocFont}
+  {\makebox[3.1em][l]{\thecontentslabel}}
   {}
-  {\titlerule*[0.6pc]{.}\contentspage}
+  {\njuTocLeader\njuTocPage{\contentspage}}
 
-\titlecontents{subsection}[4.2em]
-  {\njuSong\fontsize{12bp}{18bp}\selectfont}
-  {\contentslabel{4em}}
+\titlecontents{subsection}[7.5em]
+  {\njuTocFont}
+  {\makebox[3.6em][l]{\thecontentslabel}}
   {}
-  {\titlerule*[0.6pc]{.}\contentspage}
+  {\njuTocLeader\njuTocPage{\contentspage}}
 
 \setcounter{tocdepth}{2}
 \renewcommand{\contentsname}{目\quad 录}
@@ -239,6 +243,19 @@
 \seq_new:N \l__nju_cover_title_lines_seq
 \tl_new:N \l__nju_cover_title_text_tl
 \newcommand{\njuCoverTitleLineGap}{0.38em}
+\newsavebox{\njuCoverTitleLineBox}
+\newcommand{\njuCoverTitleLine}[2]{%
+  \sbox{\njuCoverTitleLineBox}{\njuCoverValueFont \strut #2}%
+  \underline{%
+    \makebox[#1][c]{%
+      \ifdim\wd\njuCoverTitleLineBox>#1\relax
+        \resizebox{#1}{!}{\usebox{\njuCoverTitleLineBox}}%
+      \else
+        \usebox{\njuCoverTitleLineBox}%
+      \fi
+    }%
+  }%
+}
 \cs_new_protected:Npn \nju_render_cover_title_lines:nn #1#2
   {
     \tl_set:Nx \l__nju_cover_title_text_tl {#2}
@@ -248,9 +265,7 @@
       \seq_map_indexed_inline:Nn \l__nju_cover_title_lines_seq
         {
           \hbox{%
-            \underline{%
-              \makebox[#1][l]{\njuCoverValueFont \strut ##2}%
-            }%
+            \njuCoverTitleLine{#1}{##2}%
           }%
           \int_compare:nNnT {##1} < { \seq_count:N \l__nju_cover_title_lines_seq }
             {
@@ -267,8 +282,8 @@
 \ExplSyntaxOff
 
 \newcommand{\njuCoverFieldLabelWidth}{2.2cm}
-\newcommand{\njuCoverTitleWidth}{6.35cm}
-\newcommand{\njuCoverFieldLabelGap}{1.2em}
+\newcommand{\njuCoverTitleWidth}{8.6cm}
+\newcommand{\njuCoverFieldLabelGap}{0.9em}
 \newcommand{\njuCoverTitleVerticalShift}{4.40em}
 \newcommand{\njuCoverFieldRowGap}{-0.55em}
 \newcommand{\njuCoverFieldRuleGap}{0.05em}
@@ -341,7 +356,7 @@
     }
     \vspace{0.55cm}
     \begin{center}
-    \begin{minipage}{9.8cm}
+    \begin{minipage}{11.35cm}
       \par\vspace*{0.12em}%
       \ifstrempty{\njuCoverTitleLinesValue}{%
         \njuCoverTitleBlock{\njuTitleValue}%

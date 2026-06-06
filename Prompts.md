@@ -12,6 +12,10 @@
 
 ---
 
+/Volumes/2T01/Github/ChineseResearchLaTeX/projects/thesis-nju-master 的样式还有没有需要改进的？ https://github.com/huangwb8/ChineseResearchLaTeX/issues/37 的需求是否已经满足以至可以关闭issue了？
+
+---
+
 有个新issue要求做毕业论文模板： https://github.com/huangwb8/ChineseResearchLaTeX/issues/47 。 你搞一下。 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---

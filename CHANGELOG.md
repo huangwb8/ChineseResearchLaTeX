@@ -23,6 +23,7 @@
 
 ### Fixed（修复）
 
+- 优化 `thesis-nju-master` 封面题目填写区与目录层级样式：`packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex` 现扩大 NJU 封面字段区与下划线宽度，并对超长题目行增加自动测量与等比压缩保护，避免示例题目中“内容”等字符越过下划线边界；目录页则改为稳定的章号列、标题列、页码列和更疏朗的点线节奏，改善原先章/节层级拥挤、点线过密的问题；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260606`，确保安装器不会因旧版本号跳过此次样式修复。
 - 优化 `thesis-jlau-master` 封面与声明页对齐：从吉林农业大学官方 Word 封面附件中抽取干净校徽与“吉林农业大学”校名图，更新 `projects/thesis-jlau-master/assets/branding/` 并在 `packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 中新增校名图入口、重排封面标题区、将封面元信息改为官方样张的“标签 + 下划线填写区”，同时补回学位论文使用授权声明第一条的 `1、` 编号；`packages/bensz-thesis/package.json` 版本同步推进到 `p_v20260605.2`。
 - 修复 `thesis-jlau-master` 封面校徽出现黑色方框的问题：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现通过圆形裁切方式显示 `jlau-emblem.jpg`，保留原始校徽素材并去除 JPEG 四角黑底对封面的影响；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605.1`，避免安装器因旧版本号跳过此次样式修复。
 - 修复并优化 `thesis-jlau-master` 目录页层级样式：`packages/bensz-thesis/styles/bthesis-style-thesis-jlau-master.tex` 现直接在目录正文起点输出章级 `\thecontentslabel`，避免原生 `\chapter{...}` 生成的章号外凸；同时右移 section / subsection 目录项，使“章 / 节 / 小节”从左到右稳定递进，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260605`，避免安装器因旧版本号跳过此次样式修复。
