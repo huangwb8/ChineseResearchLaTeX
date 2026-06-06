@@ -1,14 +1,30 @@
 # 通用
 
----
+- 更新版本
 
-创建tag v4.0.16 ； /git-commit ;   /git-publish-release ，项目zip文件记得同步生成
+```
+github项目：huangwb8/ChineseResearchLaTeX
+version=4.0.17
+git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，并且该commit信息要提到更新版本（写commit信息的时候，不能仅根据最近1次commit； 而是版本间所有commit的总结的综合形成版本特异性commit信息）； git-publish-release skill 发布为一个release到github仓库。项目zip文件记得同步生成。
+```
 
+- 万能写代码优化
+
+```
 使用 awesome-code skill 辅助规划、优化。所有问题都要解决。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
+```
+
+- 其它
 
 将 ./packages 里的latex包安装到本地设备。
 
 # 日常
+
+---
+
+thesis-nju-master模板优化
+
+- 
 
 ---
 

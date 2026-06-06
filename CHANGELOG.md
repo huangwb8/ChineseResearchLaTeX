@@ -6,10 +6,11 @@
 
 ---
 
-## [Unreleased]
+## [4.0.17] - 2026-06-06
 
 ### Fixed（修复）
 
+- 继续优化 `thesis-nju-master` 目录层级观感：`packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex` 现进一步加大 section / subsection 目录项的右移幅度，形成更清晰的章、节、小节阶梯缩进；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260606.5`，避免安装器因旧版本号跳过此次样式修复。
 - 继续对齐 `thesis-nju-master` 与南京大学工程管理硕士学位论文规范中的字体口径：`packages/bensz-thesis/styles/bthesis-style-thesis-nju-master.tex` 现将章标题收敛为小三号仿宋加黑、目录章级条目补回小四号仿宋加粗、小节标题行距调整为小四号 1.5 倍口径，并让图表题注与 `tabular` / `tabularx` / `longtable` 表格正文默认使用五号仿宋、英文与数字继续走 Times New Roman；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260606.3`，避免安装器因旧版本号跳过此次样式修复。
 
 ## [4.0.16] - 2026-06-05
