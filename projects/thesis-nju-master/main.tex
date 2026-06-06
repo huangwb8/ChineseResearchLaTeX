@@ -10,10 +10,11 @@
 \njuMakeCover
 \njuMakeInfoPage
 \njuMakeEnglishTitle
+\njuMakeDeclarationPage
 \njuMakeBlankPage
 
 \clearpage
-\setcounter{page}{5}
+\setcounter{page}{6}
 \njuUseFrontmatterStyle{摘要}
 \addcontentsline{toc}{chapter}{摘要}
 \input{extraTex/front/abstract_zh.tex}
@@ -51,5 +52,7 @@
 \appendix
 \chapter{附录示例}
 \input{extraTex/back/appendix.tex}
+
+\njuMakePublicationAuthorization
 
 \end{document}

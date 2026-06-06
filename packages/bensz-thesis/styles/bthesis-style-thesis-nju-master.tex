@@ -1,5 +1,5 @@
 \ProvidesFile{bthesis-style-thesis-nju-master.tex}
-  [2026/06/06 v1.1.2 Thesis style: thesis-nju-master]
+  [2026/06/06 v1.1.3 Thesis style: thesis-nju-master]
 
 \RequirePackage{geometry}
 \RequirePackage{setspace}
@@ -65,9 +65,9 @@
 }
 
 \IfFontExistsTF{STFangsong}{%
-  \newCJKfontfamily\njuFangSong{STFangsong}
+  \newCJKfontfamily\njuFangSong[AutoFakeBold=3.5]{STFangsong}
 }{%
-  \newCJKfontfamily\njuFangSong{FandolFang-Regular}
+  \newCJKfontfamily\njuFangSong[AutoFakeBold=3.5]{FandolFang-Regular}
 }
 
 \xeCJKsetup{PunctStyle=plain}
@@ -75,7 +75,7 @@
 \setlength{\parindent}{2em}
 \setlength{\parskip}{0pt}
 \AtBeginDocument{%
-  \njuSong
+  \njuFangSong
   \fontsize{12bp}{20bp}\selectfont
 }
 
@@ -88,24 +88,24 @@
   CJKbookmarks=true
 }
 
-\newcommand{\njuBodyFont}{\njuSong\fontsize{12bp}{20bp}\selectfont}
-\newcommand{\njuCoverTitleFont}{\njuKai\bfseries\fontsize{24bp}{32bp}\selectfont}
-\newcommand{\njuCoverDegreeFont}{\njuKai\bfseries\fontsize{22bp}{30bp}\selectfont}
-\newcommand{\njuCoverLabelFont}{\njuKai\bfseries\fontsize{15.4bp}{19bp}\selectfont}
-\newcommand{\njuCoverValueFont}{\njuKai\fontsize{15.4bp}{19bp}\selectfont}
-\newcommand{\njuCoverFieldLabelFont}{\njuKai\bfseries\fontsize{15.4bp}{18bp}\selectfont}
-\newcommand{\njuCoverFieldValueFont}{\njuKai\fontsize{15.4bp}{18bp}\selectfont}
-\newcommand{\njuFrontHeadingFont}{\njuHei\bfseries\fontsize{15bp}{20bp}\selectfont}
-\newcommand{\njuChapterFont}{\njuHei\bfseries\fontsize{16bp}{20bp}\selectfont}
-\newcommand{\njuSectionFont}{\njuHei\bfseries\fontsize{14bp}{18bp}\selectfont}
-\newcommand{\njuSubsectionFont}{\njuHei\bfseries\fontsize{12bp}{16bp}\selectfont}
+\newcommand{\njuBodyFont}{\njuFangSong\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\njuCoverTitleFont}{\njuFangSong\bfseries\fontsize{24bp}{32bp}\selectfont}
+\newcommand{\njuCoverDegreeFont}{\njuFangSong\bfseries\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\njuCoverLabelFont}{\njuFangSong\bfseries\fontsize{15.4bp}{19bp}\selectfont}
+\newcommand{\njuCoverValueFont}{\njuFangSong\fontsize{15.4bp}{19bp}\selectfont}
+\newcommand{\njuCoverFieldLabelFont}{\njuFangSong\bfseries\fontsize{15.4bp}{18bp}\selectfont}
+\newcommand{\njuCoverFieldValueFont}{\njuFangSong\fontsize{15.4bp}{18bp}\selectfont}
+\newcommand{\njuFrontHeadingFont}{\njuFangSong\bfseries\fontsize{15bp}{20bp}\selectfont}
+\newcommand{\njuChapterFont}{\njuFangSong\bfseries\fontsize{16bp}{20bp}\selectfont}
+\newcommand{\njuSectionFont}{\njuFangSong\bfseries\fontsize{14bp}{18bp}\selectfont}
+\newcommand{\njuSubsectionFont}{\njuFangSong\fontsize{12bp}{16bp}\selectfont}
 \newcommand{\njuHeaderFont}{\njuSong\fontsize{9bp}{11bp}\selectfont}
-\newcommand{\njuCaptionFont}{\njuSong\fontsize{10.5bp}{14bp}\selectfont}
+\newcommand{\njuCaptionFont}{\njuFangSong\fontsize{10.5bp}{14bp}\selectfont}
 
 \ctexset{
   chapter = {
     name = {第,章},
-    number = \chinese{chapter},
+    number = \arabic{chapter},
     format = \centering\njuChapterFont,
     aftername = \quad,
     beforeskip = 0pt,
@@ -123,27 +123,28 @@
   }
 }
 
-\newcommand{\njuTocFont}{\njuSong\fontsize{12bp}{22bp}\selectfont}
-\newcommand{\njuTocLeader}{\titlerule*[0.78pc]{.}}
-\newcommand{\njuTocPage}[1]{\makebox[1.8em][r]{#1}}
+\newcommand{\njuTocFont}{\njuFangSong\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\njuTocChapterFont}{\njuFangSong\bfseries\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\njuTocLeader}{\titlerule*[0.45pc]{.}}
+\newcommand{\njuTocPage}[1]{\makebox[1.6em][r]{#1}}
 
 \titlecontents{chapter}[0em]
-  {\addvspace{4bp}\njuTocFont}
-  {\makebox[4.4em][l]{\thecontentslabel}}
-  {\hspace*{4.4em}}
-  {\njuTocLeader\njuTocPage{\contentspage}}
-
-\titlecontents{section}[4.4em]
-  {\njuTocFont}
-  {\makebox[3.1em][l]{\thecontentslabel}}
+  {\addvspace{3bp}\njuTocChapterFont}
+  {\contentslabel{4.0em}}
   {}
-  {\njuTocLeader\njuTocPage{\contentspage}}
+  {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
 
-\titlecontents{subsection}[7.5em]
+\titlecontents{section}[4.0em]
   {\njuTocFont}
-  {\makebox[3.6em][l]{\thecontentslabel}}
+  {\contentslabel{3.0em}}
   {}
-  {\njuTocLeader\njuTocPage{\contentspage}}
+  {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
+
+\titlecontents{subsection}[7.0em]
+  {\njuTocFont}
+  {\contentslabel{3.4em}}
+  {}
+  {\hspace{0.35em}\njuTocLeader\njuTocPage{\contentspage}}
 
 \setcounter{tocdepth}{2}
 \renewcommand{\contentsname}{目\quad 录}
@@ -163,7 +164,7 @@
 \setlist[itemize]{leftmargin=2.4em,itemsep=0.2em,topsep=0.2em}
 \setlist[enumerate]{leftmargin=2.4em,itemsep=0.2em,topsep=0.2em}
 
-\renewcommand{\chaptermark}[1]{\markboth{第\chinese{chapter}章\ #1}{}}
+\renewcommand{\chaptermark}[1]{\markboth{第\arabic{chapter}章\ #1}{}}
 \renewcommand{\sectionmark}[1]{}
 
 \fancypagestyle{nju-main}{
@@ -177,6 +178,13 @@
 
 \fancypagestyle{nju-empty}{
   \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{nju-front-numbered}{
+  \fancyhf{}
+  \fancyfoot[C]{\njuHeaderFont \thepage}
   \renewcommand{\headrulewidth}{0pt}
   \renewcommand{\footrulewidth}{0pt}
 }
@@ -220,6 +228,20 @@
 \newcommand{\njuSetDegreeType}[1]{%
   \edef\njuDegreeTypeValue{#1}%
   \ifdefstring{\njuDegreeTypeValue}{academic}{\njuProfessionalDegreefalse}{\njuProfessionalDegreetrue}%
+}
+\newcommand{\njuDegreeSubtitle}{%
+  \ifnjuProfessionalDegree
+    （申请硕士专业学位）%
+  \else
+    （申请硕士学位）%
+  \fi
+}
+\newcommand{\njuMajorLabel}{%
+  \ifnjuProfessionalDegree
+    专业学位类别（领域）%
+  \else
+    学科、专业名称%
+  \fi
 }
 \newcommand{\njuTitle}[1]{\gdef\njuTitleValue{#1}}
 \newcommand{\njuAuthor}[1]{\gdef\njuAuthorValue{#1}}
@@ -283,6 +305,8 @@
 
 \newcommand{\njuCoverFieldLabelWidth}{2.2cm}
 \newcommand{\njuCoverTitleWidth}{8.6cm}
+\newcommand{\njuCoverWideFieldLabelWidth}{3.65cm}
+\newcommand{\njuCoverWideFieldValueWidth}{7.15cm}
 \newcommand{\njuCoverFieldLabelGap}{0.9em}
 \newcommand{\njuCoverTitleVerticalShift}{4.40em}
 \newcommand{\njuCoverFieldRowGap}{-0.55em}
@@ -335,6 +359,19 @@
   \njuCoverFieldWithHeight{#1}{\njuCoverFieldContentHeight}{#2}%
 }
 
+\newcommand{\njuCoverWideLabelField}[2]{%
+  \par\vspace*{\njuCoverFieldRowGap}%
+  \parbox[t]{\njuCoverWideFieldLabelWidth}{%
+    \raggedright\njuCoverFieldLabelFont \strut #1%
+  }%
+  \hspace{\njuCoverFieldLabelGap}%
+  \parbox[t]{\njuCoverWideFieldValueWidth}{%
+    \centering
+    \njuCoverFieldValueFont
+    \underline{\makebox[\linewidth][c]{\strut #2}}%
+  }%
+}
+
 \newcommand{\njuMakeCover}{%
   \begin{titlepage}
     \thispagestyle{empty}
@@ -346,14 +383,7 @@
     }{}
     {\njuCoverTitleFont 研\hspace{0.55em}究\hspace{0.55em}生\hspace{0.55em}毕\hspace{0.55em}业\hspace{0.55em}论\hspace{0.55em}文\par}
     \vspace{0.15cm}
-    {\njuCoverDegreeFont
-      \ifnjuProfessionalDegree
-        （申请硕士学位）%
-      \else
-        （申请硕士学位）%
-      \fi
-      \par
-    }
+    {\njuCoverDegreeFont \njuDegreeSubtitle\par}
     \vspace{0.55cm}
     \begin{center}
     \begin{minipage}{11.35cm}
@@ -364,11 +394,7 @@
         \njuCoverTitleBlock{\njuCoverTitleLinesValue}%
       }%
       \njuCoverField{作者姓名}{\njuAuthorValue}
-      \ifnjuProfessionalDegree
-        \njuCoverField{专业名称}{\njuMajorValue}
-      \else
-        \njuCoverField{专业名称}{\njuMajorValue}
-      \fi
+      \njuCoverWideLabelField{\njuMajorLabel}{\njuMajorValue}
       \njuCoverField{研究方向}{\njuResearchValue}
       \njuCoverField{指导教师}{\njuSupervisorValue}
     \end{minipage}
@@ -395,6 +421,84 @@
     }%
   \end{minipage}
   \clearpage
+}
+
+\newcommand{\njuDeclarationParagraph}[1]{%
+  \par\noindent\hspace{2em}#1\par
+}
+
+\newcommand{\njuMakeDeclarationPage}{%
+  \clearpage
+  \begingroup
+  \pagestyle{nju-front-numbered}
+  \thispagestyle{nju-front-numbered}
+  \njuBodyFont
+  \begin{center}
+    {\njuFrontHeadingFont 南京大学研究生学位论文原创性声明\par}
+  \end{center}
+  \vspace{1.2em}
+  \njuDeclarationParagraph{本人郑重声明：所呈交的学位论文是本人在导师指导下独立进行的研究工作所取得的成果。尽我所知，除了文中特别加以标注引用的内容外，论文中不包含任何其他个人或集体已经发表或撰写过的研究成果。对本文的研究做出重要贡献的个人和集体，均已在文中作了明确的说明并表示了谢意。}
+  \vspace{2.2em}
+  \noindent 研究生签名：\hspace{4.0cm} 日期：\qquad 年\qquad 月\qquad 日
+  \vspace{3.0em}
+  \begin{center}
+    {\njuFrontHeadingFont 南京大学学位论文使用授权声明\par}
+  \end{center}
+  \vspace{1.2em}
+  \njuDeclarationParagraph{本学位论文作者同意学校保留并向国家有关部门或机构送交学位论文的复印件和电子文档，可以采用影印、缩印或扫描等复制手段保存论文。本人电子文档的内容和纸质论文的内容相一致。除在保密期内的保密论文外，允许论文被查阅和借阅，可以公布（包括刊登）论文的全部或部分内容。论文的公布（包括刊登）授权南京大学研究生院办理。}
+  \vspace{2.2em}
+  \noindent 学位论文作者签名：\hspace{3.0cm} 导师签名：\par
+  \vspace{1.2em}
+  \noindent 签字日期：\qquad 年\quad 月\quad 日\hspace{2.0cm} 签字日期：\qquad 年\quad 月\quad 日
+  \clearpage
+  \endgroup
+}
+
+\newcommand{\njuPublicationField}[2]{%
+  \noindent\makebox[4.0cm][l]{#1}%
+  \underline{\makebox[\dimexpr\linewidth-4.0cm\relax][l]{#2}}\par
+  \vspace{0.45em}
+}
+
+\newcommand{\njuMakePublicationAuthorization}{%
+  \clearpage
+  \begingroup
+  \pagestyle{nju-front-numbered}
+  \thispagestyle{nju-front-numbered}
+  \njuFangSong\fontsize{11bp}{16bp}\selectfont
+  \sloppy
+  \setlength{\emergencystretch}{2em}%
+  \begin{center}
+    {\njuFrontHeadingFont 《学位论文出版授权书》\par}
+  \end{center}
+  \vspace{0.8em}
+  \njuDeclarationParagraph{本人完全同意《中国优秀博硕士学位论文全文数据库出版章程》（以下简称“章程”），愿意将本人的学位论文提交“中国学术期刊（光盘版）电子杂志社”在《中国博士学位论文全文数据库》、《中国优秀硕士学位论文全文数据库》中全文发表。《中国博士学位论文全文数据库》、《中国优秀硕士学位论文全文数据库》可以以电子、网络及其他数字媒体形式公开出版，并同意编入《中国知识资源总库》，在《中国博硕士学位论文评价数据库》中使用和在互联网上传播，同意按“章程”规定享受相关权益。}
+  \vspace{1.4em}
+  \begin{flushright}
+    作者签名：\underline{\makebox[4.0cm]{}}\par
+    \vspace{0.5em}
+    \qquad 年\qquad 月\qquad 日
+  \end{flushright}
+  \vspace{0.7em}
+  \njuPublicationField{论文题名}{\njuTitleValue}
+  \njuPublicationField{研究生学号}{\njuStudentIdValue}
+  \njuPublicationField{所在院系}{工程管理学院}
+  \njuPublicationField{学位年度}{\njuEnrollmentYearValue}
+  \noindent\makebox[4.0cm][l]{论文级别}%
+  \parbox[t]{\dimexpr\linewidth-4.0cm\relax}{%
+    $\square$学术学位硕士\quad
+    \ifnjuProfessionalDegree $\boxtimes$专业学位硕士\else $\square$专业学位硕士\fi\par
+    $\square$学术学位博士\quad $\square$专业学位博士%
+  }\par
+  \vspace{0.5em}
+  \njuPublicationField{作者 Email}{}
+  \njuPublicationField{导师姓名}{\njuSupervisorValue}
+  \vspace{0.3em}
+  \noindent 论文涉密情况：\quad $\boxtimes$不保密\quad $\square$保密，保密期（\qquad 年\quad 月\quad 日 至 \qquad 年\quad 月\quad 日）\par
+  \vfill
+  \noindent 注：请将该授权书填写后装订在学位论文最后一页（南大封面）。
+  \clearpage
+  \endgroup
 }
 
 \newcommand{\njuMakeEnglishTitle}{%

@@ -1,6 +1,6 @@
 {
   "name": "bensz-thesis",
-  "version": "p_v20260606",
+  "version": "p_v20260606.1",
   "description": "ChineseResearchLaTeX 毕业论文公共包（支持多学校 profile、PDF 构建、DOCX 初稿导出与像素级验收）",
   "author": "ChineseResearchLaTeX Contributors",
   "license": "MIT",
