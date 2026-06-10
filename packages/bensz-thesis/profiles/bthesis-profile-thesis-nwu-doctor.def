@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-nwu-doctor.def}
+  [2026/06/10 v1.0.0 Thesis profile: thesis-nwu-doctor]
+
+\makeatletter
+\def\bthesis@template{thesis-nwu-doctor}
+\def\bthesis@templateversion{t_v20260610}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-nwu-doctor.tex}
+\makeatother

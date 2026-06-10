@@ -6,6 +6,12 @@
 
 ---
 
+## [4.0.18] - 2026-06-10
+
+### Added（新增）
+
+- 新增 `projects/thesis-nwu-doctor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper / 官方资料记录，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-nwu-doctor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-nwu-doctor.tex`：基于 issue #48、《西北大学研究生学位论文规范》（研字〔2019〕7 号）和研究生院公开 Word 模板，为 `bensz-thesis` 产品线新增 NWU 博士论文独立模板身份，覆盖中文封面、英文题名页、知识产权声明书、独创性声明、中英文摘要、目录、章节正文、结论、参考文献、附录、攻读博士学位期间取得的研究成果、致谢和作者简介；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260610`，避免安装器因旧版本号跳过新增模板。
+
 ## [4.0.17] - 2026-06-06
 
 ### Fixed（修复）

@@ -87,6 +87,7 @@
 | [`thesis-hit-doctor/`](./thesis-hit-doctor/) | 哈尔滨工业大学博士论文示例项目 | 需要 HIT 博士论文版式模板 |
 | [`thesis-jlau-doctor/`](./thesis-jlau-doctor/) | 吉林农业大学博士论文示例项目 | 需要 JLAU 博士论文版式模板 |
 | [`thesis-jlau-master/`](./thesis-jlau-master/) | 吉林农业大学硕士论文示例项目 | 需要 JLAU 硕士论文版式模板 |
+| [`thesis-nwu-doctor/`](./thesis-nwu-doctor/) | 西北大学博士论文示例项目 | 需要 NWU 博士论文版式模板 |
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |
 | [`thesis-smu-postdoc/`](./thesis-smu-postdoc/) | 南方医科大学博士后研究报告示例项目 | 需要按博士后研究报告规范组织封面、题名页、中英文摘要、正文与后置材料 |
@@ -117,7 +118,7 @@
 - 写广东省自然科学基金面上项目报告正文：进入 `GDNSF_General/`
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`
-- 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
+- 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-nwu-doctor/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
 - 写博士后研究报告：进入 `thesis-smu-postdoc/`
 - 写中英文简历：进入 `cv-01/`
 

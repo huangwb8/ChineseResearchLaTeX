@@ -1,0 +1,391 @@
+\ProvidesFile{bthesis-style-thesis-nwu-doctor.tex}
+  [2026/06/10 v1.0.0 Thesis style: thesis-nwu-doctor]
+
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{chngcntr}
+
+\geometry{
+  a4paper,
+  left=30mm,
+  right=20mm,
+  top=25mm,
+  bottom=25mm,
+  headheight=14pt,
+  headsep=8mm,
+  footskip=9mm
+}
+
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{Songti SC}{
+  \setCJKmainfont{Songti SC}
+  \newCJKfontfamily\nwuSong{Songti SC}
+}{
+  \IfFontExistsTF{SimSun}{
+    \setCJKmainfont{SimSun}
+    \newCJKfontfamily\nwuSong{SimSun}
+  }{
+    \setCJKmainfont{FandolSong-Regular}
+    \newCJKfontfamily\nwuSong{FandolSong-Regular}
+  }
+}
+
+\IfFontExistsTF{Heiti SC}{
+  \newCJKfontfamily\nwuHei{Heiti SC}
+}{
+  \IfFontExistsTF{SimHei}{
+    \newCJKfontfamily\nwuHei{SimHei}
+  }{
+    \newCJKfontfamily\nwuHei{FandolHei-Regular}
+  }
+}
+
+\AtBeginDocument{\nwuBodyFont}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\emergencystretch=2em
+\setstretch{1.0}
+\xeCJKsetup{PunctStyle=plain}
+
+\hypersetup{
+  colorlinks=false,
+  hidelinks,
+  hypertexnames=false,
+  CJKbookmarks=true
+}
+\pdfstringdefDisableCommands{%
+  \def\quad{ }%
+}
+
+\newcommand{\nwuBodyFont}{\nwuSong\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\nwuHeaderFont}{\nwuSong\fontsize{9bp}{11bp}\selectfont}
+\newcommand{\nwuPageNumberFont}{\nwuSong\fontsize{10.5bp}{12bp}\selectfont}
+\newcommand{\nwuChapterFont}{\nwuHei\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\nwuTocTitleFont}{\nwuHei\fontsize{18bp}{24bp}\selectfont}
+\newcommand{\nwuSectionFont}{\nwuHei\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\nwuSubsectionFont}{\nwuHei\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\nwuFrontTitleFont}{\nwuHei\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\nwuCoverTopFont}{\nwuHei\fontsize{12bp}{17bp}\selectfont}
+\newcommand{\nwuCoverTitleFont}{\nwuHei\bfseries\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\nwuCoverMetaFont}{\nwuHei\fontsize{14bp}{21bp}\selectfont}
+\newcommand{\nwuCoverFooterFont}{\nwuSong\fontsize{16bp}{24bp}\selectfont}
+\newcommand{\nwuEnglishTitleFont}{\bfseries\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\nwuEnglishBodyFont}{\fontsize{14bp}{21bp}\selectfont}
+
+\renewcommand{\thechapter}{\chinese{chapter}}
+\renewcommand{\thesection}{\arabic{chapter}.\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{chapter}.\arabic{section}.\arabic{subsection}}
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+\counterwithin{equation}{chapter}
+\renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\thetable}{\arabic{table}}
+
+\renewcommand{\contentsname}{目\quad 录}
+\setcounter{tocdepth}{2}
+\newcommand{\nwuTocFont}{\nwuSong\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\nwuTocChapterFont}{\nwuHei\fontsize{12bp}{18bp}\selectfont}
+\newcommand{\nwuTocLeader}{\titlerule*[0.66pc]{.}}
+\newcommand{\nwuTocPage}[1]{\makebox[1.8em][r]{#1}}
+\titlecontents{chapter}[0pt]
+  {\addvspace{2bp}\nwuTocChapterFont}
+  {\thecontentslabel\hspace{1.1em}}
+  {}
+  {\hspace{0.35em}\nwuTocLeader\nwuTocPage{\contentspage}}
+\titlecontents{section}[4.2em]
+  {\nwuTocFont}
+  {\contentslabel{3.0em}}
+  {}
+  {\hspace{0.35em}\nwuTocLeader\nwuTocPage{\contentspage}}
+\titlecontents{subsection}[7.2em]
+  {\nwuTocFont}
+  {\contentslabel{4.0em}}
+  {}
+  {\hspace{0.35em}\nwuTocLeader\nwuTocPage{\contentspage}}
+
+\ctexset{
+  chapter = {
+    name = {第,章},
+    number = \chinese{chapter},
+    format = \centering\nwuChapterFont,
+    aftername = \quad,
+    beforeskip = 24bp,
+    afterskip = 18bp
+  },
+  section = {
+    format = \nwuSectionFont,
+    beforeskip = 18bp,
+    afterskip = 12bp
+  },
+  subsection = {
+    format = \nwuSubsectionFont,
+    beforeskip = 6bp,
+    afterskip = 6bp
+  }
+}
+
+\setlist[itemize]{leftmargin=2em,itemsep=0.15em,topsep=0.15em}
+\setlist[enumerate]{leftmargin=2em,itemsep=0.15em,topsep=0.15em}
+
+\fancypagestyle{nwu-cover}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{nwu-front}{
+  \fancyhf{}
+  \fancyfoot[C]{\nwuPageNumberFont \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{nwu-main}{
+  \fancyhf{}
+  \fancyhead[CO]{\nwuHeaderFont 西北大学博士学位论文}
+  \fancyhead[CE]{\nwuHeaderFont \nouppercase{\leftmark}}
+  \fancyfoot[C]{\nwuPageNumberFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[CO]{\nwuHeaderFont 西北大学博士学位论文}
+  \fancyhead[CE]{\nwuHeaderFont \nouppercase{\leftmark}}
+  \fancyfoot[C]{\nwuPageNumberFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\DeclareCaptionFont{nwuCaptionFont}{\nwuSong\fontsize{10.5bp}{15bp}\selectfont}
+\captionsetup{
+  font=nwuCaptionFont,
+  labelfont=bf,
+  textfont=bf,
+  justification=centering,
+  singlelinecheck=false,
+  labelsep=quad
+}
+\captionsetup[table]{position=top}
+\captionsetup[figure]{position=bottom}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\bibname}{参考文献}
+
+\providecommand{\nwuClassNo}{Q16}
+\providecommand{\nwuSchoolCode}{10697}
+\providecommand{\nwuSecretLevel}{公开}
+\providecommand{\nwuStudentId}{2026000000}
+\providecommand{\nwuBlindReview}{false}
+\providecommand{\nwuTitleZh}{西北大学博士学位论文题目}
+\providecommand{\nwuTitleEn}{English Dissertation Title}
+\providecommand{\nwuDiscipline}{生物学}
+\providecommand{\nwuMajorEn}{Biology}
+\providecommand{\nwuDegreeEn}{Doctor of Science}
+\providecommand{\nwuAuthor}{作者姓名}
+\providecommand{\nwuAuthorEn}{Candidate Name}
+\providecommand{\nwuSupervisor}{导师姓名\quad 教授}
+\providecommand{\nwuSupervisorEn}{Supervisor Name\quad Professor}
+\providecommand{\nwuSubmitDateZh}{二〇二六年六月}
+\providecommand{\nwuSubmitDateEn}{June 2026}
+\providecommand{\nwuKeywordsZh}{关键词一，关键词二，关键词三}
+\providecommand{\nwuKeywordsEn}{keyword one, keyword two, keyword three}
+
+\newcommand{\nwuMaybeBlind}[1]{%
+  \ifdefstring{\nwuBlindReview}{true}{}{#1}%
+}
+
+\newcommand{\nwuMakeCover}{%
+  \thispagestyle{nwu-cover}%
+  \begingroup
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=3.25cm,yshift=-2.65cm]current page.north west)
+      {{\nwuCoverTopFont 分类号：\nwuClassNo}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=3.25cm,yshift=-3.45cm]current page.north west)
+      {{\nwuCoverTopFont 密\hspace{1em}级：\nwuSecretLevel}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=13.10cm,yshift=-2.65cm]current page.north west)
+      {{\nwuCoverTopFont 学校代码：\nwuSchoolCode}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=13.10cm,yshift=-3.45cm]current page.north west)
+      {{\nwuCoverTopFont 学\hspace{1em}号：\nwuMaybeBlind{\nwuStudentId}}};
+    \node[anchor=north,inner sep=0pt,align=center,text width=15.0cm]
+      at ([yshift=-12.80cm]current page.north)
+      {{\nwuCoverTitleFont \nwuTitleZh}};
+    \draw[line width=0.6pt]
+      ([xshift=-5.65cm,yshift=-13.58cm]current page.north) --
+      ([xshift=5.65cm,yshift=-13.58cm]current page.north);
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=4.05cm,yshift=-20.10cm]current page.north west)
+      {{\nwuCoverMetaFont 学科名称：\nwuDiscipline}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=4.05cm,yshift=-21.35cm]current page.north west)
+      {{\nwuCoverMetaFont 作\hspace{2em}者：\nwuMaybeBlind{\nwuAuthor}}};
+    \node[anchor=west,inner sep=0pt]
+      at ([xshift=10.85cm,yshift=-21.35cm]current page.north west)
+      {{\nwuCoverMetaFont 指导老师：\nwuMaybeBlind{\nwuSupervisor}}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-25.05cm]current page.north)
+      {{\nwuCoverFooterFont 西北大学学位评定委员会}};
+    \node[anchor=north,inner sep=0pt]
+      at ([yshift=-26.45cm]current page.north)
+      {{\nwuCoverFooterFont \nwuSubmitDateZh}};
+  \end{tikzpicture}%
+  \null\vfill
+  \endgroup
+}
+
+\newcommand{\nwuMakeEnglishTitlePage}{%
+  \thispagestyle{nwu-cover}%
+  \begingroup
+  \centering
+  \vspace*{3.15cm}
+  {\nwuEnglishTitleFont \nwuTitleEn\par}
+  \vspace{5.40cm}
+  {\nwuEnglishBodyFont A dissertation submitted to\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont Northwest University\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont in partial fulfillment of the requirements\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont for the degree of \nwuDegreeEn\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont in \nwuMajorEn\par}
+  \vfill
+  {\nwuEnglishBodyFont By\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont \nwuMaybeBlind{\nwuAuthorEn}\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont Supervisor: \nwuMaybeBlind{\nwuSupervisorEn}\par}
+  \vspace{0.42cm}
+  {\nwuEnglishBodyFont \nwuSubmitDateEn\par}
+  \vspace*{1.2cm}
+  \endgroup
+}
+
+\newcommand{\nwuMakeStatements}{%
+  \thispagestyle{nwu-cover}%
+  \begingroup
+  \nwuBodyFont
+  \begin{center}
+    {\nwuFrontTitleFont 西北大学学位论文知识产权声明书\par}
+  \end{center}
+  \vspace{0.75cm}
+  本人完全了解西北大学关于收集、保存、使用学位论文的规定。学校有权保留并向国家有关部门或机构送交论文的复印件和电子版。本人允许论文被查阅和借阅。本人授权西北大学可以将本学位论文的全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存和汇编本学位论文。同时授权中国科学技术信息研究所等机构将本学位论文收录到《中国学位论文全文数据库》或其它相关数据库。
+
+  保密论文待解密后适用本声明。
+
+  \vspace{0.95cm}
+  \noindent 学位论文作者签名：\hfill 指导教师签名：
+
+  \vspace{0.38cm}
+  \noindent \hspace*{5.8cm}年\hspace{0.8cm}月\hspace{0.8cm}日\hfill 年\hspace{0.8cm}月\hspace{0.8cm}日
+
+  \vspace{0.55cm}
+  \noindent\rule{\textwidth}{0.4pt}
+  \vspace{0.35cm}
+  \begin{center}
+    {\nwuFrontTitleFont 西北大学学位论文独创性声明\par}
+  \end{center}
+  \vspace{0.55cm}
+  本人声明：所呈交的学位论文是本人在导师指导下进行的研究工作及取得的研究成果。据我所知，除了文中特别加以标注和致谢的地方外，本论文不包含其他人已经发表或撰写过的研究成果，也不包含为获得西北大学或其它教育机构的学位或证书而使用过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并表示谢意。
+
+  \vspace{0.95cm}
+  \noindent 学位论文作者签名：
+
+  \vspace{0.38cm}
+  \noindent \hspace*{10.0cm}年\hspace{0.8cm}月\hspace{0.8cm}日
+  \endgroup
+}
+
+\newcommand{\nwuBlankPage}{%
+  \clearpage
+  \thispagestyle{empty}%
+  \null
+  \clearpage
+}
+
+\newcommand{\nwuFrontHeading}[1]{%
+  \thispagestyle{nwu-front}%
+  \begin{center}
+    \vspace*{0.70cm}
+    {\nwuFrontTitleFont #1\par}
+  \end{center}
+  \vspace{0.65cm}
+}
+
+\newcommand{\nwuKeywordsZhLine}{%
+  \vspace{0.8cm}
+  \begin{center}
+    {\nwuSubsectionFont 关键词：}\nwuKeywordsZh
+  \end{center}
+}
+
+\newcommand{\nwuKeywordsEnLine}{%
+  \vspace{0.8cm}
+  \begin{center}
+    {\nwuSubsectionFont Key words: }\nwuKeywordsEn
+  \end{center}
+}
+
+\makeatletter
+\newcommand{\nwuTableOfContents}{%
+  \clearpage
+  \begingroup
+  \expandafter\let\csname ps@plain\expandafter\endcsname\csname ps@nwu-front\endcsname
+  \pagestyle{nwu-front}%
+  \ctexset{chapter = {format = \centering\nwuTocTitleFont}}%
+  \tableofcontents
+  \thispagestyle{nwu-front}%
+  \endgroup
+  \clearpage
+}
+\makeatother
+
+\newcommand{\nwuUnnumberedChapter}[1]{%
+  \clearpage
+  \chapter*{#1}
+  \markboth{#1}{#1}
+  \phantomsection
+  \addcontentsline{toc}{chapter}{#1}
+}
+
+\newcommand{\nwuConclusion}{\nwuUnnumberedChapter{结\quad 论}}
+\newcommand{\nwuReferences}{%
+  \clearpage
+  \phantomsection
+  \addcontentsline{toc}{chapter}{参考文献}%
+  \markboth{参考文献}{参考文献}%
+}
+\newcommand{\nwuAppendix}{\nwuUnnumberedChapter{附\quad 录}}
+\newcommand{\nwuAchievements}{\nwuUnnumberedChapter{攻读博士学位期间取得的研究成果}}
+\newcommand{\nwuAcknowledgements}{\nwuUnnumberedChapter{致\quad 谢}}
+\newcommand{\nwuAuthorBio}{\nwuUnnumberedChapter{作者简介}}

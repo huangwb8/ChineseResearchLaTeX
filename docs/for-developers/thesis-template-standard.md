@@ -6,6 +6,7 @@
 - `projects/thesis-nju-master/`
 - `projects/thesis-smu-postdoc/`
 - `projects/thesis-hit-doctor/`
+- `projects/thesis-nwu-doctor/`
 - `projects/thesis-sysu-doctor/`
 - `projects/thesis-ucas-doctor/`
 - `packages/bensz-thesis/`
@@ -90,6 +91,7 @@ projects/thesis-school-degree/
 - `thesis-smu-master`：`extraTex/@config.tex`
 - `thesis-nju-master`：`extraTex/@config.tex`（`main.tex` 为默认可编辑入口，额外提供 `baseline.tex` 公开基线验收入口与 `editable.tex` 兼容别名）
 - `thesis-hit-doctor`：`extraTex/@config.tex`
+- `thesis-nwu-doctor`：`extraTex/@config.tex`
 - `thesis-smu-postdoc`：`extraTex/config-pre.tex`
 - `thesis-sysu-doctor`：`extraTex/config-pre.tex`
 - `thesis-ucas-doctor`：`extraTex/config-pre.tex`

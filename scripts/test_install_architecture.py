@@ -108,6 +108,13 @@ def test_cmd_install_passes_force_to_package_installers(monkeypatch: pytest.Monk
             (package_name, force)
         ),
     )
+    monkeypatch.setattr(
+        install_script,
+        "_install_texmf_package",
+        lambda package_name, ref, mirror, texmfhome_override=None, force=False: calls.append(
+            (package_name, force)
+        ),
+    )
 
     install_script.cmd_install(
         ["bensz-paper", "bensz-nsfc"],
@@ -118,6 +125,7 @@ def test_cmd_install_passes_force_to_package_installers(monkeypatch: pytest.Monk
         force=True,
     )
 
+    assert ("bensz-fonts", True) in calls
     assert ("bensz-paper", True) in calls
     assert ("bensz-nsfc", True) in calls
 
@@ -341,6 +349,19 @@ def test_build_thesis_runtime_bundle_uses_independent_postdoc_profile_and_style(
     assert (runtime_dir / "bthesis-style-thesis-smu-postdoc.tex").exists()
     assert not (runtime_dir / "profiles" / "bthesis-profile-thesis-smu-master.def").exists()
     assert not (runtime_dir / "bthesis-style-thesis-smu-master.tex").exists()
+
+
+def test_build_thesis_runtime_bundle_uses_independent_nwu_profile_and_style(tmp_path: Path):
+    runtime_dir = tmp_path / "thesis-runtime"
+    project_dir = REPO_ROOT / "projects" / "thesis-nwu-doctor"
+
+    pack_release.build_thesis_runtime_bundle(runtime_dir, project_dir)
+
+    assert (runtime_dir / "profiles" / "bthesis-profile-thesis-nwu-doctor.def").exists()
+    assert (runtime_dir / "bthesis-style-thesis-nwu-doctor.tex").exists()
+    assert not (runtime_dir / "profiles" / "bthesis-profile-thesis-hit-doctor.def").exists()
+    assert not (runtime_dir / "bthesis-style-thesis-hit-doctor.tex").exists()
+    assert not (runtime_dir / "ucas").exists()
 
 
 def test_add_cv_runtime_bundle_includes_shared_cv_fonts(tmp_path: Path):
