@@ -1,39 +1,46 @@
-\chapter{保护分区分析与模板验证}
+\chapter{案例分析与模板要素展示}
 
-\section{保护分区流程}
+\section{从集中曝光到持续表达}
 
-保护分区分析通常需要把生态重要性和管理可行性放在同一框架内。示例流程先根据物种丰富度和栖息地质量识别生态热点，再结合连通性指标判断廊道价值，最后叠加人为扰动和管理边界形成分区建议。该流程并不代表真实规划结论，仅用于展示博士论文中常见的方法叙述。
+佐佐木希职业路径的早期特征是高识别度形象的集中形成。官方资料和新闻稿并不需要支持“某一张封面决定职业命运”这类过度叙事；更稳妥的表述是：她在 2006 年出道后，长期跨越杂志、广告、影视和电视节目等媒介类别活动\cite{youtube-prtimes}。在跨媒介转型研究中，这说明早期职业资本并非只存在于单一作品，而是分布在可见性、商业识别和角色适配能力之中。
 
-\begin{enumerate}
-  \item 整理物种记录和环境变量，生成统一分析网格；
-  \item 计算物种丰富度、栖息地质量和廊道连通性；
-  \item 叠加人为扰动、道路距离和保护地边界；
-  \item 按生态重要性和管理紧迫性划分优先等级；
-  \item 对分区结果进行不确定性解释和敏感性分析。
-\end{enumerate}
+进入平台化传播阶段后，公众人物的可见性越来越依赖更新节奏。图 \ref{fig:nwu-sasaki-exposure} 复用公开演示曲线图，用来说明“曝光节奏变化”这一分析对象。它不是对佐佐木希真实曝光量的统计，而是帮助模板使用者观察曲线图在博士论文正文中的尺寸、题注和编号效果。
 
-\section{示例结果}
-
-为了展示多列表格排版，表 \ref{tab:nwu-zone-result} 给出一组公开演示数据。数据仅用于模板验证，不对应真实监测结果。
-
-\begin{table}[htbp]
+\begin{figure}[htbp]
   \centering
-  \caption{保护分区指标示例}
-  \label{tab:nwu-zone-result}
-  \begin{tabular}{cccccc}
-    \toprule
-    区域 & 丰富度指数 & 连通性指数 & 扰动压力 & 不确定性 & 优先等级\\
-    \midrule
-    A & 0.82 & 0.76 & 0.21 & 0.18 & 高\\
-    B & 0.68 & 0.63 & 0.32 & 0.22 & 中高\\
-    C & 0.54 & 0.48 & 0.44 & 0.25 & 中\\
-    D & 0.37 & 0.41 & 0.58 & 0.31 & 一般\\
-    \bottomrule
-  \end{tabular}
-\end{table}
+  \includegraphics[width=0.72\textwidth]{assets/demo/figure-otd-chart.png}
+  \caption{不同阶段公开曝光节奏的示意变化}
+  \label{fig:nwu-sasaki-exposure}
+\end{figure}
 
-示例结果表明，模板能够稳定呈现章节标题、正文段落、枚举列表、表格、图题和公式。正式论文还应补充数据来源、样本量、模型参数、误差分析、敏感性检验和管理建议。
+\section{危机叙事与事实边界}
 
-\section{模板实现说明}
+2020 年配偶渡部建的婚外情报道使佐佐木希被卷入家庭相关舆论事件。日刊体育报道记录了佐佐木希就该事件公开道歉，并表示将与配偶认真沟通、自己今后也会继续工作\cite{nikkan-2020}。在本文中，这一事实只承担一个分析功能：说明公众人物的职业形象可能被非作品因素打断，且回应方式会影响后续叙事空间。
 
-`thesis-nwu-doctor` 在 `packages/bensz-thesis/` 中注册独立 profile 和 style，项目层只维护元信息、公开正文和项目说明。这样的分层能够避免修改西北大学博士论文模板时影响南京大学、中国科学院大学、中山大学、哈尔滨工业大学等既有模板。
+因此，本文不把该事件写成“职业低谷”的唯一原因，也不使用未经证实的心理判断。更合适的分析口径是：家庭相关舆论冲击改变了公众关注焦点，使作品、广告、社交平台内容与家庭叙事之间出现新的关系。后续平台化重启的意义，也正是在于将公众注意力逐步从单一争议重新引向更稳定、更可控的内容供给。
+
+\section{平台化重启与内容运营}
+
+2024 年，佐佐木希开设 YouTube 官方频道“佐々木 希(仮)”，频道开设新闻说明其首支视频为“一人晩酌”企划，并计划于 2024 年 7 月 8 日晚间公开\cite{youtube-prtimes}。这一节点的研究价值并不在于“明星也做 YouTube”本身，而在于自营视频平台改变了表达权的分配：与杂志、影视作品或广告相比，YouTube 更适合展示生活化内容、兴趣表达和持续互动。
+
+图 \ref{fig:nwu-sasaki-workbench} 和图 \ref{fig:nwu-sasaki-materials} 复用南京大学示例项目中的图片，分别示意内容生产场景与资料整理界面。它们并非佐佐木希工作现场或真实研究数据库，而是为模板验证提供可分享的图像材料。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.62\textwidth]{assets/demo/photo-workbench-a.jpeg}
+  \caption{公开内容生产场景的示意照片}
+  \label{fig:nwu-sasaki-workbench}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.76\textwidth]{assets/demo/screenshot-material-table.png}
+  \caption{案例资料编码表的示意截图}
+  \label{fig:nwu-sasaki-materials}
+\end{figure}
+
+\section{结果讨论}
+
+综合上述材料，佐佐木希案例可以说明三点。第一，跨媒介职业转型并不是单向升级，而是平台组合的持续重排。第二，形象韧性不等于争议消失，而是公众人物能否在事实边界内重建可持续表达。第三，平台化重启不是替代传统媒体，而是与影视、广告、杂志和社交平台共同构成新的职业生态。
+
+对于 \texttt{thesis-nwu-doctor} 模板而言，本章同时验证了多种常见论文元素：长标题章节、普通段落、枚举列表、图题、表题、交叉引用、公式、手工参考文献和后置材料。项目层只维护 \texttt{extraTex/} 中的公开正文和 \texttt{assets/demo/} 中的演示图片，西北大学专属版式仍由 \texttt{packages/bensz-thesis/} 中的公共样式控制。

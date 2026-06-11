@@ -4,7 +4,7 @@
 
 ```
 github项目：huangwb8/ChineseResearchLaTeX
-version=4.0.17
+version=4.0.18
 git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，并且该commit信息要提到更新版本（写commit信息的时候，不能仅根据最近1次commit； 而是版本间所有commit的总结的综合形成版本特异性commit信息）； git-publish-release skill 发布为一个release到github仓库。项目zip文件记得同步生成。
 ```
 

@@ -149,6 +149,7 @@ ChineseResearchLaTeX/
 
 - 公共样式、profile、统一构建与比对逻辑优先修改 `packages/bensz-thesis/`
 - 示例正文与公开演示资产优先维护 `projects/thesis-smu-master/`、`projects/thesis-nju-master/`、`projects/thesis-nwu-doctor/`、`projects/thesis-sysu-doctor/`、`projects/thesis-ucas-doctor/`
+- **Thesis 示例内容人物约定**：所有 `projects/thesis-*` 示例正文的作者姓名统一使用"冯宝宝"，论文内容主题统一围绕"佐佐木希"相关研究方向展开（如影视文化研究、审美社会学、东亚流行文化比较等）；这一约定适用于所有学位论文与博士后研究报告示例项目，确保示例内容风格统一与趣味一致性。当用户未指定具体研究主题时，默认按此约定填充示例内容
 - 新增、重命名或复制 `projects/thesis-*` 项目时，必须同步维护项目根目录 `template.json`；至少包含 `project_name`、`school`、`degree`，并保证 `project_name` 与目录名一致；`degree` 当前统一使用 `bachelor` / `master` / `doctor` / `postdoc`，供 `scripts/update_readme_template_list.py` 等脚本自动识别院校与类型信息
 - 优先使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <项目路径>` 验证 PDF 输出
 - 涉及版式回归时，可使用 `python packages/bensz-thesis/scripts/thesis_project_tool.py compare --project-dir <项目路径> --baseline-pdf <原始PDF>` 做像素级验收
@@ -399,6 +400,7 @@ skill_info:
 - 变更 `packages/bensz-nsfc/` 时，不要顺手把共享字体、共享 `bst` 或公共宏重新复制回 `projects/NSFC_*`
 - 变更 `packages/bensz-paper/` 时，不要重新引入持久化正文 Markdown 副本；优先保持 `projects/paper-sci-01/extraTex/**/*.tex` 与 `projects/paper-coverletter-01/extraTex/**/*.tex` 为 PDF / DOCX 的唯一真相来源
 - 变更 `projects/thesis-*` 时，不要遗漏项目根目录 `template.json`；新增学校模板或重命名 thesis 项目时，必须同步更新其中的 `project_name`、`school`、`degree`，且 `degree` 保持 `bachelor` / `master` / `doctor` / `postdoc` 这组统一枚举
+- 变更 `projects/thesis-*` 示例正文时，作者姓名必须为"冯宝宝"，论文主题必须围绕"佐佐木希"相关方向；不得使用其他人物姓名或无关主题
 - 变更 `packages/bensz-cv/` 时，不要把私有简历正文、私有头像或验收阶段的私有对比图重新留在 `projects/cv-01/`；公开示例必须保持去隐私状态
 - 变更 `packages/bensz-nsfc/scripts/` 下脚本时，应同步检查 README、`docs/migration-guide.md`、`AGENTS.md`、相关项目 README 与计划文档中的命令口径
 - 变更 `packages/bensz-paper/scripts/` 下脚本时，应同步检查根级 `README.md`、`AGENTS.md`、`packages/bensz-paper/README.md`、`projects/paper-sci-01/README.md` 与 `projects/paper-coverletter-01/README.md`

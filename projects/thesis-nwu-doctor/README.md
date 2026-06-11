@@ -6,7 +6,7 @@
 
 - 项目在 `packages/bensz-thesis/` 中注册了独立的 `thesis-nwu-doctor` template/profile/style
 - 覆盖中文封面、英文题名页、知识产权声明书、独创性声明、中英文摘要、目录、章节正文、结论、参考文献和博士论文后置材料
-- 示例正文使用公开、去隐私的秦岭生物多样性主题，不包含真实个人或保密项目材料
+- 示例正文使用公开、去隐私的佐佐木希跨媒介职业转型主题，不包含真实个人隐私或保密项目材料
 - 官方 PDF / Word 模板不直接随项目分发，来源和哈希记录见 [`docs/official/README.md`](docs/official/README.md)
 
 ## 构建

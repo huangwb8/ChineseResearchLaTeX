@@ -6,11 +6,17 @@
 
 ---
 
-## [4.0.18] - 2026-06-10
+## [4.0.18] - 2026-06-11
 
 ### Added（新增）
 
 - 新增 `projects/thesis-nwu-doctor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper / 官方资料记录，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-nwu-doctor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-nwu-doctor.tex`：基于 issue #48、《西北大学研究生学位论文规范》（研字〔2019〕7 号）和研究生院公开 Word 模板，为 `bensz-thesis` 产品线新增 NWU 博士论文独立模板身份，覆盖中文封面、英文题名页、知识产权声明书、独创性声明、中英文摘要、目录、章节正文、结论、参考文献、附录、攻读博士学位期间取得的研究成果、致谢和作者简介；同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260610`，避免安装器因旧版本号跳过新增模板。
+
+### Changed（变更）
+
+- `projects/thesis-nwu-doctor/` 示例正文从秦岭生物多样性主题调整为佐佐木希跨媒介职业转型与形象韧性公开案例，补充复用演示图片、公开来源参考文献、事实边界说明和重建后的 `main.pdf`，使 NWU 博士论文模板在公开脱敏内容下覆盖图、表、公式、附录、成果、致谢和作者简介等完整结构。
+- `AGENTS.md` 新增 Thesis 示例内容人物约定：所有 `projects/thesis-*` 示例正文的作者姓名统一使用"冯宝宝"，论文内容主题统一围绕"佐佐木希"相关研究方向展开；同步在「变更边界」中增加对应约束。
+- `README.md` 新增毕业论文模板定制需求的提交时间窗口说明，并将 Release 下载链接推进到 `v4.0.18`。
 
 ## [4.0.17] - 2026-06-06
 
