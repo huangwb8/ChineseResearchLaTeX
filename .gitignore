@@ -215,3 +215,4 @@ skills/*/tests/
 /tests/bensz-thesis/**/*.pyc
 .parallel_vibe/
 .compact-bensz-skills/
+.draw-plot
