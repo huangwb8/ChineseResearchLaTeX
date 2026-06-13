@@ -6,6 +6,12 @@
 
 ---
 
+## [Unreleased]
+
+### Changed（变更）
+
+- `README.md` 重构「AI 模型配置建议」表格：将原来的「工具 / 推荐模型 / 适用场景」三列重组为「适用场景 / Codex CLI / Claude Code」结构，把工具融入列头、模型填入单元格，使 Codex CLI 与 Claude Code 两类工具的推荐模型横向对照；Claude Code 列按任务难度分配 **Claude Opus 4.8**（最复杂任务首选）与 **GLM-5.2**（日常主力、轻量任务），并在单元格内补充 **Effort**（推理强度）与 **Thinking**（扩展思考/轮级思考）两参数的推荐取值——复杂任务 Opus 拉满 Effort `high`/`xhigh` + Thinking 开，规划任务 GLM-5.2 开 Thinking，轻量/简单任务关闭 Thinking 以更快更省；同时扩充「模型选择说明」，新增 Effort / Thinking 的取值、配置方式（`/effort`、`settings.json` 的 `effortLevel`、`Option/Alt+T`、`ultrathink` 等）与「GLM 无独立 Effort、以 Thinking 开关为主控」的说明。
+
 ## [4.0.18] - 2026-06-11
 
 ### Added（新增）
