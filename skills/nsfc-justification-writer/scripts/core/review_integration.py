@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-systematic-literature-review 集成模块
+research-literature-review 集成模块
 
-提供对 systematic-literature-review 生成的文献综述目录的只读访问支持。
+提供对 research-literature-review 生成的文献综述目录的只读访问支持。
+历史工作区目录名仍为 `.systematic-literature-review/`。
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 
-# systematic-literature-review 生成的目录标记隐藏文件夹
+# research-literature-review 生成的历史目录标记隐藏文件夹
 _SLR_MARKER = ".systematic-literature-review"
 
 
@@ -26,7 +27,7 @@ class ReviewDirectoryInfo:
 
     Attributes:
         path: 目录路径
-        is_slr_directory: 是否为 systematic-literature-review 生成的目录
+        is_slr_directory: 是否为 research-literature-review 生成的目录
         tex_files: 可用的 .tex 文件列表
         bib_files: 可用的 .bib 文件列表
         read_only: 是否为只读访问
@@ -40,11 +41,11 @@ class ReviewDirectoryInfo:
 
 def detect_slr_directory(path: Path) -> bool:
     """
-    检测给定目录是否为 systematic-literature-review 生成的文献综述目录。
+    检测给定目录是否为 research-literature-review 生成的文献综述目录。
 
     识别标准（满足任一即可）：
     1. 目录中存在隐藏文件夹 `.systematic-literature-review`（运行中的 pipeline）
-    2. 目录中存在 systematic-literature-review 典型的文件组合：
+    2. 目录中存在 research-literature-review 典型的文件组合：
        - `{主题}_review.tex` 文件
        - `{主题}_参考文献.bib` 或 `references.bib` 文件
        - `{主题}_工作条件.md` 文件
@@ -53,7 +54,7 @@ def detect_slr_directory(path: Path) -> bool:
         path: 待检测的目录路径
 
     Returns:
-        如果是 systematic-literature-review 生成的目录则返回 True
+        如果是 research-literature-review 生成的目录则返回 True
     """
     p = Path(path).resolve()
     if not p.is_dir():
@@ -96,7 +97,7 @@ def analyze_review_directory(
 
     Args:
         path: 文献综述目录路径
-        allow_write: 是否允许写入（对 systematic-literature-review 目录默认为只读）
+        allow_write: 是否允许写入（对 research-literature-review 目录默认为只读）
 
     Returns:
         ReviewDirectoryInfo 对象
@@ -260,7 +261,7 @@ def format_review_directory_summary(info: ReviewDirectoryInfo) -> str:
     """
     lines = [
         f"文献综述目录: {info.path}",
-        f"类型: {'systematic-literature-review 生成的目录' if info.is_slr_directory else '普通目录'}",
+        f"类型: {'research-literature-review 生成的目录' if info.is_slr_directory else '普通目录'}",
         f"访问模式: {'只读' if info.read_only else '可读写'}",
         "",
         f"TeX 文件 ({len(info.tex_files)} 个):",

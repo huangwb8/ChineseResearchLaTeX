@@ -1,0 +1,101 @@
+skill_info:
+  name: "research-idea"
+  version: "0.2.0"
+  description: "根据用户资料提出关键科学问题和可证伪科学假设，并通过 Premium 查新与多轮独立审查打磨最佳研究想法。"
+  author: "Bensz Conan"
+  category: "research"
+
+workspace:
+  hidden_dir: ".research-idea"
+  run_prefix: "run"
+  timestamp_format: "%Y%m%d%H%M%S%f"
+  keep_intermediates_inside_hidden_dir: true
+  subdirs:
+    - "input"
+    - "theme"
+    - "candidates"
+    - "novelty"
+    - "parallel-vibe"
+    - "agent-reviews"
+    - "synthesis"
+    - "drafts"
+    - "logs"
+
+dependencies:
+  required_skills:
+    - "research-topic-extractor"
+    - "research-literature-review"
+    - "parallel-vibe"
+  legacy_skill_aliases:
+    research-topic-extractor:
+      - "get-review-theme"
+    research-literature-review:
+      - "systematic-literature-review"
+  systematic_literature_review_tier: "Premium"
+  search_roots:
+    - "."
+    - "~/.codex/skills"
+    - "~/.claude/skills"
+    - "/Volumes/2T01/Cache/.codex/skills"
+
+iteration:
+  default_rounds: 3
+  default_independent_agents: 3
+  min_candidates: 3
+  max_candidates: 7
+  novelty_statuses:
+    - "未研究"
+    - "部分研究但关键缺口存在"
+    - "已充分研究"
+
+output:
+  default_dir: "."
+  filename_template: "Research-Idea_{repo}_{pr}_{timestamp}.md"
+  timestamp_format: "%Y%m%d%H%M%S"
+  unsafe_filename_chars: "/\\:*?\"<>|"
+  fallback_repo: "repo"
+  fallback_pr: "manual"
+  required_sections:
+    - "多个科学问题-科学假设对"
+    - "为什么选择这些科学问题-科学假设对"
+    - "最佳科学问题-科学假设对"
+    - "查新摘要"
+    - "风险与下一步"
+
+validation:
+  forbidden_path_patterns:
+    - "\\.research-idea(?:[\\\\/]|$)"
+    - "tests[\\\\/]research-idea(?:[\\\\/]|$)"
+    - "\\.parallel_vibe(?:[\\\\/]|$)"
+    - "parallel-vibe(?:[\\\\/]|$)"
+    - "agent-reviews(?:[\\\\/]|$)"
+    - "@main[\\\\/]summary\\.md"
+    - "manifest\\.json"
+    - "latest-run\\.txt"
+    - "candidate-schema\\.json"
+    - "runner\\.log"
+    - "workspace_dir="
+    - "manifest_path="
+    - "test_dir="
+    - "/(?:private/)?tmp/"
+    - "/Volumes/"
+  require_falsifiability_terms:
+    - "可证伪"
+    - "反证"
+    - "推翻"
+  min_question_hypothesis_pairs: 3
+  required_candidate_markers:
+    - "科学问题"
+    - "可证伪科学假设"
+    - "关键预测"
+    - "反证路径"
+    - "查新结论"
+  required_best_markers:
+    - "最佳选择"
+    - "科学重要性"
+    - "新颖性"
+    - "可证伪性"
+    - "可行性"
+
+tests:
+  default_dir: "tests/research-idea"

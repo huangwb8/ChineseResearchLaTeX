@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-systematic-literature-review 集成功能验证脚本
+research-literature-review 集成功能验证脚本
 
 手动验证核心功能是否正常工作
 """
@@ -26,7 +26,7 @@ from core.review_integration import (
 
 
 def create_test_slr_directory(tmp_dir: Path) -> None:
-    """创建测试用的 systematic-literature-review 目录结构"""
+    """创建测试用的 research-literature-review 目录结构"""
     # 创建标记文件夹
     (tmp_dir / ".systematic-literature-review").mkdir()
 
@@ -163,7 +163,7 @@ def test_format_summary():
 def main():
     """运行所有测试"""
     print("=" * 60)
-    print("systematic-literature-review 集成功能验证")
+    print("research-literature-review 集成功能验证")
     print("=" * 60)
     print()
 

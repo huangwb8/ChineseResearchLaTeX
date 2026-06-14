@@ -89,7 +89,7 @@ config: config.yaml
 
 ## 只读集成
 
-- 支持只读访问 `systematic-literature-review` 的结果目录，用于提取研究现状和验证引用一致性
+- 支持只读访问 `research-literature-review` 的结果目录，用于提取研究现状和验证引用一致性；历史工作区目录名仍为 `.systematic-literature-review/`
 - 集成逻辑见 `scripts/core/review_integration.py`
 - 该集成是只读的，不得修改综述目录内容
 

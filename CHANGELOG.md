@@ -10,6 +10,8 @@
 
 ### Changed（变更）
 
+- 研究类 skills 统一迁移为 `research-*` 系列：`get-review-theme` → `research-topic-extractor`、`guide-updater` → `research-guide-updater`、`check-review-alignment` → `research-citation-check`、`make-research-plan` → `research-plan`、`systematic-literature-review` → `research-literature-review`；新 `SKILL.md` frontmatter 明确保留旧名 prompt 兼容，`research-idea` 依赖优先使用新名并保留旧名 fallback，`research-citation-check` 渲染依赖优先使用 `research-literature-review` 并保留旧名 fallback，同时保留 `.systematic-literature-review/`、`.make-research-plan/`、`.check-review-alignment/` 等历史工作区目录不变。
+- `README.md` 与 `skills/README.md` 新增研究类 skill 迁移表，技能列表同步指向新目录和新版本；`nsfc-justification-writer` 的文案改为识别 `research-literature-review` 产物，但继续只读识别历史目录 `.systematic-literature-review/`。
 - `README.md` 重构「AI 模型配置建议」表格：将原来的「工具 / 推荐模型 / 适用场景」三列重组为「适用场景 / Codex CLI / Claude Code」结构，把工具融入列头、模型填入单元格，使 Codex CLI 与 Claude Code 两类工具的推荐模型横向对照；Claude Code 列按任务难度分配 **Claude Opus 4.8**（最复杂任务首选）与 **GLM-5.2**（日常主力、轻量任务），并在单元格内补充 **Effort**（推理强度）与 **Thinking**（扩展思考/轮级思考）两参数的推荐取值——复杂任务 Opus 拉满 Effort `high`/`xhigh` + Thinking 开，规划任务 GLM-5.2 开 Thinking，轻量/简单任务关闭 Thinking 以更快更省；同时扩充「模型选择说明」，新增 Effort / Thinking 的取值、配置方式（`/effort`、`settings.json` 的 `effortLevel`、`Option/Alt+T`、`ultrathink` 等）与「GLM 无独立 Effort、以 Thinking 开关为主控」的说明。
 - `README.md` 去硬编码重构：将「LaTeX 包安装」（方法二远程 curl、方法三本地 git clone）、「LaTeX 模板编译」（各产品线 build/count-words/docx 命令）、「Skills 安装/更新」（一键 curl|bash、本地/远程 git clone）三处硬编码命令统一迁移到新建的 `docs/manual-setup-guide.md`；README 三处改为以自然语言安装/编译法为主，并保留对 `docs/manual-setup-guide.md` 对应章节的引用，兼顾小白用户的 AI 一键体验与高级用户的手动命令参考。
 

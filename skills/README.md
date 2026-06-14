@@ -10,8 +10,8 @@
 
 ```mermaid
 graph LR
-    A[get-review-theme<br>提取综述主题] --> B[systematic-literature-review<br>规范化文献综述]
-    B --> C[guide-updater<br>优化项目指南]
+    A[research-topic-extractor<br>提取综述主题] --> B[research-literature-review<br>规范化文献综述]
+    B --> C[research-guide-updater<br>优化项目指南]
     C --> D[nsfc系列skills<br>标书各部分写作]
     D --> E[nsfc-roadmap / nsfc-schematic<br>技术路线图与原理图]
     D --> F[nsfc-reviewers<br>专家评审模拟]
@@ -20,11 +20,11 @@ graph LR
 ### 工作流步骤
 
 **第一步：提取综述主题**
-- 使用 `get-review-theme` 从任意输入源提取结构化综述主题
+- 使用 `research-topic-extractor` 从任意输入源提取结构化综述主题
 - 获得主题、关键词、核心问题的清晰定义
 
 **第二步：规范化文献综述**
-- 使用 `systematic-literature-review` 进行全面、深入的文献调研
+- 使用 `research-literature-review` 进行全面、深入的文献调研
 - 支持多源检索与自动降级（MCP → OpenAlex → Semantic Scholar → Crossref）
 - 生成专家级综述文档（支持 Premium/Standard/Basic 三档）
 - 摘要补齐默认启用，提升文献评估准确性
@@ -32,7 +32,7 @@ graph LR
 - 导出 PDF 与 Word 双格式
 
 **第三步：优化项目指南** ⭐ 重要
-- 使用 `guide-updater` 基于综述结果优化项目指南
+- 使用 `research-guide-updater` 基于综述结果优化项目指南
 - 在这一步深入理解：
   - 为什么要做这个研究？
   - 研究的亮点在哪里？
@@ -51,7 +51,7 @@ graph LR
 
 - **系统性**：从主题提取到文献综述，再到指南优化和标书写作，形成完整闭环
 - **渐进式深入**：每一步都为下一步提供坚实基础
-- **聚焦关键问题**：通过 guide-updater 阶段深入思考研究本质
+- **聚焦关键问题**：通过 research-guide-updater 阶段深入思考研究本质
 - **质量保障**：每个环节都有专业技能支撑，确保输出质量
 
 ---
@@ -61,7 +61,18 @@ graph LR
 说明：
 - `make-latex-model` 是当前正式名称，兼容旧写法 `make_latex_model`
 - `transfer-old-latex-to-new` 是当前正式名称，兼容历史别名 `migrating-latex-templates`
+- 研究类 skills 已迁移为 `research-*` 系列；旧名 prompt 暂时兼容，系统级旧目录会在安装新版本时清理
 - 版本号以各 `skills/*/config.yaml` 为单一真相来源；本页仅保留关键能力、适用场景与推荐 Prompt
+
+研究类 skill 迁移表：
+
+| 旧名 | 新名 | 兼容状态 |
+| --- | --- | --- |
+| `get-review-theme` | `research-topic-extractor` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
+| `guide-updater` | `research-guide-updater` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
+| `check-review-alignment` | `research-citation-check` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
+| `make-research-plan` | `research-plan` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
+| `systematic-literature-review` | `research-literature-review` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
 
 ### 1. make-latex-model - 样式对齐优化
 
@@ -236,9 +247,9 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 8. systematic-literature-review - 系统综述生成
+### 8. research-literature-review - 系统综述生成
 
-**状态**：✅ 稳定（v1.0.9）
+**状态**：✅ 稳定（v1.1.0）
 
 **类型**：📝 日常
 
@@ -253,7 +264,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 **推荐 Prompt 模板**：
 
 ```
-请用 systematic-literature-review 写一篇"HER2-ADC在乳腺癌中的研究进展"的Premium级综述。参考文献以近2023-2025年为主，更早之前的文献，如果特别相关、特别重要的，也可以纳入。要有一个小节，专门讨论出未来3年较有前景的研究方向。工作目录名为 HER2-ADC-01。
+请用 research-literature-review 写一篇"HER2-ADC在乳腺癌中的研究进展"的Premium级综述。参考文献以近2023-2025年为主，更早之前的文献，如果特别相关、特别重要的，也可以纳入。要有一个小节，专门讨论出未来3年较有前景的研究方向。工作目录名为 HER2-ADC-01。
 ```
 
 **技能特点**：
@@ -279,9 +290,9 @@ output_mode：preview（先预览）/ apply（确认后写入）
 | **Standard（标准级）** | 6000–10000 | 50–90 | 10–16 页 | 学位论文 Related Work、普通期刊综述 |
 | **Basic（基础级）** | 3000–6000 | 30–60 | 5–10 页 | 快速调研、课程作业 |
 
-> 💡 **示例**：查看 [examples/](systematic-literature-review/examples/) 目录，包含本 skill 实际生成的专家级综述示例。
+> 💡 **示例**：查看 [examples/](research-literature-review/examples/) 目录，包含本 skill 实际生成的专家级综述示例。
 
-[详细文档 →](systematic-literature-review/README.md)
+[详细文档 →](research-literature-review/README.md)
 
 ---
 
@@ -385,9 +396,9 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 12. check-review-alignment - 综述引用语义一致性检查
+### 12. research-citation-check - 综述引用语义一致性检查
 
-**状态**：✅ 稳定（v1.0.2）
+**状态**：✅ 稳定（v1.1.0）
 
 **类型**：📝 日常
 
@@ -402,7 +413,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 **推荐 Prompt 模板**：
 
 ```
-请使用 check-review-alignment 核查以下综述文档的引用语义一致性：
+请使用 research-citation-check 核查以下综述文档的引用语义一致性：
 [综述文档路径：.tex/.md/.docx]
 ```
 
@@ -413,20 +424,20 @@ output_mode：preview（先预览）/ apply（确认后写入）
   - P1（warn_only）：仅警告，不改写（支持度弱、过度宣称）
   - P2（skip）：禁止修改（文体/表达优化）
 - **多格式支持**：LaTeX、Markdown、Word
-- **渲染复用**：完美复用 systematic-literature-review 的 PDF/Word 渲染流程
+- **渲染复用**：完美复用 research-literature-review 的 PDF/Word 渲染流程
 
 **核心原则**：
 - 只修复致命性引用错误（虚假/错误/矛盾引用）
 - 不做文体优化（P2 级别）或过度调整（P1 级别）
 - 在不确定时保留原样，并在报告中警告
 
-[详细文档 →](check-review-alignment/SKILL.md)
+[详细文档 →](research-citation-check/SKILL.md)
 
 ---
 
-### 13. get-review-theme - 综述主题提取
+### 13. research-topic-extractor - 综述主题提取
 
-**状态**：🚧 开发中
+**状态**：✅ 稳定（v1.1.0）
 
 **类型**：📝 日常
 
@@ -435,25 +446,25 @@ output_mode：preview（先预览）/ apply（确认后写入）
 **使用场景**：
 - 从文件（PDF/Word/Markdown/Tex）、文件夹、图片、自然语言描述、网页 URL 提取主题
 - 生成"主题+关键词+核心问题"结构化输出
-- 作为 systematic-literature-review 的前置步骤
+- 作为 research-literature-review 的前置步骤
 
 **推荐 Prompt 模板**：
 
 ```
-请使用 get-review-theme 从以下来源提取综述主题：
+请使用 research-topic-extractor 从以下来源提取综述主题：
 [输入源：文件路径/URL/自然语言描述等]
 ```
 
 **技能特点**：
 - 支持多模态输入（文本、图片、URL）
 - 自动识别输入类型并提取内容
-- 生成可直接用于 systematic-literature-review 的结构化输出
+- 生成可直接用于 research-literature-review 的结构化输出
 
 ---
 
-### 14. guide-updater - 项目指南优化
+### 14. research-guide-updater - 项目指南优化
 
-**状态**：✅ 稳定（v1.0.0）
+**状态**：✅ 稳定（v1.1.0）
 
 **类型**：📝 日常
 
@@ -467,7 +478,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 **推荐 Prompt 模板**：
 
 ```
-请使用 guide-updater 基于以下文献综述结果优化项目指南：
+请使用 research-guide-updater 基于以下文献综述结果优化项目指南：
 [综述结果文件/目录]
 ```
 
@@ -758,10 +769,10 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ### 工作流中的技能协作
 
-- **get-review-theme**：前置步骤，提取主题关键词
-- **systematic-literature-review**：核心文献综述（可选依赖 get-review-theme 的输出）
-- **guide-updater**：中间优化，基于综述结果沉淀写作规范（依赖 systematic-literature-review 的输出）
-- **nsfc系列写作skills**：最终撰写标书各模块（可选依赖 guide-updater 优化的指南）
+- **research-topic-extractor**：前置步骤，提取主题关键词
+- **research-literature-review**：核心文献综述（可选依赖 research-topic-extractor 的输出）
+- **research-guide-updater**：中间优化，基于综述结果沉淀写作规范（依赖 research-literature-review 的输出）
+- **nsfc系列写作skills**：最终撰写标书各模块（可选依赖 research-guide-updater 优化的指南）
 - **nsfc-budget**：基于完整正文与补充材料生成预算说明书（通常放在正文接近完成后）
 - **nsfc-roadmap / nsfc-schematic**：基于写作内容生成技术路线图与原理图
 - **nsfc-length-aligner**：在中后期检查总篇幅与章节分布，防止结构失衡
@@ -776,9 +787,9 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 对于 NSFC 标书写作，建议按以下顺序使用技能：
 
-1. **get-review-theme** → 提取综述主题
-2. **systematic-literature-review** → 生成文献综述
-3. **guide-updater** → 优化项目指南（⭐ 重要环节）
+1. **research-topic-extractor** → 提取综述主题
+2. **research-literature-review** → 生成文献综述
+3. **research-guide-updater** → 优化项目指南（⭐ 重要环节）
 4. **nsfc-code** → 推荐申请代码（主/次代码 + 理由）
 5. **nsfc-justification-writer** → 撰写立项依据
 6. **nsfc-research-content-writer** → 撰写研究内容

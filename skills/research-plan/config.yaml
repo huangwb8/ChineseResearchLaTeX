@@ -1,0 +1,54 @@
+# Make Research Plan 配置文件
+
+# 技能信息
+skill_info:
+  name: research-plan
+  version: 0.2.0
+  description: "基于文献调研制定科研分析策略；兼容旧名 make-research-plan 的 prompt 触发"
+  author: "Bensz Conan"
+  category: "科研工具"
+
+# 工作目录配置
+work_directory:
+  # 工作目录名称
+  name: ".make-research-plan"
+  # 子目录名称
+  subdirs:
+    papers: "papers"
+    metadata: "metadata"
+    extracted: "extracted"
+  # 输出文件名
+  files:
+    theme: "theme.json"
+    search_history: "search_history.json"
+    papers_scored: "papers_scored.json"
+    papers_info: "papers_info.json"
+    bibtex: "references.bib"
+    analysis_framework: "analysis-framework.md"
+    plan: "plan.md"
+
+# 预留配置（待功能实现后添加）
+# 当实现文献检索脚本时，添加以下配置：
+# apis:
+#   semantic_scholar:
+#     base_url: "https://api.semanticscholar.org/graph/v1"
+#     api_key: ""  # 用户需自行配置
+#   pubmed:
+#     base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+#   unpaywall:
+#     base_url: "https://api.unpaywall.org/v2"
+#     email: ""  # 用户需自行配置
+#   arxiv:
+#     base_url: "https://export.arxiv.org/api/query"
+#     pdf_base: "https://arxiv.org/pdf/"
+#
+# 当实现 PDF 下载脚本时，添加以下配置：
+# pdf_download:
+#   timeout: 30
+#   max_retries: 3
+#   user_agent: "Mozilla/5.0 (compatible; MakeResearchPlan/0.1.0)"
+#
+# 当实现方法学提取脚本时，添加以下配置：
+# analysis_extraction:
+#   sections_to_extract: [...]
+#   min_confidence: 0.6

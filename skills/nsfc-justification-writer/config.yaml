@@ -182,15 +182,15 @@ writing_coach:
     draft_threshold_ratio: 0.4
     draft_min_chars: 600
 
-# systematic-literature-review 集成配置
+# research-literature-review 集成配置（历史目录名仍为 .systematic-literature-review）
 slr_integration:
-  # 启用 systematic-literature-review 目录检测
+  # 启用 research-literature-review 目录检测
   enabled: true
 
-  # 标记文件夹名称（用于识别 systematic-literature-review 生成的目录）
+  # 标记文件夹名称（用于识别 research-literature-review 生成的历史工作区目录）
   marker_folder: ".systematic-literature-review"
 
-  # 只读访问保护（禁止写入 systematic-literature-review 生成的目录）
+  # 只读访问保护（禁止写入 research-literature-review 生成的目录）
   read_only: true
 
   # 自动验证引用一致性
