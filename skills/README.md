@@ -59,20 +59,21 @@ graph LR
 ## 当前技能列表
 
 说明：
-- `make-latex-model` 是当前正式名称，兼容旧写法 `make_latex_model`
-- `transfer-old-latex-to-new` 是当前正式名称，兼容历史别名 `migrating-latex-templates`
-- 研究类 skills 已迁移为 `research-*` 系列；旧名 prompt 暂时兼容，系统级旧目录会在安装新版本时清理
+- 新任务、新文档和新脚本请统一使用当前名称；旧名称只作为存量 Prompt 的兼容入口
+- `make-latex-model` 取代旧写法 `make_latex_model`
+- `transfer-old-latex-to-new` 取代历史别名 `migrating-latex-templates`
+- 研究类 skills 已统一迁移为 `research-*` 系列，命名更贴近职责边界
 - 版本号以各 `skills/*/config.yaml` 为单一真相来源；本页仅保留关键能力、适用场景与推荐 Prompt
 
 研究类 skill 迁移表：
 
-| 旧名 | 新名 | 兼容状态 |
+| 历史名称 | 当前名称 | 现在怎么用 |
 | --- | --- | --- |
-| `get-review-theme` | `research-topic-extractor` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
-| `guide-updater` | `research-guide-updater` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
-| `check-review-alignment` | `research-citation-check` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
-| `make-research-plan` | `research-plan` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
-| `systematic-literature-review` | `research-literature-review` | 旧名 prompt 暂时兼容，旧目录安装时清理 |
+| `get-review-theme` | `research-topic-extractor` | 用新名提取综述主题；旧名仅兼容存量 Prompt |
+| `guide-updater` | `research-guide-updater` | 用新名沉淀项目指南；旧名仅兼容存量 Prompt |
+| `check-review-alignment` | `research-citation-check` | 用新名检查综述引用语义；旧名仅兼容存量 Prompt |
+| `make-research-plan` | `research-plan` | 用新名制定科研分析策略；旧名仅兼容存量 Prompt |
+| `systematic-literature-review` | `research-literature-review` | 用新名生成系统综述；旧名仅兼容存量 Prompt |
 
 ### 1. make-latex-model - 样式对齐优化
 
