@@ -33,6 +33,8 @@ metadata:
 ## 目标
 
 - 写出更像作者本人、而不是通用 AI 模板的论文
+- 控制 SCI 论文语气，少用带冒号的口语化解释句，优先写成自然递进的完整句
+- 在 `Introduction` 中协调核心观点、核心痛点和核心问题的出现频率，避免反复重提同一主张导致冗余
 - 在写作与修订过程中严格保护数字、逻辑和术语一致性
 - 默认直接推进修改；当用户需要人机协作时，只输出计划，不直接改论文
 - 除明确约定的对外交付物外，把所有中间文件收敛到 `<paper_dir>/.paper-write-sci/run_{timestamp}/`
@@ -148,8 +150,9 @@ metadata:
 2. 对照 Figure/Table 注释，提取每张图表支撑的论点
 3. 识别已有优质段落、薄弱段落、事实风险、风格不一致位置
 4. 标记章节职责风险，特别是 `Introduction` 泄露结果、`Results` 过度解释、`Discussion` 复述结果的段落
-5. 初步构建逻辑树并写入当前运行目录的 `analysis/logic-tree.md`
-6. 若任务涉及全文缩写治理，按 `references/execution-guards.md` 建立 `analysis/abbreviation-inventory.md`
+5. 标记 `Introduction` 中核心观点、核心痛点、核心问题被重复表达的位置，判断哪些句子应合并、前移、后置或删除
+6. 初步构建逻辑树并写入当前运行目录的 `analysis/logic-tree.md`
+7. 若任务涉及全文缩写治理，按 `references/execution-guards.md` 建立 `analysis/abbreviation-inventory.md`
 
 ### 阶段 2：决定执行路径
 
@@ -179,12 +182,14 @@ Additional Information -> Figure Legends -> Supplementary Materials -> Abstract
 
 1. 先读现有文本和对应图表证据
 2. 先判断该节的章节职责，再用所选风格判断“应该怎么写更像作者”
-3. 若涉及长规则判断，回到 `references/execution-guards.md`
-4. 若涉及新数字，先过数字审查
-5. 若命中 `Discussion audit` 触发条件，先完成专项审查，再动笔
-6. 若涉及新增、删除或改写缩写，先回查 `analysis/abbreviation-inventory.md`
-7. 在 `autonomous` 模式下对目标 tex 做最小必要修改，并遵守 `config.yaml:tex_readability`
-8. 更新逻辑树与必要的全文一致性记录，确保局部改动没有破坏全局
+3. 写句子时少用 `X: Y`、`This means: ...`、`The reason is: ...` 这类冒号解释句；除方法标签、列表、图注必要标记外，优先改成自然从句、分号或独立句
+4. 写 `Introduction` 时，把核心问题、核心痛点和核心贡献分别安排在最合适的一处展开；后文只做推进或收束，不反复用近义句重说同一主张
+5. 若涉及长规则判断，回到 `references/execution-guards.md`
+6. 若涉及新数字，先过数字审查
+7. 若命中 `Discussion audit` 触发条件，先完成专项审查，再动笔
+8. 若涉及新增、删除或改写缩写，先回查 `analysis/abbreviation-inventory.md`
+9. 在 `autonomous` 模式下对目标 tex 做最小必要修改，并遵守 `config.yaml:tex_readability`
+10. 更新逻辑树与必要的全文一致性记录，确保局部改动没有破坏全局
 
 处理 Figure Legends 或 Supplementary Materials 时：
 
@@ -196,8 +201,10 @@ Additional Information -> Figure Legends -> Supplementary Materials -> Abstract
 
 1. 发起 `section-role-check`
 2. 完成全文一致性复核，包括数字、缩写、Figure/Table 引用与图注一致性
-3. 对最新文本重建逻辑树并发起逻辑审查
-4. 若有阻塞性问题，修复后再复审
+3. 复查全文冒号解释句是否过密，特别是段首、段尾和 `Introduction` 贡献句
+4. 复查 `Introduction` 是否反复提及同一个核心问题、痛点或贡献；若重复没有推进逻辑，应合并或删除
+5. 对最新文本重建逻辑树并发起逻辑审查
+6. 若有阻塞性问题，修复后再复审
 
 ### 阶段 5：渲染与交付
 
@@ -220,6 +227,8 @@ Additional Information -> Figure Legends -> Supplementary Materials -> Abstract
 - 不允许同一概念在不同 tex 中使用冲突缩写、冲突全称或忽有忽无的定义
 - 不要为了局部简洁随意新造缩写；若新缩写不会在全文稳定复用，优先不用
 - 不为“排版整齐”而重排无关段落或整节 `.tex`
+- 不把 SCI 正文写成冒号驱动的口语化说明；冒号只用于确有必要的标签、列表、图注结构或期刊格式要求
+- 不在 `Introduction` 中反复重提同一个核心观点、痛点或问题；每次出现都必须承担新的逻辑推进功能
 - 用户要求“只改某节”时，严格限制改动范围
 - 用户要求协作模式时，严格禁止直接修改论文
 

@@ -573,7 +573,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ### 18. paper-write-sci - SCI 论文写作与修订
 
-**状态**：🚧 开发中（v0.11.1）
+**状态**：🚧 开发中（v0.11.2）
 
 **类型**：📝 日常
 
@@ -599,6 +599,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - 章节角色检查：确保每个章节承担正确的叙事角色（如 Discussion 不重复 Results）
 - 逻辑树多轮审查：结构化检查论证链完整性，最多 3 轮迭代
 - 全文级缩写守卫：按整篇论文所有正文 `.tex` 联合检查首次定义与统一写法
+- 写作节奏护栏：减少无结构功能的冒号句，并避免 Introduction 反复重提同一核心问题
 - PDF + Word 双格式渲染闭环
 
 [详细文档 →](paper-write-sci/SKILL.md)

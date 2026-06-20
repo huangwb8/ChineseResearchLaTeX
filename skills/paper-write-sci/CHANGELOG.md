@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- 强化 SCI 写作节奏规则：`SKILL.md`、`references/writing-style-guide.md`、`references/execution-guards.md` 与内置风格文件同步要求少用无结构功能的冒号解释句，优先改成自然从句、分号或独立句
+- 强化 `Introduction` 去冗余规则：要求协调核心观点、核心痛点和核心问题的主展开位置，避免在背景、局限和贡献段反复重提同一主张
+- `README.md`、根级技能索引与项目 `CHANGELOG.md` 同步记录新写作护栏，`config.yaml` 版本从 `0.11.1` 升至 `0.11.2`
+
 ## [0.11.1] - 2026-03-31
 
 ### Changed
