@@ -1,0 +1,124 @@
+# paper-know-journal 配置文件
+
+skill_info:
+  name: "paper-know-journal"
+  version: "0.3.0"
+  description: "按期刊名联网调研投稿要求、目标文体/文章类型格式清单、官网政策和社区评价，输出 KnowJournal-{杂志名}.md"
+  author: "Bensz Conan"
+  category: "paper"
+
+workspace:
+  hidden_dir: ".paper-know-journal"
+  run_prefix: "run"
+  timestamp_format: "%Y%m%d%H%M%S"
+  subdirs:
+    - official
+    - community
+    - article-samples
+    - notes
+    - drafts
+    - logs
+    - _runtime
+
+output:
+  filename_template: "KnowJournal-{journal}.md"
+  default_dir: "."
+  unsafe_filename_chars: '/\\:*?"<>|'
+
+tests:
+  default_dir: "tests/paper-know-journal"
+
+research:
+  min_official_sources: 3
+  min_community_sources: 2
+  article_sample_count: 3
+  require_access_dates: true
+  default_language: "zh-CN"
+  official_source_types:
+    - journal_homepage
+    - author_guidelines
+    - submission_system
+    - publication_ethics
+    - fees_and_open_access
+  community_source_types:
+    - scirev
+    - letpub
+    - author_experience
+    - forum_or_social
+    - institutional_library
+
+report:
+  required_sections:
+    - "调研摘要"
+    - "期刊概况"
+    - "官方投稿要求"
+    - "投稿形式要求与格式清单"
+    - "费用、开放获取与版权"
+    - "审稿流程与周期"
+    - "近期发表文章格式观察"
+    - "社区评价与作者体验"
+    - "投稿建议"
+    - "来源与可信度"
+  citation_style: "markdown_links"
+
+validation:
+  min_urls: 5
+  require_access_date: true
+  require_source_markers: true
+  official_markers:
+    - "官方"
+    - "官网"
+    - "出版社"
+    - "author guidelines"
+    - "instructions for authors"
+  community_markers:
+    - "社区"
+    - "第三方"
+    - "作者体验"
+    - "SciRev"
+    - "LetPub"
+  official_table_types:
+    - "官方"
+    - "官网"
+    - "出版社"
+  community_table_types:
+    - "社区"
+    - "第三方"
+    - "作者体验"
+  community_absence_phrases:
+    - "未找到足够社区评价"
+    - "未检索到足够社区评价"
+    - "社区评价稀少"
+  min_format_requirement_markers: 6
+  format_requirement_markers:
+    - "标题页"
+    - "摘要"
+    - "关键词"
+    - "正文结构"
+    - "图表"
+    - "补充材料"
+    - "参考文献"
+    - "声明"
+    - "伦理"
+    - "数据"
+    - "代码"
+    - "AI"
+    - "cover letter"
+  required_named_headings:
+    - "目标文体/文章类型具体要求"
+  min_article_type_requirement_markers: 5
+  article_type_requirement_markers:
+    - "目标文体"
+    - "文章类型"
+    - "官方名称"
+    - "章节标题"
+    - "章节顺序"
+    - "字数"
+    - "页数"
+    - "摘要类型"
+    - "关键词"
+    - "图表"
+    - "补充材料"
+    - "参考文献限制"
+    - "报告清单"
+    - "未在官方页面确认"

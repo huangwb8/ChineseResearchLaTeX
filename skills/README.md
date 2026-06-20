@@ -669,7 +669,39 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 21. nsfc-qc - NSFC 标书质量控制
+### 21. paper-know-journal - 期刊投稿指南调研
+
+**状态**：🚧 开发中（v0.3.0）
+
+**类型**：📝 日常
+
+**功能**：按期刊名联网调研投稿要求、目标文体/文章类型格式清单、官网政策和社区评价，并输出中文 Markdown 报告
+
+**使用场景**：
+- 已经锁定或初步考虑某个目标期刊，需要了解“怎么投”
+- 需要整理作者指南、投稿文件、格式要求、APC、审稿周期和社区反馈
+- 希望区分官方政策与第三方作者体验，避免只凭经验贴判断期刊
+
+**推荐 Prompt 模板**：
+
+```text
+请使用 paper-know-journal skill 调研这个期刊的投稿要求、投稿形式要求和社区评价。
+输入：Cancer Cell
+输出：KnowJournal-Cancer Cell.md，保存在当前工作目录根目录
+```
+
+**技能特点**：
+- 联网核验期刊官网、作者指南、投稿系统、费用页和出版政策
+- 单独整理“投稿形式要求与格式清单”，覆盖标题页、摘要、关键词、正文结构、图表、补充材料、参考文献、声明和 cover letter
+- 可按 Article、Original Research、Review、Brief Communication 等目标文体展开具体要求
+- 补充 SciRev、LetPub、论坛和作者经验等社区评价，但不把第三方体验当作官方政策
+- 默认把中间文件隔离到 `.paper-know-journal/run-<timestamp>/`，最终交付 `KnowJournal-{杂志名}.md`
+
+[详细文档 →](paper-know-journal/README.md)
+
+---
+
+### 22. nsfc-qc - NSFC 标书质量控制
 
 **状态**：✅ 稳定（版本见 `skills/nsfc-qc/config.yaml`）
 
@@ -702,7 +734,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 22. nsfc-length-aligner - NSFC 标书篇幅对齐
+### 23. nsfc-length-aligner - NSFC 标书篇幅对齐
 
 **状态**：🚧 开发中（版本见 `skills/nsfc-length-aligner/config.yaml`）
 
@@ -733,7 +765,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 23. nsfc-humanization - 去 AI 机器味润色
+### 24. nsfc-humanization - 去 AI 机器味润色
 
 **状态**：✅ 稳定（版本见 `skills/nsfc-humanization/config.yaml`）
 
@@ -783,6 +815,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - **paper-write-sci**：SCI 论文写作与修订（依赖 LaTeX 论文项目结构）
 - **paper-explain-figures**：论文 Figure 解读（可与 paper-write-sci 配合使用）
 - **paper-select-journal**：论文接近成稿后做期刊筛选（可复用 paper-write-sci 产出的 manuscript）
+- **paper-know-journal**：锁定目标期刊后调研投稿指南、格式清单、费用政策与社区评价
 
 ### 推荐使用顺序
 
@@ -806,6 +839,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 1. **paper-write-sci** → 撰写、修订和结构化审查论文正文
 2. **paper-explain-figures** → 在复杂 Figure 场景下补足读图理解与叙事说明
 3. **paper-select-journal** → 基于接近定稿的 manuscript 做证据驱动的选刊排序
+4. **paper-know-journal** → 对目标期刊做投稿要求、格式清单和社区评价调研
 
 ---
 
