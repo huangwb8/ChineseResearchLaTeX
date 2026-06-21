@@ -13,7 +13,6 @@ graph LR
     A[research-topic-extractor<br>提取综述主题] --> B[research-literature-review<br>规范化文献综述]
     B --> C[research-guide-updater<br>优化项目指南]
     C --> D[nsfc系列skills<br>标书各部分写作]
-    D --> E[nsfc-roadmap / nsfc-schematic<br>技术路线图与原理图]
     D --> F[nsfc-reviewers<br>专家评审模拟]
 ```
 
@@ -331,73 +330,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 10. nsfc-roadmap - NSFC 技术路线图生成
-
-**状态**：🚧 开发中（v0.9.1）
-
-**类型**：📝 日常
-
-**功能**：从 NSFC 标书自动生成可打印、A4 可读的技术路线图
-
-**使用场景**：
-- 需要将研究内容转成技术路线图
-- 需要可编辑的 `.drawio` 源文件和可嵌入文档的渲染结果
-
-**推荐 Prompt 模板**：
-
-```
-请使用 nsfc-roadmap 生成技术路线图：
-目标项目：projects/NSFC_Young
-```
-
-**技能特点**：
-- 输出 `.drawio`（可编辑）与 `.svg`/`.png`/`.pdf`（交付）
-- 内置参考图（model-01 ~ model-10）；规划阶段自动生成“模型画廊”（contact sheet）用于学习优秀结构与信息密度控制（默认不建议固定到单一模板）
-- 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
-- "平台期停止"策略：基于 PNG 哈希与分数提升阈值自动停止
-- 支持规划模式：纯 AI 规划（默认），先审阅 `roadmap-plan.md` 再生成
-- Nano Banana PNG-only 模式兼容 Gemini 与 OpenAI `gpt-image-2`
-
-[详细文档 →](nsfc-roadmap/SKILL.md)
-
----
-
-### 11. nsfc-schematic - NSFC 原理图/机制图生成
-
-**状态**：🚧 开发中（v0.10.0）
-
-**类型**：📝 日常
-
-**功能**：将标书中的机制描述、算法结构、模块关系转成原理图/机制图
-
-**使用场景**：
-- 需要将研究机制、算法架构转成可视化图示
-- 需要可编辑的 `.drawio` 源文件和可嵌入文档的渲染结果
-
-**推荐 Prompt 模板**：
-
-```
-请使用 nsfc-schematic 生成原理图：
-目标项目：projects/NSFC_Young
-输入：extraTex/2.1.研究内容.tex（或自然语言描述）
-```
-
-**技能特点**：
-- 分组结构：输入层 → 处理层 → 输出层（柔性）+ 任意连线
-- 节点文案自动扩容，避免文字溢出/遮挡
-- 正交路由 + 标签避障锚点，降低连线/标签压字
-- 多轮评估-优化（默认 5 轮），三维度自检（结构/视觉/可读性）
-- 元素层级保护：分组底层 → 连线中层 → 节点顶层
-- 默认关闭图内标题，避免标题与分组冲突；支持按需开启
-- 图类型参考图（5 类常用骨架 + 多个 `model-xx` 视觉参考）+ “模型画廊”（skeleton/simple 优先）用于学习结构与风格（默认纯 AI 规划，不要求模板单选）
-- 支持规划模式：先审阅 `schematic-plan.md` 再生成
-- Nano Banana PNG-only 模式兼容 Gemini 与 OpenAI `gpt-image-2`
-
-[详细文档 →](nsfc-schematic/SKILL.md)
-
----
-
-### 12. research-citation-check - 综述引用语义一致性检查
+### 10. research-citation-check - 综述引用语义一致性检查
 
 **状态**：✅ 稳定（v1.1.0）
 
@@ -436,7 +369,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 13. research-topic-extractor - 综述主题提取
+### 11. research-topic-extractor - 综述主题提取
 
 **状态**：✅ 稳定（v1.1.0）
 
@@ -463,7 +396,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 14. research-guide-updater - 项目指南优化
+### 12. research-guide-updater - 项目指南优化
 
 **状态**：✅ 稳定（v1.1.0）
 
@@ -490,7 +423,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 15. nsfc-code - NSFC 申请代码推荐
+### 13. nsfc-code - NSFC 申请代码推荐
 
 **状态**：🚧 开发中（版本见 `skills/nsfc-code/config.yaml`）
 
@@ -517,7 +450,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 16. nsfc-ref-alignment - 标书引用与参考文献核查
+### 14. nsfc-ref-alignment - 标书引用与参考文献核查
 
 **状态**：🚧 开发中（版本见 `skills/nsfc-ref-alignment/config.yaml`）
 
@@ -543,7 +476,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 17. nsfc-budget - NSFC 预算说明书生成
+### 15. nsfc-budget - NSFC 预算说明书生成
 
 **状态**：🚧 开发中（版本见 `skills/nsfc-budget/config.yaml`）
 
@@ -571,7 +504,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 18. paper-write-sci - SCI 论文写作与修订
+### 16. paper-write-sci - SCI 论文写作与修订
 
 **状态**：🚧 开发中（v0.11.2）
 
@@ -606,7 +539,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 19. paper-explain-figures - 论文 Figure 解读
+### 17. paper-explain-figures - 论文 Figure 解读
 
 **状态**：🚧 开发中（v0.2.0）
 
@@ -638,7 +571,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 20. paper-select-journal - SCI 投稿期刊筛选
+### 18. paper-select-journal - SCI 投稿期刊筛选
 
 **状态**：🚧 开发中（v0.3.1）
 
@@ -670,7 +603,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 21. paper-know-journal - 期刊投稿指南调研
+### 19. paper-know-journal - 期刊投稿指南调研
 
 **状态**：🚧 开发中（v0.3.0）
 
@@ -702,7 +635,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 22. nsfc-qc - NSFC 标书质量控制
+### 20. nsfc-qc - NSFC 标书质量控制
 
 **状态**：✅ 稳定（版本见 `skills/nsfc-qc/config.yaml`）
 
@@ -735,7 +668,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 23. nsfc-length-aligner - NSFC 标书篇幅对齐
+### 21. nsfc-length-aligner - NSFC 标书篇幅对齐
 
 **状态**：🚧 开发中（版本见 `skills/nsfc-length-aligner/config.yaml`）
 
@@ -766,7 +699,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ---
 
-### 24. nsfc-humanization - 去 AI 机器味润色
+### 22. nsfc-humanization - 去 AI 机器味润色
 
 **状态**：✅ 稳定（版本见 `skills/nsfc-humanization/config.yaml`）
 
@@ -808,7 +741,6 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - **research-guide-updater**：中间优化，基于综述结果沉淀写作规范（依赖 research-literature-review 的输出）
 - **nsfc系列写作skills**：最终撰写标书各模块（可选依赖 research-guide-updater 优化的指南）
 - **nsfc-budget**：基于完整正文与补充材料生成预算说明书（通常放在正文接近完成后）
-- **nsfc-roadmap / nsfc-schematic**：基于写作内容生成技术路线图与原理图
 - **nsfc-length-aligner**：在中后期检查总篇幅与章节分布，防止结构失衡
 - **nsfc-humanization**：在定稿前去掉明显“机器味”，保持表达更像人工撰写
 - **nsfc-qc**：在送审前做只读体检，集中排查文风/引用/篇幅/逻辑/缩写问题
@@ -829,11 +761,10 @@ output_mode：preview（先预览）/ apply（确认后写入）
 5. **nsfc-justification-writer** → 撰写立项依据
 6. **nsfc-research-content-writer** → 撰写研究内容
 7. **nsfc-research-foundation-writer** → 撰写研究基础
-8. **nsfc-roadmap** / **nsfc-schematic** → 生成技术路线图与原理图
-9. **nsfc-length-aligner** → 对齐整体篇幅与章节分布
-10. **nsfc-humanization** → 去掉明显机器味，做表达层精修
-11. **nsfc-qc** → 做只读质量控制，集中排查问题
-12. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
+8. **nsfc-length-aligner** → 对齐整体篇幅与章节分布
+9. **nsfc-humanization** → 去掉明显机器味，做表达层精修
+10. **nsfc-qc** → 做只读质量控制，集中排查问题
+11. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
 
 对于 SCI 论文写作，建议按以下顺序使用技能：
 

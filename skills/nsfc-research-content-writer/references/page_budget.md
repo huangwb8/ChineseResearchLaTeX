@@ -9,7 +9,7 @@
 ## 图表策略
 
 - **本 skill 不生成图表**，仅在任务结束后提醒用户
-- 研究内容章节的核心图表：技术路线图，使用 `nsfc-roadmap` skill 生成
+- 研究内容章节的核心图表：技术路线图
 - 技术路线图建议放在研究内容开头
 - 注：机制示意图属于“立项依据”章节，由 `nsfc-justification-writer` 负责
 - 注：预实验数据图属于“研究基础”章节，由 `nsfc-research-foundation-writer` 负责

@@ -258,8 +258,6 @@ python3 scripts/cleanup_intermediate.py --review-path /path/to/your/nsfc_proposa
 - `nsfc-justification-writer`：立项依据写作
 - `nsfc-research-content-writer`：研究内容写作
 - `nsfc-research-foundation-writer`：研究基础写作
-- `nsfc-roadmap`：技术路线图生成
-- `nsfc-schematic`：原理图/机制图生成
 
 ---
 

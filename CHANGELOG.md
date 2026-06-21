@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### Removed（删除）
+
+- 移除 `skills/nsfc-roadmap/` 与 `skills/nsfc-schematic/` 两个 skill：技术路线图与原理图生成能力不再由本项目内置 skill 维护；同步清理 `skills/README.md`（架构图节点、专属章节、技能依赖列表、推荐使用顺序及后续章节序号重排）、根级 `README.md` 技能表格、`projects/NSFC_General|Local|Young/AGENTS.md`、`skills/nsfc-reviewers/README.md` 与 `skills/nsfc-research-content-writer/` 下文档中对两者的引用。
+
 ### Changed（变更）
 
 - `skills/` 下会产生中间文件的 skills 默认工作区统一迁移到 `./.bensz-api/skills/{skill名}/{yyyy-mm-dd-hh-mm}/` 规则；覆盖 `paper-select-journal`、`paper-know-journal`、`paper-write-sci`、`research-idea`、`paper-explain-figures`、`nsfc-budget`、`nsfc-length-aligner`、`nsfc-ref-alignment`、`nsfc-reviewers`、`nsfc-qc`、`nsfc-roadmap`、`nsfc-schematic`、`research-literature-review`、`transfer-old-latex-to-new` 等脚本默认值、配置、README/SKILL 当前说明与必要的 legacy 兼容/清理边界，最终交付物路径保持原有用户可见约定。

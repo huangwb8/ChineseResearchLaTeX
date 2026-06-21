@@ -120,8 +120,6 @@
 | 新增/核验参考文献 | `nsfc-bib-manager` | "帮我加引用" |
 | 引用与文献一致性 | `nsfc-ref-alignment` | "检查引用是否对齐" |
 | 篇幅调整（扩/缩） | `nsfc-length-aligner` | "把这节压缩到 X 页" |
-| 技术路线图 | `nsfc-roadmap` | "生成技术路线图" |
-| 机制/原理图 | `nsfc-schematic` | "生成机制图" |
 | 申请代码推荐 | `nsfc-code` | "推荐申请代码" |
 
 ---

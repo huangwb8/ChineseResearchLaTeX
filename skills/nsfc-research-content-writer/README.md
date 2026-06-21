@@ -33,7 +33,7 @@ output_mode：apply（默认）/ preview（只预览不写入）
 - 研究内容推荐页数：12–15 页（含图表），约占标书总页数（≤28 页）的 50%
 - 研究内容推荐字数：12000–15000 字（纯文字部分）
 - 评审标准已从“字数控制”转向“页数控制”，建议先按页数规划结构，再用图表提质
-- 技术路线图建议放在研究内容开头：可使用 `nsfc-roadmap` skill 生成
+- 技术路线图建议放在研究内容开头
 - 参考：`skills/nsfc-research-content-writer/references/page_budget.md`
 
 ## 推荐工作流（先预览再写入）
