@@ -6,7 +6,7 @@ import datetime as dt
 import json
 from pathlib import Path
 
-from common import ensure_dir, generate_run_id, is_within, load_config, resolve_path, skill_root
+from common import allocate_unique_run_id, ensure_dir, generate_run_id, is_within, load_config, resolve_path, skill_root
 
 
 def build_manifest(
@@ -46,7 +46,7 @@ def main() -> None:
         if args.workspace_base
         else (project_root / default_hidden_dir).resolve()
     )
-    run_id = args.run_id or generate_run_id(config)
+    run_id = args.run_id or allocate_unique_run_id(workspace_base, generate_run_id(config))
     workspace_root = ensure_dir(workspace_base / run_id)
 
     for subdir in config["workspace"]["subdirs"]:

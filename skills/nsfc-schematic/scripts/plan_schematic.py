@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -105,6 +106,19 @@ def _load_template_models(config: Dict[str, Any]) -> List[TemplateModel]:
         )
 
     return out
+
+
+def _allocate_bensz_intermediate_dir(work_dir: Path, intermediate_name: str) -> Path:
+    root = work_dir.resolve().parent / intermediate_name
+    stamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    candidate = root / stamp
+    if not candidate.exists():
+        return candidate
+    for idx in range(2, 100):
+        candidate = root / f"{stamp}-{idx:02d}"
+        if not candidate.exists():
+            return candidate
+    fatal(f"无法在 {root} 下分配唯一中间目录")
 
 
 def _select_template_model(
@@ -978,7 +992,7 @@ def _ensure_intermediate_gitignore(intermediate_dir: Path) -> None:
     p = intermediate_dir / ".gitignore"
     if p.exists():
         return
-    dirname = intermediate_dir.name or ".nsfc-schematic"
+    dirname = intermediate_dir.name or "nsfc-schematic"
     p.write_text(
         f"# {dirname}/.gitignore\n"
         f"# 如需追踪版本历史，可删除此文件并 git add {dirname}/\n"
@@ -1014,7 +1028,7 @@ def main() -> None:
         "--output",
         type=Path,
         required=True,
-        help="输出目录（会写入 schematic-plan.md 与 spec_draft.yaml；中间产物默认写入 output_dir/.nsfc-schematic/）",
+        help="输出目录（会写入 schematic-plan.md 与 spec_draft.yaml；中间产物默认写入 .bensz-api/skills/nsfc-schematic/）",
     )
     p.add_argument(
         "--also-write-workspace-plan",
@@ -1187,19 +1201,27 @@ def main() -> None:
     # NOTE: In AI planning mode, the gallery is for learning only (no single-template binding).
     models = _load_template_models(config)
     model_gallery: Optional[Dict[str, str]] = None
-    intermediate_dirname = ".nsfc-schematic"
+    intermediate_dirname = ".bensz-api/skills/nsfc-schematic"
     try:
         out_cfg2 = config.get("output", {}) if isinstance(config.get("output"), dict) else {}
-        intermediate_dirname = str(out_cfg2.get("intermediate_dir", ".nsfc-schematic") or ".nsfc-schematic").strip()
+        intermediate_dirname = (
+            str(out_cfg2.get("intermediate_dir", ".bensz-api/skills/nsfc-schematic") or ".bensz-api/skills/nsfc-schematic")
+            .strip()
+        )
         if not intermediate_dirname or not is_safe_relative_path(intermediate_dirname):
-            intermediate_dirname = ".nsfc-schematic"
+            intermediate_dirname = ".bensz-api/skills/nsfc-schematic"
     except Exception:
-        intermediate_dirname = ".nsfc-schematic"
+        intermediate_dirname = ".bensz-api/skills/nsfc-schematic"
+
+    if intermediate_dirname.startswith(".bensz-api/"):
+        intermediate_root = _allocate_bensz_intermediate_dir(args.output, intermediate_dirname)
+    else:
+        intermediate_root = args.output / intermediate_dirname
 
     try:
         from model_gallery import TemplateVisual, materialize_model_gallery
 
-        gallery_out_dir = args.output / intermediate_dirname / "planning"
+        gallery_out_dir = intermediate_root / "planning"
         src_models = skill_root() / "references" / "models"
 
         fonts_cfg = (
@@ -1221,7 +1243,6 @@ def main() -> None:
         warn(f"生成模型画廊失败（已跳过，不影响规划输出）：{exc}")
 
     args.output.mkdir(parents=True, exist_ok=True)
-    intermediate_root = args.output / intermediate_dirname
     intermediate_root.mkdir(parents=True, exist_ok=True)
     _ensure_intermediate_gitignore(intermediate_root)
     plan_path = args.output / plan_name
@@ -1231,7 +1252,7 @@ def main() -> None:
         # AI planning is a 2-step protocol:
         # 1) script writes plan_request.json/plan_request.md (+ visual gallery evidence)
         # 2) host AI writes schematic-plan.md + spec_draft.yaml, then rerun to validate
-        req_dir = args.output / intermediate_dirname / "planning"
+        req_dir = intermediate_root / "planning"
         req_dir.mkdir(parents=True, exist_ok=True)
         req_json = req_dir / "plan_request.json"
         req_md = req_dir / "plan_request.md"

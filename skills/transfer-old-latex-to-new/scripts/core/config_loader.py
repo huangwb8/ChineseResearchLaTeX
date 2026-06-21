@@ -54,7 +54,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "verbose": True,
     },
     "workspace": {
-        "runs_dir": "runs",
+        "runs_dir": ".bensz-api/skills/transfer-old-latex-to-new",
     },
     # 预设配置（profiles）
     "profiles": {
@@ -162,7 +162,12 @@ def get_mapping_thresholds(config: Dict[str, Any]) -> MappingThresholds:
 
 def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
     runs_dir = (config.get("workspace", {}) or {}).get("runs_dir", "runs")
-    return (Path(skill_root) / runs_dir).resolve()
+    path = Path(str(runs_dir)).expanduser()
+    if path.is_absolute():
+        return path.resolve()
+    if str(runs_dir) == "runs":
+        return (Path(skill_root) / path).resolve()
+    return (Path.cwd() / path).resolve()
 
 
 def apply_profile(config: Dict[str, Any], profile_name: Optional[str] = None) -> Dict[str, Any]:

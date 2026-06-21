@@ -168,7 +168,7 @@ OK: dotenv=/path/to/.env, provider=openai|gemini, base_url=https://..., model=..
 | `renderer.drawio.cli_path` | "" | draw.io CLI 路径（可选） |
 | `evaluation.max_rounds` | 5 | 最大优化轮次 |
 | `evaluation.stop_strategy` | `ai_critic` | 停止策略（`ai_critic`/`plateau`/`none`） |
-| `output.hide_intermediate` | true | 是否隐藏中间产物到 `.nsfc-schematic/` |
+| `output.hide_intermediate` | true | 是否隐藏中间产物到 `.bensz-api/skills/nsfc-schematic/{yyyy-mm-dd-hh-mm}/` |
 | `layout.font.node_label_size` | 26 | 节点字号 |
 | `layout.font.edge_label_size` | 24 | 连线标签字号 |
 | `layout.canvas_fit.center_content` | true | 自动布局下将内容 bbox 居中（减少单侧留白；显式布局默认不启用） |

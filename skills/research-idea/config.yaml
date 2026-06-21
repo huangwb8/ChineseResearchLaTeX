@@ -1,14 +1,14 @@
 skill_info:
   name: "research-idea"
-  version: "0.2.0"
+  version: "0.2.1"
   description: "根据用户资料提出关键科学问题和可证伪科学假设，并通过 Premium 查新与多轮独立审查打磨最佳研究想法。"
   author: "Bensz Conan"
   category: "research"
 
 workspace:
-  hidden_dir: ".research-idea"
-  run_prefix: "run"
-  timestamp_format: "%Y%m%d%H%M%S%f"
+  hidden_dir: ".bensz-api/skills/research-idea"
+  run_prefix: ""
+  timestamp_format: "%Y-%m-%d-%H-%M"
   keep_intermediates_inside_hidden_dir: true
   subdirs:
     - "input"
@@ -64,8 +64,10 @@ output:
 
 validation:
   forbidden_path_patterns:
+    - "\\.bensz-api(?:[\\\\/]|$)"
     - "\\.research-idea(?:[\\\\/]|$)"
     - "tests[\\\\/]research-idea(?:[\\\\/]|$)"
+    - "\\.parallel-vibe(?:[\\\\/]|$)"
     - "\\.parallel_vibe(?:[\\\\/]|$)"
     - "parallel-vibe(?:[\\\\/]|$)"
     - "agent-reviews(?:[\\\\/]|$)"
@@ -98,4 +100,4 @@ validation:
     - "可行性"
 
 tests:
-  default_dir: "tests/research-idea"
+  default_dir: ".bensz-api/skills/research-idea/tests"

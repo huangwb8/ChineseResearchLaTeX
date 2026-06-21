@@ -43,15 +43,13 @@ def _err(msg: str) -> None:
     print(f"error: {msg}", file=sys.stderr)
 
 
-def _ensure_single_dir_name(name: str, *, label: str) -> str:
+def _ensure_relative_dir_path(name: str, *, label: str) -> str:
     n = str(name or "").strip()
     if not n:
         raise ValueError(f"{label} is empty")
     p = Path(n)
     if p.is_absolute() or ".." in p.parts:
         raise ValueError(f"{label} must be a relative name without '..': {n!r}")
-    if len(p.parts) != 1:
-        raise ValueError(f"{label} should be a single directory name (no slashes): {n!r}")
     return n
 
 
@@ -138,19 +136,23 @@ def _stage_dir(src: Path, dest_dir: Path, *, apply: bool, review_root: Path) -> 
 def _discover_parallel_vibe_roots(review_root: Path, intermediate_root: Path, extra: Path | None) -> list[Path]:
     roots: list[Path] = []
     candidates = [
+        intermediate_root / ".parallel-vibe",
         intermediate_root / ".parallel_vibe",
+        review_root / ".parallel-vibe",
         review_root / ".parallel_vibe",
     ]
     if extra:
-        if extra.is_dir() and extra.name == ".parallel_vibe":
+        if extra.is_dir() and extra.name in {".parallel-vibe", ".parallel_vibe"}:
             candidates.append(extra)
+        elif extra.is_dir() and (extra / ".parallel-vibe").exists():
+            candidates.append(extra / ".parallel-vibe")
         elif extra.is_dir() and (extra / ".parallel_vibe").exists():
             candidates.append(extra / ".parallel_vibe")
         else:
             candidates.append(extra)
     for p in candidates:
         try:
-            if p.exists() and p.is_dir() and p.name == ".parallel_vibe":
+            if p.exists() and p.is_dir() and p.name in {".parallel-vibe", ".parallel_vibe"}:
                 roots.append(p)
         except Exception:
             continue
@@ -180,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
 
     os_cfg = cfg.get("output_settings") if isinstance(cfg, dict) else None
     os_cfg = os_cfg if isinstance(os_cfg, dict) else {}
-    default_intermediate = str(os_cfg.get("intermediate_dir") or ".nsfc-reviewers")
+    default_intermediate = str(os_cfg.get("intermediate_dir") or ".bensz-api/skills/nsfc-reviewers")
     default_panel_dir = str(os_cfg.get("panel_dir") or "panels")
     default_filename = str(os_cfg.get("default_filename") or "comments-from-nsfc-reviewers.md")
     warn_missing_intermediate = bool(os_cfg.get("warn_missing_intermediate", True))
@@ -192,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--intermediate-dir",
         default=default_intermediate,
-        help="覆盖 config.yaml:output_settings.intermediate_dir（默认 .nsfc-reviewers）",
+        help="覆盖 config.yaml:output_settings.intermediate_dir（默认 .bensz-api/skills/nsfc-reviewers）",
     )
     p.add_argument(
         "--master-prompt-file",
@@ -207,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--parallel-vibe-path",
         default="",
-        help="可选：额外的 .parallel_vibe/ 位置（兼容 legacy 实例）；可指向 .parallel_vibe/ 或其父目录",
+        help="可选：额外的 .parallel-vibe/ 或 legacy .parallel_vibe/ 位置；可指向目录本身或其父目录",
     )
     p.add_argument(
         "--validation-level",
@@ -225,8 +227,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        intermediate_dir_name = _ensure_single_dir_name(str(args.intermediate_dir), label="--intermediate-dir")
-        panel_dir_name = _ensure_single_dir_name(default_panel_dir, label="config.yaml:output_settings.panel_dir")
+        intermediate_dir_name = _ensure_relative_dir_path(str(args.intermediate_dir), label="--intermediate-dir")
+        panel_dir_name = _ensure_relative_dir_path(default_panel_dir, label="config.yaml:output_settings.panel_dir")
     except Exception as e:
         _err(str(e))
         return 2
@@ -302,12 +304,20 @@ def main(argv: list[str] | None = None) -> int:
     panel_count = int(args.panel_count or 1)
     pv_dest = intermediate_root / "parallel-vibe"
     has_parallel_env = pv_dest.exists() and any(pv_dest.iterdir())
-    legacy_parallel_exists = (review_root / ".parallel_vibe").exists() or (intermediate_root / ".parallel_vibe").exists()
-    any_parallel_seen = has_parallel_env or legacy_parallel_exists
+    parallel_root_exists = any(
+        p.exists()
+        for p in (
+            review_root / ".parallel-vibe",
+            intermediate_root / ".parallel-vibe",
+            review_root / ".parallel_vibe",
+            intermediate_root / ".parallel_vibe",
+        )
+    )
+    any_parallel_seen = has_parallel_env or parallel_root_exists
 
-    # In DRY-RUN, legacy .parallel_vibe is expected to remain; only warn when nothing is found at all.
+    # In DRY-RUN, source parallel-vibe roots are expected to remain; only warn when nothing is found at all.
     if panel_count > 1 and warn_missing_intermediate and (not any_parallel_seen):
-        warnings.append(f"panel_count={panel_count} but no parallel-vibe env found (.parallel_vibe missing)")
+        warnings.append(f"panel_count={panel_count} but no parallel-vibe env found (.parallel-vibe missing)")
 
     if warn_missing_intermediate:
         if not (intermediate_root / "logs").exists() and apply:

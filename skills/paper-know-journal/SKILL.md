@@ -1,6 +1,6 @@
 ---
 name: paper-know-journal
-description: 当用户给出期刊/杂志名并希望了解投稿要求、投稿形式/格式清单、期刊官网信息、社区评价、审稿速度、费用、文章类型、格式细节或“这个 journal 怎么投/是否靠谱/投稿指南调研”时必须使用。联网核验期刊官网与社区评测，默认把全部中间文件隔离到当前工作目录的 `.paper-know-journal/`，最终只交付 `KnowJournal-{杂志名}.md`。⚠️ 不适用：用户要根据 manuscript 选择投稿期刊（用 paper-select-journal）、写论文正文、下载全文 PDF，或只问一个无需成稿的简单事实。
+description: 当用户给出期刊/杂志名并希望了解投稿要求、投稿形式/格式清单、期刊官网信息、社区评价、审稿速度、费用、文章类型、格式细节或“这个 journal 怎么投/是否靠谱/投稿指南调研”时必须使用。联网核验期刊官网与社区评测，默认把全部中间文件隔离到当前工作目录的 `.bensz-api/skills/paper-know-journal/`，最终只交付 `KnowJournal-{杂志名}.md`。⚠️ 不适用：用户要根据 manuscript 选择投稿期刊（用 paper-select-journal）、写论文正文、下载全文 PDF，或只问一个无需成稿的简单事实。
 metadata:
   author: Bensz Conan
   short-description: 按期刊名生成投稿要求与社区评价调研报告
@@ -27,7 +27,7 @@ metadata:
 
 输出：`KnowJournal-{杂志名}.md`，默认在用户当前工作目录根目录；用户指定输出位置时按指定保存。文件名中的 `/\:*?"<>|` 等路径危险字符替换为 `-`。
 
-中间文件：默认全部放入 `.paper-know-journal/run-<timestamp>/`。除最终 Markdown 和用户明确指定输出外，不得在隐藏工作区外写检索日志、网页摘录、截图、草稿、JSON、临时下载或运行缓存。
+中间文件：默认全部放入 `.bensz-api/skills/paper-know-journal/{yyyy-mm-dd-hh-mm}/`。除最终 Markdown 和用户明确指定输出外，不得在隐藏工作区外写检索日志、网页摘录、截图、草稿、JSON、临时下载或运行缓存。
 
 测试区：轻量验证用 `./tests/paper-know-journal/`；测试证据不得混入最终报告。
 
@@ -52,7 +52,7 @@ python3 /path/to/paper-know-journal/scripts/init_workspace.py \
   --journal "Journal for ImmunoTherapy of Cancer" \
   --cwd "$PWD" \
   --output-dir "/path/to/output" \
-  --workspace-dir "/path/to/.paper-know-journal"
+  --workspace-dir "/path/to/.bensz-api/skills/paper-know-journal"
 ```
 
 ### 调研

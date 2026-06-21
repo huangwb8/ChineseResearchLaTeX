@@ -44,7 +44,7 @@ def _load_discovery_config(cfg: dict) -> tuple[list[str], list[str], str, str]:
     os_cfg = cfg.get("output_settings") if isinstance(cfg, dict) else None
     os_cfg = os_cfg if isinstance(os_cfg, dict) else {}
     panel_dir = str(os_cfg.get("panel_dir") or "panels").strip()
-    intermediate_dir = str(os_cfg.get("intermediate_dir") or ".nsfc-reviewers").strip()
+    intermediate_dir = str(os_cfg.get("intermediate_dir") or ".bensz-api/skills/nsfc-reviewers").strip()
     if not panel_dir or not intermediate_dir:
         raise ValueError("config.yaml: output_settings.panel_dir/intermediate_dir must be non-empty")
 
@@ -58,9 +58,17 @@ def _should_skip_path(
     intermediate_dir: str,
 ) -> bool:
     # Skip any file that is under intermediate outputs / final panels / legacy parallel-vibe roots.
+    intermediate_parts = tuple(Path(intermediate_dir).parts)
+    if intermediate_parts and rel.parts[: len(intermediate_parts)] == intermediate_parts:
+        return True
+
     skip_dir_names = {
         panel_dir,
         intermediate_dir,
+        ".bensz-api",
+        ".nsfc-reviewers",
+        "parallel-vibe",
+        ".parallel-vibe",
         ".parallel_vibe",
         ".parallel_vibe".lstrip("."),  # defensive; unlikely
         ".parallel_vibe".strip("/"),
@@ -150,4 +158,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

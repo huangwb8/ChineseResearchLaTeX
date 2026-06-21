@@ -73,6 +73,16 @@ def generate_run_id(config: dict[str, Any], now: dt.datetime | None = None) -> s
     return f"{workspace_cfg['run_prefix']}{stamp}"
 
 
+def allocate_unique_run_id(workspace_base: Path, run_id: str) -> str:
+    if not (workspace_base / run_id).exists():
+        return run_id
+    for idx in range(2, 100):
+        candidate = f"{run_id}-{idx:02d}"
+        if not (workspace_base / candidate).exists():
+            return candidate
+    raise ValueError(f"无法在 {workspace_base} 下分配唯一工作目录: {run_id}")
+
+
 def normalize_text(text: str | None) -> str:
     if not text:
         return ""

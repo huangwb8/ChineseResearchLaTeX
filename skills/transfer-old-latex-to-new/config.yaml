@@ -78,7 +78,7 @@ migration:
 
   # 备份策略
   backup_mode: "snapshot"          # 备份模式: snapshot(快照)/copy(复制)/none(跳过)
-  backup_location: "runs"          # 备份位置: runs(默认，输出到 runs/<run_id>/backup/)/custom(自定义路径)
+  backup_location: "runs"          # 备份位置: runs(默认，输出到本轮 .bensz-api run 目录的 input/backup/)/custom(自定义路径)
   keep_backup_days: 30             # 自动清理备份保留天数
   fine_grained_rollback: true      # 细粒度回滚（支持单文件恢复）
 
@@ -150,7 +150,7 @@ cache:
   enabled: true                    # 启用缓存
   strategy: "layered"              # 分层策略: layered(三层)/simple(单层)/none(禁用)
   memory_max_size: 1000            # 内存缓存最大条目数
-  disk_db_path: "cache/mapping_cache.db"  # 磁盘缓存路径（相对 runs/<run_id>/）
+  disk_db_path: "cache/mapping_cache.db"  # 磁盘缓存路径（相对本轮 .bensz-api run 目录）
   ttl_days: 30                     # 缓存过期天数
 
 # =============================================================================
@@ -195,10 +195,10 @@ output:
 
   # 中间文件
   keep_intermediate: false         # 保留中间文件（用于调试）
-  intermediate_dir: "intermediate"  # 中间文件目录（相对 runs/<run_id>/）
+  intermediate_dir: "intermediate"  # 中间文件目录（相对本轮 .bensz-api run 目录）
 
   # 交付物（仅供 legacy CLI 参考）
-  deliverables_dir: "deliverables"  # 交付物目录（相对 runs/<run_id>/）
+  deliverables_dir: "deliverables"  # 交付物目录（相对本轮 .bensz-api run 目录）
   deliverables:
     - "migrated_proposal.pdf"      # 迁移后的PDF
     - "migration_log.md"           # 迁移日志
@@ -210,7 +210,7 @@ output:
 # 工作空间（本 skill 运行目录）
 # =============================================================================
 workspace:
-  runs_dir: "runs"                 # 运行产物根目录：skills/transfer-old-latex-to-new/runs/<run_id>/
+  runs_dir: ".bensz-api/skills/transfer-old-latex-to-new"  # 运行产物根目录：./.bensz-api/skills/transfer-old-latex-to-new/<yyyy-mm-dd-hh-mm>/
 
 # =============================================================================
 # 智能决策规则（AI自主规划逻辑）

@@ -15,7 +15,7 @@
 适合：
 
 - 已经有明确的 `--old` 和 `--new` 两个目录
-- 需要保留 `runs/<run_id>/` 这类可追溯产物
+- 需要保留 `.bensz-api/skills/transfer-old-latex-to-new/{yyyy-mm-dd-hh-mm}/` 这类可追溯产物
 - 希望用固定命令走一遍分析、应用、编译流程
 
 不适合：

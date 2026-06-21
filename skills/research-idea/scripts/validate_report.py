@@ -25,8 +25,10 @@ DEFAULT_CONFIG = {
     },
     "validation": {
         "forbidden_path_patterns": [
+            r"\.bensz-api(?:[\\/]|$)",
             r"\.research-idea(?:[\\/]|$)",
             r"tests[\\/]research-idea(?:[\\/]|$)",
+            r"\.parallel-vibe(?:[\\/]|$)",
             r"\.parallel_vibe(?:[\\/]|$)",
         ],
         "require_falsifiability_terms": ["可证伪", "反证", "推翻"],
@@ -108,7 +110,7 @@ def main() -> None:
     ):
         errors.append("文件名应为 Research-Idea_{github仓库名}_{pr名}_{时间戳}.md")
 
-    inside = path_is_inside_named_dir(report_path, {".research-idea", "tests", ".parallel_vibe", "parallel-vibe"})
+    inside = path_is_inside_named_dir(report_path, {".bensz-api", ".research-idea", "tests", ".parallel-vibe", ".parallel_vibe", "parallel-vibe"})
     if inside is not None:
         errors.append(f"最终报告不得放在中间目录或测试目录内: {inside}")
 

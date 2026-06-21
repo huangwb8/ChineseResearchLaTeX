@@ -63,10 +63,10 @@ checks:
     regex: "(?i)\\b10\\.\\d{4,9}/[-._;()/:A-Z0-9]+\\b"
 
 guardrails:
-  # 只读：脚本与 AI 都不得修改标书内容（tex/bib 等）。所有写入必须在 .nsfc-ref-alignment 下；
+  # 只读：脚本与 AI 都不得修改标书内容（tex/bib 等）。中间写入必须在 .bensz-api/skills/nsfc-ref-alignment 下；
   # 最终报告默认写到 ./references（可由用户指定）。
   allowed_write_globs:
-    - ".nsfc-ref-alignment/**"
+    - ".bensz-api/skills/nsfc-ref-alignment/**"
     - "references/**"
   forbidden_write_globs:
     - "**/*.tex"
@@ -75,7 +75,7 @@ guardrails:
     - "**/*.sty"
 
 output_contract:
-  # run_dir = {project_root}/.nsfc-ref-alignment/run_{run_id}
+  # run_dir = {project_root}/.bensz-api/skills/nsfc-ref-alignment/{run_id}
   ai_input_json: "{run_dir}/ai_ref_alignment_input.json"
   deterministic_report: "{run_dir}/ref_integrity_report.md"
   citations_csv: "{run_dir}/citations.csv"

@@ -8,6 +8,8 @@
 
 ### Changed
 
+- `config.yaml`：版本号 `0.2.0 → 0.2.1`；最终报告泄露校验新增 `.parallel-vibe/` 禁止路径，兼容 `parallel-vibe` 默认工作区目录变更。
+- `SKILL.md` / `scripts/validate_report.py`：同步最终报告不得暴露 `.parallel-vibe/` 中间产物路径。
 - 依赖口径迁移为 `research-topic-extractor` 与 `research-literature-review`。
 - 依赖检查脚本增加旧名 fallback：`get-review-theme`、`systematic-literature-review`。
 - README 与 SKILL 文档同步更新相邻 skill 边界说明。

@@ -54,7 +54,7 @@ metadata:
 - `roadmap.pdf`
 - `roadmap-plan.md`
 
-隐藏中间产物位于 `output_dir/.nsfc-roadmap/`：
+隐藏中间产物位于 `output_dir 的同级 .bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/`：
 
 - `runs/run_*/round_*`
 - `spec_latest.yaml`
@@ -120,7 +120,7 @@ python3 nsfc-roadmap/scripts/generate_roadmap.py \
 ### 5. 可选：AI 自主闭环
 
 - 若希望由宿主 AI 决定“是否继续、改哪里”，在 `config_local.yaml` 中启用 `evaluation.stop_strategy: ai_critic`。
-- 脚本会在 `output_dir/.nsfc-roadmap/ai/` 下生成：
+- 脚本会在 `output_dir 的同级 .bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/ai/` 下生成：
   - `ai_critic_request.md`
   - `ai_critic_response.yaml`
   - 每轮 `ai_pack_round_XX/`

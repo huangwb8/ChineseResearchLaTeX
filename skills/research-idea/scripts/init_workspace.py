@@ -19,9 +19,9 @@ except ModuleNotFoundError:  # pragma: no cover
 
 DEFAULT_CONFIG = {
     "workspace": {
-        "hidden_dir": ".research-idea",
-        "run_prefix": "run",
-        "timestamp_format": "%Y%m%d%H%M%S%f",
+        "hidden_dir": ".bensz-api/skills/research-idea",
+        "run_prefix": "",
+        "timestamp_format": "%Y-%m-%d-%H-%M",
         "subdirs": [
             "input",
             "theme",
@@ -58,7 +58,7 @@ DEFAULT_CONFIG = {
             "/Volumes/2T01/Cache/.codex/skills",
         ],
     },
-    "tests": {"default_dir": "tests/research-idea"},
+    "tests": {"default_dir": ".bensz-api/skills/research-idea/tests"},
 }
 
 
@@ -150,9 +150,11 @@ def ensure_within(base: Path, child: Path, label: str) -> None:
         raise SystemExit(f"{label} 默认必须位于当前工作目录内: {child}") from exc
 
 
-def ensure_hidden_dir(path: Path, label: str) -> None:
-    if not path.name.startswith("."):
-        raise SystemExit(f"{label} 必须是隐藏目录，目录名需以点号开头: {path}")
+def ensure_hidden_workspace(path: Path, label: str) -> None:
+    parts = path.parts
+    if path.name.startswith(".") or ".bensz-api" in parts:
+        return
+    raise SystemExit(f"{label} 必须位于隐藏目录内，推荐 .bensz-api/skills/research-idea: {path}")
 
 
 def ensure_not_nested(parent: Path, child: Path, label: str) -> None:
@@ -161,6 +163,16 @@ def ensure_not_nested(parent: Path, child: Path, label: str) -> None:
     except ValueError:
         return
     raise SystemExit(f"{label} 不得位于隐藏工作区内: {child}")
+
+
+def allocate_unique_run_id(workspace_base: Path, run_id: str) -> str:
+    if not (workspace_base / run_id).exists():
+        return run_id
+    for idx in range(2, 100):
+        candidate = f"{run_id}-{idx:02d}"
+        if not (workspace_base / candidate).exists():
+            return candidate
+    raise SystemExit(f"无法在 {workspace_base} 下分配唯一工作目录: {run_id}")
 
 
 def find_skill(skill_name: str, search_roots: list[str], cwd: Path) -> Path | None:
@@ -213,13 +225,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="初始化 research-idea 隐藏工作区")
     parser.add_argument("--input-label", required=True, help="资料或主题的简短标签")
     parser.add_argument("--cwd", default=".", help="用户当前工作目录，默认当前目录")
-    parser.add_argument("--workspace-dir", help="隐藏工作区根目录，默认 <cwd>/.research-idea")
+    parser.add_argument("--workspace-dir", help="隐藏工作区根目录，默认 <cwd>/.bensz-api/skills/research-idea")
     parser.add_argument("--output-dir", help="最终 Markdown 输出目录，默认 <cwd>")
-    parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/tests/research-idea")
+    parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/.bensz-api/skills/research-idea/tests")
     parser.add_argument("--with-test-dir", action="store_true", help="创建测试区；普通用户运行默认不创建")
     parser.add_argument("--repo-name", help="覆盖自动识别的 GitHub 仓库名")
     parser.add_argument("--pr-name", help="覆盖自动识别的 PR/分支名")
-    parser.add_argument("--run-id", help="运行 ID，默认 run-YYYYMMDDHHMMSS")
+    parser.add_argument("--run-id", help="运行 ID，默认 YYYY-MM-DD-HH-MM")
     parser.add_argument("--overwrite", action="store_true", help="允许覆盖已存在的最终报告路径")
     parser.add_argument("--skip-dependency-check", action="store_true", help="仅测试脚本时跳过依赖 skill 检查")
     args = parser.parse_args()
@@ -249,12 +261,11 @@ def main() -> None:
     run_timestamp = dt.datetime.now().strftime(workspace_config["timestamp_format"])
     output_timestamp = dt.datetime.now().strftime(output_config["timestamp_format"])
     run_prefix = workspace_config["run_prefix"]
-    run_id = args.run_id or f"{run_prefix}-{run_timestamp}"
-    if not re.fullmatch(rf"{re.escape(run_prefix)}-[A-Za-z0-9_.-]+", run_id):
-        raise SystemExit(f"run-id 必须以 {run_prefix}- 开头，且只包含字母、数字、点、下划线和连字符")
-
     workspace_base = resolve_dir(args.workspace_dir, default=cwd / workspace_config["hidden_dir"])
-    ensure_hidden_dir(workspace_base, "workspace_dir")
+    ensure_hidden_workspace(workspace_base, "workspace_dir")
+    run_id = args.run_id or allocate_unique_run_id(workspace_base, f"{run_prefix}{run_timestamp}")
+    if not re.fullmatch(rf"{re.escape(run_prefix)}[A-Za-z0-9_.-]+", run_id):
+        raise SystemExit(f"run-id 必须只包含字母、数字、点、下划线和连字符")
     workspace_dir = workspace_base / run_id
     output_dir = resolve_dir(args.output_dir, default=cwd)
     test_dir = resolve_dir(args.test_dir, default=cwd / tests_config["default_dir"])
@@ -269,7 +280,6 @@ def main() -> None:
     if args.output_dir is None:
         ensure_within(cwd, output_path, "output_path")
     ensure_not_nested(workspace_base, output_path, "output_path")
-    ensure_not_nested(workspace_base, test_dir, "test_dir")
     if workspace_dir.exists():
         raise SystemExit(f"run 工作区已存在，拒绝复用以避免串稿: {workspace_dir}")
     if output_path.exists() and not args.overwrite:

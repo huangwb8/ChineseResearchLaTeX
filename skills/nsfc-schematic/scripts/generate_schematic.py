@@ -390,7 +390,10 @@ def _resolve_output_dirs(out_dir: Path, config: Dict[str, Any]) -> Tuple[Path, P
     """
     output_cfg = config.get("output", {}) if isinstance(config.get("output", {}), dict) else {}
     hide = bool(output_cfg.get("hide_intermediate", True))
-    intermediate_name = str(output_cfg.get("intermediate_dir", ".nsfc-schematic")).strip() or ".nsfc-schematic"
+    intermediate_name = (
+        str(output_cfg.get("intermediate_dir", ".bensz-api/skills/nsfc-schematic")).strip()
+        or ".bensz-api/skills/nsfc-schematic"
+    )
     if not is_safe_relative_path(intermediate_name):
         fatal(
             "output.intermediate_dir 必须是 output_dir 内的相对路径，且不得包含 `..` 或绝对/盘符路径："
@@ -399,13 +402,29 @@ def _resolve_output_dirs(out_dir: Path, config: Dict[str, Any]) -> Tuple[Path, P
 
     work_dir = out_dir
     if hide:
-        intermediate_dir = work_dir / intermediate_name
+        if intermediate_name.startswith(".bensz-api/"):
+            intermediate_dir = _allocate_bensz_intermediate_dir(work_dir, intermediate_name)
+        else:
+            intermediate_dir = work_dir / intermediate_name
         (intermediate_dir / "runs").mkdir(parents=True, exist_ok=True)
         (intermediate_dir / "legacy").mkdir(parents=True, exist_ok=True)
         _ensure_intermediate_gitignore(intermediate_dir)
     else:
         intermediate_dir = work_dir
     return work_dir, intermediate_dir, hide
+
+
+def _allocate_bensz_intermediate_dir(work_dir: Path, intermediate_name: str) -> Path:
+    root = work_dir.resolve().parent / intermediate_name
+    stamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    candidate = root / stamp
+    if not candidate.exists():
+        return candidate
+    for idx in range(2, 100):
+        candidate = root / f"{stamp}-{idx:02d}"
+        if not candidate.exists():
+            return candidate
+    fatal(f"无法在 {root} 下分配唯一中间目录")
 
 
 def _ensure_intermediate_gitignore(intermediate_dir: Path) -> None:
@@ -416,7 +435,7 @@ def _ensure_intermediate_gitignore(intermediate_dir: Path) -> None:
     p = intermediate_dir / ".gitignore"
     if p.exists():
         return
-    dirname = intermediate_dir.name or ".nsfc-schematic"
+    dirname = intermediate_dir.name or "nsfc-schematic"
     p.write_text(
         f"# {dirname}/.gitignore\n"
         f"# 如需追踪版本历史，可删除此文件并 git add {dirname}/\n"

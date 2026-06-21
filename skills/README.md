@@ -549,7 +549,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 **类型**：📝 日常
 
-**功能**：基于 NSFC 标书正文或其它材料，生成预算说明书 LaTeX 项目并渲染 `budget.pdf`；所有中间过程默认隔离到工作目录 `.nsfc-budget/` 下。
+**功能**：基于 NSFC 标书正文或其它材料，生成预算说明书 LaTeX 项目并渲染 `budget.pdf`；所有中间过程默认隔离到工作目录 `.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/` 下。
 
 **使用场景**：
 - 你已经写好或基本写好正文，需要补预算说明书
@@ -564,7 +564,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 项目类型：general
 材料：projects/NSFC_General/main.tex
 总预算：50w
-要求：输出 LaTeX 项目与 budget.pdf；中间文件全部进入 .nsfc-budget
+要求：输出 LaTeX 项目与 budget.pdf；中间文件全部进入 .bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}
 ```
 
 [详细文档 →](nsfc-budget/SKILL.md)
@@ -664,7 +664,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - 基于内置期刊表做最小硬过滤，减少明显不匹配候选
 - 联网核验期刊官网、scope、业内认可度与风险信号
 - 补抓候选期刊最近 3 个月 PubMed 原始论文，给出与稿件主题的语义相关性依据
-- 所有中间文件默认收纳到 `.paper-select-journal/run-<timestamp>/` 隐藏工作区
+- 所有中间文件默认收纳到 `.bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/` 隐藏工作区
 
 [详细文档 →](paper-select-journal/README.md)
 
@@ -696,7 +696,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - 单独整理“投稿形式要求与格式清单”，覆盖标题页、摘要、关键词、正文结构、图表、补充材料、参考文献、声明和 cover letter
 - 可按 Article、Original Research、Review、Brief Communication 等目标文体展开具体要求
 - 补充 SciRev、LetPub、论坛和作者经验等社区评价，但不把第三方体验当作官方政策
-- 默认把中间文件隔离到 `.paper-know-journal/run-<timestamp>/`，最终交付 `KnowJournal-{杂志名}.md`
+- 默认把中间文件隔离到 `.bensz-api/skills/paper-know-journal/{yyyy-mm-dd-hh-mm}/`，最终交付 `KnowJournal-{杂志名}.md`
 
 [详细文档 →](paper-know-journal/README.md)
 
@@ -729,7 +729,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 - 全程只读：不改 `.tex/.bib/.cls/.sty`
 - 支持文风、引用真伪、逻辑闭环、篇幅结构与缩写规范的多维检查
 - 引用核查采用“硬编码证据包 + AI 语义判断”双层证据链
-- 默认使用“交付目录 + `.nsfc-qc/` sidecar 工作区”隔离中间文件
+- 默认使用“交付目录 + `.bensz-api/skills/nsfc-qc/{yyyy-mm-dd-hh-mm}/` 工作区”隔离中间文件
 
 [详细文档 →](nsfc-qc/README.md)
 
@@ -759,7 +759,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 **技能特点**：
 - 支持按文件/按章节统计篇幅差距
 - 对 `main.tex` 项目会沿 `\input/\include` 依赖树收集实际正文
-- 默认将报告写入 `.nsfc-length-aligner/` 隐藏工作区，避免根目录污染
+- 默认将报告写入 `.bensz-api/skills/nsfc-length-aligner/{yyyy-mm-dd-hh-mm}/` 隐藏工作区，避免根目录污染
 - 适合与 `nsfc-reviewers`、`nsfc-qc` 配合，在送审前收紧结构分布
 
 [详细文档 →](nsfc-length-aligner/README.md)

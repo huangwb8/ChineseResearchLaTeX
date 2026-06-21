@@ -54,7 +54,7 @@ metadata:
 - `schematic.svg`
 - `schematic.png`
 
-隐藏中间产物写入 `output_dir/.nsfc-schematic/`：
+隐藏中间产物写入 `output_dir 的同级 .bensz-api/skills/nsfc-schematic/{yyyy-mm-dd-hh-mm}/`：
 
 - `optimization_report.md`
 - `spec_latest.yaml`
@@ -116,7 +116,7 @@ python3 nsfc-schematic/scripts/generate_schematic.py \
 ### 4. 可选：AI 自主闭环
 
 - 当需要宿主 AI 根据证据包决定下一轮时，启用 `evaluation.stop_strategy: ai_critic`。
-- 协议文件位于 `.nsfc-schematic/ai/`，主要包括：
+- 协议文件位于 `.bensz-api/skills/nsfc-schematic/{yyyy-mm-dd-hh-mm}/ai/`，主要包括：
   - `ai_critic_request.md`
   - `ai_critic_response.yaml`
   - `ai_pack_round_XX/`

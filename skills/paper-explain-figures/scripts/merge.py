@@ -5,9 +5,6 @@ import argparse
 from pathlib import Path
 
 
-WORK_DIR_NAME = ".paper-explain-figures"
-
-
 def _require_within(base_dir: Path, target: Path) -> None:
     base = base_dir.resolve()
     tgt = target.resolve()
@@ -28,8 +25,12 @@ def _read_text_maybe(path: Path, *, max_chars: int = 240_000) -> str:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Merge .paper-explain-figures run outputs into a single Markdown report.")
-    p.add_argument("--run-dir", required=True, help="某次 run 目录（例如 .paper-explain-figures/run_... ）")
+    p = argparse.ArgumentParser(description="Merge a paper-explain-figures run directory into a single Markdown report.")
+    p.add_argument(
+        "--run-dir",
+        required=True,
+        help="某次 run 目录（例如 .bensz-api/skills/paper-explain-figures/YYYY-MM-DD-HH-MM）",
+    )
     p.add_argument("--out", default="paper-explain-figures_report.md", help="输出 Markdown（默认写到当前目录）")
     args = p.parse_args()
 

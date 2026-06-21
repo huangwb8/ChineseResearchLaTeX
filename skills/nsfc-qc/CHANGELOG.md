@@ -8,6 +8,12 @@
 - 新增计划文档 `plans/英文缩写检查-v202603080812.md`：梳理 `nsfc-qc` 英文缩写检查的渲染顺序、全文唯一性与产物/文档同步优化方案，供后续实施参考。
 
 ### Changed（变更）
+- **nsfc-qc v1.2.0 → v1.2.1**：同步 `parallel-vibe` 默认工作区目录变更
+  - `scripts/run_parallel_qc.py`：说明与 snapshot 排除项改为新目录 `.parallel-vibe/`，并继续排除 legacy `.parallel_vibe/`
+  - `scripts/materialize_final_outputs.py`：优先读取 `.parallel-vibe/`，兼容读取旧 `.parallel_vibe/`
+  - `SKILL.md` / `README.md` / `templates/REPORT_TEMPLATE.md`：同步复现路径与报告模板口径
+  - `config.yaml`：版本号更新至 `1.2.1`
+
 - **nsfc-qc v1.1.0 → v1.2.0**：英文缩写预检升级为“按 main.tex 实际渲染顺序 + 全文级缩写注册表”模型
   - `scripts/nsfc_qc_precheck.py`：新增 render stream / abbreviation registry 机制；首次出现按真实渲染顺序判断，不再按单文件整文件扫描；同一行缩写按实际列号顺序识别；新增 `late_definition`、`conflicting_english_full_name`、`conflicting_chinese_full`、`repeated_same_definition` 等 issue model
   - 新增工件：`abbreviation_registry.json`、`abbreviation_render_stream.jsonl`

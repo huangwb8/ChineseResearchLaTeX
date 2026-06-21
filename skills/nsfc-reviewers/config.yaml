@@ -4,7 +4,7 @@
 # 技能基本信息
 skill_info:
   name: nsfc-reviewers
-  version: 1.4.0
+  version: 1.4.1
   description: "模拟领域专家视角对 NSFC 标书进行多维度评审，输出分级问题与可执行修改建议，并识别受资助额度限制的设计妥协"
   author: "Bensz Conan"
   category: writing
@@ -247,8 +247,8 @@ output_settings:
   format: markdown
   # 是否将中间过程文件隐藏到 intermediate_dir（推荐开启，减少根目录噪声）
   hide_intermediate: true
-  # 中间过程统一托管目录（隐藏目录名，放置 parallel-vibe 环境、日志与快照）
-  intermediate_dir: .nsfc-reviewers
+  # 中间过程统一托管目录（相对 review 根目录，放置 parallel-vibe 环境、日志与快照）
+  intermediate_dir: .bensz-api/skills/nsfc-reviewers
   # 是否强制执行“输出整理”阶段（强烈建议开启，保证并行环境/计划文件可追溯）
   enforce_output_finalization: true
   # 若检测到多组评审但未生成 intermediate_dir（或缺少 parallel-vibe 环境），是否发出警告

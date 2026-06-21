@@ -2,11 +2,11 @@
 """
 High-level runner for nsfc-qc with "deliver dir + sidecar workspace" layout.
 
-Default layout (when --deliver-dir not provided):
-  <project_root>/QC/<run_id>/               (deliver-dir; for humans)
-  <project_root>/QC/<run_id>/.nsfc-qc/      (workspace-dir; for reproducibility)
+Default layout (when --deliver-dir/--workspace-dir not provided):
+  <project_root>/QC/<run_id>/                                  (deliver-dir; for humans)
+  <project_root>/.bensz-api/skills/nsfc-qc/<run_id>/           (workspace-dir; for reproducibility)
 
-All QC intermediate products (runs/, snapshot/, .parallel_vibe/, artifacts) go to workspace-dir.
+All QC intermediate products (runs/, snapshot/, .parallel-vibe/, artifacts) go to workspace-dir.
 Deliver-dir receives a copy of final outputs for review.
 
 This script is deterministic and does NOT modify proposal sources.
@@ -26,12 +26,12 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 
-# Accept both minute-level (vYYYYMMDDHHMM) and second-level (vYYYYMMDDHHMMSS) ids.
-RUN_ID_RE = re.compile(r"^v\d{12}(?:\d{2})?(?:r\d+)?$")
+# Accept the new minute-level id, plus legacy vYYYYMMDDHHMM[SS] ids.
+RUN_ID_RE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}-\d{2}-\d{2}(?:-\d{2})?|v\d{12}(?:\d{2})?(?:r\d+)?)$")
 
 
 def _now_run_id() -> str:
-    return datetime.now().strftime("v%Y%m%d%H%M%S")
+    return datetime.now().strftime("%Y-%m-%d-%H-%M")
 
 
 def _ensure_unique_dir(path: Path) -> Path:
@@ -39,9 +39,9 @@ def _ensure_unique_dir(path: Path) -> Path:
         return path
     base = path.name
     parent = path.parent
-    for i in range(1, 100):
-        # Keep hidden directories hidden (e.g. ".nsfc-qc" -> ".nsfc-qc.r1").
-        suffix = f".r{i}" if base.startswith(".") else f"r{i}"
+    for i in range(2, 100):
+        # Keep hidden directories hidden (e.g. ".bensz-api" roots stay under the hidden tree).
+        suffix = f".r{i}" if base.startswith(".") else f"-{i:02d}"
         cand = parent / f"{base}{suffix}"
         if not cand.exists():
             return cand
@@ -109,8 +109,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--project-root", required=True)
     ap.add_argument("--main-tex", default="main.tex")
-    ap.add_argument("--deliver-dir", default="", help="deliver directory (recommended: .../QC/vYYYYMMDDHHMMSS)")
-    ap.add_argument("--workspace-dir", default="", help="workspace directory (recommended: <deliver-dir>/.nsfc-qc)")
+    ap.add_argument("--deliver-dir", default="", help="deliver directory (recommended: .../QC/YYYY-MM-DD-HH-MM)")
+    ap.add_argument("--workspace-dir", default="", help="workspace directory (recommended: <project-root>/.bensz-api/skills/nsfc-qc/<run-id>)")
     ap.add_argument("--threads", type=int, default=5)
     ap.add_argument("--execution", choices=["serial", "parallel"], default="serial")
     ap.add_argument("--max-parallel", type=int, default=3)
@@ -159,10 +159,12 @@ def main() -> int:
         workspace_dir = Path(args.workspace_dir).expanduser().resolve()
         workspace_dir = _ensure_unique_dir(workspace_dir)
     else:
-        workspace_dir = _ensure_unique_dir(deliver_dir / ".nsfc-qc")
+        workspace_dir = _ensure_unique_dir(project_root / ".bensz-api" / "skills" / "nsfc-qc" / run_id)
 
     deliver_dir.mkdir(parents=True, exist_ok=True)
-    workspace_dir.mkdir(parents=True, exist_ok=True)
+    run_base_dir = workspace_dir.parent
+    run_base_dir.mkdir(parents=True, exist_ok=True)
+    run_id_for_workspace = workspace_dir.name
 
     cmd = [
         sys.executable,
@@ -172,11 +174,11 @@ def main() -> int:
         "--main-tex",
         main_tex_rel,
         "--workspace-dir",
-        str(workspace_dir),
+        str(run_base_dir),
         "--runs-root",
-        "runs",
+        ".",
         "--run-id",
-        run_id,
+        run_id_for_workspace,
         "--threads",
         str(int(args.threads)),
         "--execution",
@@ -208,7 +210,7 @@ def main() -> int:
     run_dir = Path(run_dir_str).expanduser().resolve() if run_dir_str else None
     if not run_dir or not run_dir.exists():
         # Best-effort: try to materialize using expected run_dir.
-        expected = (workspace_dir / "runs" / run_id).resolve()
+        expected = workspace_dir.resolve()
         expected.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [sys.executable, str(materialize_py), "--run-dir", str(expected), "--project-root", str(project_root), "--deliver-dir", str(deliver_dir)],
@@ -246,7 +248,7 @@ def main() -> int:
         "workspace_dir_rel_from_deliver": ws_rel,
         "run_dir": str(run_dir),
         "project_root": str(project_root),
-        "note": "deliver_dir contains copied final outputs; full reproducibility data (runs/snapshot/artifacts/.parallel_vibe/final) is in workspace_dir.",
+        "note": "deliver_dir contains copied final outputs; full reproducibility data (snapshot/artifacts/.parallel-vibe/final) is in workspace_dir.",
     }
     (deliver_dir / "nsfc-qc_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

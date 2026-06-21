@@ -12,8 +12,8 @@ directories:
 runtime_outputs:
   collaborative_plan_dir: plans
   collaborative_plan_pattern: "WritePaperSCI_{topic}_{run_id}.md"
-  timestamp_format: "%Y%m%d%H%M%S"
-  run_dir_pattern: "run_{timestamp}"
+  timestamp_format: "%Y-%m-%d-%H-%M"
+  run_dir_pattern: "{timestamp}"
   topic_slug:
     fallback: paper
     max_length: 48
@@ -33,12 +33,16 @@ input_validation:
     allow_directories: true
 
 workspace:
-  hidden_dir: .paper-write-sci
+  hidden_dir: .bensz-api/skills/paper-write-sci
   legacy_hidden_dirs:
+    - .paper-write-sci
     - .write-paper-sci
     - .write-paper
   keep_intermediates_inside_hidden_dir: true
   subdirs:
+    - input
+    - output
+    - log
     - analysis
     - number-check
     - section-role-check

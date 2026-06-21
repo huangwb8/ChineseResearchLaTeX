@@ -135,7 +135,7 @@ def main() -> int:
         resolve_output_dir(
             workdir,
             args.output_dirname,
-            str(defaults.get("intermediate_dirname") or ".nsfc-budget"),
+            str(defaults.get("intermediate_dirname") or ".bensz-api/skills/nsfc-budget"),
             label="output_dirname",
         )
         template_dir = resolve_under(skill_root / "models", args.template_id, label="template_id")
@@ -145,10 +145,13 @@ def main() -> int:
         print(f"[nsfc-budget] {exc}", file=sys.stderr)
         return 2
 
-    intermediate_root = ensure_directory(workdir / str(defaults.get("intermediate_dirname") or ".nsfc-budget"))
-    run_dir = unique_path(intermediate_root / f"run_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+    intermediate_root = ensure_directory(workdir / str(defaults.get("intermediate_dirname") or ".bensz-api/skills/nsfc-budget"))
+    run_dir = unique_path(intermediate_root / datetime.now().strftime("%Y-%m-%d-%H-%M"))
     ensure_directory(run_dir)
-    materials_dir = ensure_directory(run_dir / "materials")
+    ensure_directory(run_dir / "input")
+    ensure_directory(run_dir / "output")
+    ensure_directory(run_dir / "log")
+    materials_dir = ensure_directory(run_dir / "input" / "materials")
     ensure_directory(run_dir / "logs")
     ensure_directory(run_dir / "build")
 

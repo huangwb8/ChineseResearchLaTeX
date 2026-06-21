@@ -3,16 +3,17 @@
 Run nsfc-qc multi-thread QC via parallel-vibe.
 
 This script supports two output layouts:
-1) Legacy (default): all artifacts under <project_root>/.nsfc-qc/runs/<run_id>/
+1) Default: all artifacts under <project_root>/.bensz-api/skills/nsfc-qc/<run_id>/
 2) Workspace-driven: all artifacts under <workspace_dir>/<runs_root>/<run_id>/
+3) Legacy-compatible: explicitly pass --runs-root .nsfc-qc/runs
 
 This script:
 - Creates a run directory (see above) with subfolders: artifacts/, final/, snapshot/
 - (Default) Runs deterministic precheck and reference evidence collection into artifacts/
 - Creates an isolated snapshot of the proposal (read-only) for thread workspaces
-- Copies key artifacts into snapshot/.nsfc-qc/input/ for threads to read
+- Copies key artifacts into snapshot/.bensz-api/skills/nsfc-qc/input/ for threads to read
 - Generates a deterministic parallel-vibe plan.json with N identical QC threads
-- Executes parallel-vibe with --out-dir set to the run directory (so .parallel_vibe lives under the run)
+- Executes parallel-vibe with --out-dir set to the run directory (so .parallel-vibe lives under the run)
 
 Note: This script does NOT modify proposal source files. It only writes into the run directory.
 """
@@ -31,7 +32,7 @@ from typing import List, Optional, Set
 
 
 def _now_run_id() -> str:
-    return datetime.now().strftime("v%Y%m%d%H%M%S")
+    return datetime.now().strftime("%Y-%m-%d-%H-%M")
 
 
 def _write_json(path: Path, obj: dict) -> None:
@@ -144,7 +145,9 @@ def _copy_snapshot(project_root: Path, snapshot_dir: Path) -> None:
 
     bad_dirs = {
         ".git",
+        ".bensz-api",
         ".nsfc-qc",
+        ".parallel-vibe",
         ".parallel_vibe",
         "__pycache__",
         ".pytest_cache",
@@ -196,20 +199,20 @@ def _mk_thread_prompt(*, main_tex: str) -> str:
         "你将对 NSFC 标书进行“只读质量控制（QC）”。\n"
         "硬约束：\n"
         "- 你的当前工作目录（cwd）就是标书项目根目录（来自原项目的 snapshot 拷贝）。\n"
-        "- 注意：snapshot 是“最小化副本”，通常只包含 `*.tex/*.bib` 与 `./.nsfc-qc/input/` 证据包；缺失的图片/模板/字体/编译产物不影响你做文本 QC。\n"
+        "- 注意：snapshot 是“最小化副本”，通常只包含 `*.tex/*.bib` 与 `./.bensz-api/skills/nsfc-qc/input/` 证据包；缺失的图片/模板/字体/编译产物不影响你做文本 QC。\n"
         "- 禁止修改任何已有文件（尤其是 .tex/.bib/.cls/.sty）。把建议写进 RESULT.md。\n"
         "- 禁止访问父目录（..）与任何绝对路径写入。\n"
         "- 不编造引用与论文内容；无法确定时标记为 uncertain，并给出可复核路径。\n\n"
         "证据包（只读，可用于“引用真伪/错引风险”的语义核查）：\n"
-        "- `./.nsfc-qc/input/precheck.json`\n"
-        "- `./.nsfc-qc/input/citations_index.csv`\n"
-        "- `./.nsfc-qc/input/abbreviation_issues_summary.json`（缩写规范预检摘要：建议先读，快速定位高优先级项）\n"
-        "- `./.nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检明细：按行定位；注意过滤 LaTeX 标签/数学变量等误报）\n"
-        "- `./.nsfc-qc/input/abbreviation_registry.json`（全文级缩写注册表：首次出现、全部出现、定义候选、唯一性状态）\n"
-        "- `./.nsfc-qc/input/abbreviation_render_stream.jsonl`（按 main.tex 实际渲染顺序展开的调试流；仅在需要时抽查）\n"
-        "- `./.nsfc-qc/input/terminology_issues_summary.json`（术语一致性预检摘要：英文术语大小写/连字符变体）\n"
-        "- `./.nsfc-qc/input/terminology_issues.csv`（术语一致性预检明细：按 normalized_key 分组，列出所有变体）\n"
-        "- `./.nsfc-qc/input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/precheck.json`\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/citations_index.csv`\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/abbreviation_issues_summary.json`（缩写规范预检摘要：建议先读，快速定位高优先级项）\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/abbreviation_issues.csv`（缩写规范预检明细：按行定位；注意过滤 LaTeX 标签/数学变量等误报）\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/abbreviation_registry.json`（全文级缩写注册表：首次出现、全部出现、定义候选、唯一性状态）\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/abbreviation_render_stream.jsonl`（按 main.tex 实际渲染顺序展开的调试流；仅在需要时抽查）\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/terminology_issues_summary.json`（术语一致性预检摘要：英文术语大小写/连字符变体）\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/terminology_issues.csv`（术语一致性预检明细：按 normalized_key 分组，列出所有变体）\n"
+        "- `./.bensz-api/skills/nsfc-qc/input/reference_evidence.jsonl`（硬编码抓取到的题目/摘要/可选 PDF 片段 + 标书内引用上下文）\n\n"
         "缩略语规范（必检，独立小节输出）：\n"
         "- 以 `abbreviation_issues_summary.json` / `abbreviation_issues.csv` / `abbreviation_registry.json` 为起点，逐条核对。\n"
         "- 首次出现必须按 `abbreviation_render_stream.jsonl` 对应的真实渲染顺序理解，不得按文件名或目录扫描顺序自行重排。\n"
@@ -294,7 +297,7 @@ def main() -> int:
     ap.add_argument(
         "--runs-root",
         default="",
-        help="relative root for runs; defaults to '.nsfc-qc/runs' (legacy) or 'runs' (when --workspace-dir is set)",
+        help="relative root for runs; defaults to '.bensz-api/skills/nsfc-qc' or 'runs' (when --workspace-dir is set)",
     )
     ap.add_argument("--plan-only", action="store_true", help="only write plan + snapshot; do not run threads")
     ap.add_argument("--precheck", dest="precheck", action="store_true", default=True, help="run deterministic precheck before threads")
@@ -335,10 +338,10 @@ def main() -> int:
         runs_root = Path(args.runs_root.strip() or "runs")
     else:
         base_dir = project_root
-        runs_root = Path(args.runs_root.strip() or ".nsfc-qc/runs")
-        # Legacy safety: keep artifacts isolated under project_root/.nsfc-qc/ unless workspace-dir is used.
-        if not runs_root.parts or runs_root.parts[0] != ".nsfc-qc":
-            print("error: --runs-root must start with .nsfc-qc/ unless --workspace-dir is set", file=sys.stderr)
+        runs_root = Path(args.runs_root.strip() or ".bensz-api/skills/nsfc-qc")
+        # Keep artifacts isolated under a hidden intermediate root unless workspace-dir is used.
+        if not runs_root.parts or runs_root.parts[0] not in {".bensz-api", ".nsfc-qc"}:
+            print("error: --runs-root must start with .bensz-api/ or .nsfc-qc/ unless --workspace-dir is set", file=sys.stderr)
             return 2
 
     try:
@@ -388,7 +391,7 @@ def main() -> int:
     _copy_snapshot(project_root, snapshot_dir)
 
     # Make deterministic artifacts readable inside thread workspaces (still read-only).
-    qc_in = snapshot_dir / ".nsfc-qc" / "input"
+    qc_in = snapshot_dir / ".bensz-api" / "skills" / "nsfc-qc" / "input"
     qc_in.mkdir(parents=True, exist_ok=True)
     for name in (
         "precheck.json",

@@ -6,12 +6,15 @@ skill_info:
   category: "academic-writing"
 
 workspace:
-  hidden_dir: ".paper-select-journal"
-  run_prefix: "run-"
-  timestamp_format: "%Y%m%d%H%M%S"
+  hidden_dir: ".bensz-api/skills/paper-select-journal"
+  run_prefix: ""
+  timestamp_format: "%Y-%m-%d-%H-%M"
   latest_run_pointer: "latest-run.txt"
   keep_intermediates_inside_hidden_dir: true
   subdirs:
+    - "input"
+    - "output"
+    - "log"
     - "inputs"
     - "analysis"
     - "candidates"

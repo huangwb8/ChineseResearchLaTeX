@@ -8,10 +8,13 @@ skill_info:
   category: "paper"
 
 workspace:
-  hidden_dir: ".paper-know-journal"
-  run_prefix: "run"
-  timestamp_format: "%Y%m%d%H%M%S"
+  hidden_dir: ".bensz-api/skills/paper-know-journal"
+  run_prefix: ""
+  timestamp_format: "%Y-%m-%d-%H-%M"
   subdirs:
+    - input
+    - output
+    - log
     - official
     - community
     - article-samples
@@ -26,7 +29,7 @@ output:
   unsafe_filename_chars: '/\\:*?"<>|'
 
 tests:
-  default_dir: "tests/paper-know-journal"
+  default_dir: ".bensz-api/skills/paper-know-journal/tests"
 
 research:
   min_official_sources: 3

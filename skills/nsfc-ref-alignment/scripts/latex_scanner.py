@@ -141,7 +141,7 @@ def discover_bib_files(
         candidates = [
             p
             for p in sorted(project_root.rglob("*.bib"))
-            if ".nsfc-ref-alignment" not in str(p) and ".latex-cache" not in str(p)
+            if ".nsfc-ref-alignment" not in str(p) and ".bensz-api" not in str(p) and ".latex-cache" not in str(p)
         ]
         if candidates:
             warnings.append("no bib file discovered from \\bibliography/\\addbibresource; fallback to scanning project_root/**/*.bib")

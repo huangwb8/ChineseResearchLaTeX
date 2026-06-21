@@ -177,11 +177,11 @@ metadata:
 python3 scripts/run_pipeline.py --topic "{主题}" --runs-root runs
 
 # 旧入口 / resume
-python3 scripts/pipeline_runner.py --topic "{主题}" --domain general --work-dir runs/{safe_topic}
-python3 scripts/pipeline_runner.py --resume runs/{safe_topic}
+python3 scripts/pipeline_runner.py --topic "{主题}" --domain general --work-dir .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}
+python3 scripts/pipeline_runner.py --resume .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}
 
 # 阶段 3 评分后，从第 4 阶段继续
-python3 scripts/pipeline_runner.py --resume runs/{safe_topic} --resume-from 4
+python3 scripts/pipeline_runner.py --resume .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic} --resume-from 4
 ```
 
 ## 环境与脚本

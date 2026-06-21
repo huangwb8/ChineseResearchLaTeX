@@ -47,7 +47,7 @@ metadata:
 ### 中间产物（强制）
 **所有中间文件**必须托管在：
 
-`{project_root}/.nsfc-ref-alignment/run_{YYYYMMDDHHMMSS}/`
+`{project_root}/.bensz-api/skills/nsfc-ref-alignment/{yyyy-mm-dd-hh-mm}/`
 
 其中 `run_{YYYYMMDDHHMMSS}` 为时间戳；如同秒重复运行，脚本会追加 `-2/-3/...`，确保多次分析不冲突。
 
@@ -122,7 +122,7 @@ python3 skills/nsfc-ref-alignment/scripts/run_ref_alignment.py \
 - 默认**不修改**任何标书内容与配置：
   - 禁止修改：`**/*.tex`、`**/*.bib`、`**/*.cls`、`**/*.sty`
 - 允许写入：
-  - `{project_root}/.nsfc-ref-alignment/**`（中间产物）
+  - `{project_root}/.bensz-api/skills/nsfc-ref-alignment/**`（中间产物）
   - `./references/**`（最终报告；可由用户改到别处）
 - 若用户明确要求“修复引用/修复 bib”，必须先在报告里给出**修改计划**与影响面，再执行最小化修改（默认不做）。
 
@@ -131,6 +131,6 @@ python3 skills/nsfc-ref-alignment/scripts/run_ref_alignment.py \
 - 不同点：本 skill 面向**标书项目**（多文件 `\input{}` 结构），且默认**不做任何自动改写**（只输出审查报告）。
 
 ## 验证清单（静态自检）
-- `{project_root}/.nsfc-ref-alignment/run_{timestamp}/` 存在且包含 4 个核心产物（json/md/csv/json）。
+- `{project_root}/.bensz-api/skills/nsfc-ref-alignment/{yyyy-mm-dd-hh-mm}/` 存在且包含 4 个核心产物（json/md/csv/json）。
 - 最终报告写入 `report_dir`，且没有任何 `.tex/.bib` 文件被修改。
 - 报告对每个 P0/P1 给出：定位（file/line）+ 原句 + 依据 + 建议动作。

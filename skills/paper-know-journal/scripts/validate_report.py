@@ -172,6 +172,7 @@ def main() -> None:
         errors.append(f"来源链接不足: 需要至少 {min_urls} 个，实际 {len(urls)} 个")
 
     forbidden_patterns = [
+        r"\.bensz-api(?:[\\/]|$)",
         r"\.paper-know-journal(?:[\\/]|$)",
         r"tests[\\/]paper-know-journal(?:[\\/]|$)",
     ]

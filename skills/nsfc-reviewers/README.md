@@ -97,7 +97,7 @@
 │   ├── G001.md
 │   ├── G002.md
 │   └── ...
-└── .nsfc-reviewers/                   # 【中间过程】parallel-vibe 环境、日志与快照
+└── .bensz-api/skills/nsfc-reviewers/                   # 【中间过程】parallel-vibe 环境、日志与快照
     ├── parallel-vibe/                 # 并行运行环境（按 project_id 归档）
     ├── logs/                          # master prompt 与计划文件（用于追溯）
     │   ├── master_prompt.txt
@@ -108,17 +108,17 @@
 说明：
 - `comments-from-nsfc-reviewers.md` 的默认文件名见 `config.yaml:output_settings.default_filename`。
 - `panels/` 目录名见 `config.yaml:output_settings.panel_dir`。
-- `.nsfc-reviewers/` 目录名见 `config.yaml:output_settings.intermediate_dir`。
+- `.bensz-api/skills/nsfc-reviewers/` 目录名见 `config.yaml:output_settings.intermediate_dir`。
 
 ## 输出整理（强制，推荐脚本）
 
-当你使用并行评审（多组）时，根目录可能会出现 `.parallel_vibe/`、`master_prompt.txt`、`plan*.json` 等中间文件。为保证评审过程可追溯，推荐在最后统一“输出整理”：
+当你使用并行评审（多组）时，根目录可能会出现 `.parallel-vibe/`、`master_prompt.txt`、`plan*.json` 等中间文件。为保证评审过程可追溯，推荐在最后统一“输出整理”（脚本仍兼容旧 `.parallel_vibe/` 实例）：
 
 ```bash
 # DRY-RUN：仅打印动作
 python3 scripts/finalize_output.py --review-path /path/to/your/nsfc_proposal --panel-count 3
 
-# APPLY：实际整理（会将并行环境/日志/快照迁移到 .nsfc-reviewers/）
+# APPLY：实际整理（会将并行环境/日志/快照迁移到 .bensz-api/skills/nsfc-reviewers/）
 python3 scripts/finalize_output.py --review-path /path/to/your/nsfc_proposal --panel-count 3 --apply
 ```
 

@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--intermediate-dir",
         default="",
-        help="覆盖 config.yaml:output_settings.intermediate_dir（默认 .nsfc-reviewers）",
+        help="覆盖 config.yaml:output_settings.intermediate_dir（默认 .bensz-api/skills/nsfc-reviewers）",
     )
     p.add_argument(
         "--logs-max-age-days",
@@ -74,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--delete-parallel-vibe",
         action="store_true",
-        help="删除 intermediate_dir 下的 parallel-vibe/ 与 .parallel_vibe/（以及 review 根目录的 legacy .parallel_vibe/，若存在）",
+        help="删除 intermediate_dir 下的 parallel-vibe/、.parallel-vibe/ 与 legacy .parallel_vibe/（以及 review 根目录 legacy .parallel_vibe/，若存在）",
     )
     p.add_argument(
         "--delete-snapshot",
@@ -95,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
 
     os_cfg = cfg.get("output_settings") if isinstance(cfg, dict) else None
     os_cfg = os_cfg if isinstance(os_cfg, dict) else {}
-    intermediate_dir_name = str(args.intermediate_dir or os_cfg.get("intermediate_dir") or ".nsfc-reviewers").strip()
+    intermediate_dir_name = str(
+        args.intermediate_dir or os_cfg.get("intermediate_dir") or ".bensz-api/skills/nsfc-reviewers"
+    ).strip()
     if not intermediate_dir_name:
         print("error: intermediate_dir is empty", file=sys.stderr)
         return 2
@@ -103,10 +105,6 @@ def main(argv: list[str] | None = None) -> int:
     if p_intermediate.is_absolute() or ".." in p_intermediate.parts:
         print(f"error: intermediate_dir must be a relative name without '..': {intermediate_dir_name!r}", file=sys.stderr)
         return 2
-    if len(p_intermediate.parts) != 1:
-        print(f"error: intermediate_dir should be a single directory name (no slashes): {intermediate_dir_name!r}", file=sys.stderr)
-        return 2
-
     intermediate_root = (review_root / intermediate_dir_name).resolve()
     if not _within(review_root, intermediate_root):
         print(
@@ -136,7 +134,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.delete_parallel_vibe:
         candidates = [
             intermediate_root / "parallel-vibe",
+            intermediate_root / ".parallel-vibe",
             intermediate_root / ".parallel_vibe",
+            review_root / ".parallel-vibe",
             review_root / ".parallel_vibe",
         ]
         for d in candidates:

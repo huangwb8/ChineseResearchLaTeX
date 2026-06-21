@@ -1,7 +1,7 @@
 ---
 name: nsfc-qc
-version: 1.2.0
-description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到“交付目录内的隐藏工作区（.nsfc-qc/）”，并兼容 legacy `.nsfc-qc/`。
+version: 1.2.1
+description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到 `project_root/.bensz-api/skills/nsfc-qc/{yyyy-mm-dd-hh-mm}/`，并兼容 legacy `.nsfc-qc/` 读取/清理。
 author: Bensz Conan
 metadata:
   author: Bensz Conan
@@ -40,7 +40,7 @@ references: skills/nsfc-qc/references/
 
 - 只读 QC：不修改 `.tex/.bib/.cls/.sty`
 - 目标是产出标准化 QC 报告，而不是“顺手帮用户改文”
-- 推荐布局：`deliver_dir/` 放交付物，`deliver_dir/.nsfc-qc/` 放工作区
+- 推荐布局：`deliver_dir/` 放交付物，`project_root/.bensz-api/skills/nsfc-qc/{run_id}/` 放工作区
 
 ## 输入
 
@@ -85,9 +85,9 @@ references: skills/nsfc-qc/references/
 
 - 优先用实例隔离布局：
   - `deliver_dir`
-  - `workspace_dir={deliver_dir}/.nsfc-qc`
-  - `run_dir={workspace_dir}/runs/{run_id}`
-- 只有用户明确要求 legacy 时才退回 `project_root/.nsfc-qc/`
+  - `workspace_dir=project_root/.bensz-api/skills/nsfc-qc/{run_id}`
+  - `run_dir={workspace_dir}`
+- 只有用户明确要求 legacy 或处理旧产物时才读取 `project_root/.nsfc-qc/`
 
 ### 2. 只读预检
 
@@ -99,7 +99,7 @@ references: skills/nsfc-qc/references/
 
 ### 3. 多线程独立 QC
 
-- 优先用 `parallel-vibe`，并把 `.parallel_vibe/` 放到当前 run 内部
+- 优先用 `parallel-vibe`，并把 `.parallel-vibe/` 放到当前 run 内部
 - snapshot 只包含最小必要副本：`*.tex/*.bib` + 预检证据包
 - 每个 thread 至少覆盖：
   - 文风与可读性

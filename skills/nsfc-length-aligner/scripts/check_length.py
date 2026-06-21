@@ -30,13 +30,22 @@ def _resolve_report_out_dir(input_path: Path, out_dir_arg: str, cfg: dict[str, A
     if not isinstance(output_settings, dict):
         output_settings = {}
 
-    default_dirname = str(output_settings.get("intermediate_dir") or ".nsfc-length-aligner").strip()
+    default_dirname = str(output_settings.get("intermediate_dir") or ".bensz-api/skills/nsfc-length-aligner").strip()
     if not default_dirname:
-        default_dirname = ".nsfc-length-aligner"
+        default_dirname = ".bensz-api/skills/nsfc-length-aligner"
 
     base = input_path if input_path.is_dir() else input_path.parent
     if not out_dir_arg:
-        return (base / default_dirname).resolve()
+        root = (base / default_dirname).resolve()
+        stamp = dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        candidate = root / stamp
+        if not candidate.exists():
+            return candidate
+        for idx in range(2, 100):
+            candidate = root / f"{stamp}-{idx:02d}"
+            if not candidate.exists():
+                return candidate
+        raise _ConfigError(f"cannot allocate unique output dir under {root}")
 
     candidate = Path(out_dir_arg).expanduser()
     if candidate.is_absolute():
@@ -517,7 +526,7 @@ def _render_template(text: str, values: dict[str, str]) -> str:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="NSFC proposal length checker (file/section budgets)")
     parser.add_argument("--input", required=True, help="Path to proposal dir or a single file")
-    parser.add_argument("--config", default="config.yaml", help="Path to config.yaml")
+    parser.add_argument("--config", default="", help="Path to config.yaml (default: skill config.yaml)")
     parser.add_argument(
         "--pdf",
         default="",
@@ -528,7 +537,7 @@ def main(argv: list[str]) -> int:
         default="",
         help=(
             "Output directory for reports "
-            "(default: <input>/.nsfc-length-aligner; relative paths are resolved from --input)"
+            "(default: <input>/.bensz-api/skills/nsfc-length-aligner/<yyyy-mm-dd-hh-mm>; relative paths are resolved from --input)"
         ),
     )
     parser.add_argument(
@@ -543,7 +552,11 @@ def main(argv: list[str]) -> int:
         print(f"error: input not found: {input_path}", file=sys.stderr)
         return 2
 
-    config_path = Path(args.config).expanduser().resolve()
+    config_path = (
+        Path(args.config).expanduser().resolve()
+        if str(args.config or "").strip()
+        else (Path(__file__).resolve().parents[1] / "config.yaml")
+    )
     if not config_path.exists():
         print(f"error: config not found: {config_path}", file=sys.stderr)
         return 2

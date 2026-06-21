@@ -30,10 +30,26 @@ def _is_safe_relative_path(p: str) -> bool:
     return all(part != ".." for part in parts)
 
 
+def _allocate_bensz_intermediate_dir(work_dir: Path, intermediate_name: str) -> Path:
+    root = work_dir.resolve().parent / intermediate_name
+    stamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    candidate = root / stamp
+    if not candidate.exists():
+        return candidate
+    for idx in range(2, 100):
+        candidate = root / f"{stamp}-{idx:02d}"
+        if not candidate.exists():
+            return candidate
+    fatal(f"无法在 {root} 下分配唯一中间目录")
+
+
 def _resolve_output_dirs(out_dir: Path, config: Dict[str, Any]) -> tuple[Path, Path, bool]:
     output_cfg = config.get("output", {}) if isinstance(config.get("output", {}), dict) else {}
     hide = bool(output_cfg.get("hide_intermediate", True))
-    intermediate_name = str(output_cfg.get("intermediate_dir", ".nsfc-roadmap")).strip() or ".nsfc-roadmap"
+    intermediate_name = (
+        str(output_cfg.get("intermediate_dir", ".bensz-api/skills/nsfc-roadmap")).strip()
+        or ".bensz-api/skills/nsfc-roadmap"
+    )
     if not _is_safe_relative_path(intermediate_name):
         fatal(
             "output.intermediate_dir 必须是 output_dir 内的相对路径，且不得包含 `..` 或绝对/盘符路径："
@@ -41,7 +57,10 @@ def _resolve_output_dirs(out_dir: Path, config: Dict[str, Any]) -> tuple[Path, P
         )
     work_dir = out_dir
     if hide:
-        intermediate_dir = work_dir / intermediate_name
+        if intermediate_name.startswith(".bensz-api/"):
+            intermediate_dir = _allocate_bensz_intermediate_dir(work_dir, intermediate_name)
+        else:
+            intermediate_dir = work_dir / intermediate_name
         intermediate_dir.mkdir(parents=True, exist_ok=True)
         (intermediate_dir / "runs").mkdir(parents=True, exist_ok=True)
         (intermediate_dir / "legacy").mkdir(parents=True, exist_ok=True)
@@ -373,7 +392,7 @@ def main() -> None:
     lines.append("")
     lines.append(f"- 画布：{width_px}x{height_px}px（A4 宽度不变，高度约 2/3 A4）")
     lines.append("- 标题/备注默认不落图（需显式开启 config.yaml:layout.title.enabled / layout.notes.enabled）")
-    lines.append("- 交付根目录仅保留：roadmap.drawio/svg/png/pdf + roadmap-plan.md + .nsfc-roadmap/")
+    lines.append("- 交付根目录仅保留：roadmap.drawio/svg/png/pdf + roadmap-plan.md；中间产物进入 .bensz-api/skills/nsfc-roadmap/")
     lines.append("")
 
     # Template reference (optional, but recommended).

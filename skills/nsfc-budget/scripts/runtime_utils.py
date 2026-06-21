@@ -11,7 +11,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "defaults": {
         "template_id": "01",
         "output_dirname": "budget_output",
-        "intermediate_dirname": ".nsfc-budget",
+        "intermediate_dirname": ".bensz-api/skills/nsfc-budget",
         "project_type": "general",
         "total_budget_wan": {"general": 50, "local": 50, "youth": 30},
         "target_chars": {"recommended_min": 800, "recommended_max": 1000, "recommended_default": 900},

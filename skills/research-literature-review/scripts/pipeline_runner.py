@@ -25,6 +25,26 @@ import io
 import yaml
 
 
+def _safe_topic_slug(topic: str) -> str:
+    slug = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff._-]+", "-", (topic or "").strip())
+    slug = re.sub(r"-{2,}", "-", slug).strip(".-_")
+    return (slug[:48].strip(".-_") or "review")
+
+
+def _default_bensz_work_dir(topic: str) -> Path:
+    root = Path.cwd().resolve() / ".bensz-api" / "skills" / "research-literature-review"
+    stamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    base = f"{stamp}-{_safe_topic_slug(topic)}"
+    candidate = root / base
+    if not candidate.exists():
+        return candidate
+    for idx in range(2, 100):
+        candidate = root / f"{base}-{idx:02d}"
+        if not candidate.exists():
+            return candidate
+    raise ValueError(f"无法在 {root} 下分配唯一工作目录: {base}")
+
+
 # ============================================================================
 # 数据模型
 # ============================================================================
@@ -915,25 +935,24 @@ def main() -> int:
     parser.add_argument("--topic", required=False, help="主题")
     parser.add_argument("--domain", default="general", help="领域（可选）")
     parser.add_argument("--config", type=Path, default=Path(__file__).parent.parent / "config.yaml")
-    parser.add_argument("--work-dir", type=Path, required=False, help="工作目录（必须显式指定）")
+    parser.add_argument("--work-dir", type=Path, required=False, help="工作目录；默认使用 .bensz-api/skills/research-literature-review/<timestamp-topic>")
     parser.add_argument("--review-level", choices=["premium", "standard", "basic"], help="档位（可选）")
     parser.add_argument("--output-stem", help="文件名前缀（可选）")
     parser.add_argument("--resume", type=Path, help="从已有 work_dir 恢复（自动读取其中的 pipeline_state.json）")
     parser.add_argument("--resume-from", type=int, help="从阶段编号开始执行（0-based）")
     args = parser.parse_args()
 
+    topic = args.topic
     work_dir = args.work_dir
     if args.resume:
         work_dir = args.resume if args.resume.is_dir() else args.resume.parent
-    if work_dir is None:
-        raise ValueError("请显式传入 --work-dir <任务子目录> 或使用 --resume")
-    work_dir = Path(work_dir).expanduser().resolve()
-
-    topic = args.topic
     if args.resume and not topic:
         topic = Path(work_dir).name
     if not topic:
         raise ValueError("缺少 --topic")
+    if work_dir is None:
+        work_dir = _default_bensz_work_dir(topic)
+    work_dir = Path(work_dir).expanduser().resolve()
 
     # 防御性提示：避免出现 {topic}/{topic} 的异常嵌套目录（通常来自外部编排器重复拼接）
     try:

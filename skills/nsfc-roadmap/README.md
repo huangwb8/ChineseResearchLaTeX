@@ -68,7 +68,7 @@
 - 风格： layered-pipeline
 ```
 
-**比例锁定说明**：当你明确给出高宽比或在 `output_dir/.nsfc-roadmap/config_local.yaml` 中设置 `renderer.canvas.width_px/height_px` 后，skill 会把该比例视为硬约束；后续 draw.io 优化与 Nano Banana 多轮 `ai_critic` 都会保持同一宽高比，不再回退到默认 A4 比例。
+**比例锁定说明**：当你明确给出高宽比或在 `output_dir` 同级 `.bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/config_local.yaml` 中设置 `renderer.canvas.width_px/height_px` 后，skill 会把该比例视为硬约束；后续 draw.io 优化与 Nano Banana 多轮 `ai_critic` 都会保持同一宽高比，不再回退到默认 A4 比例。
 
 ### 选择模板风格（可选）
 
@@ -153,7 +153,7 @@ roadmap_output/
 ├── roadmap_compacted.png     # Nano Banana 模式自动生成：体积显著更小的 PNG（适合嵌入标书 PDF）
 ├── roadmap.pdf              # 默认输出（无 CLI 时为 PNG→PDF 栅格降级）
 ├── roadmap-plan.md          # 规划草案（可审阅/修改）
-└── .nsfc-roadmap/           # 中间产物（默认隐藏）
+../.bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/            # 中间产物（默认隐藏，位于 output_dir 同级）
     ├── config_local.yaml     # 实例级局部配置覆盖（白名单字段；不改全局 config.yaml）
     ├── runs/
     │   └── run_YYYYMMDDHHMMSS/
@@ -234,12 +234,12 @@ python3 nsfc-roadmap/scripts/nano_banana_check.py
 
 可选启用 AI 自主闭环（`evaluation.stop_strategy: ai_critic`）：
 
-- 脚本每次只渲染/评估 1 轮，并在 `output_dir/.nsfc-roadmap/ai/{run_dir}/` 生成证据包与 `ai_critic_request.md`
+- 脚本每次只渲染/评估 1 轮，并在 `output_dir 的同级 .bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/ai/{run_dir}/` 生成证据包与 `ai_critic_request.md`
 - 你（宿主 AI）阅读证据包后，把结构化响应写入 `ai_critic_response.yaml`（spec/config_local patch + stop/continue）
 - 若 `--renderer nano_banana`（Gemini/OpenAI PNG-only），证据包还会包含 `nano_banana_prompt.md`；你也可在响应中提供 `nano_banana_prompt` 字段来控制下一轮传给图片模型的 prompt（含 `nano_banana_prompt_only` action）；脚本会在每一轮真正发送前自动补齐字体/文字排版硬约束，避免多轮自优化时字体约束漂移，并强制禁止图内总标题
 - 再次运行脚本即可自动应用 patch 并进入下一轮（不在脚本内调用外部模型 API）
 
-> 推荐做法：把 `evaluation.stop_strategy: ai_critic` 写到 `output_dir/.nsfc-roadmap/config_local.yaml`，作为”仅本次实例生效”的开关。
+> 推荐做法：把 `evaluation.stop_strategy: ai_critic` 写到 `output_dir` 同级 `.bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/config_local.yaml`，作为”仅本次实例生效”的开关。
 
 补充：若启用 `evaluation.evaluation_mode: ai`（常与 `ai_critic` 搭配），每轮会额外导出 `measurements.json/dimension_measurements.json`，把”度量证据”与”阈值判定”解耦，便于宿主 AI 做上下文判断。
 
@@ -319,7 +319,7 @@ critique_*.json / nano_banana_prompt.md 等）+ ai_critic_request.md
 
 ### Q：如何修改节点内容？
 
-优先编辑 `.nsfc-roadmap/spec_latest.yaml` 或规划阶段生成的 `spec_draft.yaml`，然后重新运行生成脚本。这样可以保持可复现性。
+优先编辑 `.bensz-api/skills/nsfc-roadmap/{yyyy-mm-dd-hh-mm}/spec_latest.yaml` 或规划阶段生成的 `spec_draft.yaml`，然后重新运行生成脚本。这样可以保持可复现性。
 
 ### Q：生成后想微调布局怎么办？
 

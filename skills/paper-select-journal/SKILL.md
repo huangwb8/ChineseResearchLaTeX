@@ -17,7 +17,7 @@ metadata:
 ## 核心原则
 
 - 当前信息必须实时核验：scope、官网、业内认可度、中科院分区、近 3 个月论文都属于时效性信息，不能靠旧记忆。
-- 中间文件只允许落在当前工作目录下的 `.paper-select-journal/` 隐藏目录；用户若明确指定其他目录，才可覆盖默认值。
+- 中间文件只允许落在当前工作目录下的 `.bensz-api/skills/paper-select-journal/` 隐藏目录；用户若明确指定其他目录，才可覆盖默认值。
 - Set1 不再依赖固定语义权重。脚本只负责最小硬过滤与候选池整理，真正的语义规划由当前宿主模型完成。
 - Set1 不是最终答案。最终报告只保留证据充分的 Set3，最多 10 个期刊。
 - 不能推荐明显预警、垃圾期刊或影响因子低于 `3` 的期刊；若确实保留低于 `3` 的例外，必须写明“为何它仍是领域内人类专家认可的稳妥选择”。
@@ -35,7 +35,7 @@ metadata:
 python3 <skill_root>/scripts/init_workspace.py --project-root .
 ```
 
-脚本会创建 `.paper-select-journal/run-<timestamp>/`，其中至少包含：
+脚本会创建 `.bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/`，其中至少包含：
 
 - `inputs/`
 - `analysis/`
@@ -71,8 +71,8 @@ python3 <skill_root>/scripts/init_workspace.py --project-root .
 
 ```bash
 python3 <skill_root>/scripts/shortlist_journals.py \
-  --workspace .paper-select-journal/run-<timestamp> \
-  --profile .paper-select-journal/run-<timestamp>/analysis/manuscript_profile.json
+  --workspace .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm} \
+  --profile .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/analysis/manuscript_profile.json
 ```
 
 产物：
@@ -119,9 +119,9 @@ python3 <skill_root>/scripts/shortlist_journals.py \
 
 ```bash
 python3 <skill_root>/scripts/fetch_pubmed_recent.py \
-  --workspace .paper-select-journal/run-<timestamp> \
-  --profile .paper-select-journal/run-<timestamp>/analysis/manuscript_profile.json \
-  --scope-review .paper-select-journal/run-<timestamp>/analysis/set2_scope_review.json
+  --workspace .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm} \
+  --profile .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/analysis/manuscript_profile.json \
+  --scope-review .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/analysis/set2_scope_review.json
 ```
 
 产物：
@@ -200,8 +200,8 @@ python3 <skill_root>/scripts/fetch_pubmed_recent.py \
 
 ```bash
 python3 <skill_root>/scripts/render_report.py \
-  --workspace .paper-select-journal/run-<timestamp> \
-  --final-json .paper-select-journal/run-<timestamp>/analysis/final_recommendations.json
+  --workspace .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm} \
+  --final-json .bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/analysis/final_recommendations.json
 ```
 
 最终输出：

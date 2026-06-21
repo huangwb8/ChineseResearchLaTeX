@@ -189,12 +189,12 @@ def validate_spec(spec_path: Path, spec: dict[str, Any], config: dict[str, Any],
             resolve_output_dir(
                 workdir,
                 output_dirname,
-                str(defaults.get("intermediate_dirname") or ".nsfc-budget"),
+                str(defaults.get("intermediate_dirname") or ".bensz-api/skills/nsfc-budget"),
                 label="output_dirname",
             )
         except ValueError as exc:
             errors.append(str(exc))
-        intermediate_dir = workdir / str(defaults.get("intermediate_dirname") or ".nsfc-budget")
+        intermediate_dir = workdir / str(defaults.get("intermediate_dirname") or ".bensz-api/skills/nsfc-budget")
         try:
             spec_path.resolve().relative_to(intermediate_dir.resolve())
         except Exception:
@@ -402,7 +402,7 @@ def render_from_spec(spec_path: Path, force: bool = False, skip_compile: bool = 
     output_dir = resolve_output_dir(
         workdir,
         normalized["output_dirname"],
-        str((config.get("defaults") or {}).get("intermediate_dirname") or ".nsfc-budget"),
+        str((config.get("defaults") or {}).get("intermediate_dirname") or ".bensz-api/skills/nsfc-budget"),
         label="output_dirname",
     )
     assert template_dir is not None

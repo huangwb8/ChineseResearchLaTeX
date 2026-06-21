@@ -5,7 +5,7 @@ Deterministic, read-only precheck for NSFC LaTeX proposals.
 - Extracts citations and checks bibkey existence.
 - Produces rough length metrics (per tex file and overall).
 
-All outputs must be written under a user-provided --out directory (recommended inside .nsfc-qc/).
+All outputs must be written under a user-provided --out directory (recommended inside .bensz-api/skills/nsfc-qc/).
 """
 
 from __future__ import annotations
@@ -1522,7 +1522,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--project-root", required=True)
     ap.add_argument("--main-tex", default="main.tex", help="relative to project-root")
-    ap.add_argument("--out", required=True, help="output directory (recommended: .nsfc-qc/.../artifacts)")
+    ap.add_argument("--out", required=True, help="output directory (recommended: .bensz-api/skills/nsfc-qc/.../artifacts)")
     ap.add_argument("--resolve-refs", action="store_true", help="fetch reference evidence (title/abstract/optional pdf) for AI semantic checks")
     ap.add_argument("--unpaywall-email", default=os.environ.get("UNPAYWALL_EMAIL", ""), help="required by Unpaywall API (or set env UNPAYWALL_EMAIL)")
     ap.add_argument("--fetch-pdf", action="store_true", help="attempt to download OA PDFs (arXiv/Unpaywall/bib url) and extract a short text excerpt")

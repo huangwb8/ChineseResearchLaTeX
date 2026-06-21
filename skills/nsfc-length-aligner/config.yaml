@@ -16,7 +16,7 @@ directories:
   tests: "tests"
 
 output_settings:
-  intermediate_dir: ".nsfc-length-aligner"
+  intermediate_dir: ".bensz-api/skills/nsfc-length-aligner"
 
 # ============================================================================
 # 篇幅标准（示例）
@@ -82,6 +82,7 @@ checker:
     # 避免误计入篇幅。若确实需要统计 Markdown，可自行加入 "*.md" / "*.markdown"。
     - "*.tex"
   exclude_globs:
+    - "**/.bensz-api/**"
     - "**/tests/**"
     - "**/plans/**"
     - "**/_artifacts/**"

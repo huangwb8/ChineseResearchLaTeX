@@ -194,7 +194,7 @@ evaluation:
 output:
   dirname: schematic_output
   hide_intermediate: true             # 是否将中间产物隐藏到 intermediate_dir（默认启用）
-  intermediate_dir: .nsfc-schematic   # 中间产物目录名（相对 output_dir）
+  intermediate_dir: .bensz-api/skills/nsfc-schematic  # 中间产物根目录（相对 output_dir 的父目录）
   max_history_runs: 10                # 最多保留最近 N 次 run_*（仅在 hide_intermediate=true 时生效）
   report_filename: optimization_report.md  # legacy 字段：保留兼容（新逻辑优先使用 artifacts.report）
   artifacts:

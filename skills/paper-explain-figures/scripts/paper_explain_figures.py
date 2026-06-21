@@ -17,8 +17,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 
-# Hard-coded per spec: ALL intermediates must live under this hidden dir in CWD.
-WORK_DIR_NAME = ".paper-explain-figures"
+# Hard-coded per spec: ALL intermediates must live under the unified hidden workspace in CWD.
+WORK_DIR_ROOT_NAME = ".bensz-api"
+WORK_DIR_REL = Path(".bensz-api") / "skills" / "paper-explain-figures"
 
 
 @dataclass(frozen=True)
@@ -216,7 +217,7 @@ def _audit_workspace_leaks(
     before: Dict[str, FsEntryState],
     out_md: Path,
 ) -> Tuple[List[str], List[str], List[str]]:
-    after = _snapshot_visible_tree(cwd, allowed_root_names=[WORK_DIR_NAME])
+    after = _snapshot_visible_tree(cwd, allowed_root_names=[WORK_DIR_ROOT_NAME])
     allowed_rel = set(_allowed_output_relpaths(cwd, out_md))
 
     new_paths: List[str] = []
@@ -449,7 +450,7 @@ def find_source_code_for_figure(
     # 2) nearby search
     roots = _candidate_search_roots(fig_path, max_parent_depth=max_parent_depth)
     ignore_dir_names = {
-        WORK_DIR_NAME,
+        WORK_DIR_ROOT_NAME,
         ".git",
         "node_modules",
         "__pycache__",
@@ -1181,7 +1182,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     user_notes = _parse_notes(args)
 
     cwd = Path.cwd()
-    workspace_before = _snapshot_visible_tree(cwd, allowed_root_names=[WORK_DIR_NAME])
+    workspace_before = _snapshot_visible_tree(cwd, allowed_root_names=[WORK_DIR_ROOT_NAME])
 
     # Spec intent: final report should be placed in the current workdir (not arbitrary absolute paths).
     out_md = Path(args.out).expanduser()
@@ -1193,14 +1194,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"[ERROR] --out 必须位于当前工作目录内：cwd={cwd} out={out_md}", file=sys.stderr)
         return 2
 
-    base = (cwd / WORK_DIR_NAME).resolve()
+    base = (cwd / WORK_DIR_REL).resolve()
     base.mkdir(parents=True, exist_ok=True)
 
     if args.run_id.strip():
         run_id = _safe_filename(args.run_id.strip())
     else:
-        # Stable enough, readable.
-        run_id = _dt.datetime.now().strftime("run_%Y%m%d%H%M%S") + "_" + _sha1_short("|".join([str(x) for x in figs]))
+        run_id = _dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        if (base / run_id).exists():
+            for idx in range(2, 100):
+                candidate = f"{run_id}-{idx:02d}"
+                if not (base / candidate).exists():
+                    run_id = candidate
+                    break
 
     run_dir = (base / run_id).resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -1208,7 +1214,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Preflight runner availability early to fail-fast (except local runner).
     runner_type = str(args.runner or "").strip().lower()
     if runner_type == "shell":
-        print("[ERROR] --runner shell 已禁用：它无法提供“除最终结果外所有中间文件均限制在 .paper-explain-figures/ 内”的严格保证。", file=sys.stderr)
+        print("[ERROR] --runner shell 已禁用：它无法提供“除最终结果外所有中间文件均限制在 .bensz-api/skills/paper-explain-figures/ 内”的严格保证。", file=sys.stderr)
         return 2
     if runner_type in {"codex", "claude"}:
         if not _which(runner_type):
@@ -1352,13 +1358,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     leaked_new, cleaned_new, changed_existing = _audit_workspace_leaks(cwd=cwd, before=workspace_before, out_md=out_md)
     if leaked_new or changed_existing:
         if cleaned_new:
-            print(f"[WARN] 已自动清理 .paper-explain-figures/ 外的新增中间文件：{', '.join(cleaned_new)}", file=sys.stderr)
+            print(f"[WARN] 已自动清理 .bensz-api/skills/paper-explain-figures/ 外的新增中间文件：{', '.join(cleaned_new)}", file=sys.stderr)
         if changed_existing:
             print(f"[ERROR] 检测到工作目录中存在被修改的非授权路径：{', '.join(changed_existing)}", file=sys.stderr)
             return 1
         remaining = [p for p in leaked_new if p not in set(cleaned_new)]
         if remaining:
-            print(f"[ERROR] 检测到无法清理的 .paper-explain-figures/ 外中间文件：{', '.join(remaining)}", file=sys.stderr)
+            print(f"[ERROR] 检测到无法清理的 .bensz-api/skills/paper-explain-figures/ 外中间文件：{', '.join(remaining)}", file=sys.stderr)
             return 1
 
     print(str(out_md))

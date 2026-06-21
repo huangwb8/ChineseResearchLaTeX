@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -11,9 +10,7 @@ from typing import Dict
 
 
 def _new_run_id() -> str:
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    rand = os.urandom(3).hex()
-    return f"{ts}_{rand}"
+    return datetime.now().strftime("%Y-%m-%d-%H-%M")
 
 
 @dataclass(frozen=True)
@@ -30,14 +27,22 @@ class RunPaths:
 
 def create_run(runs_root: Path, run_id: str | None = None) -> RunPaths:
     rid = run_id or _new_run_id()
+    if run_id is None:
+        for idx in range(1, 100):
+            candidate = rid if idx == 1 else f"{rid}-{idx:02d}"
+            if not (runs_root / candidate).exists():
+                rid = candidate
+                break
+        else:
+            raise FileExistsError(f"无法在 {runs_root} 下分配唯一 run 目录: {rid}")
     root = (runs_root / rid).resolve()
 
-    input_snapshot_dir = root / "input_snapshot"
+    input_snapshot_dir = root / "input" / "snapshot"
     analysis_dir = root / "analysis"
     plan_dir = root / "plan"
-    logs_dir = root / "logs"
-    deliverables_dir = root / "deliverables"
-    backup_dir = root / "backup"
+    logs_dir = root / "log"
+    deliverables_dir = root / "output" / "deliverables"
+    backup_dir = root / "input" / "backup"
 
     for p in [
         input_snapshot_dir,
@@ -68,11 +73,10 @@ def get_run(runs_root: Path, run_id: str) -> RunPaths:
     return RunPaths(
         run_id=run_id,
         run_root=root,
-        input_snapshot_dir=root / "input_snapshot",
+        input_snapshot_dir=root / "input" / "snapshot",
         analysis_dir=root / "analysis",
         plan_dir=root / "plan",
-        logs_dir=root / "logs",
-        deliverables_dir=root / "deliverables",
-        backup_dir=root / "backup",
+        logs_dir=root / "log",
+        deliverables_dir=root / "output" / "deliverables",
+        backup_dir=root / "input" / "backup",
     )
-

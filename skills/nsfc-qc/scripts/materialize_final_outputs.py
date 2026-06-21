@@ -34,9 +34,10 @@ def _write_json(path: Path, obj: Any) -> None:
 
 
 def _find_parallel_vibe_root(run_dir: Path) -> Optional[Path]:
-    pv = run_dir / ".parallel_vibe"
-    if pv.exists() and pv.is_dir():
-        return pv
+    for name in (".parallel-vibe", ".parallel_vibe"):
+        pv = run_dir / name
+        if pv.exists() and pv.is_dir():
+            return pv
     return None
 
 
@@ -402,7 +403,7 @@ def main() -> int:
     ap.add_argument("--run-dir", default="", help="preferred: the run directory (contains artifacts/final/snapshot)")
     ap.add_argument("--project-root", default="", help="optional; used for metadata only")
     ap.add_argument("--run-id", default="", help="legacy mode: resolve run_dir from project_root + runs_root + run_id")
-    ap.add_argument("--runs-root", default=".nsfc-qc/runs", help="legacy mode: relative to project-root")
+    ap.add_argument("--runs-root", default=".bensz-api/skills/nsfc-qc", help="legacy mode: relative to project-root")
     ap.add_argument("--deliver-dir", default="", help="optional; for report metadata only")
     ap.add_argument("--overwrite", action="store_true", help="overwrite existing final outputs")
     args = ap.parse_args()
@@ -425,8 +426,8 @@ def main() -> int:
         if runs_root.is_absolute() or ".." in runs_root.parts:
             print("error: --runs-root must be a relative path without '..'", file=sys.stderr)
             return 2
-        if not runs_root.parts or runs_root.parts[0] != ".nsfc-qc":
-            print("error: --runs-root must start with .nsfc-qc/ to keep artifacts isolated", file=sys.stderr)
+        if not runs_root.parts or runs_root.parts[0] not in {".bensz-api", ".nsfc-qc"}:
+            print("error: --runs-root must start with .bensz-api/ or .nsfc-qc/ to keep artifacts isolated", file=sys.stderr)
             return 2
         run_dir = (project_root_resolved / runs_root / run_id).resolve()
 

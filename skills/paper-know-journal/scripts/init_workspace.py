@@ -15,11 +15,14 @@ except ModuleNotFoundError:  # pragma: no cover - dependency fallback
 
 
 DEFAULT_CONFIG = {
-    "workspace": {
-        "hidden_dir": ".paper-know-journal",
-        "run_prefix": "run",
-        "timestamp_format": "%Y%m%d%H%M%S",
+        "workspace": {
+        "hidden_dir": ".bensz-api/skills/paper-know-journal",
+        "run_prefix": "",
+        "timestamp_format": "%Y-%m-%d-%H-%M",
         "subdirs": [
+            "input",
+            "output",
+            "log",
             "official",
             "community",
             "article-samples",
@@ -33,7 +36,7 @@ DEFAULT_CONFIG = {
         "filename_template": "KnowJournal-{journal}.md",
         "unsafe_filename_chars": '/\\:*?"<>|',
     },
-    "tests": {"default_dir": "tests/paper-know-journal"},
+    "tests": {"default_dir": ".bensz-api/skills/paper-know-journal/tests"},
 }
 
 
@@ -84,14 +87,24 @@ def ensure_within(base: Path, child: Path, label: str) -> None:
         raise SystemExit(f"{label} 必须位于当前工作目录或用户显式指定目录内: {child}") from exc
 
 
+def allocate_unique_run_id(workspace_base: Path, run_id: str) -> str:
+    if not (workspace_base / run_id).exists():
+        return run_id
+    for idx in range(2, 100):
+        candidate = f"{run_id}-{idx:02d}"
+        if not (workspace_base / candidate).exists():
+            return candidate
+    raise SystemExit(f"无法在 {workspace_base} 下分配唯一工作目录: {run_id}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="初始化 paper-know-journal 隐藏工作区")
     parser.add_argument("--journal", required=True, help="期刊/杂志名")
     parser.add_argument("--cwd", default=".", help="用户当前工作目录，默认当前目录")
-    parser.add_argument("--workspace-dir", help="隐藏工作区根目录，默认 <cwd>/.paper-know-journal")
+    parser.add_argument("--workspace-dir", help="隐藏工作区根目录，默认 <cwd>/.bensz-api/skills/paper-know-journal")
     parser.add_argument("--output-dir", help="最终 Markdown 输出目录，默认 <cwd>")
-    parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/tests/paper-know-journal")
-    parser.add_argument("--run-id", help="运行 ID，默认 run-YYYYMMDDHHMMSS")
+    parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/.bensz-api/skills/paper-know-journal/tests")
+    parser.add_argument("--run-id", help="运行 ID，默认 YYYY-MM-DD-HH-MM")
     args = parser.parse_args()
     config = load_config()
     workspace_config = config["workspace"]
@@ -107,8 +120,12 @@ def main() -> None:
         unsafe_chars=output_config["unsafe_filename_chars"],
     )
     run_prefix = workspace_config["run_prefix"]
-    run_id = args.run_id or f"{run_prefix}-{timestamp(workspace_config['timestamp_format'])}"
-    run_id_pattern = rf"{re.escape(run_prefix)}-[A-Za-z0-9_.-]+"
+    default_run_id = f"{run_prefix}{timestamp(workspace_config['timestamp_format'])}"
+    run_id = args.run_id or allocate_unique_run_id(
+        resolve_dir(args.workspace_dir, default=cwd / workspace_config["hidden_dir"]),
+        default_run_id,
+    )
+    run_id_pattern = rf"{re.escape(run_prefix)}[A-Za-z0-9_.-]+"
     if not re.fullmatch(run_id_pattern, run_id):
         raise SystemExit(f"run-id 只能使用 {run_prefix}- 前缀及字母、数字、下划线、点和连字符")
 

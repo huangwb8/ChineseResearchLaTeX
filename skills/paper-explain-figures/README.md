@@ -60,8 +60,8 @@ paper-explain-figures 是你的"论文 Figure 解读老师"——不只是描述
 **全程只读，零风险**：
 - 不会修改你的 figure 文件
 - 不会修改你的源代码文件
-- 中间产物只写入当前目录下 `.paper-explain-figures/`
-- runner 与图片转换器的 `HOME/TMP/XDG` 运行时辅助文件也会被重定向到 `.paper-explain-figures/`
+- 中间产物只写入当前目录下 `.bensz-api/skills/paper-explain-figures/`
+- runner 与图片转换器的 `HOME/TMP/XDG` 运行时辅助文件也会被重定向到 `.bensz-api/skills/paper-explain-figures/`
 
 ## 使用示例
 
@@ -117,7 +117,7 @@ python3 paper-explain-figures/scripts/paper_explain_figures.py \
 | 文件 | 说明 |
 |------|------|
 | `paper-explain-figures_report.md` | 最终解读报告（你主要看这个） |
-| `.paper-explain-figures/` | 中间产物目录（日志、转换图、单图解读等） |
+| `.bensz-api/skills/paper-explain-figures/` | 中间产物目录（日志、转换图、单图解读等） |
 
 ### 报告结构（每张图）
 
@@ -178,9 +178,9 @@ defaults:
 
 ### Runner 隔离说明
 
-- `shell` runner 已禁用：它无法对“.paper-explain-figures 之外绝不泄露中间文件”提供严格保证
-- `codex` / `claude` / `local` 会在 job 目录下执行，并把 HOME、TMP、XDG cache/state/config 等运行时目录重定向进 `.paper-explain-figures/`
-- 脚本结束前会审计当前工作目录；若发现 `.paper-explain-figures/` 外新增了非结果文件，会自动清理并报错/告警
+- `shell` runner 已禁用：它无法对“.bensz-api/skills/paper-explain-figures 之外绝不泄露中间文件”提供严格保证
+- `codex` / `claude` / `local` 会在 job 目录下执行，并把 HOME、TMP、XDG cache/state/config 等运行时目录重定向进 `.bensz-api/skills/paper-explain-figures/`
+- 脚本结束前会审计当前工作目录；若发现 `.bensz-api/skills/paper-explain-figures/` 外新增了非结果文件，会自动清理并报错/告警
 
 ## 源代码检索机制
 
@@ -202,7 +202,7 @@ defaults:
 如需清理中间产物：
 
 ```bash
-rm -rf .paper-explain-figures
+rm -rf .bensz-api/skills/paper-explain-figures
 ```
 
 ## 常见问题

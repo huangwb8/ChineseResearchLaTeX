@@ -56,11 +56,11 @@ config: skills/nsfc-budget/config.yaml
 
 ## 中间产物边界
 
-- 所有中间文件只能放在 `<workdir>/.nsfc-budget/`。
+- 所有中间文件只能放在 `<workdir>/.bensz-api/skills/nsfc-budget/`。
 - 不要把草稿、日志、计划、截图、临时 JSON、编译中间文件散落到工作目录其它位置。
 - 最终可见交付物只放在 `<workdir>/<output_dirname>/`（默认值见 `config.yaml:defaults.output_dirname`）。
 - `template_id`、`output_dirname`、`.template.yaml` 里的 `section_files/latex_entry/pdf_name` 都必须是**相对安全路径**；不得包含绝对路径、`.` / `..` 越界段。
-- `output_dirname` 不得指向工作目录根路径，也不得与隐藏工作区 `<workdir>/.nsfc-budget/` 重叠。
+- `output_dirname` 不得指向工作目录根路径，也不得与隐藏工作区 `<workdir>/.bensz-api/skills/nsfc-budget/` 重叠。
 
 ## 工作流
 
@@ -75,8 +75,8 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
   --template-id 01
 ```
 
-如用户已给材料路径，可追加多个 `--material <path>`。脚本会把材料快照复制到 `.nsfc-budget/run_xxx/materials/`。
-若同秒重复初始化，脚本会自动避让目录名冲突，避免 run 目录互相污染。
+如用户已给材料路径，可追加多个 `--material <path>`。脚本会把材料快照复制到 `.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/input/materials/`。
+若同一分钟重复初始化，脚本会自动追加后缀避让目录名冲突，避免 run 目录互相污染。
 
 ### 2. 吃透材料，形成“任务-需求-金额-依据”链
 
@@ -112,7 +112,7 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 
 ```bash
 python3 skills/nsfc-budget/scripts/render_budget_project.py \
-  --spec <workdir>/.nsfc-budget/run_xxx/budget_spec.json
+  --spec <workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/budget_spec.json
 ```
 
 脚本会：
@@ -120,7 +120,7 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 - 复制模板到 `<workdir>/<output_dirname>/`
 - 将五个 section 写入对应 `extraTex/*.tex`
 - 校验金额关系、段落长度、可见字符数与模板/路径约束
-- 校验 `budget_spec.json` 是否仍位于 `<workdir>/.nsfc-budget/`，保证隐藏工作区承诺不被破坏
+- 校验 `budget_spec.json` 是否仍位于 `<workdir>/.bensz-api/skills/nsfc-budget/`，保证隐藏工作区承诺不被破坏
 - 自动转义常见 LaTeX 特殊字符（如 `%`、`#`、`&`、`_`），减少自然语言正文导致的编译失败
 - 在隐藏目录保存 `validation_report.md/json`
 - 若校验失败，终端会直接给出首批错误摘要与 `validation_report.md` 路径
@@ -157,7 +157,7 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 
 中间过程保留在：
 
-- `<workdir>/.nsfc-budget/run_xxx/`
+- `<workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/`
 
 ## 关键文件
 

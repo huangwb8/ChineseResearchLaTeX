@@ -9,7 +9,7 @@ run_ref_alignment.py - nsfc-ref-alignment 的确定性入口（只读）
 - 进行确定性完整性检查：缺失 bibkey / 重复条目 / 字段缺失 / DOI 格式
 - 可选：在线核验 DOI（Crossref/OpenAlex，只做存在性与元信息粗比对；失败降级）
 - 生成：
-  - 中间产物：{project_root}/.nsfc-ref-alignment/run_{timestamp}/...
+  - 中间产物：{project_root}/.bensz-api/skills/nsfc-ref-alignment/{timestamp}/...
   - 交付报告（确定性草稿）：{report_dir}/NSFC-REF-ALIGNMENT-v{timestamp}.md
 
 非职责（启发式/AI）：
@@ -31,7 +31,11 @@ from bib_utils import BibEntry, merge_bib_entries, required_field_issues, valida
 from latex_scanner import CitationHit, discover_bib_files, discover_tex_dependency_tree, extract_citations
 from online_verify import check_doi_online
 from report_utils import build_deterministic_report_md, write_citations_csv, write_json
-from runtime_utils import load_config, relpath_safe, utc_timestamp_compact
+from runtime_utils import load_config, relpath_safe
+
+
+def local_timestamp_minute() -> str:
+    return dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
 
 
 def _safe_get(cfg: Dict[str, Any], path: List[str], default: Any) -> Any:
@@ -82,14 +86,14 @@ def main() -> int:
     main_tex = (project_root / args.main_tex).resolve()
     report_dir = Path(args.report_dir).expanduser().resolve()
 
-    run_id = utc_timestamp_compact()  # seconds
-    runs_root = project_root / ".nsfc-ref-alignment"
+    run_id = local_timestamp_minute()
+    runs_root = project_root / ".bensz-api" / "skills" / "nsfc-ref-alignment"
     runs_root.mkdir(parents=True, exist_ok=True)
     run_dir = None
     # Use atomic mkdir to avoid collisions (even under concurrent runs).
     for i in range(1, 100):
-        suffix = "" if i == 1 else f"-{i}"
-        cand = runs_root / f"run_{run_id}{suffix}"
+        suffix = "" if i == 1 else f"-{i:02d}"
+        cand = runs_root / f"{run_id}{suffix}"
         try:
             cand.mkdir(parents=False, exist_ok=False)
             run_dir = cand
@@ -306,7 +310,7 @@ def main() -> int:
     # Delivery report (deterministic draft).
     # Tie deliver filename to run_dir so it's unique even when run_id gets a -2/-3 suffix.
     report_dir.mkdir(parents=True, exist_ok=True)
-    deliver_id = run_dir.name[len("run_") :] if run_dir.name.startswith("run_") else run_dir.name
+    deliver_id = run_dir.name
     deliver_path = report_dir / f"NSFC-REF-ALIGNMENT-v{deliver_id}.md"
     draft = []
     draft.append("# NSFC 参考文献与引用核查报告（草稿：确定性部分）")
