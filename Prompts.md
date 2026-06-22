@@ -991,6 +991,10 @@ PlanName =实例辅助优化-v202602281042
 
 ---
 
+skills/nsfc-humanization 优化：/Volumes/2T01/winE/iProjects/Fundings/2026-区域联合基金-地区培育项目/docs/基金申请书机器味表达识别特征.md （你只能读、理解这个文件，不能引用它）有一个机器的特征。 我希望本skill可以处理这种类型的写作。
+
+---
+
 PlanName =v202602241320
 按 skills/nsfc-humanization/plans/{PlanName}.md 的要求优化skill，所有缺陷都要修复。 有疑问的地方，你按最优方案决定，不要问我。在skills/nsfc-humanization/tests/{PlanName} 这个文件夹里运行轻量测试以保证项目流程可以正常运行；所有测试时产生的中间文件都必须保存在测试目录里；测试目录必须包含测试的规划文档和报告文档。
 

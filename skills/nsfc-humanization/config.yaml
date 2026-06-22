@@ -1,5 +1,5 @@
 skill_info:
   name: nsfc-humanization
-  version: 1.0.0
-  description: "去除 NSFC 标书中的 AI 机器味，使文本读起来像资深领域专家亲笔撰写（不适用：非标书内容/需修改格式/需补充新内容）"
+  version: 1.1.0
+  description: "去除 NSFC 标书中的 AI 机器味，尤其适用于模板化转折、抽象概念堆叠、边界声明过重、研究动作不清的段落，使文本读起来像资深领域专家亲笔撰写（不适用：非标书内容/需修改格式/需补充新内容）"
   category: writing
