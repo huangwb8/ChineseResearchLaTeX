@@ -96,7 +96,7 @@
 
 - `section_type`：`立项依据/研究内容/研究基础/工作条件/风险应对/通用`
 - `field`：`general/cs/engineering/medicine/life_science`
-- `strength`：`minimal`（默认）/ `moderate` / `aggressive`
+- `strength`：`minimal` / `moderate` / `aggressive`（默认）
 - `output_mode`：`text_only`（默认）/ `text_with_change_summary` / `diagnosis_only` / `text_with_change_summary_and_style_card`
 
 ### 示例：带强度与变更摘要
@@ -147,4 +147,4 @@ output_mode=text_with_change_summary_and_style_card
 
 ## 版本
 
-1.1.0 — 详见 [CHANGELOG.md](CHANGELOG.md)
+1.1.1 — 详见 [CHANGELOG.md](CHANGELOG.md)

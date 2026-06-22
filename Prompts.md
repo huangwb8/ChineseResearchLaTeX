@@ -989,6 +989,8 @@ PlanName =实例辅助优化-v202602281042
 
 # nsfc-humanization
 
+skills/nsfc-humanization 优化： 默认模式改为 aggressive 。
+
 ---
 
 skills/nsfc-humanization 优化：/Volumes/2T01/winE/iProjects/Fundings/2026-区域联合基金-地区培育项目/docs/基金申请书机器味表达识别特征.md （你只能读、理解这个文件，不能引用它）有一个机器的特征。 我希望本skill可以处理这种类型的写作。

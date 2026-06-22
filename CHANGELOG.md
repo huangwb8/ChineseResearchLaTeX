@@ -22,6 +22,7 @@
 - `README.md` 去硬编码重构：将「LaTeX 包安装」（方法二远程 curl、方法三本地 git clone）、「LaTeX 模板编译」（各产品线 build/count-words/docx 命令）、「Skills 安装/更新」（一键 curl|bash、本地/远程 git clone）三处硬编码命令统一迁移到新建的 `docs/manual-setup-guide.md`；README 三处改为以自然语言安装/编译法为主，并保留对 `docs/manual-setup-guide.md` 对应章节的引用，兼顾小白用户的 AI 一键体验与高级用户的手动命令参考。
 - `skills/paper-write-sci/` 升级到 `v0.11.2`：新增 SCI 写作节奏护栏，要求少用无结构功能的冒号解释句，并在 `Introduction` 中协调核心观点、核心痛点和核心问题的主展开位置，避免同一主张反复重提造成冗余。
 - `skills/nsfc-humanization/` 升级到 `v1.1.0`：新增针对模板化转折、抽象概念堆叠、边界声明过重和研究动作不清的机器味识别与改写规则，强调把原文已有信息改成研究动作优先表达，同时禁止为追求具体化而新增事实；同步更新根级 `README.md` 与 `skills/README.md` 的版本快照和功能说明。
+- `skills/nsfc-humanization/` 升级到 `v1.1.1`：默认 `strength` 从 `minimal` 调整为 `aggressive`，未显式声明强度时更主动地做段内表达重组；同步更新 skill README、配置版本与根级 README 版本快照。
 
 ## [4.0.18] - 2026-06-11
 

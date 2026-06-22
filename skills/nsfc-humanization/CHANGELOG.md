@@ -2,6 +2,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.1.1] - 2026-06-22
+
+### Changed（变更）
+
+- 默认润色强度从 `minimal` 调整为 `aggressive`；未显式声明 `strength` 时，允许在语义零损失和结构保护前提下做更主动的段内表达重组。
+- 同步更新 `SKILL.md`、`README.md` 与 `config.yaml` 中的默认参数和版本号口径。
+
 ## [1.1.0] - 2026-06-22
 
 ### Added（新增）

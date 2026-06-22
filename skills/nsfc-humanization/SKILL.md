@@ -25,7 +25,7 @@ metadata:
 
 - `section_type`：`通用 / 立项依据 / 研究内容 / 研究基础 / 工作条件 / 风险应对 / 其他`
 - `field`：`general / cs / engineering / medicine / life_science`
-- `strength`：`minimal / moderate / aggressive`
+- `strength`：`minimal / moderate / aggressive`，默认 `aggressive`
 - `output_mode`：`text_only / text_with_change_summary / diagnosis_only / text_with_change_summary_and_style_card`
 - `self_eval_rounds`：默认 1，最多 2
 
@@ -80,7 +80,7 @@ metadata:
 
 ## 工作流
 
-1. 解析或推断参数。
+1. 解析或推断参数；若用户未显式指定 `strength`，按 `aggressive` 执行。
 2. 若 `diagnosis_only`，只输出诊断报告。
 3. 标记受保护片段与可编辑片段。
 4. 识别高优先级机器味：括号堆砌、模板化转折、抽象概念连续堆叠、边界声明压过研究动作。
