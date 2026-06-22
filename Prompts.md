@@ -989,6 +989,8 @@ PlanName =实例辅助优化-v202602281042
 
 # nsfc-humanization
 
+skills/nsfc-humanization 优化： 不是 。。。 而是 。。。 类的句式ai也是特别重的，这也是本skill的优化对象。 添加这种句式的识别和处理。
+
 skills/nsfc-humanization 优化： 默认模式改为 aggressive 。
 
 ---

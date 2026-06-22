@@ -23,6 +23,7 @@
 - `skills/paper-write-sci/` 升级到 `v0.11.2`：新增 SCI 写作节奏护栏，要求少用无结构功能的冒号解释句，并在 `Introduction` 中协调核心观点、核心痛点和核心问题的主展开位置，避免同一主张反复重提造成冗余。
 - `skills/nsfc-humanization/` 升级到 `v1.1.0`：新增针对模板化转折、抽象概念堆叠、边界声明过重和研究动作不清的机器味识别与改写规则，强调把原文已有信息改成研究动作优先表达，同时禁止为追求具体化而新增事实；同步更新根级 `README.md` 与 `skills/README.md` 的版本快照和功能说明。
 - `skills/nsfc-humanization/` 升级到 `v1.1.1`：默认 `strength` 从 `minimal` 调整为 `aggressive`，未显式声明强度时更主动地做段内表达重组；同步更新 skill README、配置版本与根级 README 版本快照。
+- `skills/nsfc-humanization/` 升级到 `v1.1.2`：将“不是……而是…… / 不只是……更是……”等伪对立、整齐二分句式明确列为高优先级 AI 机器味，新增真实边界、伪对立和同义递进三类处理策略；同步更新 skill README、参考模式库、配置版本与根级 README 版本快照。
 
 ## [4.0.18] - 2026-06-11
 
