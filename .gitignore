@@ -38,6 +38,7 @@
 .DS_Store
 
 # Skill workspaces (runtime artifacts)
+.bensz-api/
 skills/transfer_old_latex_to_new/runs/
 skills/complete_example/runs/
 skills/nsfc-justification-writer/.cache/

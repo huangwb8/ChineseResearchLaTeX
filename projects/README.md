@@ -83,6 +83,7 @@
 | [`thesis-smu-master/`](./thesis-smu-master/) | 南方医科大学硕士论文示例项目 | 需要 SMU 硕士论文版式模板 |
 | [`thesis-nju-master/`](./thesis-nju-master/) | 南京大学工程管理硕士论文示例项目 | 需要 NJU 工程管理硕士论文版式模板，且希望默认 `main.tex` 就是可编辑入口，同时保留公开基线验收文件 |
 | [`thesis-just-bachelor/`](./thesis-just-bachelor/) | 江苏科技大学本科毕业设计（论文）示例项目 | 需要 JUST 本科毕业设计（论文）版式模板 |
+| [`thesis-jxust-bachelor/`](./thesis-jxust-bachelor/) | 江西理工大学本科毕业论文 / 毕业设计示例项目 | 需要 JXUST 本科毕业论文 / 毕业设计版式模板，并希望在 `main.tex` 中切换论文 / 设计页眉 |
 | [`thesis-ahnu-master/`](./thesis-ahnu-master/) | 安徽师范大学硕士论文示例项目 | 需要 AHNU 硕士论文版式模板 |
 | [`thesis-hit-doctor/`](./thesis-hit-doctor/) | 哈尔滨工业大学博士论文示例项目 | 需要 HIT 博士论文版式模板 |
 | [`thesis-jlau-doctor/`](./thesis-jlau-doctor/) | 吉林农业大学博士论文示例项目 | 需要 JLAU 博士论文版式模板 |

@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### Added（新增）
+
+- 新增 `projects/thesis-jxust-bachelor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-jxust-bachelor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-jxust-bachelor.tex`：基于 issue #49 与江西理工大学 2026 届本科毕业论文（设计）官方格式文件，为 `bensz-thesis` 产品线新增 JXUST 本科毕业论文 / 毕业设计独立模板身份；`main.tex` 通过 `\jxustSetWorkType{thesis|design}` 切换封面标题与正文页眉，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260630`，避免安装器因旧版本号跳过新增模板。
+
 ### Removed（删除）
 
 - 移除 `skills/nsfc-roadmap/` 与 `skills/nsfc-schematic/` 两个 skill：技术路线图与原理图生成能力不再由本项目内置 skill 维护；同步清理 `skills/README.md`（架构图节点、专属章节、技能依赖列表、推荐使用顺序及后续章节序号重排）、根级 `README.md` 技能表格、`projects/NSFC_General|Local|Young/AGENTS.md`、`skills/nsfc-reviewers/README.md` 与 `skills/nsfc-research-content-writer/` 下文档中对两者的引用。

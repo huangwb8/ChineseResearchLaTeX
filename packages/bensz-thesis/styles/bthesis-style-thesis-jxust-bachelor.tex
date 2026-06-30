@@ -1,0 +1,276 @@
+\ProvidesFile{bthesis-style-thesis-jxust-bachelor.tex}
+  [2026/06/30 v1.0.0 Thesis style: thesis-jxust-bachelor]
+
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{caption}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+\RequirePackage{amsmath}
+
+\geometry{
+  a4paper,
+  left=3.17cm,
+  right=3.17cm,
+  top=2.54cm,
+  bottom=2.54cm,
+  headheight=14pt,
+  headsep=0.55cm,
+  footskip=1.0cm
+}
+
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+
+\IfFontExistsTF{SimSun}{
+  \setCJKmainfont{SimSun}
+  \newCJKfontfamily\jxustSong{SimSun}
+}{
+  \IfFontExistsTF{Songti SC}{
+    \setCJKmainfont{Songti SC}
+    \newCJKfontfamily\jxustSong{Songti SC}
+  }{
+    \setCJKmainfont{FandolSong-Regular}
+    \newCJKfontfamily\jxustSong{FandolSong-Regular}
+  }
+}
+
+\IfFontExistsTF{SimHei}{
+  \newCJKfontfamily\jxustHei{SimHei}
+}{
+  \IfFontExistsTF{Heiti SC}{
+    \newCJKfontfamily\jxustHei{Heiti SC}
+  }{
+    \newCJKfontfamily\jxustHei{FandolHei-Regular}
+  }
+}
+
+\AtBeginDocument{%
+  \jxustSong
+  \fontsize{12bp}{20bp}\selectfont
+}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setstretch{1.0}
+\linespread{1}
+\xeCJKsetup{PunctStyle=plain}
+
+\hypersetup{
+  colorlinks=false,
+  hidelinks,
+  hypertexnames=false,
+  CJKbookmarks=true
+}
+
+\newcommand{\jxustBodyFont}{\jxustSong\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\jxustHeaderFont}{\jxustSong\fontsize{10.5bp}{12bp}\selectfont}
+\newcommand{\jxustFooterFont}{\jxustSong\fontsize{9bp}{11bp}\selectfont}
+\newcommand{\jxustChapterFont}{\jxustHei\bfseries\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\jxustSectionFont}{\jxustHei\bfseries\fontsize{14bp}{20bp}\selectfont}
+\newcommand{\jxustSubsectionFont}{\jxustHei\bfseries\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\jxustFrontTitleFont}{\jxustHei\bfseries\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\jxustTocTitleFont}{\jxustHei\bfseries\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\jxustCoverTitleFont}{\jxustHei\bfseries\fontsize{26bp}{34bp}\selectfont}
+\newcommand{\jxustCoverSubTitleFont}{\jxustHei\bfseries\fontsize{22bp}{30bp}\selectfont}
+\newcommand{\jxustCoverFieldFont}{\jxustSong\fontsize{14bp}{22bp}\selectfont}
+\newcommand{\jxustCaptionFont}{\jxustSong\fontsize{10.5bp}{14bp}\selectfont}
+
+\providecommand{\jxustCohort}{2026}
+\providecommand{\jxustWorkType}{论文}
+\providecommand{\jxustWorkTypeTitle}{本科毕业论文}
+\providecommand{\jxustTitleZh}{毕业论文题目}
+\providecommand{\jxustTitleEn}{English Title}
+\providecommand{\jxustAuthor}{作者姓名}
+\providecommand{\jxustMajor}{专业}
+\providecommand{\jxustClass}{班级}
+\providecommand{\jxustStudentId}{学号}
+\providecommand{\jxustSupervisor}{指导教师}
+\providecommand{\jxustCollege}{学院}
+\providecommand{\jxustDateZh}{二〇二六年六月}
+\providecommand{\jxustDateNum}{2026 年 6 月}
+\providecommand{\jxustKeywordsZh}{关键词 1；关键词 2；关键词 3}
+\providecommand{\jxustKeywordsEn}{keyword 1; keyword 2; keyword 3}
+
+\newcommand{\jxustSetWorkType}[1]{%
+  \def\jxust@type{#1}%
+  \ifdefstring{\jxust@type}{design}{%
+    \renewcommand{\jxustWorkType}{设计}%
+    \renewcommand{\jxustWorkTypeTitle}{本科毕业设计}%
+  }{%
+    \renewcommand{\jxustWorkType}{论文}%
+    \renewcommand{\jxustWorkTypeTitle}{本科毕业论文}%
+  }%
+}
+\newcommand{\jxustHeaderText}{江西理工大学\jxustCohort{}届本科毕业\jxustWorkType}
+
+\renewcommand{\contentsname}{目\quad 录}
+\setcounter{tocdepth}{2}
+\titlecontents{chapter}[0pt]
+  {\jxustSong\fontsize{15bp}{20bp}\selectfont}
+  {\contentslabel{5.8em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{section}[2.8em]
+  {\jxustSong\fontsize{14bp}{20bp}\selectfont}
+  {\contentslabel{3.0em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[5.8em]
+  {\jxustSong\fontsize{12bp}{20bp}\selectfont}
+  {\contentslabel{3.8em}}
+  {}
+  {\titlerule*[0.6pc]{.}\contentspage}
+\titleformat{\chapter}[block]
+  {\centering\jxustChapterFont}
+  {第\chinese{chapter}章}
+  {1em}
+  {}
+\titlespacing*{\chapter}{0pt}{0pt}{18bp}
+
+\titleformat{\section}
+  {\jxustSectionFont}
+  {\thesection}
+  {0.8em}
+  {}
+\titlespacing*{\section}{0pt}{12bp}{6bp}
+
+\titleformat{\subsection}
+  {\jxustSubsectionFont}
+  {\thesubsection}
+  {0.8em}
+  {}
+\titlespacing*{\subsection}{0pt}{8bp}{4bp}
+
+\renewcommand{\thechapter}{\arabic{chapter}}
+\renewcommand{\thesection}{\thechapter.\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+\renewcommand{\thetable}{\thechapter-\arabic{table}}
+\renewcommand{\theequation}{\thechapter-\arabic{equation}}
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+\numberwithin{equation}{chapter}
+
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.1em,topsep=0.1em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.1em,topsep=0.1em}
+
+\fancypagestyle{jxust-main}{
+  \fancyhf{}
+  \fancyhead[C]{\jxustHeaderFont \jxustHeaderText}
+  \fancyfoot[C]{\jxustFooterFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{jxust-front}{
+  \fancyhf{}
+  \fancyfoot[C]{\jxustFooterFont \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{jxust-empty}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[C]{\jxustHeaderFont \jxustHeaderText}
+  \fancyfoot[C]{\jxustFooterFont \thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\captionsetup{
+  font={stretch=1.0},
+  textfont=normalfont,
+  labelfont=normalfont,
+  justification=centering,
+  singlelinecheck=false
+}
+\DeclareCaptionFont{jxustcaption}{\jxustCaptionFont}
+\captionsetup{font=jxustcaption}
+
+\newcommand{\jxustField}[2]{%
+  \noindent
+  \begin{tabularx}{\textwidth}{>{\jxustCoverFieldFont\raggedleft\arraybackslash}p{4.0cm}X}
+    #1 & {\jxustCoverFieldFont\centering\arraybackslash #2}\tabularnewline[-0.2em]
+       & \hrulefill
+  \end{tabularx}\par\vspace{0.35cm}
+}
+
+\newcommand{\jxustMakeCover}{%
+  \thispagestyle{jxust-empty}%
+  \begingroup
+  \centering
+  \vspace*{1.6cm}
+  {\jxustCoverTitleFont 江西理工大学\par}
+  \vspace{1.0cm}
+  {\jxustCoverSubTitleFont \jxustWorkTypeTitle\par}
+  \vspace{1.2cm}
+  {\jxustHei\bfseries\fontsize{18bp}{26bp}\selectfont 题\quad 目\par}
+  \vspace{0.4cm}
+  {\jxustSong\bfseries\fontsize{16bp}{24bp}\selectfont \parbox{12.6cm}{\centering \jxustTitleZh}\par}
+  \vspace{1.4cm}
+  \jxustField{学\quad 院：}{\jxustCollege}
+  \jxustField{专业班级：}{\jxustMajor\quad \jxustClass}
+  \jxustField{学生姓名：}{\jxustAuthor}
+  \jxustField{学\quad 号：}{\jxustStudentId}
+  \jxustField{指导教师：}{\jxustSupervisor}
+  \vfill
+  {\jxustSong\fontsize{14bp}{20bp}\selectfont \jxustDateZh\par}
+  \endgroup
+}
+
+\newcommand{\jxustMakeTitlePage}{%
+  \thispagestyle{jxust-empty}%
+  \begingroup
+  \centering
+  \vspace*{2.6cm}
+  {\jxustCoverTitleFont 江西理工大学\par}
+  \vspace{0.7cm}
+  {\jxustCoverSubTitleFont \jxustWorkTypeTitle\par}
+  \vspace{2.2cm}
+  {\jxustHei\bfseries\fontsize{18bp}{24bp}\selectfont \jxustTitleZh\par}
+  \vspace{0.5cm}
+  {\fontsize{14bp}{20bp}\selectfont \parbox{12cm}{\centering \jxustTitleEn}\par}
+  \vspace{2.1cm}
+  \renewcommand{\arraystretch}{1.6}
+  \begin{tabular}{>{\raggedleft\arraybackslash}p{4cm}p{7.5cm}}
+    学院： & \jxustCollege \\
+    专业班级： & \jxustMajor\quad \jxustClass \\
+    学生姓名： & \jxustAuthor \\
+    学号： & \jxustStudentId \\
+    指导教师： & \jxustSupervisor \\
+  \end{tabular}\par
+  \vfill
+  {\jxustSong\fontsize{14bp}{20bp}\selectfont \jxustDateNum\par}
+  \endgroup
+}
+
+\newcommand{\jxustFrontHeading}[1]{%
+  \thispagestyle{jxust-empty}%
+  \begin{center}
+    \vspace*{1.4cm}
+    {\jxustFrontTitleFont #1\par}
+  \end{center}
+  \vspace{0.8cm}
+}
