@@ -1,0 +1,26 @@
+\chapter{讨论与局限}
+
+\section{讨论}
+
+本项目没有另起一套博士后报告公共包，而是选择在现有 thesis 产品线内注册独立的 CAS 博士后模板身份。这样做有两个好处：第一，继续复用已经稳定、已被多套项目验证的构建链路和页面样式能力；第二，既保证博士后研究报告在业务和打包层面独立成立，又避免为高度相近的底层排版能力重复维护第二套公共包。
+
+\section{当前公开示例的边界}
+
+本模板仍然是公开演示项目，因此存在明确边界：
+
+\begin{enumerate}
+  \item 不包含任何私有访谈材料、平台后台数据或未公开研究发现；
+  \item 不承诺已经对齐某一年度所有院内细则，仅优先吸收全国统一规则与封面核心字段；
+  \item DOCX 导出仅定位为可编辑初稿，当前交付重点仍是稳定 PDF。
+\end{enumerate}
+
+\section{适用建议}
+
+实际使用时，建议优先替换以下内容：
+
+\begin{enumerate}
+  \item \texttt{extraTex/meta.tex} 中的封面与题名页元信息；
+  \item \texttt{extraTex/front/abstract\_*.tex} 中的摘要内容；
+  \item \texttt{extraTex/body/} 中各章正文；
+  \item \texttt{extraTex/back/} 中的附录、简历、成果和通信地址。
+\end{enumerate}

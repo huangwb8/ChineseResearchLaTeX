@@ -1,0 +1,50 @@
+\chapter{资料整理与方法流程}
+
+\section{结构设计原则}
+
+项目层实现遵循“最小侵入”原则：公共包继续负责页面样式、目录、图表、参考文献、统一构建，以及 \texttt{thesis-cas-postdoc} 的独立模板身份；博士后研究报告特有的封面、题名页和结尾材料仍放在项目自己的 \texttt{extraTex/} 中维护。这样既能保证单项目分发时的业务独立，又不会把尚未稳定沉淀的个性化正文逻辑提前固化到共享包中。
+
+\section{正文组织方式}
+
+正文采用五章结构：
+
+\begin{enumerate}
+  \item 研究背景与问题界定；
+  \item 资料整理与方法流程；
+  \item 传播路径与示范分析；
+  \item 讨论与局限；
+  \item 结论与应用建议。
+\end{enumerate}
+
+\section{示范流程图}
+
+\begin{figure}[H]
+  \centering
+  \fbox{%
+    \parbox[c][4.2cm][c]{0.78\textwidth}{%
+      \centering
+      公开示意图占位\\[0.4em]
+      影像材料采集 $\rightarrow$ 传播渠道整理 $\rightarrow$ 审美主题编码 $\rightarrow$ 接受机制阐释
+    }%
+  }
+  \caption{博士后研究报告示例中的文化材料分析流程示意图}
+  \label{fig:postdoc-workflow}
+\end{figure}
+
+\section{关键变量分组}
+
+\begin{table}[H]
+  \centering
+  \caption{公开示例中的变量分组说明}
+  \label{tab:variables}
+  \begin{tabularx}{0.92\textwidth}{@{}lXX@{}}
+    \toprule
+    分组 & 核心材料 & 说明 \\
+    \midrule
+    影像文本 & 影视片段、写真视觉、公开访谈 & 用于描述佐佐木希形象的媒介呈现 \\
+    传播渠道 & 电视、杂志、短视频、社交平台 & 用于梳理跨媒介扩散路径 \\
+    接受表达 & 评论文本、二次创作、主题讨论 & 用于呈现审美评价和情感投射 \\
+    比较维度 & 日本本土、中文互联网、东亚区域语境 & 用于演示区域差异分析写法 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

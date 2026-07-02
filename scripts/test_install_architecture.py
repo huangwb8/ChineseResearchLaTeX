@@ -351,6 +351,18 @@ def test_build_thesis_runtime_bundle_uses_independent_postdoc_profile_and_style(
     assert not (runtime_dir / "bthesis-style-thesis-smu-master.tex").exists()
 
 
+def test_build_thesis_runtime_bundle_uses_independent_cas_postdoc_profile_and_style(tmp_path: Path):
+    runtime_dir = tmp_path / "thesis-runtime"
+    project_dir = REPO_ROOT / "projects" / "thesis-cas-postdoc"
+
+    pack_release.build_thesis_runtime_bundle(runtime_dir, project_dir)
+
+    assert (runtime_dir / "profiles" / "bthesis-profile-thesis-cas-postdoc.def").exists()
+    assert (runtime_dir / "bthesis-style-thesis-cas-postdoc.tex").exists()
+    assert not (runtime_dir / "profiles" / "bthesis-profile-thesis-smu-postdoc.def").exists()
+    assert not (runtime_dir / "bthesis-style-thesis-smu-postdoc.tex").exists()
+
+
 def test_build_thesis_runtime_bundle_uses_independent_nwu_profile_and_style(tmp_path: Path):
     runtime_dir = tmp_path / "thesis-runtime"
     project_dir = REPO_ROOT / "projects" / "thesis-nwu-doctor"

@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-cas-postdoc.def}
+  [2026/07/02 v1.0.0 Thesis profile: thesis-cas-postdoc]
+
+\makeatletter
+\def\bthesis@template{thesis-cas-postdoc}
+\def\bthesis@templateversion{t_v20260702}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-cas-postdoc.tex}
+\makeatother

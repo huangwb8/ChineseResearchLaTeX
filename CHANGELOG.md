@@ -10,6 +10,7 @@
 
 ### Added（新增）
 
+- 新增 `projects/thesis-cas-postdoc/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-cas-postdoc.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-cas-postdoc.tex`：基于 issue #50 与《博士后研究报告编写规则》附件，为 `bensz-thesis` 产品线新增中国科学院博士后出站研究报告独立模板身份，覆盖封面、题名页、中英文摘要、目录、插图清单、附表清单、符号与缩略词表、正文、参考文献、附录、博士后个人简历、博士生/博士后期间科研成果、永久通信地址和致谢；示例正文遵循 thesis 产品线公开演示约定，以“冯宝宝”署名并围绕“佐佐木希”相关公开文化研究方向展开，同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260702`，避免安装器因旧版本号跳过新增模板。
 - 新增 `projects/thesis-jxust-bachelor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-jxust-bachelor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-jxust-bachelor.tex`：基于 issue #49 与江西理工大学 2026 届本科毕业论文（设计）官方格式文件，为 `bensz-thesis` 产品线新增 JXUST 本科毕业论文 / 毕业设计独立模板身份；`main.tex` 通过 `\jxustSetWorkType{thesis|design}` 切换封面标题与正文页眉，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260630`，避免安装器因旧版本号跳过新增模板。
 - 为 `projects/thesis-jxust-bachelor/` 补充江西理工大学官网横版标志资源，并在 `bthesis-style-thesis-jxust-bachelor.tex` 的封面和题名页接入 `\jxustLogoImagePath`，缺少图片时仍回退为校名文字，修复 issue #49 首版封面未显示 logo 的遗漏。
 

@@ -1,0 +1,100 @@
+% 封面
+\thispagestyle{empty}
+\newgeometry{left=3.5cm,right=2.0cm,top=3.0cm,bottom=2.5cm,headheight=14pt,headsep=10pt}
+
+\begingroup
+\setstretch{1.0}
+\setlength{\parindent}{0pt}
+\enlargethispage{2cm}
+
+\begingroup
+  \zihao{-4}
+  \renewcommand{\arraystretch}{1.95}
+  \setlength{\tabcolsep}{0pt}
+  \newcommand{\postdocCoverTopLabel}[1]{{\fontsize{13.5pt}{13.5pt}\selectfont #1}}
+  \newlength{\postdocCoverTopLeftLabelWidth}
+  \newlength{\postdocCoverTopRightLabelWidth}
+  \newlength{\postdocCoverTopLabelGapWidth}
+  \newlength{\postdocCoverTopGroupGapWidth}
+  \newlength{\postdocCoverTopFieldWidth}
+  \setlength{\postdocCoverTopLeftLabelWidth}{2.4cm}
+  \setlength{\postdocCoverTopRightLabelWidth}{1.3cm}
+  \setlength{\postdocCoverTopLabelGapWidth}{0.28cm}
+  \setlength{\postdocCoverTopGroupGapWidth}{0.9cm}
+  \setlength{\postdocCoverTopFieldWidth}{%
+    \dimexpr
+      (\textwidth
+      - \postdocCoverTopLeftLabelWidth
+      - \postdocCoverTopRightLabelWidth
+      - 2\postdocCoverTopLabelGapWidth
+      - \postdocCoverTopGroupGapWidth)/2
+    \relax
+  }
+  \begin{tabular}{@{}>{\raggedleft\arraybackslash}p{\postdocCoverTopLeftLabelWidth}@{\hspace{\postdocCoverTopLabelGapWidth}}p{\postdocCoverTopFieldWidth}@{\hspace{\postdocCoverTopGroupGapWidth}}>{\raggedleft\arraybackslash}p{\postdocCoverTopRightLabelWidth}@{\hspace{\postdocCoverTopLabelGapWidth}}p{\postdocCoverTopFieldWidth}@{}}
+    \postdocCoverTopLabel{分类号} &
+      \casdocUnderlinedFieldL{\postdocClassNo}{\linewidth} &
+      \postdocCoverTopLabel{密级} &
+      \casdocUnderlinedFieldL{\postdocSecretLevel}{\linewidth} \\
+    \postdocCoverTopLabel{U\kern0.35em D\kern0.35em C} &
+      \casdocUnderlinedFieldL{\postdocUDC}{\linewidth} &
+      \postdocCoverTopLabel{编号} &
+      \casdocUnderlinedFieldL{\postdocNo}{\linewidth} \\
+  \end{tabular}
+\endgroup
+
+\vspace*{1.2cm}
+\begin{center}
+  {\sffamily\bfseries\zihao{0}\postdocUnitShort\par}
+
+  \vspace*{1.25cm}
+  {\sffamily\bfseries\zihao{1}博\hspace{0.85em}士\hspace{0.85em}后\hspace{0.85em}研\hspace{0.85em}究\hspace{0.85em}工\hspace{0.85em}作\hspace{0.85em}报\hspace{0.85em}告\par}
+
+  \vspace*{1.35cm}
+  \begingroup
+    \arrayrulecolor{black}
+    \setlength{\tabcolsep}{0pt}
+    \renewcommand{\arraystretch}{1.55}
+    \def\casdocCoverLinebreak{\\\hline}
+    \begin{tabularx}{0.88\textwidth}{>{\centering\arraybackslash\sffamily\bfseries\zihao{3}}X}
+      \postdocTitleZhCover\\\hline
+    \end{tabularx}
+  \endgroup
+
+  \vspace*{0.65cm}
+  \begingroup
+    \arrayrulecolor{black}
+    \setlength{\tabcolsep}{0pt}
+    \renewcommand{\arraystretch}{1.65}
+    \def\casdocCoverLinebreak{\\\hline}
+    \begin{tabularx}{0.88\textwidth}{>{\centering\arraybackslash\sffamily\bfseries\fontsize{14pt}{17pt}\selectfont}X}
+      \hline
+      \postdocTitleEnCover\\\hline
+    \end{tabularx}
+  \endgroup
+
+  \vspace*{1.1cm}
+  {\sffamily\bfseries\zihao{4}\postdocAuthorZh\par}
+  \rule{0.42\textwidth}{0.4pt}\par
+\end{center}
+
+\vspace*{1.2cm}
+\zihao{-4}
+\renewcommand{\arraystretch}{1.8}
+\setlength{\tabcolsep}{0pt}
+\newlength{\postdocCoverLabelWidth}
+\setlength{\postdocCoverLabelWidth}{4.5cm}
+\newcommand{\postdocCoverLabel}[1]{\sffamily\textbf{\makebox[\postdocCoverLabelWidth][s]{#1}}}
+\begin{tabularx}{\textwidth}{@{}p{\postdocCoverLabelWidth}@{\hspace{0.5em}}X@{}}
+  \postdocCoverLabel{工作完成日期} & \casdocUnderlinedFieldLPad{\postdocCompletionDate}{\linewidth} \\
+  \postdocCoverLabel{报告提交日期} & \casdocUnderlinedFieldLPad{\postdocSubmitDate}{\linewidth} \\
+\end{tabularx}
+
+\vfill
+\begin{center}
+  {\zihao{-3}\postdocUnit\par}
+  \vspace*{0.4cm}
+  {\zihao{-4}（\postdocCountryRegion\quad \postdocCity）\par}
+  \vspace*{0.3cm}
+  {\zihao{-4}\postdocReportDate\par}
+\end{center}
+\endgroup

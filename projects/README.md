@@ -85,6 +85,7 @@
 | [`thesis-just-bachelor/`](./thesis-just-bachelor/) | 江苏科技大学本科毕业设计（论文）示例项目 | 需要 JUST 本科毕业设计（论文）版式模板 |
 | [`thesis-jxust-bachelor/`](./thesis-jxust-bachelor/) | 江西理工大学本科毕业论文 / 毕业设计示例项目 | 需要 JXUST 本科毕业论文 / 毕业设计版式模板，并希望在 `main.tex` 中切换论文 / 设计页眉 |
 | [`thesis-ahnu-master/`](./thesis-ahnu-master/) | 安徽师范大学硕士论文示例项目 | 需要 AHNU 硕士论文版式模板 |
+| [`thesis-cas-postdoc/`](./thesis-cas-postdoc/) | 中国科学院博士后出站研究报告示例项目 | 需要按中国科学院博士后出站报告场景组织封面、题名页、中英文摘要、目录、图表清单、正文与后置材料 |
 | [`thesis-hit-doctor/`](./thesis-hit-doctor/) | 哈尔滨工业大学博士论文示例项目 | 需要 HIT 博士论文版式模板 |
 | [`thesis-jlau-doctor/`](./thesis-jlau-doctor/) | 吉林农业大学博士论文示例项目 | 需要 JLAU 博士论文版式模板 |
 | [`thesis-jlau-master/`](./thesis-jlau-master/) | 吉林农业大学硕士论文示例项目 | 需要 JLAU 硕士论文版式模板 |
@@ -93,7 +94,7 @@
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |
 | [`thesis-smu-postdoc/`](./thesis-smu-postdoc/) | 南方医科大学博士后研究报告示例项目 | 需要按博士后研究报告规范组织封面、题名页、中英文摘要、正文与后置材料 |
 
-如果你的目标是博士后出站研究报告，请优先进入 `thesis-smu-postdoc/`；如果你的目标是学位论文，请进入学校和类型最接近的其他 `thesis-*` 项目。
+如果你的目标是博士后出站研究报告，请优先进入 `thesis-cas-postdoc/` 或 `thesis-smu-postdoc/`；如果你的目标是学位论文，请进入学校和类型最接近的其他 `thesis-*` 项目。
 
 ## 简历（CV）
 
@@ -120,7 +121,7 @@
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`
 - 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-nwu-doctor/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
-- 写博士后研究报告：进入 `thesis-smu-postdoc/`
+- 写博士后研究报告：进入 `thesis-cas-postdoc/` 或 `thesis-smu-postdoc/`
 - 写中英文简历：进入 `cv-01/`
 
 若你的问题涉及共享样式、公共宏、构建脚本或安装逻辑，再回到 `packages/` 目录定位对应公共包。
