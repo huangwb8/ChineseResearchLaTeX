@@ -11,6 +11,7 @@
 ### Added（新增）
 
 - 新增 `projects/thesis-jxust-bachelor/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-jxust-bachelor.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-jxust-bachelor.tex`：基于 issue #49 与江西理工大学 2026 届本科毕业论文（设计）官方格式文件，为 `bensz-thesis` 产品线新增 JXUST 本科毕业论文 / 毕业设计独立模板身份；`main.tex` 通过 `\jxustSetWorkType{thesis|design}` 切换封面标题与正文页眉，并将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260630`，避免安装器因旧版本号跳过新增模板。
+- 为 `projects/thesis-jxust-bachelor/` 补充江西理工大学官网横版标志资源，并在 `bthesis-style-thesis-jxust-bachelor.tex` 的封面和题名页接入 `\jxustLogoImagePath`，缺少图片时仍回退为校名文字，修复 issue #49 首版封面未显示 logo 的遗漏。
 
 ### Removed（删除）
 

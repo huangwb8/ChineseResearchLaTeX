@@ -6,8 +6,9 @@
 \input{extraTex/meta.tex}
 
 % 可选值：
-%   thesis  -> 页眉和封面显示“本科毕业论文”
-%   design  -> 页眉和封面显示“本科毕业设计”
+%   thesis  -> 正文页眉显示“本科毕业论文”
+%   design  -> 正文页眉显示“本科毕业设计”
+% 封面按官方附件 6 的通用题名保留“本科毕业论文(设计)”。
 \jxustSetWorkType{thesis}
 
 \begin{document}
@@ -15,7 +16,7 @@
 \pagestyle{jxust-empty}
 \jxustMakeCover
 \clearpage
-\jxustMakeTitlePage
+\jxustMakeOriginalityStatement
 \clearpage
 
 \input{extraTex/front/abstract_zh.tex}
@@ -23,10 +24,10 @@
 \input{extraTex/front/abstract_en.tex}
 \clearpage
 
-\pagenumbering{Roman}
+\jxustFrontMatterPageNumbering
 \setcounter{page}{1}
 \pagestyle{jxust-front}
-\tableofcontents
+\jxustMakeToc
 \clearpage
 
 \pagenumbering{arabic}
@@ -39,12 +40,12 @@
 \input{extraTex/body/chapter-04.tex}
 
 \clearpage
-\chapter*{参考文献}
+\phantomsection
 \addcontentsline{toc}{chapter}{参考文献}
 \input{extraTex/back/references.tex}
 
 \clearpage
-\chapter*{致谢}
+\chapter*{致\quad 谢}
 \addcontentsline{toc}{chapter}{致谢}
 \input{extraTex/back/thanks.tex}
 

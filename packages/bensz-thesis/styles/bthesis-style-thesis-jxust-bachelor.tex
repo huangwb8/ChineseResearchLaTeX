@@ -37,6 +37,15 @@
 }{
   \setmainfont{TeX Gyre Termes}
 }
+\IfFontExistsTF{Arial Unicode MS}{
+  \newfontfamily\jxustRomanPageFont{Arial Unicode MS}
+}{
+  \IfFontExistsTF{Apple Symbols}{
+    \newfontfamily\jxustRomanPageFont{Apple Symbols}
+  }{
+    \newfontfamily\jxustRomanPageFont{Times New Roman}
+  }
+}
 
 \IfFontExistsTF{SimSun}{
   \setCJKmainfont{SimSun}
@@ -60,6 +69,15 @@
     \newCJKfontfamily\jxustHei{FandolHei-Regular}
   }
 }
+\IfFontExistsTF{LiSu}{
+  \newCJKfontfamily\jxustLi{LiSu}
+}{
+  \IfFontExistsTF{STLiti}{
+    \newCJKfontfamily\jxustLi{STLiti}
+  }{
+    \let\jxustLi\jxustSong
+  }
+}
 
 \AtBeginDocument{%
   \jxustSong
@@ -77,19 +95,28 @@
   hypertexnames=false,
   CJKbookmarks=true
 }
+\pdfstringdefDisableCommands{%
+  \def\jxustRomanPageFont{}%
+}
+\makeatletter
+\renewcommand{\@cite}[2]{\textsuperscript{[#1]}}
+\makeatother
 
 \newcommand{\jxustBodyFont}{\jxustSong\fontsize{12bp}{20bp}\selectfont}
 \newcommand{\jxustHeaderFont}{\jxustSong\fontsize{10.5bp}{12bp}\selectfont}
 \newcommand{\jxustFooterFont}{\jxustSong\fontsize{9bp}{11bp}\selectfont}
-\newcommand{\jxustChapterFont}{\jxustHei\bfseries\fontsize{16bp}{22bp}\selectfont}
+\newcommand{\jxustChapterFont}{\jxustHei\bfseries\fontsize{15bp}{22bp}\selectfont}
 \newcommand{\jxustSectionFont}{\jxustHei\bfseries\fontsize{14bp}{20bp}\selectfont}
-\newcommand{\jxustSubsectionFont}{\jxustHei\bfseries\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\jxustSubsectionFont}{\jxustHei\bfseries\fontsize{14bp}{20bp}\selectfont}
 \newcommand{\jxustFrontTitleFont}{\jxustHei\bfseries\fontsize{16bp}{22bp}\selectfont}
 \newcommand{\jxustTocTitleFont}{\jxustHei\bfseries\fontsize{16bp}{22bp}\selectfont}
-\newcommand{\jxustCoverTitleFont}{\jxustHei\bfseries\fontsize{26bp}{34bp}\selectfont}
+\newcommand{\jxustCoverTitleFont}{\jxustHei\bfseries\fontsize{34bp}{42bp}\selectfont}
 \newcommand{\jxustCoverSubTitleFont}{\jxustHei\bfseries\fontsize{22bp}{30bp}\selectfont}
-\newcommand{\jxustCoverFieldFont}{\jxustSong\fontsize{14bp}{22bp}\selectfont}
+\newcommand{\jxustCoverFieldFont}{\jxustHei\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\jxustCoverValueFont}{\jxustSong\fontsize{12bp}{20bp}\selectfont}
 \newcommand{\jxustCaptionFont}{\jxustSong\fontsize{10.5bp}{14bp}\selectfont}
+\newcommand{\jxustStatementTitleFont}{\jxustHei\fontsize{18bp}{24bp}\selectfont}
+\newcommand{\jxustStatementBodyFont}{\jxustLi\fontsize{16bp}{24bp}\selectfont}
 
 \providecommand{\jxustCohort}{2026}
 \providecommand{\jxustWorkType}{论文}
@@ -101,11 +128,19 @@
 \providecommand{\jxustClass}{班级}
 \providecommand{\jxustStudentId}{学号}
 \providecommand{\jxustSupervisor}{指导教师}
+\providecommand{\jxustSupervisorTitle}{职称}
+\providecommand{\jxustSupervisorSecond}{}
+\providecommand{\jxustSupervisorTitleSecond}{}
 \providecommand{\jxustCollege}{学院}
+\providecommand{\jxustTopicTitle}{}
 \providecommand{\jxustDateZh}{二〇二六年六月}
 \providecommand{\jxustDateNum}{2026 年 6 月}
+\providecommand{\jxustDateCover}{2026 年 6 月}
 \providecommand{\jxustKeywordsZh}{关键词 1；关键词 2；关键词 3}
 \providecommand{\jxustKeywordsEn}{keyword 1; keyword 2; keyword 3}
+\providecommand{\jxustLogoImagePath}{assets/branding/jxust_logo.jpg}
+\providecommand{\jxustEmblemImagePath}{assets/branding/jxust_emblem_official.jpeg}
+\providecommand{\jxustWordmarkImagePath}{assets/branding/jxust_wordmark_official.jpeg}
 
 \newcommand{\jxustSetWorkType}[1]{%
   \def\jxust@type{#1}%
@@ -121,21 +156,22 @@
 
 \renewcommand{\contentsname}{目\quad 录}
 \setcounter{tocdepth}{2}
-\titlecontents{chapter}[0pt]
-  {\jxustSong\fontsize{15bp}{20bp}\selectfont}
-  {\contentslabel{5.8em}}
+\newcommand{\jxustTocPage}[1]{\makebox[2.0em][r]{#1}}
+\titlecontents{chapter}[1.5em]
+  {\addvspace{2bp}\jxustSong\fontsize{15bp}{20bp}\selectfont}
+  {\contentslabel{4.8em}}
   {}
-  {\titlerule*[0.6pc]{.}\contentspage}
-\titlecontents{section}[2.8em]
+  {\hspace{0.35em}\titlerule*[0.6pc]{.}\jxustTocPage{\contentspage}}
+\titlecontents{section}[3.3em]
   {\jxustSong\fontsize{14bp}{20bp}\selectfont}
   {\contentslabel{3.0em}}
   {}
-  {\titlerule*[0.6pc]{.}\contentspage}
-\titlecontents{subsection}[5.8em]
+  {\hspace{0.35em}\titlerule*[0.6pc]{.}\jxustTocPage{\contentspage}}
+\titlecontents{subsection}[6.3em]
   {\jxustSong\fontsize{12bp}{20bp}\selectfont}
   {\contentslabel{3.8em}}
   {}
-  {\titlerule*[0.6pc]{.}\contentspage}
+  {\hspace{0.35em}\titlerule*[0.6pc]{.}\jxustTocPage{\contentspage}}
 \titleformat{\chapter}[block]
   {\centering\jxustChapterFont}
   {第\chinese{chapter}章}
@@ -160,12 +196,12 @@
 \renewcommand{\thechapter}{\arabic{chapter}}
 \renewcommand{\thesection}{\thechapter.\arabic{section}}
 \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
-\renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-\renewcommand{\thetable}{\thechapter-\arabic{table}}
-\renewcommand{\theequation}{\thechapter-\arabic{equation}}
 \numberwithin{figure}{chapter}
 \numberwithin{table}{chapter}
 \numberwithin{equation}{chapter}
+\renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+\renewcommand{\thetable}{\thechapter-\arabic{table}}
+\renewcommand{\theequation}{\thechapter-\arabic{equation}}
 
 \setlist[itemize]{leftmargin=2.2em,itemsep=0.1em,topsep=0.1em}
 \setlist[enumerate]{leftmargin=2.2em,itemsep=0.1em,topsep=0.1em}
@@ -179,6 +215,13 @@
 }
 
 \fancypagestyle{jxust-front}{
+  \fancyhf{}
+  \fancyfoot[C]{\jxustFooterFont \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{jxustfrontplain}{
   \fancyhf{}
   \fancyfoot[C]{\jxustFooterFont \thepage}
   \renewcommand{\headrulewidth}{0pt}
@@ -208,35 +251,170 @@
 }
 \DeclareCaptionFont{jxustcaption}{\jxustCaptionFont}
 \captionsetup{font=jxustcaption}
+\AtBeginDocument{%
+  \renewcommand{\footnotesize}{\jxustSong\fontsize{9bp}{12bp}\selectfont}%
+}
+
+\newcommand{\jxustCnRomanPage}{%
+  {\jxustRomanPageFont
+  \ifcase\value{page}%
+  \or Ⅰ\or Ⅱ\or Ⅲ\or Ⅳ\or Ⅴ\or Ⅵ\or Ⅶ\or Ⅷ\or Ⅸ\or Ⅹ%
+  \or Ⅺ\or Ⅻ\or XIII\or XIV\or XV\or XVI\or XVII\or XVIII\or XIX\or XX%
+  \else\Roman{page}\fi}%
+}
+\newcommand{\jxustFrontMatterPageNumbering}{%
+  \pagenumbering{Roman}%
+  \renewcommand{\thepage}{\jxustCnRomanPage}%
+}
+\makeatletter
+\newcommand{\jxustMakeToc}{%
+  \begingroup
+  \let\jxust@saved@plain\ps@plain
+  \let\ps@plain\ps@jxustfrontplain
+  \pagestyle{jxust-front}%
+  \tableofcontents
+  \thispagestyle{jxust-front}%
+  \let\ps@plain\jxust@saved@plain
+  \endgroup
+}
+\makeatother
 
 \newcommand{\jxustField}[2]{%
   \noindent
-  \begin{tabularx}{\textwidth}{>{\jxustCoverFieldFont\raggedleft\arraybackslash}p{4.0cm}X}
-    #1 & {\jxustCoverFieldFont\centering\arraybackslash #2}\tabularnewline[-0.2em]
+  \begin{tabularx}{\textwidth}{>{\jxustCoverFieldFont\raggedleft\arraybackslash}p{3.6cm}X}
+    #1 & {\jxustCoverValueFont\centering\arraybackslash #2}\tabularnewline[-0.3em]
        & \hrulefill
-  \end{tabularx}\par\vspace{0.35cm}
+  \end{tabularx}\par\vspace{0.26cm}
+}
+
+\newcommand{\jxustCoverUnderline}[2][7.6cm]{%
+  \underline{\makebox[#1][c]{\jxustCoverValueFont #2}}%
+}
+
+\newcommand{\jxustCoverSingleField}[3][7.6cm]{%
+  \noindent
+  \makebox[2.7cm][r]{\jxustCoverFieldFont #2}%
+  \hspace{0.30cm}%
+  \jxustCoverUnderline[#1]{#3}\par\vspace{0.28cm}
+}
+
+\newcommand{\jxustCoverPairField}[4]{%
+  \noindent
+  \makebox[2.7cm][r]{\jxustCoverFieldFont #1}%
+  \hspace{0.30cm}%
+  \jxustCoverUnderline[2.35cm]{#2}%
+  \hspace{0.40cm}%
+  \makebox[1.55cm][r]{\jxustCoverFieldFont #3}%
+  \hspace{0.30cm}%
+  \jxustCoverUnderline[2.35cm]{#4}\par\vspace{0.28cm}
+}
+
+\newcommand{\jxustCoverLogoBlock}{%
+  \noindent\makebox[\textwidth][l]{%
+    \hspace*{1.25cm}%
+    \IfFileExists{\jxustEmblemImagePath}{%
+      \includegraphics[width=2.05cm]{\jxustEmblemImagePath}%
+    }{}%
+  }\par
+  \vspace{0.18cm}
+  \IfFileExists{\jxustWordmarkImagePath}{%
+    \includegraphics[width=6.35cm]{\jxustWordmarkImagePath}\par
+  }{%
+    \IfFileExists{\jxustLogoImagePath}{%
+      \includegraphics[width=7.2cm]{\jxustLogoImagePath}\par
+    }{%
+      {\jxustCoverSubTitleFont 江西理工大学\par}%
+    }%
+  }%
+}
+\newcommand{\jxustLogoBlock}{\jxustCoverLogoBlock}
+\newcommand{\jxustCoverDoubleRule}{%
+  \rule{13.2cm}{1.2pt}\par\vspace{0.5pt}%
+  \rule{13.2cm}{0.4pt}\par
 }
 
 \newcommand{\jxustMakeCover}{%
   \thispagestyle{jxust-empty}%
   \begingroup
   \centering
-  \vspace*{1.6cm}
-  {\jxustCoverTitleFont 江西理工大学\par}
-  \vspace{1.0cm}
-  {\jxustCoverSubTitleFont \jxustWorkTypeTitle\par}
-  \vspace{1.2cm}
-  {\jxustHei\bfseries\fontsize{18bp}{26bp}\selectfont 题\quad 目\par}
-  \vspace{0.4cm}
-  {\jxustSong\bfseries\fontsize{16bp}{24bp}\selectfont \parbox{12.6cm}{\centering \jxustTitleZh}\par}
-  \vspace{1.4cm}
-  \jxustField{学\quad 院：}{\jxustCollege}
-  \jxustField{专业班级：}{\jxustMajor\quad \jxustClass}
-  \jxustField{学生姓名：}{\jxustAuthor}
-  \jxustField{学\quad 号：}{\jxustStudentId}
-  \jxustField{指导教师：}{\jxustSupervisor}
+  \vspace*{1.35cm}
+  \jxustCoverLogoBlock
+  \vspace{0.95cm}
+  {\jxustCoverTitleFont 本科毕业论文(设计)\par}
+  \vspace{0.55cm}
+  \jxustCoverDoubleRule
+  \vspace{0.95cm}
+  \begin{minipage}{11.2cm}
+  \jxustCoverSingleField{题\quad 目：}{\jxustTitleZh}
+  \jxustCoverSingleField{专题题目：}{\jxustTopicTitle}
+  \vspace{0.35cm}
+  \jxustCoverSingleField{学\quad 院：}{\jxustCollege}
+  \jxustCoverSingleField{专\quad 业：}{\jxustMajor}
+  \jxustCoverSingleField{班\quad 级：}{\jxustClass}
+  \jxustCoverPairField{学\quad 号：}{\jxustStudentId}{学\quad 生：}{\jxustAuthor}
+  \jxustCoverPairField{指导教师：}{\jxustSupervisor}{职\quad 称：}{\jxustSupervisorTitle}
+  \jxustCoverPairField{指导教师：}{\jxustSupervisorSecond}{职\quad 称：}{\jxustSupervisorTitleSecond}
+  \vspace{0.28cm}
+  \jxustCoverSingleField[5.6cm]{时\quad 间：}{\jxustDateCover}
+  \end{minipage}
   \vfill
-  {\jxustSong\fontsize{14bp}{20bp}\selectfont \jxustDateZh\par}
+  \endgroup
+}
+
+\newcommand{\jxustMakeOriginalityStatement}{%
+  \thispagestyle{jxust-empty}%
+  \begingroup
+  \jxustStatementBodyFont
+  \setlength{\parindent}{2em}%
+  \setlength{\parskip}{0pt}%
+  \vspace*{1.0cm}
+  \begin{center}
+    {\jxustStatementTitleFont 独创性声明\par}
+  \end{center}
+  \vspace{0.65cm}
+  本人郑重声明，所呈交的论文（设计）是我本人在指导教师的指导下进行的研究工作并取得的研究成果。尽我所知，除了中文特别加以标注和致谢的地方外，论文（设计）中没有抄袭、剽窃其他人已经发表或撰写的研究成果，也不存在为获得江西理工大学或其他教育机构的学位或证书所使用过的材料。为本论文（设计）的完成给予过的帮助、做出过的贡献均已在论文（设计）中做了明确的说明并表示了谢意。
+
+  \vspace{0.7cm}
+  \noindent\hfill 签名：\hspace{2.8cm} 日期：\hspace{2.0cm}
+
+  \vspace{1.15cm}
+  \begin{center}
+    {\jxustStatementTitleFont 关于论文（设计）使用授权的说明\par}
+  \end{center}
+  \vspace{0.65cm}
+  本人完全了解江西理工大学有关保留、使用毕业论文（设计）的规定，即：学校有权保留送交论文（设计）的原件，允许论文（设计）被查阅和借阅；学校可以公布论文（设计）的全部或部分内容，可以影印、缩印或其他复制手段保存论文（设计）。即使是保密的论文（设计）解密后也应遵守项规定。
+
+  \vspace{0.7cm}
+  \noindent\hfill 签名：\hspace{2.8cm} 日期：\hspace{2.0cm}
+  \endgroup
+}
+
+\newcommand{\jxustMakeIntegrityCommitment}{%
+  \thispagestyle{jxust-empty}%
+  \begingroup
+  \jxustBodyFont
+  \setlength{\parindent}{2em}%
+  \vspace*{0.9cm}
+  \begin{center}
+    {\jxustStatementTitleFont 承\quad 诺\quad 书\par}
+  \end{center}
+  \vspace{0.65cm}
+  \noindent\textbf{本人郑重承诺：}根据所学专业人才培养方案和布置下达的毕业论文（设计）任务书要求，在学校规定的任务期限内认真自主完成。提交的毕业论文（设计）查重文稿，确系本人经指导教师指导完成并同意提交的终稿。本人已知晓“毕业论文（设计）查重率大于30\%”或认定存在剽窃、伪造、篡改、买卖、代写等学术不端行为将取消毕业答辩资格的相关规定；若本人的毕业论文（设计）经上级部门抽检结论为不合格，接受并同意学校注销并追回已发放的毕业证和学位证。如发生上述情况，本人愿意承担因本科毕业论文（设计）质量达不到要求而产生的一切后果。
+
+  \vspace{0.7cm}
+  \noindent 所在学院：\jxustCollege\par
+  \noindent 所学专业：\jxustMajor\par
+  \noindent 所在班级：\jxustClass\par
+  \noindent 本人学号：\jxustStudentId\par
+  \noindent 姓\quad 名：\jxustAuthor\hfill （签字确认）\par
+  \noindent 指导教师：\jxustSupervisor\hfill （签字确认）\par
+  \vspace{0.5cm}
+  \begin{flushright}
+    年\hspace{0.8cm}月\hspace{0.8cm}日
+  \end{flushright}
+  \vfill
+  {\jxustSong\fontsize{10.5bp}{16bp}\selectfont
+  \noindent 说明：承诺书在指导教师下达毕业论文（设计）任务书时提交。本承诺书纸质稿一式二份，学生本人留存一份，学院留存一份。各学院按班级整理汇总全院的承诺书电子稿发教务处一份存档备查。\par}
   \endgroup
 }
 
@@ -245,7 +423,7 @@
   \begingroup
   \centering
   \vspace*{2.6cm}
-  {\jxustCoverTitleFont 江西理工大学\par}
+  \jxustLogoBlock
   \vspace{0.7cm}
   {\jxustCoverSubTitleFont \jxustWorkTypeTitle\par}
   \vspace{2.2cm}
@@ -273,4 +451,21 @@
     {\jxustFrontTitleFont #1\par}
   \end{center}
   \vspace{0.8cm}
+}
+\newcommand{\jxustFrontHeadingEn}[1]{%
+  \thispagestyle{jxust-empty}%
+  \begin{center}
+    \vspace*{1.4cm}
+    {\bfseries\fontsize{16bp}{22bp}\selectfont #1\par}
+  \end{center}
+  \vspace{0.8cm}
+}
+
+\newcommand{\jxustKeywordsZhLine}{%
+  \vspace{20bp}%
+  \noindent\hangindent=4.5em\hangafter=1\textbf{关键词：}\jxustKeywordsZh\par
+}
+\newcommand{\jxustKeywordsEnLine}{%
+  \vspace{20bp}%
+  \noindent\hangindent=5.4em\hangafter=1\textbf{Keywords:}\jxustKeywordsEn\par
 }
