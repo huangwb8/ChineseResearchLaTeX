@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+（暂无未发布变更）
+
+## [4.0.19] - 2026-07-03
+
 ### Added（新增）
 
 - 新增 `projects/thesis-cas-postdoc/`、项目级 `AGENTS.md` / `CLAUDE.md` / `README.md` / `template.json` / VS Code wrapper，以及 `packages/bensz-thesis/profiles/bthesis-profile-thesis-cas-postdoc.def`、`packages/bensz-thesis/styles/bthesis-style-thesis-cas-postdoc.tex`：基于 issue #50 与《博士后研究报告编写规则》附件，为 `bensz-thesis` 产品线新增中国科学院博士后出站研究报告独立模板身份，覆盖封面、题名页、中英文摘要、目录、插图清单、附表清单、符号与缩略词表、正文、参考文献、附录、博士后个人简历、博士生/博士后期间科研成果、永久通信地址和致谢；示例正文遵循 thesis 产品线公开演示约定，以“冯宝宝”署名并围绕“佐佐木希”相关公开文化研究方向展开，同时将 `packages/bensz-thesis/package.json` 版本推进到 `p_v20260702`，避免安装器因旧版本号跳过新增模板。
