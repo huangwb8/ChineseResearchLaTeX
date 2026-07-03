@@ -21,12 +21,13 @@
 
 \pagenumbering{Roman}
 \setcounter{page}{1}
+\casdocUseFrontPageStyle
 \input{extraTex/front/abstract_zh.tex}
 \clearpage
 \input{extraTex/front/abstract_en.tex}
 \clearpage
 
-\pagestyle{casdoc-main}
+\casdocUseFrontPageStyle
 \casdocTOCBlackLinks
 \tableofcontents
 \casdocTOCRestoreLinks
@@ -46,18 +47,18 @@
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-\pagestyle{casdoc-main}
-\input{extraTex/body/chapter-01.tex}
-\input{extraTex/body/chapter-02.tex}
-\input{extraTex/body/chapter-03.tex}
-\input{extraTex/body/chapter-04.tex}
-\input{extraTex/body/chapter-05.tex}
+\casdocUseMainPageStyle
+\casdocMainChapter{extraTex/body/chapter-01.tex}
+\casdocMainChapter{extraTex/body/chapter-02.tex}
+\casdocMainChapter{extraTex/body/chapter-03.tex}
+\casdocMainChapter{extraTex/body/chapter-04.tex}
+\casdocMainChapter{extraTex/body/chapter-05.tex}
 
 \clearpage
 \nocite{*}
 \printbibliography[heading=bibintoc,title={参考文献}]
 
-\appendix
+\casdocAppendix
 \input{extraTex/back/appendix.tex}
 \input{extraTex/back/resume.tex}
 \input{extraTex/back/achievements.tex}

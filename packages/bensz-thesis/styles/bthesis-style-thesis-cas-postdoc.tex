@@ -122,6 +122,14 @@
   justification=centering,
   singlelinecheck=false
 }
+\captionsetup[figure]{
+  position=bottom,
+  skip=6pt
+}
+\captionsetup[table]{
+  position=top,
+  skip=6pt
+}
 
 %------------------------ 列表 ------------------------%
 \setlist[enumerate]{
@@ -150,6 +158,14 @@
 \fancypagestyle{casdoc-main}{
   \fancyhf{}
   \fancyhead[C]{\casdocHeaderFont \casdocHeaderTextMain}
+  \fancyfoot[R]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+\fancypagestyle{casdoc-front}{
+  \fancyhf{}
+  \fancyhead[C]{\casdocHeaderFont \casdocHeaderTextMain}
   \fancyfoot[C]{\thepage}
   \renewcommand{\headrulewidth}{0.4pt}
   \renewcommand{\footrulewidth}{0pt}
@@ -169,6 +185,28 @@
   \fancyfoot[C]{\thepage}
   \renewcommand{\headrulewidth}{0.4pt}
   \renewcommand{\footrulewidth}{0pt}
+}
+
+\newcommand{\casdocUseFrontPageStyle}{%
+  \pagestyle{casdoc-front}%
+  \fancypagestyle{plain}{%
+    \fancyhf{}%
+    \fancyhead[C]{\casdocHeaderFont \casdocHeaderTextMain}%
+    \fancyfoot[C]{\thepage}%
+    \renewcommand{\headrulewidth}{0.4pt}%
+    \renewcommand{\footrulewidth}{0pt}%
+  }%
+}
+
+\newcommand{\casdocUseMainPageStyle}{%
+  \pagestyle{casdoc-main}%
+  \fancypagestyle{plain}{%
+    \fancyhf{}%
+    \fancyhead[C]{\casdocHeaderFont \casdocHeaderTextMain}%
+    \fancyfoot[R]{\thepage}%
+    \renewcommand{\headrulewidth}{0.4pt}%
+    \renewcommand{\footrulewidth}{0pt}%
+  }%
 }
 
 %------------------------ 章节标题（尽量贴近 Word） ------------------------%
@@ -210,6 +248,18 @@
 \newcommand{\casdocTOCAddChapter}[1]{%
   \phantomsection%
   \addcontentsline{toc}{chapter}{#1}%
+}
+
+\newcommand{\casdocMainChapter}[1]{%
+  \clearpage
+  \input{#1}%
+}
+
+\newcommand{\casdocAppendix}{%
+  \appendix
+  \renewcommand{\thefigure}{\Alph{chapter}\arabic{figure}}%
+  \renewcommand{\thetable}{\Alph{chapter}\arabic{table}}%
+  \renewcommand{\theequation}{\Alph{chapter}\arabic{equation}}%
 }
 
 % 压缩“中文-西文/数字”之间的自动间距（主要用于封面填写字段，贴近 Word 原稿）。
@@ -278,18 +328,18 @@
 %------------------------ 参考文献样式（可调参数） ------------------------%
 % 说明：
 % - 以下参数均有默认值，可在 main.tex 的 \printbibliography 前按需覆盖。
-% - 字号：\renewcommand{\casdocBibFontCmd}{\zihao{-5}}
+% - 字号：\renewcommand{\casdocBibFontCmd}{\zihao{4}}
 % - 行距：\renewcommand{\casdocBibStretch}{1.5}
 % - 条目间距：\setlength{\casdocBibItemSep}{4pt}
 % - 条目内段间距：\setlength{\casdocBibParsep}{0pt}
 
-% 字号（默认小六 = 6.5pt，约为正文小五的 75%）
-\newcommand{\casdocBibFontCmd}{\zihao{-6}}
-% 行距倍数（默认 1.0 = 单倍行距）
-\newcommand{\casdocBibStretch}{1.0}
+% 字号（默认五号）：比正文四号更紧凑，但保留正式报告的可读性
+\newcommand{\casdocBibFontCmd}{\zihao{5}}
+% 行距倍数：参考文献默认略紧凑，必要时可在 main.tex 中覆盖为 1.5
+\newcommand{\casdocBibStretch}{1.2}
 % 条目间额外间距（biblatex \bibitemsep）
 \newlength{\casdocBibItemSep}
-\setlength{\casdocBibItemSep}{1pt}
+\setlength{\casdocBibItemSep}{2pt}
 % 条目内段落间距（biblatex \bibparsep）
 \newlength{\casdocBibParsep}
 \setlength{\casdocBibParsep}{0pt}
