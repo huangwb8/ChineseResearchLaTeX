@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import zipfile
@@ -415,3 +418,120 @@ def test_select_overleaf_fonts_matches_project_requirements():
         "texgyretermes-italic.otf",
         "texgyretermes-regular.otf",
     }
+
+
+def test_gxnsf_project_has_independent_release_kind_and_minimal_fonts():
+    project_dir = REPO_ROOT / "projects" / "GXNSF_General"
+
+    assert pack_release.detect_project_kind(project_dir) == "gxnsf"
+    assert pack_release.select_overleaf_font_files(project_dir) == {
+        "AdobeFangsongStd-Regular.otf",
+        "Kaiti.ttf",
+        "TimesNewRoman.ttf",
+    }
+
+
+def test_pack_gxnsf_standard_project_keeps_development_files(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "GXNSF_General"
+
+    zip_path = pack_release.pack_project(project_dir, tmp_path, "v-test")
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = set(zf.namelist())
+
+    assert {
+        "main.tex",
+        "main.pdf",
+        "README.md",
+        "GXNSF_General.code-workspace",
+        ".vscode/settings.json",
+        "scripts/gxnsf_build.py",
+        "scripts/latex_workshop_build.lua",
+        "template/广西自然科学基金面上项目-报告正文.docx",
+        "template/广西自然科学基金面上项目-报告正文.pdf",
+    } <= names
+    assert any(name.startswith("extraTex/") and name.endswith(".tex") for name in names)
+    assert not any(".latex-cache" in name or name.endswith(".pyc") or name.endswith(".DS_Store") for name in names)
+
+
+def test_pack_gxnsf_overleaf_is_self_contained_without_nsfc_runtime(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "GXNSF_General"
+
+    zip_path = pack_release.pack_project_overleaf(project_dir, tmp_path, "v-test")
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = set(zf.namelist())
+
+    assert {
+        "main.tex",
+        "README.md",
+        "styles/bensz-fonts.sty",
+        "styles/fonts/AdobeFangsongStd-Regular.otf",
+        "styles/fonts/Kaiti.ttf",
+        "styles/fonts/TimesNewRoman.ttf",
+    } <= names
+    assert any(name.startswith("extraTex/") and name.endswith(".tex") for name in names)
+    assert not any(name.startswith("styles/bensz-nsfc") for name in names)
+    assert "main.pdf" not in names
+    assert not any(name.startswith("template/") for name in names)
+    assert not any(name.startswith("scripts/") for name in names)
+    assert not any(name.startswith(".vscode/") for name in names)
+    assert not any(name.endswith(".code-workspace") for name in names)
+
+
+def test_gdnsf_overleaf_keeps_compatible_provincial_runtime(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "GDNSF_General"
+    runtime_dir = tmp_path / "gdnsf-runtime"
+
+    pack_release.build_gdnsf_runtime_bundle(runtime_dir, project_dir)
+    zip_path = pack_release.pack_project_overleaf(project_dir, tmp_path, "v-test")
+
+    assert (runtime_dir / "bensz-fonts.sty").exists()
+    assert (runtime_dir / "fonts" / "SimSun.ttf").exists()
+    with zipfile.ZipFile(zip_path) as zf:
+        names = set(zf.namelist())
+    assert "styles/bensz-fonts.sty" in names
+    assert "styles/fonts/SimSun.ttf" in names
+    assert not any(name.startswith("styles/bensz-nsfc") for name in names)
+
+
+@pytest.mark.skipif(shutil.which("xelatex") is None, reason="xelatex is not installed")
+def test_gxnsf_overleaf_bundle_compiles_with_empty_texmfhome(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "GXNSF_General"
+    zip_path = pack_release.pack_project_overleaf(project_dir, tmp_path, "v-test")
+    bundle_dir = tmp_path / "bundle"
+    texmfhome = tmp_path / "empty-texmf"
+    cache_dir = bundle_dir / ".latex-cache"
+    bundle_dir.mkdir()
+    texmfhome.mkdir()
+
+    with zipfile.ZipFile(zip_path) as zf:
+        zf.extractall(bundle_dir)
+    cache_dir.mkdir()
+
+    env = os.environ.copy()
+    env["TEXMFHOME"] = str(texmfhome)
+    env["TEXINPUTS"] = "." + os.pathsep
+    command = [
+        "xelatex",
+        "-interaction=nonstopmode",
+        "-halt-on-error",
+        "-file-line-error",
+        f"-output-directory={cache_dir}",
+        "main.tex",
+    ]
+
+    for _ in range(2):
+        result = subprocess.run(
+            command,
+            cwd=bundle_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+
+    assert (cache_dir / "main.pdf").exists()
+    final_log = (cache_dir / "main.log").read_text(encoding="utf-8", errors="replace")
+    assert "LaTeX Error" not in final_log
+    assert "Fontspec error" not in final_log

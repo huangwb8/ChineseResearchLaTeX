@@ -1,0 +1,121 @@
+% 广西自然科学基金面上项目报告正文项目级配置。
+% 本项目独立于 bensz-nsfc，避免影响 NSFC 与其它省级基金模板。
+
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{ragged2e}
+\usepackage{indentfirst}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+
+% Word 基线：A4，上下 1440 twips（2.54 cm），左右 1800 twips（3.175 cm）。
+\geometry{a4paper,left=3.175cm,right=3.175cm,top=2.54cm,bottom=2.54cm}
+
+\hypersetup{
+  colorlinks=true,
+  urlcolor=black,
+  linkcolor=black,
+  anchorcolor=black,
+  citecolor=black,
+  CJKbookmarks=true
+}
+
+\newcommand{\GXNSFSetupLocalFontFiles}[1]{%
+  \setmainfont[Path={#1},Extension=.ttf,AutoFakeBold=2.5,AutoFakeSlant=0.2]{TimesNewRoman}%
+  \setCJKmainfont[Path={#1},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{gxnsffangsong}[Path={#1},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{gxnsfkai}[Path={#1},AutoFakeBold=2.5]{Kaiti.ttf}%
+}
+
+\newcommand{\GXNSFSetupInstalledFonts}{%
+  \usepackage{bensz-fonts}%
+  \BenszFontsSetMainTimesFallback%
+  \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{gxnsffangsong}[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{gxnsfkai}[Path={\BenszFontsDir},AutoFakeBold=2.5]{Kaiti.ttf}%
+}
+
+\newcommand{\GXNSFSetupFonts}{%
+  \IfFileExists{styles/fonts/AdobeFangsongStd-Regular.otf}{%
+    \GXNSFSetupLocalFontFiles{styles/fonts/}%
+  }{%
+    \IfFileExists{bensz-fonts.sty}{%
+      \GXNSFSetupInstalledFonts
+    }{%
+      \PackageError{GXNSF}{Missing required package bensz-fonts}{%
+        Install bensz-fonts with the repository-level scripts/install.py before compiling the standard package.\MessageBreak
+        The Overleaf release already embeds the required fonts.%
+      }%
+    }%
+  }%
+  \xeCJKsetup{PunctStyle=plain,CJKecglue={}}%
+}
+\GXNSFSetupFonts
+
+\newcommand{\gxnsffangsong}{\CJKfamily{gxnsffangsong}}
+\newcommand{\gxnsfkai}{\CJKfamily{gxnsfkai}}
+\newcommand{\GXNSFFontSize}{\fontsize{16pt}{28.3pt}\selectfont}
+
+\pagestyle{empty}
+\renewcommand{\baselinestretch}{1.0}
+\setlength{\parindent}{32pt}
+\setlength{\parskip}{0pt}
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip=0pt plus 1pt
+\AtBeginDocument{\GXNSFFontSize}
+
+\captionsetup{font={small},labelsep=period,labelfont=bf}
+\setlist{nosep,leftmargin=2em}
+
+\newcommand{\GXNSFTemplateParagraph}[2][]{%
+  \par
+  \begingroup
+    \justifying
+    \setlength{\parindent}{32pt}%
+    \setlength{\parskip}{0pt}%
+    \GXNSFFontSize
+    #1#2\par
+  \endgroup
+}
+
+\newcommand{\GXNSFReportTitle}{%
+  % 锚定首页 top skip，使标题可见上边界与 Word 导出 PDF 的约 2.85 cm 对齐。
+  \hrule height 0pt width 0pt\relax
+  \vskip -2pt\relax
+  \GXNSFTemplateParagraph[\centering\setlength{\parindent}{0pt}\gxnsffangsong\bfseries]{报告正文}%
+}
+
+\newcommand{\GXNSFPart}[1]{%
+  \GXNSFTemplateParagraph[\gxnsfkai]{#1}%
+}
+
+\newcommand{\GXNSFItem}[2]{%
+  \GXNSFTemplateParagraph[\gxnsffangsong]{{\bfseries #1}#2}%
+}
+
+\newcommand{\GXNSFItemMixed}[3]{%
+  \GXNSFTemplateParagraph[\gxnsffangsong]{{\bfseries #1}#2{\bfseries #3}}%
+}
+
+\newcommand{\GXNSFBodyText}{%
+  \setlength{\parindent}{32pt}%
+  \setlength{\parskip}{0pt}%
+  \GXNSFFontSize
+  \gxnsffangsong
+}
+
+\pdfstringdefDisableCommands{%
+  \def\gxnsffangsong{}%
+  \def\gxnsfkai{}%
+}

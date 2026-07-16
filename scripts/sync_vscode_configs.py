@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """VS Code 工作区与 LaTeX Workshop 配置同步工具。
 
-将 ``scripts/vscode/`` 下按项目类型（nsfc / gdnsf / paper / thesis / cv）维护的固定配置模板
+将 ``scripts/vscode/`` 下按项目类型（nsfc / gdnsf / gxnsf / paper / thesis / cv）维护的固定配置模板
 同步到 ``projects/`` 下各子项目中，确保所有项目具有一致的 VS Code 工程配置。
 
 同步内容：
@@ -32,6 +32,7 @@ WORKSPACE_TEMPLATE = TEMPLATES_DIR / "project.code-workspace.json"
 SETTINGS_TEMPLATES = {
     "nsfc": TEMPLATES_DIR / "nsfc.settings.json",
     "gdnsf": TEMPLATES_DIR / "gdnsf.settings.json",
+    "gxnsf": TEMPLATES_DIR / "gxnsf.settings.json",
     "paper": TEMPLATES_DIR / "paper.settings.json",
     "thesis": TEMPLATES_DIR / "thesis.settings.json",
     "cv": TEMPLATES_DIR / "cv.settings.json",
@@ -41,7 +42,7 @@ LATEX_WORKSHOP_LAUNCHER_TEMPLATE = TEMPLATES_DIR / "latex_workshop_build.lua"
 
 
 def infer_project_profile(project_name: str) -> str | None:
-    """根据项目目录名前缀推断项目类型（nsfc / gdnsf / paper / thesis / cv）。
+    """根据项目目录名前缀推断项目类型（nsfc / gdnsf / gxnsf / paper / thesis / cv）。
 
     无法识别的前缀返回 None，该类项目会被同步流程跳过。
     """
@@ -49,6 +50,8 @@ def infer_project_profile(project_name: str) -> str | None:
         return "nsfc"
     if project_name.startswith("GDNSF_"):
         return "gdnsf"
+    if project_name.startswith("GXNSF_"):
+        return "gxnsf"
     if project_name.startswith("paper-"):
         return "paper"
     if project_name.startswith("thesis-"):

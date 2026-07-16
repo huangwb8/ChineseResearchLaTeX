@@ -69,6 +69,7 @@ class TemplateSpec:
 CATEGORY_TITLES = {
     "nsfc": "NSFC 模板",
     "gdnsf": "广东省自然科学基金模板",
+    "gxnsf": "广西壮族自治区自然科学基金模板",
     "paper": "SCI 论文模板",
     "thesis": "学位论文 / 博士后模板",
     "cv": "简历模板",
@@ -78,6 +79,7 @@ CATEGORY_TITLES = {
 CATEGORY_DESCRIPTIONS = {
     "nsfc": "当前主线，优先面向正式申报与 Overleaf 打包分发。",
     "gdnsf": "项目层独立模板，面向广东省自然科学基金面上项目报告正文。",
+    "gxnsf": "项目层独立模板，面向广西自然科学基金面上项目报告正文。",
     "paper": "公共包 + 示例项目已落地，支持 PDF / DOCX 双输出。",
     "thesis": "公共包 + 示例项目已落地，支持 PDF 输出与像素级验收。",
     "cv": "公共包 + 示例项目已落地，支持中英文 PDF 输出与像素级验收。",
@@ -125,6 +127,12 @@ BASE_TEMPLATE_SPECS = (
         display_name="广东省面上",
         local_path="projects/GDNSF_General/",
         asset_prefix="GDNSF_General",
+    ),
+    TemplateSpec(
+        category="gxnsf",
+        display_name="广西面上",
+        local_path="projects/GXNSF_General/",
+        asset_prefix="GXNSF_General",
     ),
 )
 
@@ -519,7 +527,7 @@ def render_template_section(repo: str, release: dict[str, Any]) -> str:
         "",
     ]
 
-    for category in ("nsfc", "gdnsf", "paper", "thesis", "cv"):
+    for category in ("nsfc", "gdnsf", "gxnsf", "paper", "thesis", "cv"):
         category_specs = tuple(spec for spec in template_specs if spec.category == category)
         if not category_specs:
             continue

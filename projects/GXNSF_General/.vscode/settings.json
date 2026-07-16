@@ -1,0 +1,62 @@
+{
+  // Keep ALL LaTeX build artifacts in `.latex-cache/`.
+  // The final deliverable stays in the project root as `main.pdf`.
+  "latex-workshop.latex.outDir": ".latex-cache",
+  "latex-workshop.latex.auxDir": ".latex-cache",
+
+  // Prevent magic comments from bypassing the unified Python render pipeline.
+  "latex-workshop.latex.build.enableMagicComments": false,
+  "latex-workshop.latex.build.forceRecipeUsage": true,
+
+  "latex-workshop.latex.recipe.default": "gxnsf build (python)",
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "gxnsf build (python)",
+      "tools": [
+        "gxnsf-python-build"
+      ]
+    }
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "gxnsf-python-build",
+      "command": "texlua",
+      "args": [
+        "%WORKSPACE_FOLDER%/scripts/latex_workshop_build.lua",
+        "%WORKSPACE_FOLDER%/scripts/gxnsf_build.py",
+        "build",
+        "--project-dir",
+        "%WORKSPACE_FOLDER%",
+        "--tex-file",
+        "%DOCFILE_EXT%"
+      ]
+    }
+  ],
+
+  "latex-workshop.message.log.level": "info",
+  "latex-workshop.linting.chktex.enabled": false,
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoClean.run": "never",
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true,
+
+  "files.exclude": {
+    "%OUTDIR%/": true,
+    "*.aux": true,
+    "*.log": true,
+    "*.out": true,
+    "*.toc": true,
+    "*.lof": true,
+    "*.lot": true,
+    "*.bbl": true,
+    "*.blg": true,
+    "*.fls": true,
+    "*.fdb_latexmk": true,
+    "*.synctex.gz": true,
+    "*.synctex(busy)": true,
+    "*.xdv": true
+  },
+  "files.watcherExclude": {
+    "**/.latex-cache/**": true
+  }
+}

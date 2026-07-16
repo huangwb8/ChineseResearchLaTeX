@@ -12,6 +12,32 @@ from scripts import update_readme_template_list as updater
 from scripts.update_readme_template_list import render_template_section
 
 
+def test_render_template_section_includes_gxnsf_release_assets():
+    release = {
+        "tag_name": "v-test",
+        "published_at": "2026-07-16T08:45:15Z",
+        "assets": [
+            {
+                "name": "GXNSF_General-v-test.zip",
+                "size": 123456,
+                "browser_download_url": "https://example.com/GXNSF_General-v-test.zip",
+            },
+            {
+                "name": "GXNSF_General-Overleaf-v-test.zip",
+                "size": 234567,
+                "browser_download_url": "https://example.com/GXNSF_General-Overleaf-v-test.zip",
+            },
+        ],
+    }
+
+    rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
+
+    assert "### 广西壮族自治区自然科学基金模板" in rendered
+    assert "[广西面上](projects/GXNSF_General/)" in rendered
+    assert "https://example.com/GXNSF_General-v-test.zip" in rendered
+    assert "https://example.com/GXNSF_General-Overleaf-v-test.zip" in rendered
+
+
 def test_render_template_section_includes_thesis_release_assets():
     release = {
         "tag_name": "v4.0.1",

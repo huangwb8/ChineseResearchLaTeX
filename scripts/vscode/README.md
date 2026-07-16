@@ -6,6 +6,8 @@
 
 - `project.code-workspace.json`：所有项目共用的 `.code-workspace` 模板
 - `nsfc.settings.json`：`projects/NSFC_*` 的 `.vscode/settings.json` 模板
+- `gdnsf.settings.json`：`projects/GDNSF_*` 的 `.vscode/settings.json` 模板
+- `gxnsf.settings.json`：`projects/GXNSF_*` 的 `.vscode/settings.json` 模板
 - `paper.settings.json`：`projects/paper-*` 的 `.vscode/settings.json` 模板
 - `thesis.settings.json`：`projects/thesis-*` 的 `.vscode/settings.json` 模板
 - `cv.settings.json`：`projects/cv-*` 的 `.vscode/settings.json` 模板

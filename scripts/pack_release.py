@@ -311,12 +311,14 @@ def zip_directory(source_dir: Path, zip_path: Path) -> None:
 def detect_project_kind(project_dir: Path) -> str:
     """根据项目目录名和特征文件自动识别项目类型。
 
-    返回 ``"nsfc"`` / ``"gdnsf"`` / ``"paper"`` / ``"thesis"`` / ``"cv"`` / ``"generic"`` 之一。
+    返回 ``"nsfc"`` / ``"gdnsf"`` / ``"gxnsf"`` / ``"paper"`` / ``"thesis"`` / ``"cv"`` / ``"generic"`` 之一。
     """
     if project_dir.name.startswith("paper-"):
         return "paper"
     if project_dir.name.startswith("GDNSF_"):
         return "gdnsf"
+    if project_dir.name.startswith("GXNSF_"):
+        return "gxnsf"
     if project_dir.name.startswith("cv-"):
         return "cv"
     if project_dir.name.startswith("thesis-"):
@@ -430,6 +432,13 @@ def select_overleaf_font_files(project_dir: Path) -> set[str]:
             "Kaiti.ttf",
             "NotoSansSC-Bold.otf",
             "SimSun.ttf",
+            "TimesNewRoman.ttf",
+        }
+
+    if project_kind == "gxnsf":
+        return {
+            "AdobeFangsongStd-Regular.otf",
+            "Kaiti.ttf",
             "TimesNewRoman.ttf",
         }
 
@@ -576,12 +585,18 @@ def build_nsfc_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
     write_text_file(runtime_dir / "bensz-nsfc-runtime.def", build_overleaf_runtime_def())
 
 
-def build_gdnsf_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
-    """构建 GDNSF 项目的 Overleaf 运行时 bundle。
+def build_provincial_nsfc_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
+    """构建省级自然科学基金独立项目的 Overleaf 运行时 bundle。
 
-    当前 GDNSF 是项目层独立模板，只需要注入 ``bensz-fonts`` 入口和实际字体文件。
+    GDNSF/GXNSF 都是项目层独立模板，只注入 ``bensz-fonts`` 入口和实际字体，
+    不携带或依赖 ``bensz-nsfc`` 运行时。
     """
     copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
+
+
+def build_gdnsf_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
+    """向后兼容的 GDNSF Overleaf 运行时构建入口。"""
+    build_provincial_nsfc_runtime_bundle(runtime_dir, project_dir)
 
 
 def build_paper_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
@@ -913,8 +928,8 @@ def populate_overleaf_bundle(bundle_dir: Path, project_dir: Path) -> None:
     project_kind = detect_project_kind(project_dir)
     if project_kind == "nsfc":
         build_nsfc_runtime_bundle(runtime_dir, project_dir)
-    elif project_kind == "gdnsf":
-        build_gdnsf_runtime_bundle(runtime_dir, project_dir)
+    elif project_kind in {"gdnsf", "gxnsf"}:
+        build_provincial_nsfc_runtime_bundle(runtime_dir, project_dir)
     elif project_kind == "paper":
         build_paper_runtime_bundle(runtime_dir, project_dir)
     elif project_kind == "thesis":

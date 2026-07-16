@@ -44,6 +44,23 @@
 |------|------|----------|
 | [`GDNSF_General/`](./GDNSF_General/) | 广东省自然科学基金面上项目报告正文模板 | 准备广东省自然科学基金面上项目正文上传材料 |
 
+## 广西自然科学基金（GXNSF）
+
+适合人群：
+
+- 正在准备广西自然科学基金面上项目报告正文的科研人员
+- 需要将广西基金 Word 提纲迁移到可维护 LaTeX 项目的用户
+
+说明：
+
+- 当前 `GXNSF_General/` 是项目层独立模板，复用共享字体资源，但不修改或依赖 `packages/bensz-nsfc/`
+- 构建入口为项目内 `python scripts/gxnsf_build.py build --project-dir .`
+- 模板只覆盖 issue #52 提供的精简报告正文提纲；正式申报前仍需核对当年度申报须知与系统附件要求
+
+| 项目 | 用途 | 适用场景 |
+|------|------|----------|
+| [`GXNSF_General/`](./GXNSF_General/) | 广西自然科学基金面上项目报告正文模板 | 准备广西自然科学基金面上项目正文上传材料 |
+
 ## SCI 论文
 
 适合人群：
@@ -118,6 +135,7 @@
 
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
 - 写广东省自然科学基金面上项目报告正文：进入 `GDNSF_General/`
+- 写广西自然科学基金面上项目报告正文：进入 `GXNSF_General/`
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`
 - 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-nwu-doctor/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
