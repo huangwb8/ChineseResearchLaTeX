@@ -244,6 +244,14 @@
   \vspace{0.24cm}%
 }
 
+\newcommand{\jlauCoverCodeLine}[2]{%
+  \makebox[4.75cm][l]{%
+    \makebox[1.85cm][s]{#1}%
+    \makebox[0.42cm][c]{：}%
+    \makebox[2.48cm][l]{#2}%
+  }%
+}
+
 \newcommand{\jlauCoverEmblemAt}[1]{%
   \begin{scope}[shift={(#1)}]
     \clip (0,0) circle[radius=1.38cm];
@@ -268,13 +276,13 @@
       {{\jlauCoverTopFont 分\hspace{0.7em}类\hspace{0.7em}号：\jlauClassNo}};
     \node[anchor=east,inner sep=0pt]
       at ([xshift=-2.75cm,yshift=-2.18cm]current page.north east)
-      {{\jlauCoverTopFont 单位代码：\jlauSchoolCode}};
+      {{\jlauCoverTopFont \jlauCoverCodeLine{单位代码}{\jlauSchoolCode}}};
     \node[anchor=west,inner sep=0pt]
       at ([xshift=2.55cm,yshift=-2.98cm]current page.north west)
       {{\jlauCoverTopFont 密\hspace{2.1em}级：\jlauSecretLevel}};
     \node[anchor=east,inner sep=0pt]
       at ([xshift=-2.75cm,yshift=-2.98cm]current page.north east)
-      {{\jlauCoverTopFont 学\hspace{1.4em}号：\jlauStudentId}};
+      {{\jlauCoverTopFont \jlauCoverCodeLine{学号}{\jlauStudentId}}};
     \jlauCoverEmblemAt{[yshift=-5.60cm]current page.north}
     \jlauCoverWordmarkAt{[yshift=-7.16cm]current page.north}
     \node[anchor=north,inner sep=0pt]

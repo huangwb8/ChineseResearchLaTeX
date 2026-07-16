@@ -1,24 +1,55 @@
 \chapter{结果与分析}
 
-\section{变量质量检查}
+\section{职业阶段与媒介重心}
 
-示例数据的质量检查显示，图像类变量对光照和遮挡更敏感，人工调查指标的波动则更多来自测量间隔和记录方式。对这些差异进行显式说明，有助于读者判断后续融合结果的可信度。
+示例分析将佐佐木希的跨媒介轨迹概括为模特起步、影视拓展、形象调整与平台再建构四个阶段。表~\ref{tab:jlau-stage} 展示不同阶段的媒介重心和主要形象功能。
 
-\section{融合结果}
+\begin{table}[htbp]
+  \centering
+  \caption{佐佐木希跨媒介职业阶段的示例比较}
+  \label{tab:jlau-stage}
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{2.8cm}X}
+    \toprule
+    阶段 & 媒介重心 & 示例性形象特征 \\
+    \midrule
+    模特起步 & 平面杂志与广告 & 以稳定视觉风格建立初始识别度 \\
+    影视拓展 & 电视剧、电影与综艺 & 借助角色和节目互动扩展公众认知 \\
+    形象调整 & 访谈与品牌活动 & 在职业表达与公共讨论之间重组叙事 \\
+    平台再建构 & 社交平台与生活方式内容 & 通过连续、日常化更新增强亲近感 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-融合得分能够同时反映冠层结构和环境响应。图 \ref{fig:jlau-demo-flow} 展示了从观测数据到融合评价的基本流程。
+\section{媒介可见度的示例变化}
+
+图~\ref{fig:jlau-visibility} 使用模拟指数演示折线图的标题、图例和坐标布局。数值不代表真实传播测量结果。
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][4.2cm][c]{0.78\textwidth}{\centering 多源观测\\特征对齐\\融合评价}}
-  \caption{表型数据融合流程示意}
-  \label{fig:jlau-demo-flow}
+  \begin{tikzpicture}[x=2.45cm,y=0.062cm]
+    \draw[->,thick] (0,0) -- (4.45,0) node[right] {阶段};
+    \draw[->,thick] (0,0) -- (0,112) node[above] {示例指数};
+    \foreach \y in {20,40,60,80,100}{
+      \draw[black!15] (0,\y) -- (4.15,\y);
+      \node[left] at (0,\y) {\small \y};
+    }
+    \foreach \x/\label in {0.55/模特起步,1.55/影视拓展,2.55/形象调整,3.55/平台再建构}{
+      \node[below,align=center] at (\x,-3) {\small \label};
+    }
+    \draw[very thick,black!80] plot coordinates {(0.55,58) (1.55,86) (2.55,52) (3.55,78)};
+    \foreach \x/\y in {0.55/58,1.55/86,2.55/52,3.55/78}{
+      \fill[black!80] (\x,\y) circle[radius=1.6pt];
+      \node[above] at (\x,\y) {\small \y};
+    }
+  \end{tikzpicture}
+  \caption{不同职业阶段媒介可见度的模拟变化}
+  \label{fig:jlau-visibility}
 \end{figure}
 
 \section{讨论}
 
-融合方法的价值在于减少单一指标带来的解释偏差，但其有效性依赖于清晰的数据来源记录和稳定的质量控制规则。对于真实论文，应补充试验重复、模型参数、敏感性分析和外部验证结果。
+示例结果提示，跨媒介转型并非从一种平台简单迁移到另一种平台。杂志建立的视觉资本、影视角色提供的叙事空间和社交平台形成的更新节奏会相互叠加。对佐佐木希这类公开人物进行研究时，应避免把阶段变化归因于单一事件，而要比较媒介结构、职业选择和受众互动的共同影响。
 
 \section{小结}
 
-本章展示了结果与分析部分的基础写法。用户可在保持标题层级和图表编号规则不变的前提下，替换为真实实验结果。
+本章通过一幅趋势图和一张阶段比较表展示了常见结果章节的排版方式。使用者可以替换坐标、数据和文字，同时保留题注位置、章节编号与交叉引用结构。

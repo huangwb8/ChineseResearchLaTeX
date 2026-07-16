@@ -1,37 +1,58 @@
-\jlauChapterAfterPart{材料与方法}
+\jlauChapterAfterPart{研究设计与材料编码}
 
-\section{示例数据与变量说明}
+\section{研究材料与样本范围}
 
-本示例使用公开可分享的模拟数据结构说明论文写法。数据表包含样方编号、采样日期、冠层覆盖度、归一化植被指数、株高、叶面积指数和环境观测值等字段。真实论文写作时，用户可将本节替换为试验地点、材料来源、田间设计、仪器型号和采样流程。
+本示例把佐佐木希公开可见的杂志封面、影视角色介绍、品牌活动报道与社交平台内容作为材料类型。正式研究应明确检索时间、纳入标准、材料出处与版权边界；此处使用模拟计数，仅用于说明研究设计和模板排版。
 
-\section{数据预处理}
+\section{跨媒介材料编码流程}
 
-预处理流程包括缺失值标记、异常观测复核、时间窗口对齐和变量标准化。对于来自不同设备的观测值，先按设备批次检查分布，再统一进入融合模型，避免设备差异改变结论方向。
+编码过程依次完成材料归档、媒介分类、视觉与文本特征标注、阶段比较和解释性复核。图~\ref{fig:jlau-coding-flow} 展示各步骤之间的关系。
 
-\section{融合模型设计}
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+    node distance=0.58cm,
+    box/.style={draw=black!70,rounded corners=2pt,minimum width=2.35cm,minimum height=1.05cm,align=center,fill=black!4},
+    arrow/.style={-{Stealth[length=2.2mm]},thick,draw=black!65}
+  ]
+    \node[box] (collect) {公开材料\\归档};
+    \node[box,right=of collect] (classify) {媒介类型\\分类};
+    \node[box,right=of classify] (code) {视觉与文本\\特征编码};
+    \node[box,right=of code] (compare) {阶段比较\\与复核};
+    \draw[arrow] (collect) -- (classify);
+    \draw[arrow] (classify) -- (code);
+    \draw[arrow] (code) -- (compare);
+  \end{tikzpicture}
+  \caption{佐佐木希跨媒介公开材料的示例编码流程}
+  \label{fig:jlau-coding-flow}
+\end{figure}
 
-融合模型由特征筛选、权重估计和稳定性评价三部分组成。示例中用线性加权方式表达基本思路：
+\section{变量与评价维度}
 
-\begin{equation}
-  F_i=\sum_{j=1}^{p} w_j x_{ij}
-\end{equation}
-
-其中，$F_i$ 表示第 $i$ 个样方的融合得分，$x_{ij}$ 表示标准化后的第 $j$ 个特征，$w_j$ 表示特征权重。真实研究可根据课题需要替换为混合效应模型、随机森林、贝叶斯模型或深度学习模型。
-
-\section{图表呈现规范}
-
-图题置于图下方，表题置于表上方，并按章节编号。表格默认采用三线表，以符合规范中对表格编排的要求。
+表~\ref{tab:jlau-codebook} 给出一组适合教学演示的编码维度。真实研究可以增加编码员一致性、缺失材料处理和敏感信息排除规则。
 
 \begin{table}[htbp]
   \centering
-  \caption{示例变量说明}
-  \begin{tabular}{lll}
+  \caption{跨媒介公众形象的示例编码表}
+  \label{tab:jlau-codebook}
+  \begin{tabularx}{0.92\textwidth}{>{\centering\arraybackslash}p{2.4cm}XX}
     \toprule
-    变量 & 含义 & 来源 \\
+    维度 & 观察内容 & 示例取值 \\
     \midrule
-    CC & 冠层覆盖度 & 图像识别 \\
-    NDVI & 归一化植被指数 & 多光谱观测 \\
-    LAI & 叶面积指数 & 田间测量 \\
+    媒介场域 & 内容出现的主要渠道 & 杂志、影视、广告、社交平台 \\
+    角色定位 & 内容突出的人物功能 & 模特、演员、品牌合作者、生活叙述者 \\
+    表达方式 & 画面与文字的组织特征 & 专业化、角色化、日常化、互动化 \\
+    传播节奏 & 单位时间内的公开更新状况 & 集中曝光、稳定更新、事件驱动 \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
+
+\section{分析方法}
+
+研究先统计各阶段材料类型的构成，再结合代表性文本解释形象变化。为提示模板使用者区分事实与演示数据，本文将模拟指标统一记为标准化指数：
+
+\begin{equation}
+  I_{kt}=\frac{x_{kt}-\min(x_k)}{\max(x_k)-\min(x_k)}\times 100,
+\end{equation}
+
+其中，$I_{kt}$ 表示维度 $k$ 在阶段 $t$ 的示例指数，$x_{kt}$ 为对应的模拟编码值。
