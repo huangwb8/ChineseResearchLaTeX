@@ -34,6 +34,10 @@ references: skills/transfer-old-latex-to-new/references/
 
 # ChineseResearchLaTeX 内容迁移技能
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 这个 skill 只做一件事：把旧材料里的正文、参考文献等内容，迁移到 **当前仓库已有模板项目** 的内容层。
 
 它不是模板开发 skill，也不是公共包重构 skill。凡是要改模板源码、样式、`packages/bensz-*`、`projects/*` 内骨架文件、`main.tex`、`@config.tex`、`.cls`、`.sty`、profile、style 或构建脚本的任务，都应转给 `make-latex-model` 或对应产品线的模板开发流程。

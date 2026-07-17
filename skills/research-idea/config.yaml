@@ -6,12 +6,17 @@ skill_info:
   category: "research"
 
 workspace:
-  hidden_dir: ".bensz-api/skills/research-idea"
+  task_root_dir: ".bensz-api"
+  task_prefix: "task"
+  task_label: "research-idea"
+  workspace_contract: "bensz-api-task-v1"
   run_prefix: ""
-  timestamp_format: "%Y-%m-%d-%H-%M"
+  timestamp_format: "%Y%m%d-%H%M"
   keep_intermediates_inside_hidden_dir: true
   subdirs:
     - "input"
+    - "output"
+    - "log"
     - "theme"
     - "candidates"
     - "novelty"

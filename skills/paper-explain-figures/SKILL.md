@@ -15,6 +15,10 @@ metadata:
 
 # paper-explain-figures
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 与 bensz-collect-bugs 的协作约定
 
 - 因本 skill 设计缺陷导致的 bug，先用 `bensz-collect-bugs` 规范记录到 `~/.bensz-skills/bugs/`，不要直接修改用户本地已安装的 skill 源码；若有 workaround，先记 bug，再继续完成任务。
@@ -33,8 +37,8 @@ metadata:
 
 ## 强约束（必须遵守）
 
-- **目录管理硬约束**：所有中间产物必须托管在当前工作目录下的隐藏目录 **`.bensz-api/skills/paper-explain-figures/`**（该目录名在脚本中硬编码；不允许改到别处）。
-- **运行时隔离硬约束**：runner / 图片转换器产生的 HOME、TMP、XDG cache/state/config 等运行时辅助文件，也必须重定向并收纳到 `.bensz-api/skills/paper-explain-figures/` 内。
+- **目录管理硬约束**：所有中间产物必须托管在当前工作目录下的隐藏目录 **`.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-explain-figures/`**（该目录名在脚本中硬编码；不允许改到别处）。
+- **运行时隔离硬约束**：runner / 图片转换器产生的 HOME、TMP、XDG cache/state/config 等运行时辅助文件，也必须重定向并收纳到 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-explain-figures/` 内。
 - **只读约束**：全程只读访问用户的 Figure 与源代码文件；严禁修改它们（包括格式化/重写/覆盖）。
 
 ## 输入
@@ -48,7 +52,7 @@ metadata:
 ## 输出
 
 - 最终报告：默认输出到当前工作目录 `paper-explain-figures_report.md`
-- 所有中间文件与日志：落到 `.bensz-api/skills/paper-explain-figures/`（按 run/job 分目录保存）
+- 所有中间文件与日志：落到 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-explain-figures/`（按 run/job 分目录保存）
 
 ## 标准报告格式（每张图必须按此结构输出）
 
@@ -97,7 +101,7 @@ metadata:
 
 ## 使用方式（建议）
 
-在当前目录运行（推荐，产物会落到当前目录与 `.bensz-api/skills/paper-explain-figures/`）：
+在当前目录运行（推荐，产物会落到当前目录与 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-explain-figures/`）：
 
 ```bash
 python3 paper-explain-figures/scripts/paper_explain_figures.py \
@@ -125,12 +129,12 @@ python3 paper-explain-figures/scripts/paper_explain_figures.py --fig /abs/path/t
 python3 paper-explain-figures/scripts/paper_explain_figures.py --fig /abs/path/to/figure.png --runner codex
 ```
 
-⚠️ 安全提示：`--runner shell` 已禁用，因为它无法对“.bensz-api/skills/paper-explain-figures 之外绝不泄露中间文件”提供严格保证。
+⚠️ 安全提示：`--runner shell` 已禁用，因为它无法对“.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-explain-figures 之外绝不泄露中间文件”提供严格保证。
 
 ## 清理方式
 
 在触发目录执行：
 
 ```bash
-rm -rf .bensz-api/skills/paper-explain-figures
+rm -rf .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-explain-figures
 ```

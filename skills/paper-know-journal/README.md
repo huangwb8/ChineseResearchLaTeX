@@ -17,7 +17,7 @@
 ```text
 请使用 paper-know-journal skill 调研 Journal for ImmunoTherapy of Cancer。
 输出：保存到 `/path/to/reports/`
-另外，所有中间文件仍放在当前工作目录的 `.bensz-api/skills/paper-know-journal/`
+另外，所有中间文件仍放在当前工作目录的 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-know-journal/`
 ```
 
 ### 聚焦某类稿件
@@ -36,13 +36,13 @@
 - 补充 SciRev、LetPub、论坛、作者经验等社区评价。
 - 抽样近期已发表文章，观察真实文章结构、图表数量和声明写法。
 - 输出类似 JITC / Cancer Cell 投稿指南调研的中文 Markdown 报告。
-- 默认把中间文件隔离到 `.bensz-api/skills/paper-know-journal/{yyyy-mm-dd-hh-mm}/`。
+- 默认把中间文件隔离到 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-know-journal/{yyyy-mm-dd-hh-mm}/`。
 
 ## 输出
 
 - 最终报告：`KnowJournal-{杂志名}.md`
 - 默认输出位置：当前工作目录根目录
-- 默认隐藏工作区：`.bensz-api/skills/paper-know-journal/{yyyy-mm-dd-hh-mm}/`
+- 默认隐藏工作区：`.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-know-journal/{yyyy-mm-dd-hh-mm}/`
 - 来源索引：隐藏工作区内的 `sources.json`
 - 默认测试区：`./tests/paper-know-journal/`
 - 报告会区分官方政策与社区/第三方评价；官方政策优先，社区反馈只作为投稿体验线索。

@@ -18,6 +18,10 @@ metadata:
 
 # Paper Write SCI
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 与 bensz-collect-bugs 的协作约定
 
 - 因本 skill 设计缺陷导致的 bug，先用 `bensz-collect-bugs` 规范记录到 `~/.bensz-skills/bugs/`，不要直接修改用户本地已安装的 skill 源码；若有 workaround，先记 bug，再继续完成任务
@@ -37,7 +41,7 @@ metadata:
 - 在 `Introduction` 中协调核心观点、核心痛点和核心问题的出现频率，避免反复重提同一主张导致冗余
 - 在写作与修订过程中严格保护数字、逻辑和术语一致性
 - 默认直接推进修改；当用户需要人机协作时，只输出计划，不直接改论文
-- 除明确约定的对外交付物外，把所有中间文件收敛到 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
+- 除明确约定的对外交付物外，把所有中间文件收敛到 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
 
 ## 输入
 
@@ -55,7 +59,7 @@ metadata:
 ### `autonomous`
 
 - 直接修改目标正文文件
-- 将分析、审查、渲染日志写入当前运行目录 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
+- 将分析、审查、渲染日志写入当前运行目录 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
 - 若检测到可用构建链，尝试重新渲染 PDF 和 Word
 
 ### `collaborative`
@@ -63,7 +67,7 @@ metadata:
 - 只输出计划文件，文件名模式以 `config.yaml:runtime_outputs.collaborative_plan_pattern` 为准，默认带上本轮 `run_id`
 - 计划中总结论文缺陷、证据、建议修复方案、影响文件和风险
 - 不直接修改论文内容
-- 计划以外的中间文件仍写入当前运行目录 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
+- 计划以外的中间文件仍写入当前运行目录 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
 
 ## 模式规则
 
@@ -83,7 +87,7 @@ metadata:
 
 ## 中间文件约束
 
-除下列“明确约定的对外交付物”外，其余中间文件都必须放在 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`：
+除下列“明确约定的对外交付物”外，其余中间文件都必须放在 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`：
 
 - `plans/{collaborative_plan_pattern}`
 - 论文最终构建产物，例如项目已有的 PDF 和 Word 输出

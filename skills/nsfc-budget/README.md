@@ -12,16 +12,16 @@
 
 - 你已经写完或基本写完正文，现在要补预算说明书
 - 你有零散材料，希望先沉淀成规范的预算说明书项目
-- 你希望所有中间文件都隐藏在工作目录下的 `.bensz-api/skills/nsfc-budget/`，不污染根目录
+- 你希望所有中间文件都隐藏在工作目录下的 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/`，不污染根目录
 
 ## 先注意
 
 - **必须提供工作目录**。如果你没给，skill 会先停下来问你。
 - **2026 青年 A/B/C** 通常是**包干制**，往往**不需要预算说明书**；如果你是这类场景，请先确认单位是否仍要求你写预算说明。
-- 所有中间文件默认进入 `<workdir>/.bensz-api/skills/nsfc-budget/`。
+- 所有中间文件默认进入 `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/`。
 - 最终交付默认输出到 `<workdir>/<output_dirname>/`，当前默认值以 `skills/nsfc-budget/config.yaml` 为准。
 - `template_id`、`output_dirname` 与模板元数据中的输出路径都只接受**相对安全路径**，不能写绝对路径、`.` 或 `..`。
-- 输出目录不能写成工作目录根路径，也不能与 `.bensz-api/skills/nsfc-budget/` 重叠。
+- 输出目录不能写成工作目录根路径，也不能与 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/` 重叠。
 
 ## 你需要准备什么
 
@@ -70,7 +70,7 @@
 - ./projects/NSFC_General/main.tex
 - ./notes/budget_notes.md
 要求：
-- 中间文件全部放到 ./.bensz-api/skills/nsfc-budget
+- 中间文件全部放到 ./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget
 - 最终输出 LaTeX 项目 + budget.pdf
 - 不要捏造需求，不确定的地方先问我
 ```
@@ -93,9 +93,9 @@
 
 会创建：
 
-- `<workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/`
-- `<workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/budget_spec.json`
-- `<workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/input/materials/`
+- `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/{yyyy-mm-dd-hh-mm}/`
+- `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/{yyyy-mm-dd-hh-mm}/budget_spec.json`
+- `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/{yyyy-mm-dd-hh-mm}/input/materials/`
 
 ### 2) 形成结构化预算稿
 
@@ -122,12 +122,12 @@ skill 会把预算说明书拆成 5 段：
 
 - `<workdir>/<output_dirname>/`：最终 LaTeX 项目
 - `<workdir>/<output_dirname>/budget.pdf`
-- `<workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/validation_report.md`
-- `<workdir>/.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/validation_report.json`
+- `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/{yyyy-mm-dd-hh-mm}/validation_report.md`
+- `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/{yyyy-mm-dd-hh-mm}/validation_report.json`
 
 并额外强制检查：
 
-- `budget_spec.json` 仍位于 `<workdir>/.bensz-api/skills/nsfc-budget/`
+- `budget_spec.json` 仍位于 `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/`
 - `budget.*_wan` 与 `sections.*.amount_wan` 一致
 - 输出目录和模板路径不存在越界写入风险
 - 输出目录不会落到工作目录根路径，也不会与隐藏工作区重叠
@@ -139,7 +139,7 @@ skill 会把预算说明书拆成 5 段：
 
 ```text
 <workdir>/
-├── .bensz-api/skills/nsfc-budget/
+├── .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/
 │   └── 2026-03-07-12-00/
 │       ├── budget_spec.json
 │       ├── input/materials/
@@ -170,14 +170,14 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 
 ```bash
 python3 skills/nsfc-budget/scripts/render_budget_project.py \
-  --spec ./projects/NSFC_General/.bensz-api/skills/nsfc-budget/2026-03-07-12-00/budget_spec.json
+  --spec ./projects/NSFC_General/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/2026-03-07-12-00/budget_spec.json
 ```
 
 ## 常见问题
 
 ### 为什么一定要工作目录？
 
-因为这个 skill 会把所有中间过程隔离在 `<workdir>/.bensz-api/skills/nsfc-budget/` 下；没有工作目录，就无法保证不污染你的其它目录。
+因为这个 skill 会把所有中间过程隔离在 `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/` 下；没有工作目录，就无法保证不污染你的其它目录。
 
 ### 为什么还要我确认“预算口径”？
 

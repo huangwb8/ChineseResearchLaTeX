@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### Changed（变更）
+
+- **skills 任务工作区**：新增 `skills/WORKSPACE.md` 并同步当前 Skills 文档与默认配置；中间文件默认收敛到 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`，同一任务共享一个根目录，旧隐藏目录仅保留显式兼容读取、迁移或清理。
+
 ### Added（新增）
 
 - 新增 `projects/GXNSF_General/`：基于 issue #52 提供的广西自然科学基金面上项目精简“报告正文” DOCX，落地四部分、十五个内容插槽的独立 LaTeX 模板；对齐 A4 页面、页边距、16 pt 字号、28.3 pt 固定行距、两字符首行缩进、仿宋/楷体语义与局部粗体，并提供项目级 XeLaTeX wrapper、VS Code 工作区、Word/PDF 基线与使用边界说明。

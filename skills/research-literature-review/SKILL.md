@@ -36,6 +36,10 @@ metadata:
 
 # Research Literature Review
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 与 bensz-collect-bugs 的协作约定
 
 - 当用户环境中出现因本 skill 设计缺陷导致的 bug 时，优先使用 `bensz-collect-bugs` 按规范记录到 `~/.bensz-skills/bugs/`，严禁直接修改用户本地 Claude Code / Codex 中已安装的 skill 源码。
@@ -177,11 +181,11 @@ metadata:
 python3 scripts/run_pipeline.py --topic "{主题}" --runs-root runs
 
 # 旧入口 / resume
-python3 scripts/pipeline_runner.py --topic "{主题}" --domain general --work-dir .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}
-python3 scripts/pipeline_runner.py --resume .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}
+python3 scripts/pipeline_runner.py --topic "{主题}" --domain general --work-dir .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}
+python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}
 
 # 阶段 3 评分后，从第 4 阶段继续
-python3 scripts/pipeline_runner.py --resume .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic} --resume-from 4
+python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic} --resume-from 4
 ```
 
 ## 环境与脚本

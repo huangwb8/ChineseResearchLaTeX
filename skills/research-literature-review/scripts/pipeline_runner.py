@@ -32,16 +32,16 @@ def _safe_topic_slug(topic: str) -> str:
 
 
 def _default_bensz_work_dir(topic: str) -> Path:
-    root = Path.cwd().resolve() / ".bensz-api" / "skills" / "research-literature-review"
-    stamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
-    base = f"{stamp}-{_safe_topic_slug(topic)}"
+    root = Path.cwd().resolve() / ".bensz-api"
+    stamp = datetime.now().strftime("%Y%m%d-%H%M")
+    base = f"task-{stamp}-{_safe_topic_slug(topic)}"
     candidate = root / base
     if not candidate.exists():
-        return candidate
+        return candidate / "research-literature-review"
     for idx in range(2, 100):
         candidate = root / f"{base}-{idx:02d}"
         if not candidate.exists():
-            return candidate
+            return candidate / "research-literature-review"
     raise ValueError(f"无法在 {root} 下分配唯一工作目录: {base}")
 
 
@@ -137,6 +137,14 @@ class PipelineRunner:
         # 统一使用绝对路径：避免在子进程 cwd=self.work_dir 时把路径“拼两遍”，同时减少跨 run 污染风险。
         self.work_dir = work_dir.expanduser().resolve()
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        task_readme = self.work_dir.parent / "README.md"
+        if self.work_dir.parent.name.startswith("task-") and not task_readme.exists():
+            task_readme.write_text(
+                "# BenszAPI 任务工作区\n\n"
+                "- 本轮 skill：`research-literature-review`\n"
+                "- 输入引用、临时产物和日志分别保存于 skill 的 input/output/log。\n",
+                encoding="utf-8",
+            )
         # 设置工作目录隔离范围：子进程默认只允许在该目录内读写（由各脚本从 env 读取并校验）。
         os.environ["SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT"] = str(self.work_dir)
 
@@ -185,7 +193,7 @@ class PipelineRunner:
         # AI 临时脚本目录（供 AI 在工作流中创建临时脚本使用）
         self.scripts_dir = self.hidden_dir / "scripts"
 
-        for d in [self.hidden_dir, self.artifacts_dir, self.reference_dir, self.scripts_dir]:
+        for d in [self.work_dir / "input", self.work_dir / "log", self.hidden_dir, self.artifacts_dir, self.reference_dir, self.scripts_dir]:
             d.mkdir(parents=True, exist_ok=True)
         if self.cache_dir is not None:
             self.cache_dir.mkdir(parents=True, exist_ok=True)

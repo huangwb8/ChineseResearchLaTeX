@@ -8,7 +8,7 @@
 ## 你会得到什么
 
 - 一份**只读审查报告**（默认输出到 `./references/`）：`NSFC-REF-ALIGNMENT-v*.md`
-- 一个可复现的“证据包”（强制隔离到标书目录下）：`{project_root}/.bensz-api/skills/nsfc-ref-alignment/*/`
+- 一个可复现的“证据包”（强制隔离到标书目录下）：`{project_root}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-ref-alignment/*/`
 
 该技能默认**不修改**任何标书正文或参考文献（`*.tex/*.bib`），只生成报告供你人工复核。
 
@@ -59,7 +59,7 @@
 
 ### 1) 中间产物（强制，写入标书目录）
 
-位于：`{project_root}/.bensz-api/skills/nsfc-ref-alignment/*/`
+位于：`{project_root}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-ref-alignment/*/`
 
 典型文件：
 - `ai_ref_alignment_input.json`：结构化输入（引用位置 + 句子上下文 + 文献元信息 + 校验结果）

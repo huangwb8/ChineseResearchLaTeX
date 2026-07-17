@@ -163,7 +163,7 @@ cache:
 
 ### 按预算写作（含无引用段落）
 ```
-请读取 .bensz-api/skills/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}/.systematic-literature-review/artifacts/word_budget_final.csv，引用段按每篇文献的“综/述”字数预算写，无引用段（文献ID为空，如摘要/结论/展望）按该行预算控制长度；可合并引用但需贴近预算总字数。
+请读取 .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic}/.systematic-literature-review/artifacts/word_budget_final.csv，引用段按每篇文献的“综/述”字数预算写，无引用段（文献ID为空，如摘要/结论/展望）按该行预算控制长度；可合并引用但需贴近预算总字数。
 ```
 
 ## 运行与校验（维护者）

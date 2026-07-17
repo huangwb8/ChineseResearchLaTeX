@@ -22,7 +22,7 @@
 默认使用“**交付目录 + sidecar 工作区**”隔离中间产物（避免污染标书根目录）：
 
 - 交付目录（面向人读）：`{deliver_dir}/`
-- 工作区（面向复现/归档）：`project_root/.bensz-api/skills/nsfc-qc/{run_id}/`（包含 snapshot/.parallel-vibe/artifacts/final）
+- 工作区（面向复现/归档）：`project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{run_id}/`（包含 snapshot/.parallel-vibe/artifacts/final）
 
 同时兼容 legacy：显式传入旧参数时仍可读取或写入 `project_root/.nsfc-qc/`。
 
@@ -76,8 +76,8 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
 每次运行会创建一个 run 目录（`run_id` 为时间戳）。推荐布局是：
 
 - 交付目录：`QC/{run_id}/`
-- 工作区：`project_root/.bensz-api/skills/nsfc-qc/{run_id}/`
-- run 目录：`project_root/.bensz-api/skills/nsfc-qc/{run_id}/`
+- 工作区：`project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{run_id}/`
+- run 目录：`project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{run_id}/`
 
 | 产物 | 路径（相对 project_root） | 说明 |
 |---|---|---|
@@ -85,7 +85,7 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
 | 指标 | `QC/{run_id}/nsfc-qc_metrics.json` | 字符数/引用统计/预检信号聚合等 |
 | 结构化问题清单 | `QC/{run_id}/nsfc-qc_findings.json` | 便于后续人工审核或二次处理 |
 | 结构一致性校验 | `QC/{run_id}/validation.json` | report 与 findings JSON 的一致性校验 |
-| 工作区 run 目录 | `project_root/.bensz-api/skills/nsfc-qc/{run_id}/` | 完整可复现数据（snapshot/artifacts/final/.parallel-vibe 等都在这里） |
+| 工作区 run 目录 | `project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{run_id}/` | 完整可复现数据（snapshot/artifacts/final/.parallel-vibe 等都在这里） |
 
 补充说明：
 - `nsfc-qc_metrics.json` 的 `schema_version` 当前为 **2**（artifacts 路径以 **run_dir 为基准的相对路径**输出，便于搬运复现）。
@@ -93,7 +93,7 @@ python3 skills/nsfc-qc/scripts/nsfc_qc_run.py \
 ## 设计理念（为什么这样做）
 
 - **只读**：QC 报告通常要进一步审核；“先报告、后改稿”更可控。
-- **中间产物隔离**：所有过程文件集中到 `.bensz-api/skills/nsfc-qc/`，不污染标书工程。
+- **中间产物隔离**：所有过程文件集中到 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/`，不污染标书工程。
 - **多线程独立**：同一份清单多视角复核，减少漏检；最后再聚合去重。
 - **确定性优先**：能用脚本做的（引用 key 缺失、篇幅统计、引用证据包抓取）先脚本做，降低 AI 幻觉风险。
 - **渲染顺序优先**：缩写首次出现按 `main.tex` 的真实展开顺序判断，不按文件名顺序猜测。
@@ -138,21 +138,21 @@ OpenAI 将模型区分为 *reasoning* 与非 *reasoning*（GPT）两类，并强
 
 如果你想先做一次“确定性预检”，再让 AI 去做深度 QC：
 
-### 1) 预检（只写入 `.bensz-api/skills/nsfc-qc/`；包含“引用证据包”）
+### 1) 预检（只写入 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/`；包含“引用证据包”）
 
 ```bash
 # 在 repo 根目录运行
 python3 skills/nsfc-qc/scripts/nsfc_qc_precheck.py \
   --project-root projects/NSFC_Young \
   --main-tex main.tex \
-  --out projects/NSFC_Young/.bensz-api/skills/nsfc-qc/YYYY-MM-DD-HH-MM/artifacts \
+  --out projects/NSFC_Young/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/YYYY-MM-DD-HH-MM/artifacts \
   --resolve-refs
 ```
 
-### 2) 运行 parallel-vibe（只写入 `.bensz-api/skills/nsfc-qc/`）
+### 2) 运行 parallel-vibe（只写入 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/`）
 
 ```bash
-# 生成 snapshot + plan，并把 parallel-vibe 产物落在 projects/NSFC_Young/.bensz-api/skills/nsfc-qc/ 下
+# 生成 snapshot + plan，并把 parallel-vibe 产物落在 projects/NSFC_Young/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/ 下
 python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --project-root projects/NSFC_Young \
   --run-id YYYY-MM-DD-HH-MM \
@@ -160,7 +160,7 @@ python3 skills/nsfc-qc/scripts/run_parallel_qc.py \
   --execution serial
 ```
 
-### 3) 生成标准化 final 输出骨架（只写入 `.bensz-api/skills/nsfc-qc/`）
+### 3) 生成标准化 final 输出骨架（只写入 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/`）
 
 ```bash
 # 即使 threads 尚未运行，也可以先把标准输出文件落盘（供后续人工/AI 填充与审核）

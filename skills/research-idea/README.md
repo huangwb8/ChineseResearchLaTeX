@@ -58,7 +58,7 @@
 | 文件 | 说明 |
 |------|------|
 | `Research-Idea_{repo}_{pr}_{timestamp}.md` | 最终研究想法报告 |
-| `.bensz-api/skills/research-idea/{yyyy-mm-dd-hh-mm}/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
+| `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/{yyyy-mm-dd-hh-mm}/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
 | `tests/research-idea/` | 技能开发测试区；普通用户运行不会默认创建 |
 
 最终报告不会暴露隐藏工作区路径。

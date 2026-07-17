@@ -1,7 +1,7 @@
 ---
 name: nsfc-qc
 version: 1.2.1
-description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到 `project_root/.bensz-api/skills/nsfc-qc/{yyyy-mm-dd-hh-mm}/`，并兼容 legacy `.nsfc-qc/` 读取/清理。
+description: 当用户明确要求"标书QC/质量控制/润色前质检/引用真伪核查/篇幅与结构检查"时使用。对 NSFC 标书进行只读质量控制：并行多线程独立检查文风生硬、引用假引/错引风险、篇幅与章节分布、逻辑清晰度等，最终输出标准化 QC 报告；中间文件默认归档到 `project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{yyyy-mm-dd-hh-mm}/`，并兼容 legacy `.nsfc-qc/` 读取/清理。
 author: Bensz Conan
 metadata:
   author: Bensz Conan
@@ -30,6 +30,10 @@ references: skills/nsfc-qc/references/
 
 # NSFC 标书质量控制
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 与 bensz-collect-bugs 的协作约定
 
 - 当用户环境中出现因本 skill 设计缺陷导致的 bug 时，优先使用 `bensz-collect-bugs` 按规范记录到 `~/.bensz-skills/bugs/`，严禁直接修改用户本地 Claude Code / Codex 中已安装的 skill 源码。
@@ -40,7 +44,7 @@ references: skills/nsfc-qc/references/
 
 - 只读 QC：不修改 `.tex/.bib/.cls/.sty`
 - 目标是产出标准化 QC 报告，而不是“顺手帮用户改文”
-- 推荐布局：`deliver_dir/` 放交付物，`project_root/.bensz-api/skills/nsfc-qc/{run_id}/` 放工作区
+- 推荐布局：`deliver_dir/` 放交付物，`project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{run_id}/` 放工作区
 
 ## 输入
 
@@ -85,7 +89,7 @@ references: skills/nsfc-qc/references/
 
 - 优先用实例隔离布局：
   - `deliver_dir`
-  - `workspace_dir=project_root/.bensz-api/skills/nsfc-qc/{run_id}`
+  - `workspace_dir=project_root/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-qc/{run_id}`
   - `run_dir={workspace_dir}`
 - 只有用户明确要求 legacy 或处理旧产物时才读取 `project_root/.nsfc-qc/`
 

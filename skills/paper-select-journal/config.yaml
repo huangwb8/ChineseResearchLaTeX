@@ -6,9 +6,12 @@ skill_info:
   category: "academic-writing"
 
 workspace:
-  hidden_dir: ".bensz-api/skills/paper-select-journal"
+  task_root_dir: ".bensz-api"
+  task_prefix: "task"
+  task_label: "paper-select-journal"
+  workspace_contract: "bensz-api-task-v1"
   run_prefix: ""
-  timestamp_format: "%Y-%m-%d-%H-%M"
+  timestamp_format: "%Y%m%d-%H%M"
   latest_run_pointer: "latest-run.txt"
   keep_intermediates_inside_hidden_dir: true
   subdirs:

@@ -41,11 +41,11 @@
 
 默认会在你的当前工作目录下创建隐藏工作区：
 
-- `.bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/`
+- `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-select-journal/{yyyy-mm-dd-hh-mm}/`
 
 最终报告默认在：
 
-- `.bensz-api/skills/paper-select-journal/{yyyy-mm-dd-hh-mm}/reports/paper-select-journal-report.md`
+- `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-select-journal/{yyyy-mm-dd-hh-mm}/reports/paper-select-journal-report.md`
 
 中间文件也都留在隐藏目录里，不会散落到外面。
 一旦你开始用这些脚本串流程，`manuscript_profile.json`、`set2_scope_review.json`、`final_recommendations.json` 也应继续放在当前 run 目录里，不要挪到隐藏工作区外。

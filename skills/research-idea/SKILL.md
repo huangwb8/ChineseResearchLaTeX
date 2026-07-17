@@ -18,6 +18,10 @@ metadata:
 
 # Research Idea
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 定位
 
 把任意资料转化为多个高价值、可查新、可证伪的“科学问题-科学假设”候选，并选出最值得推进的一对。
@@ -33,7 +37,7 @@ metadata:
 - 必需：任意资料或信息，如文本、文件、文件夹、URL、论文线索、实验现象、代码仓库或 PR 背景。
 - 可选：
 - 输出路径：用户指定时遵从；未指定时放在当前项目根目录。
-- 工作区：用户指定时遵从；未指定时为当前工作目录下 `.bensz-api/skills/research-idea/`。
+- 工作区：用户指定时遵从；未指定时为当前工作目录下 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/`。
 - 轮次：默认 3 轮；用户指定时遵从。
 
 ## 输出
@@ -51,11 +55,11 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 选择理由、最佳方案及原因。
 - 查新摘要、证据缺口、可证伪路径和最小下一步。
 
-报告不得暴露 `.bensz-api/skills/research-idea/`、`tests/research-idea/`、`parallel-vibe/`、`.parallel-vibe/`、`.parallel_vibe/`、`@main/summary.md`、manifest 或其他中间产物路径。
+报告不得暴露 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/`、`tests/research-idea/`、`parallel-vibe/`、`.parallel-vibe/`、`.parallel_vibe/`、`@main/summary.md`、manifest 或其他中间产物路径。
 
 ## 工作区
 
-- 默认工作区：`{cwd}/.bensz-api/skills/research-idea/{yyyy-mm-dd-hh-mm}/`。
+- 默认工作区：`{cwd}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/{yyyy-mm-dd-hh-mm}/`。
 - 所有中间文件、查新记录、并行审查产物、草稿和日志都必须保存在隐藏工作区内；除最终 Markdown 外，不要写到项目根目录。
 - 若用户显式指定工作区，目录名仍必须是隐藏目录（以 `.` 开头），并且位于当前工作目录内；输出目录不得位于隐藏工作区内。
 
@@ -95,7 +99,7 @@ python3 ~/.claude/skills/research-idea/scripts/init_workspace.py --input-label "
 
 1. 用 `research-topic-extractor` 把该候选转换成查新主题、关键词和核心问题。
 2. 将每个候选的主题提取结果保存到 `candidates/Cx/theme.json`。
-3. 调用 `research-literature-review`，档位固定为 `Premium`，输出目录限定为 `.bensz-api/skills/research-idea/*/novelty/Cx/`。
+3. 调用 `research-literature-review`，档位固定为 `Premium`，输出目录限定为 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/*/novelty/Cx/`。
 4. 每个候选必须形成 `novelty/Cx/novelty-decision.json`，字段包括：
    - `novelty_status`：`未研究` / `部分研究但关键缺口存在` / `已充分研究`
    - `direct_answer`：已有研究是否直接回答该科学问题

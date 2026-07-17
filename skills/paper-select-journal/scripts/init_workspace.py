@@ -6,7 +6,27 @@ import datetime as dt
 import json
 from pathlib import Path
 
-from common import allocate_unique_run_id, ensure_dir, generate_run_id, is_within, load_config, resolve_path, skill_root
+from common import allocate_unique_run_id, ensure_dir, generate_run_id, is_within, load_config, resolve_path, skill_root, write_text
+
+
+def default_task_workspace(project_root: Path, config: dict, run_id: str) -> tuple[Path, Path]:
+    workspace_cfg = config["workspace"]
+    task_base = project_root / workspace_cfg.get("task_root_dir", ".bensz-api")
+    task_prefix = str(workspace_cfg.get("task_prefix", "task")).strip("-") or "task"
+    skill_name = str(workspace_cfg.get("task_label", "paper-select-journal")).strip("-")
+    task_root = task_base / f"{task_prefix}-{run_id}-{skill_name}"
+    return task_root, task_root / skill_name
+
+
+def write_task_readme(task_root: Path, skill_name: str) -> None:
+    readme = task_root / "README.md"
+    if not readme.exists():
+        write_text(
+            readme,
+            "# BenszAPI 任务工作区\n\n"
+            f"- 本轮 skill：`{skill_name}`\n"
+            "- 中间文件位于本任务的 `input/`、`output/` 和 `log/` 分类目录。\n",
+        )
 
 
 def build_manifest(
@@ -25,7 +45,8 @@ def build_manifest(
         "workspace_base": str(workspace_base),
         "workspace_root": str(workspace_root),
         "run_id": run_id,
-        "workspace_inside_project_root": is_within(project_root, workspace_base),
+        "workspace_inside_project_root": is_within(project_root, workspace_root),
+        "workspace_contract": config["workspace"].get("workspace_contract", "legacy-explicit-workspace"),
         "catalog_xlsx": str((skill_root() / config["assets"]["catalog_xlsx"]).resolve()),
         "final_report": str((workspace_root / reports_cfg["final_report"]).resolve()),
     }
@@ -40,21 +61,31 @@ def main() -> None:
 
     config = load_config()
     project_root = resolve_path(args.project_root)
-    default_hidden_dir = str(config["workspace"]["hidden_dir"])
-    workspace_base = (
-        resolve_path(args.workspace_base, base=project_root)
-        if args.workspace_base
-        else (project_root / default_hidden_dir).resolve()
-    )
-    run_id = args.run_id or allocate_unique_run_id(workspace_base, generate_run_id(config))
-    workspace_root = ensure_dir(workspace_base / run_id)
+    skill_name = str(config["workspace"].get("task_label", "paper-select-journal"))
+    if args.workspace_base:
+        workspace_base = resolve_path(args.workspace_base, base=project_root)
+        run_id = args.run_id or allocate_unique_run_id(workspace_base, generate_run_id(config))
+        workspace_root = ensure_dir(workspace_base / run_id)
+    else:
+        requested_run_id = args.run_id or generate_run_id(config)
+        task_root, workspace_root = default_task_workspace(project_root, config, requested_run_id)
+        if not args.run_id:
+            task_root = ensure_dir(task_root.parent) / allocate_unique_run_id(task_root.parent, task_root.name)
+            workspace_root = task_root / skill_name
+            run_id = task_root.name.removeprefix("task-").removesuffix(f"-{skill_name}")
+        else:
+            run_id = requested_run_id
+        workspace_base = task_root
+        ensure_dir(workspace_root)
+        write_task_readme(task_root, skill_name)
 
     for subdir in config["workspace"]["subdirs"]:
         ensure_dir(workspace_root / str(subdir))
 
-    latest_run = workspace_base / config["workspace"]["latest_run_pointer"]
-    ensure_dir(workspace_base)
-    latest_run.write_text(run_id + "\n", encoding="utf-8")
+    if args.workspace_base:
+        latest_run = workspace_base / config["workspace"]["latest_run_pointer"]
+        ensure_dir(workspace_base)
+        latest_run.write_text(run_id + "\n", encoding="utf-8")
 
     manifest = build_manifest(
         config=config,

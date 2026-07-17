@@ -282,7 +282,8 @@ api:
 # 目录与输出
 # ============================================================================
 layout:
-  hidden_dir_name: ".systematic-literature-review"
+  # pipeline_runner 的 work_dir 已是任务级 {skill名} 目录；过程状态与产物不再嵌套私有隐藏目录。
+  hidden_dir_name: "output"
   artifacts_dir_name: "artifacts"
   cache_dir_name: "cache"
   reference_dir_name: "reference"

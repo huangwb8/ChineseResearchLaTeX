@@ -22,13 +22,13 @@
 python3 scripts/check_length.py --input /path/to/proposal --config config.yaml
 ```
 
-默认会在 `/path/to/proposal/.bensz-api/skills/nsfc-length-aligner/` 生成报告（可用 `--out-dir` 自定义）。
+默认会在 `/path/to/proposal/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner/` 生成报告（可用 `--out-dir` 自定义）。
 如你希望避免覆盖旧报告，可加 `--fail-if-exists`。
 
 如需显式指定隐藏工作区，推荐这样写：
 
 ```bash
-python3 scripts/check_length.py --input /path/to/proposal --config config.yaml --out-dir .bensz-api/skills/nsfc-length-aligner
+python3 scripts/check_length.py --input /path/to/proposal --config config.yaml --out-dir .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner
 ```
 
 说明：相对 `--out-dir` 会自动按 `--input` 对应的工作目录解析，而不是按你当前 shell 所在目录解析；这样即使你从别处启动命令，也不会把报告泄露到仓库根目录或其他位置。
@@ -55,4 +55,4 @@ python3 scripts/check_length.py --input /path/to/proposal --config config.yaml -
 
 说明：默认只统计 `.tex`（见 `config.yaml:checker.include_globs`），避免把同目录的 README/笔记等 Markdown 误计入篇幅；如确实需要统计 Markdown，可自行把 `*.md` / `*.markdown` 加回 include globs。
 
-另外，默认排除 `config.yaml:output_settings.intermediate_dir`（默认 `.bensz-api/skills/nsfc-length-aligner`），避免复检时把隐藏工作区中的历史报告再次计入扫描范围。
+另外，默认排除 `config.yaml:output_settings.intermediate_dir`（默认 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner`），避免复检时把隐藏工作区中的历史报告再次计入扫描范围。

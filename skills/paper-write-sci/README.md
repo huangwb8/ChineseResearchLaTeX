@@ -42,7 +42,7 @@
 - 写作时减少无结构功能的冒号解释句，让正文更接近正式 SCI 论文叙事
 - 优化 `Introduction` 时协调核心观点、核心痛点和核心问题，避免同一主张被反复重提
 - 默认遵守 `.tex` 的“分段分点”策略：新段落用空行，同段内多个点优先逐行写，方便回源定位
-- 其余中间文件统一进入本轮运行目录 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
+- 其余中间文件统一进入本轮运行目录 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
 - 如果项目有可用构建链，会尝试重新渲染 PDF/Word
 
 ### `collaborative`
@@ -50,7 +50,7 @@
 - 不直接改论文
 - 只输出 `plans/WritePaperSCI_{topic}_{run_id}.md`
 - 计划聚焦论文缺陷、证据、建议动作、关联图表、章节分工风险、风险等级
-- 计划之外的中间文件仍收纳到本轮运行目录 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
+- 计划之外的中间文件仍收纳到本轮运行目录 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`
 
 ## 两种模式
 
@@ -170,7 +170,7 @@
 - 这个数字写在这里是否合适
 - 对这个数字的解读是否合理
 
-默认会基于 `parallel-vibe` 并行审查，配置是 `5` 个 thread、每个 thread `1` 个 runner、SDK 仅 `Codex`。相关中间文件在 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/number-check/`。
+默认会基于 `parallel-vibe` 并行审查，配置是 `5` 个 thread、每个 thread `1` 个 runner、SDK 仅 `Codex`。相关中间文件在 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/number-check/`。
 
 ### 章节职责审查
 
@@ -180,7 +180,7 @@
 - `Discussion` 应主要解释意义、边界、文献关系和转化价值，不压缩重写上一节
 - 若用户意图包含“优化讨论”“讨论像结果”“discussion 太像 results”“减少重复”“更像人写的 discussion”等表达，会强制触发 `Discussion audit`
 
-相关中间文件在 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/section-role-check/`。
+相关中间文件在 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/section-role-check/`。
 
 ### 逻辑审查
 
@@ -191,7 +191,7 @@ skill 会维护一棵论文逻辑树，反复检查：
 - 章节之间是否协同
 - 是否存在断裂、矛盾、冗余、跳跃
 
-相关中间文件在 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/logic-check/`，逻辑树主文件在 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/logic-tree.md`。
+相关中间文件在 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/logic-check/`，逻辑树主文件在 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/logic-tree.md`。
 
 ### 缩写一致性审查
 
@@ -200,7 +200,7 @@ skill 不把“缩写首次定义是否完整且全文统一”理解为单个 t
 - 会先建立全文缩写清单，再开始局部修改
 - 首次出现位置以全篇为准，不以当前正在编辑的文件为准
 - Abstract、Figure Legends、Supplementary Materials 里的缩写也要回到全文口径统一判断
-- 相关中间文件默认写入 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/abbreviation-inventory.md` 与 `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/consistency-check.md`
+- 相关中间文件默认写入 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/abbreviation-inventory.md` 与 `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/consistency-check.md`
 
 ## 输出文件
 
@@ -209,17 +209,17 @@ skill 不把“缩写首次定义是否完整且全文统一”理解为单个 t
 | 路径 | 作用 |
 |---|---|
 | `<paper_dir>/plans/WritePaperSCI_{topic}_{run_id}.md` | 协作模式计划文件 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/paper-structure.md` | 本轮章节路径映射 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/figures-tables.md` | 本轮图表与论点梳理 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/abbreviation-inventory.md` | 本轮全文缩写清单与首次出现位置 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/logic-tree.md` | 本轮逻辑树 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/reference-style.md` | 本轮参考作者材料提炼结果 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/consistency-check.md` | 本轮全文一致性与缩写复核记录 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/runtime-context.json` | 本轮运行清单 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/number-check/` | 本轮数字审查中间文件 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/section-role-check/` | 本轮章节职责审查与 `Discussion audit` 中间文件 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/logic-check/` | 本轮逻辑审查中间文件 |
-| `<paper_dir>/.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/render/` | 本轮构建日志 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/paper-structure.md` | 本轮章节路径映射 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/figures-tables.md` | 本轮图表与论点梳理 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/abbreviation-inventory.md` | 本轮全文缩写清单与首次出现位置 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/logic-tree.md` | 本轮逻辑树 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/reference-style.md` | 本轮参考作者材料提炼结果 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/consistency-check.md` | 本轮全文一致性与缩写复核记录 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/analysis/runtime-context.json` | 本轮运行清单 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/number-check/` | 本轮数字审查中间文件 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/section-role-check/` | 本轮章节职责审查与 `Discussion audit` 中间文件 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/logic-check/` | 本轮逻辑审查中间文件 |
+| `<paper_dir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/render/` | 本轮构建日志 |
 
 ## 配置项
 
@@ -254,9 +254,9 @@ skill 不把“缩写首次定义是否完整且全文统一”理解为单个 t
 
 ## 常见问题
 
-### 计划文件为什么不放进 `.bensz-api/skills/paper-write-sci/`？
+### 计划文件为什么不放进 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/`？
 
-因为协作模式下，计划本身就是明确交付给人类审查的对外产物，所以单独放在 `<paper_dir>/plans/`。除此之外，其它中间文件仍然统一收纳到 `.bensz-api/skills/paper-write-sci/{yyyy-mm-dd-hh-mm}/`。
+因为协作模式下，计划本身就是明确交付给人类审查的对外产物，所以单独放在 `<paper_dir>/plans/`。除此之外，其它中间文件仍然统一收纳到 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/paper-write-sci/{yyyy-mm-dd-hh-mm}/`。
 
 ### 为什么要给同一篇论文按轮次拆成不同 `{yyyy-mm-dd-hh-mm}`？
 

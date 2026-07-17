@@ -8,9 +8,12 @@ skill_info:
   category: "paper"
 
 workspace:
-  hidden_dir: ".bensz-api/skills/paper-know-journal"
+  task_root_dir: ".bensz-api"
+  task_prefix: "task"
+  task_label: "paper-know-journal"
+  workspace_contract: "bensz-api-task-v1"
   run_prefix: ""
-  timestamp_format: "%Y-%m-%d-%H-%M"
+  timestamp_format: "%Y%m%d-%H%M"
   subdirs:
     - input
     - output

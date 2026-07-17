@@ -2,7 +2,7 @@
 
 ## `init_budget_run.py`
 
-用途：在用户工作目录下创建隐藏工作区 `.bensz-api/skills/nsfc-budget/{yyyy-mm-dd-hh-mm}/`，并生成 `budget_spec.json` 骨架。
+用途：在用户工作目录下创建隐藏工作区 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/{yyyy-mm-dd-hh-mm}/`，并生成 `budget_spec.json` 骨架。
 
 示例：
 
@@ -25,7 +25,7 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 
 约束：
 
-- `--output-dirname` 只能是工作目录下的相对安全路径，且不能是 `.` 或与 `.bensz-api/skills/nsfc-budget/` 重叠
+- `--output-dirname` 只能是工作目录下的相对安全路径，且不能是 `.` 或与 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/` 重叠
 - `--template-id` 只能指向 `skills/nsfc-budget/models/` 下的模板目录
 - 同一分钟重复初始化时，脚本会自动追加后缀避让目录名冲突
 
@@ -37,7 +37,7 @@ python3 skills/nsfc-budget/scripts/init_budget_run.py \
 
 ```bash
 python3 skills/nsfc-budget/scripts/render_budget_project.py \
-  --spec ./projects/NSFC_General/.bensz-api/skills/nsfc-budget/2026-03-07-12-00/budget_spec.json
+  --spec ./projects/NSFC_General/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/2026-03-07-12-00/budget_spec.json
 ```
 
 常用参数：
@@ -54,7 +54,7 @@ python3 skills/nsfc-budget/scripts/render_budget_project.py \
 
 额外说明：
 
-- `--spec` 必须位于 `<workdir>/.bensz-api/skills/nsfc-budget/` 内，否则会被拒绝
+- `--spec` 必须位于 `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-budget/` 内，否则会被拒绝
 - 目录为空时可直接渲染；目录非空时需显式传 `--force`
 - `deliverables_manifest.json` 在 `--skip-compile` 时会返回 `"pdf": null` 与 `"pdf_generated": false`
 - 运行时公共工具位于 `skills/nsfc-budget/scripts/runtime_utils.py`

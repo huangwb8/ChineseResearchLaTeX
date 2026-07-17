@@ -15,6 +15,10 @@ metadata:
 
 # nsfc-length-aligner
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 与 bensz-collect-bugs 的协作约定
 
 - 当用户环境中出现因本 skill 设计缺陷导致的 bug 时，优先使用 `bensz-collect-bugs` 按规范记录到 `~/.bensz-skills/bugs/`，严禁直接修改用户本地 Claude Code / Codex 中已安装的 skill 源码。
@@ -39,9 +43,9 @@ metadata:
 
 ### 0) 锁定隐藏工作区（先做）
 
-- 以标书工作目录为根，统一使用 `<workdir>/.bensz-api/skills/nsfc-length-aligner/` 托管所有中间文件与报告
+- 以标书工作目录为根，统一使用 `<workdir>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner/` 托管所有中间文件与报告
 - 不要把 `length_report.*`、临时分析稿、计划文件写到工作目录根层或仓库其他位置
-- 若显式传入 `--out-dir`，优先使用相对路径 `.bensz-api/skills/nsfc-length-aligner`；脚本会将**相对** `--out-dir` 解析到 `--input` 对应的工作目录，而不是 shell 当前目录
+- 若显式传入 `--out-dir`，优先使用相对路径 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner`；脚本会将**相对** `--out-dir` 解析到 `--input` 对应的工作目录，而不是 shell 当前目录
 - 若工作目录本身不可写，应先切换到可写副本后再运行；不要为了省事把中间文件散落到项目外部
 
 ### 1) 需求确认（预算口径）
@@ -66,7 +70,7 @@ python3 scripts/check_length.py --input <目标标书路径> --config config.yam
 如需显式声明输出目录，请使用：
 
 ```bash
-python3 scripts/check_length.py --input <目标标书路径> --config config.yaml --out-dir .bensz-api/skills/nsfc-length-aligner
+python3 scripts/check_length.py --input <目标标书路径> --config config.yaml --out-dir .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner
 ```
 
 如果你的标书基于 `NSFC_Young` / `NSFC_General` 模板（项目根目录包含 `main.tex`），建议把 `--input` 指向项目根目录：脚本会自动沿 `main.tex` 的 `\input/\include` 依赖树收集“实际会编译进 PDF 的文件”，并忽略被注释掉的 `\input{...}`（避免把可选章节误计入篇幅）。
@@ -79,8 +83,8 @@ python3 scripts/check_length.py --input <目标标书路径> --config config.yam
 
 输出：
 - 控制台摘要（总篇幅、超/欠预算项）
-- `<input>/.bensz-api/skills/nsfc-length-aligner/length_report.md`（默认输出目录；可用 `--out-dir` 自定义）
-- `<input>/.bensz-api/skills/nsfc-length-aligner/length_report.json`（默认输出目录；可用 `--out-dir` 自定义）
+- `<input>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner/length_report.md`（默认输出目录；可用 `--out-dir` 自定义）
+- `<input>/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner/length_report.json`（默认输出目录；可用 `--out-dir` 自定义）
 
 注意：`--out-dir` 若使用相对路径，会被解析到 `<input>` 对应的工作目录下；这能避免从其他目录启动命令时把报告误写到 shell 当前目录。
 
@@ -155,5 +159,5 @@ python3 scripts/check_length.py --input <目标标书路径> --config config.yam
 
 - 报告以“文件级 +（可选）章节级”呈现
 - 预算以 `config.yaml:length_standard` 为唯一真相来源
-- 中间文件统一托管到 `config.yaml:output_settings.intermediate_dir`（默认 `.bensz-api/skills/nsfc-length-aligner`）
+- 中间文件统一托管到 `config.yaml:output_settings.intermediate_dir`（默认 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-length-aligner`）
 - 所有改写应遵循“最小改动、保持原意”的准则（见 references）

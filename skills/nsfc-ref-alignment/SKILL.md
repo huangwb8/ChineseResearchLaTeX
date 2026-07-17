@@ -18,6 +18,10 @@ metadata:
 
 # NSFC Ref Alignment
 
+## BenszAPI 任务工作区
+
+本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
+
 ## 与 bensz-collect-bugs 的协作约定
 
 - 当用户环境中出现因本 skill 设计缺陷导致的 bug 时，优先使用 `bensz-collect-bugs` 按规范记录到 `~/.bensz-skills/bugs/`，严禁直接修改用户本地 Claude Code / Codex 中已安装的 skill 源码。
@@ -47,7 +51,7 @@ metadata:
 ### 中间产物（强制）
 **所有中间文件**必须托管在：
 
-`{project_root}/.bensz-api/skills/nsfc-ref-alignment/{yyyy-mm-dd-hh-mm}/`
+`{project_root}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-ref-alignment/{yyyy-mm-dd-hh-mm}/`
 
 其中 `run_{YYYYMMDDHHMMSS}` 为时间戳；如同秒重复运行，脚本会追加 `-2/-3/...`，确保多次分析不冲突。
 
@@ -122,7 +126,7 @@ python3 skills/nsfc-ref-alignment/scripts/run_ref_alignment.py \
 - 默认**不修改**任何标书内容与配置：
   - 禁止修改：`**/*.tex`、`**/*.bib`、`**/*.cls`、`**/*.sty`
 - 允许写入：
-  - `{project_root}/.bensz-api/skills/nsfc-ref-alignment/**`（中间产物）
+  - `{project_root}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-ref-alignment/**`（中间产物）
   - `./references/**`（最终报告；可由用户改到别处）
 - 若用户明确要求“修复引用/修复 bib”，必须先在报告里给出**修改计划**与影响面，再执行最小化修改（默认不做）。
 
@@ -131,6 +135,6 @@ python3 skills/nsfc-ref-alignment/scripts/run_ref_alignment.py \
 - 不同点：本 skill 面向**标书项目**（多文件 `\input{}` 结构），且默认**不做任何自动改写**（只输出审查报告）。
 
 ## 验证清单（静态自检）
-- `{project_root}/.bensz-api/skills/nsfc-ref-alignment/{yyyy-mm-dd-hh-mm}/` 存在且包含 4 个核心产物（json/md/csv/json）。
+- `{project_root}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-ref-alignment/{yyyy-mm-dd-hh-mm}/` 存在且包含 4 个核心产物（json/md/csv/json）。
 - 最终报告写入 `report_dir`，且没有任何 `.tex/.bib` 文件被修改。
 - 报告对每个 P0/P1 给出：定位（file/line）+ 原句 + 依据 + 建议动作。

@@ -19,11 +19,16 @@ except ModuleNotFoundError:  # pragma: no cover
 
 DEFAULT_CONFIG = {
     "workspace": {
-        "hidden_dir": ".bensz-api/skills/research-idea",
+        "task_root_dir": ".bensz-api",
+        "task_prefix": "task",
+        "task_label": "research-idea",
+        "workspace_contract": "bensz-api-task-v1",
         "run_prefix": "",
-        "timestamp_format": "%Y-%m-%d-%H-%M",
+        "timestamp_format": "%Y%m%d-%H%M",
         "subdirs": [
             "input",
+            "output",
+            "log",
             "theme",
             "candidates",
             "novelty",
@@ -175,6 +180,26 @@ def allocate_unique_run_id(workspace_base: Path, run_id: str) -> str:
     raise SystemExit(f"无法在 {workspace_base} 下分配唯一工作目录: {run_id}")
 
 
+def default_task_workspace(cwd: Path, config: dict, run_id: str) -> tuple[Path, Path]:
+    task_base = cwd / config.get("task_root_dir", ".bensz-api")
+    task_prefix = str(config.get("task_prefix", "task")).strip("-") or "task"
+    skill_name = str(config.get("task_label", "research-idea")).strip("-")
+    task_root = task_base / f"{task_prefix}-{run_id}-{skill_name}"
+    return task_root, task_root / skill_name
+
+
+def write_task_readme(task_root: Path, skill_name: str) -> None:
+    task_root.mkdir(parents=True, exist_ok=True)
+    readme = task_root / "README.md"
+    if not readme.exists():
+        readme.write_text(
+            "# BenszAPI 任务工作区\n\n"
+            f"- 本轮 skill：`{skill_name}`\n"
+            "- 输入引用、临时结果和日志分别保存于该 skill 的 input/output/log。\n",
+            encoding="utf-8",
+        )
+
+
 def find_skill(skill_name: str, search_roots: list[str], cwd: Path) -> Path | None:
     candidates: list[Path] = []
     for root in search_roots:
@@ -225,13 +250,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="初始化 research-idea 隐藏工作区")
     parser.add_argument("--input-label", required=True, help="资料或主题的简短标签")
     parser.add_argument("--cwd", default=".", help="用户当前工作目录，默认当前目录")
-    parser.add_argument("--workspace-dir", help="隐藏工作区根目录，默认 <cwd>/.bensz-api/skills/research-idea")
+    parser.add_argument("--workspace-dir", help="显式兼容工作区根目录；默认使用任务级 BenszAPI 工作区")
     parser.add_argument("--output-dir", help="最终 Markdown 输出目录，默认 <cwd>")
     parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/.bensz-api/skills/research-idea/tests")
     parser.add_argument("--with-test-dir", action="store_true", help="创建测试区；普通用户运行默认不创建")
     parser.add_argument("--repo-name", help="覆盖自动识别的 GitHub 仓库名")
     parser.add_argument("--pr-name", help="覆盖自动识别的 PR/分支名")
-    parser.add_argument("--run-id", help="运行 ID，默认 YYYY-MM-DD-HH-MM")
+    parser.add_argument("--run-id", help="运行 ID，默认 YYYYMMDD-HHMM")
     parser.add_argument("--overwrite", action="store_true", help="允许覆盖已存在的最终报告路径")
     parser.add_argument("--skip-dependency-check", action="store_true", help="仅测试脚本时跳过依赖 skill 检查")
     args = parser.parse_args()
@@ -261,12 +286,24 @@ def main() -> None:
     run_timestamp = dt.datetime.now().strftime(workspace_config["timestamp_format"])
     output_timestamp = dt.datetime.now().strftime(output_config["timestamp_format"])
     run_prefix = workspace_config["run_prefix"]
-    workspace_base = resolve_dir(args.workspace_dir, default=cwd / workspace_config["hidden_dir"])
-    ensure_hidden_workspace(workspace_base, "workspace_dir")
-    run_id = args.run_id or allocate_unique_run_id(workspace_base, f"{run_prefix}{run_timestamp}")
+    if args.workspace_dir:
+        workspace_base = resolve_dir(args.workspace_dir, default=cwd)
+        ensure_hidden_workspace(workspace_base, "workspace_dir")
+        run_id = args.run_id or allocate_unique_run_id(workspace_base, f"{run_prefix}{run_timestamp}")
+        workspace_dir = workspace_base / run_id
+    else:
+        requested_run_id = args.run_id or f"{run_prefix}{run_timestamp}"
+        task_root, workspace_dir = default_task_workspace(cwd, workspace_config, requested_run_id)
+        if args.run_id:
+            run_id = requested_run_id
+        else:
+            task_root = task_root.parent / allocate_unique_run_id(task_root.parent, task_root.name)
+            workspace_dir = task_root / str(workspace_config["task_label"])
+            run_id = task_root.name.removeprefix("task-").removesuffix(f"-{workspace_config['task_label']}")
+        workspace_base = task_root
+        write_task_readme(task_root, str(workspace_config["task_label"]))
     if not re.fullmatch(rf"{re.escape(run_prefix)}[A-Za-z0-9_.-]+", run_id):
         raise SystemExit(f"run-id 必须只包含字母、数字、点、下划线和连字符")
-    workspace_dir = workspace_base / run_id
     output_dir = resolve_dir(args.output_dir, default=cwd)
     test_dir = resolve_dir(args.test_dir, default=cwd / tests_config["default_dir"])
     output_filename = output_config["filename_template"].format(
@@ -310,7 +347,8 @@ def main() -> None:
     }
     manifest_path = workspace_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (workspace_base / "latest-run.txt").write_text(run_id + "\n", encoding="utf-8")
+    if args.workspace_dir:
+        (workspace_base / "latest-run.txt").write_text(run_id + "\n", encoding="utf-8")
 
     candidate_schema = {
         "candidates": [
