@@ -11,6 +11,7 @@
 ### Added（新增）
 
 - 新增 `projects/GXNSF_General/`：基于 issue #52 提供的广西自然科学基金面上项目精简“报告正文” DOCX，落地四部分、十五个内容插槽的独立 LaTeX 模板；对齐 A4 页面、页边距、16 pt 字号、28.3 pt 固定行距、两字符首行缩进、仿宋/楷体语义与局部粗体，并提供项目级 XeLaTeX wrapper、VS Code 工作区、Word/PDF 基线与使用边界说明。
+- 为 `projects/GXNSF_General/extraTex/` 的十五个内容插槽补充佐佐木希公开案例示例：以多模态时序数据、跨媒介状态转移和职业韧性为科学主线，加入公式、表格、公开来源参考文献与完整组织实施示例；对人员履历、项目经历、工作条件和附件采用显式占位或“无”的示例写法，避免把演示材料伪装成真实申请。
 - 扩展 `scripts/sync_vscode_configs.py`、`scripts/update_readme_template_list.py` 与 `scripts/pack_release.py` 的 `GXNSF_` 项目识别：新增 GXNSF 专属 LaTeX Workshop 配置、首页独立分类、标准/Overleaf Release 资产接入及最小自包含字体运行时；省级基金打包逻辑继续与 `bensz-nsfc` 隔离，并保留 GDNSF 兼容入口。
 - 新增 GXNSF 的 VS Code、构建 wrapper、README 自动列表、标准 zip 和 Overleaf zip 回归测试，覆盖失败短路、缓存清理、项目类型识别、字体最小集合与不携带 `bensz-nsfc` 运行时等关键行为。
 
