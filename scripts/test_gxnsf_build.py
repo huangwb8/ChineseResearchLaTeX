@@ -117,6 +117,12 @@ def test_template_source_keeps_official_outline_and_layout_contract():
     assert r"\setlength{\parindent}{32pt}" in config_tex
     assert "AdobeFangsongStd-Regular.otf" in config_tex
     assert "Kaiti.ttf" in config_tex
+    assert r"\IfFontExistsTF{方正仿宋_GBK}" in config_tex
+    assert r"\IfFontExistsTF{方正仿宋简体}" in config_tex
+    assert r"\IfFontExistsTF{方正楷体_GBK}" in config_tex
+    assert r"\IfFontExistsTF{方正楷体简体}" in config_tex
+    assert r"\IfFontExistsTF{FZKai-Z03S}" not in config_tex
+    assert r"\GXNSFPreferOriginalFonts" in config_tex
     assert r"\PackageError{GXNSF}{Missing required package bensz-fonts}" in config_tex
     assert r"\justifying" in config_tex
     assert r"\usepackage{bensz-nsfc" not in config_tex

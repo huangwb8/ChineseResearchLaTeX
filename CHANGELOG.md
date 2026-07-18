@@ -11,6 +11,7 @@
 ### Changed（变更）
 
 - **skills 任务工作区**：新增 `skills/WORKSPACE.md` 并同步当前 Skills 文档与默认配置；中间文件默认收敛到 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`，同一任务共享一个根目录，旧隐藏目录仅保留显式兼容读取、迁移或清理。
+- **GXNSF 字体对齐**：`projects/GXNSF_General` 现按原 DOCX 声明优先使用系统中的“方正仿宋_GBK / 方正楷体_GBK”（兼容对应简体家族名），标题与条目标题继续使用仿宋加粗；缺少方正字体时仍稳定回退到 `bensz-fonts` 的内置字体，兼顾原稿字形与跨平台编译。
 
 ### Added（新增）
 

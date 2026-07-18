@@ -31,19 +31,17 @@
   CJKbookmarks=true
 }
 
+\newcommand{\GXNSFFallbackFontPath}{}
+
 \newcommand{\GXNSFSetupLocalFontFiles}[1]{%
   \setmainfont[Path={#1},Extension=.ttf,AutoFakeBold=2.5,AutoFakeSlant=0.2]{TimesNewRoman}%
-  \setCJKmainfont[Path={#1},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
-  \setCJKfamilyfont{gxnsffangsong}[Path={#1},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
-  \setCJKfamilyfont{gxnsfkai}[Path={#1},AutoFakeBold=2.5]{Kaiti.ttf}%
+  \renewcommand{\GXNSFFallbackFontPath}{#1}%
 }
 
 \newcommand{\GXNSFSetupInstalledFonts}{%
   \usepackage{bensz-fonts}%
   \BenszFontsSetMainTimesFallback%
-  \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
-  \setCJKfamilyfont{gxnsffangsong}[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
-  \setCJKfamilyfont{gxnsfkai}[Path={\BenszFontsDir},AutoFakeBold=2.5]{Kaiti.ttf}%
+  \renewcommand{\GXNSFFallbackFontPath}{\BenszFontsDir}%
 }
 
 \newcommand{\GXNSFSetupFonts}{%
@@ -59,8 +57,47 @@
       }%
     }%
   }%
+  \GXNSFPreferOriginalFonts
   \xeCJKsetup{PunctStyle=plain,CJKecglue={}}%
 }
+
+% 原 DOCX 指定“方正仿宋_GBK / 方正楷体_GBK”。优先使用系统已安装的
+% 对应方正字体；若不存在，则保留上面的仓库内置字体，以保证跨平台可编译。
+\newcommand{\GXNSFSetSystemFangsong}[1]{%
+  \setCJKmainfont[AutoFakeBold=2.5]{#1}%
+  \setCJKfamilyfont{gxnsffangsong}[AutoFakeBold=2.5]{#1}%
+}
+
+\newcommand{\GXNSFSetSystemKai}[1]{%
+  \setCJKfamilyfont{gxnsfkai}[AutoFakeBold=2.5]{#1}%
+}
+
+\newcommand{\GXNSFSetFallbackFangsong}{%
+  \setCJKmainfont[Path={\GXNSFFallbackFontPath},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{gxnsffangsong}[Path={\GXNSFFallbackFontPath},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+}
+
+\newcommand{\GXNSFSetFallbackKai}{%
+  \setCJKfamilyfont{gxnsfkai}[Path={\GXNSFFallbackFontPath},AutoFakeBold=2.5]{Kaiti.ttf}%
+}
+
+\newcommand{\GXNSFPreferOriginalFonts}{%
+  \IfFontExistsTF{方正仿宋_GBK}{%
+    \GXNSFSetSystemFangsong{方正仿宋_GBK}%
+  }{%
+    \IfFontExistsTF{方正仿宋简体}{%
+      \GXNSFSetSystemFangsong{方正仿宋简体}%
+    }{\GXNSFSetFallbackFangsong}%
+  }%
+  \IfFontExistsTF{方正楷体_GBK}{%
+    \GXNSFSetSystemKai{方正楷体_GBK}%
+  }{%
+    \IfFontExistsTF{方正楷体简体}{%
+      \GXNSFSetSystemKai{方正楷体简体}%
+    }{\GXNSFSetFallbackKai}%
+  }%
+}
+
 \GXNSFSetupFonts
 
 \newcommand{\gxnsffangsong}{\CJKfamily{gxnsffangsong}}
