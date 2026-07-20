@@ -31,25 +31,13 @@
   CJKbookmarks=true
 }
 
-\newcommand{\GXNSFFallbackFontPath}{}
-
-\newcommand{\GXNSFSetupLocalFontFiles}[1]{%
-  \setmainfont[Path={#1},Extension=.ttf,AutoFakeBold=2.5,AutoFakeSlant=0.2]{TimesNewRoman}%
-  \renewcommand{\GXNSFFallbackFontPath}{#1}%
-}
-
-\newcommand{\GXNSFSetupInstalledFonts}{%
-  \usepackage{bensz-fonts}%
-  \BenszFontsSetMainTimesFallback%
-  \renewcommand{\GXNSFFallbackFontPath}{\BenszFontsDir}%
-}
-
 \newcommand{\GXNSFSetupFonts}{%
-  \IfFileExists{styles/fonts/AdobeFangsongStd-Regular.otf}{%
-    \GXNSFSetupLocalFontFiles{styles/fonts/}%
+  \IfFileExists{bensz-fonts.sty}{%
+    \usepackage{bensz-fonts}%
   }{%
-    \IfFileExists{bensz-fonts.sty}{%
-      \GXNSFSetupInstalledFonts
+    \IfFileExists{styles/bensz-fonts.sty}{%
+      \makeatletter\input{styles/bensz-fonts.sty}\makeatother
+      \BenszFontsSetPackageDir{styles/}%
     }{%
       \PackageError{GXNSF}{Missing required package bensz-fonts}{%
         Install bensz-fonts with the repository-level scripts/install.py before compiling the standard package.\MessageBreak
@@ -57,12 +45,14 @@
       }%
     }%
   }%
+  \BenszFontsSetMainTimesFallback%
   \GXNSFPreferOriginalFonts
   \xeCJKsetup{PunctStyle=plain,CJKecglue={}}%
 }
 
 % 原 DOCX 指定“方正仿宋_GBK / 方正楷体_GBK”。优先使用系统已安装的
-% 对应方正字体；若不存在，则保留上面的仓库内置字体，以保证跨平台可编译。
+% 对应方正字体。若系统中没有原始字体，则由 bensz-fonts 先使用包内的
+% 同款方正字体，再按 DOCX 的 Microsoft YaHei 替代记录和跨平台字体回退。
 \newcommand{\GXNSFSetSystemFangsong}[1]{%
   \setCJKmainfont[AutoFakeBold=2.5]{#1}%
   \setCJKfamilyfont{gxnsffangsong}[AutoFakeBold=2.5]{#1}%
@@ -72,14 +62,9 @@
   \setCJKfamilyfont{gxnsfkai}[AutoFakeBold=2.5]{#1}%
 }
 
-\newcommand{\GXNSFSetFallbackFangsong}{%
-  \setCJKmainfont[Path={\GXNSFFallbackFontPath},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
-  \setCJKfamilyfont{gxnsffangsong}[Path={\GXNSFFallbackFontPath},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
-}
+\newcommand{\GXNSFSetFallbackFangsong}{\BenszFontsGXNSFSetupFangsongFallback}
 
-\newcommand{\GXNSFSetFallbackKai}{%
-  \setCJKfamilyfont{gxnsfkai}[Path={\GXNSFFallbackFontPath},AutoFakeBold=2.5]{Kaiti.ttf}%
-}
+\newcommand{\GXNSFSetFallbackKai}{\BenszFontsGXNSFSetupKaiFallback}
 
 \newcommand{\GXNSFPreferOriginalFonts}{%
   \IfFontExistsTF{方正仿宋_GBK}{%

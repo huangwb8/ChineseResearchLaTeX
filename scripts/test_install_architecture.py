@@ -426,6 +426,8 @@ def test_gxnsf_project_has_independent_release_kind_and_minimal_fonts():
     assert pack_release.detect_project_kind(project_dir) == "gxnsf"
     assert pack_release.select_overleaf_font_files(project_dir) == {
         "AdobeFangsongStd-Regular.otf",
+        "FZFangSong-Z02.ttf",
+        "FZKai-Z03.ttf",
         "Kaiti.ttf",
         "TimesNewRoman.ttf",
     }
@@ -467,6 +469,8 @@ def test_pack_gxnsf_overleaf_is_self_contained_without_nsfc_runtime(tmp_path: Pa
         "README.md",
         "styles/bensz-fonts.sty",
         "styles/fonts/AdobeFangsongStd-Regular.otf",
+        "styles/fonts/FZFangSong-Z02.ttf",
+        "styles/fonts/FZKai-Z03.ttf",
         "styles/fonts/Kaiti.ttf",
         "styles/fonts/TimesNewRoman.ttf",
     } <= names

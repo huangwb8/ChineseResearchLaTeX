@@ -115,8 +115,8 @@ def test_template_source_keeps_official_outline_and_layout_contract():
     assert r"\geometry{a4paper,left=3.175cm,right=3.175cm,top=2.54cm,bottom=2.54cm}" in config_tex
     assert r"\newcommand{\GXNSFFontSize}{\fontsize{16pt}{28.3pt}\selectfont}" in config_tex
     assert r"\setlength{\parindent}{32pt}" in config_tex
-    assert "AdobeFangsongStd-Regular.otf" in config_tex
-    assert "Kaiti.ttf" in config_tex
+    assert r"\BenszFontsGXNSFSetupFangsongFallback" in config_tex
+    assert r"\BenszFontsGXNSFSetupKaiFallback" in config_tex
     assert r"\IfFontExistsTF{方正仿宋_GBK}" in config_tex
     assert r"\IfFontExistsTF{方正仿宋简体}" in config_tex
     assert r"\IfFontExistsTF{方正楷体_GBK}" in config_tex
@@ -126,6 +126,19 @@ def test_template_source_keeps_official_outline_and_layout_contract():
     assert r"\PackageError{GXNSF}{Missing required package bensz-fonts}" in config_tex
     assert r"\justifying" in config_tex
     assert r"\usepackage{bensz-nsfc" not in config_tex
+
+
+def test_shared_font_package_exposes_gxnsf_original_font_fallbacks():
+    font_package = (REPO_ROOT / "packages" / "bensz-fonts" / "bensz-fonts.sty").read_text(
+        encoding="utf-8"
+    )
+
+    assert r"\newcommand{\BenszFontsGXNSFSetupFangsongFallback}" in font_package
+    assert r"\newcommand{\BenszFontsGXNSFSetupKaiFallback}" in font_package
+    assert "FZFangSong-Z02.ttf" in font_package
+    assert "FZKai-Z03.ttf" in font_package
+    assert (REPO_ROOT / "packages" / "bensz-fonts" / "fonts" / "FZFangSong-Z02.ttf").exists()
+    assert (REPO_ROOT / "packages" / "bensz-fonts" / "fonts" / "FZKai-Z03.ttf").exists()
 
 
 def test_clean_removes_only_project_cache_and_latex_intermediates(tmp_path: Path):

@@ -6,6 +6,7 @@
 \getabspath{bensz-fonts.sty}
 \edef\BenszFontsPackageDir{\theabsdir}
 
+\newcommand{\BenszFontsSetPackageDir}[1]{\renewcommand{\BenszFontsPackageDir}{#1}}
 \newcommand{\BenszFontsDir}{\BenszFontsPackageDir fonts/}
 \newcommand{\BenszFontsFile}[1]{\BenszFontsPackageDir fonts/#1}
 
@@ -119,5 +120,46 @@
     }{%
       \fontspec{TeX Gyre Termes}%
     }%
+  }%
+}
+
+% 广西自然科学基金项目原 DOCX 使用方正仿宋/楷体。系统已安装时由项目优先
+% 使用系统字体；以下接口负责共享包内精确字形与现有跨平台回退字体之间的兜底。
+\newcommand{\BenszFontsGXNSFSetBundledFangsong}{%
+  \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{FZFangSong-Z02.ttf}%
+  \setCJKfamilyfont{gxnsffangsong}[Path={\BenszFontsDir},AutoFakeBold=2.5]{FZFangSong-Z02.ttf}%
+}
+
+\newcommand{\BenszFontsGXNSFSetBundledKai}{%
+  \setCJKfamilyfont{gxnsfkai}[Path={\BenszFontsDir},AutoFakeBold=2.5]{FZKai-Z03.ttf}%
+}
+
+\newcommand{\BenszFontsGXNSFSetAdobeFangsongFallback}{%
+  \setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+  \setCJKfamilyfont{gxnsffangsong}[Path={\BenszFontsDir},AutoFakeBold=2.5]{AdobeFangsongStd-Regular.otf}%
+}
+
+\newcommand{\BenszFontsGXNSFSetKaitiFallback}{%
+  \setCJKfamilyfont{gxnsfkai}[Path={\BenszFontsDir},AutoFakeBold=2.5]{Kaiti.ttf}%
+}
+
+\newcommand{\BenszFontsGXNSFSetupFangsongFallback}{%
+  \IfFileExists{\BenszFontsFile{FZFangSong-Z02.ttf}}{%
+    \BenszFontsGXNSFSetBundledFangsong
+  }{%
+    \IfFontExistsTF{Microsoft YaHei}{%
+      \setCJKmainfont[AutoFakeBold=2.5]{Microsoft YaHei}%
+      \setCJKfamilyfont{gxnsffangsong}[AutoFakeBold=2.5]{Microsoft YaHei}%
+    }{\BenszFontsGXNSFSetAdobeFangsongFallback}%
+  }%
+}
+
+\newcommand{\BenszFontsGXNSFSetupKaiFallback}{%
+  \IfFileExists{\BenszFontsFile{FZKai-Z03.ttf}}{%
+    \BenszFontsGXNSFSetBundledKai
+  }{%
+    \IfFontExistsTF{Microsoft YaHei}{%
+      \setCJKfamilyfont{gxnsfkai}[AutoFakeBold=2.5]{Microsoft YaHei}%
+    }{\BenszFontsGXNSFSetKaitiFallback}%
   }%
 }

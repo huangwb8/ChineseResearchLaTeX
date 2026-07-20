@@ -438,6 +438,8 @@ def select_overleaf_font_files(project_dir: Path) -> set[str]:
     if project_kind == "gxnsf":
         return {
             "AdobeFangsongStd-Regular.otf",
+            "FZFangSong-Z02.ttf",
+            "FZKai-Z03.ttf",
             "Kaiti.ttf",
             "TimesNewRoman.ttf",
         }

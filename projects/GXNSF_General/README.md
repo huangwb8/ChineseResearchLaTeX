@@ -45,7 +45,7 @@ GXNSF_General/
 
 - A4 页面；上下边距 `2.54 cm`，左右边距 `3.175 cm`。
 - 标题与条目采用仿宋语义字体，一级提纲采用楷体语义字体；全文 `16 pt`，固定 `28.3 pt` 行距，首行缩进两字符。标题和条目标题沿用原 DOCX 的仿宋加粗设置。
-- 原 DOCX 指定“方正仿宋_GBK / 方正楷体_GBK”。本模板会优先使用系统已安装的对应方正字体（兼容“方正仿宋简体 / 方正楷体简体”家族名）；未安装时回退到 `bensz-fonts` 中的 Adobe 仿宋、楷体和 Times New Roman 兼容字体，以兼顾原稿字形与跨平台可编译性。Overleaf 包会携带这组最小回退字体运行时。
+- 原 DOCX 指定“方正仿宋_GBK / 方正楷体_GBK”。本模板优先使用系统已安装的对应方正字体（兼容“方正仿宋简体 / 方正楷体简体”家族名）；否则使用 `bensz-fonts` 内置的同款方正字体；再依次回退到 `Microsoft YaHei`、Adobe 仿宋和楷体。Overleaf 包会携带所需的最小字体运行时。
 - 参考来源：[issue #52](https://github.com/huangwb8/ChineseResearchLaTeX/issues/52)、[广西师范大学 2025 年度广西科技计划项目申报通知](http://www.research.gxnu.edu.cn/_t7/2024/0619/c533a291018/pagem.htm)及其附件四。
 
 ## 适用边界

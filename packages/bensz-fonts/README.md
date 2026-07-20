@@ -15,6 +15,14 @@
 - `bensz-fonts.sty`：统一字体路径与字体配置入口
 - `fonts/`：扁平化托管的全部字体文件
 
+## GXNSF 字体
+
+`GXNSF_General` 通过 `\BenszFontsGXNSFSetupFangsongFallback` 与
+`\BenszFontsGXNSFSetupKaiFallback` 使用广西自然科学基金项目的字体回退链。
+当系统中未安装原始方正字体时，共享包会使用 `FZFangSong-Z02.ttf` 与
+`FZKai-Z03.ttf`；再回退到系统微软雅黑和既有的跨平台字体。方正字体的使用、
+打包和再分发须遵守相应字体许可。
+
 ## 安装
 
 优先使用根级统一安装器：
