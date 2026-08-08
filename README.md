@@ -20,10 +20,13 @@
 
 我们备受关注：
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date&theme=dark" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=huangwb8/ChineseResearchLaTeX&type=Date" />
-</picture>
+<a href="https://www.star-history.com/?repos=huangwb8%2FChineseResearchLaTeX&type=timeline&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=huangwb8/ChineseResearchLaTeX&type=timeline&theme=dark&legend=top-left&sealed_token=8u8qQeNf4VAXj00A8wr4d90MbCE0bdlNpgWRf27ZQ0lRxhfKGHPvyZKLbt8hct7EZ9q1lAZHVIT_eO-A8cpVGa3Sdh6lPHLk1G0o8yH9koAvjlFfTEFGgkbnWdmyL-jsUeLggLhK4FrK4FV5fQ4LEXI8rJSOL7tJ3XBSsJYfoevVrKYm0ZSqkZiGKgi_" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=huangwb8/ChineseResearchLaTeX&type=timeline&legend=top-left&sealed_token=8u8qQeNf4VAXj00A8wr4d90MbCE0bdlNpgWRf27ZQ0lRxhfKGHPvyZKLbt8hct7EZ9q1lAZHVIT_eO-A8cpVGa3Sdh6lPHLk1G0o8yH9koAvjlFfTEFGgkbnWdmyL-jsUeLggLhK4FrK4FV5fQ4LEXI8rJSOL7tJ3XBSsJYfoevVrKYm0ZSqkZiGKgi_" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=huangwb8/ChineseResearchLaTeX&type=timeline&legend=top-left&sealed_token=8u8qQeNf4VAXj00A8wr4d90MbCE0bdlNpgWRf27ZQ0lRxhfKGHPvyZKLbt8hct7EZ9q1lAZHVIT_eO-A8cpVGa3Sdh6lPHLk1G0o8yH9koAvjlFfTEFGgkbnWdmyL-jsUeLggLhK4FrK4FV5fQ4LEXI8rJSOL7tJ3XBSsJYfoevVrKYm0ZSqkZiGKgi_" />
+ </picture>
+</a>
 
 </div>
 
