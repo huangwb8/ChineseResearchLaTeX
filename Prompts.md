@@ -22,6 +22,10 @@ git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，�
 
 ---
 
+广西国自然面上的示例正文写得不太好。 请你参考国自然青年模板的内容写一下。
+
+---
+
 广西国自然面上， latex模板里的字体、加粗和  ./projects/GXNSF_General/template 里有很大的差别。 你调一下，尽量和原模板对齐。
 
 ---
