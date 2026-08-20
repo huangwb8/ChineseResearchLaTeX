@@ -109,8 +109,8 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
 | [青年 C](projects/NSFC_Young/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
-| [面上](projects/NSFC_General/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
-| [地区](projects/NSFC_Local/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
+| [面上](projects/NSFC_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/NSFC_General-v4.0.20.zip)（0.96 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/NSFC_General-Overleaf-v4.0.20.zip)（7.22 MB） |
+| [地区](projects/NSFC_Local/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/NSFC_Local-v4.0.20.zip)（1.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/NSFC_Local-Overleaf-v4.0.20.zip)（7.90 MB） |
 
 ### 广东省自然科学基金模板
 
@@ -119,7 +119,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
 | [广东省面上](projects/GDNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GDNSF_General-v4.0.20.zip)（0.14 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GDNSF_General-Overleaf-v4.0.20.zip)（30.1 MB） |
-| [区域联合青年](projects/GDNSF_Regional_Young/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
+| [区域联合青年](projects/GDNSF_Regional_Young/) | 🟡 仅标准包 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GDNSF_Regional_Young-v4.0.20.zip)（0.17 MB） | 暂未发布 |
 
 ### 广西壮族自治区自然科学基金模板
 
@@ -127,7 +127,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [广西面上](projects/GXNSF_General/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
+| [广西面上](projects/GXNSF_General/) | 🟡 仅标准包 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GXNSF_General-v4.0.20.zip)（0.54 MB） | 暂未发布 |
 
 ### SCI 论文模板
 
