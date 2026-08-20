@@ -114,11 +114,12 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 ### 广东省自然科学基金模板
 
-> 项目层独立模板，面向广东省自然科学基金面上项目报告正文。
+> 项目层独立模板，面向广东省自然科学基金面上项目与区域联合青年基金报告正文。
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
 | [广东省面上](projects/GDNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.19/GDNSF_General-v4.0.19.zip)（0.14 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.19/GDNSF_General-Overleaf-v4.0.19.zip)（30.1 MB） |
+| [区域联合青年](projects/GDNSF_Regional_Young/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
 
 ### 广西壮族自治区自然科学基金模板
 
@@ -271,7 +272,7 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [make-latex-model](skills/make-latex-model/) | 🔧 模板开发 | v3.1.2 | 面向 ChineseResearchLaTeX 全仓库的模板落地与高保真对齐 | ✅ 稳定 |
 | [complete-example](skills/complete-example/) | 🔧 模板开发 | v1.4.1 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer-old-latex-to-new](skills/transfer-old-latex-to-new/) | 🔧 模板开发  | v2.1.0 | 模板迁移与重构编排，支持任意输入并由 AI 自主决定输出 | ✅ 稳定 |
-| [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v1.1.0 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
+| [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v1.1.1 | 令人印象深刻的精准、全面的专家级综述 | ✅ 稳定 |
 | [research-citation-check](skills/research-citation-check/) | 📚 文献调研 | v1.1.0 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [research-topic-extractor](skills/research-topic-extractor/) | 📚 文献调研 | v1.1.0 | 结构化综述主题提取 | ✅ 稳定 |
 | [research-guide-updater](skills/research-guide-updater/) | 📚 文献调研 | v1.1.0 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |

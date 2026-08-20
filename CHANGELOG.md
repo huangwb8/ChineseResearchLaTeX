@@ -6,15 +6,17 @@
 
 ---
 
-## [Unreleased]
+## [4.0.20] - 2026-08-20
 
 ### Changed（变更）
 
+- **research-literature-review**：修复显式 `--resume-from` 时未加载已有 checkpoint、随后可能以空 state 覆盖历史状态的数据完整性问题；恢复流程统一先加载 state，再决定自动或显式起始阶段。
 - **skills 任务工作区**：新增 `skills/WORKSPACE.md` 并同步当前 Skills 文档与默认配置；中间文件默认收敛到 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`，同一任务共享一个根目录，旧隐藏目录仅保留显式兼容读取、迁移或清理。
 - **GXNSF 字体对齐**：`projects/GXNSF_General` 现按原 DOCX 声明优先使用系统中的“方正仿宋_GBK / 方正楷体_GBK”（兼容对应简体家族名），标题与条目标题继续使用仿宋加粗；缺少方正字体时仍稳定回退到 `bensz-fonts` 的内置字体，兼顾原稿字形与跨平台编译。
 
 ### Added（新增）
 
+- 新增 `projects/GDNSF_Regional_Young/`：基于广东省基础与应用基础研究基金区域联合基金青年基金 Word 正文模板，复用 `GDNSF_General` 的项目层版式与构建链，落地区域联合青年基金专用标题、三段式正文提纲、研究基础与条件条目及 Word/PDF 基线资料；同步接入项目 README、VS Code 配置、Release 模板识别和省级基金模板列表，未修改 `packages/` 公共包。
 - 新增 `projects/GXNSF_General/`：基于 issue #52 提供的广西自然科学基金面上项目精简“报告正文” DOCX，落地四部分、十五个内容插槽的独立 LaTeX 模板；对齐 A4 页面、页边距、16 pt 字号、28.3 pt 固定行距、两字符首行缩进、仿宋/楷体语义与局部粗体，并提供项目级 XeLaTeX wrapper、VS Code 工作区、Word/PDF 基线与使用边界说明。
 - 为 `projects/GXNSF_General/extraTex/` 的十五个内容插槽补充佐佐木希公开案例示例：以多模态时序数据、跨媒介状态转移和职业韧性为科学主线，加入公式、表格、公开来源参考文献与完整组织实施示例；对人员履历、项目经历、工作条件和附件采用显式占位或“无”的示例写法，避免把演示材料伪装成真实申请。
 - 扩展 `scripts/sync_vscode_configs.py`、`scripts/update_readme_template_list.py` 与 `scripts/pack_release.py` 的 `GXNSF_` 项目识别：新增 GXNSF 专属 LaTeX Workshop 配置、首页独立分类、标准/Overleaf Release 资产接入及最小自包含字体运行时；省级基金打包逻辑继续与 `bensz-nsfc` 隔离，并保留 GDNSF 兼容入口。

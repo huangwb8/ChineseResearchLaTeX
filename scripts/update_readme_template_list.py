@@ -78,7 +78,7 @@ CATEGORY_TITLES = {
 # 各分类在 README 表格中的描述文字
 CATEGORY_DESCRIPTIONS = {
     "nsfc": "当前主线，优先面向正式申报与 Overleaf 打包分发。",
-    "gdnsf": "项目层独立模板，面向广东省自然科学基金面上项目报告正文。",
+    "gdnsf": "项目层独立模板，面向广东省自然科学基金面上项目与区域联合青年基金报告正文。",
     "gxnsf": "项目层独立模板，面向广西自然科学基金面上项目报告正文。",
     "paper": "公共包 + 示例项目已落地，支持 PDF / DOCX 双输出。",
     "thesis": "公共包 + 示例项目已落地，支持 PDF 输出与像素级验收。",
@@ -127,6 +127,12 @@ BASE_TEMPLATE_SPECS = (
         display_name="广东省面上",
         local_path="projects/GDNSF_General/",
         asset_prefix="GDNSF_General",
+    ),
+    TemplateSpec(
+        category="gdnsf",
+        display_name="区域联合青年",
+        local_path="projects/GDNSF_Regional_Young/",
+        asset_prefix="GDNSF_Regional_Young",
     ),
     TemplateSpec(
         category="gxnsf",

@@ -1,0 +1,36 @@
+%!TEX program = xelatex
+
+% 广东省基础与应用基础研究基金区域联合基金青年基金 - 报告正文 LaTeX 模板
+% 参考 template/广东省基础与应用基础研究基金区域联合基金青年基金项目报告正文模板.docx
+
+\documentclass[12pt,UTF8,AutoFakeBold=2.5,a4paper,fontset=none]{ctexart}
+
+\input{extraTex/@config.tex}
+
+\begin{document}
+
+\GDNSFMakeSampleWatermark
+
+\GDNSFReportTitle
+
+\GDNSFGuidance{参照以下提纲撰写，要求内容翔实、清晰，层次分明，标题突出，\linebreak{}}{申请书正文原则上不超过30页，鼓励简洁表达。除标题外，其余红色\linebreak{}解释说明文字可根据实际情况删除。}
+
+\GDNSFAINotice{申请人应当对使用的生成内容负责，应当全面如实声明使用情况，按\linebreak{}照《人工智能生成合成内容标识办法》《负责任研究行为规范指引(2023)》\linebreak{}等国家有关规定对相关内容进行标识，标识的方式包括但不限于在文本的\linebreak{}起始和末尾适当位置添加相应的文字提示等。不得使用由生成式人工智能\linebreak{}直接生成的申请书，不得使用未经核实的生成内容。}
+
+\GDNSFPart{一、立论依据}
+\GDNSFInstruction{（为什么要开展此项研究，研究的科学技术价值如何）}
+\input{extraTex/1.立论依据.tex}
+
+\GDNSFPart{二、研究内容}
+\GDNSFInstruction{（提纲不做限制，请按照研究工作的自身逻辑撰写。应提炼出研究目\linebreak{}标、特色与创新点、年度研究计划等内容。项目的研究活动、知识产权、\linebreak{}成果等应主要在粤港澳地区。\hspace{0.5em}）}
+\input{extraTex/2.研究内容.tex}
+
+\GDNSFPart{三、研究基础与条件}
+
+\GDNSFItemMixed{1、已取得的研究工作成绩及与本项目有关的研究工作积累\hspace{0.5em}}{（请着重\linebreak{}填写申请人近期的主要工作业绩以及与本项目相关的研究工作积累）}{。}
+\input{extraTex/3.1.研究工作基础.tex}
+
+\GDNSFItemFull{2、已具备的实验条件，尚缺少的实验条件和拟解决的途径。}
+\input{extraTex/3.2.实验条件.tex}
+
+\end{document}

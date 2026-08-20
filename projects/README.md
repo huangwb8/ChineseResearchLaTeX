@@ -37,12 +37,13 @@
 
 说明：
 
-- 当前 `GDNSF_General/` 是项目层独立模板，优先复用共享字体资源，但不修改 `packages/bensz-nsfc/`
+- 当前 `GDNSF_*` 是项目层独立模板，优先复用共享字体资源，但不修改 `packages/bensz-nsfc/`
 - 构建入口为项目内 `python scripts/gdnsf_build.py build --project-dir .`
 
 | 项目 | 用途 | 适用场景 |
 |------|------|----------|
 | [`GDNSF_General/`](./GDNSF_General/) | 广东省自然科学基金面上项目报告正文模板 | 准备广东省自然科学基金面上项目正文上传材料 |
+| [`GDNSF_Regional_Young/`](./GDNSF_Regional_Young/) | 广东省基础与应用基础研究基金区域联合基金青年基金报告正文模板 | 准备区域联合青年基金项目正文上传材料 |
 
 ## 广西自然科学基金（GXNSF）
 
@@ -135,6 +136,7 @@
 
 - 写国自然标书：进入 `NSFC_General/`、`NSFC_Local/` 或 `NSFC_Young/`
 - 写广东省自然科学基金面上项目报告正文：进入 `GDNSF_General/`
+- 写广东省基础与应用基础研究基金区域联合基金青年基金报告正文：进入 `GDNSF_Regional_Young/`
 - 写广西自然科学基金面上项目报告正文：进入 `GXNSF_General/`
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`

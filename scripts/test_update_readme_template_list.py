@@ -38,6 +38,19 @@ def test_render_template_section_includes_gxnsf_release_assets():
     assert "https://example.com/GXNSF_General-Overleaf-v-test.zip" in rendered
 
 
+def test_render_template_section_lists_gdnsf_young_before_its_first_release():
+    release = {
+        "tag_name": "v-test",
+        "published_at": "2026-07-16T08:45:15Z",
+        "assets": [],
+    }
+
+    rendered = render_template_section("huangwb8/ChineseResearchLaTeX", release)
+
+    assert "[区域联合青年](projects/GDNSF_Regional_Young/)" in rendered
+    assert "广东省自然科学基金面上项目与区域联合青年基金报告正文" in rendered
+
+
 def test_render_template_section_includes_thesis_release_assets():
     release = {
         "tag_name": "v4.0.1",

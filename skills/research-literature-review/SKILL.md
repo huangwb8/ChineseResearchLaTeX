@@ -188,6 +188,8 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/{yyyy-mm-dd-hh-mm}-{safe_topic} --resume-from 4
 ```
 
+`--resume-from` 只决定继续执行的阶段，不会绕过已有 `pipeline_state.json`。状态文件损坏时先备份或修复，禁止用空 state 覆盖历史 checkpoint。
+
 ## 环境与脚本
 
 - 运行环境：Python 3.9+、LaTeX（`xelatex`/`bibtex`）、pandoc。

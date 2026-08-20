@@ -851,15 +851,18 @@ class PipelineRunner:
         print(f"输出前缀: {self.file_stem}")
         print(f"工作目录: {self.work_dir}")
 
-        # 自动恢复
+        # 先恢复已有状态，再决定自动续跑或显式起始阶段。显式 --resume-from
+        # 只控制从哪里继续，不能跳过 checkpoint 加载，否则后续保存会覆盖历史状态。
         state_file = self._state_file()
-        if state_file.exists() and resume_from is None:
+        if state_file.exists():
             try:
                 loaded = PipelineState.from_json(state_file)
                 self.state = loaded
                 print(f"✓ 已从 {state_file} 恢复状态（已完成: {', '.join(self.state.completed_stages) or '无'}）")
             except Exception as e:  # noqa: BLE001
                 print(f"⚠️ 恢复状态失败: {e}")
+                print("✗ 为避免覆盖已有 checkpoint，本轮停止；请先修复或备份状态文件。")
+                return False
 
         stages = [
             ("0_setup", self.run_stage_0_setup),

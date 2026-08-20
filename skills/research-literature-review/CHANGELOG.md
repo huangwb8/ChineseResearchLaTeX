@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed（checkpoint 恢复完整性 - 2026-08-09）
+
+- `pipeline_runner.py` 在 `--resume` 与显式 `--resume-from` 组合下始终先加载已有 `pipeline_state.json`，避免空 state 跳过前置阶段后覆盖历史 checkpoint。
+- 新增专项回归覆盖显式起始阶段保留既有 output、metrics 与 completed stages，以及损坏 state 不被静默覆盖。
+
 ### Changed（Skill rename - 2026-06-14）
 
 - Renamed the skill from `systematic-literature-review` to `research-literature-review`.

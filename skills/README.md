@@ -250,7 +250,7 @@ output_mode：preview（先预览）/ apply（确认后写入）
 
 ### 8. research-literature-review - 系统综述生成
 
-**状态**：✅ 稳定（v1.1.0）
+**状态**：✅ 稳定（v1.1.1）
 
 **类型**：📝 日常
 

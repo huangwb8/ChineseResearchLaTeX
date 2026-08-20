@@ -499,6 +499,24 @@ def test_gdnsf_overleaf_keeps_compatible_provincial_runtime(tmp_path: Path):
     assert not any(name.startswith("styles/bensz-nsfc") for name in names)
 
 
+def test_gdnsf_young_overleaf_keeps_compatible_provincial_runtime(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "GDNSF_Regional_Young"
+    zip_path = pack_release.pack_project_overleaf(project_dir, tmp_path, "v-test")
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = set(zf.namelist())
+
+    assert {
+        "main.tex",
+        "README.md",
+        "styles/bensz-fonts.sty",
+        "styles/fonts/SimSun.ttf",
+    } <= names
+    assert "main.pdf" not in names
+    assert not any(name.endswith(".code-workspace") for name in names)
+    assert not any(name.startswith("styles/bensz-nsfc") for name in names)
+
+
 @pytest.mark.skipif(shutil.which("xelatex") is None, reason="xelatex is not installed")
 def test_gxnsf_overleaf_bundle_compiles_with_empty_texmfhome(tmp_path: Path):
     project_dir = REPO_ROOT / "projects" / "GXNSF_General"
