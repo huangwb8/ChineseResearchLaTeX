@@ -118,7 +118,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [广东省面上](projects/GDNSF_General/) | 🟡 仅标准包 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GDNSF_General-v4.0.20.zip)（0.14 MB） | 暂未发布 |
+| [广东省面上](projects/GDNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GDNSF_General-v4.0.20.zip)（0.14 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.0.20/GDNSF_General-Overleaf-v4.0.20.zip)（30.1 MB） |
 | [区域联合青年](projects/GDNSF_Regional_Young/) | 🛠️ 等待发布 | 暂未发布 | 暂未发布 |
 
 ### 广西壮族自治区自然科学基金模板
