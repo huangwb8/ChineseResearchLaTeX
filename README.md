@@ -282,7 +282,7 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [research-plan](skills/research-plan/) | 📚 文献调研 | v0.2.0 | 文献驱动的科研分析策略规划 | 🚧 开发中 |
 | [research-literature-radar](skills/research-literature-radar/) | 📚 文献调研 | v0.1.1 | 分层发现、筛选并长期归档重要研究文献 | 🚧 开发中 |
 | [research-literature-interpretation](skills/research-literature-interpretation/) | 📚 文献调研 | v0.1.1 | 导师式解读单篇研究文献，重建机制、证据边界与可迁移启发 | 🚧 开发中 |
-| [research-idea](skills/research-idea/) | 📚 文献调研 | v0.3.1 | 基于查新与多轮独立审查提出科学问题和可证伪假设 | 🚧 开发中 |
+| [research-idea](skills/research-idea/) | 📚 文献调研 | v0.3.2 | 基于查新与多轮独立审查提出科学问题和可证伪假设 | 🚧 开发中 |
 | [nsfc-code](skills/nsfc-code/) | ✍️ 标书写作 | v1.0.0 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | ✅ 稳定 |
 | [nsfc-abstract](skills/nsfc-abstract/) | ✍️ 标书写作 | v2.1.2 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
 | [nsfc-budget](skills/nsfc-budget/) | ✍️ 标书写作 | v0.1.2 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |
