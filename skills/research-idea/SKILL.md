@@ -42,7 +42,12 @@ metadata:
 
 1. 调用 `research-literature-radar`，根据 `theme/theme.json` 获取领域内重要、经典、前沿和具有启发性的论文。优先获取公开 PDF 正文；若无法获得 PDF，允许使用题目、摘要和可核验元数据，但必须标记证据深度不足。
 2. 将雷达结果及其 provenance 保存到 `research-literature-radar/`，至少记录论文稳定 ID、题目、年份、来源、PDF/摘要可用性、入选理由和未覆盖风险。雷达失败或没有达到最低证据量时，不得直接生成候选，应先报告并停止后续依赖步骤。
-3. 对入选论文逐篇调用 `research-literature-interpretation`。PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。将解读保存到 `research-literature-interpretation/`。
+3. 对入选论文调用 `research-literature-interpretation`，采用并行子 agent 分批执行：
+   - 一个子 agent 只负责一篇论文，独立读取该论文的 provenance 与可用正文/摘要，并将结果写入 `research-literature-interpretation/` 下独立的论文目录。
+   - 同时运行的解读子 agent 最多 3 个（不含负责调度与汇总的主 agent）；入选论文超过 3 篇时按批次排队，上一批全部完成（或记录失败）后再启动下一批。
+   - 本阶段不再嵌套启动额外的并行解读 agent；若单篇需要补证据或定向复核，由该子 agent 在自身任务内完成，不能突破全局并发上限。
+   - 主 agent 汇总所有成功解读，并保留每篇论文的失败/证据不足状态；任何论文未完成时不得把研究脉络 map 标记为完整。
+   - PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。
 4. 基于全部解读建立 `research-map/research-map.md`（或等价结构化文件）。研究脉络 map 必须呈现：时间顺序、关键问题演化、代表性方法/机制、证据转折、争议与失败边界、尚未闭合的知识缺口、不同研究线之间的连接，以及每个判断对应的论文锚点。它是候选生成的必需输入，不是最终报告中的装饰性综述。
 
 ### 基于研究脉络 map 的初始候选

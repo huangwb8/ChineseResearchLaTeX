@@ -8,6 +8,7 @@
 
 ### Changed
 
+- `0.3.2`：论文解读阶段改为并行子 agent 分批执行；每篇论文一个 agent，同时最多 3 个，超出部分排队，禁止嵌套并行，并要求主 agent 汇总失败与证据不足状态。
 - `0.3.1`：统一文献雷达与论文解读的任务工作区子目录为 `research-literature-radar/` 与 `research-literature-interpretation/`，避免 Skill 名称与产物路径脱节。
 - `0.3.0`：重构候选生成流程，新增 `research-literature-radar` 与 `research-literature-interpretation` 前置阶段；要求先形成带论文锚点的研究脉络 map，再由多个独立 agent 基于 map 生成初始候选。
 - 同步更新 `config.yaml`、`init_workspace.py`、README 与报告模板，增加文献雷达、论文解读和研究脉络 map 的中间产物目录及输出要求。

@@ -26,7 +26,7 @@
 
 ## 功能概述
 
-`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再用 `research-literature-interpretation` 解读论文并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查打磨候选并选出最佳方案。
+`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇论文一个 agent，同时最多 3 个）并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查打磨候选并选出最佳方案。
 
 它不替代完整实验设计。你已经确定科学问题后，再用 `research-plan` 制定实验或分析计划。
 如果你只需要写文献综述正文、related work 或系统综述，请直接使用 `research-literature-review`。

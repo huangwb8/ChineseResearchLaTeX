@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- `research-idea`：论文解读阶段改为并行子 agent 分批执行，每篇论文一个 agent，同时最多 3 个；超出部分排队且不嵌套并行，并保留失败/证据不足状态供研究脉络 map 汇总。
+
 - 更新 `AGENTS.md` 的 Skill 开发规则：新增或修改 Skill 前须重新查阅并对齐 `huangwb8/skills` 上游 `AGENTS.md`，以应对规范变化。
 
 - 清理各 Skill 文档中指向外部 `docs/templates/skill-common-constraints.md` 的模板维护提示。

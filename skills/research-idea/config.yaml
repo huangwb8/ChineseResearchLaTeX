@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.3.1"
+  version: "0.3.2"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，并通过 Premium 查新与独立审查打磨最佳研究想法。"
   author: "Bensz Conan"
   category: "research"
@@ -51,6 +51,13 @@ dependencies:
 iteration:
   default_rounds: 3
   default_independent_agents: 3
+  interpretation:
+    execution_mode: "parallel-subagents"
+    one_paper_per_agent: true
+    max_concurrent_agents: 3
+    concurrency_scope: "interpretation-subagents-only"
+    batch_overflow: true
+    nested_parallel_agents: false
   min_candidates: 3
   max_candidates: 7
   novelty_statuses:
