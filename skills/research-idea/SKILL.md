@@ -1,10 +1,10 @@
 ---
 name: research-idea
 description: 当用户提供研究资料、项目背景、实验结果、论文草稿、PR/仓库信息或自然语言线索，希望在文献调查基础上提出科学问题、凝练可证伪假设、寻找创新点或判断研究想法价值时使用。先建立研究脉络 map，再由多 agent 生成候选，并通过 Premium 查新和独立审查打磨。⚠️ 不适用：用户只需要完整实验方案/分析计划（优先 research-plan）、只要写文献综述正文（优先 research-literature-review）、或只要不需要文献依据的普通头脑风暴。
-metadata:
-  author: Bensz Conan
 ---
 # Research Idea
+
+## 目标
 
 把任意资料转化为领域文献证据、研究脉络 map，以及多个高价值、可查新、可证伪的“科学问题-科学假设”候选，并选出最值得推进的一对。候选生成不得脱离前置文献调查，不能由 AI 仅凭资料臆造。
 
@@ -16,6 +16,8 @@ metadata:
 - `parallel-vibe`：负责默认 3 轮串行独立审查与打磨。
 - `research-plan`：在已有科学问题和假设后，才用于实验设计或分析计划。
 
+## 流程
+
 ### 输入
 
 - 必需：任意资料或信息，如文本、文件、文件夹、URL、论文线索、实验现象、代码仓库或 PR 背景。
@@ -24,21 +26,15 @@ metadata:
 - 工作区：用户指定时遵从；未指定时为当前工作目录下 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/`。
 - 轮次：默认 3 轮；用户指定时遵从。
 
-## 流程
-
-### 输入
-
-按用户请求和配置文件提供必要输入；缺失信息应明确列出并停止依赖该输入的步骤。
-
 ### 执行步骤
 
-### 初始化与资料归纳
+#### 初始化与资料归纳
 
-1. 运行 `scripts/init_workspace.py` 创建隐藏工作区和 manifest。
+1. 使用匹配 `config.yaml.runtime.kernel` 的 Python 环境，运行 `scripts/init_workspace.py --task-root "{本轮已声明任务根}"` 创建工作区、manifest 与初始状态；已有事件时用 `scripts/idea_runtime.py ... status` 恢复。首次接入先读 [运行说明](references/runtime-guide.md)。
 2. 读取资料，只把摘要、结构化事实和必要引用写入隐藏工作区。
 3. 用 `research-topic-extractor` 生成主题、5-10 个英文关键词、2-5 个核心问题；保存为 `theme/theme.json`，字段为 `topic`、`keywords`、`core_questions`。
 
-### 文献调查与解读（候选生成前置）
+#### 文献调查与解读（候选生成前置）
 
 1. 调用 `research-literature-radar`，根据 `theme/theme.json` 获取领域内重要、经典、前沿和具有启发性的论文。优先获取公开 PDF 正文；若无法获得 PDF，允许使用题目、摘要和可核验元数据，但必须标记证据深度不足。
 2. 将雷达结果及其 provenance 保存到 `research-literature-radar/`，至少记录论文稳定 ID、题目、年份、来源、PDF/摘要可用性、入选理由和未覆盖风险。雷达失败或没有达到最低证据量时，不得直接生成候选，应先报告并停止后续依赖步骤。
@@ -50,7 +46,7 @@ metadata:
    - PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。
 4. 基于全部解读建立 `research-map/research-map.md`（或等价结构化文件）。研究脉络 map 必须呈现：时间顺序、关键问题演化、代表性方法/机制、证据转折、争议与失败边界、尚未闭合的知识缺口、不同研究线之间的连接，以及每个判断对应的论文锚点。它是候选生成的必需输入，不是最终报告中的装饰性综述。
 
-### 基于研究脉络 map 的初始候选
+#### 基于研究脉络 map 的初始候选
 
 将用户资料摘要、`theme/theme.json`、研究雷达摘要、论文解读摘要和 `research-map` 作为共同背景，调用 `parallel-vibe` 一次性启动多个独立 agent 进行初始 brainstorming；默认使用 `n=3`，用户可指定数量。各 agent 必须独立提出并论证候选，不得互相读取草稿或把同一候选改写成多个版本。汇总时去重并保留分歧，最终形成 3-7 个候选。每个候选必须包含：
 - 科学问题：明确研究对象、机制/关系/边界条件。
@@ -63,7 +59,7 @@ metadata:
 
 避免只写宽泛主题，例如“研究 X 的机制”。科学问题必须能被一个具体研究计划承接。
 
-### 逐对查新
+#### 逐对查新
 
 逐一查新每个候选，形成候选池后再比较：
 
@@ -79,7 +75,7 @@ metadata:
 
 如果所有候选均为“已充分研究”，把查新结论作为反例证据，回到“基于研究脉络 map 的初始候选”重新 brainstorming；只有当 map 本身不足以支持新一轮推理时，才回到文献调查阶段补充证据。
 
-### 多轮独立打磨
+#### 多轮独立打磨
 
 对保留或需修改的候选，用 `parallel-vibe` 做默认 3 轮串行独立审查。`rounds=3` 是外层迭代轮数，`n=3` 是每轮独立 agent 数；必须执行 3 次 `parallel-vibe`，每次把上一轮汇总后的改写版本作为下一轮输入。
 
@@ -106,11 +102,11 @@ done
 
 系统级安装时可改用 `~/.codex/skills/parallel-vibe/scripts/parallel_vibe.py` 或 `~/.claude/skills/parallel-vibe/scripts/parallel_vibe.py`。
 
-### 选择最佳方案
+#### 选择最佳方案
 
 用同一套标准比较所有保留候选：科学重要性、新颖性、可证伪性、可行性、解释力、风险透明度。最佳方案应是综合价值、可证伪性和可推进性最强的一对，不一定是最宏大的问题。
 
-### 写最终报告并验证
+#### 写最终报告并验证
 
 按 `references/report-template.md` 写最终 Markdown。写完后运行：
 
@@ -121,7 +117,7 @@ python3 ~/.codex/skills/research-idea/scripts/validate_report.py --report "{最�
 python3 ~/.claude/skills/research-idea/scripts/validate_report.py --report "{最终报告路径}"
 ```
 
-若校验失败，先修复报告再交付。
+若校验失败，先修复报告。随后用控制章节的 prepare/submit 验证最终快照；只有状态到达 completed 才交付，单独结构检查通过不能替代完成 Gate。
 
 ### 输出
 
@@ -148,26 +144,25 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 
 本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
 
-- 默认工作区：`{cwd}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/{yyyy-mm-dd-hh-mm}/`。
+- 默认工作区：`{cwd}/.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/`。
 - 所有中间文件、查新记录、并行审查产物、草稿和日志都必须保存在隐藏工作区内；除最终 Markdown 外，不要写到项目根目录或 `docs/ideas/`。
-- 若用户显式指定工作区，目录名仍必须是隐藏目录（以 `.` 开头），并且位于当前工作目录内；输出目录不得位于隐藏工作区内。
+- 用 `--task-root` 显式复用本轮任务根，必须位于项目内 `.bensz-api/task-*`；旧 `--workspace-dir` 嵌套布局只保留历史文件，不自动迁移。输出目录不得位于隐藏工作区内。
 
 初始化优先使用脚本：
 
 ```bash
-python3 research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd .
+python3 research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd . --task-root "{本轮任务根}"
 # 系统级安装后也可使用：
-python3 ~/.codex/skills/research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd .
-python3 ~/.claude/skills/research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd .
+python3 ~/.codex/skills/research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd . --task-root "{本轮任务根}"
+python3 ~/.claude/skills/research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd . --task-root "{本轮任务根}"
 ```
 
-脚本会先检查 `research-topic-extractor`、`research-literature-review` 与 `parallel-vibe`；缺失时早失败。只在开发测试时传 `--with-test-dir` 创建测试区。
+脚本先检查 Kernel 版本，以及配置中的主题提取、文献雷达、论文解读、文献综述与并行审查依赖；缺失时早失败。用户指定审查轮次或人数时增加 `--rounds` / `--agents`，自定义文件名增加 `--allow-custom-name`。
 
 ### 校验
 
-- 默认测试区：`./tests/research-idea`。
-- 测试材料、验证日志和测试报告放入该目录；最终报告不得引用测试区路径。
-- 普通用户运行初始化脚本时不创建测试区；开发测试时传 `--with-test-dir`。
+- 测试源码位于 Skill 的 `tests/`，测试材料和运行日志放本轮工作区的 output/log，最终报告不引用测试路径。
+- 普通业务不创建测试区；旧 `--with-test-dir` 仅为开发兼容选项，使用时显式把 `--test-dir` 指向本轮工作区。
 
 - 科学问题必须是问题，不是主题名。
 - 假设必须可证伪，不写无法被推翻的价值判断。
@@ -178,7 +173,17 @@ python3 ~/.claude/skills/research-idea/scripts/init_workspace.py --input-label "
 
 ### 失败与恢复
 
-保留错误证据和已完成产物；仅在输入、环境或外部依赖恢复后从最近的失败步骤重试。
+保留错误证据和已完成产物；通过 `idea_runtime.py status` 重放恢复最近阶段。证据修复后 prepare 新 attempt；已通过的前置证据变化时先 rework 回相应阶段，不能复用旧 Gate。取消用 cancel，Kernel 缺失或不匹配时停止控制流程，不静默降级。
+
+## 控制
+
+使用前读取 [运行契约与命令](references/runtime-guide.md)。配置中的 `runtime` 声明 Kernel、State 与 required Verifier；索引分别位于 [State 集合](references/states/index.json) 和 [Verifier 集合](references/verifiers/index.json)，身份与版本只在索引维护。
+
+- 在 literature → candidates、candidates → review、review → reporting、reporting → completed 的阶段边界调用 `idea_runtime.py prepare`，按 [Verifier 契约](references/verifiers/stage-readiness/VERIFIER.md) 实际核验固定证据，再 submit 绑定的 Agent 结果。
+- 主 Agent 负责调用宿主与语义核验，原有文献解读和独立审查协作要求仍执行；Kernel 不负责创建 Agent。handoff 是待办，不能记为通过。
+- 脚本检查非空证据、角色、文件哈希、审查结果数量和最终报告结构；Agent 判断文献依据、map 完整性、可证伪性、逐对 Premium 查新、独立审查及报告一致性。
+- required 组件均完成并 pass 才推进；fail/uncertain/unchecked/error/timed_out/skipped 均保留阶段。证据不足交由补证据或人工复核，再执行绑定回传，不提供人工强制通过开关。
+- 回退用 rework 并记录原因与证据；只允许 State 图中的前置阶段，失效目标及下游检查点。事件保留 run/attempt、契约与证据哈希，用 status 重放，不手改状态文件。
 
 ## 约束
 

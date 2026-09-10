@@ -1,0 +1,86 @@
+{
+  "protocol": "bensz-pack-index-v1",
+  "package_kind": "state",
+  "entries": [
+    {
+      "directory": "literature",
+      "id": "bensz.research-ideation.literature",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "kind": "skill",
+      "tags": [
+        "research",
+        "phase"
+      ],
+      "aliases": [],
+      "contract": "STATE.md",
+      "mode": "none",
+      "assurance_tier": "none",
+      "components": []
+    },
+    {
+      "directory": "candidates",
+      "id": "bensz.research-ideation.candidates",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "kind": "skill",
+      "tags": [
+        "research",
+        "phase"
+      ],
+      "aliases": [],
+      "contract": "STATE.md",
+      "mode": "none",
+      "assurance_tier": "none",
+      "components": []
+    },
+    {
+      "directory": "review",
+      "id": "bensz.research-ideation.review",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "kind": "skill",
+      "tags": [
+        "research",
+        "phase"
+      ],
+      "aliases": [],
+      "contract": "STATE.md",
+      "mode": "none",
+      "assurance_tier": "none",
+      "components": []
+    },
+    {
+      "directory": "reporting",
+      "id": "bensz.research-ideation.reporting",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "kind": "skill",
+      "tags": [
+        "research",
+        "phase"
+      ],
+      "aliases": [],
+      "contract": "STATE.md",
+      "mode": "none",
+      "assurance_tier": "none",
+      "components": []
+    },
+    {
+      "directory": "completed",
+      "id": "bensz.research-ideation.completed",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "kind": "skill",
+      "tags": [
+        "research",
+        "phase"
+      ],
+      "aliases": [],
+      "contract": "STATE.md",
+      "mode": "none",
+      "assurance_tier": "none",
+      "components": []
+    }
+  ]
+}

@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+- 新增 `docs/plans/2026-09-10-research-idea-quality-optimization.md`：基于 BAC 实战诊断制定科研价值筛选、研究 map 综合、差异化审查及新旧版本对照验收计划；本次仅交付计划，未实施 Skill 修改。
+
+- `research-idea`：新增 Kernel 驱动的阶段验证器与状态机，支持证据哈希快照、绑定语义审查、required Gate、回退与事件恢复；更新初始化接口、运行说明、定向测试和技能版本。修复报告章节提取吞掉无空行正文的问题，保持独立报告检查 CLI。
+
 - `research-idea`：论文解读阶段改为并行子 agent 分批执行，每篇论文一个 agent，同时最多 3 个；超出部分排队且不嵌套并行，并保留失败/证据不足状态供研究脉络 map 汇总。
 
 - 更新 `AGENTS.md` 的 Skill 开发规则：新增或修改 Skill 前须重新查阅并对齐 `huangwb8/skills` 上游 `AGENTS.md`，以应对规范变化。

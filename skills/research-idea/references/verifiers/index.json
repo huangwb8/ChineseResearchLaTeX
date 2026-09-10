@@ -1,0 +1,42 @@
+{
+  "protocol": "bensz-pack-index-v1",
+  "package_kind": "verifier",
+  "entries": [
+    {
+      "directory": "stage-readiness",
+      "id": "bensz.research.stage-readiness",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "tags": [
+        "research",
+        "evidence",
+        "stage"
+      ],
+      "aliases": [],
+      "contract": "VERIFIER.md",
+      "mode": "hybrid",
+      "assurance_tier": "mixed",
+      "components": [
+        {
+          "id": "evidence-shape",
+          "type": "script",
+          "entrypoint": "scripts/verify.py",
+          "required": true,
+          "assurance": "deterministic",
+          "side_effects": "none",
+          "timeout": 30
+        },
+        {
+          "id": "scientific-review",
+          "type": "agent",
+          "required": true,
+          "assurance": "llm_judge",
+          "side_effects": "none",
+          "depends_on": [
+            "evidence-shape"
+          ]
+        }
+      ]
+    }
+  ]
+}

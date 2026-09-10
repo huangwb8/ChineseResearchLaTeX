@@ -210,6 +210,8 @@ skills/*/plans/
 skills/*/tests/
 !skills/research-literature-review/tests/
 !skills/research-literature-review/tests/test_query_contract.py
+!skills/research-idea/tests/
+!skills/research-idea/tests/test_runtime.py
 /tests/*
 !/tests/bensz-thesis/
 !/tests/bensz-thesis/**
@@ -219,3 +221,6 @@ skills/*/tests/
 .parallel_vibe/
 .compact-bensz-skills/
 .draw-plot
+/tmp
+skills/*/tests/
+skills/*/plans/

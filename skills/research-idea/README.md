@@ -35,6 +35,14 @@
 
 `research-idea` 当前需要发现 `research-topic-extractor`、`research-literature-radar`、`research-literature-interpretation`、`research-literature-review` 与 `parallel-vibe`。过渡期仅对 `research-topic-extractor` 和 `research-literature-review` 保留旧名 fallback；雷达与解读是候选生成前置阶段，不能静默跳过。
 
+## 验证器与状态机
+
+现在按“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”记录进度，支持退回补证据和中断恢复。脚本检查证据完整性、哈希、审查轮次与报告格式，Agent 核验科学充分性；缺证据、未审查或不确定时不会推进。
+
+需要 Python 3.11+、与 `config.yaml.runtime.kernel` 精确匹配的 Kernel，以及 macOS/Linux（Windows 使用 WSL）。初始化用 `--task-root` 复用任务目录，恢复用 `idea_runtime.py status`；旧 Kernel 会明确报错，单独报告格式检查仍可运行。
+
+完整初始化、证据 JSON、prepare/submit、回退与迁移说明见 [运行操作指南](references/runtime-guide.md)。旧 `--workspace-dir` 嵌套写入入口已停止使用，旧文件保留，不自动推定通过。
+
 ## 使用示例
 
 ### 示例 1：从实验现象找假设
@@ -58,8 +66,8 @@
 | 文件 | 说明 |
 |------|------|
 | `docs/ideas/Research-Idea_{repo}_{pr}_{timestamp}.md` | 默认最终研究想法报告路径；可用 `--output-dir` 或用户参数覆盖 |
-| `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/{yyyy-mm-dd-hh-mm}/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
-| `tests/research-idea/` | 技能开发测试区；普通用户运行不会默认创建 |
+| `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
+| `research-idea/log/events.ndjson`（位于上述任务目录内） | 可重放的阶段、验证结果与 Gate 日志 |
 
 最终报告不会暴露隐藏工作区路径。
 

@@ -64,7 +64,7 @@ def has_section(text: str, section: str) -> bool:
 
 
 def extract_section(text: str, section: str) -> str:
-    match = re.search(rf"^##\s+{re.escape(section)}(?:\s|$).*$", text, re.MULTILINE)
+    match = re.search(rf"^##[ \t]+{re.escape(section)}(?:[ \t]|$)[^\n]*$", text, re.MULTILINE)
     if match is None:
         return ""
     next_match = re.search(r"^##\s+", text[match.end() :], re.MULTILINE)
@@ -86,15 +86,10 @@ def path_is_inside_named_dir(report_path: Path, names: set[str]) -> str | None:
     return None
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="验证 research-idea 最终 Markdown 报告")
-    parser.add_argument("--report", required=True, help="最终 Research-Idea Markdown 文件")
-    parser.add_argument("--allow-custom-name", action="store_true", help="用户显式指定输出文件名时放宽文件名模板检查")
-    parser.add_argument("--json", action="store_true", help="输出 JSON 结果")
-    args = parser.parse_args()
-
+def validate_report(report_path: Path, *, allow_custom_name: bool = False, project_root: Path | None = None) -> dict:
+    """共享结构检查；通过只代表报告格式合格，不代表科研结论成立。"""
     config = load_config()
-    report_path = Path(args.report).expanduser().resolve()
+    report_path = report_path.expanduser().resolve()
     if not report_path.exists() or not report_path.is_file():
         raise SystemExit(f"report 不存在或不是文件: {report_path}")
 
@@ -105,12 +100,13 @@ def main() -> None:
     if report_path.suffix.lower() != ".md":
         errors.append("最终报告必须是 Markdown 文件")
     if (
-        not args.allow_custom_name
+        not allow_custom_name
         and (not report_path.name.startswith("Research-Idea_") or report_path.suffix.lower() != ".md")
     ):
         errors.append("文件名应为 Research-Idea_{github仓库名}_{pr名}_{时间戳}.md")
 
-    inside = path_is_inside_named_dir(report_path, {".bensz-api", ".research-idea", "tests", ".parallel-vibe", ".parallel_vibe", "parallel-vibe"})
+    scoped_path = report_path.relative_to(project_root.resolve()) if project_root else report_path
+    inside = path_is_inside_named_dir(scoped_path, {".bensz-api", ".research-idea", "tests", ".parallel-vibe", ".parallel_vibe", "parallel-vibe"})
     if inside is not None:
         errors.append(f"最终报告不得放在中间目录或测试目录内: {inside}")
 
@@ -167,17 +163,27 @@ def main() -> None:
         "warnings": warnings,
         "pair_count": pair_count,
     }
+    return result
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="验证 research-idea 最终 Markdown 报告")
+    parser.add_argument("--report", required=True, help="最终 Research-Idea Markdown 文件")
+    parser.add_argument("--allow-custom-name", action="store_true", help="用户显式指定输出文件名时放宽文件名模板检查")
+    parser.add_argument("--json", action="store_true", help="输出 JSON 结果")
+    args = parser.parse_args()
+    result = validate_report(Path(args.report), allow_custom_name=args.allow_custom_name)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         status = "PASS" if result["passed"] else "FAIL"
         print(f"status={status}")
-        print(f"pair_count={pair_count}")
-        for error in errors:
+        print(f"pair_count={result['pair_count']}")
+        for error in result["errors"]:
             print(f"error={error}")
-        for warning in warnings:
+        for warning in result["warnings"]:
             print(f"warning={warning}")
-    if errors:
+    if not result["passed"]:
         raise SystemExit(1)
 
 

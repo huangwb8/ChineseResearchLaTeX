@@ -257,6 +257,7 @@ def main() -> None:
     parser.add_argument("--input-label", required=True, help="资料或主题的简短标签")
     parser.add_argument("--cwd", default=".", help="用户当前工作目录，默认当前目录")
     parser.add_argument("--workspace-dir", help="显式兼容工作区根目录；默认使用任务级 BenszAPI 工作区")
+    parser.add_argument("--task-root", help="复用已声明任务根目录：项目内 .bensz-api/task-* 相对路径")
     parser.add_argument("--output-dir", help="最终 Markdown 输出目录，默认 <cwd>/docs/ideas")
     parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/tests/research-idea")
     parser.add_argument("--with-test-dir", action="store_true", help="创建测试区；普通用户运行默认不创建")
@@ -265,7 +266,21 @@ def main() -> None:
     parser.add_argument("--run-id", help="运行 ID，默认 YYYYMMDD-HHMM")
     parser.add_argument("--overwrite", action="store_true", help="允许覆盖已存在的最终报告路径")
     parser.add_argument("--skip-dependency-check", action="store_true", help="仅测试脚本时跳过依赖 skill 检查")
+    parser.add_argument("--rounds", type=int, help="显式覆盖本 run 的独立审查轮数")
+    parser.add_argument("--agents", type=int, help="显式覆盖每轮审查 Agent 数量")
+    parser.add_argument("--allow-custom-name", action="store_true", help="用户已指定自定义报告文件名")
     args = parser.parse_args()
+
+    # 先检查控制依赖与兼容边界，避免创建半成品工作区。
+    from idea_runtime import Runtime, kernel_api
+    from phase_evidence import safe_path
+    kernel_api()
+    if args.workspace_dir:
+        raise SystemExit("旧 --workspace-dir 布局不支持状态恢复；请使用 --task-root .bensz-api/task-*，旧目录保留不迁移")
+    if args.run_id and not re.fullmatch(r"[A-Za-z0-9_.-]+", args.run_id):
+        raise SystemExit("run-id 必须只包含字母、数字、点、下划线和连字符")
+    if any(value is not None and not 1 <= value <= 100 for value in (args.rounds, args.agents)):
+        raise SystemExit("rounds/agents 必须为 1..100 的整数")
 
     config = load_config()
     workspace_config = config["workspace"]
@@ -292,11 +307,12 @@ def main() -> None:
     run_timestamp = dt.datetime.now().strftime(workspace_config["timestamp_format"])
     output_timestamp = dt.datetime.now().strftime(output_config["timestamp_format"])
     run_prefix = workspace_config["run_prefix"]
-    if args.workspace_dir:
-        workspace_base = resolve_dir(args.workspace_dir, default=cwd)
-        ensure_hidden_workspace(workspace_base, "workspace_dir")
-        run_id = args.run_id or allocate_unique_run_id(workspace_base, f"{run_prefix}{run_timestamp}")
-        workspace_dir = workspace_base / run_id
+    if args.task_root:
+        task_root = safe_path(cwd, args.task_root)
+        Runtime(cwd, args.task_root)  # 验证布局、索引及版本，尚不写入。
+        workspace_base = task_root
+        workspace_dir = task_root / str(workspace_config["task_label"])
+        run_id = args.run_id or f"{run_prefix}{run_timestamp}"
     else:
         requested_run_id = args.run_id or f"{run_prefix}{run_timestamp}"
         task_root, workspace_dir = default_task_workspace(cwd, workspace_config, requested_run_id)
@@ -307,7 +323,6 @@ def main() -> None:
             workspace_dir = task_root / str(workspace_config["task_label"])
             run_id = task_root.name.removeprefix("task-").removesuffix(f"-{workspace_config['task_label']}")
         workspace_base = task_root
-        write_task_readme(task_root, str(workspace_config["task_label"]))
     if not re.fullmatch(rf"{re.escape(run_prefix)}[A-Za-z0-9_.-]+", run_id):
         raise SystemExit(f"run-id 必须只包含字母、数字、点、下划线和连字符")
     output_dir = resolve_dir(
@@ -331,6 +346,8 @@ def main() -> None:
     if output_path.exists() and not args.overwrite:
         raise SystemExit(f"输出文件已存在，拒绝覆盖；如确认覆盖请添加 --overwrite: {output_path}")
 
+    runtime = Runtime(cwd, str(task_root.relative_to(cwd)))
+    write_task_readme(task_root, str(workspace_config["task_label"]))
     for subdir in workspace_config["subdirs"]:
         (workspace_dir / subdir).mkdir(parents=True, exist_ok=True)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -356,8 +373,8 @@ def main() -> None:
     }
     manifest_path = workspace_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if args.workspace_dir:
-        (workspace_base / "latest-run.txt").write_text(run_id + "\n", encoding="utf-8")
+    with runtime.locked():
+        runtime.init(args.rounds, args.agents, args.allow_custom_name)
 
     candidate_schema = {
         "candidates": [
