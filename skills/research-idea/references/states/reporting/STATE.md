@@ -20,7 +20,7 @@ transitions: ["bensz.research-ideation.completed", "bensz.research-ideation.revi
 
 ## 输入与证据
 
-report；唯一最终 Markdown，结构通过且论文依据、查新、假设及最佳选择均与前阶段证据一致。证据由业务执行 Agent 产生，审查者读取原始依据后回传，不把字段存在或模型自信视作事实成立。
+report；唯一最终 Markdown，结构通过且论文依据、查新、假设及推荐/无合格结论均与前阶段证据一致。insufficient 可作为阶段性评估交付，但保持最近阶段，不进入 completed。证据由业务执行 Agent 产生，审查者读取原始依据后回传，不把字段存在或模型自信视作事实成立。
 
 ## 离开条件
 

@@ -213,6 +213,9 @@ skills/*/tests/
 !skills/research-idea/tests/
 !skills/research-idea/tests/test_runtime.py
 /tests/*
+!/tests/research-idea/
+/tests/research-idea/*
+!/tests/research-idea/*.py
 !/tests/bensz-thesis/
 !/tests/bensz-thesis/**
 /tests/bensz-thesis/.DS_Store

@@ -8,7 +8,7 @@ transitions: ["bensz.research-ideation.reporting", "bensz.research-ideation.cand
 
 ## 状态含义
 
-候选与查新已经通过 Gate（或报告阶段回退），正在逐轮独立评估、综合并选择最佳方案。
+候选与查新已经通过 Gate（或报告阶段回退），正在逐轮独立评估、综合候选去留与业务结论。
 
 ## 进入条件
 
@@ -20,7 +20,7 @@ transitions: ["bensz.research-ideation.reporting", "bensz.research-ideation.cand
 
 ## 输入与证据
 
-review、synthesis；每轮不同结果与 reviewer 标识、上一轮汇总引用、冲突处理、最佳方案比较理由。证据由业务执行 Agent 产生，审查者读取原始依据后回传，不把字段存在或模型自信视作事实成立。
+review、synthesis；每轮不同结果与 reviewer 标识、上一轮汇总引用、冲突处理、科学价值与近期投入的独立比较，或零候选的淘汰充分性、替代方向和重启条件。每轮须承担不同判断任务并记录新增发现。证据由业务执行 Agent 产生，审查者读取原始依据后回传，不把字段存在或模型自信视作事实成立。
 
 ## 离开条件
 

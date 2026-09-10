@@ -26,10 +26,24 @@
 
 ## 功能概述
 
-`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇论文一个 agent，同时最多 3 个）并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查打磨候选并选出最佳方案。
+`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇论文一个 agent，同时最多 3 个）并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。查新前先筛选科学价值；map 连接研究线、解释与证据，候选可追溯到稳定的机会和论文编号。
 
 它不替代完整实验设计。你已经确定科学问题后，再用 `research-plan` 制定实验或分析计划。
 如果你只需要写文献综述正文、related work 或系统综述，请直接使用 `research-literature-review`。
+
+## 研究判断与交付结论
+
+科学价值、判断可信度和近期投入分别比较；不会因为一个方向容易实现就把它当成最佳科研题目。三轮审查依次挑战选题价值、检查解释与辨别能力、重新比较备选与外推边界。目标贡献和资源约束可随输入提供；未说明的资源会记为未知。
+
+初始通常探索 3–7 个方向，最终可以只有一个或没有合格候选：
+
+| 报告结论 | 用户得到什么 |
+| --- | --- |
+| 有可推荐候选 | 完成必要 Premium 查新和独立审查的候选，科学价值与近期投入两种排序，以及最强替代方向 |
+| 当前范围内无合格候选 | 有证据的淘汰原因、有限重新探索与复核结果、重启条件；不代表整个领域无题可做 |
+| 证据不足，暂不能推荐 | 明确的阶段性评估、缺口与恢复位置；不声称新颖性或全流程完成 |
+
+无合格结论不能省略必要探索与审查。若近邻全文受限或执行未完成，应保留证据不足。报告只说明关键未知、最小辨别动作和改变去留的观察，不默认展开完整实验方案。规则和跨领域示例见 [研究综合指南](references/research-synthesis.md)。
 
 ## 依赖兼容
 
@@ -97,3 +111,11 @@ A：科学问题看起来新，不代表真的没有被研究过。该 skill 会
 **Q：最终会给完整实验方案吗？**
 
 A：不会。最终报告只给科学问题、可证伪假设、选择理由和最小下一步。完整实验或分析计划应交给 `research-plan`。
+
+## 报告兼容与开发验证
+
+新报告以 `report_contract: research-idea-report-v2` 显式声明 outcome 与探索、查新、审查状态，写法见 [报告模板](references/report-template.md)。旧报告仍支持结构读取并返回 legacy 警告，不能用于新运行认证完成；新规则下的阶段性评估即使格式通过也不能进入 completed。脚本检查格式与引用可定位性，科学充分性仍由绑定证据的审查判断。
+
+新旧脚本/配置/契约资产不同，旧运行保持原样，不改写历史事件；继续研究须用新任务重新核验。CLI 保留，`candidate-schema.json` 现在用空 `candidates` 与单独 `candidate_example`，初始状态明确为 insufficient/incomplete，避免把示例当真实候选。
+
+定向回归源码位于 `tests/research-idea/`，测试命令与环境见 [运行指南](references/runtime-guide.md)。固定材料输出比较只能发现问题；目前不以格式通过或 AI 自评分宣称整体科研质量已得到验证。

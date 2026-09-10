@@ -100,6 +100,8 @@ def check(request: dict) -> dict:
             if len(reports) != 1:
                 raise ValueError('完成阶段必须且只能验证一个最终报告')
             result = validate_report(safe_path(root, reports[0]['path']), allow_custom_name=context['allow_custom_name'], project_root=root)
+            if result['passed'] and not result['completion_eligible']:
+                return {'verdict': 'fail', 'findings': [{'code': 'incomplete-report', 'message': '阶段性评估或旧报告不能认证新运行完成'}], 'facts': {}, 'evidence_refs': [e['ref'] for e in evidence]}
             if not result['passed']:
                 return {'verdict': 'fail', 'findings': [{'code': 'report-structure', 'message': e} for e in result['errors']], 'facts': {}, 'evidence_refs': [e['ref'] for e in evidence]}
         return {'verdict': 'pass', 'facts': {'evidence_count': len(evidence), 'target': target}, 'evidence_refs': [e['ref'] for e in evidence]}

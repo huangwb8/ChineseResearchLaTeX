@@ -377,14 +377,28 @@ def main() -> None:
         runtime.init(args.rounds, args.agents, args.allow_custom_name)
 
     candidate_schema = {
-        "candidates": [
+        "report_contract": config["output"]["report_contract"],
+        "outcome": "insufficient",
+        "exploration": "incomplete",
+        "novelty": "incomplete",
+        "review": "incomplete",
+        "research_goal": {"contribution": "待明确", "decision": "待明确", "resources": {"available": [], "unavailable": [], "unknown": []}},
+        "candidates": [],
+        "candidate_example": [
             {
                 "id": "C1",
                 "question": "明确、关键、可研究的科学问题",
                 "hypothesis": "可被数据、实验或观察推翻的科学假设",
                 "predictions": ["假设成立时应观察到的结果"],
                 "falsification": ["能推翻该假设的结果"],
-                "novelty_status": "未研究 / 部分研究但关键缺口存在 / 已充分研究",
+                "novelty_status": "未定",
+                "opportunity_refs": ["O1"],
+                "paper_refs": ["R1"],
+                "value_and_nontriviality": "知识增量与常规解释为何不足",
+                "nearest_work_and_delta": "已有答案、剩余未知及差异意义",
+                "strongest_alternative": "同样投入的备选与改变排序的条件",
+                "confidence_and_investment": "证据深度与已确认资源分开判断",
+                "screening_decision": "待评估",
             }
         ]
     }

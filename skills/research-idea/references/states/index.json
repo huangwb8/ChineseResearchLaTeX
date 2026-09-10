@@ -21,7 +21,7 @@
     {
       "directory": "candidates",
       "id": "bensz.research-ideation.candidates",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "classification": "semantic",
       "kind": "skill",
       "tags": [
@@ -37,7 +37,7 @@
     {
       "directory": "review",
       "id": "bensz.research-ideation.review",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "classification": "semantic",
       "kind": "skill",
       "tags": [
@@ -53,7 +53,7 @@
     {
       "directory": "reporting",
       "id": "bensz.research-ideation.reporting",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "classification": "semantic",
       "kind": "skill",
       "tags": [
@@ -69,7 +69,7 @@
     {
       "directory": "completed",
       "id": "bensz.research-ideation.completed",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "classification": "semantic",
       "kind": "skill",
       "tags": [

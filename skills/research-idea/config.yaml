@@ -1,7 +1,7 @@
 skill_info:
   name: "research-idea"
-  version: "0.4.0"
-  description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，并通过 Premium 查新与独立审查打磨最佳研究想法。"
+  version: "0.5.0"
+  description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
 
@@ -58,12 +58,15 @@ iteration:
     concurrency_scope: "interpretation-subagents-only"
     batch_overflow: true
     nested_parallel_agents: false
+  # 以下数量仅用于初始探索，最终保留数量由 outcome 决定。
   min_candidates: 3
   max_candidates: 7
+  max_reexplorations: 1
   novelty_statuses:
     - "未研究"
     - "部分研究但关键缺口存在"
     - "已充分研究"
+    - "未定"
 
 output:
   default_dir: "docs/ideas"
@@ -72,6 +75,19 @@ output:
   unsafe_filename_chars: "/\\:*?\"<>|"
   fallback_repo: "repo"
   fallback_pr: "manual"
+  report_contract: "research-idea-report-v2"
+  common_sections: ["结论与研究目标", "研究脉络 map 摘要", "候选评估", "查新摘要", "风险与下一步"]
+  outcomes:
+    recommended:
+      min_candidates: 1
+      sections: ["推荐与投入排序"]
+    no_qualified:
+      min_candidates: 0
+      sections: ["淘汰理由与重启条件"]
+    insufficient:
+      min_candidates: 0
+      sections: ["证据缺口与恢复位置"]
+  # 旧报告只读兼容，不可据此认证新运行完成。
   required_sections:
     - "研究脉络 map 摘要"
     - "多个科学问题-科学假设对"
@@ -104,6 +120,17 @@ validation:
     - "反证"
     - "推翻"
   min_question_hypothesis_pairs: 3
+  v2_candidate_markers:
+    - "科学问题"
+    - "可证伪科学假设"
+    - "关键预测"
+    - "反证路径"
+    - "价值与非平凡性"
+    - "最近工作与实质增量"
+    - "最强替代方向"
+    - "判断可信度与近期投入"
+    - "脉络依据"
+    - "查新结论"
   required_candidate_markers:
     - "科学问题"
     - "可证伪科学假设"
@@ -135,7 +162,7 @@ runtime:
     - bensz.research-ideation.completed
   verifiers:
     - id: bensz.research.stage-readiness
-      version: "1.0.0"
+      version: "2.0.0"
       required: true
 
 control:

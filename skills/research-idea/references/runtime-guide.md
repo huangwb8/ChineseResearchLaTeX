@@ -114,9 +114,19 @@ rework 只向前置阶段退回，不能绕过前向 Gate；删除目标及下�
 定向测试：
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python -m pytest {skill}/tests -q \
+PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/research-idea -q \
   -o cache_dir={task}/research-idea/log/pytest-cache \
   --basetemp={task}/research-idea/output/test-run
 ```
 
 测试含合成 Agent 回传，只证明协议与失败边界；实际科研任务仍须执行文献调查、Premium 查新和独立审查。可信宿主和本地文件权限是运行前提，目录隔离与哈希链不构成恶意代码沙箱，也不证明执行者身份经过外部认证。
+
+## 业务结论与完成边界
+
+`report_contract: research-idea-report-v2` 的 recommended 和 no_qualified 都可在证据充分、约定探索与独立审查完成后通过原 reporting → completed 路径。recommended 至少一个候选且所有保留项完成 Premium；no_qualified 的 novelty 证据角色仍必需，记录淘汰依据与查新完成或不适用的具体理由。无需查新仅用于价值筛选已经足以淘汰的事项，缺少近邻全文或核验不能算不适用。
+
+三轮分别核验价值、解释与辨别能力、重新选择与迁移；人数和轮数不自动改变。零候选仍执行约定轮次，对淘汰与重新开启条件独立复核。原图、命令、角色需求和证据哈希/绑定机制保持不变，契约版本在索引中更新。
+
+insufficient 报告可以结构通过并交付，但 `completion_eligible: false` 会阻止完成，保留真实最近阶段；不要为了交付阶段性文件推进状态。它说明缺口和恢复位置，不证明新颖性。
+
+旧标题报告仍可读取，CLI 返回 legacy 和完成不可用警告，不改写原文件。旧运行因资产哈希变化不能由新版本续写；在新任务重建需核验的证据，禁止改旧事件或把新结论追认给旧结果。结构检查不验证引用推理、声明的 Premium 执行或科学价值，这些仍由 required scientific-review 按来源审查。
