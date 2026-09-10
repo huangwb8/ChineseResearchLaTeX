@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.6.0"
+  version: "0.7.0"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
@@ -113,6 +113,7 @@ validation:
     - "关键预测"
     - "反证路径"
     - "价值与非平凡性"
+    - "创新性与颠覆潜力"
     - "最近工作与实质增量"
     - "最强替代方向"
     - "判断可信度与近期投入"
@@ -123,11 +124,13 @@ validation:
     - "可证伪科学假设"
     - "关键预测"
     - "反证路径"
+    - "创新性与颠覆潜力"
     - "查新结论"
   required_best_markers:
     - "最佳选择"
     - "科学重要性"
     - "新颖性"
+    - "创新性与颠覆潜力"
     - "可证伪性"
     - "可行性"
 
@@ -147,4 +150,7 @@ runtime:
   verifiers:
     - id: bensz.research.stage-readiness
       version: "3.0.0"
+      required: true
+    - id: bensz.research.hypothesis-merit
+      version: "1.0.0"
       required: true

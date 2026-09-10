@@ -24,7 +24,7 @@ theme、radar、interpretation、map；每个结论有论文锚点，未完成�
 
 ## 离开条件
 
-按 [运行指南](../../runtime-guide.md) 调用阶段 Verifier 并记录 Kernel Gate，再执行 bsk state transition。required 语义组件完成且 pass 才能前进；fail/uncertain/unchecked/error/timed_out/skipped 均保留当前阶段。需要返工时对 rework 必要性单独核验，不要求有缺陷的研究内容通过前进判据。
+按 [运行指南](../../runtime-guide.md) 调用 required Verifier 并记录 Kernel Gate，再执行 bsk state transition。全部 required 语义组件完成且 pass 才能前进；fail/uncertain/unchecked/error/timed_out/skipped 均保留当前阶段。需要返工时对 rework 必要性单独核验，不要求有缺陷的研究内容通过前进判据。
 
 ## 转移指引
 

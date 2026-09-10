@@ -6,7 +6,9 @@
 
 ## [Unreleased]
 
-- `research-idea` 轻量化：保留五个 Markdown State 与单一语义 Verifier，直接使用 bsk 原生状态不变量、Gate、绑定与日志；移除自建运行时、机械证据脚本和重复快照/重放逻辑，精简领域初始化。最低 Kernel 要求移至 dependencies.kernel，以兼容原生声明加载器。同步操作指南、报告质量与直接 Kernel 集成回归。旧专用 CLI 不兼容，旧运行只读保留；证据内容变化后的重审由 Agent 负责。
+- 新增 required `bensz.research.hypothesis-merit` 语义 Verifier，与阶段就绪 Verifier 一起批量记录 Kernel Gate；推荐候选必须接受科学假设价值、创新性、颠覆/改写潜力、非平凡性、关键预测和最强替代方向审问。报告模板和格式检查新增“创新性与颠覆潜力”字段，版本推进至 0.7.0。
+
+- `research-idea` 轻量化：保留五个 Markdown State 与本地语义 Verifier，直接使用 bsk 原生状态不变量、Gate、绑定与日志；移除自建运行时、机械证据脚本和重复快照/重放逻辑，精简领域初始化。最低 Kernel 要求移至 dependencies.kernel，以兼容原生声明加载器。同步操作指南、报告质量与直接 Kernel 集成回归。旧专用 CLI 不兼容，旧运行只读保留；证据内容变化后的重审由 Agent 负责。
 
 ## [0.5.0] - 2026-09-10
 

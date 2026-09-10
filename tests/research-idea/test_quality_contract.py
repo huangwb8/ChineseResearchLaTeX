@@ -24,6 +24,7 @@ def candidate(heading="C1", *, bold=True):
         "关键预测": "相同浓度下，湿度变化引起有方向的误差。",
         "反证路径": "在预设精度范围内无差异将推翻该解释。",
         "价值与非平凡性": "确定既有测量结论的适用边界。",
+        "创新性与颠覆潜力": "若成立将改写干燥条件外推到湿润环境的测量框架；若失败可排除湿度是主要偏差来源。",
         "最近工作与实质增量": "最近研究只覆盖干燥条件，湿度效应尚未测量。",
         "最强替代方向": "先改进参照测量；若误差来自参照则改变优先级。",
         "判断可信度与近期投入": "当前有限证据支持小规模鉴别观察。",
@@ -195,6 +196,13 @@ def test_missing_frontmatter_fails_cleanly(tmp_path):
 def test_placeholder_candidate_field_rejected(tmp_path, placeholder):
     text = report_text().replace("环境条件是否改变测量误差的方向？", placeholder)
     assert not validate(tmp_path, text)["passed"]
+
+
+def test_recommended_candidate_requires_innovation_and_disruption_field(tmp_path):
+    text = report_text().replace("**创新性与颠覆潜力**：若成立将改写干燥条件外推到湿润环境的测量框架；若失败可排除湿度是主要偏差来源。\n", "")
+    result = validate(tmp_path, text)
+    assert not result["passed"]
+    assert any("创新性与颠覆潜力" in error for error in result["errors"])
 
 
 @pytest.mark.parametrize("original,replacement", [("[O1](#opportunity-1)", "[O9](#opportunity-1)"), ("[R1](#reference-1)", "[R9](#reference-1)")])

@@ -8,7 +8,7 @@ transitions: []
 
 ## 状态含义
 
-唯一最终报告已通过 validate_report、绑定的科学审查和 Kernel Gate；只证明本次提交快照达到交付要求。业务结论可为 recommended 或 no_qualified，不代表必须存在推荐候选；insufficient 不属于完成。
+唯一最终报告已通过 validate_report、绑定的阶段就绪审查、科学假设价值审查和 Kernel Gate；只证明本次提交快照达到交付要求。业务结论可为 recommended 或 no_qualified，不代表必须存在推荐候选；insufficient 不属于完成。
 
 ## 进入条件
 

@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SKILL = ROOT / "skills/research-idea"
 PREFIX = "bensz.research-ideation."
 VERIFIER = "bensz.research.stage-readiness"
+MERIT_VERIFIER = "bensz.research.hypothesis-merit"
 BINDINGS = ("pack_id", "pack_version", "package_kind", "component_id", "component_type", "contract_hash", "component_hash", "plan_hash", "run_id", "attempt_id", "handoff_hash")
 
 
@@ -79,6 +80,10 @@ def bound_submission(handoff, verdict="pass"):
     }
 
 
+def bound_submissions(handoffs, verdict="pass"):
+    return [bound_submission(handoff, verdict) for handoff in handoffs]
+
+
 def transition(workspace, data, target=None, skill=SKILL):
     return bsk("state", "transition", workspace.task_root, "research-idea", target or data["subject"]["target"], "--skill-root", skill, "--run-id", data["run_id"], "--attempt-id", data["attempt_id"])
 
@@ -87,9 +92,12 @@ def test_local_pack_and_initial_state_are_discoverable(workspace):
     declaration = SkillStateDeclaration.from_skill_root(SKILL)
     assert declaration.initial_state == PREFIX + "literature"
     assert len(declaration.states) == 5
-    assert len(declaration.verifier_requirements()) == 1
-    definition = FilesystemVerifierRegistry(SKILL / "references/verifiers").resolve(VERIFIER)
-    assert [component.type for component in definition.contract_pack().components] == ["agent"]
+    assert len(declaration.verifier_requirements()) == 2
+    registry = FilesystemVerifierRegistry(SKILL / "references/verifiers")
+    stage_definition = registry.resolve(VERIFIER)
+    merit_definition = registry.resolve(MERIT_VERIFIER)
+    assert [component.type for component in stage_definition.contract_pack().components] == ["agent"]
+    assert [component.id for component in merit_definition.contract_pack().components] == ["merit-review"]
     assert workspace.read_meta_state("research-idea")["current_state"] == PREFIX + "literature"
 
 
@@ -99,20 +107,31 @@ def test_required_missing_or_nonpass_never_advances(workspace, verdict):
     if verdict is not None:
         pending = run_documented_api(workspace, path)
         assert pending["gate"]["decision"] != "allow"
-        result = run_documented_api(workspace, path, bound_submission(pending["handoffs"][0], verdict))
+        submissions = bound_submissions(pending["handoffs"])
+        submissions[0] = bound_submission(pending["handoffs"][0], verdict)
+        result = run_documented_api(workspace, path, submissions)
         assert result["gate"]["decision"] != "allow"
     rejected = transition(workspace, data)
     assert rejected["status"] == "rejected"  # CLI exit 0 is not a passing transition.
     assert workspace.read_meta_state("research-idea")["current_state"] == PREFIX + "literature"
 
 
+def test_stage_pass_without_merit_pass_never_advances(workspace):
+    path, data = request(workspace)
+    pending = run_documented_api(workspace, path)
+    result = run_documented_api(workspace, path, bound_submission(pending["handoffs"][0]))
+    assert result["gate"]["decision"] != "allow"
+    rejected = transition(workspace, data)
+    assert rejected["status"] == "rejected"
+
+
 @pytest.mark.parametrize("field", ["run_id", "attempt_id", "contract_hash", "plan_hash", "component_hash", "handoff_hash"])
 def test_kernel_rejects_wrong_binding(workspace, field):
     path, data = request(workspace)
     pending = run_documented_api(workspace, path)
-    submission = bound_submission(pending["handoffs"][0])
-    submission[field] = "wrong"
-    run_documented_api(workspace, path, submission, expect_success=False)
+    submissions = bound_submissions(pending["handoffs"])
+    submissions[0][field] = "wrong"
+    run_documented_api(workspace, path, submissions, expect_success=False)
     assert transition(workspace, data)["status"] == "rejected"
 
 
@@ -121,7 +140,7 @@ def test_changed_request_cannot_reuse_bound_result(workspace):
     pending = run_documented_api(workspace, path)
     data["evidence"][0]["content_hash"] = "sha256:changed"
     path.write_text(json.dumps(data))
-    run_documented_api(workspace, path, bound_submission(pending["handoffs"][0]), expect_success=False)
+    run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), expect_success=False)
 
 
 def test_advance_rework_resume_and_terminal(workspace):
@@ -129,7 +148,7 @@ def test_advance_rework_resume_and_terminal(workspace):
     for index, (source, target, operation) in enumerate(steps):
         path, data = request(workspace, source, target, operation, f"check-{index}")
         pending = run_documented_api(workspace, path)
-        allowed = run_documented_api(workspace, path, bound_submission(pending["handoffs"][0]))
+        allowed = run_documented_api(workspace, path, bound_submissions(pending["handoffs"]))
         assert allowed["gate"]["computed_by"] == "kernel"
         assert allowed["gate"]["decision"] == "allow"
         assert transition(workspace, data)["status"] == "transitioned"
@@ -143,7 +162,7 @@ def test_advance_rework_resume_and_terminal(workspace):
 def test_jump_and_new_attempt_without_gate_are_rejected(workspace):
     path, data = request(workspace)
     pending = run_documented_api(workspace, path)
-    run_documented_api(workspace, path, bound_submission(pending["handoffs"][0]))
+    run_documented_api(workspace, path, bound_submissions(pending["handoffs"]))
     assert transition(workspace, data, PREFIX + "completed")["status"] == "rejected"
     data["attempt_id"] = "new-without-review"
     assert transition(workspace, data)["status"] == "rejected"
@@ -205,7 +224,7 @@ def test_copied_skill_is_relocatable(workspace, tmp_path):
     assert result.returncode == 0, result.stderr
     path, data = request(workspace)
     pending = run_documented_api(workspace, path, skill=copied)
-    run_documented_api(workspace, path, bound_submission(pending["handoffs"][0]), skill=copied)
+    run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), skill=copied)
     assert transition(workspace, data, skill=copied)["status"] == "transitioned"
 
 

@@ -2,7 +2,7 @@
 
 ## 职责与环境
 
-本 Skill 仅维护五个 [STATE.md](states/index.json)、一个 [VERIFIER.md](verifiers/stage-readiness/VERIFIER.md) 和领域报告检查。Agent 读取契约、执行研究、核验证据；bsk 负责 Pack 解析、结果绑定、Gate、事件和状态持久化。不要另写 Skill 运行时、锁、检查点或事件重放器。
+本 Skill 仅维护五个 [STATE.md](states/index.json)、两个 required 语义 Verifier（[阶段就绪](verifiers/stage-readiness/VERIFIER.md)、[科学假设价值](verifiers/hypothesis-merit/VERIFIER.md)）和领域报告检查。Agent 读取契约、执行研究、核验证据；bsk 负责 Pack 解析、结果绑定、Gate、事件和状态持久化。不要另写 Skill 运行时、锁、检查点或事件重放器。
 
 使用 Python 3.11+ 和满足 `config.yaml.dependencies.kernel` 最低版本的 `bensz-skill-kernel`。在项目已有合适环境中运行，或用 `.bensz-api/.venv` 安装声明的依赖；包名不是 `bsk`。先核对 `python --version`、`python -m pip show bensz-skill-kernel`、`bsk --version` 及 CLI 实际路径属于同一环境。当前文档和回归在 Kernel 1.0.3 验证；后续版本需重跑定向检查，不能仅凭版本更高推断兼容。
 
@@ -31,11 +31,11 @@ State 的初始入口复用内置 `bensz.workspace.ready`。以下四条前进�
 | review → reporting | review、synthesis（达到约定轮次/人数，保留分歧） |
 | reporting → completed | report、validate_report 结果及前置证据一致性 |
 
-阶段充分性的详细判据只维护在 VERIFIER.md。各业务 Skill 的产物归本任务各自 `input/output/log`，research-idea 在 `input/` 记录相对来源；自己的 map、候选和综合稿归 `output/`。
+阶段充分性的详细判据维护在 `stage-readiness/VERIFIER.md`；候选科学价值、创新性、颠覆潜力和无合格结论充分性维护在 `hypothesis-merit/VERIFIER.md`。各业务 Skill 的产物归本任务各自 `input/output/log`，research-idea 在 `input/` 记录相对来源；自己的 map、候选和综合稿归 `output/`。
 
 ## 准备一次验证
 
-每次检查创建新的 `attempt_id`，同一个研究运行保持 `run_id`；重试、返工、证据变化都用新 attempt。不要把同一通过结果用于不同转移。
+每次检查创建新的 `attempt_id`，同一个研究运行保持 `run_id`；重试、返工、证据变化都用新 attempt。不要把同一通过结果用于不同转移。需要前进或完成时，当前 attempt 下两个 required Verifier 都要产生绑定结果；对 `literature → candidates` 这类尚未形成候选价值判断的阶段，`hypothesis-merit` 可按契约返回“本次不适用”的 pass，但该结果不能复用于需要完整科学价值认证的阶段。
 
 将 JSON 请求写入本 Skill 的 `input/`，设置 `IDEA_REQUEST` 指向该文件。下面展示形状，不能直接作为已完成证据使用；完整请求须覆盖本阶段所有角色和真实来源：
 
@@ -64,7 +64,7 @@ State 的初始入口复用内置 `bensz.workspace.ready`。以下四条前进�
 
 ## 直接调用 Kernel 的本地 Pack API
 
-Kernel 1.0.3 的 `bsk verifier run` 仅发现内置 Verifier，不能运行本 Skill 的本地 Pack。以下是宿主可直接执行的 API 用法，不需要保存为新 CLI 或常驻脚本。先设 `IDEA_REQUEST`；第一次不要设置 `IDEA_SUBMISSION`，读取输出的 handoff 绑定字段，并直接阅读本 Skill VERIFIER.md。handoff 只是待办。
+Kernel 1.0.3 的 `bsk verifier run` 仅发现内置 Verifier，不能运行本 Skill 的本地 Pack。以下是宿主可直接执行的 API 用法，不需要保存为新 CLI 或常驻脚本。先设 `IDEA_REQUEST`；第一次不要设置 `IDEA_SUBMISSION`，读取输出的 handoff 绑定字段，并直接阅读本 Skill VERIFIER.md。handoff 只是待办。多个 required Verifier 必须在同一 run/attempt 下批量记录成一个 Gate；单独记录某一个通过结果不能覆盖全部 required。
 
 ```python
 import json
@@ -79,23 +79,41 @@ skill = Path(os.environ["IDEA_SKILL"])
 workspace = TaskWorkspace.open_existing(os.environ["IDEA_TASK"])
 request = json.loads(Path(os.environ["IDEA_REQUEST"]).read_text())
 declaration = SkillStateDeclaration.from_skill_root(skill)
-requirement = declaration.verifier_requirements()[0]
+requirements = declaration.verifier_requirements()
 registry = FilesystemVerifierRegistry(skill / "references/verifiers")
 submission_path = os.environ.get("IDEA_SUBMISSION")
-submissions = [json.loads(Path(submission_path).read_text())] if submission_path else []
-execution = registry.run_contract(
-    requirement["id"], request, version=requirement["version"],
-    run_id=request["run_id"], attempt_id=request["attempt_id"], submissions=submissions,
-)
+loaded_submissions = json.loads(Path(submission_path).read_text()) if submission_path else []
+if isinstance(loaded_submissions, dict):
+    loaded_submissions = [loaded_submissions]
+submissions = loaded_submissions if isinstance(loaded_submissions, list) else []
+executions = []
+for requirement in requirements:
+    pack_submissions = [
+        item for item in submissions
+        if isinstance(item, dict) and item.get("pack_id") == requirement["id"]
+    ]
+    executions.append(registry.run_contract(
+        requirement["id"], request, version=requirement["version"],
+        run_id=request["run_id"], attempt_id=request["attempt_id"],
+        submissions=pack_submissions,
+    ))
 _, gate = EventLog(workspace.events).record_verification(
-    execution.to_event_payload(), execution.gate.to_dict(),
+    [execution.to_event_payload() for execution in executions],
+    {"decision": "wait"},
     run_id=request["run_id"], attempt_id=request["attempt_id"],
-    requirements=declaration.verifier_requirements(),
+    requirements=requirements,
 )
-print(json.dumps({"gate": gate.payload, "handoffs": [h.to_audit_dict() for h in execution.report.handoffs]}, ensure_ascii=False, indent=2))
+print(json.dumps({
+    "gate": gate.payload,
+    "handoffs": [
+        handoff.to_audit_dict()
+        for execution in executions
+        for handoff in execution.report.handoffs
+    ],
+}, ensure_ascii=False, indent=2))
 ```
 
-第一次输出 Gate 未放行是正常状态。输出保存在 `research-idea/log/`，不保存包含指令正文的完整 handoff。实际完成证据审查后，Agent 写入绑定结果 JSON，设 `IDEA_SUBMISSION` 指向该文件，再执行同一段 API 调用。请求与原绑定字段必须保持一致；不能重建 handoff 再给旧判断套上新身份。下一次 attempt 先清除该变量。
+第一次输出 Gate 未放行是正常状态。输出保存在 `research-idea/log/`，不保存包含指令正文的完整 handoff。实际完成证据审查后，Agent 为每个待处理 handoff 写入绑定结果 JSON；`IDEA_SUBMISSION` 可指向单个结果对象，也可指向结果对象数组。再次执行同一段 API 调用时，请求与原绑定字段必须保持一致；不能重建 handoff 再给旧判断套上新身份。下一次 attempt 先清除该变量。
 
 结果文件从原 handoff 复制 `pack_id`、`pack_version`、`package_kind`、`component_id`、`component_type`、`contract_hash`、`component_hash`、`plan_hash`、`run_id`、`attempt_id`、`handoff_hash`，再填写：
 
@@ -111,7 +129,7 @@ print(json.dumps({"gate": gate.payload, "handoffs": [h.to_audit_dict() for h in 
 }
 ```
 
-此片段省略绑定字段，不能原样提交。实际完成后使用 `completed` 与真实 verdict；有未解决不确定性时使用 `uncertain`。尚未执行、执行报错、超时或跳过时，execution_status 与 verdict 分别使用对应的 `unchecked`、`error`、`timed_out`、`skipped`，不把执行失败写为 completed。同一可信会话也可调用 Kernel 的 `handoff.bind_result(...)` 生成绑定结果。不得以模板 pass 或模型自信替代读取来源，原有独立科研审查仍需执行。
+此片段省略绑定字段，不能原样提交。实际完成后使用 `completed` 与真实 verdict；有未解决不确定性时使用 `uncertain`。尚未执行、执行报错、超时或跳过时，execution_status 与 verdict 分别使用对应的 `unchecked`、`error`、`timed_out`、`skipped`，不把执行失败写为 completed。同一可信会话也可调用 Kernel 的 `handoff.bind_result(...)` 生成绑定结果。不得以模板 pass 或模型自信替代读取来源，原有独立科研审查仍需执行；`hypothesis-merit` 必须对推荐或无合格结论写出价值、创新性和替代方向理由。
 
 ## 推进、回退与完成
 
@@ -122,11 +140,11 @@ bsk state transition "$IDEA_TASK" research-idea bensz.research-ideation.candidat
   --skill-root "$IDEA_SKILL" --run-id idea-run-1 --attempt-id literature-1
 ```
 
-**必须检查输出 JSON 的 `status` 为 `transitioned`。** Kernel 1.0.3 的图边/Gate 拒绝可能仍退出 0，退出码不能代替结果判断。所有非终态声明原生 `verifier-result-recorded`、`verifier-gate-allow`、`required-verifiers-pass`；没有当前身份的 required 结果或非通过 Gate 时不能离开。Kernel 不判断 subject 中的科学含义，也不自动检查本次结果是否被错误用于另一图边，Agent 负责这项对应关系。
+**必须检查输出 JSON 的 `status` 为 `transitioned`。** Kernel 1.0.3 的图边/Gate 拒绝可能仍退出 0，退出码不能代替结果判断。所有非终态声明原生 `verifier-result-recorded`、`verifier-gate-allow`、`required-verifiers-pass`；没有当前身份的全部 required 结果或非通过 Gate 时不能离开。Kernel 不判断 subject 中的科学含义，也不自动检查本次结果是否被错误用于另一图边，Agent 负责这项对应关系。
 
 回退时新请求用 `operation: rework` 和图中更早目标，提供返工原因、受影响证据及恢复位置；Verifier 判断返工是否有依据，通过后仍使用上述 bsk 命令转移。rework 的 pass 仅允许回退，不能用于前进。Agent 将目标及下游旧判断标为待复核；此后前进逐阶段重新检查。
 
-reporting → completed 前运行 `validate_report.py --report ...` 并检查 `passed` 与 `completion_eligible`，再完成语义核验。recommended 和有充分淘汰/探索/复核证据的 no_qualified 可以完成；insufficient 即使格式通过也只能交付阶段性评估，保持真实最近阶段。零候选不能省略独立审查，全文受限不能算无需查新。
+reporting → completed 前运行 `validate_report.py --report ...` 并检查 `passed` 与 `completion_eligible`，再完成阶段就绪和科学假设价值语义核验。recommended 和有充分淘汰/探索/复核证据的 no_qualified 可以完成；insufficient 即使格式通过也只能交付阶段性评估，保持真实最近阶段。零候选不能省略独立审查，全文受限不能算无需查新。
 
 ## 恢复与兼容边界
 

@@ -53,6 +53,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 初始探索数量遵循 config 的 min/max_candidates；最终保留数量另行决定，可以只有一个或为零。按 [研究综合指南](references/research-synthesis.md) 和 [报告模板](references/report-template.md) 表达每个候选；报告保留模板的字段名与章节名，每项用短句或 O/R 引用减少重复，不合并标签或自创同义标题：
 - 具体科学问题、可证伪假设、关键预测和反证路径；观察应能区分可能答案，不只写效果更好。
 - 价值与非平凡性：成功增加什么知识或改变什么决策，失败排除什么解释，常规解释和简单方法为何尚不足。
+- 创新性与颠覆潜力：相对最近邻工作的概念增量；若成立会改写什么机制理解、理论框架、测量范式或决策，若失败会排除什么重要解释；为什么不是换对象、换数据、加参数或组合方法。
 - 最近工作与实质增量：新条件检验什么重要边界，不能只强调对象、参数或组合没有出现过。
 - 最强替代方向、推翻优先级的条件；分开写判断可信度与近期投入。
 - 脉络依据：稳定的 O 机会编号与 R 论文锚点，能够回到 map 与原证据。
@@ -99,7 +100,7 @@ python3 ~/.codex/skills/research-idea/scripts/validate_report.py --report "{最�
 python3 ~/.claude/skills/research-idea/scripts/validate_report.py --report "{最终报告路径}"
 ```
 
-报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。正式结论须经阶段 Verifier 与 bsk Gate 核验并到达 completed 才能宣称完成；insufficient 可交付明确标识的阶段性评估，保留当前状态、缺口和恢复位置，不能进入 completed。结构通过不认证科学价值或新颖性。
+报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。正式结论须经阶段就绪 Verifier、科学假设价值 Verifier 与 bsk Gate 核验并到达 completed 才能宣称完成；insufficient 可交付明确标识的阶段性评估，保留当前状态、缺口和恢复位置，不能进入 completed。结构通过不认证科学价值或新颖性。
 
 ### 输出
 
@@ -152,9 +153,9 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 
 使用前读取 [运行契约与命令](references/runtime-guide.md)。`runtime` 声明 State 与 required Verifier；[State 索引](references/states/index.json) 与 [Verifier 索引](references/verifiers/index.json) 维护各自身份和版本。
 
-- 五个 State 只定义阶段、图边和 bsk 原生不变量；唯一语义 Verifier 按 [领域契约](references/verifiers/stage-readiness/VERIFIER.md) 判断下一阶段是否就绪，或返工是否有依据。
-- 主 Agent 实际读取来源，按运行指南直接调用 Kernel API 获取 handoff、回传判断并记录 Gate。然后使用相同 run/attempt 调用 `bsk state transition --skill-root`；检查 JSON status，而非只看退出码。
-- required 结果完成且 pass 才允许对应转移；fail/uncertain/unchecked/error/timed_out/skipped 均不前进。科学充分性、角色覆盖、轮次独立性及源/目标匹配由 Agent 判断，报告格式由 validate_report 检查。
+- 五个 State 只定义阶段、图边和 bsk 原生不变量；阶段就绪 Verifier 按 [阶段契约](references/verifiers/stage-readiness/VERIFIER.md) 判断下一阶段是否就绪，科学假设价值 Verifier 按 [价值契约](references/verifiers/hypothesis-merit/VERIFIER.md) 判断拟推荐或拟淘汰结论是否经受创新性、非平凡性和颠覆潜力审问。
+- 主 Agent 实际读取来源，按运行指南直接调用 Kernel API 获取全部 required handoff、回传判断并批量记录 Gate。然后使用相同 run/attempt 调用 `bsk state transition --skill-root`；检查 JSON status，而非只看退出码。
+- 全部 required 结果完成且 pass 才允许对应转移；fail/uncertain/unchecked/error/timed_out/skipped 均不前进。科学充分性、角色覆盖、轮次独立性、假设价值及源/目标匹配由 Agent 判断，报告格式由 validate_report 检查。
 - bsk 负责协议、结果绑定、Gate、事件和状态；不在 Skill 增加运行时包装、锁、快照或重放引擎。可按需使用内置文件/路径/引用 Verifier，不能替代科研判断。
 - Kernel 不自动发现全部证据文件变化。Agent 在转移前核对最新来源；变化后新建 attempt 并重审，旧回传不能重新绑定。人工复核提供新增证据，不提供强制通过开关。
 

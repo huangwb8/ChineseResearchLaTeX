@@ -26,7 +26,7 @@
 
 ## 功能概述
 
-`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇论文一个 agent，同时最多 3 个）并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。查新前先筛选科学价值；map 连接研究线、解释与证据，候选可追溯到稳定的机会和论文编号。
+`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇论文一个 agent，同时最多 3 个）并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。查新前先筛选科学价值；map 连接研究线、解释与证据，候选可追溯到稳定的机会和论文编号。推荐候选还必须接受独立的科学假设价值审问，说明概念增量、创新性、颠覆/改写潜力、非平凡性、关键预测和最强替代方向。
 
 它不替代完整实验设计。你已经确定科学问题后，再用 `research-plan` 制定实验或分析计划。
 如果你只需要写文献综述正文、related work 或系统综述，请直接使用 `research-literature-review`。
@@ -51,11 +51,11 @@
 
 ## 验证器与状态机
 
-以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由一个自然语言 Verifier 核验阶段证据。Agent 判断科研充分性，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
+以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由两个 required 自然语言 Verifier 分别核验阶段证据与科学假设价值。Agent 判断科研充分性、创新性和推荐价值，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
 
 需要 Python 3.11+ 与满足 `config.yaml.dependencies.kernel` 最低版本要求的 Kernel。先用 `bsk workspace init --task-root` 准备任务工作区，领域初始化脚本只生成研究参数与候选空模板，再直接用 `bsk state transition --skill-root` 进入和推进阶段。本 Skill 不再维护运行时、锁、检查点或重放代码。
 
-本地 Verifier 通过 [运行操作指南](references/runtime-guide.md) 中的简短 Kernel API 调用执行；该指南说明绑定回传、原生 Gate、返工、恢复、可复用的内置组件和兼容边界。Agent 在转移前重新核对来源，证据变化后重审；不再承诺自动检查所有文件变化。
+本地 Verifier 通过 [运行操作指南](references/runtime-guide.md) 中的简短 Kernel API 调用执行；该指南说明多 Verifier 绑定回传、批量 Gate、返工、恢复、可复用的内置组件和兼容边界。Agent 在转移前重新核对来源，证据变化后重审；不再承诺自动检查所有文件变化。
 
 ## 使用示例
 

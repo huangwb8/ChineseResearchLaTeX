@@ -123,7 +123,7 @@ SKILL_SPECS: tuple[SkillSpec, ...] = (
     SkillSpec(
         name="research-idea",
         stage="📚 文献调研",
-        summary="基于证据地图、价值筛选与独立审查评估科研方向，区分推荐与证据不足",
+        summary="基于证据地图、价值筛选与假设价值认证评估科研方向，区分推荐与证据不足",
     ),
     SkillSpec(
         name="nsfc-code",

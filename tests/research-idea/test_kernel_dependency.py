@@ -31,4 +31,9 @@ def test_kernel_1_0_3_can_load_native_runtime_declaration():
             "version": "3.0.0",
             "required": True,
         },
+        {
+            "id": "bensz.research.hypothesis-merit",
+            "version": "1.0.0",
+            "required": True,
+        },
     )

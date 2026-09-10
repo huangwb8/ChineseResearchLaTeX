@@ -25,6 +25,31 @@
           "side_effects": "none"
         }
       ]
+    },
+    {
+      "directory": "hypothesis-merit",
+      "id": "bensz.research.hypothesis-merit",
+      "version": "1.0.0",
+      "classification": "semantic",
+      "tags": [
+        "research",
+        "hypothesis",
+        "merit",
+        "novelty"
+      ],
+      "aliases": [],
+      "contract": "VERIFIER.md",
+      "mode": "prompt",
+      "assurance_tier": "llm_judge",
+      "components": [
+        {
+          "id": "merit-review",
+          "type": "agent",
+          "required": true,
+          "assurance": "llm_judge",
+          "side_effects": "none"
+        }
+      ]
     }
   ]
 }
