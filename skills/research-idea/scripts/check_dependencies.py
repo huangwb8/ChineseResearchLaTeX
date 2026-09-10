@@ -28,6 +28,8 @@ def find_skill(skill_name: str, search_roots: list[str], cwd: Path) -> Path | No
     for root in search_roots:
         root_path = (cwd if root == "." else Path(root).expanduser()).resolve()
         candidates.append(root_path / skill_name / "SKILL.md")
+        if root == ".":
+            candidates.append(root_path / "skills" / skill_name / "SKILL.md")
     for env_name in ("CODEX_HOME", "CLAUDE_HOME"):
         env_value = os.environ.get(env_name)
         if env_value:

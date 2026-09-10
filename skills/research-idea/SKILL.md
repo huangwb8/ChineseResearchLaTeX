@@ -30,21 +30,21 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 #### 初始化与资料归纳
 
-1. 使用匹配 `config.yaml.runtime.kernel` 的 Python 环境，运行 `scripts/init_workspace.py --task-root "{本轮已声明任务根}"` 创建工作区、manifest 与初始状态；已有事件时用 `scripts/idea_runtime.py ... status` 恢复。首次接入先读 [运行说明](references/runtime-guide.md)。
+1. 先读 [运行说明](references/runtime-guide.md)，核对 `config.yaml.dependencies.kernel` 的环境要求。直接用 `bsk workspace init --task-root` 复用本轮已声明任务目录，再用 `scripts/init_workspace.py` 初始化研究参数和候选空模板、`bsk state transition --skill-root` 进入 literature。已有任务按运行说明读取 Kernel 快照与来源恢复。
 2. 读取资料，在现有输入摘要中说明目标研究贡献、服务的问题或决策，以及时间与资源约束。资源区分已具备、明确没有、尚不清楚；源码没有某能力不等于团队无法建设。目标未说明时给出暂定解释，只有不同解释会改变主线选择时才澄清。只保存脱敏摘要和必要引用。
-3. 用 `research-topic-extractor` 生成主题、5-10 个英文关键词、2-5 个核心问题；保存为 `theme/theme.json`，字段为 `topic`、`keywords`、`core_questions`。
+3. 用 `research-topic-extractor` 生成主题、5-10 个英文关键词、2-5 个核心问题；保存为本 Skill 的 `input/theme.json`（引用主题提取 Skill 的原始产物），字段为 `topic`、`keywords`、`core_questions`。
 
 #### 文献调查与解读（候选生成前置）
 
-1. 调用 `research-literature-radar`，根据 `theme/theme.json` 获取领域内重要、经典、前沿和具有启发性的论文。优先获取公开 PDF 正文；若无法获得 PDF，允许使用题目、摘要和可核验元数据，但必须标记证据深度不足。
-2. 将雷达结果及其 provenance 保存到 `research-literature-radar/`，至少记录论文稳定 ID、题目、年份、来源、PDF/摘要可用性、入选理由和未覆盖风险。雷达失败或没有达到最低证据量时，不得直接生成候选，应先报告并停止后续依赖步骤。
+1. 调用 `research-literature-radar`，根据 `input/theme.json` 获取领域内重要、经典、前沿和具有启发性的论文。优先获取公开 PDF 正文；若无法获得 PDF，允许使用题目、摘要和可核验元数据，但必须标记证据深度不足。
+2. 将雷达结果及其 provenance 保存到本任务 `research-literature-radar/output/`，至少记录论文稳定 ID、题目、年份、来源、PDF/摘要可用性、入选理由和未覆盖风险。雷达失败或没有达到最低证据量时，不得直接生成候选，应先报告并停止后续依赖步骤。
 3. 对入选论文调用 `research-literature-interpretation`，采用并行子 agent 分批执行：
-   - 一个子 agent 只负责一篇论文，独立读取该论文的 provenance 与可用正文/摘要，并将结果写入 `research-literature-interpretation/` 下独立的论文目录。
+   - 一个子 agent 只负责一篇论文，独立读取该论文的 provenance 与可用正文/摘要，并将结果写入本任务 `research-literature-interpretation/output/` 下独立的论文目录。
    - 同时运行的解读子 agent 最多 3 个（不含负责调度与汇总的主 agent）；入选论文超过 3 篇时按批次排队，上一批全部完成（或记录失败）后再启动下一批。
    - 本阶段不再嵌套启动额外的并行解读 agent；若单篇需要补证据或定向复核，由该子 agent 在自身任务内完成，不能突破全局并发上限。
    - 主 agent 汇总所有成功解读，并保留每篇论文的失败/证据不足状态；任何论文未完成时不得把研究脉络 map 标记为完整。
    - PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。
-4. 主 Agent 基于全部解读建立 `research-map/research-map.md`，先读 [研究综合指南](references/research-synthesis.md)。主体包含研究线比较表、关系与演化说明、带稳定 O 编号的研究机会清单，并保留时间线与论文 R 编号锚点。区分有来源的关系与待验证综合判断；不能把时间先后、相似术语或不同测量结果写成继承、因果或矛盾。没有争议也可从重要未测量现象与适用边界提出问题，不编造冲突。缺少关键证据时定向补读。
+4. 主 Agent 基于全部解读建立本 Skill 的 `output/research-map.md`，先读 [研究综合指南](references/research-synthesis.md)。主体包含研究线比较表、关系与演化说明、带稳定 O 编号的研究机会清单，并保留时间线与论文 R 编号锚点。区分有来源的关系与待验证综合判断；不能把时间先后、相似术语或不同测量结果写成继承、因果或矛盾。没有争议也可从重要未测量现象与适用边界提出问题，不编造冲突。缺少关键证据时定向补读。
 
 #### 初始候选与低成本价值筛选
 
@@ -99,7 +99,7 @@ python3 ~/.codex/skills/research-idea/scripts/validate_report.py --report "{最�
 python3 ~/.claude/skills/research-idea/scripts/validate_report.py --report "{最终报告路径}"
 ```
 
-报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。正式结论须经 prepare/submit 到达 completed 才能宣称完成；insufficient 可交付明确标识的阶段性评估，保留当前状态、缺口和恢复位置，不能进入 completed。结构通过不认证科学价值或新颖性。
+报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。正式结论须经阶段 Verifier 与 bsk Gate 核验并到达 completed 才能宣称完成；insufficient 可交付明确标识的阶段性评估，保留当前状态、缺口和恢复位置，不能进入 completed。结构通过不认证科学价值或新颖性。
 
 ### 输出
 
@@ -130,21 +130,12 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 所有中间文件、查新记录、并行审查产物、草稿和日志都必须保存在隐藏工作区内；除最终 Markdown 外，不要写到项目根目录或 `docs/ideas/`。
 - 用 `--task-root` 显式复用本轮任务根，必须位于项目内 `.bensz-api/task-*`；旧 `--workspace-dir` 嵌套布局只保留历史文件，不自动迁移。输出目录不得位于隐藏工作区内。
 
-初始化优先使用脚本：
-
-```bash
-python3 research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd . --task-root "{本轮任务根}"
-# 系统级安装后也可使用：
-python3 ~/.codex/skills/research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd . --task-root "{本轮任务根}"
-python3 ~/.claude/skills/research-idea/scripts/init_workspace.py --input-label "{简短主题或资料名}" --cwd . --task-root "{本轮任务根}"
-```
-
-脚本先检查 Kernel 版本，以及配置中的主题提取、文献雷达、论文解读、文献综述与并行审查依赖；缺失时早失败。用户指定审查轮次或人数时增加 `--rounds` / `--agents`，自定义文件名增加 `--allow-custom-name`。
+初始化分为 bsk 工作区准备和领域资料初始化，命令与参数见 [运行说明](references/runtime-guide.md#初始化与阶段)。脚本只生成输入参数、候选空模板和正式报告路径，不管理状态或事件；用户指定审查轮数和人数时保留其设置。
 
 ### 校验
 
 - 测试源码位于仓库 `tests/research-idea/`，测试材料和运行日志放本轮工作区的 output/log，最终报告不引用测试路径。
-- 普通业务不创建测试区；旧 `--with-test-dir` 仅为开发兼容选项，使用时显式把 `--test-dir` 指向本轮工作区。
+- 普通业务不创建测试区；开发验证材料写本轮工作区，不通过业务初始化脚本创建测试目录。
 
 - 科学问题必须是问题，不是主题名。
 - 假设必须可证伪，不写无法被推翻的价值判断。
@@ -155,17 +146,17 @@ python3 ~/.claude/skills/research-idea/scripts/init_workspace.py --input-label "
 
 ### 失败与恢复
 
-保留错误证据和已完成产物；通过 `idea_runtime.py status` 重放恢复最近阶段。证据修复后 prepare 新 attempt；已通过的前置证据变化时先 rework 回相应阶段，不能复用旧 Gate。取消用 cancel，Kernel 缺失或不匹配时停止控制流程，不静默降级。
+保留错误证据和已完成产物；按运行说明读取 Kernel 领域快照、事件和原参数恢复。证据修复或契约变化后使用新 attempt；前置证据改变时核验返工并回到受影响阶段，下游结论由 Agent 标为待复核。取消记录原因并停止推进；Kernel 缺失或不可用时保留草稿与缺口，不宣称阶段通过。
 
 ## 控制
 
-使用前读取 [运行契约与命令](references/runtime-guide.md)。配置中的 `runtime` 声明 Kernel、State 与 required Verifier；索引分别位于 [State 集合](references/states/index.json) 和 [Verifier 集合](references/verifiers/index.json)，身份与版本只在索引维护。
+使用前读取 [运行契约与命令](references/runtime-guide.md)。`runtime` 声明 State 与 required Verifier；[State 索引](references/states/index.json) 与 [Verifier 索引](references/verifiers/index.json) 维护各自身份和版本。
 
-- 在 literature → candidates、candidates → review、review → reporting、reporting → completed 的阶段边界调用 `idea_runtime.py prepare`，按 [Verifier 契约](references/verifiers/stage-readiness/VERIFIER.md) 实际核验固定证据，再 submit 绑定的 Agent 结果。
-- 主 Agent 负责调用宿主与语义核验，原有文献解读和独立审查协作要求仍执行；Kernel 不负责创建 Agent。handoff 是待办，不能记为通过。
-- 脚本检查非空证据、角色、文件哈希、审查结果数量和最终报告结构；Agent 判断文献依据、map 完整性、可证伪性、拟保留项的 Premium 查新或零候选淘汰依据、各轮不同的判断贡献及业务结论一致性。
-- required 组件均完成并 pass 才推进；fail/uncertain/unchecked/error/timed_out/skipped 均保留阶段。证据不足交由补证据或人工复核，再执行绑定回传，不提供人工强制通过开关。
-- 回退用 rework 并记录原因与证据；只允许 State 图中的前置阶段，失效目标及下游检查点。事件保留 run/attempt、契约与证据哈希，用 status 重放，不手改状态文件。
+- 五个 State 只定义阶段、图边和 bsk 原生不变量；唯一语义 Verifier 按 [领域契约](references/verifiers/stage-readiness/VERIFIER.md) 判断下一阶段是否就绪，或返工是否有依据。
+- 主 Agent 实际读取来源，按运行指南直接调用 Kernel API 获取 handoff、回传判断并记录 Gate。然后使用相同 run/attempt 调用 `bsk state transition --skill-root`；检查 JSON status，而非只看退出码。
+- required 结果完成且 pass 才允许对应转移；fail/uncertain/unchecked/error/timed_out/skipped 均不前进。科学充分性、角色覆盖、轮次独立性及源/目标匹配由 Agent 判断，报告格式由 validate_report 检查。
+- bsk 负责协议、结果绑定、Gate、事件和状态；不在 Skill 增加运行时包装、锁、快照或重放引擎。可按需使用内置文件/路径/引用 Verifier，不能替代科研判断。
+- Kernel 不自动发现全部证据文件变化。Agent 在转移前核对最新来源；变化后新建 attempt 并重审，旧回传不能重新绑定。人工复核提供新增证据，不提供强制通过开关。
 
 ## 约束
 

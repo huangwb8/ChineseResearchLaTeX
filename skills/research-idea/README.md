@@ -51,11 +51,11 @@
 
 ## 验证器与状态机
 
-现在按“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”记录进度，支持退回补证据和中断恢复。脚本检查证据完整性、哈希、审查轮次与报告格式，Agent 核验科学充分性；缺证据、未审查或不确定时不会推进。
+以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由一个自然语言 Verifier 核验阶段证据。Agent 判断科研充分性，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
 
-需要 Python 3.11+、与 `config.yaml.runtime.kernel` 精确匹配的 Kernel，以及 macOS/Linux（Windows 使用 WSL）。初始化用 `--task-root` 复用任务目录，恢复用 `idea_runtime.py status`；旧 Kernel 会明确报错，单独报告格式检查仍可运行。
+需要 Python 3.11+ 与满足 `config.yaml.dependencies.kernel` 最低版本要求的 Kernel。先用 `bsk workspace init --task-root` 准备任务工作区，领域初始化脚本只生成研究参数与候选空模板，再直接用 `bsk state transition --skill-root` 进入和推进阶段。本 Skill 不再维护运行时、锁、检查点或重放代码。
 
-完整初始化、证据 JSON、prepare/submit、回退与迁移说明见 [运行操作指南](references/runtime-guide.md)。旧 `--workspace-dir` 嵌套写入入口已停止使用，旧文件保留，不自动推定通过。
+本地 Verifier 通过 [运行操作指南](references/runtime-guide.md) 中的简短 Kernel API 调用执行；该指南说明绑定回传、原生 Gate、返工、恢复、可复用的内置组件和兼容边界。Agent 在转移前重新核对来源，证据变化后重审；不再承诺自动检查所有文件变化。
 
 ## 使用示例
 
@@ -81,7 +81,7 @@
 |------|------|
 | `docs/ideas/Research-Idea_{repo}_{pr}_{timestamp}.md` | 默认最终研究想法报告路径；可用 `--output-dir` 或用户参数覆盖 |
 | `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
-| `research-idea/log/events.ndjson`（位于上述任务目录内） | 可重放的阶段、验证结果与 Gate 日志 |
+| `log/events.ndjson` 与 `research-idea/log/meta-state.json`（位于任务目录内） | bsk 维护的事件日志与领域状态快照 |
 
 最终报告不会暴露隐藏工作区路径。
 
@@ -114,8 +114,8 @@ A：不会。最终报告只给科学问题、可证伪假设、选择理由和�
 
 ## 报告兼容与开发验证
 
-新报告以 `report_contract: research-idea-report-v2` 显式声明 outcome 与探索、查新、审查状态，写法见 [报告模板](references/report-template.md)。旧报告仍支持结构读取并返回 legacy 警告，不能用于新运行认证完成；新规则下的阶段性评估即使格式通过也不能进入 completed。脚本检查格式与引用可定位性，科学充分性仍由绑定证据的审查判断。
+新报告以 `report_contract: research-idea-report-v2` 显式声明 outcome 与探索、查新、审查状态，写法见 [报告模板](references/report-template.md)。旧报告仍支持结构读取并返回 legacy 警告，不能用于新运行认证完成；新规则下的阶段性评估即使格式通过也不能进入 completed。脚本检查格式与引用可定位性，科学充分性仍由实际读取来源并绑定结果的审查判断。
 
-新旧脚本/配置/契约资产不同，旧运行保持原样，不改写历史事件；继续研究须用新任务重新核验。CLI 保留，`candidate-schema.json` 现在用空 `candidates` 与单独 `candidate_example`，初始状态明确为 insufficient/incomplete，避免把示例当真实候选。
+旧运行和事件保持原样；专用运行时 CLI 已移除，迁移与原任务内重新核验见运行指南。报告检查 CLI 保留，初始化模板 `output/candidate-schema.json` 使用空 `candidates` 与单独 `candidate_example`，初始状态明确为 insufficient/incomplete，避免把示例当真实候选。
 
 定向回归源码位于 `tests/research-idea/`，测试命令与环境见 [运行指南](references/runtime-guide.md)。固定材料输出比较只能发现问题；目前不以格式通过或 AI 自评分宣称整体科研质量已得到验证。

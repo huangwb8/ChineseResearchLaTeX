@@ -1,98 +1,16 @@
 #!/usr/bin/env python3
+"""在已声明、已由 bsk 创建的任务目录中初始化研究参数和候选模板。"""
 from __future__ import annotations
 
 import argparse
-import copy
 import datetime as dt
 import json
-import os
 import re
 import subprocess
 import unicodedata
 from pathlib import Path
 
-try:
-    import yaml
-except ModuleNotFoundError:  # pragma: no cover
-    yaml = None
-
-
-DEFAULT_CONFIG = {
-    "workspace": {
-        "task_root_dir": ".bensz-api",
-        "task_prefix": "task",
-        "task_label": "research-idea",
-        "workspace_contract": "bensz-api-task-v1",
-        "run_prefix": "",
-        "timestamp_format": "%Y%m%d-%H%M",
-        "subdirs": [
-            "input",
-            "output",
-            "log",
-            "theme",
-            "research-literature-radar",
-            "research-literature-interpretation",
-            "research-map",
-            "candidates",
-            "novelty",
-            "parallel-vibe",
-            "agent-reviews",
-            "synthesis",
-            "drafts",
-            "logs",
-        ],
-    },
-    "output": {
-        "default_dir": "docs/ideas",
-        "filename_template": "Research-Idea_{repo}_{pr}_{timestamp}.md",
-        "timestamp_format": "%Y%m%d%H%M%S",
-        "unsafe_filename_chars": '/\\:*?"<>|',
-        "fallback_repo": "repo",
-        "fallback_pr": "manual",
-    },
-    "dependencies": {
-        "required_skills": [
-            "research-topic-extractor",
-            "research-literature-radar",
-            "research-literature-interpretation",
-            "research-literature-review",
-            "parallel-vibe",
-        ],
-        "legacy_skill_aliases": {
-            "research-topic-extractor": ["get-review-theme"],
-            "research-literature-review": ["systematic-literature-review"],
-        },
-        "search_roots": [
-            ".",
-            "~/.codex/skills",
-            "~/.claude/skills",
-            "/Volumes/2T01/Cache/.codex/skills",
-        ],
-    },
-    "tests": {"default_dir": "tests/research-idea"},
-}
-
-
-def skill_root() -> Path:
-    return Path(__file__).resolve().parent.parent
-
-
-def load_config() -> dict:
-    config_path = skill_root() / "config.yaml"
-    if yaml is None and config_path.exists():
-        raise SystemExit("缺少 PyYAML，无法读取 research-idea/config.yaml；请安装 pyyaml 后重试")
-    if not config_path.exists():
-        return copy.deepcopy(DEFAULT_CONFIG)
-    loaded = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    config = copy.deepcopy(DEFAULT_CONFIG)
-    for key, value in loaded.items():
-        if isinstance(value, dict) and isinstance(config.get(key), dict):
-            merged = config[key].copy()
-            merged.update(value)
-            config[key] = merged
-        else:
-            config[key] = value
-    return config
+from check_dependencies import load_config, find_skill
 
 
 def run_git(cwd: Path, args: list[str]) -> str:
@@ -148,234 +66,74 @@ def sanitize(value: str, *, unsafe_chars: str, fallback: str, max_len: int = 80)
     return cleaned or fallback
 
 
-def resolve_dir(path: str | None, *, default: Path) -> Path:
-    if path is None:
-        return default.resolve()
-    return Path(path).expanduser().resolve()
-
-
-def ensure_within(base: Path, child: Path, label: str) -> None:
-    try:
-        child.relative_to(base)
-    except ValueError as exc:
-        raise SystemExit(f"{label} 默认必须位于当前工作目录内: {child}") from exc
-
-
-def ensure_hidden_workspace(path: Path, label: str) -> None:
-    parts = path.parts
-    if path.name.startswith(".") or ".bensz-api" in parts:
-        return
-    raise SystemExit(f"{label} 必须位于任务级隐藏目录内，推荐 .bensz-api/task-{{yyyymmdd-hhmm}}-{{简短描述}}/research-idea: {path}")
-
-
-def ensure_not_nested(parent: Path, child: Path, label: str) -> None:
-    try:
-        child.relative_to(parent)
-    except ValueError:
-        return
-    raise SystemExit(f"{label} 不得位于隐藏工作区内: {child}")
-
-
-def allocate_unique_run_id(workspace_base: Path, run_id: str) -> str:
-    if not (workspace_base / run_id).exists():
-        return run_id
-    for idx in range(2, 100):
-        candidate = f"{run_id}-{idx:02d}"
-        if not (workspace_base / candidate).exists():
-            return candidate
-    raise SystemExit(f"无法在 {workspace_base} 下分配唯一工作目录: {run_id}")
-
-
-def default_task_workspace(cwd: Path, config: dict, run_id: str) -> tuple[Path, Path]:
-    task_base = cwd / config.get("task_root_dir", ".bensz-api")
-    task_prefix = str(config.get("task_prefix", "task")).strip("-") or "task"
-    skill_name = str(config.get("task_label", "research-idea")).strip("-")
-    task_root = task_base / f"{task_prefix}-{run_id}-{skill_name}"
-    return task_root, task_root / skill_name
-
-
-def write_task_readme(task_root: Path, skill_name: str) -> None:
-    task_root.mkdir(parents=True, exist_ok=True)
-    readme = task_root / "README.md"
-    if not readme.exists():
-        readme.write_text(
-            "# BenszAPI 任务工作区\n\n"
-            f"- 本轮 skill：`{skill_name}`\n"
-            "- 输入引用、临时结果和日志分别保存于该 skill 的 input/output/log。\n",
-            encoding="utf-8",
-        )
-
-
-def find_skill(skill_name: str, search_roots: list[str], cwd: Path) -> Path | None:
-    candidates: list[Path] = []
-    for root in search_roots:
-        root_path = (cwd if root == "." else Path(root).expanduser()).resolve()
-        candidates.append(root_path / skill_name / "SKILL.md")
-    for env_name in ("CODEX_HOME", "CLAUDE_HOME"):
-        env_value = os.environ.get(env_name)
-        if env_value:
-            candidates.append(Path(env_value).expanduser().resolve() / "skills" / skill_name / "SKILL.md")
-    for candidate in candidates:
-        if candidate.exists() and candidate.is_file():
-            return candidate
-    return None
-
-
-def check_dependencies(config: dict, cwd: Path) -> dict[str, str]:
-    dependency_config = config.get("dependencies", {})
-    required = dependency_config.get("required_skills", [])
-    aliases = dependency_config.get("legacy_skill_aliases", {}) or {}
-    search_roots = dependency_config.get("search_roots", ["."])
-    found: dict[str, str] = {}
-    missing: list[str] = []
-    for skill_name in required:
-        candidates = [skill_name, *[str(item) for item in aliases.get(skill_name, [])]]
-        path = None
-        resolved_name = skill_name
-        for candidate_name in candidates:
-            path = find_skill(candidate_name, search_roots, cwd)
-            if path is not None:
-                resolved_name = candidate_name
-                break
-        if path is None:
-            missing.append(skill_name)
-        else:
-            found[skill_name] = str(path.parent)
-            if resolved_name != skill_name:
-                found[f"{skill_name}__legacy_alias"] = resolved_name
-    if missing:
-        joined = ", ".join(missing)
-        raise SystemExit(
-            "缺少 research-idea 必需依赖 skill: "
-            f"{joined}。请先安装到当前仓库、~/.codex/skills 或 ~/.claude/skills。"
-        )
-    return found
-
-
 def main() -> None:
-    parser = argparse.ArgumentParser(description="初始化 research-idea 隐藏工作区")
-    parser.add_argument("--input-label", required=True, help="资料或主题的简短标签")
-    parser.add_argument("--cwd", default=".", help="用户当前工作目录，默认当前目录")
-    parser.add_argument("--workspace-dir", help="显式兼容工作区根目录；默认使用任务级 BenszAPI 工作区")
-    parser.add_argument("--task-root", help="复用已声明任务根目录：项目内 .bensz-api/task-* 相对路径")
-    parser.add_argument("--output-dir", help="最终 Markdown 输出目录，默认 <cwd>/docs/ideas")
-    parser.add_argument("--test-dir", help="测试区目录，默认 <cwd>/tests/research-idea")
-    parser.add_argument("--with-test-dir", action="store_true", help="创建测试区；普通用户运行默认不创建")
-    parser.add_argument("--repo-name", help="覆盖自动识别的 GitHub 仓库名")
-    parser.add_argument("--pr-name", help="覆盖自动识别的 PR/分支名")
-    parser.add_argument("--run-id", help="运行 ID，默认 YYYYMMDD-HHMM")
-    parser.add_argument("--overwrite", action="store_true", help="允许覆盖已存在的最终报告路径")
-    parser.add_argument("--skip-dependency-check", action="store_true", help="仅测试脚本时跳过依赖 skill 检查")
-    parser.add_argument("--rounds", type=int, help="显式覆盖本 run 的独立审查轮数")
-    parser.add_argument("--agents", type=int, help="显式覆盖每轮审查 Agent 数量")
-    parser.add_argument("--allow-custom-name", action="store_true", help="用户已指定自定义报告文件名")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input-label", required=True)
+    parser.add_argument("--cwd", default=".")
+    parser.add_argument("--task-root", required=True, help="复用已由 bsk 初始化的项目内 .bensz-api/task-*")
+    parser.add_argument("--output-dir", help="项目内正式报告目录，默认 docs/ideas")
+    parser.add_argument("--repo-name")
+    parser.add_argument("--pr-name")
+    parser.add_argument("--rounds", type=int)
+    parser.add_argument("--agents", type=int)
+    parser.add_argument("--allow-custom-name", action="store_true")
+    parser.add_argument("--skip-dependency-check", action="store_true", help="仅开发测试使用")
     args = parser.parse_args()
-
-    # 先检查控制依赖与兼容边界，避免创建半成品工作区。
-    from idea_runtime import Runtime, kernel_api
-    from phase_evidence import safe_path
-    kernel_api()
-    if args.workspace_dir:
-        raise SystemExit("旧 --workspace-dir 布局不支持状态恢复；请使用 --task-root .bensz-api/task-*，旧目录保留不迁移")
-    if args.run_id and not re.fullmatch(r"[A-Za-z0-9_.-]+", args.run_id):
-        raise SystemExit("run-id 必须只包含字母、数字、点、下划线和连字符")
-    if any(value is not None and not 1 <= value <= 100 for value in (args.rounds, args.agents)):
-        raise SystemExit("rounds/agents 必须为 1..100 的整数")
-
     config = load_config()
-    workspace_config = config["workspace"]
-    output_config = config["output"]
-    tests_config = config["tests"]
-
     cwd = Path(args.cwd).expanduser().resolve()
-    if not cwd.exists() or not cwd.is_dir():
-        raise SystemExit(f"cwd 不存在或不是目录: {cwd}")
-    dependency_paths = {} if args.skip_dependency_check else check_dependencies(config, cwd)
-
+    relative = Path(args.task_root)
+    if relative.is_absolute() or len(relative.parts) != 2 or relative.parts[0] != ".bensz-api" or not relative.name.startswith("task-"):
+        parser.error("task-root 必须为项目内 .bensz-api/task-* 相对路径")
+    task_root = cwd / relative
+    workspace_dir = task_root / "research-idea"
+    # 这里只保护本脚本写入范围；工作区与状态均由 bsk 管理。
+    write_paths = [task_root / ".workspace.json", workspace_dir / "input/manifest.json", workspace_dir / "output/candidate-schema.json", workspace_dir / "log"]
+    for path in write_paths:
+        if any(part.is_symlink() for part in [path, *path.parents] if part != cwd and cwd in part.parents):
+            parser.error("任务目录不得含符号链接")
+        if not path.resolve().is_relative_to(cwd):
+            parser.error("任务目录越界")
+    if not (task_root / ".workspace.json").is_file():
+        parser.error("先执行 bsk workspace init --task-root；本脚本不创建任务根或状态")
+    if json.loads((task_root / ".workspace.json").read_text()).get("protocol") != "bensz-api-task-v1":
+        parser.error("工作区协议不匹配")
+    manifest_path = workspace_dir / "input/manifest.json"
+    schema_path = workspace_dir / "output/candidate-schema.json"
+    if manifest_path.exists() or schema_path.exists() or (workspace_dir / "manifest.json").exists():
+        parser.error("研究资料已存在；读取原参数恢复，不重复初始化或自动迁移旧任务")
+    settings = {
+        "rounds": args.rounds if args.rounds is not None else config["iteration"]["default_rounds"],
+        "agents": args.agents if args.agents is not None else config["iteration"]["default_independent_agents"],
+        "allow_custom_name": args.allow_custom_name,
+    }
+    if any(not 1 <= settings[key] <= 100 for key in ("rounds", "agents")):
+        parser.error("rounds/agents 必须为 1..100 的整数")
+    if not args.skip_dependency_check:
+        deps = config["dependencies"]
+        for name in deps["required_skills"]:
+            names = [name, *deps.get("legacy_skill_aliases", {}).get(name, [])]
+            if not any(find_skill(item, deps["search_roots"], cwd) for item in names):
+                parser.error(f"缺少必需 Skill: {name}")
+    output_config = config["output"]
     unsafe_chars = output_config["unsafe_filename_chars"]
-    repo = sanitize(
-        args.repo_name or detect_repo_name(cwd, output_config["fallback_repo"]),
-        unsafe_chars=unsafe_chars,
-        fallback=output_config["fallback_repo"],
-    )
-    pr = sanitize(
-        args.pr_name or detect_pr_name(cwd, output_config["fallback_pr"]),
-        unsafe_chars=unsafe_chars,
-        fallback=output_config["fallback_pr"],
-    )
-    input_label = sanitize(args.input_label, unsafe_chars=unsafe_chars, fallback="input")
-    run_timestamp = dt.datetime.now().strftime(workspace_config["timestamp_format"])
-    output_timestamp = dt.datetime.now().strftime(output_config["timestamp_format"])
-    run_prefix = workspace_config["run_prefix"]
-    if args.task_root:
-        task_root = safe_path(cwd, args.task_root)
-        Runtime(cwd, args.task_root)  # 验证布局、索引及版本，尚不写入。
-        workspace_base = task_root
-        workspace_dir = task_root / str(workspace_config["task_label"])
-        run_id = args.run_id or f"{run_prefix}{run_timestamp}"
-    else:
-        requested_run_id = args.run_id or f"{run_prefix}{run_timestamp}"
-        task_root, workspace_dir = default_task_workspace(cwd, workspace_config, requested_run_id)
-        if args.run_id:
-            run_id = requested_run_id
-        else:
-            task_root = task_root.parent / allocate_unique_run_id(task_root.parent, task_root.name)
-            workspace_dir = task_root / str(workspace_config["task_label"])
-            run_id = task_root.name.removeprefix("task-").removesuffix(f"-{workspace_config['task_label']}")
-        workspace_base = task_root
-    if not re.fullmatch(rf"{re.escape(run_prefix)}[A-Za-z0-9_.-]+", run_id):
-        raise SystemExit(f"run-id 必须只包含字母、数字、点、下划线和连字符")
-    output_dir = resolve_dir(
-        args.output_dir,
-        default=cwd / str(output_config.get("default_dir", "docs/ideas")),
-    )
-    test_dir = resolve_dir(args.test_dir, default=cwd / tests_config["default_dir"])
-    output_filename = output_config["filename_template"].format(
-        repo=repo,
-        pr=pr,
-        timestamp=output_timestamp,
-    )
-    output_path = output_dir / output_filename
-
-    ensure_within(cwd, workspace_dir, "workspace_dir")
-    if args.output_dir is None:
-        ensure_within(cwd, output_path, "output_path")
-    ensure_not_nested(workspace_base, output_path, "output_path")
-    if workspace_dir.exists():
-        raise SystemExit(f"run 工作区已存在，拒绝复用以避免串稿: {workspace_dir}")
-    if output_path.exists() and not args.overwrite:
-        raise SystemExit(f"输出文件已存在，拒绝覆盖；如确认覆盖请添加 --overwrite: {output_path}")
-
-    runtime = Runtime(cwd, str(task_root.relative_to(cwd)))
-    write_task_readme(task_root, str(workspace_config["task_label"]))
-    for subdir in workspace_config["subdirs"]:
-        (workspace_dir / subdir).mkdir(parents=True, exist_ok=True)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    if args.with_test_dir:
-        ensure_within(cwd, test_dir, "test_dir")
-        test_dir.mkdir(parents=True, exist_ok=True)
-    workspace_base.mkdir(parents=True, exist_ok=True)
-
+    repo = sanitize(args.repo_name or detect_repo_name(cwd, output_config["fallback_repo"]), unsafe_chars=unsafe_chars, fallback=output_config["fallback_repo"])
+    pr = sanitize(args.pr_name or detect_pr_name(cwd, output_config["fallback_pr"]), unsafe_chars=unsafe_chars, fallback=output_config["fallback_pr"])
+    output_dir = (cwd / (args.output_dir or output_config["default_dir"])).resolve()
+    if not output_dir.is_relative_to(cwd) or any(part.startswith(".") for part in output_dir.relative_to(cwd).parts):
+        parser.error("正式报告目录必须位于项目内且不在隐藏目录；项目外交付由 Agent 按用户授权处理")
+    output_path = output_dir / output_config["filename_template"].format(repo=repo, pr=pr, timestamp=dt.datetime.now().strftime(output_config["timestamp_format"]))
+    if output_path.exists():
+        parser.error("目标报告已存在，拒绝覆盖")
+    for folder in ("input", "output", "log"):
+        (workspace_dir / folder).mkdir(parents=True, exist_ok=True)
     manifest = {
         "skill": "research-idea",
-        "input_label": input_label,
-        "repo": repo,
-        "pr": pr,
-        "run_id": run_id,
-        "created_at": dt.datetime.now().isoformat(timespec="seconds"),
-        "cwd": str(cwd),
-        "workspace_dir": str(workspace_dir),
-        "output_path": str(output_path),
-        "output_exists": output_path.exists(),
-        "test_dir": str(test_dir) if args.with_test_dir else "",
-        "dependency_paths": dependency_paths,
-        "intermediate_policy": "All intermediate files must stay inside workspace_dir.",
+        "input_label": sanitize(args.input_label, unsafe_chars=unsafe_chars, fallback="input"),
+        "repo": repo, "pr": pr, "settings": settings,
+        "output_path": output_path.relative_to(cwd).as_posix(),
     }
-    manifest_path = workspace_dir / "manifest.json"
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    with runtime.locked():
-        runtime.init(args.rounds, args.agents, args.allow_custom_name)
-
+    with manifest_path.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     candidate_schema = {
         "report_contract": config["output"]["report_contract"],
         "outcome": "insufficient",
@@ -402,15 +160,13 @@ def main() -> None:
             }
         ]
     }
-    (workspace_dir / "candidates" / "candidate-schema.json").write_text(
+    (workspace_dir / "output" / "candidate-schema.json").write_text(
         json.dumps(candidate_schema, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
 
     print(f"workspace_dir={workspace_dir}")
     print(f"output_path={output_path}")
-    if args.with_test_dir:
-        print(f"test_dir={test_dir}")
     print(f"manifest_path={manifest_path}")
 
 

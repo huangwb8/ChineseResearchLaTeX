@@ -8,11 +8,11 @@ transitions: []
 
 ## 状态含义
 
-唯一最终报告已通过结构组件、绑定的科学审查和 Kernel Gate；只证明本次提交快照达到交付要求。业务结论可为 recommended 或 no_qualified，不代表必须存在推荐候选；insufficient 不属于完成。
+唯一最终报告已通过 validate_report、绑定的科学审查和 Kernel Gate；只证明本次提交快照达到交付要求。业务结论可为 recommended 或 no_qualified，不代表必须存在推荐候选；insufficient 不属于完成。
 
 ## 进入条件
 
-前向进入必须有当前 run/attempt 的 required Gate；回退进入必须有原因与证据。图由 Kernel StateMachine 检查，科学充分性由 Agent 判定，宿主负责 Gate 与转移的绑定。
+仅从 reporting 进入，必须有当前 run/attempt 的 required Gate。Kernel 检查图和离开源状态的不变量；Agent 核对 Gate 对应本次报告与最新证据，且报告 completion_eligible 为 true。
 
 ## Agent 行动
 
@@ -20,7 +20,7 @@ transitions: []
 
 ## 输入与证据
 
-通过的报告哈希、语义回传、Kernel Gate 和最终转移事件。证据由业务执行 Agent 产生，审查者读取原始依据后回传，不把字段存在或模型自信视作事实成立。
+报告及其对应内容标识、语义回传、Kernel Gate 和最终转移事件。证据由业务执行 Agent 产生，审查者读取原始依据后回传，不把字段存在或模型自信视作事实成立。
 
 ## 离开条件
 
@@ -32,8 +32,8 @@ transitions: []
 
 ## 失败、恢复与回滚
 
-失败和等待保留最近阶段与非通过回执；status 重放事件恢复。新证据使用新 attempt，旧回传不得复用。取消通过宿主 cancel 记录终止事件，不伪造 completed。不得覆写事件；旧版本运行不得静默改写为新协议。
+通过 Kernel 读取终态快照并核对最后的 Gate 与转移事件；领域快照提交不完整时停止处理，不手改快照或重写旧事件。完成后发现新证据须发起新的研究任务，不在终态新增 attempt 或回退。
 
 ## 边界与执行归属
 
-本 State 是阶段契约，components 为空，不宣称执行过验证。Kernel 负责图与事件完整性；Skill 宿主负责证据快照、Gate、运行身份和串行写入；Agent 负责领域语义。普通 bsk state transition 不替代本 Skill 宿主的阶段验收。
+本 State 是纯 Markdown 阶段契约，无脚本组件。Kernel 负责图、原生不变量、Gate、事件与状态持久化；Agent 负责科学语义、来源/目标匹配及变更后的重审。本文不变量由 Kernel 在离开状态时检查；自然语言要求由 Agent 执行。不另建锁、快照、事件重放或状态调度代码。

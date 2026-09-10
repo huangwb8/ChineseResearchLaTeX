@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.5.0"
+  version: "0.6.0"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
@@ -10,26 +10,13 @@ workspace:
   task_prefix: "task"
   task_label: "research-idea"
   workspace_contract: "bensz-api-task-v1"
-  run_prefix: ""
-  timestamp_format: "%Y%m%d-%H%M"
   keep_intermediates_inside_hidden_dir: true
-  subdirs:
-    - "input"
-    - "output"
-    - "log"
-    - "theme"
-    - "research-literature-radar"
-    - "research-literature-interpretation"
-    - "research-map"
-    - "candidates"
-    - "novelty"
-    - "parallel-vibe"
-    - "agent-reviews"
-    - "synthesis"
-    - "drafts"
-    - "logs"
+  subdirs: ["input", "output", "log"]
 
 dependencies:
+  kernel:
+    name: bensz-skill-kernel
+    version: ">=1.0.3"
   required_skills:
     - "research-topic-extractor"
     - "research-literature-radar"
@@ -147,11 +134,8 @@ validation:
 tests:
   default_dir: "tests/research-idea"
 
-# 运行时版本为精确消费约束；Pack 版本唯一维护于对应 index.json。
+# 最低包版本见 dependencies.kernel；runtime 仅供 bsk 原生声明加载。
 runtime:
-  kernel:
-    name: bensz-skill-kernel
-    version: "1.0.3"
   state_roots: [references/states]
   initial_state: bensz.research-ideation.literature
   states:
@@ -162,21 +146,5 @@ runtime:
     - bensz.research-ideation.completed
   verifiers:
     - id: bensz.research.stage-readiness
-      version: "2.0.0"
+      version: "3.0.0"
       required: true
-
-control:
-  limits:
-    max_evidence: 100
-    max_file_bytes: 2097152
-    max_request_bytes: 2097152
-  forward:
-    bensz.research-ideation.literature: bensz.research-ideation.candidates
-    bensz.research-ideation.candidates: bensz.research-ideation.review
-    bensz.research-ideation.review: bensz.research-ideation.reporting
-    bensz.research-ideation.reporting: bensz.research-ideation.completed
-  required_roles:
-    bensz.research-ideation.candidates: [theme, radar, interpretation, map]
-    bensz.research-ideation.review: [candidates, novelty]
-    bensz.research-ideation.reporting: [review, synthesis]
-    bensz.research-ideation.completed: [report]
