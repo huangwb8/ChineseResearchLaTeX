@@ -1,9 +1,14 @@
 skill_info:
   name: "research-literature-interpretation"
-  version: "0.1.1"
+  version: "0.1.2"
   description: "像资深研究者带学生一样解读单篇论文：提炼问题、机制、证据强弱、边界与可迁移启发。用户提供 PDF、arXiv/DOI/出版社链接、本地论文或正文片段并希望理解、批判、复现或学习时使用；不用于论文发现、多论文综述或只改写摘要。"
   author: "Bensz Conan"
   category: "research"
+
+interface:
+  display_name: "Research Literature Interpretation"
+  short_description: "导师式解读单篇研究论文，重建机制、证据边界与可迁移启发"
+  default_prompt: "使用 $research-literature-interpretation 解读这篇论文，说明机制、证据和边界。"
 
 style:
   paragraph_hard_max_chars: 160

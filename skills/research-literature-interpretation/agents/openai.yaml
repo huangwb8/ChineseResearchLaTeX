@@ -1,4 +1,0 @@
-interface:
-  display_name: "Research Literature Interpretation"
-  short_description: "导师式解读单篇研究论文，重建机制、证据边界与可迁移启发"
-  default_prompt: "使用 $research-literature-interpretation 解读这篇论文，说明机制、证据和边界。"
