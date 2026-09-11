@@ -99,6 +99,10 @@ frontmatter 使用 `outcome: insufficient`，按真实情况给三个执行状�
 
 格式合格的阶段性评估可交付，但 `completion_eligible` 为 false，运行保持最近阶段，不能声明 completed。查新结果“未定”不能转述为“未研究”。
 
+## 完成检查边界
+
+本模板只定义最终报告正文。报告格式通过不等于运行完成；recommended/no_qualified 还必须在任务工作区保留 `research-idea/output/completion-evidence.json`，并通过 `check_completion.py` 核对 completed 状态、required Gate、依赖 Skill 可复核产物、三轮独立审查证据和报告校验上下文。缺少任一票据时，将报告标为草案或阶段性结果，不在正文中声称全流程完成。
+
 ## 历史兼容
 
 没有新 frontmatter 的旧报告沿用旧标题与数量规则进行结构读取，并返回 legacy 警告；不能被用于新运行完成。保留原历史文件和事件。需要按新标准继续时创建新 run，将旧资料作为待重新核验的引用，不改写历史结论。

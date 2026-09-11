@@ -57,6 +57,8 @@
 
 本地 Verifier 通过 [运行操作指南](references/runtime-guide.md) 中的简短 Kernel API 调用执行；该指南说明多 Verifier 绑定回传、批量 Gate、返工、恢复、可复用的内置组件和兼容边界。Agent 在转移前重新核对来源，证据变化后重审；不再承诺自动检查所有文件变化。
 
+最终推荐或无合格候选结论还要通过完成收敛检查：任务工作区需保存 `research-idea/output/completion-evidence.json`，列出依赖 Skill 的非空产物、每轮独立审查者结果、轮次汇总和总综合。`check_completion.py` 会把报告结构校验、manifest 中的自定义文件名设置、bsk 事件日志、领域 meta-state、completed Gate 和证据索引一起核对。缺少其中任一项时，报告可以作为草案或阶段性评估交付，但不能说成完整 completed。
+
 ## 使用示例
 
 ### 示例 1：从实验现象找假设
@@ -81,6 +83,7 @@
 |------|------|
 | `docs/ideas/Research-Idea_{repo}_{pr}_{timestamp}.md` | 默认最终研究想法报告路径；可用 `--output-dir` 或用户参数覆盖 |
 | `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
+| `research-idea/output/completion-evidence.json`（位于任务目录内） | 完成收敛索引，记录依赖产物和独立审查证据 |
 | `log/events.ndjson` 与 `research-idea/log/meta-state.json`（位于任务目录内） | bsk 维护的事件日志与领域状态快照 |
 
 最终报告不会暴露隐藏工作区路径。
@@ -115,6 +118,8 @@ A：不会。最终报告只给科学问题、可证伪假设、选择理由和�
 ## 报告兼容与开发验证
 
 新报告以 `report_contract: research-idea-report-v2` 显式声明 outcome 与探索、查新、审查状态，写法见 [报告模板](references/report-template.md)。旧报告仍支持结构读取并返回 legacy 警告，不能用于新运行认证完成；新规则下的阶段性评估即使格式通过也不能进入 completed。脚本检查格式与引用可定位性，科学充分性仍由实际读取来源并绑定结果的审查判断。
+
+`validate_report.py` 的 `completion_eligible=true` 只表示报告文本具备进入完成流程的资格；最终还必须运行 `check_completion.py --task-root ... --report ...`。用户指定友好文件名时，完成检查会自动读取 manifest 的 `allow_custom_name`，避免裸跑报告检查产生误导。
 
 旧运行和事件保持原样；专用运行时 CLI 已移除，迁移与原任务内重新核验见运行指南。报告检查 CLI 保留，初始化模板 `output/candidate-schema.json` 使用空 `candidates` 与单独 `candidate_example`，初始状态明确为 insufficient/incomplete，避免把示例当真实候选。
 

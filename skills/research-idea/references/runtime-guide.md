@@ -146,6 +146,46 @@ bsk state transition "$IDEA_TASK" research-idea bensz.research-ideation.candidat
 
 reporting → completed 前运行 `validate_report.py --report ...` 并检查 `passed` 与 `completion_eligible`，再完成阶段就绪和科学假设价值语义核验。recommended 和有充分淘汰/探索/复核证据的 no_qualified 可以完成；insufficient 即使格式通过也只能交付阶段性评估，保持真实最近阶段。零候选不能省略独立审查，全文受限不能算无需查新。
 
+## 完成证据收敛检查
+
+`validate_report.py` 只检查最终 Markdown 的结构和 frontmatter，不能证明 bsk 状态、Gate、依赖 Skill 和独立审查真实完成。recommended/no_qualified 报告交付前，先在 `research-idea/output/completion-evidence.json` 保存可复核索引，再运行完成收敛检查。
+
+索引只记录相对于本轮 task-root 的路径和脱敏摘要，不复制完整私有 prompt、密钥或论文原文。推荐形状如下；实际路径必须指向非空文件：
+
+```json
+{
+  "dependencies": {
+    "research-topic-extractor": [{"path": "research-topic-extractor/output/theme.json", "status": "complete"}],
+    "research-literature-radar": [{"path": "research-literature-radar/output/selection.md", "status": "complete"}],
+    "research-literature-interpretation": [{"path": "research-literature-interpretation/output/R1/interpretation.md", "status": "complete"}],
+    "research-literature-review": [{"path": "research-literature-review/output/C1/novelty-result.md", "status": "complete"}]
+  },
+  "review": {
+    "rounds": [
+      {
+        "round": 1,
+        "reviewers": [
+          {"id": "round1-reviewer-a", "path": "parallel-vibe/output/round1/reviewer-a.md"}
+        ],
+        "summary_path": "parallel-vibe/output/round1/summary.md"
+      }
+    ],
+    "synthesis_path": "research-idea/output/review-synthesis.md"
+  }
+}
+```
+
+然后执行：
+
+```bash
+python "$IDEA_SKILL/scripts/check_completion.py" \
+  --project-root . \
+  --task-root "$IDEA_TASK" \
+  --report "{最终报告路径}"
+```
+
+该脚本会从 manifest 读取 `allow_custom_name`，因此用户指定 `docs/ideas/v11.md` 一类文件名时无需再手动猜 `validate_report.py --allow-custom-name`。检查通过只表示完成票据齐备；科学判断仍由已绑定的 Verifier 与独立审查承担。若失败，按错误恢复到对应阶段：状态或 Gate 缺失时先完成 bsk 转移，依赖产物缺失时回到文献/查新阶段，审查轮次不足时回到 review；不要改写旧事件来追认完成。
+
 ## 恢复与兼容边界
 
 事件由 bsk 保存到 `{task}/log/events.ndjson`，领域快照位于 `{task}/research-idea/log/meta-state.json`。读取通用日志投影可用 `bsk status "$IDEA_TASK/log/events.ndjson"`；领域阶段通过 Kernel 读取：

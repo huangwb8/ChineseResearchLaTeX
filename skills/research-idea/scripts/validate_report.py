@@ -199,7 +199,7 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
                 errors.append(f'阶段性评估缺少: {marker}')
     if statuses['novelty'] == 'not_required' and not substantive(field_value(extract_section(text, '查新摘要'), '免查新依据')):
         errors.append('无需完整查新须说明价值筛选淘汰的证据，不得以成本为由跳过')
-    return {'outcome': outcome, 'completion_eligible': eligible and not errors}
+    return {'outcome': outcome, 'execution_statuses': statuses, 'completion_eligible': eligible and not errors}
 
 
 def path_is_inside_named_dir(report_path: Path, names: set[str]) -> str | None:

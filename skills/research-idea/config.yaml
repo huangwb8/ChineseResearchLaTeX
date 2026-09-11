@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.7.0"
+  version: "0.7.1"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
@@ -63,6 +63,7 @@ output:
   fallback_repo: "repo"
   fallback_pr: "manual"
   report_contract: "research-idea-report-v2"
+  completion_evidence_index: "research-idea/output/completion-evidence.json"
   common_sections: ["结论与研究目标", "研究脉络 map 摘要", "候选评估", "查新摘要", "风险与下一步"]
   outcomes:
     recommended:

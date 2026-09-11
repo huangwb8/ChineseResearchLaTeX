@@ -100,7 +100,18 @@ python3 ~/.codex/skills/research-idea/scripts/validate_report.py --report "{最�
 python3 ~/.claude/skills/research-idea/scripts/validate_report.py --report "{最终报告路径}"
 ```
 
-报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。正式结论须经阶段就绪 Verifier、科学假设价值 Verifier 与 bsk Gate 核验并到达 completed 才能宣称完成；insufficient 可交付明确标识的阶段性评估，保留当前状态、缺口和恢复位置，不能进入 completed。结构通过不认证科学价值或新颖性。
+用户指定友好文件名时，报告结构校验必须带 `--allow-custom-name`，或在最终完成检查中通过 manifest 自动读取该设置；裸跑失败不能被解释为报告内容失败。报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。
+
+在 `research-idea/output/completion-evidence.json` 保存完成证据索引，列出依赖 Skill 的可复核产物、每轮独立审查者原始结果、每轮汇总和总综合。`validate_report.py` 只证明报告格式；`check_completion.py` 才核对报告、manifest、事件日志、meta-state、completed Gate、依赖产物和审查轮次是否收敛：
+
+```bash
+python3 research-idea/scripts/check_completion.py --project-root . --task-root "{本轮任务根}" --report "{最终报告路径}"
+# 系统级安装后也可使用：
+python3 ~/.codex/skills/research-idea/scripts/check_completion.py --project-root . --task-root "{本轮任务根}" --report "{最终报告路径}"
+python3 ~/.claude/skills/research-idea/scripts/check_completion.py --project-root . --task-root "{本轮任务根}" --report "{最终报告路径}"
+```
+
+正式结论须经阶段就绪 Verifier、科学假设价值 Verifier 与 bsk Gate 核验，到达 completed，并通过完成收敛检查后才能宣称完成；insufficient 可交付明确标识的阶段性评估，保留当前状态、缺口和恢复位置，不能进入 completed。结构通过不认证科学价值、新颖性或运行完成。
 
 ### 输出
 
@@ -120,6 +131,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 保留候选及独立价值判断；零候选给出范围、淘汰依据、重新探索结果与重启条件。
 - 科学价值与近期投入两种排序及最强替代方向；证据不足时给出缺口和恢复位置。
 - 查新摘要、证据缺口、可证伪路径和最小下一步。
+- 完成交付说明中必须区分报告格式通过、科学语义 Gate 通过、运行状态 completed 和完成收敛检查通过；任一缺失时只能按阶段性结果交付。
 
 报告不得暴露 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/`、`tests/research-idea/`、`parallel-vibe/`、`.parallel-vibe/`、`.parallel_vibe/`、`@main/summary.md`、manifest 或其他中间产物路径。
 
@@ -142,6 +154,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 假设必须可证伪，不写无法被推翻的价值判断。
 - 查新结论必须区分“没有研究过”和“研究过但缺口仍在”。
 - 拟推荐候选不得因成本高而跳过 Premium；价值筛选淘汰的事项明确记为未执行，不冒充查新通过。
+- recommended/no_qualified 交付前必须运行完成收敛检查；缺少依赖产物、completed 状态、required Gate 或约定审查轮次时，不能宣称完成。
 - 不把文献综述正文当作最终输出；最终输出是研究想法报告。
 - 不泄露隐藏工作区、中间文件、agent 内部指令或测试路径。
 

@@ -236,7 +236,12 @@ def test_native_file_verifier_alias_and_path_scope(tmp_path):
 
 
 def test_no_skill_runtime_or_script_pack_remains():
-    assert {p.name for p in (SKILL / "scripts").glob("*.py")} == {"init_workspace.py", "validate_report.py", "check_dependencies.py"}
+    assert {p.name for p in (SKILL / "scripts").glob("*.py")} == {
+        "check_completion.py",
+        "init_workspace.py",
+        "validate_report.py",
+        "check_dependencies.py",
+    }
     assert not list((SKILL / "references").rglob("*.py"))
 
 
