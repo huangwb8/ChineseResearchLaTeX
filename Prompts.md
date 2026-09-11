@@ -22,6 +22,10 @@ git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，�
 
 ---
 
+/Volumes/2T01/Github/bensz-auto-contribution/.bensz-api/task-20260911-0109-research-idea-bac 是一个 skills/research-idea 的实例的过程； /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v11.md 这是结果 。 你调查一下。从这些中间过程、结果来说，你评价一下 skills/research-idea 的工作如何？skills/research-idea 把什么按预期做好了？ 是否暴露了 skills/research-idea 的某些可修正的缺陷（如果确实有，请在 docs/plans 里写个该skill的优化计划）？
+
+---
+
 /Volumes/2T01/Github/bensz-auto-contribution/.bensz-api/task-20260909-2257-bac-research-v9 是某一次idea推断的中间过程； /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/BAC_科研战略_v9_从证据边界到干预价值.md 是它的成品。 我个人感觉这个科研idea的推断不太行； 这个idea 给人一种很low的感觉； 而且研究map也非常的粗糙。 你觉得这次实战里暴露出 skills/research-idea 的哪些问题？
 
 ---

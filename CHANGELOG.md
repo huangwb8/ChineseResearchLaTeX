@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- `research-idea`：实施完成证据收敛修复，新增 `check_completion.py` 与 `completion-evidence.json` 索引契约，交付前核对报告结构、自定义文件名上下文、bsk completed 状态、required Gate、依赖 Skill 产物和三轮独立审查证据；清理 Skill 包内旧运行时测试引用，版本推进至 v0.7.1。
+
 - `research-literature-interpretation`：将 OpenAI UI 展示元数据并入 `config.yaml:interface`，删除只托管单个小配置的 `agents/openai.yaml` 目录，版本推进至 v0.1.2；触发语义与执行契约不变。
 
 - 新增 `docs/plans/2026-09-11-research-idea-completion-evidence-convergence.md`：基于一次相邻仓库 `research-idea` 实战运行复盘，记录报告内容质量良好但运行门禁、依赖产物、独立审查证据、自定义文件名校验和 Skill 包内测试入口未收敛的问题；本次仅交付计划，未实施 Skill 修改。
