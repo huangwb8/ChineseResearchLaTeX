@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+- `research-literature-interpretation`：将 OpenAI UI 展示元数据并入 `config.yaml:interface`，删除只托管单个小配置的 `agents/openai.yaml` 目录，版本推进至 v0.1.2；触发语义与执行契约不变。
+
+- 新增 `docs/plans/2026-09-11-research-idea-completion-evidence-convergence.md`：基于一次相邻仓库 `research-idea` 实战运行复盘，记录报告内容质量良好但运行门禁、依赖产物、独立审查证据、自定义文件名校验和 Skill 包内测试入口未收敛的问题；本次仅交付计划，未实施 Skill 修改。
+
 - `research-idea`：新增 required 科学假设价值 Verifier，与阶段就绪 Verifier 一起批量 Gate；推荐候选必须通过创新性、概念增量、颠覆/改写潜力、非平凡性、关键预测和最强替代方向审问。报告模板、格式检查、README、版本快照和 Kernel 集成回归同步更新，版本推进至 v0.7.0。
 
 - `research-idea` 轻量化：保留五个 Markdown State 与本地语义 Verifier，直接使用 bsk 原生状态不变量、Gate、绑定与日志；移除自建运行时、机械证据脚本和重复快照/重放逻辑，精简领域初始化。最低 Kernel 要求移至 dependencies.kernel，以兼容原生声明加载器。同步操作指南、报告质量与直接 Kernel 集成回归。旧专用 CLI 不兼容，旧运行只读保留；证据内容变化后的重审由 Agent 负责。
