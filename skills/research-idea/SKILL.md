@@ -18,6 +18,14 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 ## 流程
 
+### 唯一阶段入口（强制）
+
+所有阶段业务动作必须先通过 `scripts/phase_entry.py` 创建 state-aware handoff；不得直接调用候选、查新、review 或 reporting 下游 Skill。入口读取当前 `meta-state.json`，按 `config.yaml.runtime.phase_entry.actions` 校验 action—State，生成唯一 `run_id/attempt_id`、输入 manifest/证据 SHA-256 快照，并在 `research-idea/log/attempts/` 留下不可覆盖的 attempt 记录。State 不匹配、缺少前一阶段 allow Gate、身份错绑或快照变化均 fail-closed；拒绝只写脱敏原因和恢复位置，不写下游产物。
+
+阶段动作固定为：`literature`（文献调查）、`candidates`/`novelty`（候选与查新，均要求当前 State 为 candidates）、`review`（独立审查，要求 review）、`reporting`（报告，要求 reporting）。下游 Skill 只接受 handoff 中的 `run_id`、`attempt_id`、`state`、manifest 快照和 `artifact_path`；每份产物必须同时记录来源阶段、attempt、handoff、生成时间和内容哈希。中断可用 `resume` 继续同一 attempt；重试、返工或证据变化必须新建 attempt，旧记录只读保留。
+
+阶段结束遵循“业务产物 → required Verifier → allow Gate → `bsk state transition`”。使用 `close`（`complete` 的别名）前必须已有同一 run/attempt 的 Kernel allow Gate，入口会重算产物快照并拒绝无 handoff、错阶段或 Gate 之后才补录的产物；提供 `--target` 时仅在 JSON `status=transitioned` 后报告成功。入口不能拦截任意外部写文件，因此 `check_completion.py` 仍会检查 artifact provenance 与事件时序，事后回填 Gate/State 的历史现场只能判为阶段越级或控制证据缺失。
+
 ### 分层完成与降级语义
 
 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个独立判断：文件存在不等于阶段执行过，阶段执行过不等于证据深度足够，证据足够也不自动证明科学结论。`recommended` 仅表示当前范围内的有界推荐；依赖故障、全文不足或等价性未核验时使用 `degraded`，已有部分证据但仍可指导下一步时使用 `bounded_recommendation`，均不可进入 `completed`。只有四层均为 true、required Verifier 通过且 `check_completion.py` 通过，才能交付 `completed`。
@@ -36,7 +44,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 #### 初始化与资料归纳
 
-1. 先读 [运行说明](references/runtime-guide.md)，核对 `config.yaml.dependencies.kernel` 的环境要求。直接用 `bsk workspace init --task-root` 复用本轮已声明任务目录，再用 `scripts/init_workspace.py` 初始化研究参数和候选空模板、`bsk state transition --skill-root` 进入 literature。已有任务按运行说明读取 Kernel 快照与来源恢复。
+1. 先读 [运行说明](references/runtime-guide.md)，核对 `config.yaml.dependencies.kernel` 的环境要求。直接用 `bsk workspace init --task-root` 复用本轮已声明任务目录，再用 `scripts/init_workspace.py` 初始化研究参数和候选空模板；阶段业务必须通过 `phase_entry.py start`，不能以直接文件写入或直接调用下游 Skill 代替。已有任务按运行说明读取 Kernel 快照与来源恢复。
 2. 读取资料，在现有输入摘要中说明目标研究贡献、服务的问题或决策，以及时间与资源约束。资源区分已具备、明确没有、尚不清楚；源码没有某能力不等于团队无法建设。目标未说明时给出暂定解释，只有不同解释会改变主线选择时才澄清。只保存脱敏摘要和必要引用。
 3. 用 `research-topic-extractor` 生成主题、5-10 个英文关键词、2-5 个核心问题；保存为本 Skill 的 `input/theme.json`（引用主题提取 Skill 的原始产物），字段为 `topic`、`keywords`、`core_questions`。
 

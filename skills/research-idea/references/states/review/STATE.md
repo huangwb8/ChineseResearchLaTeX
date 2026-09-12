@@ -16,6 +16,8 @@ transitions: ["bensz.research-ideation.reporting", "bensz.research-ideation.cand
 
 ## Agent 行动
 
+先用 `phase_entry.py start --action review` 获取 handoff；审查与综合产物必须绑定该 attempt，不接受无凭证的直接写入。完成 required Verifier 后用 `close --target bensz.research-ideation.reporting`。
+
 按运行设置执行 rounds 轮，每轮 agents 个独立审查；串行轮次，记录每个 reviewer 与轮次及汇总。实质改写问题或假设须回 candidates 重新查新。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
 ## 输入与证据
@@ -38,4 +40,4 @@ review、synthesis；每轮不同结果与 reviewer 标识、上一轮汇总引�
 
 ## 边界与执行归属
 
-本 State 是纯 Markdown 阶段契约，无脚本组件。Kernel 负责图、原生不变量、Gate、事件与状态持久化；Agent 负责科学语义、来源/目标匹配及变更后的重审。本文不变量由 Kernel 在离开状态时检查；自然语言要求由 Agent 执行。不另建锁、快照、事件重放或状态调度代码。
+本 State 不另建状态机；`phase_entry.py` 只做入口 preflight、attempt 和 provenance，Kernel 负责图、Gate、事件与状态持久化；Agent 负责科学语义和 Verifier 回传。

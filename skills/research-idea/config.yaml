@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.8.0"
+  version: "0.9.0"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
@@ -146,6 +146,17 @@ tests:
 
 # 最低包版本见 dependencies.kernel；runtime 仅供 bsk 原生声明加载。
 runtime:
+  phase_entry:
+    script: scripts/phase_entry.py
+    protocol: research-idea-phase-handoff-v1
+    actions:
+      literature: bensz.research-ideation.literature
+      candidates: bensz.research-ideation.candidates
+      novelty: bensz.research-ideation.candidates
+      review: bensz.research-ideation.review
+      reporting: bensz.research-ideation.reporting
+    require_handoff: true
+    fail_closed_reasons: [state_mismatch, missing_gate, stale_manifest, wrong_run_attempt, artifact_without_handoff, gate_after_artifact, dependency_failed]
   state_roots: [references/states]
   initial_state: bensz.research-ideation.literature
   states:

@@ -10,6 +10,30 @@
 
 ## 初始化与阶段
 
+### state-aware 阶段入口（v0.9）
+
+`phase_entry.py` 是下游 Skill 的唯一启动入口。它不替代 BSK 状态机，而是把当前 State、attempt、输入快照和 handoff 绑定成一个可审计凭证；下游不得在没有该凭证时写入 candidates、novelty、review 或 reporting 产物。
+
+| action | 允许启动的当前 State | 主要产物 | close 后目标 |
+| --- | --- | --- | --- |
+| `literature` | `...literature` | theme/radar/interpretation/map | `...candidates` |
+| `candidates` | `...candidates` | 候选池 | `...review` |
+| `novelty` | `...candidates` | Premium 查新 | `...review` |
+| `review` | `...review` | 独立审查与综合 | `...reporting` |
+| `reporting` | `...reporting` | 最终报告 | `...completed` |
+
+初始化完成并进入某个 State 后，先执行（路径均相对项目根）：
+
+```bash
+python skills/research-idea/scripts/phase_entry.py start \
+  --project-root . --task-root "$IDEA_TASK" --action literature \
+  --artifact research-idea/output/research-map.md
+```
+
+命令只创建 `research-idea/input/attempts/{attempt_id}.json` 和脱敏的 `log/attempts/{attempt_id}.json`，不会预先创建下游产物。输出的 handoff 必须随调用传递；`resume` 仅恢复同一 run 下仍为 started 的 attempt，证据/manifest 改变、返工或重试必须新建 attempt。产物生成并完成 required Verifier 后，用 `close`（`complete` 别名）校验同一 run/attempt 的 allow Gate、重算内容快照，并可用 `--target` 调用 BSK transition；必须检查返回 JSON 的 `status=transitioned`。
+
+入口拒绝使用稳定原因码：`state_mismatch`、`missing_gate`、`wrong_run_attempt`、`stale_manifest`、`artifact_without_handoff`、`gate_after_artifact` 或 `dependency_failed`。拒绝会在 `log/attempts/rejections.ndjson` 留下恢复位置，不会写下游 artifact。历史 v13 若先生成全部产物再补 Gate/State，完成收敛和重放必须判为阶段越级/控制证据缺失；旧事件只读，不自动补录。
+
 先公开并固定唯一任务目录。在项目根运行，以下 shell 变量需替换为本轮真实路径；`python` 与 `bsk` 使用同一环境：
 
 ```bash

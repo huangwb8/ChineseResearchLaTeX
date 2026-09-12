@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+- `0.9.0`：新增 `scripts/phase_entry.py` 作为唯一 state-aware 阶段入口。下游 candidates/novelty/review/reporting 动作必须在匹配 State 下创建不可复用的 attempt 与 `research-idea-phase-handoff-v1` 输入快照；`resume/close` 校验身份、产物来源和 Kernel allow Gate，拒绝越级启动、错绑、旧 attempt 复用及无 Gate 产物。补充拒绝审计、阶段 provenance 和 Gate/transition 时序约束；旧事件只读，不自动补录。
+- 完成收敛检查对可选 `artifact.registered` 事件核对 run/attempt、handoff_hash 与 content_hash；缺少来源契约的阶段产物不能作为完整运行证据。
+
 - 新增 `scripts/check_completion.py` 完成证据收敛检查：在交付 recommended/no_qualified 前核对报告结构、自定义文件名 manifest、bsk meta-state、completed Gate、依赖 Skill 可复核产物和约定独立审查轮次；新增 `completion-evidence.json` 索引契约，版本推进至 0.7.1。缺少 Gate、依赖产物或审查证据时只能作为阶段性结果交付，不追认旧运行。
 - 清理 Skill 包内过期测试入口，`skills/research-idea/tests` 不再引用已移除的 `idea_runtime.py` / `phase_evidence.py`，与仓库级当前 Kernel 集成回归保持一致。
 

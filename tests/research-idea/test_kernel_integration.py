@@ -241,6 +241,7 @@ def test_no_skill_runtime_or_script_pack_remains():
         "init_workspace.py",
         "validate_report.py",
         "check_dependencies.py",
+        "phase_entry.py",
     }
     assert not list((SKILL / "references").rglob("*.py"))
 

@@ -266,6 +266,21 @@ def check_completion_layers(index: dict[str, Any], report: dict[str, Any], error
 def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors: list[str]) -> dict[str, Any]:
     meta = load_json(task_root / "research-idea/log/meta-state.json", errors, "领域状态快照")
     events = read_events(task_root / "log/events.ndjson", errors)
+    # 若入口/宿主记录了 artifact.registered，重放其时序：allow Gate 必须先于
+    # 下一阶段产物；同一阶段 Gate 晚于产物属于 v13 事后回填，不能追认。
+    for artifact_event in [e for e in events if e.get("type") == "artifact.registered"]:
+        run_id = artifact_event.get("run_id")
+        attempt_id = artifact_event.get("attempt_id")
+        payload = artifact_event.get("payload", {})
+        for key in ("run_id", "attempt_id", "handoff_hash", "content_hash"):
+            if key == "run_id":
+                value = artifact_event.get("run_id")
+            elif key == "attempt_id":
+                value = artifact_event.get("attempt_id")
+            else:
+                value = payload.get(key)
+            if not value:
+                errors.append(f"artifact.registered 缺少 {key} provenance")
     current_state = meta.get("current_state")
     if current_state != COMPLETED:
         errors.append(f"运行状态未到 completed: 当前为 {current_state or 'unknown'}")

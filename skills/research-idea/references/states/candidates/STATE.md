@@ -16,6 +16,8 @@ map 已通过前置 Gate（或明确回退到此重新查新），正在生成�
 
 ## Agent 行动
 
+先用 `phase_entry.py start --action candidates` 或 `--action novelty` 获取匹配当前 State 的 handoff；直接从 literature/review/reporting 请求候选或查新会以 `state_mismatch` 拒绝。每项产物记录来源阶段、run/attempt、handoff_hash、生成时间和内容快照。
+
 依据 map 生成候选池；逐对查新并保留来源、覆盖不足、淘汰和改写理由。全部淘汰则按预算进行一次有新证据或新角度的重新探索；map 不足回文献调查。仍无合格项且淘汰证据充分时进入独立复核，关键证据不足时保留当前阶段。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
 ## 输入与证据
@@ -37,4 +39,4 @@ candidates、novelty；核对每个候选的科学问题、假设、预测、反
 
 ## 边界与执行归属
 
-本 State 是纯 Markdown 阶段契约，无脚本组件。Kernel 负责图、原生不变量、Gate、事件与状态持久化；Agent 负责科学语义、来源/目标匹配及变更后的重审。本文不变量由 Kernel 在离开状态时检查；自然语言要求由 Agent 执行。不另建锁、快照、事件重放或状态调度代码。
+本 State 不另建状态机；`phase_entry.py` 只做入口 preflight、attempt 和 provenance，Kernel 负责图、Gate、事件与状态持久化；Agent 负责科学语义和 Verifier 回传。
