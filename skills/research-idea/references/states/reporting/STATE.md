@@ -16,7 +16,7 @@ transitions: ["bensz.research-ideation.completed", "bensz.research-ideation.revi
 
 ## Agent 行动
 
-先用 `phase_entry.py start --action reporting` 获取 handoff；最终报告及其 provenance 必须在该 attempt 内生成。运行格式与语义 Verifier 后用 `close --target bensz.research-ideation.completed`，仅 `status=transitioned` 才能交付完成。
+完成报告及格式检查后，用 `phase_entry.py --action reporting` 获取 BSK 原生 handoff；提交真实语义回传后由同一入口记录 Kernel Gate，仅转移返回 `status=transitioned` 才能交付完成。
 
 使用 report-template；调用 validate_report 和阶段 Verifier，核对最终报告与证据的一致性，不在报告暴露内部路径。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
@@ -41,4 +41,4 @@ report；唯一最终 Markdown，结构通过且论文依据、查新、假设�
 
 ## 边界与执行归属
 
-本 State 不另建状态机；`phase_entry.py` 只做入口 preflight、attempt 和 provenance，Kernel 负责图、Gate、事件与状态持久化；Agent 负责科学语义和 Verifier 回传。
+`phase_entry.py` 只收敛 BSK 调用，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。

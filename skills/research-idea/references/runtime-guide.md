@@ -10,29 +10,29 @@
 
 ## 初始化与阶段
 
-### state-aware 阶段入口（v0.9）
+### 轻量 BSK 阶段入口
 
-`phase_entry.py` 是下游 Skill 的唯一启动入口。它不替代 BSK 状态机，而是把当前 State、attempt、输入快照和 handoff 绑定成一个可审计凭证；下游不得在没有该凭证时写入 candidates、novelty、review 或 reporting 产物。
+`phase_entry.py` 只把容易遗漏的 BSK 调用收敛到一个命令，不维护第二套运行时。action 固定对应四条前向边：
 
-| action | 允许启动的当前 State | 主要产物 | close 后目标 |
-| --- | --- | --- | --- |
-| `literature` | `...literature` | theme/radar/interpretation/map | `...candidates` |
-| `candidates` | `...candidates` | 候选池 | `...review` |
-| `novelty` | `...candidates` | Premium 查新 | `...review` |
-| `review` | `...review` | 独立审查与综合 | `...reporting` |
-| `reporting` | `...reporting` | 最终报告 | `...completed` |
+| action | 当前 State → 目标 State |
+| --- | --- |
+| `literature` | literature → candidates |
+| `candidates` | candidates → review |
+| `review` | review → reporting |
+| `reporting` | reporting → completed |
 
-初始化完成并进入某个 State 后，先执行（路径均相对项目根）：
+每个阶段完成业务产物后，将 `context` 和非空 `evidence` 数组写入本 Skill `input/` 下的 JSON。首次调用不带 `--submissions`，入口通过 `TaskWorkspace.read_meta_state()` 核对当前 State，从 Skill 声明加载全部 required Verifier，并返回 BSK 原生 handoff：
 
 ```bash
-python skills/research-idea/scripts/phase_entry.py start \
+python "$IDEA_SKILL/scripts/phase_entry.py" \
   --project-root . --task-root "$IDEA_TASK" --action literature \
-  --artifact research-idea/output/research-map.md
+  --run-id idea-run-1 --attempt-id literature-1 \
+  --input "$IDEA_TASK/research-idea/input/literature-evidence.json"
 ```
 
-命令只创建 `research-idea/input/attempts/{attempt_id}.json` 和脱敏的 `log/attempts/{attempt_id}.json`，不会预先创建下游产物。输出的 handoff 必须随调用传递；`resume` 仅恢复同一 run 下仍为 started 的 attempt，证据/manifest 改变、返工或重试必须新建 attempt。产物生成并完成 required Verifier 后，用 `close`（`complete` 别名）校验同一 run/attempt 的 allow Gate、重算内容快照，并可用 `--target` 调用 BSK transition；必须检查返回 JSON 的 `status=transitioned`。
+Agent 必须读取真实来源并按 handoff 生成绑定的 component-result；把一个结果对象或 `{ "submissions": [...] }` 保存到本 Skill `input/` 后，用相同 action/run/attempt/input 再次调用并增加 `--submissions`。入口批量提交全部 required Verifier，由 Kernel 计算 Gate；非 allow 返回拒绝，allow 后直接执行 BSK transition，并要求返回 `status=transitioned`。
 
-入口拒绝使用稳定原因码：`state_mismatch`、`missing_gate`、`wrong_run_attempt`、`stale_manifest`、`artifact_without_handoff`、`gate_after_artifact` 或 `dependency_failed`。拒绝会在 `log/attempts/rejections.ndjson` 留下恢复位置，不会写下游 artifact。历史 v13 若先生成全部产物再补 Gate/State，完成收敛和重放必须判为阶段越级/控制证据缺失；旧事件只读，不自动补录。
+入口不写 attempt/handoff/rejection/provenance 私有记录，不手工读取 `meta-state.json` 或扫描 `events.ndjson`。BSK 的 State、绑定、Gate 和事件是唯一事实源；完成收敛检查是 Agent 绕过入口时的第二道防线。
 
 先公开并固定唯一任务目录。在项目根运行，以下 shell 变量需替换为本轮真实路径；`python` 与 `bsk` 使用同一环境：
 
@@ -61,17 +61,10 @@ State 的初始入口复用内置 `bensz.workspace.ready`。以下四条前进�
 
 每次检查创建新的 `attempt_id`，同一个研究运行保持 `run_id`；重试、返工、证据变化都用新 attempt。不要把同一通过结果用于不同转移。需要前进或完成时，当前 attempt 下两个 required Verifier 都要产生绑定结果；对 `literature → candidates` 这类尚未形成候选价值判断的阶段，`hypothesis-merit` 可按契约返回“本次不适用”的 pass，但该结果不能复用于需要完整科学价值认证的阶段。
 
-将 JSON 请求写入本 Skill 的 `input/`，设置 `IDEA_REQUEST` 指向该文件。下面展示形状，不能直接作为已完成证据使用；完整请求须覆盖本阶段所有角色和真实来源：
+阶段入口会把 action 对应的 source/target 及命令行 run/attempt 加入请求。输入文件只需提供以下 `context` 和 `evidence`，不能把示例当作已完成证据：
 
 ```json
 {
-  "run_id": "idea-run-1",
-  "attempt_id": "literature-1",
-  "subject": {
-    "operation": "advance",
-    "source": "bensz.research-ideation.literature",
-    "target": "bensz.research-ideation.candidates"
-  },
   "context": {
     "rounds": 3,
     "agents": 3,
@@ -86,9 +79,9 @@ State 的初始入口复用内置 `bensz.workspace.ready`。以下四条前进�
 
 设置从 manifest 读取，不因示例中的默认数值覆盖用户约束。Agent 必须实际打开源文件，检查非空、角色与成员覆盖、来源深度及科学充分性。文件可用 `shasum -a 256` 取内容标识，不搭建快照系统。证据路径限定授权项目，拒绝 `..`、绝对路径及符号链接逃逸；大体积资料只用有来源的必要摘要。
 
-## 直接调用 Kernel 的本地 Pack API
+## Kernel API 实现说明（仅开发排查）
 
-Kernel 1.0.3 的 `bsk verifier run` 仅发现内置 Verifier，不能运行本 Skill 的本地 Pack。以下是宿主可直接执行的 API 用法，不需要保存为新 CLI 或常驻脚本。先设 `IDEA_REQUEST`；第一次不要设置 `IDEA_SUBMISSION`，读取输出的 handoff 绑定字段，并直接阅读本 Skill VERIFIER.md。handoff 只是待办。多个 required Verifier 必须在同一 run/attempt 下批量记录成一个 Gate；单独记录某一个通过结果不能覆盖全部 required。
+普通运行使用 `phase_entry.py`，不要让 Agent 重组以下调用。下面只说明入口如何复用 Kernel API，供开发测试和故障排查；Kernel 1.0.3 的 `bsk verifier run` 仅发现内置 Verifier，不能运行本 Skill 的本地 Pack。多个 required Verifier 必须在同一 run/attempt 下批量记录成一个 Gate；单独记录某一个通过结果不能覆盖全部 required。
 
 ```python
 import json
@@ -157,7 +150,7 @@ print(json.dumps({
 
 ## 推进、回退与完成
 
-确认 Kernel 输出 Gate 为 `allow`，再核对最新证据、当前 source、目标 target 与请求完全一致，用相同 run/attempt 执行：
+`phase_entry.py` 的第二次调用会在 Kernel Gate 为 `allow` 后自动使用相同 run/attempt 执行以下 BSK transition；普通运行不再手工重复。开发排查时可直接运行：
 
 ```bash
 bsk state transition "$IDEA_TASK" research-idea bensz.research-ideation.candidates \

@@ -16,7 +16,7 @@ transitions: ["bensz.research-ideation.reporting", "bensz.research-ideation.cand
 
 ## Agent 行动
 
-先用 `phase_entry.py start --action review` 获取 handoff；审查与综合产物必须绑定该 attempt，不接受无凭证的直接写入。完成 required Verifier 后用 `close --target bensz.research-ideation.reporting`。
+完成独立审查与综合后，用 `phase_entry.py --action review` 获取 BSK 原生 handoff；提交真实语义回传后由同一入口记录 Kernel Gate 并转移到 reporting。
 
 按运行设置执行 rounds 轮，每轮 agents 个独立审查；串行轮次，记录每个 reviewer 与轮次及汇总。实质改写问题或假设须回 candidates 重新查新。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
@@ -40,4 +40,4 @@ review、synthesis；每轮不同结果与 reviewer 标识、上一轮汇总引�
 
 ## 边界与执行归属
 
-本 State 不另建状态机；`phase_entry.py` 只做入口 preflight、attempt 和 provenance，Kernel 负责图、Gate、事件与状态持久化；Agent 负责科学语义和 Verifier 回传。
+`phase_entry.py` 只收敛 BSK 调用，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。

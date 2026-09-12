@@ -53,9 +53,9 @@
 
 以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由两个 required 自然语言 Verifier 分别核验阶段证据与科学假设价值。Agent 判断科研充分性、创新性和推荐价值，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
 
-需要 Python 3.11+ 与满足 `config.yaml.dependencies.kernel` 最低版本要求的 Kernel。先用 `bsk workspace init --task-root` 准备任务工作区，领域初始化脚本只生成研究参数与候选空模板；进入后必须使用 `scripts/phase_entry.py start` 取得 handoff 才能调用下游 Skill，再由 `close` 校验 Gate 并调用 `bsk state transition --skill-root`。本入口只做 state-aware preflight/attempt/provenance，不维护第二套状态机、锁、检查点或重放代码。
+需要 Python 3.11+ 与满足 `config.yaml.dependencies.kernel` 最低版本要求的 Kernel。先用 `bsk workspace init --task-root` 准备任务工作区，领域初始化脚本只生成研究参数与候选空模板，再直接用 BSK 进入 literature。后续四条前向边统一由 `scripts/phase_entry.py` 调用 BSK：第一次返回原生 Verifier handoff，Agent 提交绑定结果后再次调用，只有 Kernel Gate 为 allow 才执行 transition。
 
-本地 Verifier 由阶段入口内部按 [运行操作指南](references/runtime-guide.md) 调用；该指南说明 handoff、批量 Gate、返工、恢复、可复用的内置组件和兼容边界。Agent 在 close 前重新核对来源，证据变化后重审；完成收敛还会检查产物 provenance 与事件时序。
+本地 Verifier 由这个轻量入口按 [运行操作指南](references/runtime-guide.md) 调用；State、run/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。入口不建立私有运行时或额外 provenance 协议。Agent 在转移前重新核对来源，证据变化后使用新 attempt 重审。
 
 最终推荐或无合格候选结论还要通过完成收敛检查：任务工作区需保存 `research-idea/output/completion-evidence.json`，列出依赖 Skill 的非空产物、每轮独立审查者结果、轮次汇总和总综合。新索引使用 `schema: research-idea-completion-v2` 时，还要记录四层完成状态、run/attempt、authoritative attempt 以及来源 SHA-256/大小/修改时间快照；`check_completion.py` 会拒绝 Gate 后变更、跨 attempt 复用和 synthetic review。缺少其中任一项时，报告可以作为草案或阶段性评估交付，但不能说成完整 completed。
 

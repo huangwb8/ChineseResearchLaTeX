@@ -148,15 +148,7 @@ tests:
 runtime:
   phase_entry:
     script: scripts/phase_entry.py
-    protocol: research-idea-phase-handoff-v1
-    actions:
-      literature: bensz.research-ideation.literature
-      candidates: bensz.research-ideation.candidates
-      novelty: bensz.research-ideation.candidates
-      review: bensz.research-ideation.review
-      reporting: bensz.research-ideation.reporting
-    require_handoff: true
-    fail_closed_reasons: [state_mismatch, missing_gate, stale_manifest, wrong_run_attempt, artifact_without_handoff, gate_after_artifact, dependency_failed]
+    actions: [literature, candidates, review, reporting]
   state_roots: [references/states]
   initial_state: bensz.research-ideation.literature
   states:

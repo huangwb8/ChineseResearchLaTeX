@@ -16,7 +16,7 @@ map 已通过前置 Gate（或明确回退到此重新查新），正在生成�
 
 ## Agent 行动
 
-先用 `phase_entry.py start --action candidates` 或 `--action novelty` 获取匹配当前 State 的 handoff；直接从 literature/review/reporting 请求候选或查新会以 `state_mismatch` 拒绝。每项产物记录来源阶段、run/attempt、handoff_hash、生成时间和内容快照。
+完成候选生成、筛选和查新后，用 `phase_entry.py --action candidates` 获取 BSK 原生 handoff；提交真实语义回传后由同一入口记录 Kernel Gate 并转移到 review。
 
 依据 map 生成候选池；逐对查新并保留来源、覆盖不足、淘汰和改写理由。全部淘汰则按预算进行一次有新证据或新角度的重新探索；map 不足回文献调查。仍无合格项且淘汰证据充分时进入独立复核，关键证据不足时保留当前阶段。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
@@ -39,4 +39,4 @@ candidates、novelty；核对每个候选的科学问题、假设、预测、反
 
 ## 边界与执行归属
 
-本 State 不另建状态机；`phase_entry.py` 只做入口 preflight、attempt 和 provenance，Kernel 负责图、Gate、事件与状态持久化；Agent 负责科学语义和 Verifier 回传。
+`phase_entry.py` 只收敛 BSK 调用，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。

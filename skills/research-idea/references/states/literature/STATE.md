@@ -16,7 +16,7 @@ transitions: ["bensz.research-ideation.candidates"]
 
 ## Agent 行动
 
-先用 `scripts/phase_entry.py start --action literature` 获取本阶段 handoff；没有 handoff 不得调用下游或写入阶段产物。阶段产物需带 handoff provenance，结束时用 `close --target bensz.research-ideation.candidates`，并检查 JSON `status=transitioned`。
+完成本阶段业务产物后，用 `phase_entry.py --action literature` 获取 BSK 原生 handoff；提交真实语义回传后由同一入口记录 Kernel Gate 并转移到 candidates。
 
 调用主题提取、文献雷达、逐篇解读；沿用 SKILL.md 的分批并发上限，主 Agent 汇总失败与摘要/全文深度。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
@@ -38,4 +38,4 @@ theme、radar、interpretation、map；每个结论有论文锚点，未完成�
 
 ## 边界与执行归属
 
-本 State 不另建状态机；`phase_entry.py` 只做入口 preflight、attempt 和 provenance，Kernel 负责图、Gate、事件与状态持久化；Agent 负责科学语义和 Verifier 回传。
+`phase_entry.py` 只收敛 BSK 调用，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。
