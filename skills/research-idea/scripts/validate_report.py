@@ -139,10 +139,15 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
     for section in config['output']['common_sections'] + rules['sections']:
         if not substantive(extract_section(text, section)):
             errors.append(f'缺少实质章节: {section}')
+    section_owner = {
+        '推荐与投入排序': {'recommended', 'bounded_recommendation'},
+        '淘汰理由与重启条件': {'no_qualified'},
+        '证据缺口与恢复位置': {'insufficient', 'bounded_recommendation', 'degraded'},
+    }
     for other, other_rules in config['output']['outcomes'].items():
         if other != outcome:
             for section in other_rules['sections']:
-                if has_section(text, section):
+                if section_owner.get(section) is not None and isinstance(outcome, str) and outcome not in section_owner[section] and has_section(text, section):
                     errors.append(f'章节与业务结论冲突: {section}')
     statuses = {key: metadata.get(key) for key in ('exploration', 'novelty', 'review')}
     for key, value in statuses.items():
@@ -150,6 +155,11 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
         if value not in allowed:
             errors.append(f'缺少或非法执行状态: {key}')
     eligible = outcome in ('recommended', 'no_qualified')
+    # bounded_recommendation/degraded 是可交付但不可宣称 completed 的阶段性状态。
+    if outcome in ('bounded_recommendation', 'degraded'):
+        if outcome == 'bounded_recommendation' and statuses['exploration'] != 'complete':
+            errors.append('bounded_recommendation 要求探索阶段完成')
+        eligible = False
     if eligible:
         if statuses['exploration'] != 'complete' or statuses['review'] != 'complete':
             errors.append('正式结论要求探索与约定审查均完成')
@@ -197,9 +207,28 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
         for marker in ('关键缺口', '恢复位置'):
             if not substantive(field_value(extract_section(text, '证据缺口与恢复位置'), marker)):
                 errors.append(f'阶段性评估缺少: {marker}')
+    if outcome in ('bounded_recommendation', 'degraded'):
+        gap = extract_section(text, '证据缺口与恢复位置')
+        for marker in ('关键缺口', '恢复位置'):
+            if not substantive(field_value(gap, marker)):
+                errors.append(f'降级结论缺少: {marker}')
     if statuses['novelty'] == 'not_required' and not substantive(field_value(extract_section(text, '查新摘要'), '免查新依据')):
         errors.append('无需完整查新须说明价值筛选淘汰的证据，不得以成本为由跳过')
-    return {'outcome': outcome, 'execution_statuses': statuses, 'completion_eligible': eligible and not errors}
+    layers = metadata.get('completion_layers')
+    if layers is not None and not isinstance(layers, dict):
+        errors.append('completion_layers 必须是对象')
+        layers = {}
+    if layers is None:
+        layers = {}
+    layer_fields = ('artifact_ready', 'execution_recorded', 'evidence_sufficient', 'claim_eligible')
+    supplied_layers = {key: metadata.get(key) for key in layer_fields if key in metadata}
+    if supplied_layers:
+        for key, value in supplied_layers.items():
+            if not isinstance(value, bool):
+                errors.append(f'{key} 必须是布尔值')
+        if any(value is not True for value in supplied_layers.values()):
+            eligible = False
+    return {'outcome': outcome, 'execution_statuses': statuses, 'completion_layers': {**layers, **supplied_layers}, 'completion_eligible': eligible and not errors}
 
 
 def path_is_inside_named_dir(report_path: Path, names: set[str]) -> str | None:

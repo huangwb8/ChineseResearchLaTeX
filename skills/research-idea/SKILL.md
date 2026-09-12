@@ -18,6 +18,12 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 ## 流程
 
+### 分层完成与降级语义
+
+`artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个独立判断：文件存在不等于阶段执行过，阶段执行过不等于证据深度足够，证据足够也不自动证明科学结论。`recommended` 仅表示当前范围内的有界推荐；依赖故障、全文不足或等价性未核验时使用 `degraded`，已有部分证据但仍可指导下一步时使用 `bounded_recommendation`，均不可进入 `completed`。只有四层均为 true、required Verifier 通过且 `check_completion.py` 通过，才能交付 `completed`。
+
+新运行的 `completion-evidence.json` 可声明 `schema: research-idea-completion-v2`，并必须绑定 `run_id`、`attempt_id`、`authoritative_attempt`、四层状态及每项证据的 SHA-256/大小/修改时间快照。快照、manifest、Gate 或来源发生变化必须新建 attempt；旧回传不可复用。旧索引保持只读兼容，但不能用于认证新完成。
+
 ### 输入
 
 - 必需：任意资料或信息，如文本、文件、文件夹、URL、论文线索、实验现象、代码仓库或 PR 背景。
@@ -43,7 +49,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
    - 同时运行的解读子 agent 最多 3 个（不含负责调度与汇总的主 agent）；入选论文超过 3 篇时按批次排队，上一批全部完成（或记录失败）后再启动下一批。
    - 本阶段不再嵌套启动额外的并行解读 agent；若单篇需要补证据或定向复核，由该子 agent 在自身任务内完成，不能突破全局并发上限。
    - 主 agent 汇总所有成功解读，并保留每篇论文的失败/证据不足状态；任何论文未完成时不得把研究脉络 map 标记为完整。
-   - PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。
+   - PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。每篇解读至少记录 `source_id`、`evidence_depth`、`read_scope`、问题、方法、关键结果、限制、支持/反驳关系和稳定引用；研究 map 为每条关系标记 evidence level，并将待验证综合判断单列。
 4. 主 Agent 基于全部解读建立本 Skill 的 `output/research-map.md`，先读 [研究综合指南](references/research-synthesis.md)。主体包含研究线比较表、关系与演化说明、带稳定 O 编号的研究机会清单，并保留时间线与论文 R 编号锚点。区分有来源的关系与待验证综合判断；不能把时间先后、相似术语或不同测量结果写成继承、因果或矛盾。没有争议也可从重要未测量现象与适用边界提出问题，不编造冲突。缺少关键证据时定向补读。
 
 #### 初始候选与低成本价值筛选
@@ -68,13 +74,14 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 1. 调用 `research-topic-extractor`，将该候选主题、关键词、核心问题写入 `candidates/Cx/theme.json`。
 2. 调用 `research-literature-review`，档位仍固定 `Premium`；在同一任务根中按依赖 Skill 边界归档，并在 `novelty/Cx/` 记录相对来源。复用本轮精读与来源定位，不擅自降低依赖的交付标准。
 3. 按 [查新指南](references/novelty-check.md) 核对问题/假设是否已被等价回答，以及新增条件能否改变已有认识；优先比较最可能否定新意的近邻工作。
-4. 保存 `novelty/Cx/novelty-decision.json`，包括执行状态、已有答案、剩余未知、差异意义、未确认等价性和处理决定。直接近邻全文受限时结论为未定；未完成方向只能作为探索线索。实质改写问题/假设后重新查新。
+4. 保存 `novelty/Cx/novelty-decision.json`，包括执行状态、已有答案、剩余未知、差异意义、未确认等价性和处理决定。直接近邻全文受限时结论为未定；未完成方向只能作为探索线索。实质改写问题/假设后重新查新。Premium 只有在多源、全文（或明确记录的降级条件）、强近邻清单和等价性检查均有证据时，才能计入 `evidence_sufficient`；`primary_source=null`、runner error 或仅摘要/网页时自动降级。
 
 已充分研究不能凭协议更齐全或措辞更宏大保留；重要复现若形成不同的研究问题，重新论证并查新。价值筛选已足以淘汰的候选记录依据和未执行查新的原因，不伪造 Premium 执行记录。零候选仍保留 candidates 与 novelty 证据角色，后者说明淘汰所依据的既有证据、哪些无需查新及原因。
 
 #### 多轮独立审查
 
 用 `parallel-vibe` 执行 config 约定的外层串行轮数与每轮独立人数，默认均为 3；不得用一次调用冒充多轮。每轮使用上一轮事实修正和汇总，但不要求接受上一轮推荐。具体任务见 [审查参考](references/agent-review-prompt.md)：
+每个 reviewer 必须保存真实 `thread_id`、模型、输入快照哈希、启动/结束时间、可见上一轮结果标记和输出哈希；仅角色化草稿标记为 `synthetic_review`，不计入 required independent review。汇总必须覆盖全部原始 reviewer。
 - 第一轮挑战选题价值：成功是否值得做、平凡解释、最强替代方向。
 - 第二轮检查解释与辨别能力：定义性假设、关键反例、强基线、实质重构。
 - 第三轮重新选择与迁移检查：最强备选、选择敏感性、外推边界、最终去留。
@@ -155,6 +162,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 查新结论必须区分“没有研究过”和“研究过但缺口仍在”。
 - 拟推荐候选不得因成本高而跳过 Premium；价值筛选淘汰的事项明确记为未执行，不冒充查新通过。
 - recommended/no_qualified 交付前必须运行完成收敛检查；缺少依赖产物、completed 状态、required Gate 或约定审查轮次时，不能宣称完成。
+- 缺少贡献边界编码手册、独立真值来源、标注一致性、审计任务、隐私/伦理审批、baseline evidence views 或最小实际重要差异时，只能输出 `insufficient` 或 `bounded_recommendation`，不得进入 completed。
 - 不把文献综述正文当作最终输出；最终输出是研究想法报告。
 - 不泄露隐藏工作区、中间文件、agent 内部指令或测试路径。
 

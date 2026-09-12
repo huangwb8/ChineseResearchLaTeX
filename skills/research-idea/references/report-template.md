@@ -9,6 +9,10 @@ outcome: recommended
 exploration: complete
 novelty: complete
 review: complete
+artifact_ready: true
+execution_recorded: true
+evidence_sufficient: true
+claim_eligible: true
 ---
 # {研究主题}
 
@@ -97,7 +101,7 @@ frontmatter 使用 `outcome: insufficient`，按真实情况给三个执行状�
 **恢复位置**：{当前业务阶段、应先补什么、完成何种核验后可继续；用可读说明，不泄露运行路径}
 ```
 
-格式合格的阶段性评估可交付，但 `completion_eligible` 为 false，运行保持最近阶段，不能声明 completed。查新结果“未定”不能转述为“未研究”。
+格式合格的阶段性评估可交付，但 `completion_eligible` 为 false，运行保持最近阶段，不能声明 completed。`degraded` 与 `bounded_recommendation` 必须明确降级原因和恢复位置；查新结果“未定”不能转述为“未研究”。
 
 ## 完成检查边界
 

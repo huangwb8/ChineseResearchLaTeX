@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.7.1"
+  version: "0.8.0"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
@@ -73,6 +73,12 @@ output:
       min_candidates: 0
       sections: ["淘汰理由与重启条件"]
     insufficient:
+      min_candidates: 0
+      sections: ["证据缺口与恢复位置"]
+    bounded_recommendation:
+      min_candidates: 1
+      sections: ["推荐与投入排序", "证据缺口与恢复位置"]
+    degraded:
       min_candidates: 0
       sections: ["证据缺口与恢复位置"]
   # 旧报告只读兼容，不可据此认证新运行完成。

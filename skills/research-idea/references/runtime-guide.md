@@ -203,7 +203,7 @@ print(json.dumps(TaskWorkspace.open_existing(os.environ["IDEA_TASK"]).read_meta_
 
 旧 `idea_runtime.py`、`phase_evidence.py`、Pack 机械脚本与 init/prepare/submit/rework/status/cancel 专用接口已移除；初始化的 `--workspace-dir`、`--run-id`、`--overwrite`、`--with-test-dir`、`--test-dir` 不再提供。旧 manifest、idea.* 事件和报告只读保留，不自动转成新协议，也不重新创建同一逻辑任务根。对旧运行的续作在原任务内记录迁移说明、用新的 run 身份重新核验；不要覆写旧文件。旧报告仍可单独做格式检查，不能据此认证新运行完成。
 
-取消了自建的自动文件哈希重检、下游 checkpoint 失效和全资产锁定。Kernel 绑定的是提交的请求/证据标识；Agent 必须在每次验证和转移前重读受影响来源，发生内容或契约变化后重审。日志和绑定提供可追溯性，不提供科学真实性或恶意本地代码沙箱。
+Kernel 绑定的是提交的请求/证据标识；新完成证据索引（`schema: research-idea-completion-v2`）还必须保存每项来源的 SHA-256、大小、修改时间及 run/attempt。`check_completion.py` 在最终收敛时重算快照；Gate 后来源变化、跨 attempt 引用或报告替换都会失败并要求新 attempt。旧索引只读兼容，不能据此认证新 completed。日志和绑定提供可追溯性，不提供科学真实性或恶意本地代码沙箱。
 
 ## 按需复用内置组件
 

@@ -83,3 +83,6 @@
 ## Unreleased
 
 - 测试目录默认改为项目 `tests/research-idea`，与任务级运行工作区分离。
+- 全面优化：引入 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 四层完成语义及 `bounded_recommendation`/`degraded` 降级状态；新完成证据索引支持 run/attempt 绑定、内容快照和 authoritative attempt 校验。
+- 强化 Premium 查新和论文解读契约：要求稳定来源、证据深度、读取范围、多源/全文/等价性门禁；并行审查需记录 thread、模型、输入/输出快照和执行时间，`synthetic_review` 不计入独立审查。
+- 同步 State/Verifier 运行说明与报告模板，明确依赖故障、科研前置条件不足和 BAC 本地完整性边界不得认证 completed。
