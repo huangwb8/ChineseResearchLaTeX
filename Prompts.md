@@ -22,7 +22,7 @@ git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，�
 
 ---
 
-根据本项目的源代码，请您利用 research-idea skill 为本项目量身定制一个切实可行、有创新性的课题方向。最后的结果保存为 docs/ideas/v12.md。注意：全程不能查看 docs/ideas 里的文件（除了你要生成的结果md外）。
+请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v12.md 及对应的中间文件夹里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。
 
 ---
 
