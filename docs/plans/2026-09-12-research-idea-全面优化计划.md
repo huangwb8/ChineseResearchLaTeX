@@ -17,7 +17,7 @@
 4. 论文解读没有统一的来源深度、稳定 ID、实际读取范围、方法/结果/限制和证据引用契约。
 5. Semantic Verifier 主要接受主 Agent 的结构化声明，不能独立判断文献、审查和科学结论的真实性。
 6. parallel review 只有计划和结果文件，没有真实 thread、输入快照、上下文隔离和执行轨迹，无法强证明独立性。
-7. 状态机允许在大量工作完成后集中补记 Gate，无法证明阶段门禁是在执行时生效，还是事后追认。
+7. BSK 只按 `run_id/attempt_id` 汇总 State invariant 所需事件，未把 Verifier/Gate 限定在“当前 State 最近一次进入之后”；同一 attempt 的旧通过结果可能跨阶段复用。它仍不能、也不应替代领域侧证明真实科研工作发生的时间。
 8. 续跑后工作区 README 未自动更新，历史 insufficient 与最终 completed 并存，缺少 authoritative attempt 和 superseded 关系。
 
 ### 本次执行问题
@@ -36,6 +36,13 @@
 4. 研究结论从单一 BAC 仓库抽象而来，存在自我适配、单工具链偏置和跨仓库外推不足。
 5. 2026 年近邻多为快速变化的预印本，查新结论必须在正式投稿前重跑。
 
+### BSK 责任判断
+
+- **确属 BSK 的通用缺口：** State invariant 的证据窗口必须从当前 Skill 最近一次进入当前 State 的事件开始；窗口之前的 `verification.result` 与 `verification.gate` 即使 `run_id/attempt_id` 相同也不得放行。本项只涉及领域无关的事件顺序、运行身份和迁移审计，应在 Kernel 修复并做回放回归。
+- **BSK 已提供、应直接复用：** Pack/契约/组件/handoff 哈希，`run_id/attempt_id` 绑定，required/advisory Gate 的 fail-closed 聚合，追加式事件和 State 快照。`research-idea` 不再实现第二套锁、Gate、绑定、事件账本或重放器。
+- **不属于 BSK：** Premium 查新充分性、论文读取深度、证据—结论矩阵、ground truth 和 reviewer 独立性都是 `research-idea` 的领域命题，应放在专用 State/Verifier Pack、依赖产物契约和完成收敛检查中。BSK 不按 verifier ID、finding ID 或科研字段硬编码判断。
+- **术语修正：** `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个正交完成维度，不是四个 BSK State，也不新增 Kernel verdict/状态枚举；领域 State 仍保持 literature → candidates → review → reporting → completed。
+
 ## 要达到什么目标
 
 - `recommended` 只表示“当前证据足以进入下一阶段研究”，不再暗含实验或论文级新颖性成立。
@@ -50,7 +57,7 @@
 
 ### 方向一：重建分层完成模型和报告契约
 
-增加四层状态：`artifact_ready`（产物存在）、`execution_recorded`（阶段执行可追溯）、`evidence_sufficient`（达到该阶段最低证据深度）、`claim_eligible`（结论可交付）。报告 frontmatter 和 `completion-evidence.json` 分别记录这些状态、证据深度、降级原因和恢复位置。
+增加四个完成维度：`artifact_ready`（产物存在）、`execution_recorded`（阶段执行可追溯）、`evidence_sufficient`（达到该阶段最低证据深度）、`claim_eligible`（结论可交付）。它们属于 `research-idea` 的报告和完成证据契约，不扩展 BSK State 或 verdict 枚举。报告 frontmatter 和 `completion-evidence.json` 分别记录这些维度、证据深度、降级原因和恢复位置。
 
 `check_completion.py` 继续负责机械收敛，但必须校验来源哈希、文件大小/时间快照、manifest 与事件的 attempt/run 绑定；semantic Verifier 只在证据充分性满足后判断科学价值。`recommended` 允许作为 bounded recommendation，`completed` 只能在四层均满足时成立。
 
@@ -70,7 +77,9 @@
 
 ### 方向四：使 Gate 和 Verifier 具备内容级、时序级约束
 
-要求每个 attempt 在阶段开始时冻结输入 manifest，在阶段结束时生成带哈希的证据清单；阶段转移只能引用当前 attempt 的结果。若证据文件在 Gate 后变化，必须创建新 attempt。禁止以同一通过结果跨阶段复用。事件中记录真实操作时间、操作者、来源快照和失败/降级状态。
+先在 BSK 修复通用时序窗口：离开 State 时，只接受当前 Skill 最近一次进入该 State 之后、且与当前 `run_id/attempt_id` 一致的结果和 Gate；同一通过结果不得跨阶段复用。该修复只读取标准事件字段，不认识 `research-idea` 的领域 ID 或证据字段。
+
+`research-idea` 在每个阶段开始时生成输入 manifest，在阶段结束时生成带内容哈希的证据清单，并把摘要作为 BSK Evidence/事件 snapshot 交给专用 Pack。BSK 负责绑定和回放这些已提交的快照，不负责扫描任意外部文件或判断科研证据是否充分。若 Gate 后来源内容变化，完成收敛检查应拒绝旧快照并要求新 attempt；不能把文件大小和修改时间当作内容哈希的替代品。
 
 为 semantic Verifier 增加“证据—结论矩阵”：每条高风险结论必须关联具体来源、反例检查和不确定性；无法核对时返回 `uncertain` 而不是 `pass`。
 
@@ -102,12 +111,13 @@
 
 ## 实施范围与顺序
 
-1. **先建立基线和回归样本。** 保存 v12、早期 insufficient 运行、依赖崩溃和当前 completed 运行的脱敏 fixture，定义四层完成模型及状态迁移表。
-2. **再修复完成收敛与 State/Gate。** 先让系统能拒绝“文件齐全但证据不足、attempt 不匹配、Gate 后文件被改动”的运行。
-3. **随后修复检索和解读依赖。** 解决 null 字段崩溃，加入全文/摘要/网页证据深度和 Premium 降级门禁。
-4. **接着增强 Verifier 与 parallel review。** 加入证据—结论矩阵、真实执行元数据、上下文隔离和 reviewer 独立性判定。
-5. **最后补齐科研前置条件和文档。** 增加 ground truth/标注/隐私/跨工具检查，更新 Skill 文档、配置、CHANGELOG 和工作区最终化逻辑。
-6. **以 v12 作为反向验收。** 旧 v12 不应被静默改写为“曾经完整”；重跑后应明确显示：哪些阶段通过、哪些只达到阶段性推荐、哪些证据需要补齐。
+1. **先修复并验证 BSK 的通用时序缺口。** 增加“当前 State 进入前的通过结果不可复用、进入后的新结果可以推进、事件回放结论一致”的 Kernel 回归；这是本计划唯一需要修改 BSK 的事项。
+2. **再建立业务基线和回归样本。** 保存 v12、早期 insufficient 运行、依赖崩溃和当前 completed 运行的脱敏 fixture，定义四维完成模型及既有领域状态迁移表。
+3. **随后修复完成收敛与 State/Gate 接入。** 让系统拒绝“文件齐全但证据不足、attempt 不匹配、Gate 后来源内容变化”的运行；复用 BSK 的绑定、Gate、事件和快照，不建设 Skill 自有运行时。
+4. **随后修复检索和解读依赖。** 解决 null 字段崩溃，加入全文/摘要/网页证据深度和 Premium 降级门禁。
+5. **接着增强 Verifier 与 parallel review。** 加入证据—结论矩阵、真实执行元数据、上下文隔离和 reviewer 独立性判定。
+6. **最后补齐科研前置条件和文档。** 增加 ground truth/标注/隐私/跨工具检查，更新 Skill 文档、配置、CHANGELOG 和工作区最终化逻辑。
+7. **以 v12 作为反向验收。** 旧 v12 不应被静默改写为“曾经完整”；重跑后应明确显示：哪些阶段通过、哪些只达到阶段性推荐、哪些证据需要补齐。
 
 ## 如何确认完成
 
@@ -117,6 +127,7 @@
 - 每篇论文解读都包含稳定来源、读取范围、证据深度和限制；研究 map 能区分来源关系与待验证综合判断。
 - parallel review 测试能证明每轮 reviewer 数量、输入隔离、输出哈希和汇总覆盖；无法证明独立时自动降级。
 - Verifier 测试覆盖“结构通过但语义证据不足”“查新未完成”“报告与事件状态矛盾”“Gate 后证据变化”等反例。
+- BSK 回归证明当前 State 进入前的结果/Gate 不能用于离开该 State；进入后的同身份新结果可推进，`status/rebuild` 后结论不变，Kernel 源码中不出现 `research-idea` 的领域 ID 或字段。
 - 工作区 README 与 meta-state、报告 frontmatter、completion evidence 和 BAC 记录保持一致，并能恢复历史 attempt 关系。
 - 完成代码和文档验证：`python -m pytest -q tests/research-idea`、Skill 自带测试、文档/JSON/YAML 检查、`git diff --check`、BAC inspect/verify；若涉及检索器，再加入隔离环境下的 runner 回归。
 - 人工抽查至少一轮：从最终报告反向定位到来源、解读、查新、审查和事件；抽查结果记录为验证证据，不替代自动测试。
@@ -127,5 +138,5 @@
 - **成本：** 多源全文查新和真实独立审查会增加时间、网络和 token 成本，应允许明确的阶段性结果，但不能伪装成完整结果。
 - **隐私：** ground truth、prompt、录像和审计者数据必须最小化、脱敏并单独授权，不能写入 BAC 或公开报告。
 - **外部研究变化：** 近邻文献变化会使既有 novelty 结论失效；投稿前必须新建 attempt 重跑，而不是修改旧事件。
-- **职责边界：** 本计划修复 Skill 的流程与证据治理，不替代研究团队对实验设计、伦理审批、统计功效和论文署名的判断。
+- **职责边界：** BSK 只修复通用事件时间窗口并继续负责绑定、Gate、事件与回放；证据 manifest 的产生、内容变化判断和科研语义留在 `research-idea` 专用 Pack/完成检查。本计划不让 Kernel 替代研究团队对实验设计、伦理审批、统计功效和论文署名的判断。
 - **回滚：** 每个阶段以独立配置和新 attempt 发布；若新 Gate 误拒旧任务，可回退到只读兼容验证，不删除旧事件、不覆盖旧报告、不修改系统级 Skill。

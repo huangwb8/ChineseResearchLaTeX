@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- 优化 `docs/plans/2026-09-12-research-idea-全面优化计划.md` 的 BSK 责任判断：确认跨阶段复用旧 Gate 属于 Kernel 通用时序缺口；将四层“状态”修正为领域完成维度，并明确证据 manifest、科研充分性与 reviewer 独立性继续由 `research-idea` 专用 Pack 和完成检查负责。
+
 - `research-idea`：实施完成证据收敛修复，新增 `check_completion.py` 与 `completion-evidence.json` 索引契约，交付前核对报告结构、自定义文件名上下文、bsk completed 状态、required Gate、依赖 Skill 产物和三轮独立审查证据；清理 Skill 包内旧运行时测试引用，版本推进至 v0.7.1。
 
 - `research-literature-interpretation`：将 OpenAI UI 展示元数据并入 `config.yaml:interface`，删除只托管单个小配置的 `agents/openai.yaml` 目录，版本推进至 v0.1.2；触发语义与执行契约不变。
