@@ -64,6 +64,8 @@ metadata:
 
 ### 写成一个分层版本
 
+交付笔记必须以 `interpretation_contract: research-literature-interpretation-evidence-v1` 开头，并在 frontmatter 保存 `source_id`、`evidence_depth`（normative/fulltext/abstract/web/source）、`read_scope`、`stable_citation`、`question`、`method`、`key_results`、`limitations` 和 `supports_or_refutes`。这些字段是证据索引，不替代正文；`fulltext` 不得与仅摘要读取范围同时声明。旧笔记只能用 `--allow-legacy` 做只读检查，不能作为新运行的完整解读证据。
+
 首屏用 3–6 句交代问题、改变、最强证据和最大边界。正文按“问题 → 改变 → 机制 → 证据 → 代价/边界 → 检验”展开，可按论文合并或省略不适用部分。
 
 使用渐进披露，不按读者类型重复正文。短段落先给白话直觉，再给术语和技术核查；`**加粗**` 与 `> ` 只突出改变判断的内容，不能代替论证。
@@ -72,6 +74,8 @@ metadata:
 
 ```bash
 python3 scripts/validate_notes.py --style <note>
+# 旧笔记仅兼容读取，不用于新运行完成认证：
+python3 scripts/validate_notes.py --allow-legacy <note>
 ```
 
 机械检查不能替代科学复核。

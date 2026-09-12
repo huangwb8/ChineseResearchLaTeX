@@ -9,6 +9,12 @@ from pathlib import Path
 
 PLACEHOLDERS = ("页码待补", "完整实验细节需阅读 PDF", "后续工作通常沿三条线发展")
 DEFAULT_LEVELS = ("原文事实", "作者主张", "我的解释|我的解读", "待验证")
+EVIDENCE_CONTRACT = "research-literature-interpretation-evidence-v1"
+EVIDENCE_DEPTHS = {"normative", "fulltext", "abstract", "web", "source"}
+EVIDENCE_FIELDS = (
+    "source_id", "evidence_depth", "read_scope", "stable_citation", "question",
+    "method", "key_results", "limitations", "supports_or_refutes",
+)
 ANCHOR_RE = re.compile(
     r"(?:第\s*\d+(?:[.–—-]\d+)?\s*(?:页|节)|(?:表|图|式|算法|Table|Figure|Fig\.?|Eq\.?|Algorithm|Theorem|Lemma|Proposition)\s*[A-Za-z]?\d+(?:[.–—-]\d+)?|附录\s*[A-Za-z0-9.]+|§\s*[\dA-Za-z.]+|pp?\.\s*\d+(?:[–—-]\d+)?)",
     re.IGNORECASE,
@@ -62,6 +68,17 @@ def validate_note(path: Path, *, style: bool = False, config: dict | None = None
         return [f"cannot read note: {exc}"]
     if not re.search(r"^#\s+\S", text, re.MULTILINE):
         errors.append("missing note title")
+    frontmatter = parse_frontmatter(text)
+    if frontmatter.get("interpretation_contract") != EVIDENCE_CONTRACT:
+        errors.append(f"missing or unsupported interpretation_contract: {EVIDENCE_CONTRACT}")
+    else:
+        for field in EVIDENCE_FIELDS:
+            if not frontmatter.get(field, "").strip():
+                errors.append(f"missing evidence field: {field}")
+        if frontmatter.get("evidence_depth") not in EVIDENCE_DEPTHS:
+            errors.append("evidence_depth must be normative/fulltext/abstract/web/source")
+        if frontmatter.get("evidence_depth") == "fulltext" and re.search(r"摘要|abstract only|仅摘要", frontmatter.get("read_scope", ""), re.I):
+            errors.append("fulltext evidence_depth conflicts with abstract-only read_scope")
     if not re.search(r"(?:来源|source|阅读范围|reading scope)", text, re.IGNORECASE):
         errors.append("missing source or reading-scope statement")
     if not re.search(r"(?:https?://|doi|arxiv|一手\s*(?:来源|URL)|本地\s*(?:文件|PDF))", text, re.IGNORECASE):
@@ -86,6 +103,19 @@ def validate_note(path: Path, *, style: bool = False, config: dict | None = None
     if style:
         errors.extend(validate_style(text, active))
     return errors
+
+
+def parse_frontmatter(text: str) -> dict[str, str]:
+    """读取契约所需的简单标量字段；复杂正文仍由 Markdown 人工审查。"""
+    match = re.match(r"\A---\n(.*?)\n---(?:\n|$)", text, re.S)
+    if not match:
+        return {}
+    fields: dict[str, str] = {}
+    for line in match[1].splitlines():
+        key, separator, value = line.partition(":")
+        if separator and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", key.strip()):
+            fields[key.strip()] = value.strip().strip("'\"")
+    return fields
 
 
 def content_blocks(text: str) -> list[str]:
@@ -150,6 +180,7 @@ def main() -> int:
     parser.add_argument("--papers", type=Path, default=Path("docs/papers"))
     parser.add_argument("--ids-file", type=Path)
     parser.add_argument("--style", action="store_true", help="also enforce configurable mobile-reading style limits")
+    parser.add_argument("--allow-legacy", action="store_true", help="只读检查旧笔记；不认证新的证据契约")
     args = parser.parse_args()
     if not args.notes and args.ids_file is None:
         parser.error("provide note paths or --ids-file")
@@ -162,6 +193,8 @@ def main() -> int:
     paths = note_paths(args)
     for path in paths:
         errors = validate_note(path, style=args.style, config=config)
+        if args.allow_legacy:
+            errors = [error for error in errors if not (error.startswith("missing or unsupported interpretation_contract") or error.startswith("missing evidence field") or error.startswith("evidence_depth"))]
         if errors:
             failures += 1
             for error in errors:

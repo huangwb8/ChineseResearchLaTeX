@@ -6,6 +6,7 @@
 
 ### Changed（变更）
 
+- `0.2.0`：新增证据 frontmatter 契约，要求稳定来源、证据深度、读取范围、问题/方法/结果/限制、支持/反驳关系和稳定引用；全文声明与摘要读取范围冲突时失败，旧笔记仅可显式兼容读取。
 - `0.1.2`：将 OpenAI UI 展示元数据并入 `config.yaml:interface`，移除仅托管单个小配置的 `agents/openai.yaml` 目录，保持 Skill 触发语义不变。
 - `0.1.1`：统一 Agent 展示名为 `Research Literature Interpretation`，与 Skill slug 和目录命名保持一致。
 - 将项目论文库路径统一为 `docs/papers/`，同步更新笔记输出说明和脚本默认参数。

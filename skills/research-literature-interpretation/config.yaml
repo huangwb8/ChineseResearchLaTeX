@@ -1,6 +1,6 @@
 skill_info:
   name: "research-literature-interpretation"
-  version: "0.1.2"
+  version: "0.2.0"
   description: "像资深研究者带学生一样解读单篇论文：提炼问题、机制、证据强弱、边界与可迁移启发。用户提供 PDF、arXiv/DOI/出版社链接、本地论文或正文片段并希望理解、批判、复现或学习时使用；不用于论文发现、多论文综述或只改写摘要。"
   author: "Bensz Conan"
   category: "research"
@@ -22,3 +22,22 @@ validation:
     - 作者主张
     - 我的解释|我的解读
     - 待验证
+
+evidence_contract:
+  name: "research-literature-interpretation-evidence-v1"
+  required_fields:
+    - source_id
+    - evidence_depth
+    - read_scope
+    - stable_citation
+    - question
+    - method
+    - key_results
+    - limitations
+    - supports_or_refutes
+  evidence_depths:
+    - normative
+    - fulltext
+    - abstract
+    - web
+    - source
