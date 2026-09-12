@@ -22,6 +22,10 @@ git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，�
 
 ---
 
+根据本项目的源代码，请您利用 research-idea skill 为本项目量身定制一个切实可行、有创新性的课题方向。最后的结果保存为 docs/ideas/v12.md。注意：全程不能查看 docs/ideas 里的文件（除了你要生成的结果md外）。
+
+---
+
 /Volumes/2T01/Github/bensz-auto-contribution/.bensz-api/task-20260911-0109-research-idea-bac 是一个 skills/research-idea 的实例的过程； /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v11.md 这是结果 。 你调查一下。从这些中间过程、结果来说，你评价一下 skills/research-idea 的工作如何？skills/research-idea 把什么按预期做好了？ 是否暴露了 skills/research-idea 的某些可修正的缺陷（如果确实有，请在 docs/plans 里写个该skill的优化计划）？
 
 ---
