@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+- `0.9.1`：按 bac-v14 阶段身份计划修复 Kernel 2.1.0 直线流程。首次进入 literature 必须携带非空 run/attempt；`phase_entry.py` 从 BSK 事件投影取得当前 State 权威进入身份，按 action 隔离 Gate 幂等键并复核目标快照。由于 Kernel 尚无 State visit/attempt 轮换接口，失败重试、换 attempt、回退与无身份旧现场显式 fail-closed；完成检查新增首个控制断点诊断。
+
 - `0.9.0`：新增轻量 `scripts/phase_entry.py`，把四条前向阶段边收敛为一个不易漏用的入口。脚本通过 BSK API 读取当前 State、按 Skill 声明执行全部 required Verifier、返回 BSK 原生 handoff、由 Kernel 计算 Gate，并仅在 Gate allow 后调用 BSK transition；不自建 State/Gate、attempt 生命周期、handoff/provenance 协议或事件账本。`check_completion.py` 继续作为绕过入口时的独立完成收敛防线。
 
 - 新增 `scripts/check_completion.py` 完成证据收敛检查：在交付 recommended/no_qualified 前核对报告结构、自定义文件名 manifest、bsk meta-state、completed Gate、依赖 Skill 可复核产物和约定独立审查轮次；新增 `completion-evidence.json` 索引契约，版本推进至 0.7.1。缺少 Gate、依赖产物或审查证据时只能作为阶段性结果交付，不追认旧运行。

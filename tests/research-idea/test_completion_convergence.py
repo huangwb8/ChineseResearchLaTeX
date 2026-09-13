@@ -13,6 +13,8 @@ import check_completion
 
 
 PREFIX = "bensz.research-ideation."
+RUN_ID = "run-1"
+ATTEMPT_ID = "run-attempt-1"
 
 
 def write(path: Path, text: str = "fixture") -> str:
@@ -83,7 +85,9 @@ def make_workspace(tmp_path: Path, *, state: str = PREFIX + "literature", custom
         json.dumps(
             {
                 "type": "state.transition",
-                "attempt_id": "default",
+                "event_id": "state-entry-literature",
+                "run_id": RUN_ID,
+                "attempt_id": ATTEMPT_ID,
                 "payload": {
                     "skill": "research-idea",
                     "from_state": "bensz.workspace.ready",
@@ -99,53 +103,55 @@ def make_workspace(tmp_path: Path, *, state: str = PREFIX + "literature", custom
 
 
 def write_completion_events(task: Path) -> None:
-    events = [
-        {
-            "type": "verification.result",
-            "run_id": "run-1",
-            "attempt_id": "reporting-1",
-            "payload": {
-                "verifier_id": "bensz.research.stage-readiness",
-                "verifier_version": "3.0.0",
-                "execution_status": "completed",
-                "verdict": "pass",
+    events = []
+    for source, target in (
+        ("literature", "candidates"),
+        ("candidates", "review"),
+        ("review", "reporting"),
+        ("reporting", "completed"),
+    ):
+        for verifier_id, verifier_version in (
+            ("bensz.research.stage-readiness", "3.0.0"),
+            ("bensz.research.hypothesis-merit", "1.0.0"),
+        ):
+            events.append({
+                "type": "verification.result",
+                "run_id": RUN_ID,
+                "attempt_id": ATTEMPT_ID,
+                "payload": {
+                    "verifier_id": verifier_id,
+                    "verifier_version": verifier_version,
+                    "execution_status": "completed",
+                    "verdict": "pass",
+                },
+            })
+        events.extend([
+            {
+                "type": "verification.gate",
+                "event_id": f"gate-{source}",
+                "run_id": RUN_ID,
+                "attempt_id": ATTEMPT_ID,
+                "payload": {
+                    "decision": "allow",
+                    "computed_by": "kernel",
+                    "result_refs": [
+                        "bensz.research.stage-readiness@3.0.0",
+                        "bensz.research.hypothesis-merit@1.0.0",
+                    ],
+                },
             },
-        },
-        {
-            "type": "verification.result",
-            "run_id": "run-1",
-            "attempt_id": "reporting-1",
-            "payload": {
-                "verifier_id": "bensz.research.hypothesis-merit",
-                "verifier_version": "1.0.0",
-                "execution_status": "completed",
-                "verdict": "pass",
+            {
+                "type": "state.transition",
+                "event_id": f"state-entry-{target}",
+                "run_id": RUN_ID,
+                "attempt_id": ATTEMPT_ID,
+                "payload": {
+                    "skill": "research-idea",
+                    "from_state": PREFIX + source,
+                    "to_state": PREFIX + target,
+                },
             },
-        },
-        {
-            "type": "verification.gate",
-            "run_id": "run-1",
-            "attempt_id": "reporting-1",
-            "payload": {
-                "decision": "allow",
-                "computed_by": "kernel",
-                "result_refs": [
-                    "bensz.research.stage-readiness@3.0.0",
-                    "bensz.research.hypothesis-merit@1.0.0",
-                ],
-            },
-        },
-        {
-            "type": "state.transition",
-            "run_id": "run-1",
-            "attempt_id": "reporting-1",
-            "payload": {
-                "skill": "research-idea",
-                "from_state": PREFIX + "reporting",
-                "to_state": PREFIX + "completed",
-            },
-        },
-    ]
+        ])
     with (task / "log/events.ndjson").open("a", encoding="utf-8") as handle:
         for event in events:
             handle.write(json.dumps(event) + "\n")
@@ -198,6 +204,23 @@ def test_recommended_report_without_completed_state_fails(tmp_path):
     assert not result["passed"]
     assert any("运行状态未到 completed" in error for error in result["errors"])
     assert any("事件日志缺少 reporting -> completed" in error for error in result["errors"])
+    assert result["state"]["first_control_break"]["code"] == "verifier_or_gate_missing"
+
+
+def test_v14_style_gate_identity_mismatch_is_reported_as_first_break(tmp_path):
+    task, report = make_workspace(tmp_path)
+    with (task / "log/events.ndjson").open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps({
+            "type": "verification.gate",
+            "event_id": "gate-wrong-attempt",
+            "run_id": RUN_ID,
+            "attempt_id": "literature-2",
+            "payload": {"decision": "allow"},
+        }) + "\n")
+    result = run_check(tmp_path, task, report)
+    assert not result["passed"]
+    assert result["state"]["first_control_break"]["code"] == "state_entry_identity_mismatch"
+    assert any("state_entry_identity_mismatch" in error for error in result["errors"])
 
 
 def test_custom_name_uses_manifest_allow_custom_name(tmp_path):

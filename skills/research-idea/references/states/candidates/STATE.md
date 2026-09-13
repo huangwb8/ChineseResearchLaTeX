@@ -12,7 +12,7 @@ map 已通过前置 Gate（或明确回退到此重新查新），正在生成�
 
 ## 进入条件
 
-前向进入必须有当前 run/attempt 的 required Gate；回退进入须通过 Verifier 的 rework 判断并记录原因与证据。Kernel 检查图和离开源状态的不变量；Agent 核对 Gate 对应本次 source/target 和当前证据。
+前向进入必须有当前 run/attempt 的 required Gate。State 图保留回退边，但当前 Kernel 2.1.0 兼容入口不执行 rework；Agent 核对 Gate 对应本次 source/target 和当前证据。
 
 ## Agent 行动
 
@@ -31,12 +31,12 @@ candidates、novelty；核对每个候选的科学问题、假设、预测、反
 ## 转移指引
 
 - `bensz.research-ideation.review`：阶段证据充分且当前 Gate 通过时前进。
-- `bensz.research-ideation.literature`：发现该前置阶段需要补证据或改写时，按 Verifier 的 rework 分支核验后用 bsk 回退；Agent 将目标及下游旧结论标为待复核。
+- `bensz.research-ideation.literature`：历史图边；当前兼容模式发现需补证据时标记下游待复核并停止，不执行回退。
 
 ## 失败、恢复与回滚
 
-失败和等待保留最近阶段与非通过回执；通过 Kernel 读取领域快照并核对任务事件。新证据或返工使用新 attempt，旧回传不得复用。取消记录原因并停止，保持真实阶段；恢复前重读证据。领域快照提交不完整时停止处理，不手改快照或重写旧事件。
+失败和等待保留最近阶段与非通过回执；通过 Kernel 读取领域快照和事件投影。当前兼容模式不支持新 attempt、失败重试或返工回退，旧回传不得复用；取消记录原因并停止，保持真实阶段。领域快照提交不完整时停止处理，不手改快照或重写旧事件。
 
 ## 边界与执行归属
 
-`phase_entry.py` 只收敛 BSK 调用，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。
+`phase_entry.py` 只收敛 BSK 调用并读取 Kernel 当前进入身份，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。完整 visit/attempt 轮换须等待 Kernel 原生接口。

@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+- `research-idea`：依据 bac-v14 阶段身份闭环计划修复 Kernel 2.1.0 下的直线控制链；首次 State 进入必须带非空 run/attempt，阶段入口从 BSK 投影读取权威进入身份、按 action 隔离 Gate 幂等键并复核目标快照，完成检查可定位首个身份/转移断点。Kernel 原生 visit/attempt 轮换接口落地前，失败重试、换 attempt、回退与无身份旧现场保持 fail-closed；Skill 版本推进至 v0.9.1，最低 Kernel 调整为 2.1.0。
+
+- 新增三份 `bac-v14` 优化计划：分别针对 `research-idea` 阶段身份闭环、BSK State visit/attempt 身份模型，以及运行环境一致性、诊断与验收；计划基于 v14 实战中“内容链诚实降级但控制链停在 literature”、Kernel 2.1.0 三项身份回归失败和依赖检查误报等证据，本次不实施源码修复。
+
 - `research-idea`：新增轻量 BSK 阶段入口，统一 action→State 映射、required Verifier、Kernel Gate 与 transition 调用，降低 Agent 漏执行控制步骤的概率；入口不维护私有状态、Gate、attempt、handoff、provenance 或事件账本，完成检查继续独立拒绝缺少 BSK 状态链的运行，版本推进至 v0.9.0。
 
 - 优化 `docs/plans/2026-09-12-research-idea-全面优化计划.md` 的 BSK 责任判断：确认跨阶段复用旧 Gate 属于 Kernel 通用时序缺口；将四层“状态”修正为领域完成维度，并明确证据 manifest、科研充分性与 reviewer 独立性继续由 `research-idea` 专用 Pack 和完成检查负责。

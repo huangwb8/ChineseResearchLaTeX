@@ -20,15 +20,15 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 ### BSK 阶段入口
 
-为降低 Agent 遗漏控制步骤的概率，四条前向阶段边统一通过 `scripts/phase_entry.py` 执行，action 分别为 `literature`、`candidates`、`review`、`reporting`。脚本用 BSK API 读取当前 State，从 Skill 声明获取全部 required Verifier，构造包含固定 source/target 的请求并返回 BSK 原生 handoff；Agent 完成真实证据审查并提供绑定回传后，脚本由 Kernel 计算 Gate，仅在 `allow` 时调用 BSK transition，并严格检查 JSON `status=transitioned`。
+为降低 Agent 遗漏控制步骤的概率，四条前向阶段边统一通过 `scripts/phase_entry.py` 执行，action 分别为 `literature`、`candidates`、`review`、`reporting`。脚本从 BSK 事件投影取得当前 State 的权威进入身份，从 Skill 声明获取全部 required Verifier，构造固定 source/target 的请求并返回 BSK 原生 handoff；Agent 完成真实证据审查并提供绑定回传后，脚本由 Kernel 计算 Gate，仅在 `allow` 时调用 BSK transition，并复核目标 State 已真实进入。
 
-该入口只是 BSK 的领域适配器：不创建私有 State、Gate、attempt 生命周期、handoff/provenance 协议或事件账本，也不声称能够阻止任意文件写入。`run_id/attempt_id`、Verifier 绑定、Gate、transition 和事件均以 BSK 为唯一事实源。若 Agent 绕过入口，`check_completion.py` 仍须依据 BSK 状态链和完成证据拒绝不完整运行。
+该入口只是 BSK 的领域适配器：不创建私有 State、Gate、attempt 生命周期、handoff/provenance 协议或事件账本，也不声称能够阻止任意文件写入。`run_id/attempt_id`、Verifier 绑定、Gate、transition 和事件均以 BSK 为唯一事实源。Kernel 2.1.0 尚无 State visit/attempt 轮换接口，因此当前仅支持初始化时登记同一非空 run/attempt、随后沿四条前向边直线推进；轮换 attempt、失败后重试或回退必须 fail-closed。若 Agent 绕过入口，`check_completion.py` 仍须依据 BSK 状态链和完成证据拒绝不完整运行。
 
 ### 分层完成与降级语义
 
 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个独立判断：文件存在不等于阶段执行过，阶段执行过不等于证据深度足够，证据足够也不自动证明科学结论。`recommended` 仅表示当前范围内的有界推荐；依赖故障、全文不足或等价性未核验时使用 `degraded`，已有部分证据但仍可指导下一步时使用 `bounded_recommendation`，均不可进入 `completed`。只有四层均为 true、required Verifier 通过且 `check_completion.py` 通过，才能交付 `completed`。
 
-新运行的 `completion-evidence.json` 可声明 `schema: research-idea-completion-v2`，并必须绑定 `run_id`、`attempt_id`、`authoritative_attempt`、四层状态及每项证据的 SHA-256/大小/修改时间快照。快照、manifest、Gate 或来源发生变化必须新建 attempt；旧回传不可复用。旧索引保持只读兼容，但不能用于认证新完成。
+新运行的 `completion-evidence.json` 可声明 `schema: research-idea-completion-v2`，并必须绑定 `run_id`、`attempt_id`、`authoritative_attempt`、四层状态及每项证据的 SHA-256/大小/修改时间快照。旧回传不可复用；快照、manifest、Gate 或来源变化后，只有 Kernel 提供原生 visit/attempt 轮换接口时才能在原任务建立新 attempt，当前兼容模式停止并保留恢复位置。旧索引保持只读兼容，但不能用于认证新完成。
 
 ### 输入
 
@@ -42,7 +42,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 #### 初始化与资料归纳
 
-1. 先读 [运行说明](references/runtime-guide.md)，核对 `config.yaml.dependencies.kernel` 的环境要求。直接用 `bsk workspace init --task-root` 复用本轮已声明任务目录，再用 `scripts/init_workspace.py` 初始化研究参数和候选空模板、`bsk state transition --skill-root` 进入 literature；后续四条前向边统一调用 `phase_entry.py`。已有任务按运行说明读取 Kernel 快照与来源恢复。
+1. 先读 [运行说明](references/runtime-guide.md)，核对 `config.yaml.dependencies.kernel` 的环境要求。直接用 `bsk workspace init --task-root` 复用本轮已声明任务目录，再用 `scripts/init_workspace.py` 初始化研究参数和候选空模板，并携带同一非空 run/attempt 执行 `bsk state transition --skill-root` 进入 literature；后续四条前向边统一调用 `phase_entry.py`，由脚本读取该进入身份。已有任务按运行说明读取 Kernel 快照与来源恢复。
 2. 读取资料，在现有输入摘要中说明目标研究贡献、服务的问题或决策，以及时间与资源约束。资源区分已具备、明确没有、尚不清楚；源码没有某能力不等于团队无法建设。目标未说明时给出暂定解释，只有不同解释会改变主线选择时才澄清。只保存脱敏摘要和必要引用。
 3. 用 `research-topic-extractor` 生成主题、5-10 个英文关键词、2-5 个核心问题；保存为本 Skill 的 `input/theme.json`（引用主题提取 Skill 的原始产物），字段为 `topic`、`keywords`、`core_questions`。
 
@@ -174,7 +174,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 
 ### 失败与恢复
 
-保留错误证据和已完成产物；按运行说明读取 Kernel 领域快照、事件和原参数恢复。证据修复或契约变化后使用新 attempt；前置证据改变时核验返工并回到受影响阶段，下游结论由 Agent 标为待复核。取消记录原因并停止推进；Kernel 缺失或不可用时保留草稿与缺口，不宣称阶段通过。
+保留错误证据和已完成产物；按运行说明读取 Kernel 领域快照、事件和原参数恢复。当前兼容模式只允许未产生拒绝 Gate、证据未变化的同身份续跑；证据修复、契约变化、失败后重试或返工回退均停止推进，等待 Kernel 原生 visit/attempt 轮换接口或建立新任务重新核验。取消记录原因并停止；Kernel 缺失或不可用时保留草稿与缺口，不宣称阶段通过。
 
 ## 控制
 
@@ -184,7 +184,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 主 Agent 实际读取来源，通过 `phase_entry.py` 获取全部 BSK 原生 required handoff、回传判断并由 Kernel 批量记录 Gate；入口使用相同 run/attempt 调用 BSK transition，并检查 JSON status，而非只看退出码。
 - 全部 required 结果完成且 pass 才允许对应转移；fail/uncertain/unchecked/error/timed_out/skipped 均不前进。科学充分性、角色覆盖、轮次独立性、假设价值及源/目标匹配由 Agent 判断，报告格式由 validate_report 检查。
 - bsk 负责协议、结果绑定、Gate、事件和状态；`phase_entry.py` 只编排这些公开能力，不增加私有运行时、锁、快照或重放引擎。可按需使用内置文件/路径/引用 Verifier，不能替代科研判断。
-- Kernel 不自动发现全部证据文件变化。Agent 在转移前核对最新来源；变化后新建 attempt 并重审，旧回传不能重新绑定。人工复核提供新增证据，不提供强制通过开关。
+- Kernel 不自动发现全部证据文件变化。Agent 在转移前核对最新来源；变化后旧回传不能重新绑定，当前兼容模式须停止而不能自行轮换 attempt。人工复核提供新增证据，不提供强制通过开关。
 
 ## 约束
 

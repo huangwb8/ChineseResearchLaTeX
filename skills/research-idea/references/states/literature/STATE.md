@@ -12,7 +12,7 @@ transitions: ["bensz.research-ideation.candidates"]
 
 ## 进入条件
 
-首次从内置 workspace.ready 用 bsk state transition 进入，无需前置科研 Gate。重入仅接受图中回退边；Agent 先核验返工依据，Kernel 检查图和当前 run/attempt 的 Gate。
+首次从内置 workspace.ready 用带非空 run/attempt 的 bsk state transition 进入，无需前置科研 Gate。State 图保留历史回退边，但当前 Kernel 2.1.0 兼容入口不执行重入；需要返工时停止并保留依据。
 
 ## Agent 行动
 
@@ -34,8 +34,8 @@ theme、radar、interpretation、map；每个结论有论文锚点，未完成�
 
 ## 失败、恢复与回滚
 
-失败和等待保留最近阶段与非通过回执；通过 Kernel 读取领域快照并核对任务事件。新证据或返工使用新 attempt，旧回传不得复用。取消记录原因并停止，保持真实阶段；恢复前重读证据。领域快照提交不完整时停止处理，不手改快照或重写旧事件。
+失败和等待保留最近阶段与非通过回执；通过 Kernel 读取领域快照和事件投影。当前兼容模式不支持新 attempt、失败重试或返工回退，旧回传不得复用；取消记录原因并停止，保持真实阶段。领域快照提交不完整时停止处理，不手改快照或重写旧事件。
 
 ## 边界与执行归属
 
-`phase_entry.py` 只收敛 BSK 调用，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。
+`phase_entry.py` 只收敛 BSK 调用并读取 Kernel 当前进入身份，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。完整 visit/attempt 轮换须等待 Kernel 原生接口。

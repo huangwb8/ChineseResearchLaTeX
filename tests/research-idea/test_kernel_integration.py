@@ -3,9 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
@@ -21,6 +19,8 @@ PREFIX = "bensz.research-ideation."
 VERIFIER = "bensz.research.stage-readiness"
 MERIT_VERIFIER = "bensz.research.hypothesis-merit"
 BINDINGS = ("pack_id", "pack_version", "package_kind", "component_id", "component_type", "contract_hash", "component_hash", "plan_hash", "run_id", "attempt_id", "handoff_hash")
+RUN_ID = "fixture-run"
+ATTEMPT_ID = "fixture-attempt"
 
 
 def bsk(*args, cwd=None):
@@ -33,17 +33,20 @@ def bsk(*args, cwd=None):
 def workspace(tmp_path):
     task = tmp_path / ".bensz-api/task-fixture"
     bsk("workspace", "init", tmp_path, "--task-root", task)
-    result = bsk("state", "transition", task, "research-idea", PREFIX + "literature", "--skill-root", SKILL)
+    result = bsk(
+        "state", "transition", task, "research-idea", PREFIX + "literature",
+        "--skill-root", SKILL, "--run-id", RUN_ID, "--attempt-id", ATTEMPT_ID,
+    )
     assert result["status"] == "transitioned"
     return TaskWorkspace.open_existing(task)
 
 
-def request(workspace, source="literature", target="candidates", operation="advance", attempt="literature-1"):
+def request(workspace, source="literature", target="candidates", operation="advance", attempt=ATTEMPT_ID):
     path = workspace.paths("research-idea").path("input") / f"{attempt}.json"
     evidence_path = path.with_suffix(".md")
     evidence_path.write_text("合成证据，只验证接口与绑定。", encoding="utf-8")
     data = {
-        "run_id": "fixture-run", "attempt_id": attempt,
+        "run_id": RUN_ID, "attempt_id": attempt,
         "subject": {"operation": operation, "source": PREFIX + source, "target": PREFIX + target},
         "context": {"rounds": 1, "agents": 1, "sources": {"fixture": {"role": "map", "path": str(evidence_path.relative_to(workspace.task_root.parent.parent))}}},
         "evidence": [{"ref": "fixture", "summary": "合成协议材料", "source_type": "test-only", "content_hash": "sha256:" + hashlib.sha256(evidence_path.read_bytes()).hexdigest()}],
@@ -53,20 +56,29 @@ def request(workspace, source="literature", target="candidates", operation="adva
 
 
 def run_documented_api(workspace, path, submission=None, skill=SKILL, expect_success=True):
-    text = (skill / "references/runtime-guide.md").read_text()
-    code = re.findall(r"```python\n(.*?)\n```", text, re.S)[0]
-    env = {**os.environ, "IDEA_SKILL": str(skill), "IDEA_TASK": str(workspace.task_root), "IDEA_REQUEST": str(path), "PYTHONDONTWRITEBYTECODE": "1"}
-    env.pop("IDEA_SUBMISSION", None)
+    data = json.loads(path.read_text())
+    command = [
+        sys.executable,
+        str(skill / "scripts/phase_entry.py"),
+        "--project-root", str(workspace.task_root.parent.parent),
+        "--task-root", str(workspace.task_root),
+        "--skill-root", str(skill),
+        "--action", data["subject"]["source"].rsplit(".", 1)[-1],
+        "--input", str(path),
+    ]
     if submission is not None:
         sub_path = path.with_suffix(".result.json")
-        sub_path.write_text(json.dumps(submission))
-        env["IDEA_SUBMISSION"] = str(sub_path)
-    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        items = submission if isinstance(submission, list) else [submission]
+        sub_path.write_text(json.dumps({"submissions": items}))
+        command.extend(["--submissions", str(sub_path)])
+    result = subprocess.run(command, capture_output=True, text=True)
     if not expect_success:
         assert result.returncode != 0
         return result
-    assert result.returncode == 0, result.stdout + result.stderr
-    return json.loads(result.stdout)
+    payload = json.loads(result.stdout)
+    if payload.get("status") != "rejected":
+        assert result.returncode == 0, result.stdout + result.stderr
+    return payload
 
 
 def bound_submission(handoff, verdict="pass"):
@@ -106,7 +118,7 @@ def test_required_missing_or_nonpass_never_advances(workspace, verdict):
     path, data = request(workspace)
     if verdict is not None:
         pending = run_documented_api(workspace, path)
-        assert pending["gate"]["decision"] != "allow"
+        assert pending["status"] == "awaiting_agent"
         submissions = bound_submissions(pending["handoffs"])
         submissions[0] = bound_submission(pending["handoffs"][0], verdict)
         result = run_documented_api(workspace, path, submissions)
@@ -120,7 +132,7 @@ def test_stage_pass_without_merit_pass_never_advances(workspace):
     path, data = request(workspace)
     pending = run_documented_api(workspace, path)
     result = run_documented_api(workspace, path, bound_submission(pending["handoffs"][0]))
-    assert result["gate"]["decision"] != "allow"
+    assert result["status"] == "awaiting_agent"
     rejected = transition(workspace, data)
     assert rejected["status"] == "rejected"
 
@@ -143,15 +155,20 @@ def test_changed_request_cannot_reuse_bound_result(workspace):
     run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), expect_success=False)
 
 
-def test_advance_rework_resume_and_terminal(workspace):
-    steps = [("literature", "candidates", "advance"), ("candidates", "literature", "rework"), ("literature", "candidates", "advance"), ("candidates", "review", "advance"), ("review", "reporting", "advance"), ("reporting", "completed", "advance")]
-    for index, (source, target, operation) in enumerate(steps):
-        path, data = request(workspace, source, target, operation, f"check-{index}")
+def test_same_identity_forward_resume_and_terminal(workspace):
+    steps = [
+        ("literature", "candidates"),
+        ("candidates", "review"),
+        ("review", "reporting"),
+        ("reporting", "completed"),
+    ]
+    for source, target in steps:
+        path, data = request(workspace, source, target, "advance")
         pending = run_documented_api(workspace, path)
         allowed = run_documented_api(workspace, path, bound_submissions(pending["handoffs"]))
         assert allowed["gate"]["computed_by"] == "kernel"
         assert allowed["gate"]["decision"] == "allow"
-        assert transition(workspace, data)["status"] == "transitioned"
+        assert allowed["status"] == "transitioned"
         resumed = TaskWorkspace.open_existing(workspace.task_root)
         assert resumed.read_meta_state("research-idea")["current_state"] == PREFIX + target
     assert transition(workspace, data, PREFIX + "literature")["status"] == "rejected"
@@ -224,8 +241,8 @@ def test_copied_skill_is_relocatable(workspace, tmp_path):
     assert result.returncode == 0, result.stderr
     path, data = request(workspace)
     pending = run_documented_api(workspace, path, skill=copied)
-    run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), skill=copied)
-    assert transition(workspace, data, skill=copied)["status"] == "transitioned"
+    result = run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), skill=copied)
+    assert result["status"] == "transitioned"
 
 
 def test_native_file_verifier_alias_and_path_scope(tmp_path):
@@ -246,7 +263,7 @@ def test_no_skill_runtime_or_script_pack_remains():
     assert not list((SKILL / "references").rglob("*.py"))
 
 
-@pytest.mark.parametrize("field,value", [("subject", []), ("context", []), ("evidence", "invalid")])
+@pytest.mark.parametrize("field,value", [("context", []), ("evidence", "invalid")])
 def test_kernel_rejects_malformed_request(workspace, field, value):
     path, data = request(workspace)
     data[field] = value

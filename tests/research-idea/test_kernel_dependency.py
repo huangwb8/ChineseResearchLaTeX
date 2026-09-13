@@ -17,12 +17,13 @@ def test_kernel_dependency_uses_minimum_version_range():
     config = load_config()
     assert config["dependencies"]["kernel"] == {
         "name": "bensz-skill-kernel",
-        "version": ">=1.0.3",
+        "version": ">=2.1.0",
     }
     assert "kernel" not in config["runtime"]
+    assert config["runtime"]["phase_entry"]["identity_mode"] == "state-entry-single-attempt-compat"
 
 
-def test_kernel_1_0_3_can_load_native_runtime_declaration():
+def test_kernel_can_load_native_runtime_declaration():
     declaration = SkillStateDeclaration.from_skill_root(SKILL_ROOT)
     assert declaration.initial_state == "bensz.research-ideation.literature"
     assert declaration.verifier_requirements() == (
