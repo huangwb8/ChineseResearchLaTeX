@@ -22,6 +22,14 @@ git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，�
 
 ---
 
+你根据这次调查，写3个文件名带  bac-v14 字符的优化计划， 分别用于优化 research-idea skill 、bsk 和 其它问题的计划。
+
+---
+
+请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v14.md 及对应的中间文件夹里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。
+
+---
+
 基于 docs/plans/2026-09-12-bac-v13-research-idea-阶段编排优化计划.md 优化 skill。
 
 ---
