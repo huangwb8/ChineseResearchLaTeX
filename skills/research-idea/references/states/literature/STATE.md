@@ -12,11 +12,11 @@ transitions: ["bensz.research-ideation.candidates"]
 
 ## 进入条件
 
-首次从内置 workspace.ready 用带非空 run/attempt 的 bsk state transition 进入，无需前置科研 Gate。State 图保留历史回退边，但当前 Kernel 2.1.0 兼容入口不执行重入；需要返工时停止并保留依据。
+首次只由 `start_workflow.py` 从 workspace.ready 进入，必须同时得到 v2 run/state visit/initial attempt 与运行快照；无需前置科研 Gate。开始文献业务前必须消费 literature action authorization。
 
 ## Agent 行动
 
-完成本阶段业务产物后，用 `phase_entry.py --action literature` 获取 BSK 原生 handoff；提交真实语义回传后由同一入口记录 Kernel Gate 并转移到 candidates。
+先用 `phase_entry.py --mode start --action literature` 授权业务；完成阶段产物后用 `--mode finish` 获取 BSK 原生 handoff，提交真实语义回传，由同一入口记录 Gate 并创建 candidates 的新 visit/attempt。
 
 调用主题提取、文献雷达、逐篇解读；沿用 SKILL.md 的分批并发上限，主 Agent 汇总失败与摘要/全文深度。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
@@ -26,7 +26,7 @@ theme、radar、interpretation、map；每个结论有论文锚点，未完成�
 
 ## 离开条件
 
-按 [运行指南](../../runtime-guide.md) 调用 required Verifier 并记录 Kernel Gate，再执行 bsk state transition。全部 required 语义组件完成且 pass 才能前进；fail/uncertain/unchecked/error/timed_out/skipped 均保留当前阶段。需要返工时对 rework 必要性单独核验，不要求有缺陷的研究内容通过前进判据。
+按 [运行指南](../../runtime-guide.md) 通过 finish 模式完成 required Verifier、Kernel Gate 与 transition。全部 required 组件 completed 且 pass 才能前进；其它结果保留当前阶段，证据变化时 supersede attempt 后重新授权和审查。
 
 ## 转移指引
 
@@ -34,8 +34,8 @@ theme、radar、interpretation、map；每个结论有论文锚点，未完成�
 
 ## 失败、恢复与回滚
 
-失败和等待保留最近阶段与非通过回执；通过 Kernel 读取领域快照和事件投影。当前兼容模式不支持新 attempt、失败重试或返工回退，旧回传不得复用；取消记录原因并停止，保持真实阶段。领域快照提交不完整时停止处理，不手改快照或重写旧事件。
+失败和等待保留当前 visit 与非通过回执；证据修复后在同一 visit 内 supersede attempt，旧授权、handoff 和 Gate 失效。legacy 身份、运行漂移或快照不完整时停止，不手改快照或旧事件。
 
 ## 边界与执行归属
 
-`phase_entry.py` 只收敛 BSK 调用并读取 Kernel 当前进入身份，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。完整 visit/attempt 轮换须等待 Kernel 原生接口。
+`start_workflow.py` 与 `phase_entry.py` 只消费 BSK 2.1.1 公开接口；Kernel 负责图、授权、Gate、绑定、visit/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。

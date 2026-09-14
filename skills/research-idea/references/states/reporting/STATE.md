@@ -12,11 +12,11 @@ transitions: ["bensz.research-ideation.completed", "bensz.research-ideation.revi
 
 ## 进入条件
 
-前向进入必须有当前 run/attempt 的 required Gate。State 图保留回退边，但当前 Kernel 2.1.0 兼容入口不执行 rework；Agent 核对 Gate 对应本次 source/target 和当前证据。
+前向进入必须由上一阶段同 source identity 的 required Gate 放行，并由 BSK 创建新的 visit/initial attempt；开始报告业务前消费 reporting action authorization。
 
 ## Agent 行动
 
-完成报告及格式检查后，用 `phase_entry.py --action reporting` 获取 BSK 原生 handoff；提交真实语义回传后由同一入口记录 Kernel Gate，仅转移返回 `status=transitioned` 才能交付完成。
+先用 `phase_entry.py --mode start --action reporting` 授权业务；完成报告及格式检查后用 `--mode finish` 获取 handoff 并记录 Gate，仅创建 completed 新 visit 且返回 `status=transitioned` 才能交付完成。
 
 使用 report-template；调用 validate_report 和阶段 Verifier，核对最终报告与证据的一致性，不在报告暴露内部路径。运行资料只写当前任务的 research-idea/input|output|log；正式报告按用户项目约定保存。
 
@@ -26,19 +26,19 @@ report；唯一最终 Markdown，结构通过且论文依据、查新、假设�
 
 ## 离开条件
 
-按 [运行指南](../../runtime-guide.md) 调用 required Verifier 并记录 Kernel Gate，再执行 bsk state transition。全部 required 语义组件完成且 pass 才能前进；fail/uncertain/unchecked/error/timed_out/skipped 均保留当前阶段。需要返工时对 rework 必要性单独核验，不要求有缺陷的研究内容通过前进判据。
+按 [运行指南](../../runtime-guide.md) 通过 finish 模式完成 required Verifier、Kernel Gate 与 transition。全部 required 组件 completed 且 pass 才前进；其它结果保留当前阶段，证据变化时 supersede attempt 后重审。
 
 ## 转移指引
 
 - `bensz.research-ideation.completed`：阶段证据充分且当前 Gate 通过时前进。
-- `bensz.research-ideation.review`：历史图边；当前兼容模式发现需补证据时标记下游待复核并停止，不执行回退。
-- `bensz.research-ideation.candidates`：历史图边；当前兼容模式发现需补证据时标记下游待复核并停止，不执行回退。
-- `bensz.research-ideation.literature`：历史图边；当前兼容模式发现需补证据时标记下游待复核并停止，不执行回退。
+- `bensz.research-ideation.review`：返工边；普通前向入口不执行，需由受控 BSK 路径建立新的目标 visit/attempt。
+- `bensz.research-ideation.candidates`：返工边；普通前向入口不执行，需由受控 BSK 路径建立新的目标 visit/attempt。
+- `bensz.research-ideation.literature`：返工边；普通前向入口不执行，需由受控 BSK 路径建立新的目标 visit/attempt。
 
 ## 失败、恢复与回滚
 
-失败和等待保留最近阶段与非通过回执；通过 Kernel 读取领域快照和事件投影。当前兼容模式不支持新 attempt、失败重试或返工回退，旧回传不得复用；取消记录原因并停止，保持真实阶段。领域快照提交不完整时停止处理，不手改快照或重写旧事件。
+失败和等待保留当前 visit 与非通过回执；同 visit 内可 supersede attempt，旧授权、handoff、Gate 和完成索引不可复用。领域快照提交不完整时停止，不手改快照或旧事件。
 
 ## 边界与执行归属
 
-`phase_entry.py` 只收敛 BSK 调用并读取 Kernel 当前进入身份，不维护状态或事件；Kernel 负责图、Gate、绑定、run/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。完整 visit/attempt 轮换须等待 Kernel 原生接口。
+`phase_entry.py` 只消费 BSK 公开接口；Kernel 负责图、授权、Gate、绑定、visit/attempt、事件与状态持久化，Agent 负责报告一致性、科学语义和 Verifier 回传。

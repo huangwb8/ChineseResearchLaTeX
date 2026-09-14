@@ -20,15 +20,15 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 ### BSK 阶段入口
 
-为降低 Agent 遗漏控制步骤的概率，四条前向阶段边统一通过 `scripts/phase_entry.py` 执行，action 分别为 `literature`、`candidates`、`review`、`reporting`。脚本从 BSK 事件投影取得当前 State 的权威进入身份，从 Skill 声明获取全部 required Verifier，构造固定 source/target 的请求并返回 BSK 原生 handoff；Agent 完成真实证据审查并提供绑定回传后，脚本由 Kernel 计算 Gate，仅在 `allow` 时调用 BSK transition，并复核目标 State 已真实进入。
+新任务只通过 `scripts/start_workflow.py` 启动：一次完成环境与 capability 预检、工作区准备、v2 literature 身份、研究参数和运行快照。四个阶段开始前用 `scripts/phase_entry.py --mode start` 获取并消费 State-bound action authorization；阶段完成后用 `--mode finish` 获取 required Verifier handoff、记录 Kernel Gate并创建目标 State 的新 visit/initial attempt。
 
-该入口只是 BSK 的领域适配器：不创建私有 State、Gate、attempt 生命周期、handoff/provenance 协议或事件账本，也不声称能够阻止任意文件写入。`run_id/attempt_id`、Verifier 绑定、Gate、transition 和事件均以 BSK 为唯一事实源。Kernel 2.1.0 尚无 State visit/attempt 轮换接口，因此当前仅支持初始化时登记同一非空 run/attempt、随后沿四条前向边直线推进；轮换 attempt、失败后重试或回退必须 fail-closed。若 Agent 绕过入口，`check_completion.py` 仍须依据 BSK 状态链和完成证据拒绝不完整运行。
+两个入口只是 BSK 2.1.1 的领域适配器，不创建私有 State、Gate、attempt、handoff 或事件账本，也不声称阻止任意外部写文件。Verifier 失败或证据变化时用 `phase_entry.py --mode retry` 在当前 visit 内 supersede attempt；旧 handoff、Gate 和授权不得复用。若 Agent 绕过入口，`check_completion.py` 依据 v2 source/target identity 链拒绝不完整运行。
 
 ### 分层完成与降级语义
 
 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个独立判断：文件存在不等于阶段执行过，阶段执行过不等于证据深度足够，证据足够也不自动证明科学结论。`recommended` 仅表示当前范围内的有界推荐；依赖故障、全文不足或等价性未核验时使用 `degraded`，已有部分证据但仍可指导下一步时使用 `bounded_recommendation`，均不可进入 `completed`。只有四层均为 true、required Verifier 通过且 `check_completion.py` 通过，才能交付 `completed`。
 
-新运行的 `completion-evidence.json` 可声明 `schema: research-idea-completion-v2`，并必须绑定 `run_id`、`attempt_id`、`authoritative_attempt`、四层状态及每项证据的 SHA-256/大小/修改时间快照。旧回传不可复用；快照、manifest、Gate 或来源变化后，只有 Kernel 提供原生 visit/attempt 轮换接口时才能在原任务建立新 attempt，当前兼容模式停止并保留恢复位置。旧索引保持只读兼容，但不能用于认证新完成。
+新运行的 `completion-evidence.json` 使用 `schema: research-idea-completion-v4`，顶层 completed 身份从 BSK 当前快照派生；独立 reviewer 还必须有 thread/runner completed 回执。旧回传不可跨 attempt 复用，旧索引保持只读，不能用于认证新完成。
 
 ### 输入
 
@@ -42,7 +42,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 #### 初始化与资料归纳
 
-1. 先读 [运行说明](references/runtime-guide.md)，核对 `config.yaml.dependencies.kernel` 的环境要求。直接用 `bsk workspace init --task-root` 复用本轮已声明任务目录，再用 `scripts/init_workspace.py` 初始化研究参数和候选空模板，并携带同一非空 run/attempt 执行 `bsk state transition --skill-root` 进入 literature；后续四条前向边统一调用 `phase_entry.py`，由脚本读取该进入身份。已有任务按运行说明读取 Kernel 快照与来源恢复。
+1. 先读 [运行说明](references/runtime-guide.md)，锁定本轮任务目录后只调用 `scripts/start_workflow.py`。确认返回 `status=initialized` 及非空 run/visit/attempt，再用 `phase_entry.py --mode start --action literature` 授权文献阶段；已有任务按运行快照、Kernel 投影和 active attempt 恢复。
 2. 读取资料，在现有输入摘要中说明目标研究贡献、服务的问题或决策，以及时间与资源约束。资源区分已具备、明确没有、尚不清楚；源码没有某能力不等于团队无法建设。目标未说明时给出暂定解释，只有不同解释会改变主线选择时才澄清。只保存脱敏摘要和必要引用。
 3. 用 `research-topic-extractor` 生成主题、5-10 个英文关键词、2-5 个核心问题；保存为本 Skill 的 `input/theme.json`（引用主题提取 Skill 的原始产物），字段为 `topic`、`keywords`、`core_questions`。
 
@@ -87,7 +87,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 #### 多轮独立审查
 
 用 `parallel-vibe` 执行 config 约定的外层串行轮数与每轮独立人数，默认均为 3；不得用一次调用冒充多轮。每轮使用上一轮事实修正和汇总，但不要求接受上一轮推荐。具体任务见 [审查参考](references/agent-review-prompt.md)：
-每个 reviewer 必须保存真实 `thread_id`、模型、输入快照哈希、启动/结束时间、可见上一轮结果标记和输出哈希；仅角色化草稿标记为 `synthetic_review`，不计入 required independent review。汇总必须覆盖全部原始 reviewer。
+每个 reviewer 必须保存真实 `thread_id`、`thread_status: completed`、`runner_status: completed`、模型、输入快照哈希、启动/结束时间、可见上一轮结果标记和输出哈希；只有 RESULT 而没有完成回执时不计入 required independent review。仅角色化草稿标记为 `synthetic_review`。汇总必须覆盖全部原始 reviewer。
 - 第一轮挑战选题价值：成功是否值得做、平凡解释、最强替代方向。
 - 第二轮检查解释与辨别能力：定义性假设、关键反例、强基线、实质重构。
 - 第三轮重新选择与迁移检查：最强备选、选择敏感性、外推边界、最终去留。
@@ -156,7 +156,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 所有中间文件、查新记录、并行审查产物、草稿和日志都必须保存在隐藏工作区内；除最终 Markdown 外，不要写到项目根目录或 `docs/ideas/`。
 - 用 `--task-root` 显式复用本轮任务根，必须位于项目内 `.bensz-api/task-*`；旧 `--workspace-dir` 嵌套布局只保留历史文件，不自动迁移。输出目录不得位于隐藏工作区内。
 
-初始化分为 bsk 工作区准备和领域资料初始化，命令与参数见 [运行说明](references/runtime-guide.md#初始化与阶段)。脚本只生成输入参数、候选空模板和正式报告路径，不管理状态或事件；用户指定审查轮数和人数时保留其设置。
+初始化命令见 [运行说明](references/runtime-guide.md#原子启动)。`start_workflow.py` 调用 BSK 建立权威初始身份，再生成输入参数、候选空模板、正式报告路径和运行快照；用户指定审查轮数和人数时保留其设置。
 
 ### 校验
 
@@ -174,17 +174,17 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 
 ### 失败与恢复
 
-保留错误证据和已完成产物；按运行说明读取 Kernel 领域快照、事件和原参数恢复。当前兼容模式只允许未产生拒绝 Gate、证据未变化的同身份续跑；证据修复、契约变化、失败后重试或返工回退均停止推进，等待 Kernel 原生 visit/attempt 轮换接口或建立新任务重新核验。取消记录原因并停止；Kernel 缺失或不可用时保留草稿与缺口，不宣称阶段通过。
+保留错误证据和已完成产物；按运行说明读取运行快照、Kernel 领域快照、事件和原参数恢复。证据修复或失败后重试使用 `--mode retry` supersede 当前 attempt，再重新授权和审查；Skill/解释器漂移、legacy 身份、快照损坏或 transition 失败则停止推进。取消时记录原因；Kernel 缺失或不可用时保留草稿与缺口，不宣称阶段通过。
 
 ## 控制
 
 使用前读取 [运行契约与命令](references/runtime-guide.md)。`runtime` 声明 State 与 required Verifier；[State 索引](references/states/index.json) 与 [Verifier 索引](references/verifiers/index.json) 维护各自身份和版本。
 
 - 五个 State 只定义阶段、图边和 bsk 原生不变量；阶段就绪 Verifier 按 [阶段契约](references/verifiers/stage-readiness/VERIFIER.md) 判断下一阶段是否就绪，科学假设价值 Verifier 按 [价值契约](references/verifiers/hypothesis-merit/VERIFIER.md) 判断拟推荐或拟淘汰结论是否经受创新性、非平凡性和颠覆潜力审问。
-- 主 Agent 实际读取来源，通过 `phase_entry.py` 获取全部 BSK 原生 required handoff、回传判断并由 Kernel 批量记录 Gate；入口使用相同 run/attempt 调用 BSK transition，并检查 JSON status，而非只看退出码。
+- 主 Agent 在每阶段开始前通过 `scripts/phase_entry.py --mode start` 消费与当前 visit/active attempt 绑定的 action authorization；完成真实来源读取后以 `--mode finish` 获取全部 required handoff、回传判断并由 Kernel 批量记录 Gate。入口使用 source identity 离站，为目标 State 创建新 visit/attempt，并检查 JSON status。
 - 全部 required 结果完成且 pass 才允许对应转移；fail/uncertain/unchecked/error/timed_out/skipped 均不前进。科学充分性、角色覆盖、轮次独立性、假设价值及源/目标匹配由 Agent 判断，报告格式由 validate_report 检查。
 - bsk 负责协议、结果绑定、Gate、事件和状态；`phase_entry.py` 只编排这些公开能力，不增加私有运行时、锁、快照或重放引擎。可按需使用内置文件/路径/引用 Verifier，不能替代科研判断。
-- Kernel 不自动发现全部证据文件变化。Agent 在转移前核对最新来源；变化后旧回传不能重新绑定，当前兼容模式须停止而不能自行轮换 attempt。人工复核提供新增证据，不提供强制通过开关。
+- Kernel 不自动解释全部证据文件变化。Agent 在转移前核对最新来源；变化后旧回传不能重新绑定，须以 retry 模式创建新 active attempt。人工复核提供新增证据，不提供强制通过开关。
 
 ## 约束
 

@@ -29,7 +29,7 @@ operation=advance 时按目标判断：
 
 ## Output and verdicts
 
-使用 Kernel component-result 协议，从 handoff 复制 pack/component/contract/plan/run/attempt/hash 绑定字段，或在同一可信执行会话使用 handoff.bind_result；不能将旧审查重新绑定给新 handoff。executor 记录脱敏角色与实际模型。结果含 execution_status、verdict、evidence_refs，以及 facts.summary、facts.confidence（0..1）、facts.uncertainties；findings 说明缺陷和恢复动作。置信度不是通过阈值。
+使用 Kernel component-result 协议，从 handoff 复制 pack/component/contract/plan/run/state visit/attempt/hash 绑定字段，或在同一可信执行会话使用 handoff.bind_result；不能将旧审查重新绑定给新 handoff。executor 记录脱敏角色与实际模型。结果含 execution_status、verdict、evidence_refs，以及 facts.summary、facts.confidence（0..1）、facts.uncertainties；findings 说明缺陷和恢复动作。置信度不是通过阈值。
 
 - pass：所有命题有实证支撑、引用具体 evidence_refs、无未解决不确定性。
 - fail：结构缺失、来源矛盾、科学命题不充分或实质改写未重新查新。

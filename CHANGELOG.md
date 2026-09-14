@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+- `research-idea`：实施 bac-v15 原子初始化与阶段门控计划，版本推进至 v0.10.0、最低 Kernel 提升为 2.1.1。新增单一原子启动入口和运行快照，阶段入口接入 State-bound action authorization、每 State 新 visit/attempt 及 attempt supersede；完成检查按 v2 身份链收敛，并要求 completion-v4 的 completed 权威身份与独立审查 thread/runner 完成回执。旧 legacy 现场保持只读，不能补写获得新完成资格。
+
+- 新增两份 `bac-v15` 优化计划：分别针对 `research-idea` 的原子初始化、阶段开始授权、BSK 2.1.1 原生身份消费与运行版本绑定，以及 BSK 的强身份声明、原子 State 初始化、legacy 读写分离和运行契约快照；计划依据 v12–v15 实战事件与安装时间调查形成，本次不实施源码修改。
+
 - `research-idea`：依据 bac-v14 阶段身份闭环计划修复 Kernel 2.1.0 下的直线控制链；首次 State 进入必须带非空 run/attempt，阶段入口从 BSK 投影读取权威进入身份、按 action 隔离 Gate 幂等键并复核目标快照，完成检查可定位首个身份/转移断点。Kernel 原生 visit/attempt 轮换接口落地前，失败重试、换 attempt、回退与无身份旧现场保持 fail-closed；Skill 版本推进至 v0.9.1，最低 Kernel 调整为 2.1.0。
 
 - 新增三份 `bac-v14` 优化计划：分别针对 `research-idea` 阶段身份闭环、BSK State visit/attempt 身份模型，以及运行环境一致性、诊断与验收；计划基于 v14 实战中“内容链诚实降级但控制链停在 literature”、Kernel 2.1.0 三项身份回归失败和依赖检查误报等证据，本次不实施源码修复。

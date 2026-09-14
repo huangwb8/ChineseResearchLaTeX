@@ -53,11 +53,11 @@
 
 以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由两个 required 自然语言 Verifier 分别核验阶段证据与科学假设价值。Agent 判断科研充分性、创新性和推荐价值，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
 
-需要 Python 3.11+ 与满足 `config.yaml.dependencies.kernel` 最低版本要求的 Kernel，并确保 `python` 与 `bsk` 属于同一环境。先用 `bsk workspace init --task-root` 准备任务工作区，领域初始化脚本只生成研究参数与候选空模板，再携带同一非空 run/attempt 用 BSK 进入 literature。后续四条前向边统一由 `scripts/phase_entry.py` 调用 BSK：入口从 Kernel 投影读取当前 State 的进入身份，第一次返回原生 Verifier handoff，Agent 提交绑定结果后再次调用，只有 Kernel Gate 为 allow 且目标 State 确实进入才算推进。
+需要 Python 3.11+、BSK 2.1.1 能力集，并确保 `python` 与 `bsk` 属于同一环境。新任务只调用 `scripts/start_workflow.py`，由它建立带 run/visit/attempt 的 literature 身份、领域参数和运行快照。每阶段开始前调用 `scripts/phase_entry.py --mode start` 消费 State-bound action authorization，结束后用 `--mode finish` 完成 required Verifier、Kernel Gate 和新目标 visit 转移。
 
-本地 Verifier 由这个轻量入口按 [运行操作指南](references/runtime-guide.md) 调用；State、run/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。入口不建立私有运行时或额外 provenance 协议。Kernel 2.1.0 尚无 State visit/attempt 轮换接口，因此当前兼容路径只支持同一身份的无重试直线推进；错身份、失败后重试、证据变化和回退会停止并保留现场，不会伪装成完整闭环。
+State、run/visit/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。Verifier 失败或证据变化时用 `--mode retry` 在当前 visit 内 supersede attempt，旧授权、handoff 和 Gate 自动失效；legacy 身份和运行版本漂移保持只读并 fail-closed。
 
-最终推荐或无合格候选结论还要通过完成收敛检查：任务工作区需保存 `research-idea/output/completion-evidence.json`，列出依赖 Skill 的非空产物、每轮独立审查者结果、轮次汇总和总综合。新索引使用 `schema: research-idea-completion-v2` 时，还要记录四层完成状态、run/attempt、authoritative attempt 以及来源 SHA-256/大小/修改时间快照；`check_completion.py` 会拒绝 Gate 后变更、跨 attempt 复用和 synthetic review。缺少其中任一项时，报告可以作为草案或阶段性评估交付，但不能说成完整 completed。
+最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v4`，completed 身份来自 BSK 当前快照；每轮 reviewer 除结果和哈希外，还必须有 thread/runner completed 回执。`check_completion.py` 会拒绝缺授权、Gate 后变更、跨 attempt 复用、synthetic review 和不完整执行 provenance。
 
 ## 使用示例
 

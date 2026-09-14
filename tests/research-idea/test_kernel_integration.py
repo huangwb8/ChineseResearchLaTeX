@@ -15,10 +15,11 @@ from bensz_skill_kernel.workspace import TaskWorkspace
 
 ROOT = Path(__file__).resolve().parents[2]
 SKILL = ROOT / "skills/research-idea"
+START = SKILL / "scripts/start_workflow.py"
 PREFIX = "bensz.research-ideation."
 VERIFIER = "bensz.research.stage-readiness"
 MERIT_VERIFIER = "bensz.research.hypothesis-merit"
-BINDINGS = ("pack_id", "pack_version", "package_kind", "component_id", "component_type", "contract_hash", "component_hash", "plan_hash", "run_id", "attempt_id", "handoff_hash")
+BINDINGS = ("pack_id", "pack_version", "package_kind", "component_id", "component_type", "contract_hash", "component_hash", "plan_hash", "run_id", "state_visit_id", "attempt_id", "handoff_hash")
 RUN_ID = "fixture-run"
 ATTEMPT_ID = "fixture-attempt"
 
@@ -32,21 +33,33 @@ def bsk(*args, cwd=None):
 @pytest.fixture
 def workspace(tmp_path):
     task = tmp_path / ".bensz-api/task-fixture"
-    bsk("workspace", "init", tmp_path, "--task-root", task)
-    result = bsk(
-        "state", "transition", task, "research-idea", PREFIX + "literature",
-        "--skill-root", SKILL, "--run-id", RUN_ID, "--attempt-id", ATTEMPT_ID,
+    result = subprocess.run(
+        [
+            sys.executable, str(START), "--project-root", str(tmp_path),
+            "--task-root", ".bensz-api/task-fixture", "--input-label", "fixture",
+            "--repo-name", "fixture", "--pr-name", "manual", "--run-id", RUN_ID,
+            "--initial-attempt-id", ATTEMPT_ID, "--skip-dependency-check",
+        ], capture_output=True, text=True,
     )
-    assert result["status"] == "transitioned"
+    assert result.returncode == 0, result.stdout + result.stderr
     return TaskWorkspace.open_existing(task)
 
 
-def request(workspace, source="literature", target="candidates", operation="advance", attempt=ATTEMPT_ID):
+@pytest.fixture
+def bare_workspace(tmp_path):
+    task = tmp_path / ".bensz-api/task-bare"
+    bsk("workspace", "init", tmp_path, "--task-root", task)
+    return TaskWorkspace.open_existing(task)
+
+
+def request(workspace, source="literature", target="candidates", operation="advance", attempt=None):
+    state = workspace.read_meta_state("research-idea")
+    attempt = attempt or state["active_attempt_id"]
     path = workspace.paths("research-idea").path("input") / f"{attempt}.json"
     evidence_path = path.with_suffix(".md")
     evidence_path.write_text("合成证据，只验证接口与绑定。", encoding="utf-8")
     data = {
-        "run_id": RUN_ID, "attempt_id": attempt,
+        "run_id": RUN_ID, "state_visit_id": state["state_visit_id"], "attempt_id": attempt,
         "subject": {"operation": operation, "source": PREFIX + source, "target": PREFIX + target},
         "context": {"rounds": 1, "agents": 1, "sources": {"fixture": {"role": "map", "path": str(evidence_path.relative_to(workspace.task_root.parent.parent))}}},
         "evidence": [{"ref": "fixture", "summary": "合成协议材料", "source_type": "test-only", "content_hash": "sha256:" + hashlib.sha256(evidence_path.read_bytes()).hexdigest()}],
@@ -57,13 +70,22 @@ def request(workspace, source="literature", target="candidates", operation="adva
 
 def run_documented_api(workspace, path, submission=None, skill=SKILL, expect_success=True):
     data = json.loads(path.read_text())
+    start_command = [
+        sys.executable, str(skill / "scripts/phase_entry.py"),
+        "--project-root", str(workspace.task_root.parent.parent),
+        "--task-root", str(workspace.task_root), "--skill-root", str(skill),
+        "--mode", "start", "--action", data["subject"]["source"].rsplit(".", 1)[-1],
+    ]
+    started = subprocess.run(start_command, capture_output=True, text=True)
+    if started.returncode != 0:
+        return started if not expect_success else json.loads(started.stdout)
     command = [
         sys.executable,
         str(skill / "scripts/phase_entry.py"),
         "--project-root", str(workspace.task_root.parent.parent),
         "--task-root", str(workspace.task_root),
         "--skill-root", str(skill),
-        "--action", data["subject"]["source"].rsplit(".", 1)[-1],
+        "--mode", "finish", "--action", data["subject"]["source"].rsplit(".", 1)[-1],
         "--input", str(path),
     ]
     if submission is not None:
@@ -97,13 +119,19 @@ def bound_submissions(handoffs, verdict="pass"):
 
 
 def transition(workspace, data, target=None, skill=SKILL):
-    return bsk("state", "transition", workspace.task_root, "research-idea", target or data["subject"]["target"], "--skill-root", skill, "--run-id", data["run_id"], "--attempt-id", data["attempt_id"])
+    state = workspace.read_meta_state("research-idea")
+    return bsk(
+        "state", "transition", workspace.task_root, "research-idea",
+        target or data["subject"]["target"], "--skill-root", skill,
+        "--run-id", state["run_id"], "--state-visit-id", state["state_visit_id"],
+        "--attempt-id", state["active_attempt_id"], "--target-attempt-id", "bypass-target",
+    )
 
 
 def test_local_pack_and_initial_state_are_discoverable(workspace):
     declaration = SkillStateDeclaration.from_skill_root(SKILL)
     assert declaration.initial_state == PREFIX + "literature"
-    assert len(declaration.states) == 5
+    assert len(declaration.states) == 6
     assert len(declaration.verifier_requirements()) == 2
     registry = FilesystemVerifierRegistry(SKILL / "references/verifiers")
     stage_definition = registry.resolve(VERIFIER)
@@ -155,7 +183,7 @@ def test_changed_request_cannot_reuse_bound_result(workspace):
     run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), expect_success=False)
 
 
-def test_same_identity_forward_resume_and_terminal(workspace):
+def test_new_visit_identity_forward_resume_and_terminal(workspace):
     steps = [
         ("literature", "candidates"),
         ("candidates", "review"),
@@ -171,6 +199,7 @@ def test_same_identity_forward_resume_and_terminal(workspace):
         assert allowed["status"] == "transitioned"
         resumed = TaskWorkspace.open_existing(workspace.task_root)
         assert resumed.read_meta_state("research-idea")["current_state"] == PREFIX + target
+        assert resumed.read_meta_state("research-idea")["state_visit_id"] != data["state_visit_id"]
     assert transition(workspace, data, PREFIX + "literature")["status"] == "rejected"
     bsk("status", workspace.events)
     bsk("rebuild", workspace.events)
@@ -196,8 +225,9 @@ def init_data(project, task, skill=SKILL, *extra):
     return subprocess.run([sys.executable, str(skill / "scripts/init_workspace.py"), "--cwd", str(project), "--task-root", str(task.relative_to(project)), "--input-label", "fixture", "--repo-name", "fixture", "--pr-name", "manual", "--skip-dependency-check", *extra], capture_output=True, text=True)
 
 
-def test_initializer_only_writes_research_data(workspace):
-    before = workspace.events.read_bytes()
+def test_initializer_only_writes_research_data(bare_workspace):
+    workspace = bare_workspace
+    before = workspace.events.read_bytes() if workspace.events.exists() else b""
     project = workspace.task_root.parent.parent
     result = init_data(project, workspace.task_root, SKILL, "--rounds", "2", "--agents", "1")
     assert result.returncode == 0, result.stderr
@@ -208,11 +238,14 @@ def test_initializer_only_writes_research_data(workspace):
     schema = json.loads((scoped.path("output") / "candidate-schema.json").read_text())
     assert schema["candidates"] == [] and schema["candidate_example"]
     assert schema["outcome"] == "insufficient"
-    assert workspace.events.read_bytes() == before
+    new_events = (workspace.events.read_bytes() if workspace.events.exists() else b"")[len(before):]
+    assert b"verification.result" not in new_events
+    assert b"verification.gate" not in new_events
     assert init_data(project, workspace.task_root).returncode != 0
 
 
-def test_initializer_requires_existing_workspace_and_rejects_invalid_settings(tmp_path, workspace):
+def test_initializer_requires_existing_workspace_and_rejects_invalid_settings(tmp_path, bare_workspace):
+    workspace = bare_workspace
     missing = tmp_path / ".bensz-api/task-missing"
     assert init_data(tmp_path, missing).returncode != 0
     assert not missing.exists()
@@ -221,7 +254,8 @@ def test_initializer_requires_existing_workspace_and_rejects_invalid_settings(tm
     assert not (workspace.paths("research-idea").path("input") / "manifest.json").exists()
 
 
-def test_initializer_rejects_symlink_and_hidden_output(workspace, tmp_path):
+def test_initializer_rejects_symlink_and_hidden_output(bare_workspace, tmp_path):
+    workspace = bare_workspace
     project = workspace.task_root.parent.parent
     assert init_data(project, workspace.task_root, SKILL, "--output-dir", ".hidden").returncode != 0
     input_dir = workspace.paths("research-idea").path("input")
@@ -237,8 +271,6 @@ def test_copied_skill_is_relocatable(workspace, tmp_path):
     shutil.copytree(SKILL, copied, ignore=shutil.ignore_patterns("__pycache__"))
     declaration = SkillStateDeclaration.from_skill_root(copied)
     assert declaration.initial_state == PREFIX + "literature"
-    result = init_data(workspace.task_root.parent.parent, workspace.task_root, copied)
-    assert result.returncode == 0, result.stderr
     path, data = request(workspace)
     pending = run_documented_api(workspace, path, skill=copied)
     result = run_documented_api(workspace, path, bound_submissions(pending["handoffs"]), skill=copied)
@@ -259,6 +291,7 @@ def test_no_skill_runtime_or_script_pack_remains():
         "validate_report.py",
         "check_dependencies.py",
         "phase_entry.py",
+        "start_workflow.py",
     }
     assert not list((SKILL / "references").rglob("*.py"))
 
@@ -270,4 +303,6 @@ def test_kernel_rejects_malformed_request(workspace, field, value):
     path.write_text(json.dumps(data))
     before = workspace.events.read_bytes()
     run_documented_api(workspace, path, expect_success=False)
-    assert workspace.events.read_bytes() == before
+    new_events = workspace.events.read_bytes()[len(before):]
+    assert b"verification.result" not in new_events
+    assert b"verification.gate" not in new_events

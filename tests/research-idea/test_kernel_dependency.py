@@ -17,10 +17,12 @@ def test_kernel_dependency_uses_minimum_version_range():
     config = load_config()
     assert config["dependencies"]["kernel"] == {
         "name": "bensz-skill-kernel",
-        "version": ">=2.1.0",
+        "version": ">=2.1.1",
     }
-    assert "kernel" not in config["runtime"]
-    assert config["runtime"]["phase_entry"]["identity_mode"] == "state-entry-single-attempt-compat"
+    assert config["runtime"]["kernel"]["name"] == "bensz-skill-kernel"
+    assert config["runtime"]["kernel"]["version"] == "2.1.1"
+    assert "state_bound_action_authorization" in config["runtime"]["required_capabilities"]
+    assert config["runtime"]["phase_entry"]["identity_mode"] == "state-visit-v2"
 
 
 def test_kernel_can_load_native_runtime_declaration():

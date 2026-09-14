@@ -159,7 +159,7 @@ def record_status(record: Any) -> str | None:
 
 def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dict[str, Any], report: dict[str, Any], errors: list[str], *, run_id: str | None = None, attempt_id: str | None = None) -> None:
     dependencies = index.get("dependencies")
-    strict = index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3"}
+    strict = index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3", "research-idea-completion-v4"}
     if not isinstance(dependencies, dict):
         errors.append("完成证据索引缺少 dependencies 对象")
         dependencies = {}
@@ -243,6 +243,9 @@ def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dic
                             errors.append(f"第 {round_no} 轮 reviewer {reviewer_no} 缺少 {field}")
                     if reviewer.get("review_type") == "synthetic_review" or reviewer.get("independent") is False:
                         errors.append(f"第 {round_no} 轮 reviewer {reviewer_no} 不能计入独立审查")
+                    for field in ("thread_status", "runner_status"):
+                        if reviewer.get(field) != "completed":
+                            errors.append(f"第 {round_no} 轮 reviewer {reviewer_no} {field} 未完成")
                     check_binding(reviewer, run_id, attempt_id, errors, f"第 {round_no} 轮 reviewer {reviewer_no}")
             require_nonempty_file(task_root, item.get("summary_path"), errors, f"第 {round_no} 轮汇总")
         synthesis = require_nonempty_file(task_root, review.get("synthesis_path"), errors, "独立审查总综合")
@@ -256,7 +259,7 @@ def check_completion_layers(index: dict[str, Any], report: dict[str, Any], error
     """新契约把流程完成与证据/结论资格拆成四层。"""
     layers = index.get("completion_layers")
     if layers is None:
-        if index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3"}:
+        if index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3", "research-idea-completion-v4"}:
             errors.append("新完成证据索引缺少 completion_layers")
         return
     if not isinstance(layers, dict):
@@ -273,7 +276,7 @@ def check_completion_layers(index: dict[str, Any], report: dict[str, Any], error
 def first_control_break(
     events: list[dict[str, Any]], current_state: Any, required_verifiers: list[str]
 ) -> dict[str, Any] | None:
-    """定位 State 身份链上第一个可复核断点，不改写历史事件。"""
+    """按 BSK v2 source/target identity 定位首个控制断点。"""
     transitions = [
         (position, event)
         for position, event in enumerate(events)
@@ -287,34 +290,33 @@ def first_control_break(
             "expected_target": PREFIX + "literature",
         }
 
+    if not isinstance(transitions[0][1].get("payload", {}).get("target_identity"), dict):
+        return {
+            "code": "legacy_state_identity",
+            "event_id": transitions[0][1].get("event_id"),
+            "state": transitions[0][1].get("payload", {}).get("to_state"),
+        }
+
     expected_source = "bensz.workspace.ready"
-    first_identity: tuple[Any, Any] | None = None
+    run_id: str | None = None
+    active_identity: dict[str, Any] | None = None
+    previous_position = -1
     for transition_index, (position, event) in enumerate(transitions):
         payload = event.get("payload", {})
-        identity = (event.get("run_id"), event.get("attempt_id"))
-        if first_identity is None:
-            first_identity = identity
-            if (
-                not isinstance(identity[0], str)
-                or not identity[0]
-                or not isinstance(identity[1], str)
-                or not identity[1]
-                or identity[1] == "default"
-            ):
-                return {
-                    "code": "state_entry_identity_missing",
-                    "event_id": event.get("event_id"),
-                    "state": payload.get("to_state"),
-                }
-        elif identity != first_identity:
+        source_identity = payload.get("source_identity")
+        target_identity = payload.get("target_identity")
+        if not isinstance(target_identity, dict) or not all(
+            isinstance(target_identity.get(key), str) and target_identity[key]
+            for key in ("run_id", "state_visit_id", "attempt_id")
+        ):
             return {
-                "code": "state_entry_identity_changed",
+                "code": "target_state_identity_missing",
                 "event_id": event.get("event_id"),
-                "expected_run_id": first_identity[0],
-                "expected_attempt_id": first_identity[1],
-                "actual_run_id": identity[0],
-                "actual_attempt_id": identity[1],
             }
+        if run_id is None:
+            run_id = target_identity["run_id"]
+        elif target_identity["run_id"] != run_id:
+            return {"code": "run_identity_changed", "event_id": event.get("event_id")}
         if payload.get("from_state") != expected_source:
             return {
                 "code": "state_chain_discontinuous",
@@ -322,15 +324,48 @@ def first_control_break(
                 "expected_from": expected_source,
                 "actual_from": payload.get("from_state"),
             }
-        if transition_index > 0:
-            previous_position = transitions[transition_index - 1][0]
+        if transition_index == 0:
+            if source_identity is not None:
+                return {"code": "initial_source_identity_unexpected", "event_id": event.get("event_id")}
+        else:
+            segment = events[previous_position + 1:position]
+            for item in segment:
+                if item.get("type") == "state.attempt.started" and item.get("run_id") == run_id:
+                    active_identity = {
+                        "run_id": item.get("run_id"),
+                        "state_visit_id": item.get("state_visit_id"),
+                        "attempt_id": item.get("attempt_id"),
+                    }
+            if source_identity != active_identity:
+                return {
+                    "code": "source_state_identity_mismatch",
+                    "event_id": event.get("event_id"),
+                    "expected_source_identity": active_identity,
+                    "actual_source_identity": source_identity,
+                }
+            action = str(expected_source).rsplit(".", 1)[-1]
+            consumed = [
+                item for item in segment
+                if item.get("type") == "action.authorization.consumed"
+                and item.get("payload", {}).get("skill") == "research-idea"
+                and item.get("payload", {}).get("action") == action
+                and (item.get("run_id"), item.get("state_visit_id"), item.get("attempt_id"))
+                == (active_identity["run_id"], active_identity["state_visit_id"], active_identity["attempt_id"])
+            ]
+            if not consumed:
+                return {
+                    "code": "action_authorization_missing",
+                    "event_id": event.get("event_id"),
+                    "action": action,
+                }
             segment_gates = [
-                item for item in events[previous_position + 1:position]
+                item for item in segment
                 if item.get("type") == "verification.gate"
             ]
             matching_gates = [
                 item for item in segment_gates
-                if (item.get("run_id"), item.get("attempt_id")) == identity
+                if (item.get("run_id"), item.get("state_visit_id"), item.get("attempt_id"))
+                == (active_identity["run_id"], active_identity["state_visit_id"], active_identity["attempt_id"])
             ]
             if not matching_gates:
                 return {
@@ -356,6 +391,10 @@ def first_control_break(
                     "event_id": event.get("event_id"),
                     "missing": missing_refs,
                 }
+        if (event.get("run_id"), event.get("state_visit_id"), event.get("attempt_id")) != (
+            target_identity["run_id"], target_identity["state_visit_id"], target_identity["attempt_id"]
+        ):
+            return {"code": "transition_target_identity_mismatch", "event_id": event.get("event_id")}
         expected_target = FORWARD_TARGETS.get(expected_source)
         if payload.get("to_state") != expected_target:
             return {
@@ -366,6 +405,8 @@ def first_control_break(
                 "expected_target": expected_target,
             }
         expected_source = str(payload.get("to_state"))
+        active_identity = target_identity
+        previous_position = position
 
     entry_position, entry = transitions[-1]
     entry_state = entry.get("payload", {}).get("to_state")
@@ -379,22 +420,28 @@ def first_control_break(
     if current_state == COMPLETED:
         return None
 
-    entry_identity = (entry.get("run_id"), entry.get("attempt_id"))
+    entry_identity = (
+        active_identity.get("run_id") if active_identity else None,
+        active_identity.get("state_visit_id") if active_identity else None,
+        active_identity.get("attempt_id") if active_identity else None,
+    )
     gates = [
         event for event in events[entry_position + 1:]
         if event.get("type") == "verification.gate"
     ]
     for gate in gates:
-        gate_identity = (gate.get("run_id"), gate.get("attempt_id"))
+        gate_identity = (gate.get("run_id"), gate.get("state_visit_id"), gate.get("attempt_id"))
         if gate_identity != entry_identity:
             return {
                 "code": "state_entry_identity_mismatch",
                 "entry_event_id": entry.get("event_id"),
                 "gate_event_id": gate.get("event_id"),
                 "entry_run_id": entry_identity[0],
-                "entry_attempt_id": entry_identity[1],
+                "entry_state_visit_id": entry_identity[1],
+                "entry_attempt_id": entry_identity[2],
                 "gate_run_id": gate_identity[0],
-                "gate_attempt_id": gate_identity[1],
+                "gate_state_visit_id": gate_identity[1],
+                "gate_attempt_id": gate_identity[2],
             }
         decision = gate.get("payload", {}).get("decision")
         if decision not in {"allow", "allow_with_warnings"}:
@@ -442,16 +489,20 @@ def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors:
             "first_control_break": control_break,
         }
     completed_event = completed_events[-1]
-    run_id = completed_event.get("run_id")
-    attempt_id = completed_event.get("attempt_id")
+    target_identity = completed_event.get("payload", {}).get("target_identity") or {}
+    source_identity = completed_event.get("payload", {}).get("source_identity") or {}
+    run_id = target_identity.get("run_id") or completed_event.get("run_id")
+    state_visit_id = target_identity.get("state_visit_id") or completed_event.get("state_visit_id")
+    attempt_id = target_identity.get("attempt_id") or completed_event.get("attempt_id")
     # 完成只能来自 reporting，且 manifest 若声明身份必须一致。
     if completed_event.get("payload", {}).get("from_state") != PREFIX + "reporting":
         errors.append("completed 转移不是 reporting -> completed")
     gates = [
         event for event in events
         if event.get("type") == "verification.gate"
-        and event.get("run_id") == run_id
-        and event.get("attempt_id") == attempt_id
+        and event.get("run_id") == source_identity.get("run_id", run_id)
+        and event.get("state_visit_id") == source_identity.get("state_visit_id")
+        and event.get("attempt_id") == source_identity.get("attempt_id", attempt_id)
         and event.get("payload", {}).get("decision") == "allow"
     ]
     if not gates:
@@ -464,9 +515,10 @@ def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors:
     return {
         "current_state": current_state,
         "event_count": len(events),
-        "completed_transition": {"run_id": run_id, "attempt_id": attempt_id},
+        "completed_transition": {"run_id": run_id, "state_visit_id": state_visit_id, "attempt_id": attempt_id},
         "gate_count": len(gates),
         "run_id": run_id,
+        "state_visit_id": state_visit_id,
         "attempt_id": attempt_id,
         "first_control_break": control_break,
     }
@@ -517,18 +569,35 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
     # 先读取最后一次完成事件，供证据索引做 run/attempt 绑定检查。
     probe_events = read_events(task_root / "log/events.ndjson", [])
     completed_probe = [e for e in probe_events if e.get("type") == "state.transition" and e.get("payload", {}).get("to_state") == COMPLETED]
-    current_run = completed_probe[-1].get("run_id") if completed_probe else None
-    current_attempt = completed_probe[-1].get("attempt_id") if completed_probe else None
+    completed_identity = (
+        completed_probe[-1].get("payload", {}).get("target_identity") or completed_probe[-1]
+        if completed_probe else {}
+    )
+    current_run = completed_identity.get("run_id")
+    current_visit = completed_identity.get("state_visit_id")
+    current_attempt = completed_identity.get("attempt_id")
     if index:
         check_completion_layers(index, report_result, errors)
-        if index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3"}:
+        if index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3", "research-idea-completion-v4"}:
             if not isinstance(index.get("run_id"), str) or not isinstance(index.get("attempt_id"), str):
                 errors.append("新完成证据索引必须包含字符串 run_id/attempt_id")
             if index.get("run_id") != current_run or index.get("attempt_id") != current_attempt:
                 errors.append("完成证据索引与 completed 事件的 run/attempt 不一致")
             if not isinstance(index.get("authoritative_attempt"), dict):
                 errors.append("新完成证据索引缺少 authoritative_attempt")
-        check_dependency_index(index, task_root, manifest, report_result, errors, run_id=current_run, attempt_id=current_attempt)
+        if index.get("schema") == "research-idea-completion-v4":
+            if index.get("state_visit_id") != current_visit:
+                errors.append("完成证据索引与 completed State visit 不一致")
+            authoritative = index.get("authoritative_attempt")
+            if isinstance(authoritative, dict) and any(
+                authoritative.get(key) != value
+                for key, value in {
+                    "run_id": current_run, "state_visit_id": current_visit, "attempt_id": current_attempt,
+                }.items()
+            ):
+                errors.append("authoritative_attempt 不是 BSK 当前 completed 身份")
+        binding_attempt = None if index.get("schema") == "research-idea-completion-v4" else current_attempt
+        check_dependency_index(index, task_root, manifest, report_result, errors, run_id=current_run, attempt_id=binding_attempt)
 
     required_verifiers = []
     config_path = Path(__file__).resolve().parents[1] / "config.yaml"
@@ -544,7 +613,7 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
         warnings.append(f"无法读取 required Verifier 配置: {exc}")
     state_result = check_state_and_gate(task_root, required_verifiers, errors)
     # manifest 可选声明 run/attempt；声明后不得与最终完成事件冲突。
-    for key, actual in (("run_id", state_result.get("run_id")), ("attempt_id", state_result.get("attempt_id"))):
+    for key, actual in (("run_id", state_result.get("run_id")),):
         if key in manifest and manifest.get(key) != actual:
             errors.append(f"manifest.{key} 与 completed 事件不一致")
     return {

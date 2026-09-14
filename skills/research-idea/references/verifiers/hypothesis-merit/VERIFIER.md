@@ -34,7 +34,7 @@ operation=advance 时按结论判断：
 
 ## Output and verdicts
 
-使用 Kernel component-result 协议，从 handoff 复制 pack/component/contract/plan/run/attempt/hash 绑定字段，或在同一可信执行会话使用 handoff.bind_result。executor 记录脱敏角色与实际模型。结果含 execution_status、verdict、evidence_refs、facts.summary、facts.confidence、facts.uncertainties 和 findings。facts.summary 必须概括“为什么值得推荐/为什么无合格/为什么不足”，不能只写流程已完成。
+使用 Kernel component-result 协议，从 handoff 复制 pack/component/contract/plan/run/state visit/attempt/hash 绑定字段，或在同一可信执行会话使用 handoff.bind_result。executor 记录脱敏角色与实际模型。结果含 execution_status、verdict、evidence_refs、facts.summary、facts.confidence、facts.uncertainties 和 findings。facts.summary 必须概括“为什么值得推荐/为什么无合格/为什么不足”，不能只写流程已完成。
 
 - pass：推荐或无合格结论已通过上述价值审问，且证据引用具体、无未解决的关键疑点；或本次转移尚未包含推荐、淘汰或完成结论，facts.summary 明确标记为不适用。后者不能被复用于后续推荐或完成。
 - fail：候选平庸、重复、定义性、缺少概念增量、缺少可辨别预测、用可行性掩盖低价值，或报告推荐与证据不一致。

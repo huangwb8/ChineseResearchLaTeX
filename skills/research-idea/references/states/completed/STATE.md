@@ -12,7 +12,7 @@ transitions: []
 
 ## 进入条件
 
-仅从 reporting 进入，必须有当前 run/attempt 的 required Gate。Kernel 检查图和离开源状态的不变量；Agent 核对 Gate 对应本次报告与最新证据，且报告 completion_eligible 为 true。
+仅从 reporting 进入，必须有 reporting source visit/attempt 的 required Gate，并由 BSK 创建 completed 的新 visit/initial attempt。Agent 核对报告 completion_eligible 与最新证据。
 
 ## Agent 行动
 

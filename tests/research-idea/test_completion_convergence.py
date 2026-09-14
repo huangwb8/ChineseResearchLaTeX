@@ -204,7 +204,7 @@ def test_recommended_report_without_completed_state_fails(tmp_path):
     assert not result["passed"]
     assert any("运行状态未到 completed" in error for error in result["errors"])
     assert any("事件日志缺少 reporting -> completed" in error for error in result["errors"])
-    assert result["state"]["first_control_break"]["code"] == "verifier_or_gate_missing"
+    assert result["state"]["first_control_break"]["code"] == "legacy_state_identity"
 
 
 def test_v14_style_gate_identity_mismatch_is_reported_as_first_break(tmp_path):
@@ -219,8 +219,8 @@ def test_v14_style_gate_identity_mismatch_is_reported_as_first_break(tmp_path):
         }) + "\n")
     result = run_check(tmp_path, task, report)
     assert not result["passed"]
-    assert result["state"]["first_control_break"]["code"] == "state_entry_identity_mismatch"
-    assert any("state_entry_identity_mismatch" in error for error in result["errors"])
+    assert result["state"]["first_control_break"]["code"] == "legacy_state_identity"
+    assert any("legacy_state_identity" in error for error in result["errors"])
 
 
 def test_custom_name_uses_manifest_allow_custom_name(tmp_path):
@@ -240,9 +240,44 @@ def test_missing_dependency_and_review_evidence_fails_even_when_state_completed(
     assert any("第 1 轮" in error for error in result["errors"])
 
 
-def test_complete_state_gate_dependency_and_review_evidence_pass(tmp_path):
+def test_legacy_complete_state_cannot_gain_new_completion_eligibility(tmp_path):
     task, report = make_workspace(tmp_path, state=PREFIX + "completed")
     write_completion_events(task)
     write_evidence_index(task)
     result = run_check(tmp_path, task, report)
-    assert result["passed"], result["errors"]
+    assert not result["passed"]
+    assert result["state"]["first_control_break"]["code"] == "legacy_state_identity"
+
+
+def test_strict_review_requires_thread_and_runner_completion(tmp_path):
+    reviewer_path = tmp_path / "parallel-vibe/output/reviewer.md"
+    summary_path = tmp_path / "parallel-vibe/output/summary.md"
+    synthesis_path = tmp_path / "research-idea/output/review-synthesis.md"
+    for path in (reviewer_path, summary_path, synthesis_path):
+        write(path, "review evidence")
+    reviewer = {
+        "id": "reviewer-1", "path": reviewer_path.relative_to(tmp_path).as_posix(),
+        "thread_id": "thread-1", "model": "synthetic", "input_snapshot_hash": "sha256:input",
+        "output_hash": check_completion.file_snapshot(reviewer_path)["sha256"],
+        "started_at": "2026-09-13T00:00:00Z", "ended_at": "2026-09-13T00:01:00Z",
+        "independent": True, "run_id": RUN_ID, "attempt_id": ATTEMPT_ID,
+    }
+    index = {
+        "schema": "research-idea-completion-v4", "dependencies": {},
+        "review": {
+            "rounds": [{
+                "round": 1, "reviewers": [reviewer],
+                "summary_path": summary_path.relative_to(tmp_path).as_posix(),
+            }],
+            "synthesis_path": synthesis_path.relative_to(tmp_path).as_posix(),
+            "synthesis": {}, "run_id": RUN_ID, "attempt_id": ATTEMPT_ID,
+        },
+    }
+    errors: list[str] = []
+    check_completion.check_dependency_index(
+        index, tmp_path, {"settings": {"rounds": 1, "agents": 1}},
+        {"execution_statuses": {"review": "complete"}}, errors,
+        run_id=RUN_ID, attempt_id=None,
+    )
+    assert any("thread_status 未完成" in item for item in errors)
+    assert any("runner_status 未完成" in item for item in errors)
