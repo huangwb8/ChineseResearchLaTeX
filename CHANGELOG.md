@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- `research-literature-search`：修复 OpenAlex 合法候选的 `primary_location.source` 为 `null` 时规范化崩溃的问题；缺失 venue 改为保留 `null` 并写入候选质量 warning，补充并纳入版本控制的包内回归测试与本地 bug 闭环。
+
 - 新增 `research-idea` 最新 BSK 托管运行时迁移计划：确认现有 State/required Verifier 应保留，目标配置最终只声明 Kernel 包名；同时记录生产 BSK 2.1.2 与最新版声明契约不兼容、官方集成 helper 受阻及待生产 2.2.0 后恢复实施的路径。本次未修改 `research-idea` 源码或版本。
 
 - `research-idea`：实施 bac-v15 原子初始化与阶段门控计划，版本推进至 v0.10.0、最低 Kernel 提升为 2.1.1。新增单一原子启动入口和运行快照，阶段入口接入 State-bound action authorization、每 State 新 visit/attempt 及 attempt supersede；完成检查按 v2 身份链收敛，并要求 completion-v4 的 completed 权威身份与独立审查 thread/runner 完成回执。旧 legacy 现场保持只读，不能补写获得新完成资格。

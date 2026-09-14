@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3] - 2026-09-14
+
+### Fixed
+
+- OpenAlex 合法候选的 `primary_location.source` 为 `null` 时不再中断规范化；缺失 venue 保留为 `null` 并附加质量 warning。
+- 增加嵌套 source 空值的回归覆盖，确保其余合法候选仍可生成并通过校验的 manifest bundle。
+
 ## [1.0.2] - 2026-09-02
 
 ### Fixed

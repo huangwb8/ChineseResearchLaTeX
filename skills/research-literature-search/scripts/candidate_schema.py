@@ -172,7 +172,8 @@ def normalize_record(
         abstract_status = "present" if abstract else "missing"
 
     publication = raw.get("publication") if isinstance(raw.get("publication"), dict) else {}
-    primary_source = raw.get("primary_location", {}).get("source", {}) if isinstance(raw.get("primary_location"), dict) else {}
+    primary_location = raw.get("primary_location") if isinstance(raw.get("primary_location"), dict) else {}
+    primary_source = primary_location.get("source") if isinstance(primary_location.get("source"), dict) else {}
     venue_value = raw.get("venue") or raw.get("journal") or raw.get("container_title") or raw.get("container-title") or primary_source.get("display_name")
     if isinstance(venue_value, list):
         venue_value = venue_value[0] if venue_value else ""
@@ -196,6 +197,8 @@ def normalize_record(
     if identifiers["doi"] and not DOI_RE.match(identifiers["doi"]):
         warnings.append("invalid_doi_discarded")
         identifiers["doi"] = None
+    if not venue:
+        warnings.append("missing_venue")
     if not abstract and "missing_abstract" not in warnings:
         warnings.append("missing_abstract")
 

@@ -1,6 +1,6 @@
 skill_info:
   name: research-literature-search
-  version: 1.0.2
+  version: 1.0.3
   description: "独立完成多查询、多源文献检索、规范化、canonical 去重与可审计 manifest 交接；不负责评分、选文、写作或导出。"
   author: "Bensz Conan"
   category: normal

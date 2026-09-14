@@ -77,6 +77,8 @@ manifest 的 `status` 只有三种语义：`success`（完整成功）、`partia
 
 Provider 返回 `null` 结果或列表中混入 `null` / 非对象条目时，边界层必须跳过无效条目而不能调用 `.get()`；合法条目继续参与召回、规范化和去重。每次尝试在 `attempts` 中记录 `empty_records` / `invalid_records`，运行级 `counts` 同步累计并写入 warning。若没有任何合法候选，使用 `no_valid_candidates` 说明是数据无效导致的失败；不得静默丢弃或把空记录计入召回配额。
 
+合法候选的嵌套 provider 元数据也必须按类型防御；例如 OpenAlex 的 `primary_location.source` 为 `null` 时，保留候选、令 `venue` 为 `null` 并加入 `missing_venue` 质量 warning，不得让单条记录中断整个 bundle。
+
 ## 约束
 
 - JSON 使用 UTF-8、稳定排序和确定性序列化；相同夹具/配置下候选顺序可比较。

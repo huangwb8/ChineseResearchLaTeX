@@ -13,7 +13,7 @@ from candidate_schema import SCHEMA_VERSION
 from rls_contract import CONTRACT_VERSION
 
 
-SEARCH_SKILL_VERSION = "1.0.2"
+SEARCH_SKILL_VERSION = "1.0.3"
 ARTIFACT_NAMES = (
     "candidates_raw",
     "candidates_normalized",

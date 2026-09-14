@@ -274,7 +274,7 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [make-latex-model](skills/make-latex-model/) | 🔧 模板开发 | v3.1.2 | 面向 ChineseResearchLaTeX 全仓库的模板落地与高保真对齐 | ✅ 稳定 |
 | [complete-example](skills/complete-example/) | 🔧 模板开发 | v1.4.1 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer-old-latex-to-new](skills/transfer-old-latex-to-new/) | 🔧 模板开发 | v2.1.0 | 模板迁移与重构编排，支持任意输入并由 AI 自主决定输出 | ✅ 稳定 |
-| [research-literature-search](skills/research-literature-search/) | 📚 文献调研 | v1.0.2 | 独立多源文献检索、规范化、canonical 去重与 manifest 审计包 | ✅ 稳定 |
+| [research-literature-search](skills/research-literature-search/) | 📚 文献调研 | v1.0.3 | 独立多源文献检索、规范化、canonical 去重与 manifest 审计包 | ✅ 稳定 |
 | [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v1.3.1 | 消费 search manifest 的显式多查询、可审计专家级综述 | ✅ 稳定 |
 | [research-citation-check](skills/research-citation-check/) | 📚 文献调研 | v1.1.0 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [research-topic-extractor](skills/research-topic-extractor/) | 📚 文献调研 | v1.1.0 | 结构化综述主题提取 | ✅ 稳定 |
