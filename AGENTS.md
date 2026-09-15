@@ -70,6 +70,7 @@
 每个 Skill 以自身 `SKILL.md` 为执行规范，`config.yaml` 中的 `skill_info.version` 是版本唯一来源；`README.md` 面向用户，`CHANGELOG.md` 记录 Skill 级变更。新增或修改 Skill 时：
 
 - 以 [`huangwb8/skills` 的 `AGENTS.md`](https://github.com/huangwb8/skills/blob/main/AGENTS.md) 为对齐规范；每次开发或修改 Skill 前都重新查阅该文件，以同步可能发生的规范变化。
+- 只要 `./skills/` 内任一 Agent Skill 的源代码发生修改，必须主动复核该 Skill 与 GitHub 项目 `huangwb8/skills` 的现行规范是否完全对齐；发现不一致时，必须在本次修改中完成对齐，并同步受影响的文档、配置、测试和变更记录。
 - 先确认触发边界、输入输出、依赖和安全边界，避免把不相关能力塞进一个 Skill。
 - 确定性工作交给脚本，语义判断和需要人类判断的部分留给 AI；不要用文档口号替代真实校验。
 - 保持 `SKILL.md`、脚本、配置、README、CHANGELOG、测试和交叉引用一致；版本只在 `config.yaml` 修改。

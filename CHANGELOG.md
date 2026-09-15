@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+- 强化 `AGENTS.md` 的 Skill 开发约束：`./skills/` 内 Agent Skill 源代码发生修改时，必须主动核对并对齐 GitHub 项目 `huangwb8/skills` 的现行规范，并同步相关文档、配置、测试与变更记录。
+
+- `research-literature-search`：恢复并固化拆分前的 priority-fallback-topup 检索语义，新增按领域区分的 preprint profile（计算机/数学偏向 frontier，医学/生物学优先正式版本），并将策略写入 manifest/Search Log。
+
 - `research-literature-search`：修复 OpenAlex 合法候选的 `primary_location.source` 为 `null` 时规范化崩溃的问题；缺失 venue 改为保留 `null` 并写入候选质量 warning，补充并纳入版本控制的包内回归测试与本地 bug 闭环。
 
 - 新增 `research-idea` 最新 BSK 托管运行时迁移计划：确认现有 State/required Verifier 应保留，目标配置最终只声明 Kernel 包名；同时记录生产 BSK 2.1.2 与最新版声明契约不兼容、官方集成 helper 受阻及待生产 2.2.0 后恢复实施的路径。本次未修改 `research-idea` 源码或版本。
