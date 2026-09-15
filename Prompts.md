@@ -32,6 +32,10 @@ version=17
 
 ---
 
+根据 docs/plans/2026-09-15-research-idea-文献景观与证据门禁计划.md docs/plans/2026-09-15-research-literature-radar-核心辅助文献分层计划.md 和 docs/plans/2026-09-15-research-literature-review-相关性驱动选文计划.md 优化本项目的部分skills。
+
+---
+
 你根据这次调查，写3个文件名带  bac-v14 字符的优化计划， 分别用于优化 research-idea skill 、bsk 和 其它问题的计划。
 
 ---

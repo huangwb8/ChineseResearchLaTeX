@@ -275,14 +275,14 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [complete-example](skills/complete-example/) | 🔧 模板开发 | v1.4.1 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer-old-latex-to-new](skills/transfer-old-latex-to-new/) | 🔧 模板开发 | v2.1.0 | 模板迁移与重构编排，支持任意输入并由 AI 自主决定输出 | ✅ 稳定 |
 | [research-literature-search](skills/research-literature-search/) | 📚 文献调研 | v1.0.4 | 独立多源文献检索、规范化、canonical 去重与 manifest 审计包 | ✅ 稳定 |
-| [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v1.3.1 | 消费 search manifest 的显式多查询、可审计专家级综述 | ✅ 稳定 |
+| [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v2.0.0 | 消费 search manifest 的显式多查询、可审计专家级综述 | ✅ 稳定 |
 | [research-citation-check](skills/research-citation-check/) | 📚 文献调研 | v1.1.0 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [research-topic-extractor](skills/research-topic-extractor/) | 📚 文献调研 | v1.1.0 | 结构化综述主题提取 | ✅ 稳定 |
 | [research-guide-updater](skills/research-guide-updater/) | 📚 文献调研 | v1.1.0 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
 | [research-plan](skills/research-plan/) | 📚 文献调研 | v0.2.0 | 文献驱动的科研分析策略规划 | 🚧 开发中 |
-| [research-literature-radar](skills/research-literature-radar/) | 📚 文献调研 | v0.1.1 | 分层发现、筛选并长期归档重要研究文献 | 🚧 开发中 |
+| [research-literature-radar](skills/research-literature-radar/) | 📚 文献调研 | v0.2.0 | 分层发现、筛选并长期归档重要研究文献 | 🚧 开发中 |
 | [research-literature-interpretation](skills/research-literature-interpretation/) | 📚 文献调研 | v0.2.0 | 导师式解读单篇研究文献，重建机制、证据边界与可迁移启发 | 🚧 开发中 |
-| [research-idea](skills/research-idea/) | 📚 文献调研 | v0.10.0 | 基于证据地图、价值筛选与假设价值认证评估科研方向，区分推荐与证据不足 | 🚧 开发中 |
+| [research-idea](skills/research-idea/) | 📚 文献调研 | v0.11.0 | 基于证据地图、价值筛选与假设价值认证评估科研方向，区分推荐与证据不足 | 🚧 开发中 |
 | [nsfc-code](skills/nsfc-code/) | ✍️ 标书写作 | v1.0.0 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | ✅ 稳定 |
 | [nsfc-abstract](skills/nsfc-abstract/) | ✍️ 标书写作 | v2.1.2 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
 | [nsfc-budget](skills/nsfc-budget/) | ✍️ 标书写作 | v0.1.2 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |

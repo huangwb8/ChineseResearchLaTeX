@@ -8,6 +8,12 @@
 
 ## [Unreleased]
 
+- 新增 `research-literature-review` 分层证据池与相关性门禁优化计划：保留不凑篇数原则，同时要求 canonical 候选全量分层、低置信度与资料不足记录不静默消失，并将完整证据池与正式引用集合分离。
+
+- 按 2026-09-15 三份计划优化研究类 Skill：`research-literature-radar` v0.2.0 新增全量 canonical landscape 与 hash/计数对账；`research-literature-review` v2.0.0 将硬 `min_refs` 改为相关性阈值、证据角色和软参考预算，并提供不导出长文/PDF/Word 的 `novelty-check`；`research-idea` v0.11.0 同时消费核心证据与辅助景观，按风险升级决定性近邻，并将流程就绪、科学充分和 claim 资格拆分门禁。
+- 按项目 BSK latest 约定删除 `research-idea` 的依赖版本号、旧式 `runtime.kernel` 精确绑定和重复 capability 配置；由于当前 action-specific required Verifier 尚不可用，`hypothesis-merit` 继续全局 required，但新增 applicability 防止不适用回执进入完成证据。
+- 为 Radar landscape 与 Review 选文新增根级公开回归入口，并在 `.gitignore` 中仅放行对应 Python 测试源码；测试缓存仍统一写入 `.bensz-api/`。
+
 - 强化 `AGENTS.md` 的 Skill 开发约束：`./skills/` 内 Agent Skill 源代码发生修改时，必须主动核对并对齐 GitHub 项目 `huangwb8/skills` 的现行规范，并同步相关文档、配置、测试与变更记录。
 
 - `research-literature-search`：恢复并固化拆分前的 priority-fallback-topup 检索语义，新增按领域区分的 preprint profile（计算机/数学偏向 frontier，医学/生物学优先正式版本），并将策略写入 manifest/Search Log。

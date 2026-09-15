@@ -326,7 +326,7 @@ python3 research-literature-search/scripts/search_runner.py validate --bundle ./
 
 ### 9. nsfc-reviewers - NSFC 标书专家评审模拟
 
-**状态**：✅ 稳定（v1.4.0）
+**状态**：✅ 稳定（v1.4.1）
 
 **类型**：📝 日常
 
