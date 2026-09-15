@@ -35,6 +35,12 @@ def main() -> int:
     parser.add_argument("--domain", default="general", help="领域（可选）")
     parser.add_argument("--config", type=Path, default=Path(__file__).parent.parent / "config.yaml")
     parser.add_argument("--review-level", choices=["premium", "standard", "basic"], help="档位（可选）")
+    parser.add_argument(
+        "--purpose",
+        choices=["standard-review", "novelty-check"],
+        default="standard-review",
+        help="标准综述或轻量查新",
+    )
     parser.add_argument("--output-stem", help="文件名前缀（可选）")
     parser.add_argument("--query-file", "--queries", dest="query_file", type=Path, help="多查询 JSON 文件")
     parser.add_argument("--allow-single-query-fallback", action="store_true", help="显式授权单查询后备")
@@ -66,6 +72,8 @@ def main() -> int:
         args.domain,
         "--config",
         str(args.config),
+        "--purpose",
+        args.purpose,
     ]
     if work_dir is not None:
         work_dir.mkdir(parents=True, exist_ok=True)

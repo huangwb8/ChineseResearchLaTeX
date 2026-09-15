@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-select_references.py - 按高分优先比例选文并生成 BibTeX
+select_references.py - 按相关性、证据角色与软预算选文并生成 BibTeX
 
 输入：评分后的 papers jsonl（包含 score/subtopic/doi/title/year/venue 等）
 输出：
@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import re
 import sys
 from pathlib import Path
@@ -182,6 +181,8 @@ def _select_papers(
     high_score_max: float,
     *,
     min_abstract_chars: int,
+    min_score: float = 5.0,
+    purpose: str = "standard-review",
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     unique: Dict[str, Dict[str, Any]] = {}
     for p in papers:
@@ -190,58 +191,52 @@ def _select_papers(
             continue
         unique[k] = p
     items = list(unique.values())
-    # 优先保证摘要覆盖率：摘要缺失会显著影响后续写作与对齐检查
-    # - 先按“有摘要”过滤/排序
-    # - 若不足以满足最小参考数，再用“无摘要”条目补齐（并在 rationale 中给出提示）
+
     def _has_abstract(p: Dict[str, Any]) -> bool:
         a = p.get("abstract") or ""
         return isinstance(a, str) and len(a.strip()) >= int(min_abstract_chars)
-
-    items_with_abs = [p for p in items if _has_abstract(p)]
-    items_without_abs = [p for p in items if not _has_abstract(p)]
-
-    items_with_abs.sort(key=lambda x: (float(x.get("score") or 0), x.get("subtopic", "")), reverse=True)
-    items_without_abs.sort(key=lambda x: (float(x.get("score") or 0), x.get("subtopic", "")), reverse=True)
 
     total = len(items)
     if total == 0:
         return [], {"total_candidates": 0}
 
-    # 目标参考数：避免候选库很大时“天然打满 max_refs”，导致写作阶段上下文与运行成本膨胀。
+    role_priority = {
+        "direct-neighbor": 0,
+        "contradictory": 1,
+        "boundary": 2,
+        "methodological": 3,
+        "supporting": 4,
+    }
+
+    def _role(p: Dict[str, Any]) -> str:
+        value = str(p.get("evidence_role") or p.get("role") or "supporting").strip().lower()
+        return value if value in role_priority else "supporting"
+
+    for paper in items:
+        paper["evidence_role"] = _role(paper)
+        paper["evidence_depth"] = "abstract" if _has_abstract(paper) else "title"
+
+    qualified = [paper for paper in items if float(paper.get("score") or 0) >= float(min_score)]
+    if purpose == "standard-review":
+        qualified = [paper for paper in qualified if _has_abstract(paper)]
+    elif purpose != "novelty-check":
+        raise ValueError(f"unsupported purpose: {purpose}")
+    qualified.sort(
+        key=lambda paper: (
+            role_priority[_role(paper)],
+            -float(paper.get("score") or 0),
+            str(paper.get("subtopic") or ""),
+        )
+    )
+
+    # target_refs 是预算目标，max_refs 是硬上限；min_refs 只保留为旧配置的软目标提示。
     desired = int(target_refs)
     if desired <= 0:
         desired = int(round((min_refs + max_refs) / 2.0))
-    desired = max(int(min_refs), min(int(max_refs), desired))
+    desired = max(1, min(int(max_refs), desired))
+    selected = qualified[:desired]
 
-    frac = (high_score_min + high_score_max) / 2.0
-    high_count = max(0, min(total, math.ceil(total * frac)))
-    high_bucket = items_with_abs[: min(high_count, len(items_with_abs))]
-
-    # 先从“高分段 + 有摘要”中选到 desired
-    selected = high_bucket[: min(desired, len(high_bucket))]
-
-    # 若未满足最小参考数，继续从剩余中补齐
-    idx = len(selected)
-    while len(selected) < min_refs and idx < len(items_with_abs):
-        selected.append(items_with_abs[idx])
-        idx += 1
-
-    # 若未达 desired（但已满足 min_refs），允许从“有摘要剩余”继续补齐到 desired
-    while len(selected) < desired and idx < len(items_with_abs):
-        selected.append(items_with_abs[idx])
-        idx += 1
-
-    # 仍不足：允许使用“无摘要”条目补齐（但会在 rationale 中显式提示）
-    j = 0
-    while len(selected) < desired and j < len(items_without_abs):
-        selected.append(items_without_abs[j])
-        j += 1
-
-    # 理论上不应超过 max_refs（desired 已 clamp），这里再兜底一次
-    if len(selected) > int(max_refs):
-        selected = selected[: int(max_refs)]
-
-    # 标记：若摘要缺失，建议写作时不引用（但保留在候选/选文中以便替换或手动核验）
+    # novelty-check 保留只有标题的强近邻供升级核验，但明确禁止把它当成可引用结论证据。
     for p in selected:
         if not _has_abstract(p):
             p["do_not_cite"] = True
@@ -260,17 +255,32 @@ def _select_papers(
         "avg_score": round(sum(selected_scores) / len(selected_scores), 2) if selected_scores else 0,
     }
 
+    role_counts = {role: sum(1 for p in selected if _role(p) == role) for role in role_priority}
+    missing_target = max(0, desired - len(selected))
+    gaps: list[str] = []
+    if missing_target:
+        gaps.append(f"qualified_references_below_soft_target:{missing_target}")
+    if purpose == "novelty-check" and not any(_role(p) == "direct-neighbor" for p in selected):
+        gaps.append("direct_neighbor_missing")
+    if any(not _has_abstract(p) for p in selected):
+        gaps.append("title_only_records_require_enrichment")
     rationale = {
         "total_candidates": total,
+        "qualified_candidates": len(qualified),
         "selected": len(selected),
-        "high_score_fraction_used": frac,
-        "high_score_bucket": high_count,  # 保留向后兼容
-        "min_refs": min_refs,
+        "purpose": purpose,
+        "minimum_score": float(min_score),
+        "minimum_refs_legacy_soft_target": min_refs,
+        "migration_warning": "min_refs is no longer a hard floor; relevance and evidence eligibility decide the final count",
         "max_refs": max_refs,
-        "target_refs": desired,
+        "target_refs_soft": desired,
+        "target_shortfall": missing_target,
+        "stop_reason": "soft_target_reached" if not missing_target else "eligible_evidence_exhausted",
+        "evidence_role_counts": role_counts,
+        "evidence_gaps": gaps,
         "min_abstract_chars": int(min_abstract_chars),
         "score_distribution": score_distribution,
-        "missing_abstract_candidates": len(items_without_abs),
+        "missing_abstract_candidates": sum(1 for p in items if not _has_abstract(p)),
         "missing_abstract_selected": sum(1 for p in selected if not _has_abstract(p)),
     }
     return selected, rationale
@@ -298,6 +308,13 @@ def main() -> int:
     )
     parser.add_argument("--high-score-min", type=float, default=0.6, help="Lower bound of high-score fraction")
     parser.add_argument("--high-score-max", type=float, default=0.8, help="Upper bound of high-score fraction")
+    parser.add_argument("--min-score", type=float, default=None, help="Minimum relevance score (default: config selection.minimum_score)")
+    parser.add_argument(
+        "--purpose",
+        choices=("standard-review", "novelty-check"),
+        default=None,
+        help="standard review or focused novelty check",
+    )
     parser.add_argument(
         "--min-abstract-chars",
         type=int,
@@ -330,11 +347,18 @@ def main() -> int:
         except Exception:
             min_abs_chars = DEFAULT_MIN_ABSTRACT_CHARS
 
+    cfg: dict[str, Any] = {}
+    if load_config is not None:
+        try:
+            loaded = load_config()
+            cfg = loaded if isinstance(loaded, dict) else {}
+        except Exception:
+            cfg = {}
+
     if args.target_refs is not None:
         target_refs = int(args.target_refs)
     elif load_config is not None:
         try:
-            cfg = load_config()
             sel_cfg = cfg.get("selection", {}) if isinstance(cfg, dict) else {}
             tr = sel_cfg.get("target_refs", {}) if isinstance(sel_cfg.get("target_refs"), dict) else {}
             v = tr.get("value", None)
@@ -360,6 +384,8 @@ def main() -> int:
         high_score_min=args.high_score_min,
         high_score_max=args.high_score_max,
         min_abstract_chars=min_abs_chars,
+        min_score=float(args.min_score if args.min_score is not None else (cfg.get("selection", {}) or {}).get("minimum_score", 5.0)),
+        purpose=str(args.purpose or (cfg.get("selection", {}) or {}).get("default_purpose", "standard-review")),
     )
 
     if not selected:
@@ -389,6 +415,11 @@ def main() -> int:
     if missing_abs_selected > 0:
         print(
             f"⚠️ 选中文献中仍有 {missing_abs_selected} 篇摘要缺失/过短：建议写作时不引用或尽量替换为有摘要的文献",
+            file=sys.stderr,
+        )
+    if int((rationale or {}).get("target_shortfall", 0) or 0) > 0:
+        print(
+            "⚠️ 合格证据少于软目标；未使用低相关或无摘要条目补足，详见 selection rationale",
             file=sys.stderr,
         )
     args.bib.write_text("\n".join(bib_entries), encoding="utf-8")

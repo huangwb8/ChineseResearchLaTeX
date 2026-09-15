@@ -29,8 +29,9 @@
 > 💡 **示例**：查看 [examples/](examples/) 目录，包含本 skill 实际生成的专家级综述示例，可参考输出格式和质量标准。
 
 ## 设计理念
-- AI 先生成并显式保存查询 JSON → 多源检索 → 去重 → 标题/摘要 1–10 分相关性与子主题自动分组 → 高分优先选文 → **自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段，3 次采样均值，空 ID 行支持无引用大纲）** → 资深领域专家自由写作。
-- 档位仅影响默认字数/参考范围（可覆盖），支持三档：**Premium（旗舰级）**、**Standard（标准级）**、**Basic（基础级）**。
+- AI 先生成并显式保存查询 JSON → 多源检索 → 去重 → 标题/摘要 1–10 分相关性与证据角色 → 相关性阈值与软预算选文 → **自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段，3 次采样均值，空 ID 行支持无引用大纲）** → 资深领域专家自由写作。
+- 档位影响默认字数与参考预算（可覆盖），支持三档：**Premium（旗舰级）**、**Standard（标准级）**、**Basic（基础级）**。参考范围是预算和上限；合格文献不足时不会用低相关材料填满。
+- `--purpose novelty-check` 面向研究想法查新，只运行到强近邻选文与缺口记录，不自动生成长篇正文、PDF 或 Word。
 - 强制导出 PDF/Word；硬校验：必需章节、字数 min/max、参考文献数 min/max、\cite 与 bib 对齐；可选校验字数预算覆盖率/总和。
 - **最高原则**：AI 不得偷懒或短视地为了速度做错误事；不确定必须说明；最终润色仅做衔接与结构调整，不得改动文献题目/摘要所含事实/数字。
 - **稳健性**：查询缺失、冲突、格式错误或数量越界时默认停止；`--resume-from` 始终先加载 checkpoint，并校验查询文件是否仍存在、SHA-256 指纹是否变化；Bib 自动转义 `&`、补充缺失字段并大小写无关去重 key。
@@ -292,7 +293,7 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 - `config.yaml`：查询数量/后备策略、档位字数/参考范围和搜索默认参数
 - `scripts/query_contract.py`：查询 schema、共享 stem 和 SHA-256 指纹
 - `scripts/score_relevance.py`：子主题自动分组 + 1–10 分
-- `scripts/select_references.py`：按高分优先比例和目标数量选文，生成 Bib
+- `scripts/select_references.py`：按相关性阈值、证据角色和软预算选文，生成 Bib 与不足说明
 - `scripts/plan_word_budget.py`：三次采样生成字数预算 run1/2/3 + final（含无引用空 ID 行）
 - `scripts/validate_word_budget.py`：可选校验预算列/覆盖率/总和
 - `scripts/update_working_conditions_data_extraction.py`：记录 score/subtopic 到数据抽取表

@@ -1,12 +1,12 @@
 ---
 name: research-literature-review
-description: 当用户明确要求"做系统综述/文献综述/related work/相关工作/文献调研"，或要求使用旧名 systematic-literature-review skill 时使用。AI 先生成并显式保存 5–25 条检索查询，再执行多源检索、去重、逐篇语义评分、选文、字数预算和专家写作，强制校验引用并导出 PDF 与 Word；查询缺失或无效时默认停止，不静默降级为单查询。支持 en/zh/ja/de/fr/es。
+description: 当用户明确要求"做系统综述/文献综述/related work/相关工作/文献调研"，或为研究想法核对强近邻与新颖性时使用；兼容旧名 systematic-literature-review。标准模式执行查询、检索、评分、相关性选文、写作、引用校验与 PDF/Word 导出，novelty-check 模式只交付强近邻、反方证据和未确认项。查询缺失或无效时默认停止，不静默降级为单查询。支持 en/zh/ja/de/fr/es。
 metadata:
   author: Bensz Conan
 ---
 # Research Literature Review
 
-### 定位与检索依赖
+## 目标
 
 - 目标：在一个隔离工作目录内完成“检索 → 去重 → 评分 → 选文 → 写作 → 校验 → PDF/Word 导出”的完整综述流水线。
 - 适用：用户明确要系统综述、文献综述、related work、文献调研，并希望得到 LaTeX + BibTeX + PDF/Word 产物。
@@ -15,7 +15,7 @@ metadata:
 - `research-literature-search` 是阶段 1/2 的必需依赖（contract `rls.v1`）。review 只消费其 manifest、canonical candidates 和 provenance，不再内嵌 provider 或执行第二套 canonical 去重。
 - 旧名 `systematic-literature-review` 仅作为 prompt 兼容别名保留；`.systematic-literature-review/` 仍是稳定历史工作区名。
 
-### 输入
+### 输入概览
 
 最少需要：
 
@@ -78,10 +78,15 @@ metadata:
 
 ### 选文与 Bib 生成
 
-- `select_references.py` 按目标参考范围和高分优先比例选出最终集合。
+- `select_references.py` 按最低相关性、证据角色和软预算选出最终集合；`target_refs` 是预算目标，`max_refs` 是上限，不再用低分或无摘要条目填满旧 `min_refs`。
 - 生成 `selected_papers.jsonl`、`references.bib`、`selection_rationale.yaml`。
 - Bib 清洗必须保留：大小写无关去重 key、LaTeX 特殊字符转义、缺失字段警告。
-- 摘要缺失或过短的条目标记 `do_not_cite`，并在报告中提示摘要覆盖率风险。
+- 证据角色使用 `direct-neighbor`、`supporting`、`methodological`、`contradictory`、`boundary`；直接近邻和反方证据优先于宽泛方法相似。
+- 标准综述只把有摘要且达到相关性阈值的条目放入正式引用集合。合格论文少于软目标时照常交付较小集合，并在 rationale 写停止理由与证据缺口。
+
+### Novelty check
+
+当调用目的为 `--purpose novelty-check` 时，只运行到阶段 4，输出强近邻、反方/边界证据、未确认项与证据深度，不自动生成长篇正文、PDF 或 Word。只有标题的直接近邻可保留为待升级记录并标记 `do_not_cite`；预印本与正式论文使用同一相关性尺度，发表状态单列。
 
 ### 子主题与配额规划
 

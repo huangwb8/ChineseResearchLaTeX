@@ -120,6 +120,7 @@ class PipelineState:
     search_contract_version: str = ""
     search_manifest_sha256: str = ""
     candidates_sha256: str = ""
+    purpose: str = "standard-review"
 
     def to_json(self, path: Path) -> None:
         path.write_text(json.dumps(asdict(self), ensure_ascii=False, indent=2), encoding="utf-8")
@@ -197,9 +198,13 @@ class PipelineRunner:
         allow_single_query_fallback: Optional[bool] = None,
         fallback_reason: Optional[str] = None,
         search_skill_root: Optional[Path] = None,
+        purpose: str = "standard-review",
     ):
         self.topic = topic
         self.domain = domain
+        if purpose not in {"standard-review", "novelty-check"}:
+            raise ValueError(f"不支持的 purpose: {purpose}")
+        self.purpose = purpose
         self.search_skill_root_override = search_skill_root.expanduser().resolve() if search_skill_root is not None else None
         # Resolve before any search subprocess is started.  This is deliberately fail-closed;
         # a missing dependency must not silently reactivate the old provider implementation.
@@ -268,6 +273,8 @@ class PipelineRunner:
         ref_range = (scoring_cfg.get("default_ref_range") or {}).get(self.review_level, {}) if isinstance(scoring_cfg, dict) else {}
         self.target_words = {"min": int(word_range.get("min", 0) or 0), "max": int(word_range.get("max", 0) or 0)}
         self.target_refs = {"min": int(ref_range.get("min", 0) or 0), "max": int(ref_range.get("max", 0) or 0)}
+        selection_cfg = self.config.get("selection", {}) if isinstance(self.config, dict) else {}
+        self.minimum_score = float(selection_cfg.get("minimum_score", 5.0))
 
         high_score = scoring_cfg.get("high_score_priority") or {}
         self.high_score_fraction_min = float(high_score.get("fraction_min", 0.6))
@@ -358,7 +365,9 @@ class PipelineRunner:
             domain=self.domain,
             started_at=datetime.now().isoformat(),
             config=self.config,
+            purpose=self.purpose,
         )
+        self.state.metrics["purpose"] = self.purpose
         self.state.metrics["review_level"] = self.review_level
         self.state.metrics["target_words"] = self.target_words
         self.state.metrics["target_refs"] = self.target_refs
@@ -1021,6 +1030,10 @@ class PipelineRunner:
             str(self.high_score_fraction_min),
             "--high-score-max",
             str(self.high_score_fraction_max),
+            "--min-score",
+            str(self.minimum_score),
+            "--purpose",
+            self.purpose,
         ]
         ok = self._run_script("select_references.py", args)
         if ok and selected.exists() and bib_path.exists():
@@ -1187,6 +1200,9 @@ class PipelineRunner:
             print("  ✗ 缺少工作条件/tex/bib")
             return False
 
+        selected_count = int(self.state.metrics.get("reference_count", 0) or 0)
+        effective_min_refs = min(self.validation_refs["min"], selected_count)
+
         # 可选：校验字数预算
         budget_final = self.state.output_files.get("word_budget_final")
         selected = self.state.input_files.get("selected_papers")
@@ -1217,7 +1233,7 @@ class PipelineRunner:
                 "--max-words",
                 str(self.validation_words["max"]),
                 "--min-cites",
-                str(self.validation_refs["min"]),
+                str(effective_min_refs),
                 "--max-cites",
                 str(self.validation_refs["max"]),
             ],
@@ -1231,7 +1247,7 @@ class PipelineRunner:
                 "--bib",
                 str(references_bib),
                 "--min-refs",
-                str(self.validation_refs["min"]),
+                str(effective_min_refs),
                 "--max-refs",
                 str(self.validation_refs["max"]),
             ],
@@ -1356,6 +1372,8 @@ class PipelineRunner:
             try:
                 loaded = PipelineState.from_json(state_file)
                 self.state = loaded
+                if self.purpose == "standard-review" and loaded.purpose == "novelty-check":
+                    self.purpose = loaded.purpose
                 print(f"✓ 已从 {state_file} 恢复状态（已完成: {', '.join(self.state.completed_stages) or '无'}）")
             except Exception as e:  # noqa: BLE001
                 print(f"⚠️ 恢复状态失败: {e}")
@@ -1385,6 +1403,8 @@ class PipelineRunner:
             ("6_validate", self.run_stage_6_validate),
             ("7_export", self.run_stage_7_export),
         ]
+        if self.purpose == "novelty-check":
+            stages = stages[:5]
 
         start_idx = resume_from if resume_from is not None else 0
         if resume_from is None and self.state.completed_stages:
@@ -1451,7 +1471,7 @@ class PipelineRunner:
         except Exception as e:
             print(f"  ⚠️ 整理失败（非致命）: {e}")
 
-        if self.publish_dir is not None:
+        if self.publish_dir is not None and self.purpose != "novelty-check":
             print(f"\n[发布] 复制交付文件到: {self.publish_dir}")
             try:
                 result = publish_deliverables(
@@ -1480,6 +1500,12 @@ def main() -> int:
     parser.add_argument("--config", type=Path, default=Path(__file__).parent.parent / "config.yaml")
     parser.add_argument("--work-dir", type=Path, required=False, help="工作目录；默认使用 .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/<run-id>")
     parser.add_argument("--review-level", choices=["premium", "standard", "basic"], help="档位（可选）")
+    parser.add_argument(
+        "--purpose",
+        choices=["standard-review", "novelty-check"],
+        default="standard-review",
+        help="标准综述或仅运行到强近邻选文的查新模式",
+    )
     parser.add_argument("--output-stem", help="文件名前缀（可选）")
     parser.add_argument(
         "--query-file",
@@ -1555,6 +1581,7 @@ def main() -> int:
         allow_single_query_fallback=True if args.allow_single_query_fallback else None,
         fallback_reason=args.fallback_reason,
         search_skill_root=args.search_skill_root,
+        purpose=args.purpose,
     )
     ok = runner.run(resume_from=args.resume_from, prepare_only=args.prepare_only)
     return 0 if ok else 1

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed（相关性驱动选文与轻量查新 - 2026-09-15）
+
+- 由于 `min_refs` 从硬下限改为只读兼容的软目标提示，选文结果语义发生不兼容变化，版本提升至 `2.0.0`；`target_refs` 改为软预算、`max_refs` 保持硬上限，默认不再用低分或无摘要文献填满旧 `min_refs`，不足时在 `selection_rationale.yaml` 记录迁移提示、停止原因和证据缺口。
+- 选文引入 `direct-neighbor`、`supporting`、`methodological`、`contradictory`、`boundary` 证据角色；预印本与正式论文共用相关性尺度，发表状态与证据深度单列。
+- 新增 `--purpose novelty-check`，流水线只运行至阶段 4，输出强近邻与未确认项，不自动生成长篇正文、PDF 或 Word；旧 checkpoint 保留只读/恢复兼容。
+
 ### Fixed（manifest 契约模块隔离 - 2026-09-02）
 
 - 修复 review runner 在进程内校验 search manifest 时被同名 `query_contract` 模块遮蔽的问题；search validator 现在通过 `rls_contract` 读取 `rls.v1`。
