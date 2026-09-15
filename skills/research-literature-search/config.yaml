@@ -1,6 +1,6 @@
 skill_info:
   name: research-literature-search
-  version: 1.0.3
+  version: 1.0.4
   description: "独立完成多查询、多源文献检索、规范化、canonical 去重与可审计 manifest 交接；不负责评分、选文、写作或导出。"
   author: "Bensz Conan"
   category: normal
@@ -23,6 +23,13 @@ search:
   retrieval_strategy: priority-fallback-topup
   topup_threshold: 0.7
   timeout_seconds: 30
+
+preprint_profiles:
+  computer_science: {include_preprints: true, preprint_priority: high, published_version_preferred: true}
+  mathematics: {include_preprints: true, preprint_priority: high, published_version_preferred: true}
+  biology: {include_preprints: true, preprint_priority: medium, published_version_preferred: true}
+  medicine: {include_preprints: true, preprint_priority: low, published_version_preferred: true}
+  general: {include_preprints: true, preprint_priority: medium, published_version_preferred: true}
 
 filters:
   min_year: null

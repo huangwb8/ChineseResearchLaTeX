@@ -45,6 +45,33 @@ DEFAULT_PROVIDER_ORDER = ["mcp", "openalex", "semantic_scholar", "crossref", "du
 SUPPORTED_PROVIDERS = {"openalex", "semantic_scholar", "crossref"}
 RETRIEVAL_STRATEGY = "priority-fallback-topup"
 TOPUP_THRESHOLD = 0.7
+PREPRINT_PROFILES = {
+    "computer_science": {"include_preprints": True, "preprint_priority": "high", "published_version_preferred": True},
+    "mathematics": {"include_preprints": True, "preprint_priority": "high", "published_version_preferred": True},
+    "biology": {"include_preprints": True, "preprint_priority": "medium", "published_version_preferred": True},
+    "medicine": {"include_preprints": True, "preprint_priority": "low", "published_version_preferred": True},
+    "general": {"include_preprints": True, "preprint_priority": "medium", "published_version_preferred": True},
+}
+
+
+def resolve_preprint_profile(domain: str | None, profile: str = "auto") -> tuple[str, dict[str, Any]]:
+    """Resolve a conservative domain policy without deleting preprints."""
+    requested = (profile or "auto").strip().lower().replace("-", "_")
+    if requested == "auto":
+        text = (domain or "").lower()
+        if any(token in text for token in ("computer", "software", "informatics", "cs")):
+            requested = "computer_science"
+        elif any(token in text for token in ("math", "mathematics", "theorem")):
+            requested = "mathematics"
+        elif any(token in text for token in ("medicine", "clinical", "medical", "health")):
+            requested = "medicine"
+        elif any(token in text for token in ("biology", "biomedical", "life science", "molecular")):
+            requested = "biology"
+        else:
+            requested = "general"
+    if requested not in PREPRINT_PROFILES:
+        raise ValueError(f"unknown preprint domain profile: {profile}")
+    return requested, dict(PREPRINT_PROFILES[requested])
 
 
 def _safe_error(exc: BaseException) -> str:
@@ -126,6 +153,8 @@ def _filter_record(record: dict[str, Any], filters: Mapping[str, Any]) -> bool:
         return False
     allowed_types = filters.get("publication_types")
     if allowed_types:
+        if isinstance(allowed_types, str):
+            allowed_types = [allowed_types]
         kind = (record.get("publication") or {}).get("publication_type")
         if not kind or kind not in set(allowed_types):
             return False
@@ -159,6 +188,7 @@ def run_search(
     provider_functions: Mapping[str, ProviderFn] | None = None,
     provider_options: Mapping[str, Any] | None = None,
     query_source: str | None = None,
+    preprint_profile: str = "auto",
 ) -> dict[str, Any]:
     try:
         bundle = _safe_bundle_dir(output_dir, scope_root)
@@ -168,13 +198,19 @@ def run_search(
         # stable failure_code without leaking a traceback.
         return _failed_result(topic=topic, output_dir=output_dir, code="path_violation", warning=_safe_error(exc))
     filters = dict(filters or {})
-    order = list(provider_order or DEFAULT_PROVIDER_ORDER)
+    try:
+        resolved_profile, preprint_policy = resolve_preprint_profile(domain, preprint_profile)
+    except ValueError as exc:
+        return _failed_result(topic=topic, output_dir=output_dir, code="contract_invalid", warning=_safe_error(exc))
+    order = list(dict.fromkeys(provider_order or DEFAULT_PROVIDER_ORDER))
+    if not order:
+        order = list(DEFAULT_PROVIDER_ORDER)
     registry = _provider_registry(provider_functions)
     options = dict(provider_options or {})
     policy_fingerprint = _policy_fingerprint(order, options)
     try:
-        if max_results_per_query < 1 or max_total < 0:
-            raise ValueError("max_results_per_query must be >= 1 and max_total must be >= 0")
+        if max_results_per_query < 1 or max_total < 1:
+            raise ValueError("max_results_per_query and max_total must be >= 1")
     except (TypeError, ValueError) as exc:
         result = _failed_result(topic=topic, output_dir=output_dir, code="contract_invalid", warning=_safe_error(exc))
         write_json(bundle / "manifest.json", result)
@@ -317,7 +353,7 @@ def run_search(
     log["retrieval_strategy"] = RETRIEVAL_STRATEGY
     log["topup_threshold"] = TOPUP_THRESHOLD
     write_json(paths["search_log"], log)
-    manifest = build_manifest(bundle, topic=topic, domain=domain, query_plan={"source": plan.source, "sha256": plan.sha256, "requested_count": plan.requested_count, "accepted_count": plan.accepted_count, "items": plan.queries}, filters=filters, provider_policy={"requested_order": order, "effective_order": order, "fallback_enabled": fallback_enabled, "config_fingerprint": policy_fingerprint}, attempts=attempts, counts={"raw": len(raw_rows), "normalized": len(normalized), "deduped": len(canonical), "failed": sum(1 for item in attempts if item["status"] == "error"), "empty_records": empty_records, "invalid_records": invalid_records, "normalization_failed": normalization_failed, "dropped": dropped}, truncation={"applied": dropped > 0, "limit": max_total, "dropped_count": dropped}, dedupe={"parameters": dedupe_params, "map_path": "dedupe_map.json", "canonical_merges": len(edges)}, abstract_enrichment={"mode": "disabled", "attempted": 0, "filled": 0, "missing": sum(1 for item in canonical if item.get("abstract_status") == "missing")}, status=status, failure_code=failure_code, warnings=warnings, artifacts=paths, search_run_id=run_id, cache={"mode": "disabled"})
+    manifest = build_manifest(bundle, topic=topic, domain=domain, query_plan={"source": plan.source, "sha256": plan.sha256, "requested_count": plan.requested_count, "accepted_count": plan.accepted_count, "items": plan.queries}, filters=filters, provider_policy={"requested_order": order, "effective_order": order, "fallback_enabled": fallback_enabled, "config_fingerprint": policy_fingerprint, "preprint_profile": resolved_profile, "preprint_policy": preprint_policy}, attempts=attempts, counts={"raw": len(raw_rows), "normalized": len(normalized), "deduped": len(canonical), "failed": sum(1 for item in attempts if item["status"] == "error"), "empty_records": empty_records, "invalid_records": invalid_records, "normalization_failed": normalization_failed, "dropped": dropped}, truncation={"applied": dropped > 0, "limit": max_total, "dropped_count": dropped}, dedupe={"parameters": dedupe_params, "map_path": "dedupe_map.json", "canonical_merges": len(edges)}, abstract_enrichment={"mode": "disabled", "attempted": 0, "filled": 0, "missing": sum(1 for item in canonical if item.get("abstract_status") == "missing")}, status=status, failure_code=failure_code, warnings=warnings, artifacts=paths, search_run_id=run_id, cache={"mode": "disabled"})
     manifest["provider_policy"]["retrieval_strategy"] = RETRIEVAL_STRATEGY
     manifest["provider_policy"]["topup_threshold"] = TOPUP_THRESHOLD
     write_json(bundle / "manifest.json", manifest)
@@ -381,6 +417,7 @@ def main() -> int:
     run.add_argument("--max-year", type=int)
     run.add_argument("--exclude-preprints", action="store_true")
     run.add_argument("--provider-order", "--providers", help="逗号分隔的 provider 顺序")
+    run.add_argument("--domain-profile", default="auto", help="preprint 领域政策：auto/computer_science/mathematics/biology/medicine/general")
     run.add_argument("--publication-type", action="append", dest="publication_types", default=[])
     run.add_argument("--language", action="append", dest="languages", default=[])
     run.add_argument("--open-access", action="store_true", dest="open_access")
@@ -407,7 +444,7 @@ def main() -> int:
         if args.open_access_filter or args.open_access:
             filters["open_access"] = bool(args.open_access)
         provider_order = [item.strip() for item in args.provider_order.split(",") if item.strip()] if args.provider_order else None
-        manifest = run_search(topic=args.topic, domain=args.domain, query_file=args.query_file, output_dir=args.output_dir, scope_root=args.scope_root, filters=filters, provider_order=provider_order, max_results_per_query=args.max_results_per_query, max_total=args.max_total, fallback_enabled=not args.no_fallback, provider_options={"min_queries": args.min_queries, "max_queries": args.max_queries})
+        manifest = run_search(topic=args.topic, domain=args.domain, query_file=args.query_file, output_dir=args.output_dir, scope_root=args.scope_root, filters=filters, provider_order=provider_order, max_results_per_query=args.max_results_per_query, max_total=args.max_total, fallback_enabled=not args.no_fallback, provider_options={"min_queries": args.min_queries, "max_queries": args.max_queries}, preprint_profile=args.domain_profile)
         print(json.dumps(manifest, ensure_ascii=False, indent=2))
         return 0 if manifest.get("status") in {"success", "partial_success"} else 1
     if args.command == "enrich-abstracts":

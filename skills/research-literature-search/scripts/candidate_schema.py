@@ -186,7 +186,7 @@ def normalize_record(
     sources = [item for item in sources if isinstance(item, dict)]
     if not sources:
         sources = [_source_envelope(raw, provider=provider, query_id=query_id, rank=rank)]
-    query_matches = raw.get("query_matches") if isinstance(raw.get("query_matches"), list) else []
+    query_matches = list(raw.get("query_matches")) if isinstance(raw.get("query_matches"), list) else []
     if query_id and query_id not in query_matches:
         query_matches.append(query_id)
     warnings = raw.get("quality_warnings") if isinstance(raw.get("quality_warnings"), list) else []

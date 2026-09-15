@@ -2,7 +2,7 @@
 
 `research-literature-search` 将“查询输入 → 多源召回 → 规范化 → canonical 去重 → 来源审计”做成可独立复用的证据生产环节。它适合只想先拿候选文献池、为研究选题准备查新材料，或被综述/标书等下游流程消费的场景。
 
-当前版本：`v1.0.3`。
+当前版本：`v1.0.4`。
 
 manifest 校验使用独立命名的 `rls_contract` 模块，避免与 `research-literature-review` 的同名 `query_contract` 在同一 Python 进程中互相遮蔽。
 

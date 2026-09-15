@@ -41,7 +41,7 @@ def legacy_output_stems(raw: str) -> list[str]:
     old = re.sub(r'[\\/:*?"<>|]+', "", value)
     # Historical review runner accidentally preserved whitespace in legacy stems;
     # keep that probe path read-only so old checkpoints remain discoverable.
-    old = re.sub(r"\\s+", "-", old)[:80] or "topic"
+    old = re.sub(r"\s+", "-", old)[:80] or "topic"
     canonical = normalize_output_stem(value)
     return [item for item in dict.fromkeys([old]) if item != canonical]
 

@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
+- 修复 legacy stem 空白归一化、字符串文献类型过滤、query_matches 输入变异、重复 provider 请求及零总量上限；补充回归测试。
+
+## [1.0.4] - 2026-09-15
+
 - 明确恢复拆分前 review 的 priority-fallback-topup 检索语义，并在 manifest/Search Log 固化策略与补召阈值，避免将 fallback 误读为全 provider union 召回。
+- 增加按领域选择的 preprint profile；默认保留 preprint 作为发现线索，按领域调整排序偏好并在 manifest 中审计，不在搜索层武断删除或认证 preprint 结论。
 
 ## [1.0.3] - 2026-09-14
 
