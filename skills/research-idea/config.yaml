@@ -1,6 +1,6 @@
 skill_info:
   name: "research-idea"
-  version: "0.10.0"
+  version: "0.11.0"
   description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
@@ -16,7 +16,6 @@ workspace:
 dependencies:
   kernel:
     name: bensz-skill-kernel
-    version: ">=2.1.1"
   required_skills:
     - "research-topic-extractor"
     - "research-literature-radar"
@@ -144,17 +143,8 @@ validation:
 tests:
   default_dir: "tests/research-idea"
 
-# 最低包版本见 dependencies.kernel；runtime 仅供 bsk 原生声明加载。
+# BSK 按项目约定使用 latest；runtime 不再保留旧式精确版本绑定。
 runtime:
-  kernel:
-    name: bensz-skill-kernel
-    version: "2.1.1"
-  required_capabilities:
-    - state_visit_identity
-    - atomic_target_identity_handoff
-    - attempt_supersede
-    - state_bound_verifier_gate
-    - state_bound_action_authorization
   startup:
     script: scripts/start_workflow.py
     initial_state: bensz.research-ideation.literature
@@ -189,8 +179,8 @@ runtime:
     - bensz.research-ideation.completed
   verifiers:
     - id: bensz.research.stage-readiness
-      version: "3.0.0"
+      version: "4.0.0"
       required: true
     - id: bensz.research.hypothesis-merit
-      version: "1.0.0"
+      version: "1.1.0"
       required: true

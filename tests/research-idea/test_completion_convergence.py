@@ -17,6 +17,45 @@ RUN_ID = "run-1"
 ATTEMPT_ID = "run-attempt-1"
 
 
+def test_completed_semantics_separate_pipeline_readiness_from_claim_eligibility():
+    results = [
+        {
+            "verifier_id": "bensz.research.stage-readiness",
+            "facts": {
+                "pipeline_ready": True,
+                "scientific_evidence_sufficient": False,
+                "claim_eligible": False,
+            },
+        },
+        {
+            "verifier_id": "bensz.research.hypothesis-merit",
+            "facts": {"applicability": "not_applicable"},
+        },
+    ]
+    errors = check_completion.completion_verifier_semantic_errors(results)
+    assert any("scientific_evidence_sufficient" in error for error in errors)
+    assert any("claim_eligible" in error for error in errors)
+    assert any("不适用回执" in error for error in errors)
+
+
+def test_completed_semantics_accept_applicable_scientifically_sufficient_results():
+    results = [
+        {
+            "verifier_id": "bensz.research.stage-readiness",
+            "facts": {
+                "pipeline_ready": True,
+                "scientific_evidence_sufficient": True,
+                "claim_eligible": True,
+            },
+        },
+        {
+            "verifier_id": "bensz.research.hypothesis-merit",
+            "facts": {"applicability": "applicable"},
+        },
+    ]
+    assert check_completion.completion_verifier_semantic_errors(results) == []
+
+
 def write(path: Path, text: str = "fixture") -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
@@ -111,8 +150,8 @@ def write_completion_events(task: Path) -> None:
         ("reporting", "completed"),
     ):
         for verifier_id, verifier_version in (
-            ("bensz.research.stage-readiness", "3.0.0"),
-            ("bensz.research.hypothesis-merit", "1.0.0"),
+            ("bensz.research.stage-readiness", "4.0.0"),
+            ("bensz.research.hypothesis-merit", "1.1.0"),
         ):
             events.append({
                 "type": "verification.result",
@@ -135,8 +174,8 @@ def write_completion_events(task: Path) -> None:
                     "decision": "allow",
                     "computed_by": "kernel",
                     "result_refs": [
-                        "bensz.research.stage-readiness@3.0.0",
-                        "bensz.research.hypothesis-merit@1.0.0",
+                        "bensz.research.stage-readiness@4.0.0",
+                        "bensz.research.hypothesis-merit@1.1.0",
                     ],
                 },
             },

@@ -12,7 +12,7 @@ Agent 必须读取候选、近邻工作、研究脉络 map、审查记录和最�
 
 ## Execution
 
-唯一组件 merit-review 由当前 Agent 执行。Kernel 生成 handoff 并验证绑定回传，不自行调用模型。先核对 source/target 是否为 `candidates → review` 或 `reporting → completed`；其它前进边若尚未形成候选、推荐或无合格结论，可返回 pass，但 facts.summary 必须明确“本次转移不作科学假设价值认证，未放行推荐结论”。rework 时只判断返工是否有价值审问缺口，不替代 stage-readiness 的图边核验。
+唯一组件 merit-review 由当前 Agent 执行。Kernel 生成 handoff 并验证绑定回传，不自行调用模型。本次核对的 latest 托管 BSK 尚不支持 action-specific required Verifier，因此本 Verifier 暂保留全局 required 兼容路径。先核对 source/target 是否为 `candidates → review` 或 `reporting → completed`；这两条边必须输出 `facts.applicability=applicable` 并做真实价值认证。其它前进边输出 `facts.applicability=not_applicable`，可返回 pass，但 facts.summary 必须明确“本次转移不作科学假设价值认证，未放行推荐结论”。rework 时只判断返工是否有价值审问缺口，不替代 stage-readiness 的图边核验。
 
 operation=advance 时按结论判断：
 
@@ -34,9 +34,9 @@ operation=advance 时按结论判断：
 
 ## Output and verdicts
 
-使用 Kernel component-result 协议，从 handoff 复制 pack/component/contract/plan/run/state visit/attempt/hash 绑定字段，或在同一可信执行会话使用 handoff.bind_result。executor 记录脱敏角色与实际模型。结果含 execution_status、verdict、evidence_refs、facts.summary、facts.confidence、facts.uncertainties 和 findings。facts.summary 必须概括“为什么值得推荐/为什么无合格/为什么不足”，不能只写流程已完成。
+使用 Kernel component-result 协议，从 handoff 复制 pack/component/contract/plan/run/state visit/attempt/hash 绑定字段，或在同一可信执行会话使用 handoff.bind_result。executor 记录脱敏角色与实际模型。结果含 execution_status、verdict、evidence_refs、facts.summary、facts.confidence、facts.uncertainties、facts.applicability 和 findings。`applicability` 只能是 `applicable` 或 `not_applicable`；facts.summary 必须概括“为什么值得推荐/为什么无合格/为什么不足”，不能只写流程已完成。
 
-- pass：推荐或无合格结论已通过上述价值审问，且证据引用具体、无未解决的关键疑点；或本次转移尚未包含推荐、淘汰或完成结论，facts.summary 明确标记为不适用。后者不能被复用于后续推荐或完成。
+- pass：推荐或无合格结论已通过上述价值审问，且证据引用具体、无未解决的关键疑点；或本次转移尚未包含推荐、淘汰或完成结论，`applicability=not_applicable` 且 facts.summary 明确标记为不适用。后者不得写入 completion evidence、不得在报告中称为“价值通过”，也不能被复用于后续推荐或完成。
 - fail：候选平庸、重复、定义性、缺少概念增量、缺少可辨别预测、用可行性掩盖低价值，或报告推荐与证据不一致。
 - uncertain：近邻等价性、证据深度、领域重要性或替代方向不足以判断。
 - unchecked：尚无实际绑定的语义判断；error/timed_out/skipped 表示执行失败、超时或不适用。

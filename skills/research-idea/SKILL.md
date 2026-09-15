@@ -10,9 +10,9 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 与相邻 skill 的边界：
 - `research-topic-extractor`：只负责把资料提炼成可检索主题。
-- `research-literature-radar`：先发现并筛选经典、前沿和重要论文，形成候选文献池。
+- `research-literature-radar`：把 Search canonical 候选分成核心证据、辅助景观、待升级近邻和范围外记录。
 - `research-literature-interpretation`：逐篇解读入选论文，提取问题、机制、证据、边界和可迁移启发。
-- `research-literature-review`：负责 Premium 查新和证据综述。
+- `research-literature-review`：以 `novelty-check` 目的优先核对强近邻、反方证据和未确认等价性。
 - `parallel-vibe`：负责默认 3 轮串行独立审查与打磨。
 - `research-plan`：在已有科学问题和假设后，才用于实验设计或分析计划。
 
@@ -22,7 +22,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 新任务只通过 `scripts/start_workflow.py` 启动：一次完成环境与 capability 预检、工作区准备、v2 literature 身份、研究参数和运行快照。四个阶段开始前用 `scripts/phase_entry.py --mode start` 获取并消费 State-bound action authorization；阶段完成后用 `--mode finish` 获取 required Verifier handoff、记录 Kernel Gate并创建目标 State 的新 visit/initial attempt。
 
-两个入口只是 BSK 2.1.1 的领域适配器，不创建私有 State、Gate、attempt、handoff 或事件账本，也不声称阻止任意外部写文件。Verifier 失败或证据变化时用 `phase_entry.py --mode retry` 在当前 visit 内 supersede attempt；旧 handoff、Gate 和授权不得复用。若 Agent 绕过入口，`check_completion.py` 依据 v2 source/target identity 链拒绝不完整运行。
+两个入口只是托管 BSK 的领域适配器，不创建私有 State、Gate、attempt、handoff 或事件账本，也不声称阻止任意外部写文件。Verifier 失败或证据变化时用 `phase_entry.py --mode retry` 在当前 visit 内 supersede attempt；旧 handoff、Gate 和授权不得复用。若 Agent 绕过入口，`check_completion.py` 依据 v2 source/target identity 链拒绝不完整运行。
 
 ### 分层完成与降级语义
 
@@ -48,15 +48,15 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 #### 文献调查与解读（候选生成前置）
 
-1. 调用 `research-literature-radar`，根据 `input/theme.json` 获取领域内重要、经典、前沿和具有启发性的论文。优先获取公开 PDF 正文；若无法获得 PDF，允许使用题目、摘要和可核验元数据，但必须标记证据深度不足。
-2. 将雷达结果及其 provenance 保存到本任务 `research-literature-radar/output/`，至少记录论文稳定 ID、题目、年份、来源、PDF/摘要可用性、入选理由和未覆盖风险。雷达失败或没有达到最低证据量时，不得直接生成候选，应先报告并停止后续依赖步骤。
+1. 调用 `research-literature-radar`，根据 `input/theme.json` 消费 Search manifest 与全部 canonical 候选，输出逐条覆盖的 `literature-landscape.jsonl` 和 hash/计数摘要。每条记录正交标注相关性、证据深度、发表状态和身份可信度；预印本与单一可靠来源不得被自动降级。
+2. 将核心论文、辅助研究线、待升级近邻及其 provenance 保存到本任务 `research-literature-radar/output/`。核心论文使用 R 锚点；辅助和待跟踪论文继续使用 Search record ID，不建立平行身份。Radar 失败、landscape 未全量对账或 hash 漂移时，不得直接生成候选。
 3. 对入选论文调用 `research-literature-interpretation`，采用并行子 agent 分批执行：
    - 一个子 agent 只负责一篇论文，独立读取该论文的 provenance 与可用正文/摘要，并将结果写入本任务 `research-literature-interpretation/output/` 下独立的论文目录。
    - 同时运行的解读子 agent 最多 3 个（不含负责调度与汇总的主 agent）；入选论文超过 3 篇时按批次排队，上一批全部完成（或记录失败）后再启动下一批。
    - 本阶段不再嵌套启动额外的并行解读 agent；若单篇需要补证据或定向复核，由该子 agent 在自身任务内完成，不能突破全局并发上限。
    - 主 agent 汇总所有成功解读，并保留每篇论文的失败/证据不足状态；任何论文未完成时不得把研究脉络 map 标记为完整。
    - PDF 可用时优先基于全文；只有摘要时，解读必须收缩到摘要支持的范围，不得补写全文结论。每篇解读至少记录 `source_id`、`evidence_depth`、`read_scope`、问题、方法、关键结果、限制、支持/反驳关系和稳定引用；研究 map 为每条关系标记 evidence level，并将待验证综合判断单列。
-4. 主 Agent 基于全部解读建立本 Skill 的 `output/research-map.md`，先读 [研究综合指南](references/research-synthesis.md)。主体包含研究线比较表、关系与演化说明、带稳定 O 编号的研究机会清单，并保留时间线与论文 R 编号锚点。区分有来源的关系与待验证综合判断；不能把时间先后、相似术语或不同测量结果写成继承、因果或矛盾。没有争议也可从重要未测量现象与适用边界提出问题，不编造冲突。缺少关键证据时定向补读。
+4. 主 Agent 基于核心解读与完整 landscape 建立本 Skill 的 `output/research-map.md`，先读 [研究综合指南](references/research-synthesis.md)。主体包含研究线比较表、辅助候选聚类摘要与覆盖范围、关系与演化说明、带稳定 O 编号的研究机会清单，并保留时间线、R 锚点和 Search record ID。区分有来源的关系与待验证综合判断；不能把时间先后、相似术语或不同测量结果写成继承、因果或矛盾。发现可能决定新意的辅助近邻时按需升级全文/单篇解读，不对全部辅助论文做长篇精读。
 
 #### 初始候选与低成本价值筛选
 
@@ -78,9 +78,9 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 只有通过价值筛选、拟作为研究方向保留的候选进入完整 Premium 查新：
 1. 调用 `research-topic-extractor`，将该候选主题、关键词、核心问题写入 `candidates/Cx/theme.json`。
-2. 调用 `research-literature-review`，档位仍固定 `Premium`；在同一任务根中按依赖 Skill 边界归档，并在 `novelty/Cx/` 记录相对来源。复用本轮精读与来源定位，不擅自降低依赖的交付标准。
+2. 调用 `research-literature-review --purpose novelty-check`；Premium 表示证据强度而非固定篇数或必须导出 PDF/Word。在同一任务根中按依赖 Skill 边界归档，并在 `novelty/Cx/` 记录相对来源。复用本轮精读、landscape 与来源定位。
 3. 按 [查新指南](references/novelty-check.md) 核对问题/假设是否已被等价回答，以及新增条件能否改变已有认识；优先比较最可能否定新意的近邻工作。
-4. 保存 `novelty/Cx/novelty-decision.json`，包括执行状态、已有答案、剩余未知、差异意义、未确认等价性和处理决定。直接近邻全文受限时结论为未定；未完成方向只能作为探索线索。实质改写问题/假设后重新查新。Premium 只有在多源、全文（或明确记录的降级条件）、强近邻清单和等价性检查均有证据时，才能计入 `evidence_sufficient`；`primary_source=null`、runner error 或仅摘要/网页时自动降级。
+4. 保存 `novelty/Cx/novelty-decision.json`，包括强近邻、摘要级排除理由、决定性近邻、证据深度、未确认等价性和处理决定。摘要足以排除明显不等价工作；决定新颖性的近邻才升级全文与单篇解读。单一可靠来源通常足以确认身份，只有冲突、版本合并、疑似重复或唯一决定性近邻才补多源核验。已知决定性近邻未核验时允许进入“带缺口审查”，但 `scientific_evidence_sufficient` 与 `claim_eligible` 必须为 false。
 
 已充分研究不能凭协议更齐全或措辞更宏大保留；重要复现若形成不同的研究问题，重新论证并查新。价值筛选已足以淘汰的候选记录依据和未执行查新的原因，不伪造 Premium 执行记录。零候选仍保留 candidates 与 novelty 证据角色，后者说明淘汰所依据的既有证据、哪些无需查新及原因。
 

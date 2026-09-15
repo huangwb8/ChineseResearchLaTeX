@@ -38,4 +38,4 @@ theme、radar、interpretation、map；每个结论有论文锚点，未完成�
 
 ## 边界与执行归属
 
-`start_workflow.py` 与 `phase_entry.py` 只消费 BSK 2.1.1 公开接口；Kernel 负责图、授权、Gate、绑定、visit/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。
+`start_workflow.py` 与 `phase_entry.py` 只消费当前托管 BSK 公开接口；Kernel 负责图、授权、Gate、绑定、visit/attempt、事件与状态持久化，Agent 负责科学语义和 Verifier 回传。

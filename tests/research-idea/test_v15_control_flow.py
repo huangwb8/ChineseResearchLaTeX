@@ -1,4 +1,4 @@
-"""bac-v15 原子启动与 BSK 2.1.1 阶段门控回归。"""
+"""bac-v15 原子启动与 latest BSK 阶段门控回归。"""
 from __future__ import annotations
 
 import json
@@ -10,6 +10,7 @@ import shutil
 
 from bensz_skill_kernel.runtime import EventLog
 from bensz_skill_kernel.workspace import TaskWorkspace
+from bensz_skill_kernel import __version__ as kernel_version
 
 ROOT = Path(__file__).resolve().parents[2]
 SKILL = ROOT / "skills/research-idea"
@@ -58,8 +59,8 @@ def test_single_start_entry_creates_v2_identity_and_runtime_snapshot(tmp_path: P
     snapshot = json.loads(
         (workspace.paths("research-idea").path("log") / "runtime-snapshot.json").read_text()
     )
-    assert snapshot["skill"]["version"] == "0.10.0"
-    assert snapshot["kernel"]["version"] == "2.1.1"
+    assert snapshot["skill"]["version"] == "0.11.0"
+    assert snapshot["kernel"]["version"] == kernel_version
     assert "state_bound_action_authorization" in snapshot["kernel"]["capabilities"]
     assert all(not value.startswith("/") for value in snapshot["skill"]["files"])
 
@@ -190,8 +191,8 @@ def test_five_stage_v2_chain_has_no_control_break(tmp_path: Path):
     import check_completion
     events = [json.loads(line) for line in workspace.events.read_text().splitlines() if line]
     required = [
-        "bensz.research.stage-readiness@3.0.0",
-        "bensz.research.hypothesis-merit@1.0.0",
+        "bensz.research.stage-readiness@4.0.0",
+        "bensz.research.hypothesis-merit@1.1.0",
     ]
     assert check_completion.first_control_break(
         events, "bensz.research-ideation.completed", required
@@ -210,7 +211,7 @@ def test_phase_rejects_skill_files_changed_after_start(tmp_path: Path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     config = copied / "config.yaml"
-    config.write_text(config.read_text().replace('version: "0.10.0"', 'version: "0.10.1"', 1))
+    config.write_text(config.read_text().replace('version: "0.11.0"', 'version: "0.11.1"', 1))
     rejected, payload = run_json(
         copied / "scripts/phase_entry.py", "--project-root", tmp_path,
         "--task-root", task, "--mode", "start", "--action", "literature",

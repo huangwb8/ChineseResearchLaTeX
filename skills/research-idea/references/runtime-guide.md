@@ -2,7 +2,7 @@
 
 ## 职责与运行前提
 
-本 Skill 维护五个领域 State、两个 required 语义 Verifier、一个原子启动入口和一个阶段入口。Agent 负责科研工作与语义判断；BSK 2.1.1 负责 run、State visit、active attempt、action authorization、handoff、Gate、transition、事件和状态快照。Skill 不复制这些持久化语义。
+本 Skill 维护五个领域 State、两个 required 语义 Verifier、一个原子启动入口和一个阶段入口。Agent 负责科研工作与语义判断；项目约定的 latest 托管 BSK 负责 run、State visit、active attempt、action authorization、handoff、Gate、transition、事件和状态快照。配置只声明 Kernel 包名，不保留旧式精确版本或静态 `required_capabilities` 清单；启动入口按实际运行时 capability 检查所需能力。
 
 使用 Python 3.11+，并确保 `python` 与 `bsk` 来自同一解释器环境。启动入口按 capability 核对 `state_visit_identity`、`atomic_target_identity_handoff`、`attempt_supersede`、`state_bound_verifier_gate` 和 `state_bound_action_authorization`。任一缺失、解释器错配或期望 Skill 版本不符都在创建工作区前拒绝。
 

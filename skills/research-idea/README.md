@@ -26,7 +26,7 @@
 
 ## 功能概述
 
-`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 发现重要/前沿论文，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇论文一个 agent，同时最多 3 个）并建立时间有序、逻辑关联的研究脉络 map；之后才由多个独立 agent 基于 map brainstorming 初始候选，最后用 `research-literature-review` 做 Premium 查新，并通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。查新前先筛选科学价值；map 连接研究线、解释与证据，候选可追溯到稳定的机会和论文编号。推荐候选还必须接受独立的科学假设价值审问，说明概念增量、创新性、颠覆/改写潜力、非平凡性、关键预测和最强替代方向。
+`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 将全部 Search canonical 候选整理为核心证据、辅助景观和待升级近邻，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇核心论文一个 agent，同时最多 3 个），结合辅助研究线建立 map；之后才由多个独立 agent 生成候选，最后用 `research-literature-review --purpose novelty-check` 核对强近邻，并通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。推荐候选还必须接受独立的科学假设价值审问。
 
 它不替代完整实验设计。你已经确定科学问题后，再用 `research-plan` 制定实验或分析计划。
 如果你只需要写文献综述正文、related work 或系统综述，请直接使用 `research-literature-review`。
@@ -53,11 +53,11 @@
 
 以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由两个 required 自然语言 Verifier 分别核验阶段证据与科学假设价值。Agent 判断科研充分性、创新性和推荐价值，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
 
-需要 Python 3.11+、BSK 2.1.1 能力集，并确保 `python` 与 `bsk` 属于同一环境。新任务只调用 `scripts/start_workflow.py`，由它建立带 run/visit/attempt 的 literature 身份、领域参数和运行快照。每阶段开始前调用 `scripts/phase_entry.py --mode start` 消费 State-bound action authorization，结束后用 `--mode finish` 完成 required Verifier、Kernel Gate 和新目标 visit 转移。
+需要 Python 3.11+ 和项目约定的 latest 托管 BSK，并确保 `python` 与 `bsk` 属于同一环境。新任务只调用 `scripts/start_workflow.py`，由它按实际 capability 建立带 run/visit/attempt 的 literature 身份、领域参数和运行快照。每阶段开始前调用 `scripts/phase_entry.py --mode start` 消费 State-bound action authorization，结束后用 `--mode finish` 完成 required Verifier、Kernel Gate 和新目标 visit 转移。
 
 State、run/visit/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。Verifier 失败或证据变化时用 `--mode retry` 在当前 visit 内 supersede attempt，旧授权、handoff 和 Gate 自动失效；legacy 身份和运行版本漂移保持只读并 fail-closed。
 
-最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v4`，completed 身份来自 BSK 当前快照；每轮 reviewer 除结果和哈希外，还必须有 thread/runner completed 回执。`check_completion.py` 会拒绝缺授权、Gate 后变更、跨 attempt 复用、synthetic review 和不完整执行 provenance。
+最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v4`，completed 身份来自 BSK 当前快照；每轮 reviewer 除结果和哈希外，还必须有 thread/runner completed 回执。`stage-readiness` 分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 和 `claim_eligible`；进入带缺口审查不等于允许最终 claim。`check_completion.py` 也拒绝消费 `hypothesis-merit` 的不适用回执。
 
 ## 使用示例
 

@@ -13,15 +13,11 @@ def load_config():
     return yaml.safe_load((SKILL_ROOT / "config.yaml").read_text(encoding="utf-8"))
 
 
-def test_kernel_dependency_uses_minimum_version_range():
+def test_kernel_dependency_uses_latest_without_version_pin():
     config = load_config()
-    assert config["dependencies"]["kernel"] == {
-        "name": "bensz-skill-kernel",
-        "version": ">=2.1.1",
-    }
-    assert config["runtime"]["kernel"]["name"] == "bensz-skill-kernel"
-    assert config["runtime"]["kernel"]["version"] == "2.1.1"
-    assert "state_bound_action_authorization" in config["runtime"]["required_capabilities"]
+    assert config["dependencies"]["kernel"] == {"name": "bensz-skill-kernel"}
+    assert "kernel" not in config["runtime"]
+    assert "required_capabilities" not in config["runtime"]
     assert config["runtime"]["phase_entry"]["identity_mode"] == "state-visit-v2"
 
 
@@ -31,12 +27,12 @@ def test_kernel_can_load_native_runtime_declaration():
     assert declaration.verifier_requirements() == (
         {
             "id": "bensz.research.stage-readiness",
-            "version": "3.0.0",
+            "version": "4.0.0",
             "required": True,
         },
         {
             "id": "bensz.research.hypothesis-merit",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "required": True,
         },
     )

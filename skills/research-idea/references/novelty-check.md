@@ -1,6 +1,6 @@
 # 查新判定指南
 
-在低成本价值筛选后阅读。拟保留研究候选必须调用 `research-topic-extractor` 提取 topic、5–10 个英文关键词和 2–5 个核心问题，再调用 `research-literature-review` 的 Premium 档。每个依赖使用同一任务根下自己的 Skill 目录；`research-idea/novelty/Cx/` 保存判定与相对来源。
+在低成本价值筛选后阅读。拟保留研究候选必须调用 `research-topic-extractor` 提取 topic、5–10 个英文关键词和 2–5 个核心问题，再调用 `research-literature-review --purpose novelty-check`。Premium 在这里表示与 claim 匹配的证据强度，不表示必须填满参考篇数或导出 PDF/Word。每个依赖使用同一任务根下自己的 Skill 目录；`research-idea/novelty/Cx/` 保存判定与相对来源。
 
 ## 两层比较
 
@@ -10,7 +10,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 稳定 R 编号及全文定位 | 不只比较术语 | 区分测量/对象/条件 | 证据支持的空白 | 改变何种认识或决策 | 全文/方法缺失等 |
 
-复用本轮精读和定位，减少重复解释；仍须满足 Premium 依赖的实际交付标准。全文无法取得时，结论收缩到可读证据，不用检索数量、档位名称或“未搜到”代替新颖性判断。
+复用本轮精读、Radar landscape 和定位，减少重复解释。标题只用于发现/聚类，摘要可用于相关性、作者自报结果和明显不等价排除；决定机制、结果或等价性的近邻才必须升级全文。全文无法取得时，结论收缩到可读证据，不用检索数量、档位名称或“未搜到”代替新颖性判断。
 
 ## 判定与执行状态分开
 
@@ -34,7 +34,10 @@
   "equivalent_hypothesis_tested": "等价性判断和待确认部分",
   "key_gap": "证据支持的剩余未知",
   "scientific_delta": "差异为什么改变认识或决策",
-  "nearest_work": [{"ref": "R1", "comparison": "共同问题、已有答案、差异及全文定位"}],
+  "nearest_work": [{"ref": "Search record ID / R1", "role": "direct-neighbor", "evidence_depth": "abstract / fulltext", "decisive_neighbor": true, "comparison": "共同问题、已有答案、差异及定位"}],
+  "pipeline_ready": true,
+  "scientific_evidence_sufficient": false,
+  "claim_eligible": false,
   "source_refs": ["可复核的本轮查新来源"],
   "decision": "保留 / 实质重构 / 工程事项 / 淘汰 / 待补证据"
 }

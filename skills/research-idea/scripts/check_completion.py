@@ -190,12 +190,26 @@ def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dic
                         for field in ("evidence_depth", "read_scope", "stable_citation"):
                             if not isinstance(item.get(field), str) or not item[field].strip():
                                 errors.append(f"{skill} 产物 {index_no} 缺少 {field}")
-                    if skill == "research-literature-review":
-                        for field in ("evidence_depth", "equivalence_checked", "multi_source"):
+                    if skill == "research-literature-radar":
+                        for field in ("canonical_count", "canonical_candidates_sha256", "search_manifest_sha256"):
                             if field not in item:
                                 errors.append(f"{skill} 产物 {index_no} 缺少 {field}")
-                        if item.get("evidence_depth") not in {"fulltext", "full-text", "全文"} or item.get("equivalence_checked") is not True or item.get("multi_source") is not True:
-                            errors.append(f"{skill} 产物 {index_no} 未达到 Premium 全文/多源/等价性门禁")
+                        if item.get("coverage_complete") is not True:
+                            errors.append(f"{skill} 产物 {index_no} 未完成 canonical landscape 全量对账")
+                    if skill == "research-literature-review":
+                        for field in (
+                            "evidence_depth", "equivalence_checked", "identity_confidence",
+                            "publication_status", "decisive_neighbor",
+                        ):
+                            if field not in item:
+                                errors.append(f"{skill} 产物 {index_no} 缺少 {field}")
+                        if item.get("decisive_neighbor") is True and (
+                            item.get("evidence_depth") not in {"fulltext", "full-text", "全文"}
+                            or item.get("equivalence_checked") is not True
+                        ):
+                            errors.append(f"{skill} 产物 {index_no} 的决定性近邻未达到全文/等价性门禁")
+                        if item.get("identity_confidence") in {"conflict", "low"} and item.get("multi_source") is not True:
+                            errors.append(f"{skill} 产物 {index_no} 存在身份冲突但未补充来源核验")
 
     if statuses["review"] == "complete":
         review = index.get("review")
@@ -271,6 +285,22 @@ def check_completion_layers(index: dict[str, Any], report: dict[str, Any], error
             errors.append(f"完成层 {key} 未满足")
     if report.get("outcome") in {"recommended", "no_qualified"} and layers.get("claim_eligible") is not True:
         errors.append("正式结论要求 claim_eligible=true")
+
+
+def completion_verifier_semantic_errors(results: list[dict[str, Any]]) -> list[str]:
+    """Reject a completed claim that only has pipeline readiness or an N/A merit pass."""
+    errors: list[str] = []
+    by_id = {payload.get("verifier_id"): payload for payload in results}
+    readiness = by_id.get("bensz.research.stage-readiness", {})
+    readiness_facts = readiness.get("facts") if isinstance(readiness.get("facts"), dict) else {}
+    for field in ("pipeline_ready", "scientific_evidence_sufficient", "claim_eligible"):
+        if readiness_facts.get(field) is not True:
+            errors.append(f"completed stage-readiness 未认证 {field}=true")
+    merit = by_id.get("bensz.research.hypothesis-merit", {})
+    merit_facts = merit.get("facts") if isinstance(merit.get("facts"), dict) else {}
+    if merit_facts.get("applicability") != "applicable":
+        errors.append("completed hypothesis-merit 不是 applicable，不能消费不适用回执")
+    return errors
 
 
 def first_control_break(
@@ -512,6 +542,17 @@ def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors:
         missing = [item for item in required_verifiers if item not in result_refs]
         if missing:
             errors.append("completed Gate 未覆盖全部 required Verifier: " + ", ".join(missing))
+        source_run = source_identity.get("run_id", run_id)
+        source_visit = source_identity.get("state_visit_id")
+        source_attempt = source_identity.get("attempt_id", attempt_id)
+        results = [
+            event.get("payload", {}) for event in events
+            if event.get("type") == "verification.result"
+            and event.get("run_id") == source_run
+            and event.get("state_visit_id") == source_visit
+            and event.get("attempt_id") == source_attempt
+        ]
+        errors.extend(completion_verifier_semantic_errors(results))
     return {
         "current_state": current_state,
         "event_count": len(events),

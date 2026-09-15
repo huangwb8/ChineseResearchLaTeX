@@ -6,6 +6,10 @@
 
 ## [Unreleased]
 
+- `0.11.0`：候选生成同时消费 Radar 核心精读与覆盖全部 Search canonical 候选的辅助 landscape；查新改用 Review `novelty-check`，按风险升级决定性近邻，不再以篇数、多源或全文作为普遍充分性代理。
+- `bensz.research.stage-readiness` 升至 4.0.0，分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 与 `claim_eligible`；允许带已披露缺口进入独立审查，但 completed 必须三项均为 true。`bensz.research.hypothesis-merit` 升至 1.1.0，以 `applicability` 防止完成流程消费不适用回执。
+- 核对当前托管 BSK 后确认尚不支持 action-specific required Verifier，故保留全局 required 兼容路径；按项目 latest 约定删除 `dependencies.kernel.version`、旧式 `runtime.kernel` 精确绑定和静态 `required_capabilities` 声明，启动时继续按实际 capability 检查。
+
 - `0.10.0`：按 bac-v15 计划接入 BSK 2.1.1 原生身份生命周期。新增原子 `start_workflow.py`，统一环境/capability 预检、v2 literature 身份、领域资料和运行快照；`phase_entry.py` 增加阶段 start/finish/retry，消费 State-bound action authorization、为每个目标 State 创建新 visit/attempt，并支持同 visit attempt supersede。完成收敛改按 source/target identity 链核对授权、Gate 与转移，completion-v4 要求 completed 权威身份及 thread/runner 完成回执；legacy 现场只读 fail-closed。
 
 - `0.9.1`：按 bac-v14 阶段身份计划修复 Kernel 2.1.0 直线流程。首次进入 literature 必须携带非空 run/attempt；`phase_entry.py` 从 BSK 事件投影取得当前 State 权威进入身份，按 action 隔离 Gate 幂等键并复核目标快照。由于 Kernel 尚无 State visit/attempt 轮换接口，失败重试、换 attempt、回退与无身份旧现场显式 fail-closed；完成检查新增首个控制断点诊断。
