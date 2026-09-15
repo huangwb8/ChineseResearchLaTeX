@@ -212,6 +212,12 @@ skills/*/tests/
 !/tests/research-idea/
 /tests/research-idea/*
 !/tests/research-idea/*.py
+!/tests/research-literature-radar/
+/tests/research-literature-radar/*
+!/tests/research-literature-radar/*.py
+!/tests/research-literature-review/
+/tests/research-literature-review/*
+!/tests/research-literature-review/*.py
 !/tests/bensz-thesis/
 !/tests/bensz-thesis/**
 /tests/bensz-thesis/.DS_Store

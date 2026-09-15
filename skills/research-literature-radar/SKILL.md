@@ -6,18 +6,18 @@ metadata:
 ---
 # Research Literature Radar
 
-### 定位与边界
+## 目标
 
 把来自不同发现渠道的候选论文转成可持续维护的研究雷达。`research-literature-search` 只是本 skill 的一个检索子步骤，负责基于显式关键词的数据库召回、字段规范化、canonical 去重和 provenance；本 skill 仍负责分层发现、跨渠道汇总、价值判断、分类、跟踪与归档。
 
 本 skill 负责：
 
 - 将用户目标转成筛选标准和论文类型配额；
-- 对候选做主题相关性硬过滤和 idea-level 价值评分；
-- 分类、排序、记录不确定性和落选理由；
+- 对全部 canonical 候选分别判断相关性、证据深度、发表状态和身份可信度；
+- 分类、排序、记录不确定性，并保留核心、辅助、待跟踪和范围外角色；
 - 将入选论文映射到稳定 ID，写入论文库并维护跨轮次跟踪。
 
-### 触发与输入
+### 触发与输入概览
 
 用户提出“找值得读的论文”“建立某主题论文雷达”“按经典/热点/顶会等类型推荐论文”或类似发现与学习需求时触发。
 
@@ -74,19 +74,23 @@ dedupe_map.json
 
 当补充信号产生新论文时，使用本 skill 的稳定身份键与 catalog 比对；相似但无法确认的记录标记 `possible_duplicate`，不得静默合并。
 
-先硬过滤主题相关性、时间/venue 约束和最低元数据完整度，再评分。对通过者按 0–5 分记录：`conceptual_novelty`、`simplicity`、`surprise`、`generality`、`unification`、`new_primitive`、`follow_up_potential`、`practical_impact`。证据质量单列为 `confidence`，不混入“有趣程度”。
+对全部 canonical 候选先建立 landscape，再对可能进入核心集者评分。每条记录包含 `record_id`、`canonical_rank`、`role`、`cluster`、`relevance`、`evidence_depth`、`publication_status`、`identity_confidence`、`use_cases`、`reason`、`uncertainties` 和 `source_refs`。标题可用于发现、聚类和 watchlist；摘要可支持相关性与作者自报判断；方法、结果和等价性强结论必须匹配全文证据。预印本状态与来源数量不能替代相关性判断。
 
-为每篇入选或高分落选候选记录总分、两句理由、关键证据、思想标签和不确定性。思想标签可使用：`problem-reformulation`、`unexpected-simplicity`、`hidden-equivalence`、`assumption-revisit`、`new-measurement`、`failure-revealing`、`new-primitive`、`cross-domain-transfer`。标题短语只能触发关注，必须用摘要、论文页面或 PDF 核实。
+由 AI 批量聚类并填写简短判断草稿，再运行 `scripts/build_landscape.py --bundle <search-bundle> --draft <draft.jsonl> --output <literature-landscape.jsonl> --summary <landscape-summary.json>` 做 manifest/hash、全量覆盖、ID 唯一、枚举、canonical 顺序与计数对账。确定性脚本不得硬编码领域关键词或替 AI 判定科学价值。
 
-先满足各类最低配额，再按总分、思想标签/年份/作者多样性补足；输出高分但落选候选及原因。
+对核心候选按 0–5 分记录：`conceptual_novelty`、`simplicity`、`surprise`、`generality`、`unification`、`new_primitive`、`follow_up_potential`、`practical_impact`。证据质量单列为 `confidence`，不混入“有趣程度”。
+
+为每篇核心候选记录总分、两句理由、关键证据、思想标签和不确定性；其余候选仍保留在 landscape，不能缩成落选总数。思想标签可使用：`problem-reformulation`、`unexpected-simplicity`、`hidden-equivalence`、`assumption-revisit`、`new-measurement`、`failure-revealing`、`new-primitive`、`cross-domain-transfer`。
+
+用配额检查研究线覆盖，但不为填满配额选择低质量论文；再按总分、思想标签/年份/作者多样性形成精而少的核心集。辅助或待跟踪条目成为关键近邻时保留 Search record ID，并可新增 R 锚点和解读历史，不重新去重。
 
 `scripts/catalog.py` 提供不依赖网络的 ID 生成、标题标准化、索引加载和重复判定；`scripts/validate_layout.py` 在交付前检查运行级文件是否错误写入 `docs/papers/` 根目录。脚本不会下载或删除文件。
 
 ### 输出
 
-每轮先加载 catalog，再消费已验证的 search bundle。重复项只更新来源、版本、评分或跟进记录；只有真正新论文才创建目录。将 `discovery.md`、`selection.md`、`dedup-report.md` 和运行摘要写入同一 `runs/<run-id>/`，并明确候选数 = 入选 + 跳过 + 待确认 + 失败。
+每轮先加载 catalog，再消费已验证的 search bundle。重复项只更新来源、版本、评分或跟进记录；只有真正新论文才创建目录。将 `literature-landscape.jsonl`、`landscape-summary.json`、`discovery.md`、`selection.md`、`dedup-report.md` 和运行摘要写入同一 `runs/<run-id>/`，并明确 canonical 数 = core + supporting + watchlist + out_of_scope。
 
-交付前确认：每个实际使用的 search manifest 可消费、canonical 数量可追溯；五类渠道的适用性和覆盖情况有说明；每篇候选标注可复用思想标签，并有一手论文页面/PDF和至少一个独立发现信号（URL、访问日期、用途）；ID、metadata、catalog、raw manifest 与内部路径一致；根目录 `index.md` 已包含每篇新增论文；`docs/papers/` 根目录没有运行级文件。
+交付前确认：每个实际使用的 search manifest 可消费、canonical hash 与数量可追溯；landscape 恰好覆盖每个 canonical record ID；五类渠道的适用性和覆盖情况有说明。一个可靠来源通常足以确认身份；只有元数据冲突、版本合并、疑似重复或决定性近邻才要求额外核对。ID、metadata、catalog、raw manifest 与内部路径一致；根目录 `index.md` 已包含每篇新增论文；`docs/papers/` 根目录没有运行级文件。
 
 ### 输出管理
 

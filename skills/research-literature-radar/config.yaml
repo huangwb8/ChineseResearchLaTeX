@@ -1,6 +1,19 @@
 skill_info:
   name: "research-literature-radar"
-  version: "0.1.1"
+  version: "0.2.0"
   description: "发现、筛选并长期归档重要研究论文；当用户要求按主题寻找经典、rising star、社区精选、热点或顶会/顶刊论文时使用。采用分层发现策略，调用 research-literature-search 完成其中的关键词/数据库检索，再由本 skill 负责多渠道汇总、idea-level 价值判断、论文类型分类、跨轮次跟踪和论文库归档。"
   author: "Bensz Conan"
   category: "research"
+
+landscape:
+  schema: research-literature-landscape-v1
+  output: literature-landscape.jsonl
+  summary: landscape-summary.json
+  roles: [core, supporting, watchlist, out_of_scope]
+  relevance: [high, medium, low, none, uncertain]
+  evidence_depth: [title, abstract, fulltext]
+  publication_status: [preprint, published, unknown]
+  identity_confidence: [high, medium, low, conflict]
+  require_complete_canonical_coverage: true
+  preserve_search_record_id: true
+  additional_identity_check_reasons: [metadata_conflict, version_merge, possible_duplicate, decisive_neighbor]
