@@ -18,15 +18,17 @@ git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，�
 
 将 ./packages 里的latex包安装到本地设备。
 
+- 简单的测试
+
+```
+version=17
+
+请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v{version}.md 及对应的中间文件夹里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。
+
+你根据这次调查，写2个文件名带  bac-v{version} 字符的优化计划， 分别用于优化 research-idea skill 和 bsk 。
+```
+
 # 日常
-
----
-
-你根据这次调查，写2个文件名带  bac-v15 字符的优化计划， 分别用于优化 research-idea skill 和 bsk 。
-
----
-
-请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v15.md 及对应的中间文件夹里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。
 
 ---
 
