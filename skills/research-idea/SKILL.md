@@ -10,9 +10,10 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 与相邻 skill 的边界：
 - `research-topic-extractor`：只负责把资料提炼成可检索主题。
+- `research-literature-search`：根据显式多查询生成 `rls.v1` canonical 候选与 provenance，是本 Skill 的直接检索依赖。
 - `research-literature-radar`：把 Search canonical 候选分成核心证据、辅助景观、待升级近邻和范围外记录。
 - `research-literature-interpretation`：逐篇解读入选论文，提取问题、机制、证据、边界和可迁移启发。
-- `research-literature-review`：以 `novelty-check` 目的优先核对强近邻、反方证据和未确认等价性。
+- `research-literature-review`：仅在用户需要完整综述、related work 或系统综述时单独使用，不是本 Skill 的依赖。
 - `parallel-vibe`：负责默认 3 轮串行独立审查与打磨。
 - `research-plan`：在已有科学问题和假设后，才用于实验设计或分析计划。
 
@@ -28,7 +29,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个独立判断：文件存在不等于阶段执行过，阶段执行过不等于证据深度足够，证据足够也不自动证明科学结论。`recommended` 仅表示当前范围内的有界推荐；依赖故障、全文不足或等价性未核验时使用 `degraded`，已有部分证据但仍可指导下一步时使用 `bounded_recommendation`，均不可进入 `completed`。只有四层均为 true、required Verifier 通过且 `check_completion.py` 通过，才能交付 `completed`。
 
-新运行的 `completion-evidence.json` 使用 `schema: research-idea-completion-v4`，顶层 completed 身份从 BSK 当前快照派生；独立 reviewer 还必须有 thread/runner completed 回执。旧回传不可跨 attempt 复用，旧索引保持只读，不能用于认证新完成。
+新运行的 `completion-evidence.json` 使用 `schema: research-idea-completion-v5`，顶层 completed 身份从 BSK 当前快照派生；候选级 Search bundle 必须保留 `rls.v1`、查询与 canonical 候选哈希、数量及全量消费状态，独立 reviewer 还必须有 thread/runner completed 回执。旧回传不可跨 attempt 复用，旧索引保持只读，不能用于认证新完成。
 
 ### 输入
 
@@ -76,13 +77,13 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 #### 逐对查新与最近工作比较
 
-只有通过价值筛选、拟作为研究方向保留的候选进入完整 Premium 查新：
+只有通过价值筛选、拟作为研究方向保留的候选进入候选级查新：
 1. 调用 `research-topic-extractor`，将该候选主题、关键词、核心问题写入 `candidates/Cx/theme.json`。
-2. 调用 `research-literature-review --purpose novelty-check`；Premium 表示证据强度而非固定篇数或必须导出 PDF/Word。在同一任务根中按依赖 Skill 边界归档，并在 `novelty/Cx/` 记录相对来源。复用本轮精读、landscape 与来源定位。
-3. 按 [查新指南](references/novelty-check.md) 核对问题/假设是否已被等价回答，以及新增条件能否改变已有认识；优先比较最可能否定新意的近邻工作。
+2. 为直接近邻、等价假设、反方证据和适用边界生成 5–25 条显式查询，调用 `research-literature-search` 生成并验证独立的 `rls.v1` bundle；在同一任务根中按依赖 Skill 边界归档，并在 `novelty/Cx/` 记录相对来源。复用本轮 Search、精读、landscape 与来源定位，但候选级查询不得被宽泛领域检索替代。
+3. 逐条消费 canonical 候选，按 [查新指南](references/novelty-check.md) 核对问题/假设是否已被等价回答，以及新增条件能否改变已有认识；标注强近邻、反方/边界证据和未确认项，优先比较最可能否定新意的近邻工作。检索层不负责评分、纳入/排除或新颖性结论，这些语义判断由本 Skill 完成。
 4. 保存 `novelty/Cx/novelty-decision.json`，包括强近邻、摘要级排除理由、决定性近邻、证据深度、未确认等价性和处理决定。摘要足以排除明显不等价工作；决定新颖性的近邻才升级全文与单篇解读。单一可靠来源通常足以确认身份，只有冲突、版本合并、疑似重复或唯一决定性近邻才补多源核验。已知决定性近邻未核验时允许进入“带缺口审查”，但 `scientific_evidence_sufficient` 与 `claim_eligible` 必须为 false。
 
-已充分研究不能凭协议更齐全或措辞更宏大保留；重要复现若形成不同的研究问题，重新论证并查新。价值筛选已足以淘汰的候选记录依据和未执行查新的原因，不伪造 Premium 执行记录。零候选仍保留 candidates 与 novelty 证据角色，后者说明淘汰所依据的既有证据、哪些无需查新及原因。
+已充分研究不能凭协议更齐全或措辞更宏大保留；重要复现若形成不同的研究问题，重新论证并查新。价值筛选已足以淘汰的候选记录依据和未执行查新的原因，不伪造检索或查新记录。零候选仍保留 candidates 与 novelty 证据角色，后者说明淘汰所依据的既有证据、哪些无需查新及原因。
 
 #### 多轮独立审查
 
@@ -166,7 +167,7 @@ Research-Idea_{github仓库名}_{pr名}_{时间戳}.md
 - 科学问题必须是问题，不是主题名。
 - 假设必须可证伪，不写无法被推翻的价值判断。
 - 查新结论必须区分“没有研究过”和“研究过但缺口仍在”。
-- 拟推荐候选不得因成本高而跳过 Premium；价值筛选淘汰的事项明确记为未执行，不冒充查新通过。
+- 拟推荐候选不得因成本高而跳过候选级多查询检索与查新；价值筛选淘汰的事项明确记为未执行，不冒充查新通过。
 - recommended/no_qualified 交付前必须运行完成收敛检查；缺少依赖产物、completed 状态、required Gate 或约定审查轮次时，不能宣称完成。
 - 缺少贡献边界编码手册、独立真值来源、标注一致性、审计任务、隐私/伦理审批、baseline evidence views 或最小实际重要差异时，只能输出 `insufficient` 或 `bounded_recommendation`，不得进入 completed。
 - 不把文献综述正文当作最终输出；最终输出是研究想法报告。

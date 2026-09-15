@@ -19,13 +19,29 @@ FORWARD_TARGETS = {
     PREFIX + "review": PREFIX + "reporting",
     PREFIX + "reporting": COMPLETED,
 }
+LEGACY_COMPLETION_SCHEMAS = {
+    "research-idea-completion-v2",
+    "research-idea-completion-v3",
+    "research-idea-completion-v4",
+}
+CURRENT_COMPLETION_SCHEMA = "research-idea-completion-v5"
+STRICT_COMPLETION_SCHEMAS = LEGACY_COMPLETION_SCHEMAS | {CURRENT_COMPLETION_SCHEMA}
+
+REQUIRED_EXPLORATION_DEPENDENCIES = (
+    "research-topic-extractor",
+    "research-literature-radar",
+    "research-literature-interpretation",
+)
+LEGACY_NOVELTY_DEPENDENCIES = {
+    "research-idea-completion-v2": ("research-literature-review",),
+    "research-idea-completion-v3": ("research-literature-review",),
+    "research-idea-completion-v4": ("research-literature-review",),
+}
 REQUIRED_DEPENDENCIES = {
     "exploration": (
-        "research-topic-extractor",
-        "research-literature-radar",
-        "research-literature-interpretation",
+        *REQUIRED_EXPLORATION_DEPENDENCIES,
     ),
-    "novelty": ("research-literature-review",),
+    "novelty": ("research-literature-search",),
 }
 
 
@@ -159,7 +175,8 @@ def record_status(record: Any) -> str | None:
 
 def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dict[str, Any], report: dict[str, Any], errors: list[str], *, run_id: str | None = None, attempt_id: str | None = None) -> None:
     dependencies = index.get("dependencies")
-    strict = index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3", "research-idea-completion-v4"}
+    schema = index.get("schema")
+    strict = schema in STRICT_COMPLETION_SCHEMAS
     if not isinstance(dependencies, dict):
         errors.append("完成证据索引缺少 dependencies 对象")
         dependencies = {}
@@ -167,7 +184,7 @@ def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dic
     statuses = {key: raw_statuses.get(key) for key in ("exploration", "novelty", "review")}
     required = list(REQUIRED_DEPENDENCIES["exploration"]) if statuses["exploration"] == "complete" else []
     if statuses["novelty"] == "complete":
-        required.extend(REQUIRED_DEPENDENCIES["novelty"])
+        required.extend(LEGACY_NOVELTY_DEPENDENCIES.get(schema, REQUIRED_DEPENDENCIES["novelty"]))
     for skill in required:
         items = records(dependencies.get(skill))
         if not items:
@@ -210,6 +227,18 @@ def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dic
                             errors.append(f"{skill} 产物 {index_no} 的决定性近邻未达到全文/等价性门禁")
                         if item.get("identity_confidence") in {"conflict", "low"} and item.get("multi_source") is not True:
                             errors.append(f"{skill} 产物 {index_no} 存在身份冲突但未补充来源核验")
+                    if skill == "research-literature-search":
+                        if item.get("contract_version") != "rls.v1":
+                            errors.append(f"{skill} 产物 {index_no} contract_version 不是 rls.v1")
+                        if item.get("search_status") not in {"success", "partial_success"}:
+                            errors.append(f"{skill} 产物 {index_no} 检索状态不可消费")
+                        for field in ("query_sha256", "canonical_candidates_sha256"):
+                            if not isinstance(item.get(field), str) or not item[field].strip():
+                                errors.append(f"{skill} 产物 {index_no} 缺少 {field}")
+                        if not isinstance(item.get("canonical_count"), int) or item["canonical_count"] <= 0:
+                            errors.append(f"{skill} 产物 {index_no} canonical_count 必须为正整数")
+                        if item.get("canonical_coverage_complete") is not True:
+                            errors.append(f"{skill} 产物 {index_no} 未完成 canonical 候选全量消费")
 
     if statuses["review"] == "complete":
         review = index.get("review")
@@ -273,7 +302,7 @@ def check_completion_layers(index: dict[str, Any], report: dict[str, Any], error
     """新契约把流程完成与证据/结论资格拆成四层。"""
     layers = index.get("completion_layers")
     if layers is None:
-        if index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3", "research-idea-completion-v4"}:
+        if index.get("schema") in STRICT_COMPLETION_SCHEMAS:
             errors.append("新完成证据索引缺少 completion_layers")
         return
     if not isinstance(layers, dict):
@@ -619,14 +648,14 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
     current_attempt = completed_identity.get("attempt_id")
     if index:
         check_completion_layers(index, report_result, errors)
-        if index.get("schema") in {"research-idea-completion-v2", "research-idea-completion-v3", "research-idea-completion-v4"}:
+        if index.get("schema") in STRICT_COMPLETION_SCHEMAS:
             if not isinstance(index.get("run_id"), str) or not isinstance(index.get("attempt_id"), str):
                 errors.append("新完成证据索引必须包含字符串 run_id/attempt_id")
             if index.get("run_id") != current_run or index.get("attempt_id") != current_attempt:
                 errors.append("完成证据索引与 completed 事件的 run/attempt 不一致")
             if not isinstance(index.get("authoritative_attempt"), dict):
                 errors.append("新完成证据索引缺少 authoritative_attempt")
-        if index.get("schema") == "research-idea-completion-v4":
+        if index.get("schema") in {"research-idea-completion-v4", CURRENT_COMPLETION_SCHEMA}:
             if index.get("state_visit_id") != current_visit:
                 errors.append("完成证据索引与 completed State visit 不一致")
             authoritative = index.get("authoritative_attempt")
@@ -637,7 +666,7 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
                 }.items()
             ):
                 errors.append("authoritative_attempt 不是 BSK 当前 completed 身份")
-        binding_attempt = None if index.get("schema") == "research-idea-completion-v4" else current_attempt
+        binding_attempt = None if index.get("schema") in {"research-idea-completion-v4", CURRENT_COMPLETION_SCHEMA} else current_attempt
         check_dependency_index(index, task_root, manifest, report_result, errors, run_id=current_run, attempt_id=binding_attempt)
 
     required_verifiers = []

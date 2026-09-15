@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 移除对 `research-literature-review` 的运行依赖，改为直接调用 `research-literature-search` 生成候选级 `rls.v1` bundle；新颖性、等价性、反方证据和决定性近邻判断继续由本 Skill 结合 Radar 与 Interpretation 完成。
+- 完成证据契约升级为 `research-idea-completion-v5`，要求记录候选级查询与 canonical 候选哈希、数量、Search 状态和全量消费状态；v2–v4 仅保留历史读取。
+- 删除当前流程与报告中的 Review `Premium` 档位要求，并同步 README、状态说明、运行指南、模板、校验和回归测试。
+
 - `0.11.0`：候选生成同时消费 Radar 核心精读与覆盖全部 Search canonical 候选的辅助 landscape；查新改用 Review `novelty-check`，按风险升级决定性近邻，不再以篇数、多源或全文作为普遍充分性代理。
 - `bensz.research.stage-readiness` 升至 4.0.0，分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 与 `claim_eligible`；允许带已披露缺口进入独立审查，但 completed 必须三项均为 true。`bensz.research.hypothesis-merit` 升至 1.1.0，以 `applicability` 防止完成流程消费不适用回执。
 - 核对当前托管 BSK 后确认尚不支持 action-specific required Verifier，故保留全局 required 兼容路径；按项目 latest 约定删除 `dependencies.kernel.version`、旧式 `runtime.kernel` 精确绑定和静态 `required_capabilities` 声明，启动时继续按实际 capability 检查。

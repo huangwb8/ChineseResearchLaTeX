@@ -1,7 +1,7 @@
 skill_info:
   name: "research-idea"
-  version: "0.11.0"
-  description: "先通过文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过 Premium 查新与独立审查形成推荐、无合格候选或证据不足结论。"
+  version: "0.12.0"
+  description: "先通过可审计检索、文献雷达、论文解读和研究脉络 map 建立领域背景，再由多 agent 提出候选科学问题与可证伪假设，分开判断科学价值与近期投入，通过候选级查新与独立审查形成推荐、无合格候选或证据不足结论。"
   author: "Bensz Conan"
   category: "research"
 
@@ -18,16 +18,13 @@ dependencies:
     name: bensz-skill-kernel
   required_skills:
     - "research-topic-extractor"
+    - "research-literature-search"
     - "research-literature-radar"
     - "research-literature-interpretation"
-    - "research-literature-review"
     - "parallel-vibe"
   legacy_skill_aliases:
     research-topic-extractor:
       - "get-review-theme"
-    research-literature-review:
-      - "systematic-literature-review"
-  systematic_literature_review_tier: "Premium"
   search_roots:
     - "."
     - "~/.codex/skills"

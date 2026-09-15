@@ -95,7 +95,7 @@ review: complete
 **查新结论**：部分研究但关键缺口存在；湿度边界缺乏验证。
 
 ## 查新摘要
-Premium 是合成文本，不证明已执行真实查新。
+候选级多查询与 canonical 覆盖是合成文本，不证明已执行真实查新。
 
 ## 风险与下一步
 取得关键证据后重新判断边界。
@@ -202,7 +202,7 @@ def write_evidence_index(task: Path) -> Path:
         "research-topic-extractor": ["research-topic-extractor/output/theme.json"],
         "research-literature-radar": ["research-literature-radar/output/selection.md"],
         "research-literature-interpretation": ["research-literature-interpretation/output/R1/interpretation.md"],
-        "research-literature-review": ["research-literature-review/output/C1/novelty-result.md"],
+        "research-literature-search": ["research-literature-search/output/C1/manifest.json"],
     }
     for paths in dependency_paths.values():
         for path in paths:
@@ -269,13 +269,13 @@ def test_custom_name_uses_manifest_allow_custom_name(tmp_path):
     assert result["report"]["completion_eligible"]
 
 
-def test_missing_dependency_and_review_evidence_fails_even_when_state_completed(tmp_path):
+def test_missing_search_dependency_and_review_evidence_fails_even_when_state_completed(tmp_path):
     task, report = make_workspace(tmp_path, state=PREFIX + "completed")
     write_completion_events(task)
     write(task / "research-idea/output/completion-evidence.json", json.dumps({"dependencies": {}, "review": {"rounds": []}}))
     result = run_check(tmp_path, task, report)
     assert not result["passed"]
-    assert any("research-literature-review" in error for error in result["errors"])
+    assert any("research-literature-search" in error for error in result["errors"])
     assert any("第 1 轮" in error for error in result["errors"])
 
 
@@ -320,3 +320,44 @@ def test_strict_review_requires_thread_and_runner_completion(tmp_path):
     )
     assert any("thread_status 未完成" in item for item in errors)
     assert any("runner_status 未完成" in item for item in errors)
+
+
+def test_v5_novelty_requires_valid_search_bundle_metadata(tmp_path):
+    manifest_path = tmp_path / "research-literature-search/output/C1/manifest.json"
+    write(manifest_path, json.dumps({"contract_version": "rls.v1", "status": "success"}))
+    item = {
+        "path": manifest_path.relative_to(tmp_path).as_posix(),
+        "status": "complete",
+        "snapshot": check_completion.file_snapshot(manifest_path),
+        "source_id": "search-C1",
+        "contract_version": "rls.v1",
+        "search_status": "success",
+        "query_sha256": "sha256:queries",
+        "canonical_candidates_sha256": "sha256:candidates",
+        "canonical_count": 3,
+        "canonical_coverage_complete": True,
+    }
+    index = {
+        "schema": "research-idea-completion-v5",
+        "dependencies": {"research-literature-search": [item]},
+    }
+    errors: list[str] = []
+    check_completion.check_dependency_index(
+        index,
+        tmp_path,
+        {},
+        {"execution_statuses": {"exploration": "incomplete", "novelty": "complete", "review": "incomplete"}},
+        errors,
+    )
+    assert errors == []
+
+    item["canonical_coverage_complete"] = False
+    errors = []
+    check_completion.check_dependency_index(
+        index,
+        tmp_path,
+        {},
+        {"execution_statuses": {"exploration": "incomplete", "novelty": "complete", "review": "incomplete"}},
+        errors,
+    )
+    assert any("全量消费" in error for error in errors)

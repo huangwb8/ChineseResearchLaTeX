@@ -1,6 +1,8 @@
 # 查新判定指南
 
-在低成本价值筛选后阅读。拟保留研究候选必须调用 `research-topic-extractor` 提取 topic、5–10 个英文关键词和 2–5 个核心问题，再调用 `research-literature-review --purpose novelty-check`。Premium 在这里表示与 claim 匹配的证据强度，不表示必须填满参考篇数或导出 PDF/Word。每个依赖使用同一任务根下自己的 Skill 目录；`research-idea/novelty/Cx/` 保存判定与相对来源。
+在低成本价值筛选后阅读。拟保留研究候选必须调用 `research-topic-extractor` 提取 topic、5–10 个英文关键词和 2–5 个核心问题，再围绕直接近邻、等价假设、反方证据和适用边界生成 5–25 条显式查询，调用 `research-literature-search` 生成并验证独立的 `rls.v1` bundle。每个依赖使用同一任务根下自己的 Skill 目录；`research-idea/novelty/Cx/` 保存判定与相对来源。
+
+Search 只负责召回、规范化、canonical 去重和 provenance，不认证相关性、新颖性或结论。主 Agent 必须逐条消费 canonical 候选，记录查询与候选哈希、候选数量和全量覆盖状态，再结合 Radar landscape 与 Interpretation 全文证据完成语义判断。
 
 ## 两层比较
 

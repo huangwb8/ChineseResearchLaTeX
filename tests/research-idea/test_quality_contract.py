@@ -65,7 +65,7 @@ def report_text(outcome="recommended", *, novelty=None, body=None):
         '## 研究脉络 map 摘要\n<a id="opportunity-1"></a>O1：湿度适用边界。\n'
         '<a id="reference-1"></a>R1：合成测试证据，仅供协议测试。\n'
         f"## 候选评估\n{body}\n"
-        "## 查新摘要\nPremium 是合成文本，不证明已执行真实查新。\n"
+        "## 查新摘要\n候选级多查询与 canonical 覆盖是合成文本，不证明已执行真实查新。\n"
         + ("**免查新依据**：全部方向已由价值筛选证据淘汰。\n" if novelty == "not_required" else "")
         + "## 风险与下一步\n取得关键证据后重新判断边界。\n"
         + final_sections[outcome]
@@ -95,7 +95,7 @@ def test_legacy_report_readable_but_never_completion_eligible(tmp_path):
     sections = {name: "历史说明" for name in config["output"]["required_sections"]}
     sections["多个科学问题-科学假设对"] = blocks
     sections["最佳科学问题-科学假设对"] = "；".join(config["validation"]["required_best_markers"])
-    sections["查新摘要"] = "Premium；部分研究但关键缺口存在"
+    sections["查新摘要"] = "候选级多查询覆盖；部分研究但关键缺口存在"
     result = validate(tmp_path, "\n".join(f"## {name}\n{body}" for name, body in sections.items()))
     assert result["passed"], result
     assert result["outcome"] == "legacy"
@@ -130,7 +130,7 @@ def test_unresolvable_candidate_reference_rejected(tmp_path):
     assert any("引用不可定位" in error for error in result["errors"])
 
 
-def test_premium_text_cannot_replace_completed_novelty(tmp_path):
+def test_search_summary_cannot_replace_completed_novelty(tmp_path):
     result = validate(tmp_path, report_text(novelty="incomplete"))
     assert not result["passed"]
     assert not result["completion_eligible"]

@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- `research-idea` v0.12.0 移除对 `research-literature-review` 的运行依赖，改为直接消费 `research-literature-search` 的候选级 `rls.v1` bundle；同步查新流程、completion-v5 证据门禁、报告模板、文档与回归测试。
+
 - 新增 `research-literature-review` 分层证据池与相关性门禁优化计划：保留不凑篇数原则，同时要求 canonical 候选全量分层、低置信度与资料不足记录不静默消失，并将完整证据池与正式引用集合分离。
 
 - 按 2026-09-15 三份计划优化研究类 Skill：`research-literature-radar` v0.2.0 新增全量 canonical landscape 与 hash/计数对账；`research-literature-review` v2.0.0 将硬 `min_refs` 改为相关性阈值、证据角色和软参考预算，并提供不导出长文/PDF/Word 的 `novelty-check`；`research-idea` v0.11.0 同时消费核心证据与辅助景观，按风险升级决定性近邻，并将流程就绪、科学充分和 claim 资格拆分门禁。

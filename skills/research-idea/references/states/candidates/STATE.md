@@ -8,7 +8,7 @@ transitions: ["bensz.research-ideation.review", "bensz.research-ideation.literat
 
 ## 状态含义
 
-map 已通过前置 Gate（或明确回退到此重新查新），正在生成与筛选候选，并为拟保留项执行 Premium 查新。
+map 已通过前置 Gate（或明确回退到此重新查新），正在生成与筛选候选，并为拟保留项执行候选级多查询检索与查新。
 
 ## 进入条件
 

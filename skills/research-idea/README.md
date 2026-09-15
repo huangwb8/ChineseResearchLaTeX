@@ -26,7 +26,7 @@
 
 ## 功能概述
 
-`research-idea` 遵循“没有调查就没有发言权”：先用 `research-literature-radar` 将全部 Search canonical 候选整理为核心证据、辅助景观和待升级近邻，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇核心论文一个 agent，同时最多 3 个），结合辅助研究线建立 map；之后才由多个独立 agent 生成候选，最后用 `research-literature-review --purpose novelty-check` 核对强近邻，并通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。推荐候选还必须接受独立的科学假设价值审问。
+`research-idea` 遵循“没有调查就没有发言权”：先由 `research-literature-radar` 调用 `research-literature-search`，将全部 Search canonical 候选整理为核心证据、辅助景观和待升级近邻，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇核心论文一个 agent，同时最多 3 个），结合辅助研究线建立 map；之后才由多个独立 agent 生成候选。拟保留候选使用 `research-literature-search` 做候选级多查询检索，由本 Skill 核对强近邻、等价假设、反方证据和适用边界，再通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。
 
 它不替代完整实验设计。你已经确定科学问题后，再用 `research-plan` 制定实验或分析计划。
 如果你只需要写文献综述正文、related work 或系统综述，请直接使用 `research-literature-review`。
@@ -39,7 +39,7 @@
 
 | 报告结论 | 用户得到什么 |
 | --- | --- |
-| 有可推荐候选 | 完成必要 Premium 查新和独立审查的候选，科学价值与近期投入两种排序，以及最强替代方向 |
+| 有可推荐候选 | 完成必要候选级检索、查新和独立审查的候选，科学价值与近期投入两种排序，以及最强替代方向 |
 | 当前范围内无合格候选 | 有证据的淘汰原因、有限重新探索与复核结果、重启条件；不代表整个领域无题可做 |
 | 证据不足，暂不能推荐 | 明确的阶段性评估、缺口与恢复位置；不声称新颖性或全流程完成 |
 
@@ -47,7 +47,7 @@
 
 ## 依赖兼容
 
-`research-idea` 当前需要发现 `research-topic-extractor`、`research-literature-radar`、`research-literature-interpretation`、`research-literature-review` 与 `parallel-vibe`。过渡期仅对 `research-topic-extractor` 和 `research-literature-review` 保留旧名 fallback；雷达与解读是候选生成前置阶段，不能静默跳过。
+`research-idea` 当前需要发现 `research-topic-extractor`、`research-literature-search`、`research-literature-radar`、`research-literature-interpretation` 与 `parallel-vibe`。只对 `research-topic-extractor` 保留旧名 fallback；Search 提供可审计候选池，雷达与解读是候选生成前置阶段，均不能静默跳过。`research-literature-review` 只用于完整综述，不是本 Skill 的依赖。
 
 ## 验证器与状态机
 
@@ -57,7 +57,7 @@
 
 State、run/visit/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。Verifier 失败或证据变化时用 `--mode retry` 在当前 visit 内 supersede attempt，旧授权、handoff 和 Gate 自动失效；legacy 身份和运行版本漂移保持只读并 fail-closed。
 
-最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v4`，completed 身份来自 BSK 当前快照；每轮 reviewer 除结果和哈希外，还必须有 thread/runner completed 回执。`stage-readiness` 分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 和 `claim_eligible`；进入带缺口审查不等于允许最终 claim。`check_completion.py` 也拒绝消费 `hypothesis-merit` 的不适用回执。
+最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v5`，completed 身份来自 BSK 当前快照；候选级 Search bundle 记录 `rls.v1`、查询与 canonical 候选哈希、数量及全量消费状态，每轮 reviewer 除结果和哈希外还必须有 thread/runner completed 回执。`stage-readiness` 分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 和 `claim_eligible`；进入带缺口审查不等于允许最终 claim。
 
 ## 使用示例
 
@@ -95,7 +95,7 @@ State、run/visit/attempt、原生 handoff、批量 Gate、transition 和事件�
 | 场景 | 推荐模型/强度 | 理由 |
 |------|---------------|------|
 | 提出和筛选科学问题 | 强推理模型，高 reasoning effort | 需要识别机制缺口、可证伪性和隐含假设 |
-| Premium 查新总结 | 长上下文强模型 | 需要稳定整合文献证据并避免重复已有研究 |
+| 候选级查新判断 | 长上下文强模型 | 需要完整消费 Search 候选并比较等价假设、反方证据与适用边界 |
 | 独立审查 agent | 中高 reasoning effort | 需要从不同角度找缺陷并给出可执行改写 |
 | 最终报告整理 | 默认或中等强度模型 | 主要是结构化表达和证据摘要 |
 

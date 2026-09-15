@@ -300,9 +300,6 @@ def validate_report(report_path: Path, *, allow_custom_name: bool = False, proje
         if not any(term in text for term in terms):
             errors.append("报告缺少可证伪/反证/推翻等反证路径表述")
 
-        if "Premium" not in text:
-            errors.append("查新摘要必须明确说明使用 research-literature-review Premium 档")
-
         novelty_section = extract_section(text, "查新摘要")
         for status in ("未研究", "部分研究但关键缺口存在", "已充分研究"):
             if status in novelty_section:

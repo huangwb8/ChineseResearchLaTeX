@@ -59,7 +59,7 @@ def test_single_start_entry_creates_v2_identity_and_runtime_snapshot(tmp_path: P
     snapshot = json.loads(
         (workspace.paths("research-idea").path("log") / "runtime-snapshot.json").read_text()
     )
-    assert snapshot["skill"]["version"] == "0.11.0"
+    assert snapshot["skill"]["version"] == "0.12.0"
     assert snapshot["kernel"]["version"] == kernel_version
     assert "state_bound_action_authorization" in snapshot["kernel"]["capabilities"]
     assert all(not value.startswith("/") for value in snapshot["skill"]["files"])
@@ -211,7 +211,7 @@ def test_phase_rejects_skill_files_changed_after_start(tmp_path: Path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     config = copied / "config.yaml"
-    config.write_text(config.read_text().replace('version: "0.11.0"', 'version: "0.11.1"', 1))
+    config.write_text(config.read_text().replace('version: "0.12.0"', 'version: "0.12.1"', 1))
     rejected, payload = run_json(
         copied / "scripts/phase_entry.py", "--project-root", tmp_path,
         "--task-root", task, "--mode", "start", "--action", "literature",
