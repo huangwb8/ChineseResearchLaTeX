@@ -43,6 +43,8 @@ except ModuleNotFoundError:
 ProviderFn = Callable[..., list[dict[str, Any]]]
 DEFAULT_PROVIDER_ORDER = ["mcp", "openalex", "semantic_scholar", "crossref", "duckduckgo"]
 SUPPORTED_PROVIDERS = {"openalex", "semantic_scholar", "crossref"}
+RETRIEVAL_STRATEGY = "priority-fallback-topup"
+TOPUP_THRESHOLD = 0.7
 
 
 def _safe_error(exc: BaseException) -> str:
@@ -209,7 +211,8 @@ def run_search(
         text = query["query"]
         query_attempts: list[dict[str, Any]] = []
         hits: list[tuple[str, dict[str, Any]]] = []
-        # Behavior-locked policy: OpenAlex first; top up only when recall is low.
+        # Compatibility policy: priority order with fallback/top-up, matching
+        # the pre-split review pipeline rather than a full provider union.
         for provider in order:
             if provider not in SUPPORTED_PROVIDERS:
                 item = {"provider": provider, "status": "skipped", "results": 0, "reason": "host tool required"}
@@ -273,7 +276,7 @@ def run_search(
                     warnings.append(f"{query_id}/{provider}: skipped " + ", ".join(details) + " record(s)")
                 hits.extend((provider, row) for row in valid_result)
                 # OpenAlex is the main source; only supplement if clearly below target.
-                if len(hits) >= max(5, int(max_results_per_query * 0.7)):
+                if len(hits) >= max(5, int(max_results_per_query * TOPUP_THRESHOLD)):
                     break
             except Exception as exc:  # noqa: BLE001
                 item = {"provider": provider, "status": "error", "results": 0, "error": _safe_error(exc)}
@@ -311,8 +314,12 @@ def run_search(
     status = "success" if canonical and not warnings else ("partial_success" if canonical else "failed")
     failure_code = None if canonical else ("no_valid_candidates" if empty_records or invalid_records or normalization_failed else "no_provider")
     log = {"search_mode": "multi_query", "query_source": query_source or str(query_file), "requested_query_count": plan.requested_count, "accepted_query_count": plan.accepted_count, "fallback_reason": "", "total_returned": len(raw_rows), "total_unique": len(canonical), "empty_records": empty_records, "invalid_records": invalid_records, "normalization_failed": normalization_failed, "queries": query_logs, "attempts": attempts, "warnings": sorted(set(warnings))}
+    log["retrieval_strategy"] = RETRIEVAL_STRATEGY
+    log["topup_threshold"] = TOPUP_THRESHOLD
     write_json(paths["search_log"], log)
     manifest = build_manifest(bundle, topic=topic, domain=domain, query_plan={"source": plan.source, "sha256": plan.sha256, "requested_count": plan.requested_count, "accepted_count": plan.accepted_count, "items": plan.queries}, filters=filters, provider_policy={"requested_order": order, "effective_order": order, "fallback_enabled": fallback_enabled, "config_fingerprint": policy_fingerprint}, attempts=attempts, counts={"raw": len(raw_rows), "normalized": len(normalized), "deduped": len(canonical), "failed": sum(1 for item in attempts if item["status"] == "error"), "empty_records": empty_records, "invalid_records": invalid_records, "normalization_failed": normalization_failed, "dropped": dropped}, truncation={"applied": dropped > 0, "limit": max_total, "dropped_count": dropped}, dedupe={"parameters": dedupe_params, "map_path": "dedupe_map.json", "canonical_merges": len(edges)}, abstract_enrichment={"mode": "disabled", "attempted": 0, "filled": 0, "missing": sum(1 for item in canonical if item.get("abstract_status") == "missing")}, status=status, failure_code=failure_code, warnings=warnings, artifacts=paths, search_run_id=run_id, cache={"mode": "disabled"})
+    manifest["provider_policy"]["retrieval_strategy"] = RETRIEVAL_STRATEGY
+    manifest["provider_policy"]["topup_threshold"] = TOPUP_THRESHOLD
     write_json(bundle / "manifest.json", manifest)
     return manifest
 

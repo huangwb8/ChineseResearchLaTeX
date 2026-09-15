@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- 明确恢复拆分前 review 的 priority-fallback-topup 检索语义，并在 manifest/Search Log 固化策略与补召阈值，避免将 fallback 误读为全 provider union 召回。
+
 ## [1.0.3] - 2026-09-14
 
 ### Fixed
