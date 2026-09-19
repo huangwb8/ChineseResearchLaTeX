@@ -32,6 +32,10 @@ version=17
 
 ---
 
+请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v18.md 及对应的中间文件夹里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。
+
+---
+
 根据 docs/plans/2026-09-15-research-idea-文献景观与证据门禁计划.md docs/plans/2026-09-15-research-literature-radar-核心辅助文献分层计划.md 和 docs/plans/2026-09-15-research-literature-review-相关性驱动选文计划.md 优化本项目的部分skills。
 
 ---

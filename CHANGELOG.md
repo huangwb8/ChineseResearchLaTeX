@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- 新增 `research-idea` v18 审计闭环优化计划：规划将 Gate 前业务证据索引与 completed 后 Kernel attestation 分离，对 reviewer 原始回执逐字段对账，并在提交前、Gate 后和完成重放时校验全部前向边的 `hypothesis-merit` applicability；本轮不修改 Skill 源码。
+
 - `research-idea` v0.12.0 移除对 `research-literature-review` 的运行依赖，改为直接消费 `research-literature-search` 的候选级 `rls.v1` bundle；同步查新流程、completion-v5 证据门禁、报告模板、文档与回归测试。
 
 - 新增 `research-literature-review` 分层证据池与相关性门禁优化计划：保留不凑篇数原则，同时要求 canonical 候选全量分层、低置信度与资料不足记录不静默消失，并将完整证据池与正式引用集合分离。
