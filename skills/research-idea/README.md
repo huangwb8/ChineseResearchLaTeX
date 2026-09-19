@@ -57,7 +57,7 @@
 
 State、run/visit/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。Verifier 失败或证据变化时用 `--mode retry` 在当前 visit 内 supersede attempt，旧授权、handoff 和 Gate 自动失效；legacy 身份和运行版本漂移保持只读并 fail-closed。
 
-最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v5`，completed 身份来自 BSK 当前快照；候选级 Search bundle 记录 `rls.v1`、查询与 canonical 候选哈希、数量及全量消费状态，每轮 reviewer 除结果和哈希外还必须有 thread/runner completed 回执。`stage-readiness` 分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 和 `claim_eligible`；进入带缺口审查不等于允许最终 claim。
+最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v5`，业务索引哈希交给 BSK 绑定到 verifier result、Gate 和 transition；reviewer 摘要必须能逐字段回到 thread/done/RESULT 原始回执，四条前向边的 merit applicability 由 Skill 在提交前和最终重放时核对。任一漂移都 fail-closed，并返回稳定断点码。`stage-readiness` 分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 和 `claim_eligible`；进入带缺口审查不等于允许最终 claim。
 
 ## 使用示例
 

@@ -8,7 +8,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from validate_report import validate_report
+from edge_rules import applicability_errors, reviewer_receipt_errors
 
 PREFIX = "bensz.research-ideation."
 COMPLETED = PREFIX + "completed"
@@ -289,6 +293,9 @@ def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dic
                     for field in ("thread_status", "runner_status"):
                         if reviewer.get(field) != "completed":
                             errors.append(f"第 {round_no} 轮 reviewer {reviewer_no} {field} 未完成")
+                    if any(key in reviewer for key in ("thread_path", "done_path")):
+                        errors.extend(reviewer_receipt_errors(task_root, reviewer, f"第 {round_no} 轮 reviewer {reviewer_no}"))
+                    # 新契约必须把摘要逐字段对回原始 thread/done/RESULT 回执。
                     check_binding(reviewer, run_id, attempt_id, errors, f"第 {round_no} 轮 reviewer {reviewer_no}")
             require_nonempty_file(task_root, item.get("summary_path"), errors, f"第 {round_no} 轮汇总")
         synthesis = require_nonempty_file(task_root, review.get("synthesis_path"), errors, "独立审查总综合")
@@ -524,11 +531,37 @@ def first_control_break(
     }
 
 
+def check_edge_applicability(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """重放四条前向边，任何 merit applicability 漂移均 fail-closed。"""
+    breaks: list[dict[str, Any]] = []
+    transitions = [(position, event) for position, event in enumerate(events) if event.get("type") == "state.transition" and event.get("payload", {}).get("skill") == "research-idea"]
+    previous = "bensz.workspace.ready"
+    previous_position = -1
+    for position, transition in transitions:
+        payload = transition.get("payload", {})
+        source, target = payload.get("from_state"), payload.get("to_state")
+        if source is None or target is None:
+            previous_position = position
+            continue
+        segment = events[previous_position + 1:position]
+        results = [item.get("payload", {}) for item in segment if item.get("type") == "verification.result"]
+        for message in applicability_errors(str(source), str(target), results):
+            breaks.append({"code": "merit_applicability_mismatch", "event_id": transition.get("event_id"), "message": message})
+        previous = target
+        previous_position = position
+    return breaks
+
+
 def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors: list[str]) -> dict[str, Any]:
     meta = load_json(task_root / "research-idea/log/meta-state.json", errors, "领域状态快照")
     events = read_events(task_root / "log/events.ndjson", errors)
     current_state = meta.get("current_state")
     control_break = first_control_break(events, current_state, required_verifiers)
+    applicability_breaks = check_edge_applicability(events)
+    if applicability_breaks:
+        errors.append("控制链首个断点: merit_applicability_mismatch")
+        if control_break is None:
+            control_break = applicability_breaks[0]
     if control_break is not None:
         errors.append(f"控制链首个断点: {control_break['code']}")
     if current_state != COMPLETED:
@@ -591,6 +624,7 @@ def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors:
         "state_visit_id": state_visit_id,
         "attempt_id": attempt_id,
         "first_control_break": control_break,
+        "applicability_breaks": applicability_breaks,
     }
 
 

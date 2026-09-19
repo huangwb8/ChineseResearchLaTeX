@@ -79,7 +79,7 @@ State 图保留返工边供 BSK 生命周期表达；普通入口当前只实现
 
 `validate_report.py` 只检查报告结构。正式 completed 还必须通过 `check_completion.py`：逐段核对已消费的 action authorization、同 source identity 的 required Verifier/Gate、source/target identity 转移链和 completed 当前身份。
 
-新索引写入 `research-idea/output/completion-evidence.json`，使用 `schema: research-idea-completion-v5`；其顶层 `run_id`、`state_visit_id`、`attempt_id` 与 `authoritative_attempt` 必须从 BSK 当前 completed 快照派生。依赖产物保留内容快照与稳定来源；候选级 `research-literature-search` 记录还必须包含 `contract_version: rls.v1`、检索状态、查询与 canonical 候选哈希、候选数量及全量消费状态。独立 reviewer 除 RESULT 文件外还必须记录 `thread_status: completed`、`runner_status: completed`、线程/模型、输入输出哈希及开始结束时间。只有内容而没有完成回执不能计入 required independent review。
+新索引写入 `research-idea/output/completion-evidence.json`，使用 `schema: research-idea-completion-v5`；其顶层身份与 verifier result 由 BSK 绑定到 Gate、transition 和 completed 重放。依赖产物保留内容快照与稳定来源；候选级 `research-literature-search` 记录还必须包含 `contract_version: rls.v1`、检索状态、查询与 canonical 候选哈希、候选数量及全量消费状态。独立 reviewer 除 RESULT 文件外还必须记录 `thread.json`、`done.json` 的路径、哈希与逐字段快照；只有内容而没有完成回执不能计入 required independent review。
 
 ```bash
 python "$IDEA_SKILL/scripts/check_completion.py" \

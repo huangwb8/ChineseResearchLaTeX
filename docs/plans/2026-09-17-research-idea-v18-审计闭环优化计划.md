@@ -26,6 +26,16 @@ v18 的研究工作确实完成了，BSK 的 State、Verifier 和 Gate 也真实
 
 风险边界：这些缺陷不否定 v18 的实际科研产物、25 条 BSK 事件、5 次 State transition、4 次 action authorization、8 次 Verifier result 和 4 次 allow Gate；它们否定的是“当前文件集合已经构成不可变端到端证明”这一更强结论。
 
+### v18 现场与责任归属
+
+本计划的判断以 `/Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v18.md` 和 `task-20260915-2107-课题方向-v18` 中的现场为准：
+
+- `research-idea/output/completion-evidence.json` 仍是 `research-idea-completion-v5`，记录了 `idea-run-v18`、最终报告快照、依赖产物和 9 个 reviewer 摘要，但没有独立的 completed 后 attestation；因此索引不可变性和完成身份串联属于 Skill 完成证据设计与 BSK Gate 绑定共同缺失的问题。
+- `research-idea/log/runtime-snapshot.json` 显示 v18 使用 `research-idea 0.12.0`、BSK Kernel `2.1.2`，已有 state visit、attempt、Gate 和严格身份能力；所以本计划不是从零设计状态机，而是补足证据引用和重放接口。
+- `log/events.ndjson` 的最终 reporting Gate（`seq=24`）只留下两个 verifier 的 `result_refs`，随后 `seq=25` 转入 completed；事件没有把 Gate 实际消费的业务索引哈希作为通用 evidence binding 固定下来，这是 BSK 需要补的协议能力。
+- v18 的 reviewer 原始文件位于 `parallel-vibe/2026-09-15-21-59`、`22-07`、`22-26` 各轮目录。`completion-evidence.json` 中的摘要字段与这些 `thread.json`、`done.json`、`RESULT.md` 尚未形成逐字段、逐哈希的完成检查，这是 Skill 需要补的 receipt adapter 和对账逻辑。
+- 事件中 `literature → candidates` 的 merit 结果为 `not_applicable`，`candidates → review` 为 `applicable`，最终 reporting 边为 `applicable`；计划中的 applicability 规则应由 Skill 提交并重放，BSK 只负责确保 required result、Gate 和 transition 引用的是同一次受权运行。
+
 ## 目标与非目标
 
 ### 目标
@@ -43,6 +53,38 @@ v18 的研究工作确实完成了，BSK 的 State、Verifier 和 Gate 也真实
 - 不增加 State、语义 Verifier、私有事件账本或第二套 Gate。
 - 不把 `research-idea` 的边适用性硬编码进 BSK。
 - 不绑定某个 BSK 具体版本；实施时先确认 latest 生产运行时的真实接口。
+
+## 两个责任层分别怎么改
+
+这次不是把所有缺陷都塞进 `research-idea`，也不是要求 BSK 理解研究语义。v18 的材料显示，问题同时落在两个责任层：Skill 生成并解释领域证据，BSK 负责把一次运行的身份、Gate 和转移做成不可绕过的协议记录。
+
+### `research-idea` Skill：负责领域规则、业务证据和完成检查
+
+Skill 需要优化的是“什么证据算对、哪条研究边适用什么检查，以及如何把 reviewer 的业务摘要对回原始回执”：
+
+- 在 Skill 内维护唯一的 `source → target → expected applicability` 映射。`literature → candidates` 和 `review → reporting` 必须是 `not_applicable`，`candidates → review` 和 `reporting → completed` 必须是 `applicable`。`phase_entry.py` 在提交前、收到 Gate allow 后转移前各检查一次，`check_completion.py` 在事件重放时再检查一次。
+- 将 Gate 前的 `completion-evidence.json` 定义为一次 attempt 的只读业务索引。它保存报告、依赖产物、查新、审查轮次以及每个 reviewer 的原始 receipt 路径、哈希和规范化快照；索引一旦作为 Gate evidence 被消费，Skill 不得原地更新，证据变化必须开启新 attempt。
+- 新增 completed 后才生成的 `completion-attestation.json`，把已消费的业务索引哈希、报告哈希、Gate/transition/completed 身份串起来。该文件由 `phase_entry.py` 在成功转移后原子生成；`check_completion.py` 只读验证，不负责补写。
+- 为 reviewer receipt 增加版本化 adapter，逐字段核对 `thread.json`、`done.json`、runner 状态、起止时间、模型、输入 snapshot、退出码、output hash 和实际 RESULT 文件；字段缺失、版本未知、路径越界或任一哈希漂移都拒绝签发严格完成证明。
+- 将 `completion-v5` 作为 legacy 只读输入，只能给出诊断，不能从邻近文件猜测回执或自动升级为新 attestation。同步 `SKILL.md`、运行指南、report template、CHANGELOG、`config.yaml` 和专项 fixture。
+
+这部分的验收对象是研究流程本身：领域映射不会被误写，Gate 消费的业务证据不会静默变化，reviewer 摘要能回到原始回执，历史现场不会被伪造补齐。
+
+### BSK：负责通用协议、权威身份和 Gate 绑定
+
+BSK 不应知道 `hypothesis-merit` 在哪条研究边适用；它需要优化的是让 Skill 提供的领域证据无法脱离一次受保护的运行链：
+
+- 扩展 Gate/handoff 的通用证据绑定接口，使 Gate 记录实际消费的 evidence hash（以及必要的 evidence ref），而不是只记录 `result_refs`。Gate allow 后，任何 evidence hash、handoff、attempt 或 action authorization 不一致都不能继续 transition。
+- 保持并强化 run/state visit/attempt、action authorization、Gate、transition 的权威身份串联和 append-only 事件语义；transition 只能消费当前 visit/attempt 的已授权 Gate，旧 Gate、旧 handoff 或错 action authorization 必须被拒绝。
+- 提供可重放的 Gate/result/transition 查询接口，让 Skill 的 `check_completion.py` 能从事件投影读取事实，而不是依赖 Skill 自己复制一份“看起来正确”的身份字段。BSK 只验证协议身份和引用完整性，业务文件内容仍由 Skill 核验。
+- 若 latest BSK 支持 action/edge-specific required Verifier，提供通用的 action 元数据或 required-set 能力，让调用方按边声明 required 集合；若暂不支持，至少保证 Skill 仍能在 Gate 前后做领域 applicability 检查。不得把 `research-idea` 的四条边硬编码进 Kernel。
+- 明确 transition 成功与外部完成 attestation 写入是两个结果：BSK 不替 Skill 生成业务 attestation，也不因 attestation 写入失败回滚已经提交的 transition；同一 transition receipt 可以被确定性重试读取。
+
+这部分的验收对象是协议安全性：即使调用方传入旧结果、改过的文件哈希或伪造的 completed 身份，BSK 也不能把它们重新包装成一次新的合法转移。
+
+### 两层之间的接口边界
+
+`research-idea` 提交：`source/target`、业务 evidence hash、两个 verifier result 和领域 applicability；BSK 返回：Gate decision、权威 Gate 身份和 transition receipt。Skill 再用这些返回值生成 attestation 并执行最终重放。BSK 不解释报告科学内容，Skill 不自行制造 Kernel 身份；任一层发现不一致都 fail-closed。
 
 ## 删除影响测试
 
@@ -187,23 +229,23 @@ BSK 上游若未来支持 edge/action-specific required Verifier，可让不适�
 
 ## 实施顺序
 
-### P0：建立不可变完成证明
+### P0：`research-idea` 建立不可变完成证明，BSK 提供证据绑定接口
 
-- 修改 `phase_entry.py`、`check_completion.py` 和完成证据文档，定义新 completion schema 与 attestation schema。
-- reporting Gate 只消费 Gate 前业务索引；transition 后只写 attestation。
-- 增加 Gate evidence hash、报告 hash、Gate/transition/completed identity 的闭环验证。
+- **Skill：** 修改 `phase_entry.py`、`check_completion.py` 和完成证据文档，定义新 completion schema 与 attestation schema；reporting Gate 只消费 Gate 前业务索引，transition 后只写 attestation。
+- **BSK：** 提供并记录 Gate 实际消费的 evidence hash/ref，并在 Gate 后拒绝 handoff、attempt、授权或 evidence hash 的错绑；不把业务索引内容复制成 Kernel 自己的第二份事实。
+- **联调：** 用 BSK 返回的权威 Gate/transition/completed 身份生成 attestation，增加报告 hash、索引 hash 和身份首尾相接的闭环验证。
 - 完成条件：Gate 后修改业务索引或报告时，完成检查稳定失败；正常链可从 immutable index 生成并验证 attestation。
 
-### P0：覆盖全部前向边的 applicability
+### P0：`research-idea` 覆盖全部前向边，BSK 保证 required-set 可被可靠消费
 
-- 在 Skill 内建立单一 source/target 映射纯函数。
-- `phase_entry.py` 在提交前和 Gate 后各检查一次；`check_completion.py` 重放四条边。
+- **Skill：** 建立单一 source/target 映射纯函数；`phase_entry.py` 在提交前和 Gate 后各检查一次，`check_completion.py` 重放四条边。
+- **BSK：** 若有 action/edge-specific required Verifier 接口则接入通用 required-set；若没有，继续消费 Skill 提交的两个 required result，但不替 Skill 判断适用性。
 - 完成条件：`review → reporting` 的 `applicable` 被拒绝，两个关键边的 `not_applicable` 被拒绝，其余两个非关键前向边的 `not_applicable` 通过。
 
-### P1：reviewer receipt 逐字段对账
+### P1：`research-idea` 完成 reviewer receipt 对账，BSK 暴露可重放回执
 
-- 扩展新 completion schema，保存 receipt 路径、哈希与规范化字段快照。
-- 在完成检查中读取 thread/done/RESULT 并逐字段核对，输出 reviewer 定位信息。
+- **Skill：** 扩展新 completion schema，保存 receipt 路径、哈希与规范化字段快照；在完成检查中读取 thread/done/RESULT 并逐字段核对，输出 reviewer 定位信息。
+- **BSK：** 提供 Gate/result/transition 的只读事件查询和稳定引用，确保 Skill 对账时取得的是该次 run/visit/attempt 的原始协议回执，而非后来拼装的摘要。
 - 完成条件：时间、状态、模型、输入哈希、退出码或输出哈希任一漂移都能被定向测试捕获。
 
 ### P1：文档、版本与诊断收敛
@@ -212,31 +254,31 @@ BSK 上游若未来支持 edge/action-specific required Verifier，可让不适�
 - 版本只改 `config.yaml:skill_info.version`；若实施时基线仍为 0.12.0，建议按 schema 变化升级到下一个 minor 版本。
 - 增加稳定错误码和 first-control-break 摘要，避免只输出笼统“完成检查失败”。
 
-### P2：可选上游增强
+### P2：可选 BSK 上游增强
 
-- 核对 latest 生产 BSK 是否已有 action/edge-specific required Verifier。
-- 若已有，单独制定兼容迁移；若没有，向 BSK 提交最小通用需求，但 research-idea 的 P0/P1 不等待该能力。
+- 核对 latest 生产 BSK 是否已有 action/edge-specific required Verifier、evidence hash binding 和可重放查询接口。
+- 若已有，单独制定兼容迁移；若没有，向 BSK 提交最小通用需求，但 `research-idea` 的 P0/P1 不等待该能力。
 - 可选评估论文解读 batch receipt；它是审计增强，不属于本次三项正式缺陷的阻塞项。
 
-## 验收矩阵
+## 分层验收矩阵
 
-| 场景 | 期望结果 |
-| --- | --- |
-| 正常四阶段前向链 | 四个 Gate 与 transition 可重放，完成检查通过 |
-| Gate 前业务索引与 completed attestation 正确分离 | 两个文件身份清楚，前者无 completed target identity 循环依赖 |
-| Gate 后修改业务索引 | `gate_evidence_hash_mismatch`，失败 |
-| 当前报告哈希与 Gate/attestation 记录不一致 | 失败 |
-| reviewer started/ended 任一不一致 | 定位到 reviewer 和字段，失败 |
-| reviewer 状态、exit code 或 output hash 不一致 | 失败 |
-| `review → reporting` 使用 `applicable` | transition 前拒绝，完成重放亦失败 |
-| `literature → candidates` 使用 `not_applicable` | 允许 |
-| `candidates → review` 使用 `not_applicable` | 拒绝 |
-| `reporting → completed` 使用 `not_applicable` | 拒绝 |
-| 复用旧 attempt、旧 handoff、旧 Gate 或错 action authorization | 拒绝 |
-| completion-v5 历史现场 | 只读诊断，不生成严格 attestation |
-| 当前回归基线 | 现有 98 项继续通过，并新增三类专项用例 |
+| 场景 | `research-idea` Skill 期望结果 | BSK 期望结果 |
+| --- | --- | --- |
+| 正常四阶段前向链 | 四个 Gate 与 transition 可重放，完成检查通过 | 只接受当前 visit/attempt 的授权 Gate 并产生首尾相接 receipt |
+| Gate 前业务索引与 completed attestation 正确分离 | 两个文件身份清楚，前者无 completed target identity 循环依赖 | Gate 固定实际消费的 evidence hash，不要求预写 completed 身份 |
+| Gate 后修改业务索引 | 报告 `gate_evidence_hash_mismatch`，失败 | 后续调用无法用旧 Gate 继续合法 transition |
+| 当前报告哈希与 Gate/attestation 记录不一致 | 失败 | 返回可重放的 Gate/transition 身份供 Skill 定位 |
+| reviewer started/ended 任一不一致 | 定位到 reviewer 和字段，失败 | 提供原始 result/事件引用，不接受摘要替代 |
+| reviewer 状态、exit code 或 output hash 不一致 | 失败 | 不因 Skill 的摘要字段而放宽协议引用 |
+| `review → reporting` 使用 `applicable` | transition 前拒绝，完成重放亦失败 | 只验证 required result 与当前边/授权一致，不解释领域语义 |
+| `literature → candidates` 使用 `not_applicable` | 允许 | 消费 Skill 提交的合法 required result 集 |
+| `candidates → review` 使用 `not_applicable` | 拒绝 | 若支持 action-specific required，则按调用方声明的 required-set 执行 |
+| `reporting → completed` 使用 `not_applicable` | 拒绝 | 不替 Skill 生成 attestation |
+| 复用旧 attempt、旧 handoff、旧 Gate 或错 action authorization | 拒绝 | 协议层 fail-closed |
+| completion-v5 历史现场 | 只读诊断，不生成严格 attestation | 保留 legacy event read，不伪造新身份 |
+| 当前回归基线 | 现有 98 项继续通过，并新增三类专项用例 | 新增 evidence binding、重放和错绑拒绝用例 |
 
-实现后的定向验证至少包括：新旧 schema fixture、四条边参数化测试、receipt 每字段突变测试、索引/报告/Gate/transition 哈希突变测试、一次真实 latest BSK 托管集成 smoke、Skill 文档与配置校验、`git diff --check` 和 BAC verify。
+实现后的定向验证至少包括：Skill 的新旧 schema fixture、四条边参数化测试、receipt 每字段突变测试、索引/报告哈希突变测试；BSK 的 evidence binding、旧 Gate/错授权拒绝和事件重放测试；一次真实 latest BSK 托管集成 smoke、Skill 文档与配置校验、`git diff --check` 和 BAC verify。
 
 ## 兼容、迁移与回退
 
@@ -252,4 +294,3 @@ BSK 上游若未来支持 edge/action-specific required Verifier，可让不适�
 - 原始 runner receipt 的字段名可能因执行器版本不同而有合法差异；实现时应先形成受版本约束的规范化 adapter，再比较统一字段，未知版本 fail-closed。
 - attestation 原子写入不等于密码学签名；本计划保证内容寻址、身份串联和可重放，远程签名或可信时间戳另行设计。
 - 本计划不证明 AI 的科研判断一定正确，只保证“哪些判断由谁、基于什么证据、在哪条边被消费”可核对且不可静默漂移。
-

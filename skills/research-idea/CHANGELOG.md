@@ -6,6 +6,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `0.13.0`：按 v18 审计闭环计划把业务索引哈希交给 BSK 的 evidence binding、Gate 和 transition 重放；Skill 仅保留四条前向边 applicability 与 reviewer thread/done/RESULT 回执对账。移除重复 BSK 的本地 completion contract/attestation 实现。
+
 ### Changed
 
 - 移除对 `research-literature-review` 的运行依赖，改为直接调用 `research-literature-search` 生成候选级 `rls.v1` bundle；新颖性、等价性、反方证据和决定性近邻判断继续由本 Skill 结合 Radar 与 Interpretation 完成。

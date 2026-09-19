@@ -76,6 +76,7 @@
 - 保持 `SKILL.md`、脚本、配置、README、CHANGELOG、测试和交叉引用一致；版本只在 `config.yaml` 修改。
 - 需要计划、报告或测试产物时，按本文件的任务工作区规则归档；正式计划放 `docs/plans/`。
 - Verifier、State、Pack 等基础设施不是普通 Skill 的默认组成部分；只有任务明确需要时才引入，并补充契约、失败路径和测试。
+- 不得在 Skill 内重复实现 BSK 已提供的通用协议能力，包括事件账本、哈希链、evidence binding、Gate 聚合、身份绑定、transition 校验、原子事件写入和重放。修改前必须先阅读本地 `/Volumes/2T01/Github/skills/packages/bensz-skill-kernel` 的真实 API；Skill 只保留领域语义、输入适配和 BSK 未覆盖的专属判定。发现通用能力缺口时，优先改进或调用 BSK，不得新建平行运行时、completion contract 或 attestation 协议。
 - 不直接修改系统级 Skill；项目个性化行为放在仓库内的 `skills/` 中。
 
 ## 版本、文档与变更记录

@@ -8,6 +8,9 @@
 
 ## [Unreleased]
 
+- `research-idea` 0.13.0：依据 v18 审计闭环计划新增不可变 completion evidence hash、completed attestation、reviewer 原始回执逐字段对账和四条前向边 applicability 重放校验；旧 v5 现场保持只读兼容。
+- 修订 Skill 基础设施边界：移除重复 BSK 的 `contract.py` 与自建 completion attestation，通用 evidence/Gate/transition/重放统一交给本地 BSK；research-idea 仅保留边 applicability 与 reviewer receipt 领域适配。
+
 - 新增 `research-idea` v18 审计闭环优化计划：规划将 Gate 前业务证据索引与 completed 后 Kernel attestation 分离，对 reviewer 原始回执逐字段对账，并在提交前、Gate 后和完成重放时校验全部前向边的 `hypothesis-merit` applicability；本轮不修改 Skill 源码。
 
 - `research-idea` v0.12.0 移除对 `research-literature-review` 的运行依赖，改为直接消费 `research-literature-search` 的候选级 `rls.v1` bundle；同步查新流程、completion-v5 证据门禁、报告模板、文档与回归测试。

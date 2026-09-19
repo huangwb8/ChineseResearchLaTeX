@@ -29,7 +29,7 @@ description: 当用户提供研究资料、项目背景、实验结果、论文�
 
 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 是四个独立判断：文件存在不等于阶段执行过，阶段执行过不等于证据深度足够，证据足够也不自动证明科学结论。`recommended` 仅表示当前范围内的有界推荐；依赖故障、全文不足或等价性未核验时使用 `degraded`，已有部分证据但仍可指导下一步时使用 `bounded_recommendation`，均不可进入 `completed`。只有四层均为 true、required Verifier 通过且 `check_completion.py` 通过，才能交付 `completed`。
 
-新运行的 `completion-evidence.json` 使用 `schema: research-idea-completion-v5`，顶层 completed 身份从 BSK 当前快照派生；候选级 Search bundle 必须保留 `rls.v1`、查询与 canonical 候选哈希、数量及全量消费状态，独立 reviewer 还必须有 thread/runner completed 回执。旧回传不可跨 attempt 复用，旧索引保持只读，不能用于认证新完成。
+新运行的 `completion-evidence.json` 使用 `schema: research-idea-completion-v5`，顶层 completed 身份从 BSK 当前快照派生；业务索引作为 verifier result 的 `evidence_hash` 交给 BSK，由 Kernel Gate 和 transition 共同绑定、校验和重放，变化必须开启新 attempt。候选级 Search bundle 必须保留 `rls.v1`、查询与 canonical 候选哈希、数量及全量消费状态，独立 reviewer 还必须有 thread/done/RESULT completed 回执并由 Skill 对账。旧回传不可跨 attempt 复用，旧索引保持只读，不能用于认证新完成。
 
 ### 输入
 
@@ -117,6 +117,8 @@ python3 ~/.claude/skills/research-idea/scripts/validate_report.py --report "{最
 用户指定友好文件名时，报告结构校验必须带 `--allow-custom-name`，或在最终完成检查中通过 manifest 自动读取该设置；裸跑失败不能被解释为报告内容失败。报告采用 `config.output.report_contract` 的显式结论和执行状态，开头一页以内说明问题、价值、证据链、最近工作差异与确定程度。校验失败先修复；insufficient 也保留“查新摘要”“风险与下一步”“证据缺口与恢复位置”，不能将它们合并为自由标题。
 
 在 `research-idea/output/completion-evidence.json` 保存完成证据索引，列出依赖 Skill 的可复核产物、每轮独立审查者原始结果、每轮汇总和总综合。`validate_report.py` 只证明报告格式；`check_completion.py` 才核对报告、manifest、事件日志、meta-state、completed Gate、依赖产物和审查轮次是否收敛：
+
+`phase_entry.py` 与 `check_completion.py` 共用 Skill 根目录 `edge_rules.py` 的领域规则。四条前向边的 `hypothesis-merit.facts.applicability` 必须分别为 `not_applicable`、`applicable`、`not_applicable`、`applicable`；提交前和最终事件重放均检查，错误使用稳定码 `merit_applicability_mismatch`。Gate/索引、报告和 transition 的哈希与身份由 BSK 校验；reviewer 原始回执字段漂移时由 Skill 报告 `reviewer_receipt_mismatch`。
 
 ```bash
 python3 research-idea/scripts/check_completion.py --project-root . --task-root "{本轮任务根}" --report "{最终报告路径}"

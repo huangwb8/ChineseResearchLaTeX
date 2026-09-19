@@ -9,12 +9,15 @@ import subprocess
 import sys
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from bensz_skill_kernel.runtime import EventLog, IdempotencyConflict, KernelError
 from bensz_skill_kernel.states import SkillStateDeclaration
 from bensz_skill_kernel.verifiers import FilesystemVerifierRegistry
 from bensz_skill_kernel.workspace import TaskWorkspace
 
 from start_workflow import StartError, check_interpreter, critical_files
+from edge_rules import applicability_errors
 
 PREFIX = "bensz.research-ideation."
 ACTION_TRANSITIONS = {
@@ -186,6 +189,21 @@ def verifier_request(
     }
 
 
+def completion_index_from_input(workspace: TaskWorkspace, input_data: dict[str, Any]) -> Path | None:
+    """读取 reporting 阶段声明的业务索引；不猜测邻近文件。"""
+    raw = input_data.get("completion_evidence_path")
+    context = input_data.get("context")
+    if raw is None and isinstance(context, dict):
+        raw = context.get("completion_evidence_path")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    path = Path(raw).expanduser().resolve()
+    allowed = workspace.task_root.resolve()
+    if not path.is_relative_to(allowed) or path.is_symlink() or not path.is_file():
+        raise PhaseEntryError("completion_evidence_invalid", "completion evidence 必须是任务内的普通文件")
+    return path
+
+
 def transition_with_bsk(
     *, task: Path, skill_root: Path, target: str, identity: dict[str, str], target_attempt_id: str
 ) -> dict[str, Any]:
@@ -344,13 +362,19 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if not args.input:
         raise PhaseEntryError("verifier_input_missing", "finish 模式需要 --input")
     input_path = scoped_input_path(workspace, args.input, "Verifier 输入")
+    input_data = load_object(input_path, "Verifier 输入")
     request = verifier_request(
-        load_object(input_path, "Verifier 输入"),
+        input_data,
         action=args.action,
         run_id=identity["run_id"],
         state_visit_id=identity["state_visit_id"],
         attempt_id=identity["attempt_id"],
     )
+    evidence_index = completion_index_from_input(workspace, input_data) if args.action == "reporting" else None
+    evidence_hash = None
+    if evidence_index is not None:
+        import hashlib
+        evidence_hash = "sha256:" + hashlib.sha256(evidence_index.read_bytes()).hexdigest()
     declaration = SkillStateDeclaration.from_skill_root(skill_root)
     requirements = declaration.verifier_requirements()
     registry = FilesystemVerifierRegistry(skill_root / "references/verifiers")
@@ -371,6 +395,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             )
         )
 
+    result_payloads = [execution.to_event_payload() for execution in executions]
+
     handoffs = [
         handoff.to_audit_dict()
         for execution in executions
@@ -389,8 +415,25 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "handoffs": handoffs,
         }
 
+    # applicability 是 research-idea 的领域规则：提交前先检查，避免不适用回执被 Gate 消费。
+    applicability = applicability_errors(source, target, result_payloads)
+    if applicability:
+        raise PhaseEntryError(
+            "merit_applicability_mismatch",
+            applicability[0],
+            current_state=current,
+            target_state=target,
+            recovery="修正 hypothesis-merit 回执后，以新 attempt 重新提交；不得复用旧 Gate",
+        )
+
+    if evidence_hash:
+        for payload in result_payloads:
+            payload["evidence_hash"] = evidence_hash
+            refs = list(payload.get("evidence_refs", []))
+            refs.append(evidence_hash)
+            payload["evidence_refs"] = list(dict.fromkeys(refs))
     _, gate_event = log.record_verification_batch(
-        [execution.to_event_payload() for execution in executions],
+        result_payloads,
         {"decision": "wait"},
         scope="skill",
         actor="research-idea:phase-entry",
