@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -49,16 +50,22 @@ def workspace(tmp_path: Path) -> TaskWorkspace:
 
 def input_file(workspace: TaskWorkspace, action: str = "literature") -> Path:
     path = workspace.paths("research-idea").path("input") / f"{action}.json"
-    path.write_text(
-        json.dumps({
+    payload = {
             "context": {"sources": {"fixture": {"role": "map"}}},
             "evidence": [{
                 "ref": "fixture", "source_type": "test-only",
                 "summary": "只验证 BSK 编排", "content_hash": "sha256:fixture",
             }],
-        }),
-        encoding="utf-8",
-    )
+    }
+    if action == "reporting":
+        index = workspace.paths("research-idea").path("output") / "completion-evidence.json"
+        index.write_text(json.dumps({
+            "schema": "research-idea-completion-v6",
+            "dependencies": {},
+            "review": {},
+        }), encoding="utf-8")
+        payload["completion_evidence_path"] = str(index)
+    path.write_text(json.dumps(payload), encoding="utf-8")
     return path
 
 
@@ -92,7 +99,8 @@ def bound_result(handoff: dict) -> dict:
         "verdict": "pass",
         "executor": {"type": "agent", "id": "synthetic-test", "model": "synthetic-only"},
         "facts": {"summary": "只测试绑定与阶段编排", "confidence": 0.5, "uncertainties": []},
-        "evidence_refs": ["fixture"],
+        "evidence_hash": handoff["evidence_hash"],
+        "evidence_refs": handoff["evidence_refs"],
         "findings": [],
     }
 
@@ -129,6 +137,11 @@ def test_entry_returns_native_handoffs_then_kernel_gate_and_transition(workspace
     assert result["run_id"] == RUN_ID
     assert result["gate"]["decision"] == "allow"
     assert result["transition"]["status"] == "transitioned"
+    binding = result["transition"]["gate_binding"]
+    assert binding["status"] == "bound"
+    assert binding["gate_event_id"] == result["gate"]["gate_event_id"]
+    assert binding["transition_evidence_hash"] == result["gate"]["evidence_hash"]
+    assert binding["transition_evidence_refs"] == result["gate"]["evidence_refs"]
     assert workspace.read_meta_state("research-idea")["current_state"] == "bensz.research-ideation.candidates"
     assert not (workspace.paths("research-idea").path("log") / "attempts").exists()
 
@@ -152,9 +165,18 @@ def test_nonpass_submission_does_not_transition(workspace: TaskWorkspace):
 def test_initial_transition_without_identity_is_rejected_before_handoff(tmp_path: Path):
     task = tmp_path / ".bensz-api/task-no-identity"
     bsk("workspace", "init", tmp_path, "--task-root", task)
+    legacy_skill = tmp_path / "legacy-research-idea"
+    shutil.copytree(SKILL, legacy_skill)
+    config = legacy_skill / "config.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace(
+            "  identity_policy: state-identity-v2\n", "", 1
+        ),
+        encoding="utf-8",
+    )
     result = bsk(
         "state", "transition", task, "research-idea",
-        "bensz.research-ideation.literature", "--skill-root", SKILL,
+        "bensz.research-ideation.literature", "--skill-root", legacy_skill,
     )
     assert result["status"] == "transitioned"
     unbound = TaskWorkspace.open_existing(task)

@@ -15,8 +15,9 @@ def load_config():
 
 def test_kernel_dependency_uses_latest_without_version_pin():
     config = load_config()
-    assert config["dependencies"]["kernel"] == {"name": "bensz-skill-kernel"}
-    assert "kernel" not in config["runtime"]
+    assert "kernel" not in config["dependencies"]
+    assert config["runtime"]["kernel"] == {"name": "bensz-skill-kernel"}
+    assert config["runtime"]["identity_policy"] == "state-identity-v2"
     assert "required_capabilities" not in config["runtime"]
     assert config["runtime"]["phase_entry"]["identity_mode"] == "state-visit-v2"
 
@@ -27,7 +28,7 @@ def test_kernel_can_load_native_runtime_declaration():
     assert declaration.verifier_requirements() == (
         {
             "id": "bensz.research.stage-readiness",
-            "version": "4.0.0",
+            "version": "4.1.0",
             "required": True,
         },
         {

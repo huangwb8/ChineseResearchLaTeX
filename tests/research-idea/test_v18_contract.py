@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "skills/research-idea"))
+sys.path.insert(0, str(ROOT / "skills/research-idea/scripts"))
 
 from edge_rules import applicability_errors  # noqa: E402
 
@@ -20,4 +20,3 @@ def test_edge_applicability_is_single_valued():
         "bensz.research-ideation.review", "bensz.research-ideation.reporting",
         [{"verifier_id": "bensz.research.hypothesis-merit", "facts": {"applicability": "not_applicable"}}],
     ) == []
-

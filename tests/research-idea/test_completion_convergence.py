@@ -9,7 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "skills/research-idea/scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-import check_completion
+import check_completion  # noqa: E402
+from bensz_skill_kernel.runtime import EventLog  # noqa: E402
 
 
 PREFIX = "bensz.research-ideation."
@@ -150,7 +151,7 @@ def write_completion_events(task: Path) -> None:
         ("reporting", "completed"),
     ):
         for verifier_id, verifier_version in (
-            ("bensz.research.stage-readiness", "4.0.0"),
+            ("bensz.research.stage-readiness", "4.1.0"),
             ("bensz.research.hypothesis-merit", "1.1.0"),
         ):
             events.append({
@@ -174,7 +175,7 @@ def write_completion_events(task: Path) -> None:
                     "decision": "allow",
                     "computed_by": "kernel",
                     "result_refs": [
-                        "bensz.research.stage-readiness@4.0.0",
+                        "bensz.research.stage-readiness@4.1.0",
                         "bensz.research.hypothesis-merit@1.1.0",
                     ],
                 },
@@ -286,6 +287,31 @@ def test_legacy_complete_state_cannot_gain_new_completion_eligibility(tmp_path):
     result = run_check(tmp_path, task, report)
     assert not result["passed"]
     assert result["state"]["first_control_break"]["code"] == "legacy_state_identity"
+
+
+def test_unbound_completed_transition_is_explicitly_legacy_and_fails_closed(tmp_path):
+    task = tmp_path / ".bensz-api/task-unbound"
+    write(task / ".workspace.json", json.dumps({"protocol": "bensz-api-task-v1"}))
+    source = {"run_id": RUN_ID, "state_visit_id": "visit-reporting", "attempt_id": ATTEMPT_ID}
+    target = {"run_id": RUN_ID, "state_visit_id": "visit-completed", "attempt_id": "completed-a1"}
+    log = EventLog(task / "log/events.ndjson")
+    transition = log.append(
+        "state.transition",
+        scope="skill",
+        run_id=RUN_ID,
+        state_visit_id="visit-reporting",
+        attempt_id=ATTEMPT_ID,
+        payload={
+            "skill": "research-idea",
+            "from_state": PREFIX + "reporting",
+            "to_state": PREFIX + "completed",
+            "source_identity": source,
+            "target_identity": target,
+        },
+    )
+    binding = log.query_transition_bindings(skill="research-idea")[0]
+    assert binding["transition_event_id"] == transition.event_id
+    assert binding["status"] == "legacy_unbound"
 
 
 def test_strict_review_requires_thread_and_runner_completion(tmp_path):

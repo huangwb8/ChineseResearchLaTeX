@@ -105,7 +105,7 @@ frontmatter 使用 `outcome: insufficient`，按真实情况给三个执行状�
 
 ## 完成检查边界
 
-本模板只定义最终报告正文。报告格式通过不等于运行完成；recommended/no_qualified 还必须在任务工作区保留 `research-idea/output/completion-evidence.json`，并通过 `check_completion.py` 核对 completed 状态、required Gate、依赖 Skill 可复核产物、三轮独立审查证据和报告校验上下文。缺少任一票据时，将报告标为草案或阶段性结果，不在正文中声称全流程完成。
+本模板只定义最终报告正文。报告格式通过不等于运行完成；recommended/no_qualified 还必须在任务工作区保留 `schema: research-idea-completion-v6` 的 `research-idea/output/completion-evidence.json`，在 reporting Verifier 输入中显式传入 `completion_evidence_path`，并通过 `check_completion.py` 核对 completed 状态、同索引哈希的 Gate/transition binding、依赖 Skill 可复核产物、论文解读深度与全文源、三轮独立审查回执和报告校验上下文。缺少任一票据时，将报告标为草案或阶段性结果，不在正文中声称全流程完成。
 
 ## 历史兼容
 

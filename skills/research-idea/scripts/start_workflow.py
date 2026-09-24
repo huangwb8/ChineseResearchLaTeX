@@ -5,15 +5,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
 from typing import Any
 
 from bensz_skill_kernel import __version__ as kernel_version
-from bensz_skill_kernel.identity import kernel_capabilities
 from bensz_skill_kernel.workspace import TaskWorkspace
 
 from check_dependencies import find_skill, load_config
@@ -61,42 +60,76 @@ def critical_files(skill_root: Path) -> dict[str, str]:
         skill_root / "scripts/start_workflow.py",
         skill_root / "scripts/init_workspace.py",
         skill_root / "scripts/phase_entry.py",
+        skill_root / "scripts/edge_rules.py",
+        skill_root / "references/verifiers/index.json",
         *sorted((skill_root / "references/states").glob("*/STATE.md")),
         *sorted((skill_root / "references/verifiers").glob("*/VERIFIER.md")),
+        *sorted((skill_root / "references/verifiers").glob("*/scripts/*.py")),
     ]
     return {path.relative_to(skill_root).as_posix(): sha256(path) for path in paths}
 
 
+def managed_bsk_path() -> Path:
+    override = os.environ.get("BENSZ_BSK")
+    bsk = Path(override).expanduser() if override else Path.home() / ".bensz-skills/bin/bsk"
+    bsk = bsk.resolve()
+    if not bsk.is_file() or not os.access(bsk, os.X_OK):
+        raise StartError("kernel_cli_missing", "缺少 Bensz 托管 bsk 固定入口")
+    return bsk
+
+
+def _managed_command(*args: str) -> dict[str, Any]:
+    result = subprocess.run(
+        [str(managed_bsk_path()), *args], capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0:
+        raise StartError("kernel_diagnostics_failed", result.stderr.strip() or "BSK diagnostics 失败")
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise StartError("kernel_diagnostics_failed", "BSK diagnostics 未返回合法 JSON") from exc
+    if not isinstance(payload, dict):
+        raise StartError("kernel_diagnostics_failed", "BSK diagnostics 返回类型错误")
+    return payload
+
+
 def check_interpreter() -> dict[str, Any]:
-    executable = Path(sys.executable).resolve()
-    bsk = shutil.which("bsk")
-    if not bsk:
-        raise StartError("kernel_cli_missing", "当前环境找不到 bsk CLI")
-    first_line = Path(bsk).read_text(encoding="utf-8", errors="replace").splitlines()[0]
-    if not first_line.startswith("#!"):
-        raise StartError("kernel_interpreter_mismatch", "bsk 入口没有可核对的解释器声明")
-    cli_python = Path(first_line[2:].strip().split()[0]).resolve()
-    if cli_python != executable:
+    diagnostics = _managed_command("diagnostics")
+    capabilities = _managed_command("capabilities")
+    if diagnostics.get("kernel_version") != kernel_version:
         raise StartError(
-            "kernel_interpreter_mismatch",
-            "当前 Python 与 bsk CLI 不属于同一解释器环境",
-            python=executable.name,
-            bsk_python=cli_python.name,
+            "kernel_runtime_mismatch",
+            "当前 Python API 与 Bensz 托管 bsk 版本不一致",
+            python_kernel=kernel_version,
+            managed_kernel=diagnostics.get("kernel_version"),
         )
+    available = capabilities.get("capabilities", [])
+    missing = sorted(REQUIRED_CAPABILITIES - set(available if isinstance(available, list) else []))
+    if missing:
+        raise StartError(
+            "kernel_capability_missing",
+            "Bensz 托管 BSK 缺少 research-idea 必需能力",
+            missing=missing,
+        )
+    python = diagnostics.get("python") if isinstance(diagnostics.get("python"), dict) else {}
     return {
-        "implementation": sys.implementation.name,
-        "version": ".".join(map(str, sys.version_info[:3])),
-        "executable_name": executable.name,
-        "bsk_entrypoint_hash": sha256(Path(bsk)),
+        "implementation": python.get("implementation"),
+        "version": python.get("version"),
+        "executable_name": Path(str(python.get("executable", "python"))).name,
+        "bsk_entrypoint_hash": sha256(managed_bsk_path()),
         "same_environment": True,
+        "kernel_version": diagnostics.get("kernel_version"),
+        "capabilities": available,
+        "identity_protocol": diagnostics.get("state_identity_protocol"),
     }
 
 
 def run_kernel(args: list[str], code: str) -> dict[str, Any]:
     result = subprocess.run(
-        [sys.executable, "-m", "bensz_skill_kernel.cli", *args],
+        [str(managed_bsk_path()), *args],
         capture_output=True,
         text=True,
+        timeout=60,
     )
     if result.returncode != 0:
         raise StartError(code, result.stderr.strip() or result.stdout.strip() or "BSK 执行失败")
@@ -104,7 +137,7 @@ def run_kernel(args: list[str], code: str) -> dict[str, Any]:
         payload = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         raise StartError(code, "BSK 未返回合法 JSON") from exc
-    if payload.get("status") not in {"ready", "transitioned"}:
+    if payload.get("status") not in {"ready", "initialized", "transitioned"}:
         raise StartError(code, payload.get("reason") or "BSK 拒绝请求", kernel_result=payload)
     return payload
 
@@ -131,11 +164,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     skill_root = Path(__file__).resolve().parents[1]
     task, relative_task = validate_task_root(project, args.task_root)
     config = load_config()
-    capabilities = kernel_capabilities(version=kernel_version)
-    required_capabilities = set(config["runtime"].get("required_capabilities", REQUIRED_CAPABILITIES))
-    missing = sorted(required_capabilities - set(capabilities["capabilities"]))
-    if missing:
-        raise StartError("kernel_capability_missing", "当前 Kernel 缺少 research-idea 必需能力", missing=missing)
     interpreter = check_interpreter()
     if args.expected_skill_version and args.expected_skill_version != config["skill_info"]["version"]:
         raise StartError(
@@ -151,11 +179,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             if not any(find_skill(item, deps["search_roots"], project) for item in names):
                 raise StartError("dependency_missing", f"缺少必需 Skill: {name}", dependency=name)
 
-    run_kernel(["workspace", "init", str(project), "--task-root", str(task), "--description", "research-idea"], "workspace_init_failed")
     transition = run_kernel([
-        "state", "transition", str(task), "research-idea", INITIAL_STATE,
+        "workspace", "initialize", str(project), "research-idea", INITIAL_STATE,
+        "--task-root", str(task), "--description", "research-idea",
         "--skill-root", str(skill_root), "--run-id", args.run_id,
-        "--target-attempt-id", args.initial_attempt_id,
+        "--attempt-id", args.initial_attempt_id,
         "--idempotency-key", f"research-idea:{args.run_id}:initialize",
     ], "initial_state_failed")
 
@@ -191,9 +219,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "source_hash": "sha256:" + hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest(),
         },
         "kernel": {
-            "version": kernel_version,
-            "capabilities": capabilities["capabilities"],
-            "identity_protocol": capabilities["state_identity_protocol"],
+            "version": interpreter["kernel_version"],
+            "capabilities": interpreter["capabilities"],
+            "identity_protocol": interpreter["identity_protocol"],
         },
         "interpreter": interpreter,
         "identity": {

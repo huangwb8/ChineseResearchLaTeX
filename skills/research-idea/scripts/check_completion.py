@@ -8,11 +8,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 from validate_report import validate_report
-from edge_rules import applicability_errors, reviewer_receipt_errors
+from bensz_skill_kernel.runtime import EventLog, IntegrityError, KernelError
+from edge_rules import applicability_errors, completion_evidence_errors, reviewer_receipt_errors
 
 PREFIX = "bensz.research-ideation."
 COMPLETED = PREFIX + "completed"
@@ -27,8 +25,9 @@ LEGACY_COMPLETION_SCHEMAS = {
     "research-idea-completion-v2",
     "research-idea-completion-v3",
     "research-idea-completion-v4",
+    "research-idea-completion-v5",
 }
-CURRENT_COMPLETION_SCHEMA = "research-idea-completion-v5"
+CURRENT_COMPLETION_SCHEMA = "research-idea-completion-v6"
 STRICT_COMPLETION_SCHEMAS = LEGACY_COMPLETION_SCHEMAS | {CURRENT_COMPLETION_SCHEMA}
 
 REQUIRED_EXPLORATION_DEPENDENCIES = (
@@ -293,12 +292,12 @@ def check_dependency_index(index: dict[str, Any], task_root: Path, manifest: dic
                     for field in ("thread_status", "runner_status"):
                         if reviewer.get(field) != "completed":
                             errors.append(f"第 {round_no} 轮 reviewer {reviewer_no} {field} 未完成")
-                    if any(key in reviewer for key in ("thread_path", "done_path")):
+                    if schema == CURRENT_COMPLETION_SCHEMA or any(key in reviewer for key in ("thread_path", "done_path")):
                         errors.extend(reviewer_receipt_errors(task_root, reviewer, f"第 {round_no} 轮 reviewer {reviewer_no}"))
                     # 新契约必须把摘要逐字段对回原始 thread/done/RESULT 回执。
                     check_binding(reviewer, run_id, attempt_id, errors, f"第 {round_no} 轮 reviewer {reviewer_no}")
             require_nonempty_file(task_root, item.get("summary_path"), errors, f"第 {round_no} 轮汇总")
-        synthesis = require_nonempty_file(task_root, review.get("synthesis_path"), errors, "独立审查总综合")
+        require_nonempty_file(task_root, review.get("synthesis_path"), errors, "独立审查总综合")
         if strict:
             if not isinstance(review.get("synthesis"), dict):
                 errors.append("review 缺少 authoritative synthesis 元数据")
@@ -535,7 +534,6 @@ def check_edge_applicability(events: list[dict[str, Any]]) -> list[dict[str, Any
     """重放四条前向边，任何 merit applicability 漂移均 fail-closed。"""
     breaks: list[dict[str, Any]] = []
     transitions = [(position, event) for position, event in enumerate(events) if event.get("type") == "state.transition" and event.get("payload", {}).get("skill") == "research-idea"]
-    previous = "bensz.workspace.ready"
     previous_position = -1
     for position, transition in transitions:
         payload = transition.get("payload", {})
@@ -547,16 +545,45 @@ def check_edge_applicability(events: list[dict[str, Any]]) -> list[dict[str, Any
         results = [item.get("payload", {}) for item in segment if item.get("type") == "verification.result"]
         for message in applicability_errors(str(source), str(target), results):
             breaks.append({"code": "merit_applicability_mismatch", "event_id": transition.get("event_id"), "message": message})
-        previous = target
         previous_position = position
     return breaks
 
 
-def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors: list[str]) -> dict[str, Any]:
+def check_state_and_gate(
+    task_root: Path,
+    required_verifiers: list[str],
+    errors: list[str],
+    *,
+    evidence_hash: str | None = None,
+    evidence_ref: str | None = None,
+) -> dict[str, Any]:
     meta = load_json(task_root / "research-idea/log/meta-state.json", errors, "领域状态快照")
     events = read_events(task_root / "log/events.ndjson", errors)
     current_state = meta.get("current_state")
     control_break = first_control_break(events, current_state, required_verifiers)
+    transition_bindings: list[dict[str, Any]] = []
+    try:
+        transition_bindings = EventLog(task_root / "log/events.ndjson").query_transition_bindings(
+            skill="research-idea"
+        )
+    except (IntegrityError, KernelError, OSError, ValueError) as exc:
+        errors.append(f"BSK 事件或 transition binding 无法重放: {exc}")
+    invalid_binding = next(
+        (
+            item for item in transition_bindings
+            if item.get("status") not in {"bound", "not_applicable"}
+        ),
+        None,
+    )
+    if invalid_binding is not None and control_break is None:
+        control_break = {
+            "code": (
+                "legacy_unbound_completion"
+                if invalid_binding.get("status") == "legacy_unbound"
+                else invalid_binding.get("reason_code", "gate_transition_binding_invalid")
+            ),
+            "event_id": invalid_binding.get("transition_event_id"),
+        }
     applicability_breaks = check_edge_applicability(events)
     if applicability_breaks:
         errors.append("控制链首个断点: merit_applicability_mismatch")
@@ -589,6 +616,29 @@ def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors:
     # 完成只能来自 reporting，且 manifest 若声明身份必须一致。
     if completed_event.get("payload", {}).get("from_state") != PREFIX + "reporting":
         errors.append("completed 转移不是 reporting -> completed")
+    completed_binding = next(
+        (
+            item for item in transition_bindings
+            if item.get("transition_event_id") == completed_event.get("event_id")
+        ),
+        None,
+    )
+    if completed_binding is None:
+        errors.append("completed transition 缺少 BSK binding 重放结果")
+    elif completed_binding.get("status") != "bound":
+        errors.append(
+            "completed transition 未严格绑定 source Gate: "
+            + str(completed_binding.get("reason_code") or completed_binding.get("status"))
+        )
+    else:
+        if evidence_hash is not None and completed_binding.get("transition_evidence_hash") != evidence_hash:
+            errors.append("当前 completion index hash 与 completed transition 不一致")
+        if evidence_hash is not None and completed_binding.get("gate_evidence_hash") != evidence_hash:
+            errors.append("当前 completion index hash 与 completed Gate 不一致")
+        if evidence_ref is not None and completed_binding.get("transition_evidence_refs") != [evidence_ref]:
+            errors.append("当前 completion index ref 与 completed transition 不一致")
+        if evidence_ref is not None and completed_binding.get("gate_evidence_refs") != [evidence_ref]:
+            errors.append("当前 completion index ref 与 completed Gate 不一致")
     gates = [
         event for event in events
         if event.get("type") == "verification.gate"
@@ -625,6 +675,7 @@ def check_state_and_gate(task_root: Path, required_verifiers: list[str], errors:
         "attempt_id": attempt_id,
         "first_control_break": control_break,
         "applicability_breaks": applicability_breaks,
+        "completed_binding": completed_binding,
     }
 
 
@@ -669,6 +720,11 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
     elif not evidence_index.is_absolute():
         evidence_index = (project_root / evidence_index).resolve()
     index = load_json(evidence_index, errors, "完成证据索引")
+    evidence_hash = None
+    evidence_ref = None
+    if evidence_index.is_file() and evidence_index.is_relative_to(task_root):
+        evidence_hash = "sha256:" + hashlib.sha256(evidence_index.read_bytes()).hexdigest()
+        evidence_ref = evidence_index.relative_to(task_root).as_posix()
     state_result = None
     # 先读取最后一次完成事件，供证据索引做 run/attempt 绑定检查。
     probe_events = read_events(task_root / "log/events.ndjson", [])
@@ -681,6 +737,8 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
     current_visit = completed_identity.get("state_visit_id")
     current_attempt = completed_identity.get("attempt_id")
     if index:
+        if index.get("schema") == CURRENT_COMPLETION_SCHEMA:
+            errors.extend(item["message"] for item in completion_evidence_errors(task_root, evidence_index))
         check_completion_layers(index, report_result, errors)
         if index.get("schema") in STRICT_COMPLETION_SCHEMAS:
             if not isinstance(index.get("run_id"), str) or not isinstance(index.get("attempt_id"), str):
@@ -715,7 +773,13 @@ def check_completion(project_root: Path, task_root: Path, report_path: Path | No
         ]
     except Exception as exc:  # pragma: no cover - defensive CLI guard
         warnings.append(f"无法读取 required Verifier 配置: {exc}")
-    state_result = check_state_and_gate(task_root, required_verifiers, errors)
+    state_result = check_state_and_gate(
+        task_root,
+        required_verifiers,
+        errors,
+        evidence_hash=evidence_hash,
+        evidence_ref=evidence_ref,
+    )
     # manifest 可选声明 run/attempt；声明后不得与最终完成事件冲突。
     for key, actual in (("run_id", state_result.get("run_id")),):
         if key in manifest and manifest.get(key) != actual:

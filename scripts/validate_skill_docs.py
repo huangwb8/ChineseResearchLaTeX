@@ -25,8 +25,12 @@ def validate(path: Path, max_lines: int) -> list[str]:
         item = KEY_RE.match(line)
         if item:
             keys.append(item.group("key"))
-    if keys != ["name", "description"]:
-        errors.append(f"frontmatter keys must be name, description; got {keys}")
+    if keys not in (["name", "description"], ["name", "description", "metadata"]):
+        errors.append(f"frontmatter keys must be name, description, optional metadata; got {keys}")
+    if "metadata" in keys and not re.search(
+        r"^metadata:\s*\n  author:\s*Bensz Conan\s*$", match.group("body"), re.M
+    ):
+        errors.append("metadata.author must be Bensz Conan")
     if not re.search(r"^name:\s*[^\s#]+\s*$", match.group("body"), re.M):
         errors.append("name must be a non-empty identifier")
     if not re.search(r"^description:\s*.+$", match.group("body"), re.M):

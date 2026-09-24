@@ -2,9 +2,9 @@
 
 ## 职责与运行前提
 
-本 Skill 维护五个领域 State、两个 required 语义 Verifier、一个原子启动入口和一个阶段入口。Agent 负责科研工作与语义判断；项目约定的 latest 托管 BSK 负责 run、State visit、active attempt、action authorization、handoff、Gate、transition、事件和状态快照。配置只声明 Kernel 包名，不保留旧式精确版本或静态 `required_capabilities` 清单；启动入口按实际运行时 capability 检查所需能力。
+本 Skill 维护五个领域 State、两个 required Verifier、一个原子启动入口和一个阶段入口。`stage-readiness` 由确定性 evidence-consistency 脚本与语义审查组成，`hypothesis-merit` 保持语义审查；Agent 负责科研工作与语义判断。项目约定的 latest 托管 BSK 负责 run、State visit、active attempt、action authorization、handoff、Gate、transition、事件和状态快照。配置只声明 Kernel 包名，不保留旧式精确版本或静态 `required_capabilities` 清单；启动入口按实际运行时 capability 检查所需能力。
 
-使用 Python 3.11+，并确保 `python` 与 `bsk` 来自同一解释器环境。启动入口按 capability 核对 `state_visit_identity`、`atomic_target_identity_handoff`、`attempt_supersede`、`state_bound_verifier_gate` 和 `state_bound_action_authorization`。任一缺失、解释器错配或期望 Skill 版本不符都在创建工作区前拒绝。
+使用 Python 3.11+，并确保调用入口的 Python API 版本与固定托管入口 `~/.bensz-skills/bin/bsk` 一致。启动入口通过 diagnostics/capabilities 核对运行时，不解析 wrapper shebang，并检查 `state_visit_identity`、`atomic_target_identity_handoff`、`attempt_supersede`、`state_bound_verifier_gate` 和 `state_bound_action_authorization`。任一缺失、运行时版本错配或期望 Skill 版本不符都在创建工作区前拒绝。
 
 ## 原子启动
 
@@ -42,7 +42,7 @@ python "$IDEA_SKILL/scripts/phase_entry.py" \
   --mode start --action literature
 ```
 
-完成业务产物后，把 `context` 和非空 `evidence` 写入当前任务 `research-idea/input/`，再执行 finish。首次 finish 返回 required Verifier 的原生 handoff；Agent 必须读取真实来源并返回完整绑定结果，其中包括 `run_id`、`state_visit_id` 和 `attempt_id`。
+完成业务产物后，把 `context` 和非空 `evidence` 写入当前任务 `research-idea/input/`，再执行 finish。首次 finish 返回 required Verifier 的原生 handoff以及当前阶段的 `evidence_hash`/`evidence_refs`；Agent 必须读取真实来源并返回完整绑定结果，其中包括 run/visit/attempt、handoff 和该 evidence binding。reporting 阶段的输入还必须显式提供任务内 `completion_evidence_path`。
 
 ```bash
 python "$IDEA_SKILL/scripts/phase_entry.py" \
@@ -57,7 +57,7 @@ python "$IDEA_SKILL/scripts/phase_entry.py" \
   --submissions "$IDEA_TASK/research-idea/input/literature-results.json"
 ```
 
-全部 required 结果 completed 且 pass 时，Kernel 生成同 source visit/attempt 的 allow Gate；入口随后用 `source_identity` 离站，并为目标 State 创建新的 visit 和 initial attempt。任何缺失、错绑、非通过、超时或异常均保持当前 State。
+全部 required 结果 completed 且 pass 时，Kernel 生成同 source visit/attempt 的 allow Gate；入口随后把同一 `gate_event_id`、`evidence_hash` 和 `evidence_refs` 交给 BSK transition，用 `source_identity` 离站并为目标 State 创建新的 visit 和 initial attempt。四条前向边均执行这套绑定，入口还核对 transition 返回的 `gate_binding`；任何缺失、错绑、非通过、超时或异常均保持当前 State。
 
 ## 重试与恢复
 
@@ -71,7 +71,7 @@ python "$IDEA_SKILL/scripts/phase_entry.py" \
   --reason "evidence changed"
 ```
 
-恢复时读取 manifest、运行快照、领域 meta-state 和 `bsk status` 投影。`legacy_state_identity`、`runtime_snapshot_missing`、`skill_runtime_drift`、`kernel_interpreter_mismatch`、`action_not_authorized`、Verifier 非通过和 transition 失败分别保留首个错误，不继续调度下游。旧任务不补写 run/visit/attempt、Gate 或运行快照，也不能获得新的 completed 资格。
+恢复时读取 manifest、运行快照、领域 meta-state 和 `bsk status` 投影。`legacy_state_identity`、`runtime_snapshot_missing`、`skill_runtime_drift`、`kernel_runtime_mismatch`、`action_not_authorized`、Verifier 非通过和 transition 失败分别保留首个错误，不继续调度下游。旧任务不补写 run/visit/attempt、Gate 或运行快照，也不能获得新的 completed 资格。
 
 State 图保留返工边供 BSK 生命周期表达；普通入口当前只实现表中四条前向 action。需要跨 State 回退时先保留原因与受影响证据，不手工改写事件或 meta-state。
 
@@ -79,19 +79,19 @@ State 图保留返工边供 BSK 生命周期表达；普通入口当前只实现
 
 `validate_report.py` 只检查报告结构。正式 completed 还必须通过 `check_completion.py`：逐段核对已消费的 action authorization、同 source identity 的 required Verifier/Gate、source/target identity 转移链和 completed 当前身份。
 
-新索引写入 `research-idea/output/completion-evidence.json`，使用 `schema: research-idea-completion-v5`；其顶层身份与 verifier result 由 BSK 绑定到 Gate、transition 和 completed 重放。依赖产物保留内容快照与稳定来源；候选级 `research-literature-search` 记录还必须包含 `contract_version: rls.v1`、检索状态、查询与 canonical 候选哈希、候选数量及全量消费状态。独立 reviewer 除 RESULT 文件外还必须记录 `thread.json`、`done.json` 的路径、哈希与逐字段快照；只有内容而没有完成回执不能计入 required independent review。
+新索引写入 `research-idea/output/completion-evidence.json`，使用 `schema: research-idea-completion-v6`；reporting 的两个 verifier result、Kernel Gate、transition 和 completed 重放必须绑定该索引的同一哈希与引用。依赖产物保留内容快照与稳定来源；候选级 `research-literature-search` 记录还必须包含 `contract_version: rls.v1`、检索状态、查询与 canonical 候选哈希、候选数量及全量消费状态。每篇论文解读记录 frontmatter 元数据、版本化 execution receipt 和输出哈希；只有 host-agent receipt 才可声明 agent 身份，全文级结论还必须绑定任务内 fulltext source 及其哈希。独立 reviewer 除 RESULT 文件外还必须记录版本化 receipt、`thread.json`、`done.json` 的路径、哈希与逐字段快照；只有内容而没有完成回执不能计入 required independent review。
 
 ```bash
 python "$IDEA_SKILL/scripts/check_completion.py" \
   --project-root . --task-root "$IDEA_TASK" --report "{最终报告路径}"
 ```
 
-`insufficient`、`degraded` 和 `bounded_recommendation` 可按其语义交付，但不能伪装为 completed。旧 completion-v2/v3/v4 仅用于历史读取，不可回填成 v5。
+`insufficient`、`degraded` 和 `bounded_recommendation` 可按其语义交付，但不能伪装为 completed。旧 completion-v2–v5 和没有 Gate/transition evidence binding 的现场仅用于只读历史审计，不可回填成 v6。
 
 ## 开发验证
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3.12 -m pytest tests/research-idea skills/research-idea/tests -q \
+PYTHONDONTWRITEBYTECODE=1 ~/.bensz-skills/envs/benszapi/bin/python -m pytest tests/research-idea skills/research-idea/tests -q \
   -o cache_dir="$IDEA_TASK/research-idea/log/pytest-cache"
 ```
 

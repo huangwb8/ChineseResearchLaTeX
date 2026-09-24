@@ -14,7 +14,7 @@ Agent 必须阅读 ref 对应文件和所引用的论文依据；summary 只是�
 
 ## Execution
 
-唯一组件 scientific-review 由当前 Agent 执行。读取当前 State、目标 State、证据及源文件，先核对图边与 subject.operation；未知操作或非法图边返回 fail。Kernel 生成 handoff 并验证绑定回传，不自行调用模型。报告阶段另运行已有 validate_report.py，读取 passed 与 completion_eligible；它只检查本 Skill 格式。
+先运行 required 的 `evidence-consistency` 确定性组件，再由当前 Agent 执行 required 的 `scientific-review`。前者只核对 completion index、论文解读 frontmatter、全文源文件哈希、论文解读执行回执和 reviewer thread/done/RESULT 回执；未知 schema、缺字段、越界路径、符号链接、哈希或证据层级冲突均 fail-closed，不评价科研价值。后者读取当前 State、目标 State、证据及源文件，先核对图边与 subject.operation；未知操作或非法图边返回 fail。Kernel 生成 handoff并验证绑定回传，不自行调用模型。报告阶段另运行已有 validate_report.py，读取 passed 与 completion_eligible；它只检查本 Skill 格式。
 
 operation=rework 时只允许退到图中更早阶段：核验返工原因、受影响上游及下游、下一步补证据动作，证据充分则 pass。此 pass 仅支持回退，不能用来推荐或完成；不要求被推翻的研究结论通过。无清楚依据时 uncertain。
 
@@ -36,7 +36,7 @@ operation=advance 时按目标判断：
 - uncertain：资料有限、网络不可观测、证据相关性无法判断，保留疑点供补证据/人工复核。
 - unchecked：尚无实际绑定的语义判断；error/timed_out：执行失败；skipped：依赖未完成。
 
-required 语义组件 completed 且 pass 才允许对应转移；Kernel 原生不变量检查当前 run/attempt 的记录及 Gate。Agent 必须核对 source/target 和最新证据，旧 attempt 或其它转移的结果不可复用。
+两个 required 组件均 completed 且 pass 才允许对应转移；Kernel 原生不变量检查当前 run/attempt 的记录及 Gate。Agent 必须核对 source/target 和最新证据，旧 attempt 或其它转移的结果不可复用。
 
 ## Failure and boundaries
 

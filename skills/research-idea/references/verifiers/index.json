@@ -5,7 +5,7 @@
     {
       "directory": "stage-readiness",
       "id": "bensz.research.stage-readiness",
-      "version": "4.0.0",
+      "version": "4.1.0",
       "classification": "semantic",
       "tags": [
         "research",
@@ -17,6 +17,14 @@
       "mode": "prompt",
       "assurance_tier": "llm_judge",
       "components": [
+        {
+          "id": "evidence-consistency",
+          "type": "script",
+          "entrypoint": "scripts/evidence_consistency.py",
+          "required": true,
+          "assurance": "deterministic",
+          "side_effects": "none"
+        },
         {
           "id": "scientific-review",
           "type": "agent",

@@ -8,6 +8,12 @@
 
 ## [Unreleased]
 
+- `research-idea` v0.14.1：将共享领域规则模块归入 `scripts/`，同步调用方、关键文件快照和回归导入；压缩工作型 Skill 文档，并新增事实对齐的中英文 README，保持现有运行与科研判断语义不变。
+
+- `research-idea` v0.14.0：落实 v19 证据闭环，四条前向边以同一 evidence artifact 贯通 verifier result、Kernel Gate 与 transition；完成索引升级至 v6，并新增论文解读深度/全文源、reviewer 回执和 deterministic evidence-consistency 对账。启动入口迁移到 strict-v2 原子初始化与固定托管 BSK wrapper。
+
+- 新增 `research-idea` v19 与 BSK 证据闭环优化计划：确认 v19 业务、State、Verifier、Gate 与事件链真实运行，同时记录完成索引哈希未贯通 Gate/transition、证据深度跨文件冲突、latest 托管声明与入口不兼容等缺口；计划分别给出 BSK 通用 binding 与 `research-idea` 领域适配的分层修复路径，本轮不修改两者源码。
+
 - `research-idea` 0.13.0：依据 v18 审计闭环计划新增不可变 completion evidence hash、completed attestation、reviewer 原始回执逐字段对账和四条前向边 applicability 重放校验；旧 v5 现场保持只读兼容。
 - 修订 Skill 基础设施边界：移除重复 BSK 的 `contract.py` 与自建 completion attestation，通用 evidence/Gate/transition/重放统一交给本地 BSK；research-idea 仅保留边 applicability 与 reviewer receipt 领域适配。
 

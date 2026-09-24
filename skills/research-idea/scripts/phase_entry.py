@@ -6,17 +6,14 @@ import argparse
 import json
 from pathlib import Path
 import subprocess
-import sys
 from typing import Any
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from bensz_skill_kernel.runtime import EventLog, IdempotencyConflict, KernelError
 from bensz_skill_kernel.states import SkillStateDeclaration
 from bensz_skill_kernel.verifiers import FilesystemVerifierRegistry
 from bensz_skill_kernel.workspace import TaskWorkspace
 
-from start_workflow import StartError, check_interpreter, critical_files
+from start_workflow import StartError, check_interpreter, critical_files, managed_bsk_path
 from edge_rules import applicability_errors
 
 PREFIX = "bensz.research-ideation."
@@ -170,7 +167,8 @@ def validate_runtime_snapshot(workspace: TaskWorkspace, skill_root: Path) -> Non
 
 
 def verifier_request(
-    input_data: dict[str, Any], *, action: str, run_id: str, state_visit_id: str, attempt_id: str
+    input_data: dict[str, Any], *, action: str, run_id: str, state_visit_id: str,
+    attempt_id: str, task_root: Path, completion_evidence_path: Path | None = None,
 ) -> dict[str, Any]:
     source, target = ACTION_TRANSITIONS[action]
     context = input_data.get("context", {})
@@ -179,12 +177,15 @@ def verifier_request(
         raise ValueError("Verifier 输入必须包含对象 context 和数组 evidence")
     if not evidence:
         raise ValueError("Verifier 输入 evidence 不得为空")
+    runtime_context = {**context, "task_root": str(task_root)}
+    if completion_evidence_path is not None:
+        runtime_context["completion_evidence_path"] = str(completion_evidence_path)
     return {
         "run_id": run_id,
         "state_visit_id": state_visit_id,
         "attempt_id": attempt_id,
         "subject": {"operation": "advance", "source": source, "target": target},
-        "context": context,
+        "context": runtime_context,
         "evidence": evidence,
     }
 
@@ -205,12 +206,12 @@ def completion_index_from_input(workspace: TaskWorkspace, input_data: dict[str, 
 
 
 def transition_with_bsk(
-    *, task: Path, skill_root: Path, target: str, identity: dict[str, str], target_attempt_id: str
+    *, task: Path, skill_root: Path, target: str, identity: dict[str, str],
+    target_attempt_id: str, gate_event_id: str, evidence_hash: str,
+    evidence_refs: list[str],
 ) -> dict[str, Any]:
     command = [
-        sys.executable,
-        "-m",
-        "bensz_skill_kernel.cli",
+        str(managed_bsk_path()),
         "state",
         "transition",
         str(task),
@@ -223,9 +224,13 @@ def transition_with_bsk(
         "--attempt-id",
         identity["attempt_id"],
         "--target-attempt-id", target_attempt_id,
+        "--gate-event-id", gate_event_id,
+        "--evidence-hash", evidence_hash,
         "--idempotency-key", f"research-idea:{identity['run_id']}:{identity['state_visit_id']}:{target}:transition",
     ]
-    result = subprocess.run(command, capture_output=True, text=True)
+    for ref in evidence_refs:
+        command.extend(["--evidence-ref", ref])
+    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
         raise PhaseEntryError(
             "kernel_transition_error",
@@ -247,6 +252,21 @@ def transition_with_bsk(
             kernel_result=payload,
             recovery="保持当前 State；不要开展下一阶段业务或手工改写状态",
         )
+    binding = payload.get("gate_binding") if isinstance(payload.get("gate_binding"), dict) else {}
+    if (
+        payload.get("protocol") != "bensz-meta-state-v2"
+        or payload.get("source_identity") != {key: identity[key] for key in ("run_id", "state_visit_id", "attempt_id")}
+        or binding.get("status") != "bound"
+        or binding.get("gate_event_id") != gate_event_id
+        or binding.get("transition_evidence_hash") != evidence_hash
+        or binding.get("transition_evidence_refs") != evidence_refs
+    ):
+        raise PhaseEntryError(
+            "kernel_transition_binding_mismatch",
+            "bsk transition 回执未证明 source Gate 与 evidence binding 已完整消费",
+            kernel_result=payload,
+            recovery="保持当前 State；核对 Gate 与 transition 事件，不得手工补写完成证明",
+        )
     return payload
 
 
@@ -254,13 +274,13 @@ def start_attempt_with_bsk(
     *, task: Path, current: str, identity: dict[str, str], attempt_id: str, reason: str
 ) -> dict[str, Any]:
     command = [
-        sys.executable, "-m", "bensz_skill_kernel.cli", "attempt", "start",
+        str(managed_bsk_path()), "attempt", "start",
         str(task), "research-idea", "--run-id", identity["run_id"],
         "--state-visit-id", identity["state_visit_id"], "--attempt-id", attempt_id,
         "--reason", reason,
         "--idempotency-key", f"research-idea:{identity['run_id']}:{identity['state_visit_id']}:{attempt_id}:attempt",
     ]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
         raise PhaseEntryError(
             "attempt_supersede_failed",
@@ -363,18 +383,27 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         raise PhaseEntryError("verifier_input_missing", "finish 模式需要 --input")
     input_path = scoped_input_path(workspace, args.input, "Verifier 输入")
     input_data = load_object(input_path, "Verifier 输入")
+    evidence_index = completion_index_from_input(workspace, input_data) if args.action == "reporting" else None
     request = verifier_request(
         input_data,
         action=args.action,
         run_id=identity["run_id"],
         state_visit_id=identity["state_visit_id"],
         attempt_id=identity["attempt_id"],
+        task_root=task,
+        completion_evidence_path=evidence_index,
     )
-    evidence_index = completion_index_from_input(workspace, input_data) if args.action == "reporting" else None
-    evidence_hash = None
-    if evidence_index is not None:
-        import hashlib
-        evidence_hash = "sha256:" + hashlib.sha256(evidence_index.read_bytes()).hexdigest()
+    binding_artifact = evidence_index or input_path
+    import hashlib
+    evidence_hash = "sha256:" + hashlib.sha256(binding_artifact.read_bytes()).hexdigest()
+    evidence_ref = binding_artifact.relative_to(task).as_posix()
+    if not any(item.get("ref") == evidence_ref for item in request["evidence"] if isinstance(item, dict)):
+        request["evidence"].append({
+            "ref": evidence_ref,
+            "source_type": "stage-binding-artifact",
+            "summary": "当前阶段 Gate 与 transition 共用的不可变 evidence artifact",
+            "content_hash": evidence_hash,
+        })
     declaration = SkillStateDeclaration.from_skill_root(skill_root)
     requirements = declaration.verifier_requirements()
     registry = FilesystemVerifierRegistry(skill_root / "references/verifiers")
@@ -382,7 +411,25 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     submissions = load_submissions(submission_path)
     executions = []
     for requirement in requirements:
-        matching = [item for item in submissions if item.get("pack_id") == requirement["id"]]
+        matching = []
+        for item in submissions:
+            if item.get("pack_id") != requirement["id"]:
+                continue
+            submitted_hash = item.get("evidence_hash")
+            submitted_refs = item.get("evidence_refs")
+            if submitted_hash not in (None, evidence_hash) or submitted_refs not in (None, [evidence_ref]):
+                raise PhaseEntryError(
+                    "component_evidence_binding_mismatch",
+                    "Verifier 回传绑定的 evidence artifact 与当前阶段输入不一致",
+                    expected_evidence_hash=evidence_hash,
+                    expected_evidence_refs=[evidence_ref],
+                    recovery="保持当前 State；使用当前 handoff 返回的 evidence binding 重新审查",
+                )
+            matching.append({
+                **item,
+                "evidence_hash": evidence_hash,
+                "evidence_refs": [evidence_ref],
+            })
         executions.append(
             registry.run_contract(
                 requirement["id"],
@@ -398,7 +445,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     result_payloads = [execution.to_event_payload() for execution in executions]
 
     handoffs = [
-        handoff.to_audit_dict()
+        {
+            **handoff.to_audit_dict(),
+            "evidence_hash": evidence_hash,
+            "evidence_refs": [evidence_ref],
+        }
         for execution in executions
         for handoff in execution.report.handoffs
     ]
@@ -426,12 +477,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             recovery="修正 hypothesis-merit 回执后，以新 attempt 重新提交；不得复用旧 Gate",
         )
 
-    if evidence_hash:
-        for payload in result_payloads:
-            payload["evidence_hash"] = evidence_hash
-            refs = list(payload.get("evidence_refs", []))
-            refs.append(evidence_hash)
-            payload["evidence_refs"] = list(dict.fromkeys(refs))
+    for payload in result_payloads:
+        payload["evidence_hash"] = evidence_hash
+        payload["evidence_refs"] = [evidence_ref]
     _, gate_event = log.record_verification_batch(
         result_payloads,
         {"decision": "wait"},
@@ -442,7 +490,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         idempotency_key=f"research-idea:{identity['run_id']}:{identity['state_visit_id']}:{identity['attempt_id']}:{args.action}:verification",
         requirements=requirements,
     )
-    gate = gate_event.payload if gate_event is not None else {"decision": "wait"}
+    gate = (
+        {**gate_event.payload, "gate_event_id": gate_event.event_id}
+        if gate_event is not None
+        else {"decision": "wait"}
+    )
     if gate.get("decision") != "allow":
         return {
             "status": "rejected",
@@ -454,13 +506,28 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "gate": gate,
             "recovery": "保留当前 State；使用 --mode retry 显式 supersede attempt 后重新授权和审查",
         }
-    import hashlib
+    if gate_event is None:
+        raise PhaseEntryError("kernel_gate_missing", "BSK 未返回可消费的 Gate 事件")
+    if gate.get("evidence_hash") != evidence_hash or gate.get("evidence_refs") != [evidence_ref]:
+        raise PhaseEntryError(
+            "kernel_gate_binding_mismatch",
+            "BSK Gate 未绑定当前 evidence artifact",
+            gate_event_id=gate_event.event_id,
+            recovery="保持当前 State；以新 attempt 重新提交同一 evidence artifact",
+        )
+    log.validate_transition_gate_binding(
+        gate_event_id=gate_event.event_id,
+        source_identity={key: identity[key] for key in ("run_id", "state_visit_id", "attempt_id")},
+        evidence_hash=evidence_hash,
+        evidence_refs=[evidence_ref],
+    )
     target_attempt_id = "attempt-" + hashlib.sha256(
         f"{identity['run_id']}:{identity['state_visit_id']}:{target}".encode()
     ).hexdigest()[:16]
     transition = transition_with_bsk(
         task=task, skill_root=skill_root, target=target, identity=identity,
-        target_attempt_id=target_attempt_id,
+        target_attempt_id=target_attempt_id, gate_event_id=gate_event.event_id,
+        evidence_hash=evidence_hash, evidence_refs=[evidence_ref],
     )
     entered = workspace.read_meta_state("research-idea").get("current_state")
     if entered != target:

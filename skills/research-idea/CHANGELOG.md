@@ -8,10 +8,14 @@
 
 ### Added
 
+- `0.14.0`：按 v19 证据闭环计划为 `stage-readiness` 增加 required 确定性 evidence-consistency 组件；论文解读、全文源和独立 reviewer 使用版本化执行回执并与源 artifact 对账。
 - `0.13.0`：按 v18 审计闭环计划把业务索引哈希交给 BSK 的 evidence binding、Gate 和 transition 重放；Skill 仅保留四条前向边 applicability 与 reviewer thread/done/RESULT 回执对账。移除重复 BSK 的本地 completion contract/attestation 实现。
 
 ### Changed
 
+- `0.14.1`：将共享领域规则模块从 Skill 根目录迁入 `scripts/edge_rules.py`，同步运行快照、嵌套 Verifier 与回归导入；压缩 `SKILL.md` 的重复说明并新增中英文对齐的用户指南，运行与科研判断契约不变。
+- 完成证据升级为 `research-idea-completion-v6`；四条前向边的 verifier result、Gate 与 transition 绑定同一 evidence artifact，最终阶段绑定完成索引并以 BSK 查询接口重放。v2–v5 与 legacy-unbound 现场只读保留。
+- 运行声明迁移到 `runtime.kernel` 与 strict-v2 identity policy；启动改用固定托管 BSK diagnostics/capabilities 和原子 `workspace initialize`。论文解读改为按论文隔离任务，只有可对账的 host-agent receipt 才声明独立 agent 身份。
 - 移除对 `research-literature-review` 的运行依赖，改为直接调用 `research-literature-search` 生成候选级 `rls.v1` bundle；新颖性、等价性、反方证据和决定性近邻判断继续由本 Skill 结合 Radar 与 Interpretation 完成。
 - 完成证据契约升级为 `research-idea-completion-v5`，要求记录候选级查询与 canonical 候选哈希、数量、Search 状态和全量消费状态；v2–v4 仅保留历史读取。
 - 删除当前流程与报告中的 Review `Premium` 档位要求，并同步 README、状态说明、运行指南、模板、校验和回归测试。

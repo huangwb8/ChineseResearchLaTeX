@@ -1,126 +1,104 @@
-# research-idea - 用户使用指南
+<div align="center">
+  <h1>Research Idea</h1>
+  <p><strong>从研究资料和可审计文献证据中提出科学问题、可证伪假设与有边界的研究方向。</strong></p>
+  <p><a href="README_EN.md">English</a> · <a href="#快速开始">快速开始</a> · <a href="SKILL.md">执行规范</a> · <a href="references/runtime-guide.md">运行说明</a></p>
+</div>
 
-本 README 面向**使用者**：如何触发并正确使用 `research-idea` skill。
-执行规范和硬性流程在 `SKILL.md`；默认参数在 `config.yaml`。
+<!-- README README_EN -->
+
+`research-idea` 先建立文献 landscape、逐篇解读和研究脉络 map，再生成、查新并独立审查候选。它把科学价值、判断可信度和近期投入分开呈现，并明确区分“可推荐”“当前范围内无合格候选”和“证据不足”。
 
 ## 快速开始
 
-推荐 Prompt：
+向支持 Agent Skills 的宿主提供研究资料，并明确调用本 Skill：
 
 ```text
-请使用 research-idea skill 根据我提供的资料提出关键科学问题和可证伪科学假设。
-输入：下面这段项目背景/实验现象/论文草稿/文件路径/URL。
-输出：`./docs/ideas/Research-Idea_{github仓库名}_{pr名}_{时间戳}.md`。
+请使用 research-idea skill，根据 ./notes 和 ./draft.md 提出关键科学问题与可证伪假设。
+请先调查文献，再比较最近工作；最终报告保存到 ./docs/ideas/。
 ```
 
-进阶 Prompt：
+预期结果是一个 Markdown 研究想法报告；默认文件名为 `Research-Idea_{repo}_{pr}_{timestamp}.md`。中间证据、查新记录和审查回执留在同一 `.bensz-api/task-*` 任务区。
 
-```text
-请使用 research-idea skill 根据 ./notes 和 ./draft.md 提出关键科学问题和可证伪科学假设。
-输入：./notes 文件夹 + ./draft.md。
-输出：`/path/to/output/` 目录下的 `Research-Idea_{github仓库名}_{pr名}_{时间戳}.md`。
-另外，还有下列参数约束：
-- 轮次：5 轮独立审查
-- 研究边界：只考虑可在 6 个月内验证的假设
-```
+## 它做什么
 
-## 功能概述
+1. 用 `research-topic-extractor` 把输入转成可检索主题。
+2. 用 `research-literature-search` 和 `research-literature-radar` 建立 canonical 候选池与完整 landscape。
+3. 用 `research-literature-interpretation` 按论文隔离解读，建立带 O/R 锚点的研究 map。
+4. 用 `parallel-vibe` 生成候选并进行多轮独立审查。
+5. 对拟保留候选执行多查询查新，比较直接近邻、等价假设、反方证据和适用边界。
+6. 输出推荐、无合格候选或证据不足结论，并用 BSK State、Verifier、Gate 和完成检查保存可复核证据。
 
-`research-idea` 遵循“没有调查就没有发言权”：先由 `research-literature-radar` 调用 `research-literature-search`，将全部 Search canonical 候选整理为核心证据、辅助景观和待升级近邻，再由并行子 agent 分批调用 `research-literature-interpretation`（每篇核心论文一个 agent，同时最多 3 个），结合辅助研究线建立 map；之后才由多个独立 agent 生成候选。拟保留候选使用 `research-literature-search` 做候选级多查询检索，由本 Skill 核对强近邻、等价假设、反方证据和适用边界，再通过 `parallel-vibe` 默认 3 轮串行独立审查形成结论。
+## 输入与输出
 
-它不替代完整实验设计。你已经确定科学问题后，再用 `research-plan` 制定实验或分析计划。
-如果你只需要写文献综述正文、related work 或系统综述，请直接使用 `research-literature-review`。
-
-## 研究判断与交付结论
-
-科学价值、判断可信度和近期投入分别比较；不会因为一个方向容易实现就把它当成最佳科研题目。三轮审查依次挑战选题价值、检查解释与辨别能力、重新比较备选与外推边界。目标贡献和资源约束可随输入提供；未说明的资源会记为未知。
-
-初始通常探索 3–7 个方向，最终可以只有一个或没有合格候选：
-
-| 报告结论 | 用户得到什么 |
+| 类型 | 内容 |
 | --- | --- |
-| 有可推荐候选 | 完成必要候选级检索、查新和独立审查的候选，科学价值与近期投入两种排序，以及最强替代方向 |
-| 当前范围内无合格候选 | 有证据的淘汰原因、有限重新探索与复核结果、重启条件；不代表整个领域无题可做 |
-| 证据不足，暂不能推荐 | 明确的阶段性评估、缺口与恢复位置；不声称新颖性或全流程完成 |
+| 最小输入 | 研究背景、实验现象、论文草稿、文件/目录、URL、仓库或 PR 线索中的至少一种 |
+| 可选约束 | 研究目标、时间/资源边界、输出位置、审查轮数与人数 |
+| 正式输出 | `./docs/ideas/Research-Idea_{repo}_{pr}_{timestamp}.md`，或用户指定的 Markdown 路径 |
+| 中间产物 | `.bensz-api/task-{yyyymmdd-hhmm}-{描述}/{skill名}/input\|output\|log/` |
 
-无合格结论不能省略必要探索与审查。若近邻全文受限或执行未完成，应保留证据不足。报告只说明关键未知、最小辨别动作和改变去留的观察，不默认展开完整实验方案。规则和跨领域示例见 [研究综合指南](references/research-synthesis.md)。
-
-## 依赖兼容
-
-`research-idea` 当前需要发现 `research-topic-extractor`、`research-literature-search`、`research-literature-radar`、`research-literature-interpretation` 与 `parallel-vibe`。只对 `research-topic-extractor` 保留旧名 fallback；Search 提供可审计候选池，雷达与解读是候选生成前置阶段，均不能静默跳过。`research-literature-review` 只用于完整综述，不是本 Skill 的依赖。
-
-## 验证器与状态机
-
-以五个 Markdown State 记录“文献调查 → 候选与查新 → 独立打磨 → 报告 → 完成”，由两个 required 自然语言 Verifier 分别核验阶段证据与科学假设价值。Agent 判断科研充分性、创新性和推荐价值，现有脚本检查报告格式，bsk 原生能力负责 Gate、绑定、事件和状态持久化。
-
-需要 Python 3.11+ 和项目约定的 latest 托管 BSK，并确保 `python` 与 `bsk` 属于同一环境。新任务只调用 `scripts/start_workflow.py`，由它按实际 capability 建立带 run/visit/attempt 的 literature 身份、领域参数和运行快照。每阶段开始前调用 `scripts/phase_entry.py --mode start` 消费 State-bound action authorization，结束后用 `--mode finish` 完成 required Verifier、Kernel Gate 和新目标 visit 转移。
-
-State、run/visit/attempt、原生 handoff、批量 Gate、transition 和事件仍全部归 BSK。Verifier 失败或证据变化时用 `--mode retry` 在当前 visit 内 supersede attempt，旧授权、handoff 和 Gate 自动失效；legacy 身份和运行版本漂移保持只读并 fail-closed。
-
-最终推荐或无合格候选结论还要通过完成收敛检查。新索引使用 `schema: research-idea-completion-v5`，业务索引哈希交给 BSK 绑定到 verifier result、Gate 和 transition；reviewer 摘要必须能逐字段回到 thread/done/RESULT 原始回执，四条前向边的 merit applicability 由 Skill 在提交前和最终重放时核对。任一漂移都 fail-closed，并返回稳定断点码。`stage-readiness` 分开返回 `pipeline_ready`、`scientific_evidence_sufficient` 和 `claim_eligible`；进入带缺口审查不等于允许最终 claim。
+报告会给出文献证据深度、研究 map、候选或零候选依据、科学价值/可信度/投入判断、最近工作与查新、反证路径、风险和最小下一步。它不会把隐藏工作区路径、测试路径或 agent 内部指令写入正式报告。
 
 ## 使用示例
 
-### 示例 1：从实验现象找假设
+### 从实验现象形成候选
 
 ```text
 请使用 research-idea skill。
-输入：我们发现处理 A 后细胞迁移增强，但增殖没有变化；已有 RNA-seq 显示通路 B 上调。
-输出：默认目录 `./docs/ideas/` 下的 Markdown 报告。
+输入：处理 A 后细胞迁移增强，但增殖没有变化；RNA-seq 显示通路 B 上调。
+约束：只保留 6 个月内可形成关键辨别证据的方向；高可行性不能抵消低科学价值。
+输出：默认 docs/ideas 目录下的研究想法报告。
 ```
 
-### 示例 2：从项目资料夹找创新点
+### 从项目资料寻找创新点
 
 ```text
-请使用 research-idea skill。
-输入：./project-background/，里面有 preliminary data、读书笔记和一份 grant 草稿。
-输出：`./outputs/` 目录下的 `Research-Idea_{github仓库名}_{pr名}_{时间戳}.md`。
+请使用 research-idea skill 分析 ./project-background/ 和 ./grant-draft.md。
+先建立文献 landscape 与研究 map，再提出候选；对拟推荐候选检查直接近邻、等价假设和反方证据。
+执行 5 轮独立审查，并分别报告科学价值、判断可信度与近期投入建议。
 ```
 
-## 输出文件
+## 适用范围
 
-| 文件 | 说明 |
-|------|------|
-| `docs/ideas/Research-Idea_{repo}_{pr}_{timestamp}.md` | 默认最终研究想法报告路径；可用 `--output-dir` 或用户参数覆盖 |
-| `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-idea/` | 隐藏工作区，保存中间资料、查新记录和审查草稿 |
-| `research-idea/output/completion-evidence.json`（位于任务目录内） | 完成收敛索引，记录依赖产物和独立审查证据 |
-| `log/events.ndjson` 与 `research-idea/log/meta-state.json`（位于任务目录内） | bsk 维护的事件日志与领域状态快照 |
+适合需要文献依据的科学问题发现、可证伪假设凝练、创新点判断和研究方向比较。
 
-最终报告不会暴露隐藏工作区路径。
+以下任务应使用相邻 Skill：
 
-## WHICHMODEL
+- 已确定问题，只需要实验或分析方案：`research-plan`。
+- 需要系统综述、related work 或完整综述正文：`research-literature-review`。
+- 只需检索候选论文池：`research-literature-search`。
+- 不需要文献依据的普通创意发散：使用通用 brainstorming 流程。
 
-本 skill 需要复杂科研推理、查新综合和多轮批判性审查。默认建议：
+## 配置与脚本
 
-| 场景 | 推荐模型/强度 | 理由 |
-|------|---------------|------|
-| 提出和筛选科学问题 | 强推理模型，高 reasoning effort | 需要识别机制缺口、可证伪性和隐含假设 |
-| 候选级查新判断 | 长上下文强模型 | 需要完整消费 Search 候选并比较等价假设、反方证据与适用边界 |
-| 独立审查 agent | 中高 reasoning effort | 需要从不同角度找缺陷并给出可执行改写 |
-| 最终报告整理 | 默认或中等强度模型 | 主要是结构化表达和证据摘要 |
+`config.yaml` 是版本、默认轮次、依赖、输出和 BSK runtime 声明的事实来源。常用入口如下：
 
-模型选择会随平台和供应商更新而变化；优先使用当前环境中最强的推理模型处理“候选生成、查新判断、最佳方案选择”三步。
+| 入口 | 用途 |
+| --- | --- |
+| `scripts/start_workflow.py` | 原子初始化任务区与 BSK run/visit/attempt 身份 |
+| `scripts/phase_entry.py` | 阶段授权、Verifier handoff、Gate、transition 与 retry |
+| `scripts/validate_report.py` | 检查报告结构、字段、命名和路径泄露 |
+| `scripts/check_completion.py` | 核对依赖证据、回执、Gate/transition 绑定和 completed 状态 |
+| `scripts/edge_rules.py` | 供阶段入口、完成检查和确定性 Verifier 共享的领域规则 |
 
-## FAQ
+完整命令与恢复路径见 [运行说明](references/runtime-guide.md)。报告格式见 [报告模板](references/report-template.md)，研究 map 与价值筛选见 [研究综合指南](references/research-synthesis.md)。
 
-**Q：没有 GitHub PR 也能用吗？**
+## 完成语义与限制
 
-A：可以。文件名里的 PR 名会退化为当前分支名；仍无法识别时使用 `manual`。
+报告文件存在不等于流程完成。`artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 四层必须分别核验；正式 `completed` 还要求 required Verifier、BSK Gate、绑定的 transition 与 `check_completion.py` 全部通过。
 
-**Q：为什么要查新？**
+`bounded_recommendation`、`degraded` 和 `insufficient` 可以作为诚实的阶段性交付，但不能伪装成完成结论。旧 completion v2–v5 或没有 evidence binding 的历史运行只读保留，不回填为新完成记录。
 
-A：科学问题看起来新，不代表真的没有被研究过。该 skill 会把“已充分研究”的候选淘汰或重构，避免把旧问题换个说法。
+## 常见问题（FAQ）与更多文档
 
-**Q：最终会给完整实验方案吗？**
+**为什么没有推荐方向？** 当前证据可能足以淘汰候选，也可能不足以判断。报告会区分 `no_qualified` 与 `insufficient`，并给出重启条件或恢复位置。
 
-A：不会。最终报告只给科学问题、可证伪假设、选择理由和最小下一步。完整实验或分析计划应交给 `research-plan`。
+**为什么不能直接写实验方案？** 本 Skill 负责先确认问题和假设是否值得研究；确定方向后再交给 `research-plan` 展开设计。
 
-## 报告兼容与开发验证
+**摘要够不够？** 摘要可用于相关性和明显不等价排除；决定机制、结果或新颖性的近邻通常需要全文。无法取得时必须收缩 claim。
 
-新报告以 `report_contract: research-idea-report-v2` 显式声明 outcome 与探索、查新、审查状态；可用 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible` 表达四层完成语义，写法见 [报告模板](references/report-template.md)。`bounded_recommendation` 与 `degraded` 是可交付但不可 completed 的降级状态。旧报告仍支持结构读取并返回 legacy 警告，不能用于新运行认证完成；脚本检查格式与引用可定位性，科学充分性仍由实际读取来源并绑定结果的审查判断。
-
-`validate_report.py` 的 `completion_eligible=true` 只表示报告文本具备进入完成流程的资格；最终还必须运行 `check_completion.py --task-root ... --report ...`。用户指定友好文件名时，完成检查会自动读取 manifest 的 `allow_custom_name`，避免裸跑报告检查产生误导。
-
-旧运行和事件保持原样；专用运行时 CLI 已移除，迁移与兼容边界见运行指南。缺少进入身份、已有拒绝 Gate 或需要轮换 attempt 的旧现场只读保留，不在原任务追认完成。报告检查 CLI 保留，初始化模板 `output/candidate-schema.json` 使用空 `candidates` 与单独 `candidate_example`，初始状态明确为 insufficient/incomplete，避免把示例当真实候选。BAC 仅证明本地账本结构和事件链完整；当前 unsigned/local checkpoint 不证明现实贡献、作者身份或不可篡改性。
-
-定向回归源码位于 `tests/research-idea/`，测试命令与环境见 [运行指南](references/runtime-guide.md)。固定材料输出比较只能发现问题；目前不以格式通过或 AI 自评分宣称整体科研质量已得到验证。
+- [Skill 执行规范](SKILL.md)
+- [运行说明](references/runtime-guide.md)
+- [查新判定指南](references/novelty-check.md)
+- [独立审查参考](references/agent-review-prompt.md)
+- [变更日志](CHANGELOG.md)

@@ -64,6 +64,14 @@ def request(workspace, source="literature", target="candidates", operation="adva
         "context": {"rounds": 1, "agents": 1, "sources": {"fixture": {"role": "map", "path": str(evidence_path.relative_to(workspace.task_root.parent.parent))}}},
         "evidence": [{"ref": "fixture", "summary": "合成协议材料", "source_type": "test-only", "content_hash": "sha256:" + hashlib.sha256(evidence_path.read_bytes()).hexdigest()}],
     }
+    if target == "completed":
+        index = workspace.paths("research-idea").path("output") / "completion-evidence.json"
+        index.write_text(json.dumps({
+            "schema": "research-idea-completion-v6",
+            "dependencies": {},
+            "review": {},
+        }), encoding="utf-8")
+        data["completion_evidence_path"] = str(index)
     path.write_text(json.dumps(data), encoding="utf-8")
     return path, data
 
@@ -109,7 +117,8 @@ def bound_submission(handoff, verdict="pass"):
         "protocol": "bensz-contract-component-result-v1",
         "execution_status": verdict if verdict in {"error", "timed_out", "skipped", "unchecked"} else "completed", "verdict": verdict,
         "executor": {"type": "agent", "id": "synthetic-test", "model": "synthetic-only"},
-        "evidence_refs": ["fixture"], "findings": [],
+        "evidence_hash": handoff["evidence_hash"],
+        "evidence_refs": handoff["evidence_refs"], "findings": [],
         "facts": {"summary": "只测试协议", "confidence": 0.5, "uncertainties": [] if verdict == "pass" else ["合成缺口"]},
     }
 
@@ -120,12 +129,20 @@ def bound_submissions(handoffs, verdict="pass"):
 
 def transition(workspace, data, target=None, skill=SKILL):
     state = workspace.read_meta_state("research-idea")
-    return bsk(
-        "state", "transition", workspace.task_root, "research-idea",
-        target or data["subject"]["target"], "--skill-root", skill,
-        "--run-id", state["run_id"], "--state-visit-id", state["state_visit_id"],
-        "--attempt-id", state["active_attempt_id"], "--target-attempt-id", "bypass-target",
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "bensz_skill_kernel.cli", "state", "transition",
+            str(workspace.task_root), "research-idea", target or data["subject"]["target"],
+            "--skill-root", str(skill), "--run-id", state["run_id"],
+            "--state-visit-id", state["state_visit_id"],
+            "--attempt-id", state["active_attempt_id"],
+            "--target-attempt-id", "bypass-target",
+        ],
+        capture_output=True,
+        text=True,
     )
+    assert result.returncode in {0, 2}, result.stdout + result.stderr
+    return json.loads(result.stdout)
 
 
 def test_local_pack_and_initial_state_are_discoverable(workspace):
@@ -136,7 +153,7 @@ def test_local_pack_and_initial_state_are_discoverable(workspace):
     registry = FilesystemVerifierRegistry(SKILL / "references/verifiers")
     stage_definition = registry.resolve(VERIFIER)
     merit_definition = registry.resolve(MERIT_VERIFIER)
-    assert [component.type for component in stage_definition.contract_pack().components] == ["agent"]
+    assert [component.type for component in stage_definition.contract_pack().components] == ["script", "agent"]
     assert [component.id for component in merit_definition.contract_pack().components] == ["merit-review"]
     assert workspace.read_meta_state("research-idea")["current_state"] == PREFIX + "literature"
 
@@ -290,10 +307,13 @@ def test_no_skill_runtime_or_script_pack_remains():
         "init_workspace.py",
         "validate_report.py",
         "check_dependencies.py",
+        "edge_rules.py",
         "phase_entry.py",
         "start_workflow.py",
     }
-    assert not list((SKILL / "references").rglob("*.py"))
+    assert {path.relative_to(SKILL).as_posix() for path in (SKILL / "references").rglob("*.py")} == {
+        "references/verifiers/stage-readiness/scripts/evidence_consistency.py"
+    }
 
 
 @pytest.mark.parametrize("field,value", [("context", []), ("evidence", "invalid")])

@@ -32,6 +32,14 @@ version=17
 
 ---
 
+根据 /Volumes/2T01/Github/ChineseResearchLaTeX/docs/plans/2026-09-20-research-idea-v19-bsk-证据闭环优化计划.md 优化 research-idea skill。
+
+---
+
+请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v19.md 及对应的中间文件夹（/Volumes/2T01/Github/bensz-auto-contribution/.bensz-api/task-20260920-0655-bac-研究课题）里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。如果你觉得有需要改进的点，你可以写一个优化计划，计划里要分别说明 bsk / research-idea skill 怎么改进。
+
+---
+
 请结合 /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas/v18.md 及对应的中间文件夹里留下的痕迹，评估一下 research-idea skill 的实际工作状态； 特别是和bsk、verifier、state 、gate 等是否按预期工作。
 
 ---

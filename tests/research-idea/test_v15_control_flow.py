@@ -7,6 +7,7 @@ import subprocess
 import sys
 import os
 import shutil
+import yaml
 
 from bensz_skill_kernel.runtime import EventLog
 from bensz_skill_kernel.workspace import TaskWorkspace
@@ -59,7 +60,8 @@ def test_single_start_entry_creates_v2_identity_and_runtime_snapshot(tmp_path: P
     snapshot = json.loads(
         (workspace.paths("research-idea").path("log") / "runtime-snapshot.json").read_text()
     )
-    assert snapshot["skill"]["version"] == "0.12.0"
+    config = yaml.safe_load((SKILL / "config.yaml").read_text(encoding="utf-8"))
+    assert snapshot["skill"]["version"] == config["skill_info"]["version"]
     assert snapshot["kernel"]["version"] == kernel_version
     assert "state_bound_action_authorization" in snapshot["kernel"]["capabilities"]
     assert all(not value.startswith("/") for value in snapshot["skill"]["files"])
@@ -120,10 +122,19 @@ def test_legacy_initial_state_is_rejected_before_new_control_events(tmp_path: Pa
         "--task-root", task,
     )
     assert result.returncode == 0
+    legacy_skill = tmp_path / "legacy-research-idea"
+    shutil.copytree(SKILL, legacy_skill)
+    legacy_config = legacy_skill / "config.yaml"
+    legacy_config.write_text(
+        legacy_config.read_text(encoding="utf-8").replace(
+            "  identity_policy: state-identity-v2\n", "", 1
+        ),
+        encoding="utf-8",
+    )
     result, _ = run_json(
         "-m", "bensz_skill_kernel.cli", "state", "transition", task,
         "research-idea", "bensz.research-ideation.literature",
-        "--skill-root", SKILL,
+        "--skill-root", legacy_skill,
     )
     assert result.returncode == 0
     before = (task / "log/events.ndjson").read_bytes()
@@ -158,10 +169,19 @@ def test_five_stage_v2_chain_has_no_control_break(tmp_path: Path):
         )
         assert started.returncode == 0, started.stdout + started.stderr
         input_path = workspace.paths("research-idea").path("input") / f"{action}.json"
-        input_path.write_text(json.dumps({
+        input_data = {
             "context": {"sources": {"fixture": {"role": action}}},
             "evidence": [{"ref": "fixture", "source_type": "test-only", "summary": action, "content_hash": "sha256:fixture"}],
-        }))
+        }
+        if action == "reporting":
+            evidence_index = workspace.paths("research-idea").path("output") / "completion-evidence.json"
+            evidence_index.write_text(json.dumps({
+                "schema": "research-idea-completion-v6",
+                "dependencies": {},
+                "review": {},
+            }))
+            input_data["completion_evidence_path"] = str(evidence_index)
+        input_path.write_text(json.dumps(input_data))
         pending_result, pending = run_json(
             PHASE, "--project-root", tmp_path, "--task-root", workspace.task_root,
             "--mode", "finish", "--action", action, "--input", input_path,
@@ -175,7 +195,8 @@ def test_five_stage_v2_chain_has_no_control_break(tmp_path: Path):
                 "execution_status": "completed", "verdict": "pass",
                 "executor": {"type": "agent", "id": "synthetic-test", "model": "synthetic-only"},
                 "facts": {"summary": "synthetic binding test", "confidence": 0.5, "uncertainties": []},
-                "evidence_refs": ["fixture"], "findings": [],
+                "evidence_hash": handoff["evidence_hash"],
+                "evidence_refs": handoff["evidence_refs"], "findings": [],
             })
         submission_path = input_path.with_name(f"{action}-submissions.json")
         submission_path.write_text(json.dumps({"submissions": submissions}))
@@ -191,7 +212,7 @@ def test_five_stage_v2_chain_has_no_control_break(tmp_path: Path):
     import check_completion
     events = [json.loads(line) for line in workspace.events.read_text().splitlines() if line]
     required = [
-        "bensz.research.stage-readiness@4.0.0",
+        "bensz.research.stage-readiness@4.1.0",
         "bensz.research.hypothesis-merit@1.1.0",
     ]
     assert check_completion.first_control_break(
@@ -211,7 +232,13 @@ def test_phase_rejects_skill_files_changed_after_start(tmp_path: Path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     config = copied / "config.yaml"
-    config.write_text(config.read_text().replace('version: "0.12.0"', 'version: "0.12.1"', 1))
+    current_version = yaml.safe_load(config.read_text(encoding="utf-8"))["skill_info"]["version"]
+    config.write_text(
+        config.read_text(encoding="utf-8").replace(
+            f'version: "{current_version}"', 'version: "99.0.0"', 1
+        ),
+        encoding="utf-8",
+    )
     rejected, payload = run_json(
         copied / "scripts/phase_entry.py", "--project-root", tmp_path,
         "--task-root", task, "--mode", "start", "--action", "literature",
@@ -220,7 +247,7 @@ def test_phase_rejects_skill_files_changed_after_start(tmp_path: Path):
     assert payload["error_code"] == "skill_runtime_drift"
 
 
-def test_interpreter_mismatch_fails_before_workspace_creation(tmp_path: Path):
+def test_path_shadow_cannot_replace_managed_bsk_wrapper(tmp_path: Path):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
     fake_bsk = fake_bin / "bsk"
@@ -235,6 +262,6 @@ def test_interpreter_mismatch_fails_before_workspace_creation(tmp_path: Path):
         "--skip-dependency-check",
     ], capture_output=True, text=True, env=env)
     payload = json.loads(result.stdout)
-    assert result.returncode != 0
-    assert payload["error_code"] == "kernel_interpreter_mismatch"
-    assert not task.exists()
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "initialized"
+    assert task.exists()
