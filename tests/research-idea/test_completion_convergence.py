@@ -65,7 +65,10 @@ def write(path: Path, text: str = "fixture") -> str:
 
 def report_text() -> str:
     return """---
-report_contract: research-idea-report-v2
+report_contract: research-idea-report-v3
+citation_style: gb-t-7714-2025-numeric
+reference_map:
+  R1: 1
 outcome: recommended
 exploration: complete
 novelty: complete
@@ -77,8 +80,7 @@ review: complete
 评估测量边界是否构成有意义的研究问题。
 
 ## 研究脉络 map 摘要
-<a id="opportunity-1"></a>O1：湿度适用边界。
-<a id="reference-1"></a>R1：合成测试证据，仅供协议测试。
+<a id="opportunity-1"></a>O1：湿度适用边界[1](#ref-1)。
 
 ## 候选评估
 ### C1：测量边界
@@ -92,7 +94,7 @@ review: complete
 **最近工作与实质增量**：最近研究只覆盖干燥条件，湿度效应尚未测量。
 **最强替代方向**：先改进参照测量；若误差来自参照则改变优先级。
 **判断可信度与近期投入**：当前有限证据支持小规模鉴别观察。
-**脉络依据**：[O1](#opportunity-1)，[R1](#reference-1)
+**脉络依据**：[O1](#opportunity-1)，[1](#ref-1)
 **查新结论**：部分研究但关键缺口存在；湿度边界缺乏验证。
 
 ## 查新摘要
@@ -103,6 +105,9 @@ review: complete
 
 ## 推荐与投入排序
 科学价值优先 C1；近期仅投入关键边界的观察。
+
+## References
+<a id="ref-1"></a>[1] 测试机构. 测量边界研究[J]. 测试期刊, 2024, 1(1): 1-5. DOI: 10.0000/example.
 """
 
 

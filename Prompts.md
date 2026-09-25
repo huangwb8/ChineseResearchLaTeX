@@ -32,6 +32,20 @@ version=17
 
 ---
 
+根据 docs/plans/2026-09-25-research-idea-研究脉络叙事优化计划.md 优化 skill 
+
+---
+
+优化 research-idea : /Volumes/2T01/Github/bensz-auto-contribution/docs/ideas 里的多个 `v*.md` ，我看了一下 `## 研究脉络 map 摘要`  这个小节。 我感觉这个小节写得不好。 我希望它应该像是这样：
+
+- 一个非常资深的科学家准备向一个对该领域完全陌生的研究生介绍一些东西
+- 资深科学家的脑子有一个map， 它掌握了大量关于现有研究的现状、局限的相关latent space
+- 资深科学家根据他的map写一个深入浅出的介绍。我觉得表现形式上，应该有点像 Nsfc Justification Writer skill里所定义的那样。
+
+你有什么意见？
+
+---
+
 根据 /Volumes/2T01/Github/ChineseResearchLaTeX/docs/plans/2026-09-20-research-idea-v19-bsk-证据闭环优化计划.md 优化 research-idea skill。
 
 ---

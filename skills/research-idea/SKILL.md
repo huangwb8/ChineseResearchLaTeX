@@ -28,15 +28,15 @@ metadata:
 
 2. **文献证据。** 用 `research-literature-radar` 消费 Search manifest 和全部 canonical 候选，生成逐条覆盖的 landscape 与 hash/计数摘要；未全量对账或 hash 漂移时停止。对入选论文调用 `research-literature-interpretation`：一任务一论文、最多并行 3 个、不嵌套；只有可对账的宿主回执才称“独立 agent”。全文优先，只有摘要时收缩结论；记录稳定来源、证据深度/范围、问题、方法、结果、限制和支持/反驳关系。
 
-3. **研究 map。** 按 [研究综合指南](references/research-synthesis.md) 写 `output/research-map.md`，包含研究线比较、landscape 覆盖、关系/演化、稳定 O 机会编号、R 核心论文锚点和 Search record ID。来源关系与“待验证综合判断”分开；时间先后、术语相似或测量差异不自动证明继承、因果或矛盾。
+3. **研究 map。** 按 [研究综合指南](references/research-synthesis.md) 写 `output/research-map.md`，包含研究线比较、landscape 覆盖、关键关系、稳定 O 机会编号、R 核心论文锚点和 Search record ID。说明对象/测量、前提、最强反例及所需辨别证据；来源关系与“待验证综合判断”分开。时间先后、术语相似或测量差异不自动证明继承、因果或矛盾。
 
-4. **生成与筛选候选。** 以用户摘要、主题、证据和 map 为共同事实，用 `parallel-vibe n=3` 独立生成候选；首轮不预设最佳方向，agent 不互读草稿。初始探索 3–7 个，最终可保留一个或零个。按 [报告模板](references/report-template.md) 写问题、假设、关键预测、反证、价值/非平凡性、创新/颠覆潜力、最近工作增量、最强替代方向、可信度、投入和 O/R 依据。定义性假设、无知识增量、方法名代替机制或无意义场景迁移优先重构/淘汰。全部不合格时最多用新证据或新解释重新探索一次；资料不足保持 `insufficient`。
+4. **生成与筛选候选。** 以用户摘要、主题、证据和 map 为共同事实，用 `parallel-vibe n=3` 独立生成候选；首轮不预设最佳方向，agent 不互读草稿。初始探索 3–7 个，最终可保留一个或零个。按 [报告模板](references/report-template.md) 写问题、假设、关键预测、反证、价值/非平凡性、创新/颠覆潜力、最近工作增量、最强替代方向、可信度、投入和脉络依据；工作证据用 O/R 编号，正式报告用 O 与学术引注。定义性假设、无知识增量、方法名代替机制或无意义场景迁移优先重构/淘汰。全部不合格时最多用新证据或新解释重新探索一次；资料不足保持 `insufficient`。
 
 5. **候选级查新。** 对每个拟保留候选生成 `candidates/Cx/theme.json`，围绕直接近邻、等价假设、反方证据和适用边界提出 5–25 条查询，调用 `research-literature-search` 生成独立 `rls.v1` bundle。逐条消费 canonical 候选，按 [查新指南](references/novelty-check.md) 保存 `novelty/Cx/novelty-decision.json`。摘要可排除明显不等价工作；决定新颖性的近邻才升级全文。决定性近邻未核验时可带缺口进入审查，但 `scientific_evidence_sufficient=false`、`claim_eligible=false`。淘汰项记录未执行查新的原因，不伪造结果。
 
 6. **独立审查与选择。** 按 [审查参考](references/agent-review-prompt.md) 串行执行约定轮次，默认依次挑战价值、解释/辨别能力、重新选择与迁移边界。reviewer 必须独立读证据，并有 thread/done/RESULT completed 回执、模型、输入/输出哈希和时间；只有 RESULT、角色化草稿或复述不计入 required review。主 Agent 按论证与反例综合，不按多数票；实质改写问题/假设后重新查新。分别报告价值、可信度和投入，不用可行性抵消低价值。
 
-7. **结论与报告。** 结论只能是 `recommended`、`no_qualified` 或 `insufficient`；`bounded_recommendation`/`degraded` 可阶段性交付但不能 completed。按模板写报告并运行：
+7. **结论与报告。** 结论只能是 `recommended`、`no_qualified` 或 `insufficient`；`bounded_recommendation`/`degraded` 可阶段性交付但不能 completed。摘要按问题、已有答案、研究线关系、最强近邻与重要未知推进，给必要术语和关键判断就近引注；不强制表格、时间线或固定篇幅。正式报告默认采用 GB/T 7714—2025 顺序编码制，`reference_map` 保存 R 到书目编号的一一映射，最后以 `## References` 著录；指定期刊/学位样式时按模板声明并人工复核。完成前检查叙事连贯、证据深度、反方证据、缺口重要性及书目元数据，不能把语义审查伪装成脚本 Gate。按 [报告模板](references/report-template.md) 写报告并运行：
 
 ```bash
 python3 research-idea/scripts/validate_report.py --report "{最终报告路径}"
@@ -61,7 +61,7 @@ python3 research-idea/scripts/check_completion.py --project-root . --task-root "
 
 ### 校验
 
-- 分开核验 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible`；文件存在或格式通过不证明科学 claim。
+- 分开核验 `artifact_ready`、`execution_recorded`、`evidence_sufficient`、`claim_eligible`；文件存在或格式通过不证明科学 claim。v2 R 锚点报告只读兼容，不能取得 v3 完成资格。
 - Search bundle 保留 `rls.v1`、查询/canonical hash、数量和全量消费状态；论文解读、全文源与 reviewer 回执可回到源 artifact。
 - 拟推荐候选不得跳过多查询查新。关键编码手册、独立真值、标注一致性、审计/伦理前置或 baseline evidence 缺失时，只能给 `insufficient`/`bounded_recommendation`。
 - 测试源码位于 `tests/research-idea/`；缓存和日志写任务区。版本只在 `config.yaml:skill_info.version` 维护；接口或目录变化同步 README、CHANGELOG 和测试。

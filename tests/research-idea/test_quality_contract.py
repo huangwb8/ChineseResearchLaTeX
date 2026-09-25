@@ -28,7 +28,7 @@ def candidate(heading="C1", *, bold=True):
         "最近工作与实质增量": "最近研究只覆盖干燥条件，湿度效应尚未测量。",
         "最强替代方向": "先改进参照测量；若误差来自参照则改变优先级。",
         "判断可信度与近期投入": "当前有限证据支持小规模鉴别观察。",
-        "脉络依据": "[O1](#opportunity-1)，[R1](#reference-1)",
+        "脉络依据": "[O1](#opportunity-1)，[1](#ref-1)",
         "查新结论": "部分研究但关键缺口存在；湿度边界缺乏验证。",
     }
     return f"### {heading}：测量边界\n\n" + "\n".join(
@@ -41,12 +41,13 @@ def report_text(outcome="recommended", *, novelty=None, body=None):
     novelty = novelty or ("incomplete" if outcome == "insufficient" else "complete")
     state = "incomplete" if outcome == "insufficient" else "complete"
     metadata = (
-        "---\nreport_contract: research-idea-report-v2\n"
+        "---\nreport_contract: research-idea-report-v3\n"
+        "citation_style: gb-t-7714-2025-numeric\nreference_map:\n  R1: 1\n"
         f"outcome: {outcome}\nexploration: {state}\nnovelty: {novelty}\n"
         f"review: {state}\n---\n"
     )
     if body is None:
-        body = candidate() if outcome == "recommended" else "当前没有可保留候选。\n"
+        body = candidate() if outcome in ("recommended", "bounded_recommendation") else "当前没有可保留候选。\n"
     final_sections = {
         "recommended": "## 推荐与投入排序\n科学价值优先 C1；近期仅投入关键边界的观察。\n",
         "no_qualified": (
@@ -59,16 +60,25 @@ def report_text(outcome="recommended", *, novelty=None, body=None):
             "## 证据缺口与恢复位置\n**关键缺口**：缺少最近论文全文。\n"
             "**恢复位置**：补齐全文后重新评估查新。\n"
         ),
+        "bounded_recommendation": (
+            "## 推荐与投入排序\n科学价值优先 C1，但需补关键证据。\n"
+            "## 证据缺口与恢复位置\n**关键缺口**：缺少最近论文全文。\n"
+            "**恢复位置**：补齐全文后重新评估查新。\n"
+        ),
+        "degraded": (
+            "## 证据缺口与恢复位置\n**关键缺口**：缺少最近论文全文。\n"
+            "**恢复位置**：补齐全文后重新评估查新。\n"
+        ),
     }
     return metadata + (
         "## 结论与研究目标\n评估测量边界是否构成有意义的研究问题。\n"
-        '## 研究脉络 map 摘要\n<a id="opportunity-1"></a>O1：湿度适用边界。\n'
-        '<a id="reference-1"></a>R1：合成测试证据，仅供协议测试。\n'
+        '## 研究脉络 map 摘要\n<a id="opportunity-1"></a>O1：湿度适用边界[1](#ref-1)。\n'
         f"## 候选评估\n{body}\n"
         "## 查新摘要\n候选级多查询与 canonical 覆盖是合成文本，不证明已执行真实查新。\n"
         + ("**免查新依据**：全部方向已由价值筛选证据淘汰。\n" if novelty == "not_required" else "")
         + "## 风险与下一步\n取得关键证据后重新判断边界。\n"
         + final_sections[outcome]
+        + '\n## References\n<a id="ref-1"></a>[1] 测试机构. 测量边界研究[J]. 测试期刊, 2024, 1(1): 1-5. DOI: 10.0000/example.\n'
     )
 
 
@@ -102,12 +112,13 @@ def test_legacy_report_readable_but_never_completion_eligible(tmp_path):
     assert not result["completion_eligible"]
 
 
-@pytest.mark.parametrize("outcome,count,eligible", [("recommended", 1, True), ("no_qualified", 0, True), ("insufficient", 0, False)])
-def test_three_report_outcomes(tmp_path, outcome, count, eligible):
+@pytest.mark.parametrize("outcome,count,eligible", [("recommended", 1, True), ("no_qualified", 0, True), ("insufficient", 0, False), ("bounded_recommendation", 1, False), ("degraded", 0, False)])
+def test_report_outcomes_have_references_last(tmp_path, outcome, count, eligible):
     result = validate(tmp_path, report_text(outcome))
     assert result["passed"], result
     assert result["pair_count"] == count
     assert result["completion_eligible"] is eligible
+    assert report_text(outcome).rstrip().split('## ')[-1].startswith('References')
 
 
 @pytest.mark.parametrize("bold", [True, False])
@@ -124,10 +135,53 @@ def test_empty_duplicate_or_missing_candidate_rejected(tmp_path, body):
 
 
 def test_unresolvable_candidate_reference_rejected(tmp_path):
-    text = report_text().replace('<a id="reference-1"></a>', "")
+    text = report_text().replace('<a id="ref-1"></a>', "")
     result = validate(tmp_path, text)
     assert not result["passed"]
-    assert any("引用不可定位" in error for error in result["errors"])
+    assert any("References 条目" in error or "数字引注不可定位" in error for error in result["errors"])
+
+
+def test_v2_r_anchor_report_is_readable_but_not_completion_eligible(tmp_path):
+    text = report_text().replace('research-idea-report-v3', 'research-idea-report-v2')
+    text = text.replace('，[1](#ref-1)', '，[R1](#reference-1)')
+    text = text.replace('## References', '<a id="reference-1"></a>R1：旧论文索引。\n\n## References')
+    result = validate(tmp_path, text)
+    assert result['passed'], result
+    assert not result['completion_eligible']
+    assert any('v2' in warning for warning in result['warnings'])
+
+
+@pytest.mark.parametrize('change', [
+    lambda text: text + '\n## 附记\n正文之后的备注。\n',
+    lambda text: text.replace('  R1: 1', '  R1: 2'),
+    lambda text: text.replace('[1](#ref-1)', '[2](#ref-1)'),
+    lambda text: text.replace('2024, 1(1)', '年份缺失, 1(1)'),
+    lambda text: text.replace('测试机构. 测量边界研究[J]. 测试期刊', '测量边界研究[J]. 测试期刊'),
+])
+def test_v3_rejects_broken_reference_contract(tmp_path, change):
+    result = validate(tmp_path, change(report_text()))
+    assert not result['passed'], result
+
+
+def test_pending_bibliography_metadata_blocks_completion(tmp_path):
+    text = report_text().replace('测试机构', '作者待核验')
+    result = validate(tmp_path, text)
+    assert result['passed'], result
+    assert not result['completion_eligible']
+
+
+def test_user_requested_author_year_style_keeps_r_mapping(tmp_path):
+    text = report_text().replace(
+        'citation_style: gb-t-7714-2025-numeric',
+        'citation_style: custom\ncitation_style_source: 目标期刊作者年份规范',
+    ).replace('  R1: 1', '  R1: ref-smith-2024')
+    text = text.replace('[1](#ref-1)', '[Smith, 2024](#ref-smith-2024)')
+    text = text.replace(
+        '<a id="ref-1"></a>[1] 测试机构. 测量边界研究[J]. 测试期刊, 2024, 1(1): 1-5. DOI: 10.0000/example.',
+        '<a id="ref-smith-2024"></a>Smith (2024). Measurement boundary. Test Journal, 1(1), 1–5. DOI: 10.0000/example.',
+    )
+    result = validate(tmp_path, text)
+    assert result['passed'], result
 
 
 def test_search_summary_cannot_replace_completed_novelty(tmp_path):
@@ -170,11 +224,11 @@ def test_plain_cli_shows_outcome_and_completion_eligibility(tmp_path):
 
 
 @pytest.mark.parametrize("metadata", [
-    "report_contract: research-idea-report-v2\noutcome: unknown",
-    "report_contract: research-idea-report-v2",
-    "report_contract: research-idea-report-v2\noutcome: [recommended]",
-    "report_contract: research-idea-report-v2\noutcome: {name: recommended}",
-    "report_contract: research-idea-report-v2\noutcome: true",
+    "report_contract: research-idea-report-v3\noutcome: unknown",
+    "report_contract: research-idea-report-v3",
+    "report_contract: research-idea-report-v3\noutcome: [recommended]",
+    "report_contract: research-idea-report-v3\noutcome: {name: recommended}",
+    "report_contract: research-idea-report-v3\noutcome: true",
     "[recommended, complete]",
     "null",
     "report_contract: [",
@@ -205,7 +259,7 @@ def test_recommended_candidate_requires_innovation_and_disruption_field(tmp_path
     assert any("创新性与颠覆潜力" in error for error in result["errors"])
 
 
-@pytest.mark.parametrize("original,replacement", [("[O1](#opportunity-1)", "[O9](#opportunity-1)"), ("[R1](#reference-1)", "[R9](#reference-1)")])
+@pytest.mark.parametrize("original,replacement", [("[O1](#opportunity-1)", "[O9](#opportunity-1)"), ("[1](#ref-1)", "[2](#ref-1)")])
 def test_reference_label_must_match_declared_target(tmp_path, original, replacement):
     result = validate(tmp_path, report_text().replace(original, replacement))
     assert not result["passed"], "引用编号不能借用不同编号的已存在锚点"

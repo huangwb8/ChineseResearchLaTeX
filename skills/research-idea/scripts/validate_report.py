@@ -120,7 +120,73 @@ def without_code_blocks(text: str) -> str:
     return ''.join(lines)
 
 
-def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
+def validate_citations(text: str, metadata: dict, config: dict, errors: list[str]) -> dict:
+    """Check traceability and basic bibliography shape; semantic style review remains with the AI."""
+    style = metadata.get('citation_style')
+    numeric = style == config['output']['default_citation_style']
+    custom_source = metadata.get('citation_style_source')
+    if not numeric and (style != 'custom' or not isinstance(custom_source, str) or not substantive(custom_source)):
+        errors.append('citation_style 必须为默认顺序编码制，或声明 custom 及 citation_style_source')
+    headings = list(re.finditer(r'^##[ \t]+([^\n]+)$', text, re.M))
+    if not headings or headings[-1][1].strip() != 'References':
+        errors.append('## References 必须是最后一个二级小节')
+    references = extract_section(text, 'References')
+    if not substantive(references):
+        errors.append('缺少实质 References 书目')
+    reference_heading = re.search(r'^##[ \t]+References[ \t]*$', text, re.M)
+    body = text[:reference_heading.start()] if reference_heading else text
+    mapping = metadata.get('reference_map')
+    if not isinstance(mapping, dict) or not mapping:
+        errors.append('reference_map 必须建立 R 编号到书目条目的映射')
+        mapping = {}
+    if any(not re.fullmatch(r'R[1-9]\d*', str(key)) for key in mapping):
+        errors.append('reference_map 包含非法 R 编号')
+    if numeric:
+        entries = re.findall(r'^<a id="ref-([1-9]\d*)"></a>\s*\[([1-9]\d*)\]\s*(.+)$', references, re.M)
+        if not entries or len(entries) != len(re.findall(r'^<a\s+id=', references, re.M)):
+            errors.append('References 条目须使用 ref-N 锚点与同号 [N] 著录')
+        numbers = [int(anchor) for anchor, label, _ in entries if anchor == label]
+        if len(numbers) != len(entries) or numbers != list(range(1, len(entries) + 1)):
+            errors.append('References 编号须从 1 连续且与锚点一致')
+        mapped = [value for value in mapping.values() if type(value) is int]
+        if len(mapped) != len(mapping) or sorted(mapped) != sorted(numbers):
+            errors.append('reference_map 必须与 References 编号一一对应')
+        citations = re.findall(r'\[([1-9]\d*)\]\(#ref-([1-9]\d*)\)', body)
+        if not citations:
+            errors.append('正文缺少指向 References 的数字引注')
+        for label, anchor in citations:
+            if label != anchor or int(anchor) not in numbers:
+                errors.append(f'数字引注不可定位或编号不一致: [{label}](#ref-{anchor})')
+        cited = [int(anchor) for _, anchor in citations]
+        if set(cited) != set(numbers):
+            errors.append('References 每个条目均须在正文中被引用')
+        if list(dict.fromkeys(cited)) != numbers:
+            errors.append('References 编号须遵循正文首次引注顺序')
+        if re.search(r'\[R\d+\]\(#[^)]*\)', body):
+            errors.append('新版正文须使用学术引注，R 编号仅保留在 reference_map 与工作 map')
+        pending = '待核验' in references
+        for _, _, entry in entries:
+            if '待核验' not in entry and not re.search(
+                r'^.+?[.．]\s*.+?\[[A-Z]{1,3}(?:/OL)?\][.．]\s*.+?\b(?:19|20)\d{2}\b', entry
+            ):
+                errors.append('书目条目缺少作者/机构、题名、文献类型、出处或年份的基本结构')
+        return {'metadata_complete': not pending}
+    # A user-specified journal or degree style may use author–year labels.
+    entries = re.findall(r'^<a id="(ref-[a-zA-Z0-9-]+)"></a>\s*(.+)$', references, re.M)
+    ids = [anchor for anchor, _ in entries]
+    if not ids or len(ids) != len(set(ids)):
+        errors.append('自定义样式的 References 锚点缺失或重复')
+    if any(not isinstance(value, str) for value in mapping.values()) or set(str(value) for value in mapping.values()) != set(ids) or len(mapping) != len(ids):
+        errors.append('reference_map 必须与自定义书目锚点一一对应')
+    cited_ids = re.findall(r'\[[^\]\n]+\]\(#(ref-[a-zA-Z0-9-]+)\)', body)
+    if not cited_ids or any(anchor not in ids for anchor in cited_ids):
+        errors.append('自定义样式正文引注须链接到唯一书目条目')
+    if set(cited_ids) != set(ids):
+        errors.append('自定义样式的 References 每个条目均须在正文中被引用')
+    return {'metadata_complete': '待核验' not in references}
+
+
+def validate_v2(text: str, config: dict, errors: list[str], *, old_contract: bool = False) -> dict:
     match = re.match(r"\A---\n(.*?)\n---(?:\n|$)", text, re.S)
     try:
         metadata = yaml.safe_load(match[1]) if match else {}
@@ -128,7 +194,7 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
         metadata = {}
     if not isinstance(metadata, dict):
         metadata = {}
-    contract = config['output']['report_contract']
+    contract = 'research-idea-report-v2' if old_contract else config['output']['report_contract']
     if metadata.get('report_contract') != contract:
         errors.append(f"报告必须声明 report_contract: {contract}")
     outcome = metadata.get('outcome')
@@ -178,7 +244,8 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
             if not substantive(field_value(body, marker)):
                 errors.append(f'{candidate_id} 缺少实质字段: {marker}')
         trace = field_value(body, '脉络依据')
-        if not re.search(r'\[O\d+\]\(#[^\s)]+\)', trace) or not re.search(r'\[R\d+\]\(#[^\s)]+\)', trace):
+        paper_citation = r'\[R\d+\]\(#[^\s)]+\)' if old_contract else r'\[[^\]\n]+\]\(#ref-[^\s)]+\)'
+        if not re.search(r'\[O\d+\]\(#[^\s)]+\)', trace) or not re.search(paper_citation, trace):
             errors.append(f'{candidate_id} 缺少 map 机会或论文引用')
         if outcome == 'recommended':
             novelty = field_value(body, '查新结论')
@@ -228,7 +295,10 @@ def validate_v2(text: str, config: dict, errors: list[str]) -> dict:
                 errors.append(f'{key} 必须是布尔值')
         if any(value is not True for value in supplied_layers.values()):
             eligible = False
-    return {'outcome': outcome, 'execution_statuses': statuses, 'completion_layers': {**layers, **supplied_layers}, 'completion_eligible': eligible and not errors}
+    citation_result = {'metadata_complete': True}
+    if not old_contract:
+        citation_result = validate_citations(text, metadata, config, errors)
+    return {'outcome': outcome, 'report_contract': contract, 'execution_statuses': statuses, 'completion_layers': {**layers, **supplied_layers}, 'completion_eligible': eligible and citation_result['metadata_complete'] and not old_contract and not errors}
 
 
 def path_is_inside_named_dir(report_path: Path, names: set[str]) -> str | None:
@@ -278,7 +348,13 @@ def validate_report(report_path: Path, *, allow_custom_name: bool = False, proje
     is_v2 = text.startswith('---\n') or has_section(text, '结论与研究目标') or has_section(text, '候选评估')
     outcome_result = {'outcome': 'legacy', 'completion_eligible': False}
     if is_v2:
-        outcome_result = validate_v2(text, config, errors)
+        frontmatter = re.match(r'\A---\n(.*?)\n---(?:\n|$)', text, re.S)
+        is_old_contract = bool(frontmatter and re.search(r'^report_contract:\s*research-idea-report-v2\s*$', frontmatter[1], re.M))
+        outcome_result = validate_v2(text, config, errors, old_contract=is_old_contract)
+        if is_old_contract:
+            warnings.append('v2 报告仅作只读结构兼容；新运行须使用 v3 引文契约')
+        elif not outcome_result['completion_eligible'] and '待核验' in extract_section(text, 'References'):
+            warnings.append('书目元数据待核验；相关论断须收缩，不能取得完成资格')
     else:
         warnings.append('历史报告仅作结构兼容读取；新运行须使用显式业务结论')
         for section in config["output"]["required_sections"]:

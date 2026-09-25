@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+- `research-idea` v0.15.0：实施研究脉络叙事优化计划，工作 map 强化研究线关系与辨别证据，正式摘要以已有答案和重要未知组织论证；报告契约 v3 增加 GB/T 7714—2025 顺序引注、R→书目映射及末尾 `References` 校验，v2 报告仅保留只读兼容。同步中英文指南、模板、定向回归和只读历史样稿。
+
+- 新增并修订 `research-idea` 研究脉络摘要优化计划：区分工作 map 的完整证据索引与正式报告的领域介绍，纳入统一学术引文、末尾 `References`、R 编号映射、语义复核和历史样本验收；本轮未修改 Skill。
+
 - `research-idea` v0.14.1：将共享领域规则模块归入 `scripts/`，同步调用方、关键文件快照和回归导入；压缩工作型 Skill 文档，并新增事实对齐的中英文 README，保持现有运行与科研判断语义不变。
 
 - `research-idea` v0.14.0：落实 v19 证据闭环，四条前向边以同一 evidence artifact 贯通 verifier result、Kernel Gate 与 transition；完成索引升级至 v6，并新增论文解读深度/全文源、reviewer 回执和 deterministic evidence-consistency 对账。启动入口迁移到 strict-v2 原子初始化与固定托管 BSK wrapper。

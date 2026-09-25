@@ -39,6 +39,12 @@ The expected result is a Markdown research-idea report named `Research-Idea_{rep
 
 The report covers evidence depth, the research map, candidate or zero-candidate rationale, value/confidence/investment judgments, recent work and novelty checks, falsification paths, risks, and the smallest next step. It does not expose hidden workspace paths, test paths, or internal agent instructions.
 
+## Research Narrative and Citations
+
+The working map retains the full research-line index, Search record IDs, evidence depth, and stable O/R identifiers. The formal summary introduces the real question and essential terms, then explains existing answers, relationships among lines, the strongest neighbor, and the important unknown behind each O opportunity. Tables and timelines are optional. Review nearby evidence, contrary findings, source claims versus synthesis, and the strength of abstract-only evidence after drafting.
+
+New reports use `research-idea-report-v3`. The default GB/T 7714—2025 numeric style links in-text citations such as `[1](#ref-1)` to the final `## References` section; `reference_map` maps working R identifiers to bibliography numbers. A requested journal or degree style may declare `citation_style: custom` and its source, with the mapping and style checked by the host AI. Earlier v2 R-anchor reports remain readable but cannot certify a new run.
+
 ## Usage Examples
 
 ### Derive candidates from an observation
