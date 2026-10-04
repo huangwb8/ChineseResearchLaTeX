@@ -1,0 +1,21 @@
+\chapter{参数分析与讨论}
+\section{计算结果}
+取 $m=10\,\mathrm{kg}$、$c=20\,\mathrm{N\,s/m}$，按式\eqref{eq:frequency}计算三组刚度下的指标，结果见表\ref{tab:parameters}。
+
+\begin{table}[htbp]
+  \centering
+  \caption{不同刚度下的模型计算结果}
+  \label{tab:parameters}
+  \begin{tabular}{ccc}
+    \toprule
+    $k/(\mathrm{N/m})$ & $f_n/\mathrm{Hz}$ & $\zeta$ \\
+    \midrule
+    1000 & 1.59 & 0.100 \\
+    2000 & 2.25 & 0.071 \\
+    4000 & 3.18 & 0.050 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{结果解释与局限}
+质量不变时，刚度增大使固有频率按平方根关系增加；阻尼系数不变时，阻尼比降低。实际系统中的间隙、摩擦与柔性连接可能偏离这些假设。因此，工程应用还应结合尺寸设计、载荷工况和测量结果复核\cite{shigley2015}。

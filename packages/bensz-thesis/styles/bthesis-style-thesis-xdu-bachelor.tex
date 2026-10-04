@@ -1,0 +1,31 @@
+\ProvidesFile{bthesis-style-thesis-xdu-bachelor.tex}
+  [2026/10/03 Thesis style: thesis-xdu-bachelor]
+
+% 版式由包内固定的 XDUTS 6.2.7.2 本科文档类负责。
+\makeatletter
+\@ifclassloaded{xduugthesis}{}{%
+  \PackageError{bensz-thesis}{thesis-xdu-bachelor requires xduugthesis}%
+    {Use documentclass xduugthesis with the bensz-thesis build wrapper.}%
+}
+\makeatother
+
+% 字体使用共享包内文件，避免不同操作系统自动选择不同字形。
+\xdusetup{style={cjk-font=none,latin-font=none,math-font=cm,
+  bib-backend=biblatex,
+  biblatex-option={style=gb7714-2005,sorting=none,maxbibnames=3,minbibnames=3}}}
+\IfFileExists{styles/fonts/SimSun.ttf}{\BenszFontsSetPackageDir{styles/}}{}
+\setCJKmainfont[Path={\BenszFontsDir},AutoFakeBold=3,
+  ItalicFont=Kaiti.ttf]{SimSun.ttf}
+\setCJKsansfont[Path={\BenszFontsDir}]{AdobeHeitiStd-Regular.otf}
+\setCJKmonofont[Path={\BenszFontsDir}]{SimSun.ttf}
+\setCJKfamilyfont{zhsong}[Path={\BenszFontsDir},AutoFakeBold=3]{SimSun.ttf}
+\setCJKfamilyfont{zhhei}[Path={\BenszFontsDir}]{AdobeHeitiStd-Regular.otf}
+\setCJKfamilyfont{zhkai}[Path={\BenszFontsDir}]{Kaiti.ttf}
+\setmainfont[Path={\BenszFontsDir},AutoFakeBold=3,
+  AutoFakeSlant=0.2]{TimesNewRoman.ttf}
+\setsansfont{texgyreheros-regular.otf}[
+  BoldFont=texgyreheros-bold.otf,ItalicFont=texgyreheros-italic.otf,
+  BoldItalicFont=texgyreheros-bolditalic.otf]
+\setmonofont{texgyrecursor-regular.otf}[
+  BoldFont=texgyrecursor-bold.otf,ItalicFont=texgyrecursor-italic.otf,
+  BoldItalicFont=texgyrecursor-bolditalic.otf]

@@ -9,7 +9,7 @@ README 只描述公共包本身的职责、稳定入口和目录结构；具体�
 - 提供毕业论文模板的公共入口包、profile 与样式装配逻辑
 - 提供 PDF 构建、DOCX 初稿导出、缓存清理与像素级比较脚本入口
 - 依赖 `bensz-fonts` 统一管理共享字体资源
-- 当前已注册独立模板：`thesis-smu-master`、`thesis-nju-master`、`thesis-just-bachelor`、`thesis-jxust-bachelor`、`thesis-ahnu-master`、`thesis-hit-doctor`、`thesis-jlau-doctor`、`thesis-jlau-master`、`thesis-nwu-doctor`、`thesis-cas-postdoc`、`thesis-smu-postdoc`、`thesis-sysu-doctor`、`thesis-ucas-doctor`
+- 当前已注册独立模板：`thesis-smu-master`、`thesis-nju-master`、`thesis-just-bachelor`、`thesis-jxust-bachelor`、`thesis-xdu-bachelor`、`thesis-ahnu-master`、`thesis-hit-doctor`、`thesis-jlau-doctor`、`thesis-jlau-master`、`thesis-nwu-doctor`、`thesis-cas-postdoc`、`thesis-smu-postdoc`、`thesis-sysu-doctor`、`thesis-ucas-doctor`
 
 ## 目录说明
 
@@ -17,6 +17,7 @@ README 只描述公共包本身的职责、稳定入口和目录结构；具体�
 - `bthesis-core.sty`：profile 与样式装配入口
 - `profiles/`：不同论文模板的 profile
 - `styles/`：不同论文模板的稳定样式实现
+- `styles/xdu/`：固定的 XDUTS 6.2.7.2 本科文档类、校徽、原始源码和 LPPL 许可证；仅西安电子科技大学本科 profile 使用
 - `../bensz-fonts/`：共享字体基础包；`bensz-thesis` 安装时会作为强制依赖一并安装
 - `scripts/thesis_project_tool.py`：PDF 构建 / DOCX 导出 / 清理 / 像素级比较入口
 - `scripts/thesis_docx_tool.py`：LaTeX 源到可编辑 Word 初稿的通用导出实现
@@ -30,6 +31,8 @@ README 只描述公共包本身的职责、稳定入口和目录结构；具体�
 ```bash
 python packages/bensz-thesis/scripts/thesis_project_tool.py build --project-dir <project-dir>
 ```
+
+构建入口开启 recorder，以便共享字体解析包内文件路径；首轮生成的 `.bcf` / `.aux` 用于识别由文档类内部配置的 Biber / BibTeX 后端，fontspec 字体错误会被判定为构建失败。
 
 如需从同一份 LaTeX 源导出可编辑 Word 初稿：
 

@@ -73,6 +73,7 @@ STANDARD_PROJECT_INCLUDE_ITEMS = [
     "bibtex-style",
     "code",
     "extraTex",
+    "docs/specification.md",
     "figures",
     "references",
     "scripts",
@@ -104,6 +105,7 @@ OVERLEAF_PROJECT_INCLUDE_ITEMS = [
     "bibtex-style",
     "code",
     "extraTex",
+    "docs/specification.md",
     "figures",
     "references",
     "styles",
@@ -448,6 +450,8 @@ def select_overleaf_font_files(project_dir: Path) -> set[str]:
         return set()
 
     if project_kind == "thesis":
+        if detect_thesis_template_id(project_dir) == "thesis-xdu-bachelor":
+            return {"SimSun.ttf", "AdobeHeitiStd-Regular.otf", "Kaiti.ttf", "TimesNewRoman.ttf"}
         config_files = (
             project_dir / "extraTex" / "@config.tex",
             project_dir / "extraTex" / "config-pre.tex",
@@ -715,6 +719,13 @@ def build_thesis_runtime_bundle(runtime_dir: Path, project_dir: Path) -> None:
         )
     if template_id == "thesis-ucas-doctor":
         copy_tree_contents(THESIS_PACKAGE_DIR / "styles" / "ucas", runtime_dir / "ucas")
+    if template_id == "thesis-xdu-bachelor":
+        # 保留上游文件名：类和校徽放到工程根目录，让 TeX 优先于系统旧版查找。
+        # 原始源码和许可证随包携带，保持 LPPL 分发完整性。
+        vendor_dir = THESIS_PACKAGE_DIR / "styles" / "xdu"
+        copy_tree_contents(vendor_dir, runtime_dir / "xdu")
+        for file_name in ("xduugthesis.cls", "xdulogo.pdf"):
+            copy_file(vendor_dir / file_name, runtime_dir.parent / file_name)
 
     copy_fonts_runtime_bundle(runtime_dir, select_overleaf_font_files(project_dir))
 

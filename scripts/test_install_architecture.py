@@ -32,6 +32,23 @@ nsfc_install_script = _load_module(
 pack_release = _load_module("project_pack_release", REPO_ROOT / "scripts" / "pack_release.py")
 
 
+def test_xdu_overleaf_bundle_pins_class_logo_and_fonts(tmp_path: Path):
+    project_dir = REPO_ROOT / "projects" / "thesis-xdu-bachelor"
+    bundle = tmp_path / "overleaf"
+    pack_release.populate_overleaf_bundle(bundle, project_dir)
+    vendor = REPO_ROOT / "packages" / "bensz-thesis" / "styles" / "xdu"
+    for name in ("xduugthesis.cls", "xdulogo.pdf"):
+        assert (bundle / name).read_bytes() == (vendor / name).read_bytes()
+    for name in ("xduts.dtx", "xduts.ins", "LICENSE", "README.md"):
+        assert (bundle / "styles" / "xdu" / name).is_file()
+    for name in ("SimSun.ttf", "AdobeHeitiStd-Regular.otf", "Kaiti.ttf", "TimesNewRoman.ttf"):
+        assert (bundle / "styles" / "fonts" / name).is_file()
+    assert "styles/bensz-thesis" in (bundle / "extraTex" / "@config.tex").read_text()
+    assert (bundle / "docs" / "specification.md").is_file()
+    assert not (bundle / "styles" / "ucas").exists()
+    assert not (bundle / "scripts").exists()
+
+
 def test_resolve_requested_packages_adds_bensz_fonts_dependency():
     assert install_script.resolve_requested_packages(["bensz-paper"]) == [
         "bensz-fonts",

@@ -1,5 +1,11 @@
 # 通用
 
+- 更新commit
+
+```
+用 git-commit skill 上传； 仅1个commit； 把改动点罗列清楚。
+```
+
 - 更新版本
 
 ```
@@ -29,6 +35,10 @@ version=17
 ```
 
 # 日常
+
+---
+
+你搞一下 https://github.com/huangwb8/ChineseResearchLaTeX/issues/54 。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 

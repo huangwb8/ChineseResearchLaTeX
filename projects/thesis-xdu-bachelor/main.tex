@@ -1,0 +1,14 @@
+%!TEX program = xelatex
+\PassOptionsToClass{twoside,openright}{ctexbook}
+\documentclass{xduugthesis}
+\input{extraTex/@config.tex}
+\input{extraTex/meta.tex}
+
+\begin{document}
+% XDUTS 自动装配封面、中英文摘要、目录与后置材料。
+% 此处只维护正文，不重复调用 \maketitle、\tableofcontents 或文献列表。
+\input{extraTex/body/chapter-01.tex}
+\input{extraTex/body/chapter-02.tex}
+\input{extraTex/body/chapter-03.tex}
+\input{extraTex/body/chapter-04.tex}
+\end{document}

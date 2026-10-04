@@ -277,7 +277,10 @@ def log_has_fatal_errors(log_path: Path) -> bool:
         "Emergency stop.",
         "Fatal error",
     )
-    return any(marker in content for marker in fatal_markers)
+    # 缺失字体可能仍输出 PDF，但成品会缺字；明确拒绝此类失败。
+    return any(marker in content for marker in fatal_markers) or bool(
+        re.search(r"Package\s+fontspec\s+Error:", content)
+    )
 
 
 def run_best_effort(
@@ -297,8 +300,20 @@ def run_best_effort(
     )
 
 
-def detect_bibliography_backend(tex_path: Path) -> str | None:
-    """检测 TeX 文件使用的文献后端：biber（\\addbibresource）或 bibtex（\\bibliography）。"""
+def detect_bibliography_backend(tex_path: Path, cache_dir: Path | None = None) -> str | None:
+    """优先从首轮编译产物识别后端，再回退到主文件中的显式命令。
+
+    XDUTS 等文档类在内部加载文献，主文件不一定包含文献命令。
+    构建前已清空缓存，因此这里不会消费旧的 bcf/aux 文件。
+    """
+    if cache_dir is not None:
+        if (cache_dir / f"{tex_path.stem}.bcf").is_file():
+            return "biber"
+        aux_path = cache_dir / f"{tex_path.stem}.aux"
+        if aux_path.is_file() and re.search(
+            r"\\bibdata\{", aux_path.read_text(encoding="utf-8", errors="ignore")
+        ):
+            return "bibtex"
     content = tex_path.read_text(encoding="utf-8")
     if "\\addbibresource" in content:
         return "biber"
@@ -357,6 +372,7 @@ def build_project(project_dir: Path, tex_file: str) -> Path:
         resolve_executable("xelatex"),
         "-interaction=nonstopmode",
         "-file-line-error",
+        "-recorder",
         "-synctex=1",
         f"-output-directory={cache_dir}",
         tex_path.name,
@@ -364,7 +380,7 @@ def build_project(project_dir: Path, tex_file: str) -> Path:
 
     xelatex_run_1 = run_best_effort(xelatex_cmd, cwd=project_dir, env=tex_env)
 
-    bib_backend = detect_bibliography_backend(tex_path)
+    bib_backend = detect_bibliography_backend(tex_path, cache_dir)
     bib_run: subprocess.CompletedProcess[str] | None = None
     if bib_backend == "biber":
         bib_run = run_best_effort(
