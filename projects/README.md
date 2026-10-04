@@ -102,7 +102,7 @@
 | [`thesis-nju-master/`](./thesis-nju-master/) | 南京大学工程管理硕士论文示例项目 | 需要 NJU 工程管理硕士论文版式模板，且希望默认 `main.tex` 就是可编辑入口，同时保留公开基线验收文件 |
 | [`thesis-just-bachelor/`](./thesis-just-bachelor/) | 江苏科技大学本科毕业设计（论文）示例项目 | 需要 JUST 本科毕业设计（论文）版式模板 |
 | [`thesis-jxust-bachelor/`](./thesis-jxust-bachelor/) | 江西理工大学本科毕业论文 / 毕业设计示例项目 | 需要 JXUST 本科毕业论文 / 毕业设计版式模板，并希望在 `main.tex` 中切换论文 / 设计页眉 |
-| [`thesis-xdu-bachelor/`](./thesis-xdu-bachelor/) | 西安电子科技大学本科毕业设计论文示例 | 需要 XDU 本科版式、机械工程示例与 GB/T 7714—2005 顺序引用 |
+| [`thesis-xdu-bachelor/`](./thesis-xdu-bachelor/) | 西安电子科技大学本科毕业设计论文示例 | 需要 XDU 本科版式、佐佐木希虚构图文示例与 GB/T 7714—2005 顺序引用 |
 | [`thesis-ahnu-master/`](./thesis-ahnu-master/) | 安徽师范大学硕士论文示例项目 | 需要 AHNU 硕士论文版式模板 |
 | [`thesis-cas-postdoc/`](./thesis-cas-postdoc/) | 中国科学院博士后出站研究报告示例项目 | 需要按中国科学院博士后出站报告场景组织封面、题名页、中英文摘要、目录、图表清单、正文与后置材料 |
 | [`thesis-hit-doctor/`](./thesis-hit-doctor/) | 哈尔滨工业大学博士论文示例项目 | 需要 HIT 博士论文版式模板 |

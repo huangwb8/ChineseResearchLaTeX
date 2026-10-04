@@ -1,21 +1,37 @@
-\chapter{参数分析与讨论}
-\section{计算结果}
-取 $m=10\,\mathrm{kg}$、$c=20\,\mathrm{N\,s/m}$，按式\eqref{eq:frequency}计算三组刚度下的指标，结果见表\ref{tab:parameters}。
+\chapter{模拟结果与讨论}
+\section{跨媒介形象的材料呈现}
+在虚构案例中，平面摄影阶段重点观察视觉风格，影视转型阶段观察角色标签，新媒体阶段观察内容更新与交流方式。图\ref{fig:portrait-vertical}采用纵向构图，服饰细节与人物姿态在画面中占据较大比例；图\ref{fig:portrait-landscape}则通过横向空间呈现人物与背景的关系。两张图片的画幅与造型不同，可以用于比较视觉表达，但照片外观本身无法证明职业阶段发生转变。
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.40\textwidth]{figures/zzmx-mobile-105.jpg}
+  \caption{人像材料中的服饰与构图特征}
+  \label{fig:portrait-vertical}
+\end{figure}
+
+在材料编码时，同一主题可在多种媒介中出现。例如，模拟文本中的“职业探索”标签可以对应宣传报道与视频内容，但两种媒介的表达方式应分别记录。职业阶段描述长期变化，时间窗口则用于比较某次设定事件前后的短期变化，两种分析尺度分别保留。
+
+\section{模拟评论的情感变化}
+在新媒体重塑阶段设定四个观察窗口：转型前、内容试水、调整期和稳定更新期。每个窗口均使用120条模拟评论，按式\eqref{eq:sentiment-count}计算得分，结果见表\ref{tab:sentiment-results}。
 \begin{table}[htbp]
   \centering
-  \caption{不同刚度下的模型计算结果}
-  \label{tab:parameters}
-  \begin{tabular}{ccc}
+  \caption{四个时间窗口的模拟评论与情感得分}
+  \label{tab:sentiment-results}
+  \begin{tabular}{lrrrr}
     \toprule
-    $k/(\mathrm{N/m})$ & $f_n/\mathrm{Hz}$ & $\zeta$ \\
+    设定窗口 & 正向 & 负向 & 中性 & $S(t)$ \\
     \midrule
-    1000 & 1.59 & 0.100 \\
-    2000 & 2.25 & 0.071 \\
-    4000 & 3.18 & 0.050 \\
+    转型前 & 60 & 30 & 30 & 0.25 \\
+    内容试水 & 70 & 22 & 28 & 0.40 \\
+    调整期 & 48 & 36 & 36 & 0.10 \\
+    稳定更新期 & 78 & 12 & 30 & 0.55 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\section{结果解释与局限}
-质量不变时，刚度增大使固有频率按平方根关系增加；阻尼系数不变时，阻尼比降低。实际系统中的间隙、摩擦与柔性连接可能偏离这些假设。因此，工程应用还应结合尺寸设计、载荷工况和测量结果复核\cite{shigley2015}。
+例如，稳定更新期的得分为 $(78-12)/120=0.55$。调整期与稳定更新期的差值为 $0.45$，反映本例设置的评论构成变化。由于各窗口样本量相同且全部使用等权重，差异可以直接复算。
+
+\section{结果解释与适用边界}
+按教学情境，内容试水期与稳定更新期获得较多正向评论，调整期的负向评论比例相对增加。这种变化提示，同一职业阶段内部仍可能出现短期波动，单张照片或单次曝光无法概括整个职业轨迹。
+
+表\ref{tab:sentiment-results}由预先设定的计数生成，不能用于证明某种转型策略有效，也不能用于推断真实粉丝态度。开展实际研究时，需要说明抽样范围、平台差异、重复评论处理与编码误差；若比较多个窗口，还需检查样本是否可比。

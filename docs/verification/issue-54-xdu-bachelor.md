@@ -36,3 +36,11 @@ python packages/bensz-thesis/scripts/validate_package.py --skip-compile
 原始附件、渲染图、安装日志、构建日志、比较结果和测试缓存保存在唯一任务目录 `.bensz-api/task-20261003-2305-issue54/`；公开项目不携带这些原始材料。
 
 标准 ZIP 与 Overleaf ZIP 使用 `scripts/pack_release.py` 的正式打包函数生成并实际解包验证，仍为本地产物，未上传或发布。未创建分支、Git commit 或修改 GitHub issue 状态。BAC 账本记录维护与验证证据。
+
+## 2026-10-04 示例主题调整
+
+将正文改为沿用 `NSFC_Young` 主题的佐佐木希虚构职业发展与跨媒介形象论文，复制两张既有图片到项目自身的 `figures/`，使独立项目不依赖相邻目录。正文包含五阶段表、流程图、情感得分公式与模拟评论表；机械模型、公式与参数表保留在附录。同步双语摘要、元数据、参考文献与项目说明。
+
+本轮通过官方 Python wrapper 重新构建，当前 PDF 为 24 页（含双面编排空白页）。两张人物图片确实嵌入 PDF，已检查封面、摘要、目录、两张配图、公式、表格、参考文献与机械附录的渲染。最终日志无未解析引用、Overfull 或缺字，Biber 无 warning；模拟计数、情感得分和一致性公式复算通过。仍存在上文所述封面 Underfull 与 Computer Modern 数学字体尺寸替代提示，所检页面无可见溢出。
+
+本轮为正文与资源调整，未重跑上轮完整安装、打包与跨模板回归；本轮验证摘要、PDF 提取文本与渲染图位于 `.bensz-api/task-20261004-1344-xdu-sasaki-example/`。

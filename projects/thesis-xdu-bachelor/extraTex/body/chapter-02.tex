@@ -1,39 +1,61 @@
-\chapter{系统建模与分析方法}
-\section{模型假设}
-将传动机构等效为质量为 $m$、刚度为 $k$、黏性阻尼为 $c$ 的单自由度系统。位移为 $x(t)$，外载荷为 $F(t)$，各参数在分析区间内保持常数。运动方程为
-\begin{equation}
-  m\ddot{x}(t)+c\dot{x}(t)+kx(t)=F(t).
-  \label{eq:motion}
-\end{equation}
-图\ref{fig:model}示意模型中的连接关系，不对应实际设备的结构尺寸。
+\chapter{案例设计与分析方法}
+\section{职业阶段与材料组织}
+依据媒介重心与职业定位的变化，设定时尚模特、影视转型、多领域拓展、职业稳定与新媒体重塑五个阶段。为使每条记录只归属一个阶段，本文采用互不重叠的年份区间，见表\ref{tab:career-stages}。这些区间是模拟编码规则，不是经核验的真实履历。
 
+\begin{table}[htbp]
+  \centering
+  \caption{虚构案例的职业阶段与观察维度}
+  \label{tab:career-stages}
+  \small
+  \begin{tabular}{llll}
+    \toprule
+    阶段 & 时间区间 & 设定的主要媒介 & 观察维度 \\
+    \midrule
+    时尚模特期 & 2002--2007 & 杂志与平面摄影 & 造型与视觉风格 \\
+    影视转型期 & 2008--2009 & 影视与宣传报道 & 角色与职业定位 \\
+    多领域拓展期 & 2010--2016 & 影视与综艺 & 媒介组合 \\
+    职业稳定期 & 2017--2019 & 综合媒体 & 形象一致性 \\
+    新媒体重塑期 & 2020--2025 & 视频与社交平台 & 互动与内容更新 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+每条记录包含年份、媒介类型、阶段编号与内容标签。图片记录保留画面形式与使用场景，文本记录保留主题与情感类别。本文选取两张人物图片作为视觉观察材料，分别记录服饰、姿态、构图和背景；由于缺少经核验的拍摄时间与媒介来源，不将这两张图片用于判定职业阶段。
+
+\section{研究流程}
+分析按材料整理、阶段编码、指标计算与结果解释四步进行，见图\ref{fig:workflow}。先统一记录格式，再划分阶段与时间窗口，随后计算情感得分并复核编码一致性，最后结合情境设定解释差异。
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}[>=stealth]
-    \draw[thick] (0,0) rectangle (2,1.2);
-    \node at (1,0.6) {$m$};
-    \draw[thick] (-2,-0.3) -- (-2,1.5);
-    \draw[thick] (-2,0.85) -- (-1.7,0.85) -- (-1.5,1.05)
-      -- (-1.3,0.65) -- (-1.1,1.05) -- (-0.9,0.65)
-      -- (-0.7,1.05) -- (-0.5,0.85) -- (0,0.85);
-    \node at (-1,1.35) {$k$};
-    \draw[thick] (-2,0.25) -- (-1.2,0.25);
-    \draw[thick] (-1.2,0.05) -- (-1.2,0.45);
-    \draw[thick] (-1.4,0.05) -- (-0.8,0.05) -- (-0.8,0.45) -- (-1.4,0.45);
-    \draw[thick] (-0.8,0.25) -- (0,0.25);
-    \node at (-1,-0.25) {$c$};
-    \draw[->,thick] (2,0.6) -- (3.2,0.6) node[right] {$F(t)$};
-    \draw[->] (0,-0.55) -- (2,-0.55) node[right] {$x(t)$};
+    \node[draw, rounded corners, minimum width=3.8cm, minimum height=0.8cm] (a) at (0,0) {整理图片与模拟文本};
+    \node[draw, rounded corners, minimum width=3.8cm, minimum height=0.8cm] (b) at (0,-1.3) {划分阶段与编码材料};
+    \node[draw, rounded corners, minimum width=3.8cm, minimum height=0.8cm] (c) at (0,-2.6) {计算情感与一致性指标};
+    \node[draw, rounded corners, minimum width=3.8cm, minimum height=0.8cm] (d) at (0,-3.9) {比较结果并说明边界};
+    \draw[->,thick] (a) -- (b);
+    \draw[->,thick] (b) -- (c);
+    \draw[->,thick] (c) -- (d);
   \end{tikzpicture}
-  \caption{单自由度等效模型}
-  \label{fig:model}
+  \caption{虚构职业发展案例的分析流程}
+  \label{fig:workflow}
 \end{figure}
 
-\section{评价指标}
-由式\eqref{eq:motion}得到无阻尼固有频率 $f_n$ 和阻尼比 $\zeta$：
+\section{情感得分与编码一致性}
+将评论编码为正向、中性与负向三类，分别赋值为 $+1$、$0$ 与 $-1$。时间窗口 $t$ 的加权情感得分定义为
 \begin{equation}
-  f_n=\frac{1}{2\pi}\sqrt{\frac{k}{m}},\qquad
-  \zeta=\frac{c}{2\sqrt{km}}.
-  \label{eq:frequency}
+  S(t)=\frac{\sum_{i=1}^{N_t}w_i s_i(t)}{\sum_{i=1}^{N_t}w_i},
+  \qquad w_i\geq 0,\quad \sum_{i=1}^{N_t}w_i>0.
+  \label{eq:sentiment}
 \end{equation}
-参数分别以 $\mathrm{kg}$、$\mathrm{N/m}$ 和 $\mathrm{N\,s/m}$ 为单位，频率以 $\mathrm{Hz}$ 表示。小位移、线性刚度与黏性阻尼假设限定了模型的适用范围\cite{rao2011}。
+其中，$N_t$ 为窗口内评论数，$w_i$ 为评论权重，$s_i(t)$ 为情感编码。式\eqref{eq:sentiment}将得分限制在 $[-1,1]$，避免权重规模改变得分范围。为便于复算，本例全部取 $w_i=1$，于是
+\begin{equation}
+  S(t)=\frac{n_{+}(t)-n_{-}(t)}{N_t},
+  \qquad N_t=n_{+}(t)+n_{0}(t)+n_{-}(t).
+  \label{eq:sentiment-count}
+\end{equation}
+
+两位编码者对同一批模拟文本独立判断，用观察一致率 $p_o$ 与偶然一致率 $p_e$ 计算
+\begin{equation}
+  \kappa=\frac{p_o-p_e}{1-p_e}.
+  \label{eq:kappa}
+\end{equation}
+本例设定 $p_o=0.90$、$p_e=1/3$，则 $\kappa=0.85$。这只是公式计算示例；实际研究应由双方完整编码结果计算 $p_o$ 与 $p_e$。

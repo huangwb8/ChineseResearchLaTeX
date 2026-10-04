@@ -1,8 +1,72 @@
-\chapter{参数复核清单}
+\chapter{模拟数据与编码复核清单}
 \label{app:checklist}
 \begin{enumerate}
-  \item 记录质量、刚度和阻尼的来源及单位。
-  \item 检查公式适用的线性与小位移假设。
-  \item 将计算值与表格显示精度区分，避免过早舍入。
-  \item 用实测数据验证模型，并说明预测偏差。
+  \item 标注每条材料的时间、媒介类型、阶段编号与情感类别。
+  \item 将本例的模拟材料与真实研究数据分开，保留参数和生成规则。
+  \item 核对每个时间窗口的样本总数以及正向、负向和中性评论数量。
+  \item 检查加权情感得分的分母，记录权重定义与零权重的处理方式。
+  \item 复核两位编码者的一致率，记录分歧及其处理过程。
 \end{enumerate}
+
+\chapter{机械模型与公式排版示例}
+本附录保留机械工程公式、示意图与参数表的排版示例。机械设计与振动分析的基本方法可参见相关教材\cite{shigley2015,rao2011}；本附录与正文的艺人职业发展分析分别使用独立模型。
+
+\section{模型假设}
+将传动机构等效为质量为 $m$、刚度为 $k$、黏性阻尼为 $c$ 的单自由度系统。位移为 $x(t)$，外载荷为 $F(t)$，各参数在分析区间内保持常数。运动方程为
+\begin{equation}
+  m\ddot{x}(t)+c\dot{x}(t)+kx(t)=F(t).
+  \label{eq:motion}
+\end{equation}
+图\ref{fig:model}示意模型中的连接关系，不对应实际设备的结构尺寸。
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[>=stealth]
+    \draw[thick] (0,0) rectangle (2,1.2);
+    \node at (1,0.6) {$m$};
+    \draw[thick] (-2,-0.3) -- (-2,1.5);
+    \draw[thick] (-2,0.85) -- (-1.7,0.85) -- (-1.5,1.05)
+      -- (-1.3,0.65) -- (-1.1,1.05) -- (-0.9,0.65)
+      -- (-0.7,1.05) -- (-0.5,0.85) -- (0,0.85);
+    \node at (-1,1.35) {$k$};
+    \draw[thick] (-2,0.25) -- (-1.2,0.25);
+    \draw[thick] (-1.2,0.05) -- (-1.2,0.45);
+    \draw[thick] (-1.4,0.05) -- (-0.8,0.05) -- (-0.8,0.45) -- (-1.4,0.45);
+    \draw[thick] (-0.8,0.25) -- (0,0.25);
+    \node at (-1,-0.25) {$c$};
+    \draw[->,thick] (2,0.6) -- (3.2,0.6) node[right] {$F(t)$};
+    \draw[->] (0,-0.55) -- (2,-0.55) node[right] {$x(t)$};
+  \end{tikzpicture}
+  \caption{单自由度等效模型}
+  \label{fig:model}
+\end{figure}
+
+\section{评价指标}
+由式\eqref{eq:motion}得到无阻尼固有频率 $f_n$ 和阻尼比 $\zeta$：
+\begin{equation}
+  f_n=\frac{1}{2\pi}\sqrt{\frac{k}{m}},\qquad
+  \zeta=\frac{c}{2\sqrt{km}}.
+  \label{eq:frequency}
+\end{equation}
+参数分别以 $\mathrm{kg}$、$\mathrm{N/m}$ 和 $\mathrm{N\,s/m}$ 为单位，频率以 $\mathrm{Hz}$ 表示。小位移、线性刚度与黏性阻尼假设限定了模型的适用范围\cite{rao2011}。
+\section{参数分析}
+\subsection{计算结果}
+取 $m=10\,\mathrm{kg}$、$c=20\,\mathrm{N\,s/m}$，按式\eqref{eq:frequency}计算三组刚度下的指标，结果见表\ref{tab:parameters}。
+
+\begin{table}[htbp]
+  \centering
+  \caption{不同刚度下的模型计算结果}
+  \label{tab:parameters}
+  \begin{tabular}{ccc}
+    \toprule
+    $k/(\mathrm{N/m})$ & $f_n/\mathrm{Hz}$ & $\zeta$ \\
+    \midrule
+    1000 & 1.59 & 0.100 \\
+    2000 & 2.25 & 0.071 \\
+    4000 & 3.18 & 0.050 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{结果解释与局限}
+质量不变时，刚度增大使固有频率按平方根关系增加；阻尼系数不变时，阻尼比降低。实际系统中的间隙、摩擦与柔性连接可能偏离这些假设。因此，工程应用还应结合尺寸设计、载荷工况和测量结果复核\cite{shigley2015}。

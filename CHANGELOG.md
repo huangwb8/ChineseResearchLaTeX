@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- 将 `thesis-xdu-bachelor` 正文改为沿用 `NSFC_Young` 主题的佐佐木希虚构职业发展论文，补齐双语摘要、人物配图、阶段表、流程图与模拟情感计算；附录保留机械模型和公式展示，同步示例说明。
+
 - 新增 issue #54 西安电子科技大学本科模板 `thesis-xdu-bachelor`：固定 XDUTS 6.2.7.2 本科基线与许可证，增加独立 profile/style、机械工程公开示例、共享字体、GB/T 7714—2005 引用、VS Code 配置和 Overleaf 打包；记录研究生附件与本科需求的适用差异。
 - 毕业论文构建入口开启 recorder，优先从首轮 `.bcf`/`.aux` 识别文档类内部配置的文献后端，并将 fontspec 字体错误纳入失败检测；补充后端、字体错误与独立打包回归。
 
