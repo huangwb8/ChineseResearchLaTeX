@@ -20,7 +20,7 @@ from .constraints import (
 
 def snapshot_third_party_constraints(*, tex_text: str, config: Mapping[str, Any]) -> Dict[str, Any]:
     """
-    将“第三方瘦身提质约束”落到可机器读的 snapshot，供 diagnose/review/coach 展示与预警。
+    将“第三方瘦身提质约束”落到可机器读的 snapshot，供 diagnose 展示与预警。
     注意：本模块只做诊断/预警，不作为写入阻断。
     """
     configured = config.get("constraints")

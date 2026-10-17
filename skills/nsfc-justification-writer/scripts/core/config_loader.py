@@ -66,49 +66,6 @@ def _is_nonempty_seq_str(x: Any) -> bool:
     return isinstance(x, list) and all(isinstance(it, str) and str(it).strip() for it in x) and len(x) > 0
 
 
-def _looks_like_path(s: str) -> bool:
-    t = (s or "").strip()
-    if not t:
-        return False
-    if "\n" in t or "\r" in t:
-        return False
-    if t.endswith((".txt", ".md", ".yaml", ".yml")):
-        return True
-    return ("/" in t) or ("\\" in t)
-
-
-def _resolve_prompt_path(skill_root: Path, value: str) -> Optional[Path]:
-    v = str(value or "").strip()
-    if not v or (not _looks_like_path(v)):
-        return None
-    p = Path(v).expanduser()
-    if not p.is_absolute():
-        p = (Path(skill_root).resolve() / p).resolve()
-    return p.resolve()
-
-
-def _collect_config_warnings(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
-    warnings: List[str] = []
-    prompts = config.get("prompts", {})
-    if isinstance(prompts, dict):
-        for k, v in prompts.items():
-            if not isinstance(k, str):
-                continue
-            if not isinstance(v, str) or (not v.strip()):
-                continue
-            p = _resolve_prompt_path(skill_root, v)
-            if p is None:
-                continue
-            # 仅做风险提示：外部路径内容可能被拼入 prompt（若上层注入 responder）
-            if Path(v).expanduser().is_absolute():
-                warnings.append(f"prompts.{k} 使用绝对路径：{v}（注意：该文件内容可能被拼入 prompt）")
-            try:
-                p.relative_to(Path(skill_root).resolve())
-            except ValueError:
-                warnings.append(f"prompts.{k} 指向 skill_root 之外：{v} -> {p}（注意：该文件内容可能被拼入 prompt）")
-    return warnings
-
-
 def _harden_guardrails(*, config: Dict[str, Any], meta: Dict[str, Any]) -> None:
     """
     安全关键项加固：
@@ -207,23 +164,12 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
         if not isinstance(wc.get("tolerance", 200), int):
             err("word_count.tolerance 必须是整数")
 
-    ai = config.get("ai", {})
-    if not isinstance(ai, dict):
-        err("ai 必须是 dict")
-    else:
-        if not isinstance(ai.get("enabled", True), bool):
-            err("ai.enabled 必须是 bool")
-        if "cache_dir" in ai and not isinstance(ai.get("cache_dir"), str):
-            err("ai.cache_dir 必须是 str")
-
     limits = config.get("limits", {})
     if limits is not None and not isinstance(limits, dict):
         err("limits 必须是 dict")
     elif isinstance(limits, dict):
         if "max_file_size_mb" in limits and not isinstance(limits.get("max_file_size_mb"), int):
             err("limits.max_file_size_mb 必须是 int")
-        if "writing_coach_preview_chars" in limits and not isinstance(limits.get("writing_coach_preview_chars"), int):
-            err("limits.writing_coach_preview_chars 必须是 int")
         if "word_target" in limits:
             wt = limits.get("word_target")
             if wt is not None and not isinstance(wt, dict):
@@ -233,22 +179,6 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
                     err("limits.word_target.min 必须是 int")
                 if "max" in wt and not isinstance(wt.get("max"), int):
                     err("limits.word_target.max 必须是 int")
-
-    prompts = config.get("prompts", {})
-    if prompts is not None and not isinstance(prompts, dict):
-        err("prompts 必须是 dict")
-    elif isinstance(prompts, dict):
-        for k, v in prompts.items():
-            if not isinstance(v, str) or not v.strip():
-                err(f"prompts.{k} 必须是非空字符串")
-                continue
-            # 允许：1) 文件路径；2) 直接写多行 prompt（用于 override/preset）
-            if _looks_like_path(v):
-                p = Path(v)
-                if not p.is_absolute():
-                    maybe = (Path(skill_root).resolve() / p).resolve()
-                    if not maybe.exists():
-                        err(f"prompts.{k} 路径不存在：{v}")
 
     guardrails = config.get("guardrails")
     if not isinstance(guardrails, dict):
@@ -268,17 +198,6 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
                 "targets.justification_tex 必须同时精确出现在 guardrails.allowed_write_files 中；"
                 "自定义目标不会自动扩大写入白名单"
             )
-
-    writing_coach = config.get("writing_coach")
-    if writing_coach is not None and not isinstance(writing_coach, dict):
-        err("writing_coach 必须是 dict")
-    elif isinstance(writing_coach, dict):
-        if "enable_ai_stage_inference" in writing_coach and not isinstance(writing_coach.get("enable_ai_stage_inference"), bool):
-            err("writing_coach.enable_ai_stage_inference 必须是 bool")
-        if "ai_inference_mode" in writing_coach and not isinstance(writing_coach.get("ai_inference_mode"), str):
-            err("writing_coach.ai_inference_mode 必须是 str")
-        if "fallback_rules" in writing_coach and not isinstance(writing_coach.get("fallback_rules"), dict):
-            err("writing_coach.fallback_rules 必须是 dict")
 
     # 第三方约束：仅做类型校验（不要求必须存在）
     constraints = config.get("constraints")
@@ -326,7 +245,6 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
 def load_config(
     skill_root: Path,
     *,
-    preset: Optional[str] = None,
     override_path: Optional[str] = None,
     load_user_override: bool = True,
 ) -> Dict[str, Any]:
@@ -350,20 +268,6 @@ def load_config(
     config_path = (skill_root / "config.yaml").resolve()
     _merge_yaml(config_path, label="repo config.yaml")
 
-    if preset:
-        # 新规范：assets/presets/<name>.yaml（优先）
-        # 兼容旧路径：config/presets/<name>.yaml
-        preset_name = str(preset).strip()
-        preset_candidates = [
-            (skill_root / "assets" / "presets" / f"{preset_name}.yaml").resolve(),
-            (skill_root / "config" / "presets" / f"{preset_name}.yaml").resolve(),
-        ]
-        preset_path = next((p for p in preset_candidates if p.exists()), preset_candidates[0])
-        _merge_yaml(preset_path, label=f"preset={preset_name}")
-        config["active_preset"] = str(preset)
-    else:
-        config["active_preset"] = ""
-
     disable_user_override = str(os.environ.get("NSFC_JUSTIFICATION_WRITER_DISABLE_USER_OVERRIDE", "")).strip().lower() in {
         "1",
         "true",
@@ -381,7 +285,6 @@ def load_config(
             p = (Path.cwd() / p).resolve()
         _merge_yaml(p, label="--override")
 
-    meta["warnings"].extend(_collect_config_warnings(skill_root=skill_root, config=config))
     config["_config_loader"] = meta
 
     disable_validation = str(os.environ.get("NSFC_JUSTIFICATION_WRITER_DISABLE_CONFIG_VALIDATION", "")).strip().lower() in {
@@ -418,11 +321,3 @@ def get_runs_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
     if not runs_dir or "{yyyymmdd" in runs_dir or runs_dir.startswith("tests/_artifacts"):
         return (Path.cwd() / ".bensz-api" / f"task-{datetime.now().strftime('%Y%m%d-%H%M')}-nsfc-justification-writer" / "nsfc-justification-writer").resolve()
     return (Path(skill_root) / runs_dir).resolve()
-
-
-def get_cache_dir(skill_root: Path, config: Dict[str, Any]) -> Path:
-    ai = config.get("ai", {}) if isinstance(config, dict) else {}
-    value = str(ai.get("cache_dir", "") or "") if isinstance(ai, dict) else ""
-    if not value or "{yyyymmdd" in value or value.startswith("tests/_artifacts"):
-        return (Path.cwd() / ".bensz-api" / f"task-{datetime.now().strftime('%Y%m%d-%H%M')}-nsfc-justification-writer" / "nsfc-justification-writer" / "cache" / "ai").resolve()
-    return (Path(skill_root) / value).resolve()

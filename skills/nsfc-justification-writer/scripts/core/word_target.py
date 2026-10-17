@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-from .config_access import get_mapping, get_int, get_str
+from .config_access import get_mapping, get_int
 from .limits import word_target_range
 
 
@@ -77,8 +77,7 @@ def resolve_word_target(
     解析优先级（用户意图优先）：
     - P0：user_intent_text（通常是用户指令/Prompt）
     - P1：info_form_text（信息表中的“字数限制”）
-    - P2：config.active_preset（若存在，视作“学科预设”来源之一）
-    - P3：config.word_count.*（兜底）
+    - P2：config.word_count.*（兜底）
     """
     parsed = parse_word_target_from_text(user_intent_text)
     if parsed:
@@ -99,9 +98,5 @@ def resolve_word_target(
     tol = get_int(wc_cfg, "tolerance", 200)
     lo, hi = word_target_range(config)
     target = _clamp_int(target, lo=lo, hi=hi)
-
-    preset = get_str(config, "active_preset", "").strip()
-    if preset:
-        return WordTargetSpec(target=target, tolerance=tol, source=f"preset:{preset}", evidence="")
 
     return WordTargetSpec(target=target, tolerance=tol, source="config_default", evidence="")

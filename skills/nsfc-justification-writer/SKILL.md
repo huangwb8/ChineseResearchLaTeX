@@ -1,89 +1,58 @@
 ---
 name: nsfc-justification-writer
-description: 当用户要求写作、重构、审查或润色 NSFC/科研基金申请书的立项依据时使用，包括研究意义、国内外研究现状及发展动态、现状末端的科学问题/科学假设凝练和小结。以标准立项依据的内容边界、语义论证和可核验性为核心；不要把研究目标、技术路线、主验证场景或判定规则写成立项依据的固定章节。支持任意文件名、标题命令和 LaTeX 结构；默认全自动完成诊断、成稿、校正、备份和写入，不向用户发起中途确认或审核问题。
+description: 当用户要求写作、重构、审查或润色 NSFC/科研基金申请书的立项依据时使用。宿主 AI 一次性完成理解、论证和正文改写；脚本负责目标定位、引用检查、白名单、diff、备份和安全写入。内容覆盖研究意义、国内外研究现状、科学问题与科学假设和小结；不把研究目标、技术路线、主验证场景或判定规则写成立项依据主线。
 metadata:
   author: Bensz Conan
 ---
 # 科研立项依据写作器
 
-## 流程
+## 主流程
 
-### 输入
+本 Skill 只保留一个主流程：**AI 读懂材料并改写正文，脚本检查边界并安全写入**。
 
-按用户请求和配置文件读取必要输入；缺失信息记录为保守假设和待核验项，不把缺口扩写成未经证实的事实。
+1. 读取目标正文、相关研究内容、研究基础和 `.bib`。目标文件按“显式配置 → 文件名含立项依据/justification → 字典序”选择；缺失信息采用最小保守假设并记录待核验项。
+2. 宿主 AI 一次性完成结构判断、论证规划、语义审查和正文生成。正文遵循：**研究意义 → 国内外研究现状 → 科学问题与科学假设 → 小结**。
+3. 将完整正文提案交给 `scripts/run.py preview`。脚本只检查路径、白名单、引用 key、结构命令和变更范围，生成 diff；通过后备份并写入。
+4. 输出目标文件、修改摘要、假设/待核验项、diff、备份路径和回滚命令。
 
-### 执行步骤
+## 参考资料路由
 
-- 本 skill 设计缺陷导致 bug 时，按 `bensz-collect-bugs` 记录到 `~/.bensz-skills/bugs/`，不要改用户本地已安装 skill；可用 workaround 时先记录再继续。
-- 仅用户明确要求公开上报时，才用本地 `gh` 通过该 skill 上传新增 bug 到 `huangwb8/bensz-bugs`；不 pull/clone 整仓库。
+以下链接均相对于本 Skill 目录。按当前任务读取需要的资料，不要默认加载整个 `references/` 目录：
 
-1. 按标准立项依据的内容链组织正文：**研究意义 → 国内外研究现状及发展动态（按课题主题分块）→ 小结**。模板标题可因项目而变，但不得把后续章节的方案内容硬塞进立项依据。
-2. 研究意义写研究对象为何重要、现实/临床或理论必要性是什么、现有路线为何仍不足，以及解决该缺口的价值；不写详细研究目标、技术流程、主终点、阈值或风险处理。
-3. 国内外研究现状及发展动态按 2–4 个与课题直接相关的主题组织。每个主题先写代表性证据和发展，再写能力边界、争议或缺口；不是罗列论文，也不是把“现有研究的局限性”机械独立成固定章节。
-4. 在研究现状的后段或小结中收束关键瓶颈，凝练科学问题和可证伪科学假设，并说明申请人前期工作如何构成本项目切入点。科学问题用疑问句，假设用预测性陈述；二者是论证要素，不要求单独设标题。
-5. 立项依据只用简短文字衔接后续研究内容。研究目标、总体研究思路、技术路线、主验证场景、排除标准、主终点、比较基线、预设阈值、统计/模型锁定规则和风险处理属于研究内容、研究方案或研究基础，不能在立项依据中形成独立章节或主线。
-6. 外部论文的方法学描述可作为现状证据；本项目的方法、比较、验证终点和交付物应后置。前期工作可在现状末端用与证据强度相称的篇幅桥接切入点，详细数据和可行性证据放研究基础。
+- **确定内容链和写作取向**：先读 [`theoretical_innovation_guidelines.md`](references/theoretical_innovation_guidelines.md)；需要把理论导向落实为执行安排时，再读 [`theoretical_innovation_plan.md`](references/theoretical_innovation_plan.md)。
+- **材料不足或需要结构化输入**：使用 [`info_form.md`](references/info_form.md) 作为字段模板；它是输入参考，不是必须由用户填写的交互步骤。
+- **凝练科学问题与科学假设**：分别读 [`scientific_question_guidelines.md`](references/scientific_question_guidelines.md) 和 [`scientific_hypothesis_guidelines.md`](references/scientific_hypothesis_guidelines.md)，检查“瓶颈—约束—问题—假设”的对应关系。
+- **检查方法术语是否抢占主线**：涉及方法、模型或平台表述时读 [`methodology_term_examples.md`](references/methodology_term_examples.md)。
+- **执行语义审查**：每次写入前必须读 [`tier2_semantic_review.md`](references/tier2_semantic_review.md)；需要逐句改善大同行可读性时一并读 [`professional_readability_guidelines.md`](references/professional_readability_guidelines.md)，检查夸大或绝对化表述时读 [`boastful_expression_guidelines.md`](references/boastful_expression_guidelines.md)。
+- **解释机器诊断或做最终验收**：诊断结果难以解释时参考 [`diagnostic_examples.md`](references/diagnostic_examples.md)；写入前按 [`dod_checklist.md`](references/dod_checklist.md) 做完成度核对。
 
-7. 逻辑与引用检查后必须读取 `references/tier2_semantic_review.md`，由当前宿主 AI 直接执行 Tier2 语义检查。由宿主 AI 自主规划术语、论证维度和可读性，输出“位置/障碍/影响/保真改法”。检查长句层级、指代、缩写/新概念、抽象名词、衔接和无效修饰；不科普化或因必要限定强改。
-8. 可读性改写须保留已核验事实、对象、限定、问题/假设、引用、标签和 LaTeX 结构；无法保真保留原句并记录风险，不补事实/证据。
+## AI 的工作边界
 
-措辞边界：吹牛式、绝对化或无依据夸大由宿主 AI 按 `references/boastful_expression_guidelines.md` 语义复核并归入逻辑/表达建议；Python 只做路径、结构命令、引用 key 等确定性检查，不用固定词表判定。
+AI 自主决定研究现状的主题、证据与缺口的关系、科学问题和假设的表述、章节归属、术语和可读性修改。研究意义默认 2–3 段、全文约 15%–25%；每个研究现状主题默认 1 段、必要时最多 2 段。科学问题使用疑问句，科学假设使用可证伪的预测性陈述。
 
-1. 读取目标文件和上下文；目标缺失时自动追踪 `main.tex`，按确定性优先级选择候选，必要时创建白名单内的默认正文文件。
-2. 检查问题—假设—证据—研究内容闭环及引用 key；随后必做 Tier2，结果分为“事实问题、逻辑问题、表达建议”。
-3. 完成检查后自动复核专业可读性；`polish` 先在内部锁定事实/逻辑/引用，再做受约束精修，不向用户提问。
-4. 自动生成完整正文或 unified diff；发现结构命令变化时自动回退为正文-only 提案并重试。
-5. 通过白名单、引用和质量检查后自动写入；写入前备份，写入后展示 diff、假设与回滚入口。
-6. 字数与引用检查可独立运行；流程不绑定固定标题或维度清单。
+AI 必须保留已核验事实、限定、引用、标签和 LaTeX 结构；不新增无法核验的文献、结果或绝对化结论。研究目标、技术路线、主验证场景、终点、阈值和风险处理只作后续章节的简短衔接，不在立项依据中展开。
 
-- `scripts/run.py preview`：自动生成 diff 并按 `guardrails.output_mode` 写入；需要只读检查时显式加 `--dry-run`。
-- `refs`、`wordcount`：独立引用/字数工具；术语、论证维度和可读性由 Tier2 宿主 AI 规划。
-- `diagnose`：仅执行 Tier1 确定性诊断，并提示宿主 AI 读取 `references/tier2_semantic_review.md`；不主动调用模型、不生成 Tier2 fallback 结论。
-- `coach`、`review`：主流程必须包含由宿主 AI 直接执行的 Tier2 语义检查。吹牛式/绝对化风险按参考准则由 AI 判断，脚本不做固定短语命中。
-- `apply-section`：legacy 标题替换写入；新流程优先使用完整正文提案自动写入，不依赖 `\\subsubsection`。
-- `diff`、`rollback`：查看或回滚自动写入变更；回滚命令仍需显式 `--yes` 以避免误操作。
+语义审查按历史文件 `references/tier2_semantic_review.md` 执行一次，至少覆盖事实与证据、逻辑闭环、科学问题/假设、章节边界和专业可读性。主流程不分检查层，也不分多个写作阶段。
 
-按任务先阅读 `references/tier2_semantic_review.md`，再按其中需要阅读 `references/scientific_question_guidelines.md`、`references/scientific_hypothesis_guidelines.md`、`references/professional_readability_guidelines.md` 和 `references/boastful_expression_guidelines.md`。用户流程、脚本用法和架构边界见 `README.md`；检查维度由宿主 AI 自主规划，不依赖固定术语矩阵或四维度门槛。
+## 脚本的工作边界
 
-### 输出
+脚本只做可重复的安全工作：目标定位、路径白名单、引用 key/DOI 检查、字数统计、结构命令变更检查、diff、备份、写入和回滚。脚本不判断研究逻辑、术语质量、夸大表述或科学问题是否成立。
 
-默认输出：
+## 入口
 
-```text
-目标文件（自动选择及依据）：...
-修改范围：仅白名单正文
-主要问题：...
-章节边界：...
-建议正文或 unified diff：...
-引用与事实守护：...
-未修改：标题、结构命令、配置和样式文件
-```
+- `preview`：主流程唯一需要的写入入口；默认自动写入，`--dry-run` 只检查。
+- `diagnose`、`refs`、`wordcount`：需要单独查看机器检查结果时使用。
 
-“章节边界”必须说明受影响句子/段落的位置、当前职责、建议归属（研究意义 / 研究现状及发展动态 / 小结 / 研究内容 / 研究基础）和调整理由。需要跨小节移动时，先输出章节级提案，再输出正文 diff；只做局部润色而不说明归属变化不算完成。若发现主验证场景、总体研究目标或技术路线被写成立项依据章节，应明确建议移至研究内容、研究方案或研究基础。
+## 缺陷记录
 
-可读性发现归入“表达建议”，不当作事实错误；Tier2 是完整诊断必选项，由当前宿主 AI 直接完成，不经过 Python responder 或 fallback。
-
-无法明确正文边界时按最小安全正文范围继续；若材料不足，采用保守假设并在“假设与待核验项”中记录，不暂停等待用户输入。始终执行白名单、备份、缺失 bibkey 检查并报告实际变更。
-
-### 输出管理
-
-本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
-
-### 校验
-
-完成后执行 Skill 已有的静态检查、脚本验证或人工复核，并记录通过标准。
-
-### 失败与恢复
-
-保留错误证据和已完成产物；仅在输入、环境或外部依赖恢复后从最近的失败步骤重试。
+- 本 Skill 或 Bensz 基础设施自身的设计缺陷，按 `bensz-collect-bugs` 记录到 `~/.bensz-skills/bugs/`；不要修改用户本地已安装 Skill。
+- 只有用户明确要求公开上报时，才通过本地 `gh` 上传脱敏 bug；不 pull/clone 整仓库。
 
 ## 约束
 
-- 自动理解目标文件、段落和目标，直接生成成稿并写入安全目标；同时输出 unified diff、备份路径和假设记录。
-- 只改自动确定且通过白名单的正文；保留标题、章节/环境命令、标签、引用命令和配置命令。
-- 只改白名单正文文件，不改 `main.tex`、配置文件、`.cls`、`.sty`。目标不唯一时按“已配置目标 → 文件名含立项依据/justification → 字典序首项”自动选择并记录选择依据。
-- 目标可来自用户或配置，不假定固定文件名。
-- 引用 key 必须能在项目 `.bib` 中核验；不新增无法核验的引用、结果或绝对化结论。
+- 只改自动确定且通过白名单的正文；保留标题、章节/环境命令、标签和引用命令。
+- 不改 `main.tex`、配置文件、`.cls`、`.sty`；缺失 bibkey 默认拒绝写入。
+- 写入前备份，写入后输出 diff、假设和回滚入口。
 
 ### 公共硬约束
 

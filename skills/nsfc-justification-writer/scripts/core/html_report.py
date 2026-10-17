@@ -94,12 +94,10 @@ def render_diagnostic_html(
     report: DiagnosticReport,
     next_steps: Optional[List[str]] = None,
 ) -> str:
-    # 新规范：assets/templates/...
-    # 兼容旧路径：templates/...
+    # HTML 模板作为运行时参考资源随 Skill 分发。
     skill_root = Path(skill_root).resolve()
     tpl_candidates = [
-        (skill_root / "assets" / "templates" / "html" / "report_template.html").resolve(),
-        (skill_root / "templates" / "html" / "report_template.html").resolve(),
+        (skill_root / "references" / "report_template.html").resolve(),
     ]
     tpl_path = next((p for p in tpl_candidates if p.exists()), tpl_candidates[0])
     template = _load_template(tpl_path)

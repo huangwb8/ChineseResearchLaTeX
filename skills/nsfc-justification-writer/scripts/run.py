@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import argparse
 import json
 import logging
@@ -28,7 +27,7 @@ from core.config_loader import load_config, get_runs_dir, validate_config
 from core.config_access import get_bool, get_mapping, get_seq_str, get_str
 from core.bib_manager_integration import BibFixSuggestion
 from core.change_guard import inspect_proposal
-from core.errors import BackupNotFoundError, SkillError, TargetResolutionError
+from core.errors import BackupNotFoundError, SkillError
 from core.html_report import render_diagnostic_html
 from core.hybrid_coordinator import HybridCoordinator
 from core.info_form import copy_info_form_template
@@ -179,12 +178,10 @@ def _read_body_file(body_file: Optional[str]) -> str:
 
 
 def _load_config_for_args(skill_root: Path, args: argparse.Namespace) -> Dict[str, Any]:
-    preset = getattr(args, "preset", None)
     override = getattr(args, "override", None)
     no_user_override = bool(getattr(args, "no_user_override", False))
     cfg = load_config(
         skill_root,
-        preset=str(preset) if preset else None,
         override_path=str(override) if override else None,
         load_user_override=(not no_user_override),
     )
@@ -203,7 +200,7 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
     coord = HybridCoordinator(skill_root=skill_root, config=config)
 
     if getattr(args, "verbose", False):
-        logger.info("⏳ 正在运行 Tier1；随后由宿主 AI 执行 Tier2...")
+            logger.info("⏳ 正在运行机器检查；随后由宿主 AI 做一次语义审查...")
     report = coord.diagnose(
         project_root=Path(args.project_root),
         include_tier2=True,
@@ -357,7 +354,7 @@ def cmd_test_session(args: argparse.Namespace) -> int:
             "-q",
             "-o",
             f"cache_dir={str((session_dir / '_artifacts' / 'pytest_cache').resolve())}",
-            str((skill_root / "tests" / "pytest").resolve()),
+            str((skill_root / "tests").resolve()),
         ],
         cwd=skill_root,
         env=env,
@@ -372,149 +369,6 @@ def cmd_test_session(args: argparse.Namespace) -> int:
         return 0
     print(f"❌ 测试失败：{session_dir}")
     return 2
-
-
-def cmd_check_ai(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
-
-    ai_cfg = get_mapping(config, "ai")
-    enabled = bool(get_bool(ai_cfg, "enabled", True))
-
-    print("AI 可用性自检：")
-    print(f"- {'✅' if enabled else '⚠️'} ai.enabled = {enabled}")
-
-    if not enabled:
-        print("- ⚠️ AI 已在配置中关闭：所有 AI 功能将自动回退到硬编码能力")
-        return 0
-
-    if coord.ai.responder is None:
-        print("- ⚠️ responder 未注入：当前运行在“优雅降级模式”（AI 功能会回退）")
-        print("- 💡 提示：本仓库脚本不会主动直连外部大模型；需由运行环境/上层工具注入 responder")
-        return 0
-
-    print("- ✅ responder 已注入")
-
-    async def _run() -> Any:
-        def _fallback() -> Dict[str, Any]:
-            return {"ok": False, "reason": "fallback"}
-
-        return await coord.ai.process_request(
-            task="check_ai_echo",
-            prompt='请只输出 JSON：{"ok": true}',
-            fallback=_fallback,
-            output_format="json",
-            cache_dir=None,
-            fresh=True,
-        )
-
-    try:
-        obj = asyncio.run(_run())
-    except RuntimeError:
-        obj = None
-
-    stats = coord.ai.get_stats()
-    if isinstance(obj, dict) and (not bool(stats.get("fallback_mode", False))) and int(stats.get("success_count", 0)) > 0:
-        print("- ✅ AI 测试请求成功")
-    else:
-        print("- ⚠️ AI 测试请求未成功（已回退或响应不可用）")
-
-    print(
-        "- stats:",
-        f"fallback_mode={bool(stats.get('fallback_mode', False))},",
-        f"request_count={int(stats.get('request_count', 0))},",
-        f"success_count={int(stats.get('success_count', 0))}",
-    )
-    return 0
-
-
-def cmd_apply_section(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
-
-    output_mode = get_str(get_mapping(config, "guardrails"), "output_mode", "preview").strip().lower() or "preview"
-    logger.warning(
-        "⚠️ apply-section 是 legacy 兼容入口（配置 output_mode=%s）：它依赖标题解析并会写入文件；新流程优先运行自动 preview。",
-        output_mode,
-    )
-
-    body = _read_body_file(args.body_file).strip()
-    if not body:
-        logger.error("❌ body 为空：请通过 --body-file 或 stdin 提供新正文")
-        return 2
-
-    run_id = args.run_id or make_run_id("apply")
-    # 若用户选择放宽引用约束，建议至少启用“新正文质量闸门”（可选阻断）。
-    if bool(getattr(args, "allow_missing_citations", False)) and (not bool(getattr(args, "strict_quality", False))):
-        strict_cfg = get_bool(get_mapping(config, "quality"), "strict_on_apply", False)
-        if not strict_cfg:
-            qr = check_new_body_quality(new_body=body, config=config)
-            if not qr.ok:
-                if qr.avoid_commands_hits:
-                    logger.warning(
-                        "⚠️ 新正文包含可能破坏模板的命令（建议移除或启用 --strict-quality 阻断写入）：%s",
-                        "、".join(qr.avoid_commands_hits[:10]),
-                    )
-    try:
-        result = coord.apply_section_body(
-            project_root=Path(args.project_root),
-            title=args.title,
-            new_body=body,
-            backup=not bool(args.no_backup),
-            run_id=run_id,
-            allow_missing_citations=bool(args.allow_missing_citations),
-            strict_quality=bool(getattr(args, "strict_quality", False)),
-        )
-    except MissingCitationKeysError as e:
-        logger.error("❌ %s", str(e))
-        if e.missing_keys:
-            logger.error("\n缺失的 bibkey：")
-            for k in e.missing_keys[:50]:
-                logger.error("- %s", k)
-        if getattr(e, "fix_suggestion", ""):
-            logger.error("\n💡 修复建议：")
-            logger.error("%s", getattr(e, "fix_suggestion", ""))
-        return 2
-    except SectionNotFoundError as e:
-        logger.error("❌ %s", str(e))
-        if getattr(e, "fix_suggestion", ""):
-            logger.error("\n💡 修复建议：")
-            logger.error("%s", getattr(e, "fix_suggestion", ""))
-        if bool(getattr(args, "suggest_alias", False)):
-            target = coord.target_path(project_root=Path(args.project_root))
-            if target.exists():
-                tex = target.read_text(encoding="utf-8", errors="ignore")
-                titles = [s.title for s in parse_subsubsections(tex)]
-                if titles:
-                    logger.error("\n可用的小标题（全部）：")
-                    for t in titles[:80]:
-                        logger.error("- %s", t)
-        return 2
-
-    print(f"✅ 已写入：{result.target_path}")
-    if result.backup_path:
-        print(f"📦 备份：{result.backup_path}")
-
-    if args.log_json:
-        runs_root = get_runs_dir(skill_root, config)
-        log_path = (runs_root / run_id / "logs" / "apply_result.json").resolve()
-        try:
-            target_relpath = result.target_path.relative_to(Path(args.project_root).resolve()).as_posix()
-        except ValueError:
-            target_relpath = result.target_path.name
-        _write_json(
-            log_path,
-            {
-                "run_id": run_id,
-                "target": str(result.target_path),
-                "target_relpath": str(target_relpath),
-                "backup": str(result.backup_path) if result.backup_path else None,
-            },
-        )
-        print(f"🧾 记录：{log_path}")
-    return 0
 
 
 def cmd_preview(args: argparse.Namespace) -> int:
@@ -636,48 +490,6 @@ def cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_review(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
-    md = coord.reviewer_advice(
-        project_root=Path(args.project_root),
-        include_tier2=True,
-    )
-    if args.out:
-        Path(args.out).write_text(md, encoding="utf-8")
-        print(f"已输出：{args.out}")
-        return 0
-    print(md, end="")
-    return 0
-
-
-def cmd_coach(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
-    info_form_text = ""
-    if args.info_form:
-        info_form_text = Path(args.info_form).read_text(encoding="utf-8", errors="ignore")
-    md = coord.coach(project_root=Path(args.project_root), stage=str(args.stage), info_form_text=info_form_text)
-    if args.topic:
-        md = coord.recommend_examples(query=str(args.topic), top_k=int(args.top_k)) + "\n" + md
-    if args.out:
-        Path(args.out).write_text(md, encoding="utf-8")
-        print(f"已输出：{args.out}")
-        return 0
-    print(md, end="")
-    return 0
-
-
-def cmd_examples(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
-    print(coord.recommend_examples(query=str(args.query), top_k=int(args.top_k)), end="")
-    return 0
-
-
 def cmd_list_runs(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
@@ -757,12 +569,11 @@ def cmd_rollback(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="nsfc-justification-writer", add_help=True)
     p.add_argument("--verbose", action="store_true", help="输出更详细的错误信息（包含堆栈）")
-    p.add_argument("--preset", help="加载学科预设 assets/presets/<name>.yaml（兼容旧路径 config/presets/，可选）")
     p.add_argument("--override", help="额外配置覆盖文件（yaml，可选，优先级最高）")
     p.add_argument("--no-user-override", action="store_true", help="不加载 ~/.config/nsfc-justification-writer/override.yaml")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    p_diag = sub.add_parser("diagnose", help="Tier1/Tier2 诊断（结构/引用/字数/表述）")
+    p_diag = sub.add_parser("diagnose", help="机器诊断（结构/引用/字数）")
     p_diag.add_argument("--project-root", required=True)
     p_diag.add_argument("--json-out", help="可选：输出 JSON 报告到文件")
     p_diag.add_argument(
@@ -795,25 +606,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
     p_init.set_defaults(func=cmd_init)
 
-    p_review = sub.add_parser("review", help="评审人视角质疑与建议（包含必选 Tier2）")
-    p_review.add_argument("--project-root", required=True)
-    p_review.add_argument("--out", help="可选：输出到文件（markdown）")
-    p_review.set_defaults(func=cmd_review)
-
-    p_coach = sub.add_parser("coach", help="渐进式写作引导（骨架→段落→修订→润色→验收）")
-    p_coach.add_argument("--project-root", required=True)
-    p_coach.add_argument("--stage", default="auto", choices=["auto", "skeleton", "draft", "revise", "polish", "final"])
-    p_coach.add_argument("--info-form", help="可选：已填写的信息表文件（markdown）")
-    p_coach.add_argument("--topic", help="可选：一句话主题，用于推荐 assets/examples/ 示例")
-    p_coach.add_argument("--top-k", default=3, type=int)
-    p_coach.add_argument("--out", help="可选：输出到文件（markdown）")
-    p_coach.set_defaults(func=cmd_coach)
-
-    p_ex = sub.add_parser("examples", help="根据主题推荐 assets/examples/ 中的参考骨架")
-    p_ex.add_argument("--query", required=True, help="主题/方向/关键词")
-    p_ex.add_argument("--top-k", default=3, type=int)
-    p_ex.set_defaults(func=cmd_examples)
-
     p_runs = sub.add_parser("list-runs", help="列出 runs_dir 下的 run_id（用于 diff/rollback）")
     p_runs.add_argument("--limit", default=20, type=int)
     p_runs.set_defaults(func=cmd_list_runs)
@@ -832,18 +624,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_rb.add_argument("--new-run-id", help="可选：回滚备份的 run_id（默认按时间生成）")
     p_rb.set_defaults(func=cmd_rollback)
 
-    p_apply = sub.add_parser("apply-section", help="替换指定 \\subsubsection 的正文（安全写入+备份）")
-    p_apply.add_argument("--project-root", required=True)
-    p_apply.add_argument("--title", required=True, help="精确匹配 \\subsubsection{title}")
-    p_apply.add_argument("--body-file", help="新正文来源文件；用 - 表示从 stdin 读")
-    p_apply.add_argument("--no-backup", action="store_true", help="不做备份（默认备份）")
-    p_apply.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
-    p_apply.add_argument("--log-json", action="store_true", help="写入 runs_dir/.../logs/apply_result.json")
-    p_apply.add_argument("--allow-missing-citations", action="store_true", help="允许存在缺失 bibkey 的 \\cite{...}（不推荐）")
-    p_apply.add_argument("--strict-quality", action="store_true", help="启用“新正文质量闸门”：命中可能破坏模板的结构命令则拒绝写入；措辞风险由宿主 AI 语义复核")
-    p_apply.add_argument("--suggest-alias", action="store_true", help="当标题未命中时，输出可用标题候选（便于改 title）")
-    p_apply.set_defaults(func=cmd_apply_section)
-
     p_preview = sub.add_parser("preview", help="生成完整正文 unified diff；默认自动写入，--dry-run 只读")
     p_preview.add_argument("--project-root", required=True)
     p_preview.add_argument("--proposal-file", required=True, help="完整正文提案文件；用 - 表示从 stdin 读")
@@ -852,16 +632,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_preview.add_argument("--dry-run", action="store_true", help="只生成 diff，不写入文件")
     p_preview.set_defaults(func=cmd_preview)
 
-    p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + preset + override）")
+    p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + override）")
     p_cfg.set_defaults(func=cmd_validate_config)
 
     p_ts = sub.add_parser("test-session", help="创建一次可追溯测试会话目录，并运行最小自检（validate-config + pytest）")
     p_ts.add_argument("--round", default="A", choices=["A", "B轮"], help="会话目录前缀（A 或 B轮）")
     p_ts.add_argument("--session-id", help="可选：指定会话 ID（默认 vYYYYMMDDHHMMSS）")
     p_ts.set_defaults(func=cmd_test_session)
-
-    p_check_ai = sub.add_parser("check-ai", help="AI 可用性自检（responder 注入/降级模式）")
-    p_check_ai.set_defaults(func=cmd_check_ai)
 
     return p
 

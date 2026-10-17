@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""LaTeX 标题解析器（legacy）：仅供 apply-section 兼容入口使用。"""
+"""用于诊断 LaTeX 小节结构的轻量解析器。"""
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
-
-from .ai_integration import AIIntegration
+from typing import List, Optional, Tuple
 
 
 _SUBSUBSECTION_CMD_RE = re.compile(r"\\subsubsection\*?")
-_WS_RE = re.compile(r"\s+")
 
 
 @dataclass(frozen=True)
@@ -221,132 +217,3 @@ def parse_subsubsections(text: str) -> List[LatexSection]:
         body_end = headers[idx + 1][0] if (idx + 1) < len(headers) else len(source)
         sections.append(LatexSection(title=title, header_span=(hs, he), body_span=(body_start, body_end)))
     return sections
-
-
-def find_subsubsection(text: str, title: str) -> Optional[LatexSection]:
-    for sec in parse_subsubsections(text):
-        if sec.title == title:
-            return sec
-    return None
-
-
-def replace_subsubsection_body(text: str, title: str, new_body: str) -> Tuple[str, bool]:
-    sec = find_subsubsection(text, title)
-    if sec is None:
-        return text, False
-
-    start, end = sec.body_span
-    new_text = text[:start] + "\n" + new_body.rstrip() + "\n" + text[end:]
-    return new_text, True
-
-
-def normalize_title(title: str) -> str:
-    t = (title or "").strip()
-    t = _WS_RE.sub("", t)
-    # 去掉常见 LaTeX 命令外壳（仅用于匹配，不用于展示）
-    t = re.sub(r"\\[a-zA-Z]+\*?", "", t)
-    t = t.replace("{", "").replace("}", "").replace("[", "").replace("]", "")
-    return t.lower()
-
-
-def title_similarity(a: str, b: str) -> float:
-    aa = normalize_title(a)
-    bb = normalize_title(b)
-    if not aa or not bb:
-        return 0.0
-    if aa == bb:
-        return 1.0
-    set_a = set(aa)
-    set_b = set(bb)
-    inter = len(set_a & set_b)
-    union = len(set_a | set_b)
-    return inter / max(union, 1)
-
-
-def suggest_titles(text: str, *, query: str, limit: int = 8) -> List[str]:
-    secs = parse_subsubsections(text)
-    scored = [(title_similarity(query, s.title), s.title) for s in secs]
-    scored.sort(key=lambda it: (it[0], it[1]), reverse=True)
-    out = []
-    for score, t in scored[: max(int(limit), 1)]:
-        if t:
-            out.append(t)
-    return out
-
-
-async def match_title_via_ai(
-    *,
-    query: str,
-    candidates: Sequence[str],
-    ai: AIIntegration,
-    cache_dir: Optional[Path] = None,
-    fresh: bool = False,
-) -> Optional[str]:
-    items = [str(x) for x in candidates if str(x).strip()]
-    if not items:
-        return None
-
-    prompt = (
-        "你是 LaTeX 小标题匹配器。\n"
-        "用户给了一个目标标题（可能不完全一致），请在候选标题列表中选择最匹配的一个。\n\n"
-        f"目标标题：{query}\n\n"
-        "候选标题（按原样）：\n"
-        + "\n".join([f"- {t}" for t in items[:50]])
-        + "\n\n"
-        "请只输出 JSON：{\"matched_title\": \"...\"}；如果没有明显匹配，请输出 {\"matched_title\": null}。\n"
-    )
-
-    def _fallback() -> dict[str, Any]:
-        return {"matched_title": None}
-
-    obj = await ai.process_request(
-        task="match_subsubsection_title",
-        prompt=prompt,
-        output_format="json",
-        fallback=_fallback,
-        cache_dir=cache_dir,
-        fresh=fresh,
-    )
-    if isinstance(obj, dict) and obj.get("matched_title"):
-        v = str(obj.get("matched_title")).strip()
-        return v if v in items else None
-    return None
-
-
-def find_subsubsection_hybrid(
-    text: str,
-    *,
-    title: str,
-    strict: bool = True,
-    min_similarity: float = 0.6,
-) -> Optional[LatexSection]:
-    secs = parse_subsubsections(text)
-    if strict:
-        return next((s for s in secs if s.title == title), None)
-
-    best: Optional[LatexSection] = None
-    best_score = 0.0
-    for s in secs:
-        sc = title_similarity(title, s.title)
-        if sc > best_score:
-            best_score = sc
-            best = s
-    if best and best_score >= float(min_similarity):
-        return best
-    return None
-
-
-def replace_subsubsection_body_hybrid(
-    text: str,
-    *,
-    title: str,
-    new_body: str,
-    strict: bool = True,
-    min_similarity: float = 0.6,
-) -> Tuple[str, bool, Optional[str]]:
-    sec = find_subsubsection_hybrid(text, title=title, strict=strict, min_similarity=min_similarity)
-    if sec is None:
-        return text, False, None
-    start, end = sec.body_span
-    new_text = text[:start] + "\n" + new_body.rstrip() + "\n" + text[end:]
-    return new_text, True, sec.title

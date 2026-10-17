@@ -1,13 +1,26 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.3.2
-  description: "全自动撰写、重构、审查和润色 NSFC/科研基金立项依据；按研究意义—研究现状及发展动态—小结的内容链执行，自动完成目标选择、Tier1+Tier2、保守假设、成稿、备份与写入，不在中途要求用户确认或审核。"
+  version: 1.5.0
+  description: "全自动撰写、重构、审查和润色 NSFC/科研基金立项依据；宿主 AI 负责理解与改写，脚本负责引用、路径和安全写入。"
   category: writing
   author: "Bensz Conan"
 
 # 只影响措辞和证据重心，不作为结构通过条件。
 style:
   mode: theoretical
+
+# 作为宿主 AI 的默认软预算；用户明确给出的篇幅要求优先，不能以压缩预算删除必要事实、限定或引用。
+structure:
+  canonical_status_title: "国内外研究现状"
+  research_significance:
+    preferred_paragraphs: 2
+    max_paragraphs: 3
+    max_body_ratio: 0.25
+  thematic_subsection:
+    preferred_paragraphs: 1
+    max_paragraphs: 2
+  summary:
+    preferred_paragraphs: 1
 
 parameters:
   project_root:
@@ -30,14 +43,6 @@ limits:
   word_target:
     min: 100
     max: 20000
-
-ai:
-  enabled: true
-  cache_dir: .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-justification-writer/cache/ai
-
-prompts:
-  review_suggestions: assets/prompts/review_suggestions.txt
-  writing_coach: assets/prompts/writing_coach.txt
 
 references:
   # 缺失 bibkey 仍记录为事实风险；自动流程不暂停询问，宿主 AI 应优先改写为可核验表述。
@@ -65,30 +70,7 @@ quality:
   # 结构命令由 preview 的变更范围检查比较前后差异；不对现有正文中的命令逐字报警。
   avoid_commands: []
 
-# 仅保留用户显式要求时的独立预警；默认不进行开篇 300 字或固定页数/文献数判定。
-constraints: {}
-
 word_count:
   target: 9000
   tolerance: 800
   mode: cjk_only
-
-writing_coach:
-  enable_ai_stage_inference: true
-  ai_inference_mode: auto
-  fallback_rules:
-    draft_threshold_ratio: 0.4
-    draft_min_chars: 600
-
-slr_integration:
-  enabled: true
-  marker_folder: ".systematic-literature-review"
-  read_only: true
-  validate_citations: true
-  tex_patterns:
-    - "*.tex"
-    - "*_review.tex"
-  bib_patterns:
-    - "*.bib"
-    - "*_参考文献.bib"
-    - "references.bib"

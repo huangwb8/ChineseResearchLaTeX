@@ -21,11 +21,6 @@ def max_file_bytes(cfg: Mapping[str, Any], *, default_mb: int = 5) -> int:
     return max_file_size_mb(cfg, default=default_mb) * 1024 * 1024
 
 
-def writing_coach_preview_chars(cfg: Mapping[str, Any], *, default: int = 3000) -> int:
-    n = get_int(_limits_cfg(cfg), "writing_coach_preview_chars", default)
-    return max(300, n)
-
-
 def word_target_range(cfg: Mapping[str, Any], *, default_min: int = 100, default_max: int = 20000) -> Tuple[int, int]:
     wt = get_mapping(_limits_cfg(cfg), "word_target")
     lo = get_int(wt, "min", default_min)

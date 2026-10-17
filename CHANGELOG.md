@@ -8,7 +8,8 @@
 
 ## [Unreleased]
 
-- `nsfc-justification-writer` v1.3.2：依据标准 NSFC 项目样例校准立项依据边界，统一为“研究意义—国内外研究现状及发展动态（按主题分块）—小结”的内容链；科学问题/假设作为现状末端论证要素，主验证场景、总体研究目标、技术路线和判定规则移回后续章节；同步重写结构模板、方向示例、Tier2 与用户指南。
+- `nsfc-justification-writer` v1.5.0：删除不再使用的 `assets/` 资源和旧版 `coach`、`review`、`examples`、`apply-section` 入口；HTML 诊断报告模板移至 `references/`，主流程接口与文档同步收敛。
+- `nsfc-justification-writer` v1.3.4：将主标题规范收敛为“国内外研究现状”，禁止把“本项目切入点”并入标题；研究意义默认压缩为 2–3 段，研究现状主题小节默认 1 段、最多 2 段。同步更新模板、方向示例、Tier2、Prompt、验收清单与用户指南。
 
 ## [4.1.2] - 2026-10-17
 
