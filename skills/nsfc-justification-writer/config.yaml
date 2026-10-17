@@ -1,7 +1,7 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.6.0
-  description: "全自动撰写、重构、审查和润色 NSFC/科研基金立项依据；宿主 AI 负责理解与改写，脚本负责引用、路径和安全写入。"
+  version: 1.6.1
+  description: "撰写、重构、审查和润色 NSFC/科研基金申请书立项依据，保留可核验事实与 LaTeX 结构并通过安全写入链落盘。"
   category: writing
   author: "Bensz Conan"
 

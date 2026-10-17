@@ -7,6 +7,8 @@ The version number is the single source of truth in `config.yaml` (`skill_info.v
 ## [Unreleased]
 
 ### Changed
+- 按 `huangwb8/skills` 当前 Skill 规范重排 `SKILL.md`：采用固定的“目标—流程—输入/执行步骤/输出/输出管理/校验/失败与恢复—约束”骨架，补齐输出管理、失败恢复和可复现校验，并同步 canonical 公共约束块。
+- 将触发描述收敛为用途与边界，保留现有写作内容链、脚本入口、白名单、备份和回滚语义；版本推进至 `1.6.1`。
 - 版本推进至 `1.6.0`：删除旧版入口和兼容分支，备份、诊断和脚本 API 只使用当前路径与当前字段；移除 `Tier1/Tier2` 旧分层命名。
 - 版本推进至 `1.5.1`：删除信息表生成入口与隐式读取路径，脚本目录只保留确定性检查和安全写入职责；将 `HybridCoordinator` 更名为 `Coordinator`。
 - 删除不再参与主流程的信息表模板、`init` CLI 和交互式信息表代码；输入提取清单并入 `references/section_writing.md`，脚本只保留确定性检查与安全写入。

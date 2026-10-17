@@ -8,6 +8,7 @@
 
 ## [Unreleased]
 
+- `nsfc-justification-writer` v1.6.1：按 `huangwb8/skills` 当前 Skill 开发规范重排 `SKILL.md` 固定骨架，补齐输入/输出管理、失败恢复、可复现校验和 canonical 公共约束块；同步收敛触发描述与版本文档。
 - `nsfc-justification-writer` v1.6.0：删除旧版备份回退、分块别名和 Tier1/Tier2 分层命名，脚本只使用当前路径与当前诊断字段；信息表模板、`init` CLI 和交互式信息表代码已删除。
 - `nsfc-justification-writer` v1.5.0：删除不再使用的 `assets/` 资源和旧版 `coach`、`review`、`examples`、`apply-section` 入口；将 `references/` 收敛为分节写法与质量控制两份文档，删除 HTML 诊断报告功能，主流程接口与文档同步收敛。
 - `nsfc-justification-writer` v1.3.4：将主标题规范收敛为“国内外研究现状”，禁止把“本项目切入点”并入标题；研究意义默认压缩为 2–3 段，研究现状主题小节默认 1 段、最多 2 段。同步更新模板、方向示例、Tier2、Prompt、验收清单与用户指南。
