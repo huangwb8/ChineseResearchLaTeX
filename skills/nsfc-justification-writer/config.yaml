@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.7.0
+  version: 1.9.0
   description: "撰写、重构、审查和润色 NSFC/科研基金申请书立项依据，保留可核验事实与 LaTeX 结构并通过安全写入链落盘。"
   category: writing
   author: "Bensz Conan"

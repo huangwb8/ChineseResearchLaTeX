@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- `nsfc-justification-writer` v1.9.0：修复科学问题与科学假设被写成 `R1/R2/R3`、`H1/H2` 验证清单的问题，改为从研究现状缺口自然收束到核心问题，再由项目切入点提出可证伪假设；验证协议后置到研究方案。
+- `nsfc-justification-writer` v1.8.0：依据 2026-10-17 优化计划，新增正文判断与审查记录分离规则、必要限定压缩、缺证据时缩小主张、正文自然度质量控制和四类匿名回归样例；保留引用、事实、科学二分与安全写入链。
 - `nsfc-justification-writer` v1.7.0：移除 `9000±800` 默认字数目标及代码兜底，`wordcount`/`diagnose` 仅报告统计结果，不再进行目标、容差或扩写/压缩判定。
 - `nsfc-justification-writer` v1.6.1：按 `huangwb8/skills` 当前 Skill 开发规范重排 `SKILL.md` 固定骨架，补齐输入/输出管理、失败恢复、可复现校验和 canonical 公共约束块；同步收敛触发描述与版本文档。
 - `nsfc-justification-writer` v1.6.0：删除旧版备份回退、分块别名和 Tier1/Tier2 分层命名，脚本只使用当前路径与当前诊断字段；信息表模板、`init` CLI 和交互式信息表代码已删除。

@@ -143,7 +143,7 @@ SKILL_SPECS: tuple[SkillSpec, ...] = (
     SkillSpec(
         name="nsfc-justification-writer",
         stage="✍️ 标书写作",
-        summary="全自动立项依据语义写作、专业可读性复核与可逆写入",
+        summary="立项依据叙事写作与专业可读性复核；科学问题/假设从现状缺口自然收束，验证协议后置，可逆写入",
     ),
     SkillSpec(
         name="nsfc-research-content-writer",
