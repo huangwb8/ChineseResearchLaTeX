@@ -1,7 +1,7 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.3.0
-  description: "全自动撰写、重构、审查和润色 NSFC/科研基金立项依据；自动完成目标选择、Tier1+Tier2、保守假设、成稿、备份与写入，不在中途要求用户确认或审核。"
+  version: 1.3.2
+  description: "全自动撰写、重构、审查和润色 NSFC/科研基金立项依据；按研究意义—研究现状及发展动态—小结的内容链执行，自动完成目标选择、Tier1+Tier2、保守假设、成稿、备份与写入，不在中途要求用户确认或审核。"
   category: writing
   author: "Bensz Conan"
 
