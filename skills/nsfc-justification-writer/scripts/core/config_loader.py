@@ -156,27 +156,14 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
             err("quality.avoid_commands 必须是字符串列表")
 
     wc = config.get("word_count", {})
-    if not isinstance(wc, dict):
+    if wc is not None and not isinstance(wc, dict):
         err("word_count 必须是 dict")
-    else:
-        if not isinstance(wc.get("target", 4000), int):
-            err("word_count.target 必须是整数")
-        if not isinstance(wc.get("tolerance", 200), int):
-            err("word_count.tolerance 必须是整数")
-
-    limits = config.get("limits", {})
-    if limits is not None and not isinstance(limits, dict):
-        err("limits 必须是 dict")
-    elif isinstance(limits, dict):
-        if "word_target" in limits:
-            wt = limits.get("word_target")
-            if wt is not None and not isinstance(wt, dict):
-                err("limits.word_target 必须是 dict")
-            elif isinstance(wt, dict):
-                if "min" in wt and not isinstance(wt.get("min"), int):
-                    err("limits.word_target.min 必须是 int")
-                if "max" in wt and not isinstance(wt.get("max"), int):
-                    err("limits.word_target.max 必须是 int")
+    elif isinstance(wc, dict) and "mode" in wc:
+        if not isinstance(wc.get("mode"), str) or str(wc.get("mode")).strip() not in {
+            "cjk_only",
+            "cjk_strip_commands",
+        }:
+            err("word_count.mode 必须是 cjk_only 或 cjk_strip_commands")
 
     guardrails = config.get("guardrails")
     if not isinstance(guardrails, dict):

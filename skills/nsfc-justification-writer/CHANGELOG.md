@@ -7,6 +7,7 @@ The version number is the single source of truth in `config.yaml` (`skill_info.v
 ## [Unreleased]
 
 ### Changed
+- 版本推进至 `1.7.0`：删除 `9000±800` 默认字数目标、容差和代码兜底；`wordcount` 与 `diagnose` 仅保留字数统计，不再判定篇幅偏差。
 - 按 `huangwb8/skills` 当前 Skill 规范重排 `SKILL.md`：采用固定的“目标—流程—输入/执行步骤/输出/输出管理/校验/失败与恢复—约束”骨架，补齐输出管理、失败恢复和可复现校验，并同步 canonical 公共约束块。
 - 将触发描述收敛为用途与边界，保留现有写作内容链、脚本入口、白名单、备份和回滚语义；版本推进至 `1.6.1`。
 - 版本推进至 `1.6.0`：删除旧版入口和兼容分支，备份、诊断和脚本 API 只使用当前路径与当前字段；移除 `Tier1/Tier2` 旧分层命名。

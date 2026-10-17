@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.6.1
+  version: 1.7.0
   description: "撰写、重构、审查和润色 NSFC/科研基金申请书立项依据，保留可核验事实与 LaTeX 结构并通过安全写入链落盘。"
   category: writing
   author: "Bensz Conan"
@@ -38,11 +38,6 @@ targets:
 workspace:
   runs_dir: .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-justification-writer
 
-limits:
-  word_target:
-    min: 100
-    max: 20000
-
 references:
   # 缺失 bibkey 仍记录为事实风险；自动流程不暂停询问，宿主 AI 应优先改写为可核验表述。
   allow_missing_citations: false
@@ -69,7 +64,6 @@ quality:
   # 结构命令由 preview 的变更范围检查比较前后差异；不对现有正文中的命令逐字报警。
   avoid_commands: []
 
+# 仅定义统计口径；本 Skill 不设默认目标字数或容差。
 word_count:
-  target: 9000
-  tolerance: 800
   mode: cjk_only

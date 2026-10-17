@@ -29,14 +29,14 @@ metadata:
 1. 读取目标正文、相关研究内容、研究基础和 `.bib`，确认研究对象、现有瓶颈、证据、科学问题和假设；信息不足时采用最小保守假设，并把待核验项列入输出。
 2. 宿主 AI 一次性完成结构判断、论证规划、正文生成和语义审查。研究意义默认 2–3 段、约占正文 15%–25%；研究现状按主题组织，每个研究现状主题默认 1 段、必要时最多 2 段；科学问题用疑问句，科学假设用可证伪的预测性陈述。
 3. 保留已核验事实、限定、引用、标签和 LaTeX 结构；不新增无法在项目 `.bib` 中核验的文献、结果或绝对化结论。按 [质量控制](references/quality_control.md) 检查事实与证据、逻辑闭环、章节边界和专业可读性。
-4. 将完整正文提案交给 `scripts/run.py preview`。脚本检查路径白名单、引用 key/DOI、字数、结构命令和变更范围；检查通过后默认备份并写入，`--dry-run` 只生成 diff。
+4. 将完整正文提案交给 `scripts/run.py preview`。脚本检查路径白名单、引用 key/DOI、正文结构命令和变更范围，并可报告字数统计；检查通过后默认备份并写入，`--dry-run` 只生成 diff。
 5. 需要单独查看机器结果时使用 `diagnose`、`refs` 或 `wordcount`；需要回溯历史时使用 `list-runs`、`diff` 和 `rollback`。
 
 ### 输出
 
 - `preview`：目标文件的正文-only unified diff；成功写入时同时返回目标路径、修改摘要、假设/待核验项、备份路径和回滚命令。
 - `diagnose`：结构、引用、DOI、字数和配置约束的文本摘要；传入 `--json-out` 时额外保存 JSON。
-- `refs`：引用核验摘要及 BibTeX 补齐/核验提示；`wordcount`：当前字数、目标、容差和偏差状态。
+- `refs`：引用核验摘要及 BibTeX 补齐/核验提示；`wordcount`：按选定口径统计当前字数，不设默认目标、容差或偏差状态。
 - `list-runs`、`diff`、`rollback`：列出运行记录、查看某次运行的备份差异或从备份恢复。
 
 ### 输出管理
@@ -49,9 +49,9 @@ metadata:
 ### 校验
 
 - 运行 `python skills/nsfc-justification-writer/scripts/run.py validate-config`，确认配置字段和写入白名单有效。
-- 运行 `diagnose`，通过标准是目标路径在项目范围内、所有 `\\cite{...}` key 可在配置的 `.bib` 中找到、结构命令没有未经允许的变化，且字数结果已报告。
+- 运行 `diagnose`，通过标准是目标路径在项目范围内、所有 `\\cite{...}` key 可在配置的 `.bib` 中找到、结构命令没有未经允许的变化，且字数统计结果已报告（不作目标值判断）。
 - 运行 `preview --dry-run`，确认变更只涉及正文；出现结构/配置命令时默认拒绝，只有项目白名单允许且用户明确传入 `--allow-structural-change` 才能继续。
-- 运行 `python skills/nsfc-justification-writer/tests/test_semantic_boundaries.py` 验证目标解析、引用守护、备份/回滚和正文-only diff；测试缓存集中在 `.bensz-api/`。
+- 运行 `python skills/nsfc-justification-writer/tests/test_semantic_boundaries.py` 验证目标定位、字数无约束统计、引用守护、备份/回滚和正文-only diff；测试缓存集中在 `.bensz-api/`。
 - 结构规范另由仓库级 Skill 检查器验证；本 Skill 不把结构检查器当作语义质量判断的替代品。
 
 ### 失败与恢复

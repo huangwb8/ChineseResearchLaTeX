@@ -522,7 +522,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_diag.add_argument("--json-out", help="可选：输出 JSON 报告到文件")
     p_diag.set_defaults(func=cmd_diagnose)
 
-    p_wc = sub.add_parser("wordcount", help="统计 1.1 立项依据字数并给出偏差")
+    p_wc = sub.add_parser("wordcount", help="统计 1.1 立项依据字数（不设目标）")
     p_wc.add_argument("--project-root", required=True)
     p_wc.add_argument(
         "--mode",

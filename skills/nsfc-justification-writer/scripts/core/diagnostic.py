@@ -33,7 +33,6 @@ class DiagnosticChecks:
 @dataclass
 class DiagnosticReport:
     checks: DiagnosticChecks
-    word_target: Dict[str, Any]
     notes: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -51,7 +50,6 @@ class DiagnosticReport:
                 "avoid_commands_hits": self.checks.avoid_commands_hits,
                 "constraints": self.checks.constraints,
             },
-            "word_target": self.word_target,
             "notes": self.notes,
         }
 

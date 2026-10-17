@@ -18,7 +18,6 @@ from .security import (
     validate_target_file,
 )
 from .wordcount import count_cjk_chars, describe_word_count_mode
-from .word_target import resolve_word_target
 
 
 class Coordinator:
@@ -57,16 +56,9 @@ class Coordinator:
         project_root = Path(project_root).resolve()
         target = self._resolve_target(project_root)
         tex = read_text_streaming(target).text if target.exists() else ""
-        word_spec = resolve_word_target(config=self.config)
         checks = run_checks(tex_text=tex, project_root=project_root, config=self.config)
         report = DiagnosticReport(
             checks=checks,
-            word_target={
-                "target": word_spec.target,
-                "tolerance": word_spec.tolerance,
-                "source": word_spec.source,
-                "evidence": word_spec.evidence,
-            },
             notes=[],
         )
         self.obs.add("diagnose", **report.to_dict()["checks"])
@@ -78,13 +70,6 @@ class Coordinator:
 
     def format_diagnose(self, report: DiagnosticReport) -> str:
         out = ["诊断结果：", format_diagnostic(report.checks).rstrip()]
-        tgt = report.word_target
-        src = tgt.get("source", "")
-        ev = tgt.get("evidence", "")
-        out.append(
-            f"- 🎯 目标字数：{tgt.get('target')}（容差 ±{tgt.get('tolerance')}，"
-            f"来源：{src}{'，线索：' + ev if ev else ''}）"
-        )
         if report.notes:
             out.append("")
             out.append("备注：")
@@ -100,24 +85,11 @@ class Coordinator:
         used_mode = str(mode or wc_cfg.get("mode", "cjk_only")).strip() or "cjk_only"
         current = count_cjk_chars(tex, mode=used_mode).cjk_count
 
-        word_spec = resolve_word_target(config=self.config)
-        target_n = int(word_spec.target)
-        tol = int(word_spec.tolerance)
-        if abs(current - target_n) <= tol:
-            status = "within_tolerance"
-        elif current < target_n:
-            status = "need_expand"
-        else:
-            status = "need_compress"
-        self.obs.add("wordcount", current=current, target=target_n, tolerance=tol, status=status)
+        status = "unconstrained"
+        self.obs.add("wordcount", current=current, status=status)
         return {
             "current": current,
             "mode": used_mode,
             "mode_definition": describe_word_count_mode(used_mode),
-            "target": target_n,
-            "tolerance": tol,
-            "source": word_spec.source,
-            "evidence": word_spec.evidence,
             "status": status,
-            "delta": current - target_n,
         }
