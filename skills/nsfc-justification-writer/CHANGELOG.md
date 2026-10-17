@@ -7,8 +7,9 @@ The version number is the single source of truth in `config.yaml` (`skill_info.v
 ## [Unreleased]
 
 ### Changed
-- 清理已停用的 `assets/` 资源目录，删除旧版 `coach`、`review`、`examples` 和 `apply-section` 入口及其专用模块；HTML 诊断报告模板移至 `references/report_template.html`，配置只保留当前主流程需要的字段。
-- 补充 `SKILL.md` 的参考资料路由，明确 `references/` 下各文档在内容规划、科学问题/假设凝练、Tier2 语义审查、诊断解释和最终验收中的读取时机，并在 README 提供索引。
+- 将 `references/` 收敛为 `section_writing.md` 和 `quality_control.md` 两份工作文档；信息表保留为 `scripts/templates/info_form.md`，删除 HTML 报告模板及其 CLI 功能。
+- 清理已停用的 `assets/` 资源目录，删除旧版 `coach`、`review`、`examples` 和 `apply-section` 入口及其专用模块，配置只保留当前主流程需要的字段。
+- 补充 `SKILL.md` 的参考资料路由，并在 README 提供索引。
 
 - 版本推进至 `1.5.0`：主流程收敛为“宿主 AI 一次性完成理解与改写，Python 完成安全检查与写入”，不再保留旧版兼容入口。
 

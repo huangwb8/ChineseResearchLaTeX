@@ -3,6 +3,8 @@ name: nsfc-justification-writer
 description: 当用户要求写作、重构、审查或润色 NSFC/科研基金申请书的立项依据时使用。宿主 AI 一次性完成理解、论证和正文改写；脚本负责目标定位、引用检查、白名单、diff、备份和安全写入。内容覆盖研究意义、国内外研究现状、科学问题与科学假设和小结；不把研究目标、技术路线、主验证场景或判定规则写成立项依据主线。
 metadata:
   author: Bensz Conan
+  keywords:
+    - nsfc-justification-writer
 ---
 # 科研立项依据写作器
 
@@ -17,14 +19,10 @@ metadata:
 
 ## 参考资料路由
 
-以下链接均相对于本 Skill 目录。按当前任务读取需要的资料，不要默认加载整个 `references/` 目录：
+references/ 只保留两份工作文档，按需读取：
 
-- **确定内容链和写作取向**：先读 [`theoretical_innovation_guidelines.md`](references/theoretical_innovation_guidelines.md)；需要把理论导向落实为执行安排时，再读 [`theoretical_innovation_plan.md`](references/theoretical_innovation_plan.md)。
-- **材料不足或需要结构化输入**：使用 [`info_form.md`](references/info_form.md) 作为字段模板；它是输入参考，不是必须由用户填写的交互步骤。
-- **凝练科学问题与科学假设**：分别读 [`scientific_question_guidelines.md`](references/scientific_question_guidelines.md) 和 [`scientific_hypothesis_guidelines.md`](references/scientific_hypothesis_guidelines.md)，检查“瓶颈—约束—问题—假设”的对应关系。
-- **检查方法术语是否抢占主线**：涉及方法、模型或平台表述时读 [`methodology_term_examples.md`](references/methodology_term_examples.md)。
-- **执行语义审查**：每次写入前必须读 [`tier2_semantic_review.md`](references/tier2_semantic_review.md)；需要逐句改善大同行可读性时一并读 [`professional_readability_guidelines.md`](references/professional_readability_guidelines.md)，检查夸大或绝对化表述时读 [`boastful_expression_guidelines.md`](references/boastful_expression_guidelines.md)。
-- **解释机器诊断或做最终验收**：诊断结果难以解释时参考 [`diagnostic_examples.md`](references/diagnostic_examples.md)；写入前按 [`dod_checklist.md`](references/dod_checklist.md) 做完成度核对。
+- [`section_writing.md`](references/section_writing.md)：说明论证地图、四个小节的段落推进、路线比较、证据组织和章节边界。
+- [`quality_control.md`](references/quality_control.md)：说明 AI 语义审查和 Python 安全检查的共同验收项。
 
 ## AI 的工作边界
 
@@ -32,7 +30,7 @@ AI 自主决定研究现状的主题、证据与缺口的关系、科学问题�
 
 AI 必须保留已核验事实、限定、引用、标签和 LaTeX 结构；不新增无法核验的文献、结果或绝对化结论。研究目标、技术路线、主验证场景、终点、阈值和风险处理只作后续章节的简短衔接，不在立项依据中展开。
 
-语义审查按历史文件 `references/tier2_semantic_review.md` 执行一次，至少覆盖事实与证据、逻辑闭环、科学问题/假设、章节边界和专业可读性。主流程不分检查层，也不分多个写作阶段。
+语义审查按 `references/quality_control.md` 执行一次，至少覆盖事实与证据、逻辑闭环、科学问题/假设、章节边界和专业可读性。主流程不分检查层，也不分多个写作阶段。
 
 ## 脚本的工作边界
 

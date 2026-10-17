@@ -19,4 +19,4 @@
 
 可选补充：**字数限制**（如 4000 中文字符 ±200）；**术语口径**（对象称呼、核心指标、缩写是否首次写全称）。
 
-扩展阅读：`references/scientific_question_guidelines.md`、`references/scientific_hypothesis_guidelines.md`。
+扩展阅读：`references/section_writing.md`。

@@ -65,7 +65,7 @@ guardrails:
   auto_retry_body_only: true
 
 quality:
-  # 吹牛式表述由宿主 AI 按 references/boastful_expression_guidelines.md 语义复核；
+  # 夸大或绝对化表述由宿主 AI 按 references/quality_control.md 语义复核；
   # Python 不维护固定短语表，也不对正文措辞做硬编码判定。
   # 结构命令由 preview 的变更范围检查比较前后差异；不对现有正文中的命令逐字报警。
   avoid_commands: []

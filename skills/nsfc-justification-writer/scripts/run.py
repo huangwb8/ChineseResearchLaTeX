@@ -10,7 +10,6 @@ import os
 import subprocess
 import sys
 import traceback
-import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -28,7 +27,6 @@ from core.config_access import get_bool, get_mapping, get_seq_str, get_str
 from core.bib_manager_integration import BibFixSuggestion
 from core.change_guard import inspect_proposal
 from core.errors import BackupNotFoundError, SkillError
-from core.html_report import render_diagnostic_html
 from core.hybrid_coordinator import HybridCoordinator
 from core.info_form import copy_info_form_template
 from core.logging_utils import configure_logging
@@ -211,37 +209,6 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
     if args.json_out:
         _write_json(Path(args.json_out), report.to_dict())
 
-    if args.html_report:
-        if getattr(args, "verbose", False):
-            logger.info("⏳ 正在生成 HTML 报告...")
-        run_id = args.run_id or make_run_id("diagnose")
-        runs_root = get_runs_dir(skill_root, config)
-        out_path = Path(args.html_report)
-        if str(args.html_report).strip().lower() == "auto":
-            out_path = (runs_root / run_id / "reports" / "diagnose.html").resolve()
-
-        target = coord.target_path(project_root=Path(args.project_root))
-        try:
-            target_relpath = target.relative_to(Path(args.project_root).resolve()).as_posix()
-        except ValueError:
-            target_relpath = target.name
-        tex = target.read_text(encoding="utf-8", errors="ignore") if target.exists() else ""
-        html_text = render_diagnostic_html(
-            skill_root=skill_root,
-            project_root=Path(args.project_root),
-            target_relpath=target_relpath,
-            tex_text=tex,
-            report=report,
-        )
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(html_text, encoding="utf-8")
-        print(f"🧩 HTML 报告：{out_path}")
-        if bool(getattr(args, "open", False)):
-            try:
-                webbrowser.open(out_path.resolve().as_uri())
-            except (OSError, ValueError, webbrowser.Error) as e:
-                if bool(getattr(args, "verbose", False)):
-                    logger.warning("⚠️ 打开浏览器失败：%s: %s", type(e).__name__, str(e))
     return 0
 
 
@@ -481,7 +448,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     out_path = Path(args.out) if args.out else (runs_root / run_id / "inputs" / "info_form.md")
     out_path = out_path.resolve()
 
-    template_path = (skill_root / "references" / "info_form.md").resolve()
+    template_path = (skill_root / "scripts" / "templates" / "info_form.md").resolve()
     ok = copy_info_form_template(template_path=template_path, out_path=out_path)
     if not ok:
         logger.error("❌ 未找到 info_form 模板。")
@@ -576,12 +543,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_diag = sub.add_parser("diagnose", help="机器诊断（结构/引用/字数）")
     p_diag.add_argument("--project-root", required=True)
     p_diag.add_argument("--json-out", help="可选：输出 JSON 报告到文件")
-    p_diag.add_argument(
-        "--html-report",
-        help="可选：输出 HTML 报告到文件；用 auto 输出到当前任务的 runs_dir...",
-    )
-    p_diag.add_argument("--open", action="store_true", help="若生成 HTML 报告则尝试自动打开浏览器")
-    p_diag.add_argument("--run-id", help="可选：diagnose 的 run_id（用于 html-report=auto）")
     p_diag.set_defaults(func=cmd_diagnose)
 
     p_wc = sub.add_parser("wordcount", help="统计 1.1 立项依据字数并给出偏差")

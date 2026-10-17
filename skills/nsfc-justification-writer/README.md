@@ -26,14 +26,10 @@
 
 ## 参考资料
 
-执行时按阶段读取 Skill 内的参考文档，不需要一次加载全部资料：
+- [分节写法](references/section_writing.md)：从论证地图到四个小节的段落推进、证据组织和章节边界。
+- [质量控制](references/quality_control.md)：AI 语义审查与脚本安全检查。
 
-- 内容链与理论导向：[`theoretical_innovation_guidelines.md`](references/theoretical_innovation_guidelines.md)、[`theoretical_innovation_plan.md`](references/theoretical_innovation_plan.md)；
-- 信息整理、科学问题与科学假设：[`info_form.md`](references/info_form.md)、[`scientific_question_guidelines.md`](references/scientific_question_guidelines.md)、[`scientific_hypothesis_guidelines.md`](references/scientific_hypothesis_guidelines.md)；
-- 语义审查、可读性和措辞：[`tier2_semantic_review.md`](references/tier2_semantic_review.md)、[`professional_readability_guidelines.md`](references/professional_readability_guidelines.md)、[`boastful_expression_guidelines.md`](references/boastful_expression_guidelines.md)、[`methodology_term_examples.md`](references/methodology_term_examples.md)；
-- 诊断与验收：[`diagnostic_examples.md`](references/diagnostic_examples.md)、[`dod_checklist.md`](references/dod_checklist.md)。
-
-`SKILL.md` 中的[参考资料路由](SKILL.md#参考资料路由)说明了每份资料的读取时机。
+信息表模板属于脚本运行资源，位于 `scripts/templates/info_form.md`；诊断命令只输出文本或 JSON，不生成 HTML 报告。
 
 ## 固定写作边界
 

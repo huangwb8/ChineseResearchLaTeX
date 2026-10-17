@@ -87,7 +87,7 @@ class HybridCoordinator:
         self.obs.add("diagnose.tier1", **report.to_dict()["tier1"])
 
         report.notes.append(
-            "机器检查已完成；写入前由当前宿主 AI 按 references/tier2_semantic_review.md 做一次语义审查。"
+            "机器检查已完成；写入前由当前宿主 AI 按 references/quality_control.md 做一次语义审查。"
         )
         return report
 
