@@ -38,6 +38,10 @@ version=17
 
 ---
 
+基于 /Volumes/2T01/winE/iProjects/Manuscripts/NSFC_Young_2027/docs/plans/2026-10-17-nsfc-justification-writer-章节边界优化.md 优化 skills/nsfc-justification-writer
+
+---
+
 你搞一下 https://github.com/huangwb8/ChineseResearchLaTeX/issues/54 。 如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
