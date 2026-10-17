@@ -176,11 +176,6 @@ SKILL_SPECS: tuple[SkillSpec, ...] = (
         summary="NSFC 标书篇幅对齐（检查差距 → 扩写/压缩到达标）",
     ),
     SkillSpec(
-        name="nsfc-humanization",
-        stage="✍️ 标书写作",
-        summary="分词语/句法/段落/章节四层去 AI 机器味，识别工程协议腔、术语漂移并审计安全不变量",
-    ),
-    SkillSpec(
         name="paper-write-sci",
         stage="📝 SCI 论文",
         summary="SCI 期刊论文写作与修订（风格化写作、数字审查、逻辑审查、写作节奏护栏、PDF/Word 渲染闭环）",

@@ -129,7 +129,6 @@
 | 写/改研究内容 + 创新 + 年度计划 | `nsfc-research-content-writer` | "帮我写研究内容" |
 | 写/改研究基础 + 工作条件 | `nsfc-research-foundation-writer` | "帮我写研究基础" |
 | 生成中英文摘要 | `nsfc-abstract` | "帮我生成摘要" |
-| 去 AI 机器味润色 | `nsfc-humanization` | "润色这段文字" |
 | 全文质量控制 | `nsfc-qc` | "帮我做质量控制" |
 | 模拟专家评审 | `nsfc-reviewers` | "帮我模拟专家评审" |
 | 新增/核验参考文献 | `nsfc-bib-manager` | "帮我加引用" |

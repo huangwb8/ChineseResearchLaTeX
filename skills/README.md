@@ -727,41 +727,6 @@ python3 research-literature-search/scripts/search_runner.py validate --bundle ./
 
 ---
 
-### 22. nsfc-humanization - 去 AI 机器味润色
-
-**状态**：✅ 稳定（版本见 `skills/nsfc-humanization/config.yaml`）
-
-**类型**：📝 日常
-
-**功能**：在不新增信息、不破坏 LaTeX 结构的前提下，按词语、句法、段落和章节四层去除 NSFC 标书“机器味”，识别工程协议腔、规格书字段串、术语漂移、跨章节重复，并审计安全不变量
-
-**使用场景**：
-- 正文已经基本成型，但表达发硬、句式过于模板化
-- 段落反复出现“不是……而是……”“不只是……更是……”等整齐二分句式
-- 段落大量使用概念定位和泛化功能词，研究动作不够清楚
-- 需要保持 `\item`、`\caption{}`、引用 key 和数学公式不变
-- 想做最小改动式润色，而不是整段重写
-
-**推荐 Prompt 模板**：
-
-```text
-请使用 nsfc-humanization 润色以下段落（仅润色表达，不新增信息，不改 LaTeX 结构）：
-
-[粘贴你的标书文本]
-```
-
-**技能特点**：
-- 核心原则是“语义零损失 + 结构保护”
-- 兼容纯文本与 LaTeX 混合文本，保护代码状态、数字、阈值、分母和失败处理
-- 通过术语表和“保留/改写/合并/人工确认”分类降低误报
-- 支持把抽象定位句改写为原文事实支持的研究动作句
-- 支持 `minimal / moderate / aggressive` 三档润色强度
-- 可选输出分层诊断、变更摘要与 STYLE_CARD，便于跨段落保持风格一致
-
-[详细文档 →](nsfc-humanization/README.md)
-
----
-
 ## 技能依赖关系
 
 某些技能依赖其他技能的输出，形成完整的工作流：
@@ -778,7 +743,6 @@ python3 research-literature-search/scripts/search_runner.py validate --bundle ./
 - **nsfc系列写作skills**：最终撰写标书各模块（可选依赖 research-guide-updater 优化的指南）
 - **nsfc-budget**：基于完整正文与补充材料生成预算说明书（通常放在正文接近完成后）
 - **nsfc-length-aligner**：在中后期检查总篇幅与章节分布，防止结构失衡
-- **nsfc-humanization**：在定稿前去掉明显“机器味”，保持表达更像人工撰写
 - **nsfc-qc**：在送审前做只读体检，集中排查文风/引用/篇幅/逻辑/缩写问题
 - **nsfc-reviewers**：标书完成后模拟专家评审（依赖标书完整正文）
 - **paper-write-sci**：SCI 论文写作与修订（依赖 LaTeX 论文项目结构）
@@ -799,9 +763,8 @@ python3 research-literature-search/scripts/search_runner.py validate --bundle ./
 7. **nsfc-research-content-writer** → 撰写研究内容
 8. **nsfc-research-foundation-writer** → 撰写研究基础
 9. **nsfc-length-aligner** → 对齐整体篇幅与章节分布
-10. **nsfc-humanization** → 去掉明显机器味，做表达层精修
-11. **nsfc-qc** → 做只读质量控制，集中排查问题
-12. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
+10. **nsfc-qc** → 做只读质量控制，集中排查问题
+11. **nsfc-reviewers** → 模拟专家评审，发现问题并迭代优化
 
 对于 SCI 论文写作，建议按以下顺序使用技能：
 

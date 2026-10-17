@@ -8,6 +8,14 @@
 
 ## [Unreleased]
 
+## [4.1.2] - 2026-10-17
+
+本次发布汇总 `v4.1.1` 之后的全部变更，移除已迁移至 `huangwb8/skills` 的通用写作风格 Skill，并同步清理登记、项目调用指引、Prompt 与文档索引；同时生成全部项目的 v4.1.2 标准版和 Overleaf 版 ZIP。
+
+### Removed（移除）
+
+- 删除 `skills/nsfc-humanization/` 及技能登记、README 总览、NSFC 项目调用指引和专属 Prompt。写作风格 humanization 属于通用能力，已改名并迁至 `huangwb8/skills` 仓库维护，本仓库不再提供该 Skill。
+
 ## [4.1.1] - 2026-10-04
 
 本次发布汇总 `v4.1.0` 之后的完整变更，重点包括西电本科模板、研究文献发现与解读、研究想法的证据闭环，以及检索与综述契约改进。同步生成全部 23 个项目的标准版和 Overleaf 版 ZIP。
