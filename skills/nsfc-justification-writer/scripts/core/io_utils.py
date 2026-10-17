@@ -60,27 +60,6 @@ def read_text_streaming(
     return ReadTextResult(text="".join(parts), truncated=truncated, bytes_read=bytes_read, total_bytes=total)
 
 
-def iter_text_chunks_by_subsubsection_mark(
-    path: Path,
-    *,
-    encoding: str = "utf-8",
-    errors: str = "ignore",
-    max_chars: int,
-    max_chunks: int,
-) -> Iterator[str]:
-    """
-    legacy 兼容名称：实际转发到不依赖任何标题宏的段落分块。
-    """
-    # 兼容旧调用；新 Tier2 路径使用不依赖标题宏的 paragraph 分块。
-    yield from iter_text_chunks_by_paragraph(
-        path,
-        encoding=encoding,
-        errors=errors,
-        max_chars=max_chars,
-        max_chunks=max_chunks,
-    )
-
-
 def iter_text_chunks_by_paragraph(
     path: Path,
     *,

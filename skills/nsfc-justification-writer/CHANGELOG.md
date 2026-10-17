@@ -7,7 +7,10 @@ The version number is the single source of truth in `config.yaml` (`skill_info.v
 ## [Unreleased]
 
 ### Changed
-- 将 `references/` 收敛为 `section_writing.md` 和 `quality_control.md` 两份工作文档；信息表保留为 `scripts/templates/info_form.md`，删除 HTML 报告模板及其 CLI 功能。
+- 版本推进至 `1.6.0`：删除旧版入口和兼容分支，备份、诊断和脚本 API 只使用当前路径与当前字段；移除 `Tier1/Tier2` 旧分层命名。
+- 版本推进至 `1.5.1`：删除信息表生成入口与隐式读取路径，脚本目录只保留确定性检查和安全写入职责；将 `HybridCoordinator` 更名为 `Coordinator`。
+- 删除不再参与主流程的信息表模板、`init` CLI 和交互式信息表代码；输入提取清单并入 `references/section_writing.md`，脚本只保留确定性检查与安全写入。
+- 将旧的 `HybridCoordinator` 重命名为 `Coordinator`，移除已停用的 Tier2 编排字段和信息表字数解析路径。
 - 清理已停用的 `assets/` 资源目录，删除旧版 `coach`、`review`、`examples` 和 `apply-section` 入口及其专用模块，配置只保留当前主流程需要的字段。
 - 补充 `SKILL.md` 的参考资料路由，并在 README 提供索引。
 

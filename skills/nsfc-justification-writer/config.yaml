@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.5.0
+  version: 1.6.0
   description: "全自动撰写、重构、审查和润色 NSFC/科研基金立项依据；宿主 AI 负责理解与改写，脚本负责引用、路径和安全写入。"
   category: writing
   author: "Bensz Conan"
@@ -39,7 +39,6 @@ workspace:
   runs_dir: .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-justification-writer
 
 limits:
-  max_file_size_mb: 5
   word_target:
     min: 100
     max: 20000

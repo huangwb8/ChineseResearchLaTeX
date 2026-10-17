@@ -13,12 +13,12 @@ from .config_loader import get_runs_dir, load_config, validate_config
 from .diagnostic import DiagnosticReport
 from .editor import ApplyResult
 from .errors import SkillError
-from .hybrid_coordinator import HybridCoordinator
+from .coordinator import Coordinator
 
 __all__ = [
     "ApplyResult",
     "DiagnosticReport",
-    "HybridCoordinator",
+    "Coordinator",
     "SkillError",
     "get_runs_dir",
     "load_config",

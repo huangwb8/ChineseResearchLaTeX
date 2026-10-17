@@ -27,14 +27,13 @@ from core.config_access import get_bool, get_mapping, get_seq_str, get_str
 from core.bib_manager_integration import BibFixSuggestion
 from core.change_guard import inspect_proposal
 from core.errors import BackupNotFoundError, SkillError
-from core.hybrid_coordinator import HybridCoordinator
-from core.info_form import copy_info_form_template
+from core.coordinator import Coordinator
 from core.logging_utils import configure_logging
 from core.observability import ensure_run_dir, make_run_id
 from core.reference_validator import check_citations
 from core.security import validate_target_file
 from core.editor import apply_new_content
-from core.versioning import find_backup_for_run_v2, list_runs, rollback_from_backup, unified_diff
+from core.versioning import find_backup_for_run, list_runs, rollback_from_backup, unified_diff
 
 logger = logging.getLogger(__name__)
 
@@ -195,14 +194,11 @@ def _load_config_for_args(skill_root: Path, args: argparse.Namespace) -> Dict[st
 def cmd_diagnose(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
+    coord = Coordinator(skill_root=skill_root, config=config)
 
     if getattr(args, "verbose", False):
-            logger.info("⏳ 正在运行机器检查；随后由宿主 AI 做一次语义审查...")
-    report = coord.diagnose(
-        project_root=Path(args.project_root),
-        include_tier2=True,
-    )
+        logger.info("⏳ 正在运行机器检查；随后由宿主 AI 做一次语义审查...")
+    report = coord.diagnose(project_root=Path(args.project_root))
     text = coord.format_diagnose(report)
     print(text, end="")
 
@@ -215,7 +211,7 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
 def cmd_wordcount(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
+    coord = Coordinator(skill_root=skill_root, config=config)
     status = coord.word_count_status(project_root=Path(args.project_root), mode=getattr(args, "mode", None))
     print(json.dumps(status, ensure_ascii=False, indent=2))
     return 0
@@ -224,13 +220,13 @@ def cmd_wordcount(args: argparse.Namespace) -> int:
 def cmd_refs(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
+    coord = Coordinator(skill_root=skill_root, config=config)
 
-    report = coord.diagnose(project_root=Path(args.project_root), include_tier2=False)
+    report = coord.diagnose(project_root=Path(args.project_root))
     sug = BibFixSuggestion(
-        missing_bibkeys=list(report.tier1.missing_citation_keys or []),
-        missing_doi_keys=list(getattr(report.tier1, "missing_doi_keys", []) or []),
-        invalid_doi_keys=list(getattr(report.tier1, "invalid_doi_keys", []) or []),
+        missing_bibkeys=list(report.checks.missing_citation_keys or []),
+        missing_doi_keys=list(getattr(report.checks, "missing_doi_keys", []) or []),
+        invalid_doi_keys=list(getattr(report.checks, "invalid_doi_keys", []) or []),
     )
     md = sug.to_markdown(project_root=str(Path(args.project_root)))
     if str(getattr(args, "verify_doi", "none")).strip().lower() == "crossref":
@@ -342,7 +338,7 @@ def cmd_preview(args: argparse.Namespace) -> int:
     """生成完整正文提案 diff，并按配置自动写入（--dry-run 时保持只读）。"""
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
+    coord = Coordinator(skill_root=skill_root, config=config)
     project_root = Path(args.project_root).resolve()
     guard = get_mapping(config, "guardrails")
     auto_apply = (
@@ -439,24 +435,6 @@ def cmd_preview(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_init(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    config = _load_config_for_args(skill_root, args)
-    runs_root = get_runs_dir(skill_root, config)
-    run_id = args.run_id or make_run_id("init")
-
-    out_path = Path(args.out) if args.out else (runs_root / run_id / "inputs" / "info_form.md")
-    out_path = out_path.resolve()
-
-    template_path = (skill_root / "scripts" / "templates" / "info_form.md").resolve()
-    ok = copy_info_form_template(template_path=template_path, out_path=out_path)
-    if not ok:
-        logger.error("❌ 未找到 info_form 模板。")
-        return 2
-    print(f"✅ 已生成信息表模板：{out_path}")
-    return 0
-
-
 def cmd_list_runs(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
@@ -473,7 +451,7 @@ def cmd_list_runs(args: argparse.Namespace) -> int:
 def cmd_diff(args: argparse.Namespace) -> int:
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
+    coord = Coordinator(skill_root=skill_root, config=config)
     runs_root = get_runs_dir(skill_root, config)
     target = coord.target_path(project_root=Path(args.project_root))
     try:
@@ -481,11 +459,10 @@ def cmd_diff(args: argparse.Namespace) -> int:
     except ValueError:
         target_relpath = target.name
     try:
-        backup = find_backup_for_run_v2(
+        backup = find_backup_for_run(
             runs_root=runs_root,
             run_id=str(args.run_id),
             target_relpath=target_relpath,
-            filename_fallback=target.name,
         )
     except BackupNotFoundError:
         logger.error("❌ 未找到 run_id=%s 的备份文件。", str(args.run_id))
@@ -509,7 +486,7 @@ def cmd_rollback(args: argparse.Namespace) -> int:
         return 2
     skill_root = Path(__file__).resolve().parent.parent
     config = _load_config_for_args(skill_root, args)
-    coord = HybridCoordinator(skill_root=skill_root, config=config)
+    coord = Coordinator(skill_root=skill_root, config=config)
     runs_root = get_runs_dir(skill_root, config)
     target = coord.target_path(project_root=Path(args.project_root))
     try:
@@ -561,11 +538,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_refs.add_argument("--doi-timeout", default=5.0, type=float, help="Crossref 校验超时时间（秒）")
     p_refs.add_argument("--out", help="可选：输出到文件（markdown）")
     p_refs.set_defaults(func=cmd_refs)
-
-    p_init = sub.add_parser("init", help="生成信息表 info_form.md；宿主 AI 自动提取和补齐内容")
-    p_init.add_argument("--out", help="输出路径（默认写到 runs_dir/<run_id>/inputs/info_form.md）")
-    p_init.add_argument("--run-id", help="可选：指定 run_id（默认按时间生成）")
-    p_init.set_defaults(func=cmd_init)
 
     p_runs = sub.add_parser("list-runs", help="列出 runs_dir 下的 run_id（用于 diff/rollback）")
     p_runs.add_argument("--limit", default=20, type=int)

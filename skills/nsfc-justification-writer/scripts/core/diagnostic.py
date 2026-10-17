@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .config_access import get_mapping
 from .hard_rules import QualityRule, StructureRule, load_quality_rule, load_structure_rule
@@ -16,7 +16,7 @@ from .wordcount import WordCountResult, count_cjk_chars
 
 
 @dataclass(frozen=True)
-class Tier1Report:
+class DiagnosticChecks:
     structure_ok: bool
     structure_check_enabled: bool
     subsubsection_count: int
@@ -32,27 +32,25 @@ class Tier1Report:
 
 @dataclass
 class DiagnosticReport:
-    tier1: Tier1Report
-    tier2: Optional[Dict[str, Any]] = None
-    word_target: Optional[Dict[str, Any]] = None
+    checks: DiagnosticChecks
+    word_target: Dict[str, Any]
     notes: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "tier1": {
-                "structure_ok": self.tier1.structure_ok,
-                "structure_check_enabled": self.tier1.structure_check_enabled,
-                "subsubsection_count": self.tier1.subsubsection_count,
-                "missing_subsubsections": self.tier1.missing_subsubsections,
-                "citation_ok": self.tier1.citation_ok,
-                "missing_citation_keys": self.tier1.missing_citation_keys,
-                "missing_doi_keys": self.tier1.missing_doi_keys,
-                "invalid_doi_keys": self.tier1.invalid_doi_keys,
-                "word_count": self.tier1.word_count,
-                "avoid_commands_hits": self.tier1.avoid_commands_hits,
-                "constraints": self.tier1.constraints,
+            "checks": {
+                "structure_ok": self.checks.structure_ok,
+                "structure_check_enabled": self.checks.structure_check_enabled,
+                "subsubsection_count": self.checks.subsubsection_count,
+                "missing_subsubsections": self.checks.missing_subsubsections,
+                "citation_ok": self.checks.citation_ok,
+                "missing_citation_keys": self.checks.missing_citation_keys,
+                "missing_doi_keys": self.checks.missing_doi_keys,
+                "invalid_doi_keys": self.checks.invalid_doi_keys,
+                "word_count": self.checks.word_count,
+                "avoid_commands_hits": self.checks.avoid_commands_hits,
+                "constraints": self.checks.constraints,
             },
-            "tier2": self.tier2,
             "word_target": self.word_target,
             "notes": self.notes,
         }
@@ -83,12 +81,12 @@ def _check_quality(text: str, rule: QualityRule) -> tuple[List[str], List[str]]:
     return [], cmd_hits
 
 
-def run_tier1(
+def run_checks(
     *,
     tex_text: str,
     project_root: Path,
     config: Dict[str, Any],
-) -> Tier1Report:
+) -> DiagnosticChecks:
     structure_rule = load_structure_rule(config)
     quality_rule = load_quality_rule(config)
 
@@ -108,7 +106,7 @@ def run_tier1(
 
     constraints: Dict[str, Any] = snapshot_third_party_constraints(tex_text=tex_text, config=config)
 
-    return Tier1Report(
+    return DiagnosticChecks(
         structure_ok=structure_ok,
         structure_check_enabled=_structure_check_enabled(structure_rule),
         subsubsection_count=count,
@@ -123,7 +121,7 @@ def run_tier1(
     )
 
 
-def format_tier1(report: Tier1Report) -> str:
+def format_diagnostic(report: DiagnosticChecks) -> str:
     lines: List[str] = []
     if not report.structure_check_enabled:
         lines.append(f"- ℹ️ 未启用固定结构检查：检测到 subsubsection={report.subsubsection_count}（标题/宏由用户保留）")

@@ -29,7 +29,7 @@ def load_structure_rule(config: Mapping[str, Any]) -> StructureRule:
     return StructureRule(
         expected_subsubsections=[str(x) for x in expected],
         strict_title_match=get_bool(s, "strict_title_match", False),
-        # 没有结构配置时不把文档判为空；标题/宏只在 legacy 写入命令中使用。
+        # 没有结构配置时不把文档判为空。
         min_subsubsection_count=get_int(s, "min_subsubsection_count", 0),
     )
 

@@ -30,43 +30,23 @@ def list_runs(*, runs_root: Path) -> List[RunInfo]:
     return sorted(items, key=lambda x: x.run_id, reverse=True)
 
 
-def find_backup_for_run(*, runs_root: Path, run_id: str, filename: str) -> Path:
+def find_backup_for_run(*, runs_root: Path, run_id: str, target_relpath: str) -> Path:
     runs_root = Path(runs_root).resolve()
     run_dir = (runs_root / run_id).resolve()
     if not run_dir.is_dir():
         raise BackupNotFoundError(run_id)
 
-    candidates = sorted(run_dir.glob(f"backup/**/{filename}"))
-    if not candidates:
+    rel = Path(str(target_relpath).strip())
+    if rel.is_absolute() or ".." in rel.parts or not rel.parts:
         raise BackupNotFoundError(run_id)
-    return candidates[-1].resolve()
-
-
-def find_backup_for_run_v2(
-    *,
-    runs_root: Path,
-    run_id: str,
-    target_relpath: Optional[str],
-    filename_fallback: str,
-) -> Path:
-    """
-    优先按 target_relpath 精确定位备份；找不到则回退到旧版“按文件名”匹配。
-    兼容历史 runs 目录结构。
-    """
-    runs_root = Path(runs_root).resolve()
-    run_dir = (runs_root / run_id).resolve()
-    if not run_dir.is_dir():
+    backup = (run_dir / "backup" / run_id / rel).resolve()
+    try:
+        backup.relative_to(run_dir / "backup" / run_id)
+    except ValueError as exc:
+        raise BackupNotFoundError(run_id) from exc
+    if not backup.is_file():
         raise BackupNotFoundError(run_id)
-
-    if target_relpath:
-        rel = str(target_relpath).strip().lstrip("/").lstrip("\\")
-        if rel and (".." not in Path(rel).parts):
-            candidates = sorted(run_dir.glob(f"backup/**/{rel}"))
-            if candidates:
-                return candidates[-1].resolve()
-
-    # backward-compatible fallback
-    return find_backup_for_run(runs_root=runs_root, run_id=run_id, filename=filename_fallback)
+    return backup
 
 
 def unified_diff(
@@ -88,16 +68,15 @@ def rollback_from_backup(
     runs_root: Path,
     run_id: str,
     target_path: Path,
-    target_relpath: Optional[str] = None,
+    target_relpath: str,
     backup_current: bool = True,
     rollback_run_id: Optional[str] = None,
 ) -> Path:
     target_path = Path(target_path).resolve()
-    backup_path = find_backup_for_run_v2(
+    backup_path = find_backup_for_run(
         runs_root=runs_root,
         run_id=run_id,
         target_relpath=target_relpath,
-        filename_fallback=target_path.name,
     )
     desired = backup_path.read_text(encoding="utf-8", errors="ignore")
 

@@ -168,8 +168,6 @@ def validate_config(*, skill_root: Path, config: Dict[str, Any]) -> List[str]:
     if limits is not None and not isinstance(limits, dict):
         err("limits 必须是 dict")
     elif isinstance(limits, dict):
-        if "max_file_size_mb" in limits and not isinstance(limits.get("max_file_size_mb"), int):
-            err("limits.max_file_size_mb 必须是 int")
         if "word_target" in limits:
             wt = limits.get("word_target")
             if wt is not None and not isinstance(wt, dict):

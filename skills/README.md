@@ -175,7 +175,7 @@ graph LR
 
 ### 5. nsfc-justification-writer - 全自动立项依据语义写作与专业可读性复核
 
-**状态**：✅ 稳定（v1.5.0）
+**状态**：✅ 稳定（v1.6.0）
 
 **类型**：📝 日常
 
@@ -194,7 +194,7 @@ graph LR
 ```
 请使用 nsfc-justification-writer：
 目标项目：projects/NSFC_Young
-信息表：请按 skills/nsfc-justification-writer/references/info_form.md 提供
+输入材料：请提供项目正文、研究内容、研究基础和参考文献；宿主 AI 会按需提取写作要素
 输出：写入 extraTex/1.1.立项依据.tex（不要改 main.tex）
 ```
 

@@ -1,12 +1,12 @@
-# nsfc-justification-writer 脚本
+# 脚本入口
 
-脚本只负责写入安全链：目标定位、路径白名单、引用 key、字数统计、结构变更检查、备份、diff 和回滚。
+脚本只处理可重复的确定性工作：目标定位、引用检查、字数统计、结构变更检查、备份、diff、写入和回滚。研究逻辑、章节安排和语言修改由宿主 AI 完成。
 
-主流程只有一个：
+## 主流程
 
-1. 宿主 AI 读取材料并生成完整正文提案；
-2. 运行 `preview`；
-3. 脚本检查并自动写入，或用 `--dry-run` 只读检查。
+1. 宿主 AI 读取项目材料并生成完整正文提案。
+2. 运行 `preview` 检查正文 diff。
+3. 检查通过后自动写入；需要只读检查时加 `--dry-run`。
 
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py preview \
@@ -14,7 +14,7 @@ python skills/nsfc-justification-writer/scripts/run.py preview \
   --proposal-file <完整正文提案.tex>
 ```
 
-辅助命令：
+## 辅助命令
 
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py diagnose --project-root <项目目录>
@@ -22,4 +22,4 @@ python skills/nsfc-justification-writer/scripts/run.py refs --project-root <项�
 python skills/nsfc-justification-writer/scripts/run.py wordcount --project-root <项目目录>
 ```
 
-脚本不判断研究逻辑、术语质量、夸大表述或科学问题是否成立；这些判断由宿主 AI 完成。
+`core/` 中的模块按职责拆分：`coordinator.py` 负责目标和诊断编排，`security.py` 负责路径白名单，`change_guard.py` 负责正文 diff，`editor.py` 和 `versioning.py` 负责备份、写入和回滚。脚本没有信息表生成入口；输入清单和写作方法见 [`../references/section_writing.md`](../references/section_writing.md)。

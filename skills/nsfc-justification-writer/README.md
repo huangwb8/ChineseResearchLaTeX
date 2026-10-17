@@ -29,7 +29,7 @@
 - [分节写法](references/section_writing.md)：从论证地图到四个小节的段落推进、证据组织和章节边界。
 - [质量控制](references/quality_control.md)：AI 语义审查与脚本安全检查。
 
-信息表模板属于脚本运行资源，位于 `scripts/templates/info_form.md`；诊断命令只输出文本或 JSON，不生成 HTML 报告。
+不再提供独立的信息表模板：宿主 AI 直接从项目材料提取研究对象、现有瓶颈、科学问题、假设和切入点。需要整理输入时，参照 [`references/section_writing.md`](references/section_writing.md) 的论证地图。诊断命令只输出文本或 JSON，不生成 HTML 报告。
 
 ## 固定写作边界
 
