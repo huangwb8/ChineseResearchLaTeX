@@ -208,7 +208,7 @@ graph LR
 
 **类型**：📝 日常
 
-**功能**：面向 NSFC 标书正文 `（二）研究内容` 写作/重构，并同步编排 `特色与创新` 与 `年度研究计划`
+**功能**：面向 NSFC 研究内容、特色与创新、年度研究计划的新写、重构、审查和保真润色，按授权检查三章关联
 
 **使用场景**：需要把“研究问题→目标→内容→技术路线→验证口径”写清，并输出 `2.1/2.2/2.3` 三份一致闭环的文件
 
@@ -217,10 +217,11 @@ graph LR
 ```
 请使用 nsfc-research-content-writer：
 目标项目：projects/NSFC_Young
-信息表：请按 skills/nsfc-research-content-writer/references/info_form.md 提供
-输出模式：preview（先预览）/ apply（确认后写入）
+材料：从现有正文、立项依据和研究基础提取；仅补问影响方案的关键缺口
+输出模式：preview（只读预览）/ apply（已有授权时写入）
 输出：写入 extraTex/2.1.研究内容.tex、extraTex/2.2.特色与创新.tex、extraTex/2.3.年度研究计划.tex（不要改 main.tex、extraTex/@config.tex）
-额外要求：子目标编号 S1–S4；2.2/2.3 标注回溯到对应 Sx；每年都有里程碑与可交付物
+额外要求：保留 3–4 个子目标、三年计划、研究内容 12–15 页；关联关系用自然语言表达，不将内部编号写入正文
+局部需求：可只润色创新点，其余章节只读检查；仅审查时不写正文
 ```
 
 [详细文档 →](nsfc-research-content-writer/SKILL.md)

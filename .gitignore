@@ -212,6 +212,9 @@ skills/*/tests/
 !/tests/nsfc-justification-writer/
 /tests/nsfc-justification-writer/*
 !/tests/nsfc-justification-writer/*.py
+!/tests/nsfc-research-content-writer/
+/tests/nsfc-research-content-writer/*
+!/tests/nsfc-research-content-writer/*.py
 !/tests/research-idea/
 /tests/research-idea/*
 !/tests/research-idea/*.py

@@ -4,9 +4,9 @@
 
 skill_info:
   name: nsfc-research-content-writer
-  version: 1.0.0
+  version: 1.1.0
   # template_year: 移除年份限制，使技能适用于不同年份的 NSFC 模板
-  description: NSFC 标书正文“（二）研究内容”写作/重构，并同步编排“特色与创新”“三年年度研究计划”，输出 2.1/2.2/2.3 三份 extraTex 文件
+  description: NSFC 研究内容、特色与创新、年度研究计划的新写、重构、审查与保真润色
   category: writing
   author: "Bensz Conan"
 
@@ -39,11 +39,20 @@ guardrails:
     - "**/*.sty"
 
 quality_contract:
+  subgoals_min: 3
+  subgoals_max: 4
+  innovation_min: 1
+  innovation_max: 3
+  plan_years: 3
+  research_pages_min: 12
+  research_pages_max: 15
+  auxiliary_words_min: 12000
+  auxiliary_words_max: 15000
   research_content_must_cover:
     - 研究问题与总体目标
     - 3–4 个可检验子目标（指标/对照/数据来源）
     - 研究内容与任务分解（对齐子目标）
-    - 技术路线与验证口径（防泄漏/对照/消融/统计）
+    - 技术路线与学科适配的验证口径（机制干预/理论证明或反例/应用比较）
   innovation_must_be:
     - 可理解（评审能看懂）
     - 可对照（相对坐标系）
@@ -54,6 +63,10 @@ quality_contract:
 
 # scripts/check_project_outputs.py 的轻量自检参数（可选覆盖默认值）
 checks:
+  bibliography_globs:
+    - "references/**/*.bib"
+    - "bib/**/*.bib"
+    - "*.bib"
   # 绝对化措辞：通常建议避免；脚本可扫描并给出 WARN/ERROR（见 --fail-on-risk-phrases）
   risk_phrases:
     - 首次
@@ -62,5 +75,5 @@ checks:
     - 突破性
     - 国际领先
     - 世界领先
-  # 研究内容里至少出现多少个子目标标记（默认 3）：S1/S2/S3（可多于 3）
+  # deprecated：仅兼容读取并提示，不再参与任何判定；子目标由 AI 语义复核。
   subgoal_markers_min: 3

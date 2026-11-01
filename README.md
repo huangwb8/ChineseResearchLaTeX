@@ -288,7 +288,7 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [nsfc-abstract](skills/nsfc-abstract/) | ✍️ 标书写作 | v2.1.2 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
 | [nsfc-budget](skills/nsfc-budget/) | ✍️ 标书写作 | v0.1.2 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |
 | [nsfc-justification-writer](skills/nsfc-justification-writer/) | ✍️ 标书写作 | [配置版本](skills/nsfc-justification-writer/config.yaml) | 诊断后选择修订幅度，公允界定缺口、衔接假设证据并保留科学含义；支持只读审查与可逆写入 | ✅ 稳定 |
-| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | ✍️ 标书写作 | v1.0.0 | NSFC 研究内容编排写作 | ✅ 稳定 |
+| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | ✍️ 标书写作 | [配置](skills/nsfc-research-content-writer/config.yaml) | NSFC 研究内容及关联章节写作、审查与润色 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | ✍️ 标书写作 | v0.1.2 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-qc](skills/nsfc-qc/) | ✍️ 标书写作 | v1.2.1 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑 + 全文级缩写注册表 QC） | ✅ 稳定 |
 | [nsfc-ref-alignment](skills/nsfc-ref-alignment/) | ✍️ 标书写作 | v0.1.1 | NSFC 参考文献与正文引用一致性核查（只读） | 🚧 开发中 |

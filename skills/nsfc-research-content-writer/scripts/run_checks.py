@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 
 def _run(cmd: list[str]) -> int:
     print("+ " + " ".join(cmd), flush=True)

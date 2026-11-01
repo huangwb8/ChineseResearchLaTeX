@@ -1,193 +1,60 @@
 #!/usr/bin/env python3
+"""检查独立安装包的配置、固定骨架、资源与本地链接。"""
 from __future__ import annotations
-
+import hashlib
 import re
 import sys
-from pathlib import Path
-
-from _yaml_utils import extract_yaml_list_under_block, extract_yaml_value_under_block
-
-
-def _err(message: str) -> int:
-    print(f"ERROR: {message}", file=sys.stderr)
-    return 1
+sys.dont_write_bytecode = True
+if sys.version_info < (3, 11):
+    raise SystemExit("需要 Python 3.11+")
+from revision import SKILL_ROOT, load_config, yaml
 
 
-def _extract_frontmatter(text: str) -> str:
-    if not text.startswith("---"):
-        return ""
-    parts = text.split("\n---\n", 1)
-    if len(parts) != 2:
-        return ""
-    return parts[0]
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
 
 
-def _extract_frontmatter_field(frontmatter: str, key: str) -> str | None:
-    match = re.search(rf"(?m)^{re.escape(key)}:\s*(.+?)\s*$", frontmatter)
-    if not match:
-        return None
-    return match.group(1).strip().strip('"').strip("'")
+def validate() -> None:
+    config = load_config()
+    text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    front, body = text.removeprefix("---\n").split("\n---\n", 1)
+    meta = yaml.safe_load(front)
+    require(meta["name"] == config["skill_info"]["name"], "Skill 名称不一致")
+    require(meta.get("description") and meta.get("metadata", {}).get("author") == "Bensz Conan", "缺少触发描述或作者")
+    require("version" not in meta and re.fullmatch(r"\d+\.\d+\.\d+", str(config["skill_info"]["version"])), "版本来源或格式错误")
+    require(re.findall(r"^## (.+)$", body, re.M) == ["目标", "流程", "约束"], "二级章节顺序错误")
+    require(re.findall(r"^### (.+)$", body.split("## 约束")[0], re.M) == ["输入", "执行步骤", "输出", "输出管理", "校验", "失败与恢复"], "流程子章节不完整")
+    require(len(text.splitlines()) <= 500, "SKILL.md 超过 500 行")
+    begin, end = "<!-- BEGIN COMMON CONSTRAINTS -->", "<!-- END COMMON CONSTRAINTS -->"
+    common = text.split(begin + "\n", 1)[1].split(end, 1)[0]
+    hash_line, template = common.split("\n", 1)
+    require(hash_line == "<!-- Source-Hash: sha256:" + hashlib.sha256(template.encode()).hexdigest() + " -->", "公共约束摘要不匹配")
+    require(config["parameters"]["output_mode"]["default"] in ("preview", "apply"), "默认输出模式错误")
+    quality = config["quality_contract"]
+    for lo, hi in (("subgoals_min", "subgoals_max"), ("innovation_min", "innovation_max"),
+                   ("research_pages_min", "research_pages_max"), ("auxiliary_words_min", "auxiliary_words_max")):
+        require(0 < quality[lo] <= quality[hi], "质量配置范围错误：" + lo)
+    require(quality["plan_years"] > 0, "年度范围错误")
+    for name in ("README.md", "README_EN.md", "CHANGELOG.md", "scripts/run.py", "scripts/revision.py",
+                 "scripts/run_checks.py", "scripts/check_project_outputs.py", "scripts/create_test_session.py",
+                 "templates/TEST_PLAN_TEMPLATE.md", "templates/TEST_REPORT_TEMPLATE.md"):
+        require((SKILL_ROOT / name).is_file(), "缺少资源：" + name)
+    for md in [SKILL_ROOT / "SKILL.md", *SKILL_ROOT.glob("README*.md"), *SKILL_ROOT.glob("references/*.md")]:
+        for link in re.findall(r"\]\(([^)]+)\)", md.read_text(encoding="utf-8")):
+            path = link.split("#", 1)[0]
+            if path and not re.match(r"[a-z]+://|mailto:", path):
+                require((md.parent / path).is_file(), f"失效链接 {md.name}: {path}")
 
 
 def main() -> int:
-    skill_root = Path(__file__).resolve().parents[1]
-    repo_root = skill_root.parents[1]
-    skill_md = skill_root / "SKILL.md"
-    config_yaml = skill_root / "config.yaml"
-    templates_dir = skill_root / "templates"
-    plans_dir = skill_root / "plans"
-    tests_dir = skill_root / "tests"
-
-    required_files = [
-        skill_md,
-        config_yaml,
-        skill_root / "README.md",
-        skill_root / "scripts" / "create_test_session.py",
-        skill_root / "scripts" / "check_project_outputs.py",
-        skill_root / "scripts" / "run_checks.py",
-        skill_root / "scripts" / "_yaml_utils.py",
-        skill_root / "references" / "info_form.md",
-        skill_root / "references" / "dod_checklist.md",
-        templates_dir / "OPTIMIZATION_PLAN_TEMPLATE.md",
-        templates_dir / "B_ROUND_CHECK_TEMPLATE.md",
-        templates_dir / "TEST_PLAN_TEMPLATE.md",
-        templates_dir / "TEST_REPORT_TEMPLATE.md",
-    ]
-    for path in required_files:
-        if not path.exists():
-            return _err(f"missing required file: {path}")
-
-    for d in [plans_dir, tests_dir, templates_dir]:
-        if not d.exists() or not d.is_dir():
-            return _err(f"missing required directory: {d}")
-
-    skill_text = skill_md.read_text(encoding="utf-8")
-    frontmatter = _extract_frontmatter(skill_text)
-    if not frontmatter:
-        return _err("SKILL.md missing YAML frontmatter block")
-
-    fm_name = _extract_frontmatter_field(frontmatter, "name")
-    fm_version = _extract_frontmatter_field(frontmatter, "version")
-    fm_config = _extract_frontmatter_field(frontmatter, "config")
-    fm_references = _extract_frontmatter_field(frontmatter, "references")
-    if not fm_name or not fm_version or not fm_config or not fm_references:
-        return _err("SKILL.md frontmatter missing required fields: name/version/config/references")
-
-    fm_config_path = Path(fm_config)
-    resolved_config_path = (
-        (repo_root / fm_config_path) if str(fm_config_path).startswith("skills/") else (skill_root / fm_config_path)
-    ).resolve()
-    if resolved_config_path != config_yaml.resolve():
-        return _err(f"config path mismatch: SKILL.md={resolved_config_path} expected={config_yaml.resolve()}")
-
-    fm_refs_path = Path(fm_references)
-    resolved_refs_path = (
-        (repo_root / fm_refs_path) if str(fm_refs_path).startswith("skills/") else (skill_root / fm_refs_path)
-    ).resolve()
-    if not resolved_refs_path.exists() or not resolved_refs_path.is_dir():
-        return _err(f"references path invalid: {resolved_refs_path}")
-
-    config_lines = config_yaml.read_text(encoding="utf-8").splitlines()
-    cfg_name = extract_yaml_value_under_block(config_lines, "skill_info", "name")
-    cfg_version = extract_yaml_value_under_block(config_lines, "skill_info", "version")
-    cfg_description = extract_yaml_value_under_block(config_lines, "skill_info", "description")
-    cfg_category = extract_yaml_value_under_block(config_lines, "skill_info", "category")
-    if not cfg_name or not cfg_version:
-        return _err("config.yaml missing skill_info.name or skill_info.version")
-    if not cfg_description or not cfg_category:
-        return _err("config.yaml missing skill_info.description or skill_info.category")
-
-    if fm_name != cfg_name:
-        return _err(f"name mismatch: SKILL.md={fm_name} config.yaml={cfg_name}")
-    if fm_version != cfg_version:
-        return _err(f"version mismatch: SKILL.md={fm_version} config.yaml={cfg_version}")
-
-    targets = [
-        extract_yaml_value_under_block(config_lines, "targets", "research_content_tex"),
-        extract_yaml_value_under_block(config_lines, "targets", "innovation_tex"),
-        extract_yaml_value_under_block(config_lines, "targets", "yearly_plan_tex"),
-    ]
-    if any(t is None for t in targets):
-        return _err("config.yaml missing one of targets.*_tex")
-
-    allowed = extract_yaml_list_under_block(config_lines, "guardrails", "allowed_write_files")
-    if not allowed:
-        return _err("config.yaml missing guardrails.allowed_write_files")
-
-    if set(allowed) != set(t for t in targets if t is not None):
-        return _err("config.yaml mismatch: guardrails.allowed_write_files must equal targets.*_tex values")
-
-    forbidden = extract_yaml_list_under_block(config_lines, "guardrails", "forbidden_write_files") or []
-    for must_forbid in ["main.tex", "extraTex/@config.tex"]:
-        if must_forbid not in forbidden:
-            return _err(f"config.yaml missing guardrails.forbidden_write_files entry: {must_forbid}")
-
-    forbidden_globs = extract_yaml_list_under_block(config_lines, "guardrails", "forbidden_write_globs") or []
-    for must_forbid_glob in ["**/*.cls", "**/*.sty"]:
-        if must_forbid_glob not in forbidden_globs:
-            return _err(f"config.yaml missing guardrails.forbidden_write_globs entry: {must_forbid_glob}")
-
-    required_skill_snippets = [
-        "project_root",
-        "output_mode",
-        "写入安全约束",
-        "references/output_skeletons.md",
-        "main.tex",
-        "extraTex/@config.tex",
-        ".cls",
-        ".sty",
-    ]
-    for snippet in required_skill_snippets:
-        if snippet not in skill_text:
-            return _err(f"SKILL.md missing required snippet: {snippet}")
-
-    for t in targets:
-        if t and t not in skill_text:
-            return _err(f"SKILL.md missing target path from config.yaml: {t}")
-
-    link_paths = re.findall(r"\((references/[^)]+)\)", skill_text)
-    missing_links = []
-    for rel in link_paths:
-        if not (skill_root / rel).exists():
-            missing_links.append(rel)
-    if missing_links:
-        missing = "\n".join(f"- {p}" for p in missing_links)
-        return _err(f"SKILL.md contains missing references links:\n{missing}")
-
-    stray = "（ 二）"
-    readme_path = skill_root / "README.md"
-    md_files = [skill_md, readme_path, *sorted((skill_root / "references").glob("*.md"))]
-    for md in md_files:
-        txt = md.read_text(encoding="utf-8")
-        if stray in txt:
-            return _err(f"found stray title variant '{stray}' in {md}")
-
-    readme_text = readme_path.read_text(encoding="utf-8")
-    for required_snippet in [
-        "project_root",
-        "output_mode",
-        "禁止改动",
-        "check_project_outputs.py",
-        "run_checks.py",
-        "--fail-on-risk-phrases",
-    ]:
-        if required_snippet not in readme_text:
-            return _err(f"README.md missing required snippet: {required_snippet}")
-
-    for required_path in [
-        "skills/nsfc-research-content-writer/references/info_form.md",
-        "skills/nsfc-research-content-writer/references/dod_checklist.md",
-        "skills/nsfc-research-content-writer/references/output_skeletons.md",
-    ]:
-        if required_path not in readme_text:
-            return _err(f"README.md missing required reference path: {required_path}")
-
-    print("OK: validate-skill passed")
-    print(f"- skill: {fm_name}")
-    print(f"- version: {fm_version}")
-    print(f"- referenced files: {len(link_paths)}")
+    try:
+        validate()
+    except (AssertionError, KeyError, ValueError, OSError, TypeError) as exc:
+        print("ERROR: Skill 配置或资源校验失败：" + str(exc), file=sys.stderr)
+        return 1
+    print("OK: Skill 配置、骨架、公共约束摘要和资源链接通过；科学质量需 AI 复核。")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
