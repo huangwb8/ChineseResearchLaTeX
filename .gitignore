@@ -209,6 +209,9 @@ test.md
 skills/*/plans/
 skills/*/tests/
 /tests/*
+!/tests/nsfc-justification-writer/
+/tests/nsfc-justification-writer/*
+!/tests/nsfc-justification-writer/*.py
 !/tests/research-idea/
 /tests/research-idea/*
 !/tests/research-idea/*.py

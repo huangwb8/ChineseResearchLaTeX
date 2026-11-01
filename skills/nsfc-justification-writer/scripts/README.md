@@ -4,9 +4,9 @@
 
 ## 主流程
 
-1. 宿主 AI 读取项目材料并生成完整正文提案。
+1. 宿主 AI 判断任务类型并诊断；写作任务生成完整正文提案，仅审查任务输出诊断与建议，不进入默认写入流程。
 2. 运行 `preview` 检查正文 diff。
-3. 检查通过后自动写入；需要只读检查时加 `--dry-run`。
+3. 检查通过后自动写入；需要只读检查候选 diff 时加 `--dry-run`。脚本不判断科学主张变更是否有依据及授权，宿主 AI 须按质量控制先完成语义复核。
 
 ```bash
 python skills/nsfc-justification-writer/scripts/run.py preview \

@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.9.0
+  version: 1.10.0
   description: "撰写、重构、审查和润色 NSFC/科研基金申请书立项依据，保留可核验事实与 LaTeX 结构并通过安全写入链落盘。"
   category: writing
   author: "Bensz Conan"
@@ -9,7 +9,8 @@ skill_info:
 style:
   mode: theoretical
 
-# 作为宿主 AI 的默认软预算；用户明确给出的篇幅要求优先，不能以压缩预算删除必要事实、限定或引用。
+# 仅为宿主 AI 的默认软建议，包括 max_* 与标题字段；不改变解析语义，也不作为结构通过条件。
+# 用户篇幅要求优先；必要证据、限定、引用与已有合理结构优先于段数、比例和标题建议。
 structure:
   canonical_status_title: "国内外研究现状"
   research_significance:
@@ -39,7 +40,8 @@ workspace:
   runs_dir: .bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/nsfc-justification-writer
 
 references:
-  # 缺失 bibkey 仍记录为事实风险；自动流程不暂停询问，宿主 AI 应优先改写为可核验表述。
+  # 缺失 bibkey 仍阻止默认写入；宿主 AI 不得为了通过检查删除必要引用或暗换科学主张。
+  # 先核实来源并保真修复；无法解决时保留原文件、提案和待核验项。
   allow_missing_citations: false
 
 guardrails:
