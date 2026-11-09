@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- 查询解析迁入唯一命名的 `rls_contract.py`，旧 `query_contract.py` 保留兼容导入；修复先加载 review 模块后检索缺失 `query_id` 的问题。
+- manifest 的 Skill 版本改为读取自身 `config.yaml`，清除 README 冗余版本与旧 Python 下限，公共约束精确同步上游；配置更新为 patch，`rls.v1` 与候选 schema 保持兼容。
+- 同进程 review→search 检索与 bundle 校验、旧导入兼容、查询 ID、非法查询数量和配置版本一致性均通过回归；strict 结构检查通过。检索使用合成 provider，不把本轮结果表述为线上数据库召回验证。
+
 - 修复 legacy stem 空白归一化、字符串文献类型过滤、query_matches 输入变异、重复 provider 请求及零总量上限；补充回归测试。
 
 ## [1.0.4] - 2026-09-15

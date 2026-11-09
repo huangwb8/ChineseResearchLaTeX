@@ -9,11 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+import yaml
+
 from candidate_schema import SCHEMA_VERSION
 from rls_contract import CONTRACT_VERSION
 
 
-SEARCH_SKILL_VERSION = "1.0.4"
+SEARCH_SKILL_VERSION = str(yaml.safe_load(
+    (Path(__file__).resolve().parents[1] / "config.yaml").read_text(encoding="utf-8")
+)["skill_info"]["version"])
 ARTIFACT_NAMES = (
     "candidates_raw",
     "candidates_normalized",

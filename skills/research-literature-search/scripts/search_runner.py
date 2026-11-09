@@ -24,8 +24,7 @@ try:
     from dedupe_papers import dedupe_records
     from manifest import ARTIFACT_NAMES, SEARCH_SKILL_VERSION, build_manifest, write_json
     from normalize_papers import write_jsonl
-    from query_contract import QueryInputError, load_query_plan
-    from rls_contract import CONTRACT_VERSION
+    from rls_contract import CONTRACT_VERSION, QueryInputError, load_query_plan
     from validate_bundle import validate_bundle
     from providers import search_crossref, search_openalex, search_semantic_scholar
 except ModuleNotFoundError:
@@ -34,8 +33,7 @@ except ModuleNotFoundError:
     from dedupe_papers import dedupe_records
     from manifest import ARTIFACT_NAMES, SEARCH_SKILL_VERSION, build_manifest, write_json
     from normalize_papers import write_jsonl
-    from query_contract import QueryInputError, load_query_plan
-    from rls_contract import CONTRACT_VERSION
+    from rls_contract import CONTRACT_VERSION, QueryInputError, load_query_plan
     from validate_bundle import validate_bundle
     from providers import search_crossref, search_openalex, search_semantic_scholar
 

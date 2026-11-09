@@ -2,9 +2,9 @@
 
 `research-literature-search` 将“查询输入 → 多源召回 → 规范化 → canonical 去重 → 来源审计”做成可独立复用的证据生产环节。它适合只想先拿候选文献池、为研究选题准备查新材料，或被综述/标书等下游流程消费的场景。
 
-当前版本：`v1.0.4`。
+版本以 `config.yaml:skill_info.version` 为唯一来源。
 
-manifest 校验使用独立命名的 `rls_contract` 模块，避免与 `research-literature-review` 的同名 `query_contract` 在同一 Python 进程中互相遮蔽。
+查询解析与 manifest 校验均使用独立命名的 `rls_contract` 模块，避免与 `research-literature-review` 的同名 `query_contract` 在同一 Python 进程中互相遮蔽；旧查询模块保留兼容导入。manifest 中的 Skill 版本直接读取自身配置。
 
 ## 快速开始
 
@@ -50,4 +50,4 @@ OpenAlex 候选缺少嵌套来源元数据（例如 `primary_location.source` �
 
 ## 依赖
 
-Python 3.10+；联网 provider 使用 `requests`。MCP/duckduckgo 需要宿主工具，纯 Python runner 会显式记录 skipped。详见 [paper-schema.md](references/paper-schema.md)、[bundle-schema.md](references/bundle-schema.md) 和 [provider-guide.md](references/provider-guide.md)。
+Python 3.11+；联网 provider 使用 `requests`，配置读取使用 PyYAML。MCP/duckduckgo 需要宿主工具，纯 Python runner 会显式记录 skipped。详见 [paper-schema.md](references/paper-schema.md)、[bundle-schema.md](references/bundle-schema.md) 和 [provider-guide.md](references/provider-guide.md)。

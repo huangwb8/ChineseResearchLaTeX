@@ -54,6 +54,8 @@ search_log.json               # 可读审计日志
 
 运行 Skill 已有的静态检查、脚本验证或人工复核，并记录通过标准。manifest 保存查询 SHA-256、provider policy、attempts、截断、去重参数、缓存模式、版本和 artifact hash。
 
+查询解析与 manifest 契约共用唯一命名的 `rls_contract.py`；旧 `query_contract.py` 只保留兼容导入。同进程消费者必须使用前者，避免 review 同名模块遮蔽查询 ID。manifest 的 Skill 版本读取 `config.yaml:skill_info.version`。
+
 ### 失败与恢复
 
 provider 返回 `null`、非对象或嵌套 source 为 `null` 时跳过/保留并记录计数或 warning；无合法候选返回 `no_valid_candidates`，不得静默丢弃。preprint 按领域 profile（`auto`→computer_science/mathematics/biology/medicine/general）标记并审计，搜索层不认证结论。旧 `title/year/id` 仅经显式 legacy adapter 并附 `legacy_adapted` warning；新增 provider/union 策略需升级 contract。
@@ -75,7 +77,7 @@ provider 返回 `null`、非对象或嵌套 source 为 `null` 时跳过/保留�
 - 正式交付物、源代码和正式计划按项目约定保存，不写入任务工作区；未经授权不覆盖、删除、迁移或远程写入。
 - 项目维护变更检查 BAC 可用性并记录需求、AI 产出、工具结果、文件改动和验证摘要；BAC 只做过程审计，不替代署名、责任或合规判断。
 - 不记录 API Key、访问令牌、密码、Cookie、环境/凭据文件、私有 Prompt、身份信息、本地用户名、主机名或不必要的大体积原始数据。
-- 文件路径必须规范化并限制在授权项目范围内；外部 URL、子进程和网络访问遵循最小权限，防止路径穿越、SSRF 和命令注入。
+- 文件路径必须规范化并限制在授权项目范围内；外部 URL、子进程和网络访问遵循最小权限，防止路径遍历、SSRF 和命令注入。
 - Skill 版本唯一记录在自身 `config.yaml:skill_info.version`；公开 API、协议、目录或配置变更同步文档与 `CHANGELOG.md`。
 - `bensz-collect-bugs` 是一个 Agent Skill；仅将 Bensz Agent Skill 或 Bensz 基础设施本身的设计缺陷交给它。先脱敏写入 `~/.bensz-skills/bugs/`，当前任务不中断，只有用户明确要求才公开上报，禁止直接修改用户已安装的 Skill 源码。
 
