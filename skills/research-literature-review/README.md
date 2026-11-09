@@ -32,13 +32,17 @@ Python 依赖及版本约束统一维护在 `config.yaml:dependencies.python`，
 python scripts/render_review_template.py --title "研究进展" --body body.tex --bib 主题_参考文献.bib --output 主题_review.tex
 ```
 
-证据卡默认保留完整摘要和已有提取字段，不再用前 800 字符代替整段结果。每个关键结论仍需核对研究身份、人群、终点、数字及不确定性；摘要覆盖率不等于全文阅读，相关性评分不等于证据等级。叙述性进展综述与正式系统综述需明确区分，后者保留必要的方法与偏倚评价。
+证据卡默认保留完整摘要和已有提取字段，不再用前 800 字符代替整段结果。每个关键结论仍需核对研究身份、人群、终点、数字及不确定性；摘要覆盖率不等于全文阅读，相关性评分不等于证据等级。
+
+综述正文默认直接呈现研究发现、争议与证据边界。摘要、引言及其它正文位置不介绍本次综述如何检索、筛选和选文，不附带“透明检索支持”或“未进行双人筛选/GRADE”等制作过程声明，也不把它们挪到文稿脚注、图表或附录。这些信息留在工作条件、Search Log 和配套报告中，检索及证据核验照常进行。原始研究的设计、偏倚和适用范围仍需讨论。仅用户或目标期刊明确要求方法报告（如 PRISMA）时才另设方法章节或补充材料；仅称“系统综述”不自动加入过程叙述，也不据此宣称符合报告规范。
 
 自动报告只说明实际检查范围，未经执行的论断核验、全文审计、PDF/Word 目视与复现检查标为未验证。编译器检测缺字和未解析引用，保留最终日志；Word 显示 Pandoc 警告。交付前仍需实际比较正文、标题、图表与书目，并在工作条件中记录检查位置。
 
-迁移已有自动化时：默认标准运行会交完整包，若仍只需阅读文件使用 `--readers-only`；直接 Python 调用 `publish_deliverables` 保留 `include_supporting=False` 默认，但两种模式都要求非空 PDF/Word 配对。完整包资源应放在 supporting 内，以静态相对路径引用；动态宏路径先具体化，系统 TeX 包由用户发行版提供。恢复已完成运行会重新检查并导出当前稿件，不沿用旧结果证明新文件通过。`--force-pass` 已停用。
+迁移已有自动化时：默认标准运行会交完整包，若仍只需阅读文件使用 `--readers-only`；直接 Python 调用 `publish_deliverables` 保留 `include_supporting=False` 默认，但两种模式都要求非空 PDF/Word 配对。图表、片段和用户指定的本地自定义资源应放在 supporting 内，以静态相对路径引用；动态宏路径先具体化。内置 BST 直接引用宿主机 Skill 的绝对路径，系统 TeX 包与样式由发行版提供，均不复制到成品。恢复已完成运行会重新检查并导出当前稿件，不沿用旧结果证明新文件通过。`--force-pass` 已停用。
 
 Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保留在 `references/latex-template/review-numeric.csl`；PDF 使用现有 GB/T BST，两者引文编号均按首次出现顺序，书目排版不承诺逐像素一致。Word 保留摘要标签；默认宋体在支持 `fc-list` 的环境中可回退到本机已安装的宋体或 Noto/思源宋体，用户自定义字体保持原样。接收端仍需安装相应字体，跨系统打开后应复核换行和表格。
+
+综述成品不含 README，使用说明和限制写入已有的工作条件。仓库中本 Skill 的 README 与任务工作区内部 README 各自保留，不进入成品目录。
 
 ## 旧名兼容
 
@@ -132,7 +136,7 @@ review 与 search 可能在同一 Python 进程内运行；search 的查询解�
 
 标准综述排除显式标记 `do_not_cite=true` 的记录，保留原评分审计，并在选文理由中统计此类候选；查新模式仍允许把它们保留为待核验线索。Bib 生成会将独立的字面换行转义正规化为空格，并保留已有 LaTeX 转义和命名宏。
 
-PDF 编译先查工作目录及模板资源，再用 `kpsewhich` 查询 TeX 发行版中的 BST；完整交付会携带实际使用的系统 BST。引用分布检查支持 `citep`、`citet` 等命令、可选参数和跨行花括号，忽略注释中的引用。历史 JSONL 去重入口按文件行读取，保留摘要内合法的 Unicode 行分隔符。
+PDF 编译将内置 BST 绑定到当前宿主机 Skill 的 `references/latex-template/`，TeX 直接引用该绝对路径（省略 `.bst` 后缀）；系统 BST 通过 `kpsewhich` 查找，两者均不复制到成品。换机或 Skill 安装路径变化时，更新 TeX 引用后重编译。引用分布检查支持 `citep`、`citet` 等命令、可选参数和跨行花括号，忽略注释中的引用。历史 JSONL 去重入口按文件行读取，保留摘要内合法的 Unicode 行分隔符。
 
 ## 字数预算的设计哲学
 
@@ -325,7 +329,7 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 
 - `output/artifacts/` 保存候选库、评分、选文、字数预算、证据卡和校验 JSON；`output/reference/` 保存数据抽取表；`output/deliverables/` 保存内部生成的 PDF/Word，`output/deliverables/supporting/` 保存源码与支持性文件。
 - `input/queries.json` 保存当前 run 的规范化查询输入；不要从其他 run 猜测或复用未声明路径。
-- 正式目录由 `--publish-dir` 接收白名单文件，默认复制 PDF/Word、TeX、Bib、工作条件、验证报告及实际引用的相对图表/片段/BST；`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留兼容。缺必需文件、越界依赖或目标冲突会在写入前停止。
+- 正式目录由 `--publish-dir` 接收白名单文件，默认复制 PDF/Word、TeX、Bib、工作条件、验证报告及实际引用的相对图表/片段；内置和系统 BST 不随包复制；`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留兼容。缺必需文件、越界依赖或目标冲突会在写入前停止。
 - 历史 `.systematic-literature-review/` 目录只能通过显式 resume/整理/迁移处理，不再作为新运行的默认路径。
 
 ## 关键文件

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -67,8 +68,43 @@ def test_full_publication_carries_only_referenced_resources(tmp_path):
     tex.write_text(tex.read_text().replace(r"\end{document}", r"\includegraphics{figures/plot.png}\end{document}"))
     result = publish_deliverables(source, tmp_path / "published", include_supporting=True)
     assert "figures/plot.png" in result.published
-    assert "gbt7714-nsfc.bst" in result.published
+    assert not any(name.endswith(".bst") for name in result.published)
+    assert "README.md" not in result.published
+    expected = (SKILL / "references/latex-template/gbt7714-nsfc").as_posix()
+    assert rf"\bibliographystyle{{{expected}}}" in (tmp_path / "published/topic_review.tex").read_text()
     assert (tmp_path / "published/topic_参考文献.bib").exists()
+
+
+def test_publication_does_not_copy_stale_bundled_bst_or_internal_readme(tmp_path):
+    source = bundle(tmp_path)
+    support = source / "supporting"
+    (support / "gbt7714-nsfc.bst").write_text("stale local copy")
+    (support / "README.md").write_text("internal notes")
+    target = tmp_path / "published"
+    publish_deliverables(source, target, include_supporting=True)
+    from validate_workdir_cleanliness import validate_publish_dir
+    assert validate_publish_dir(target, include_supporting=True) == []
+    assert not (target / "gbt7714-nsfc.bst").exists()
+    assert not (target / "README.md").exists()
+    # 不删除已有的用户文件，包括上次手工交付留下的文件。
+    (target / "README.md").write_text("user original")
+    with pytest.raises(PublishError):
+        publish_deliverables(source, target, include_supporting=True, force=True)
+    assert (target / "README.md").read_text() == "user original"
+
+
+def test_publication_accepts_bundled_absolute_bst_but_rejects_arbitrary_external_bst(tmp_path):
+    source = bundle(tmp_path)
+    tex = source / "supporting/topic_review.tex"
+    bundled = (SKILL / "references/latex-template/gbt7714-nsfc").as_posix()
+    tex.write_text(document().replace("{gbt7714-nsfc}", "{" + bundled + "}"))
+    publish_deliverables(source, tmp_path / "published", include_supporting=True)
+    external = tmp_path / "outside.bst"
+    external.write_text("external")
+    tex.write_text(document().replace("{gbt7714-nsfc}", "{" + external.with_suffix("").as_posix() + "}"))
+    with pytest.raises(PublishError):
+        publish_deliverables(source, tmp_path / "rejected", include_supporting=True)
+    assert not (tmp_path / "rejected").exists()
 
 
 @pytest.mark.parametrize("dependency", ["figures/missing.png", "../../outside.png"])
@@ -235,14 +271,19 @@ def test_real_pdf_word_and_isolated_rebuild(tmp_path, monkeypatch, style):
     result = cli("render_review_template.py", "--title", "合成格式测试", "--body", body,
                  "--bib", support / "topic_参考文献.bib", "--output", tex)
     assert result.returncode == 0, result.stderr
-    tex.write_text(tex.read_text(encoding="utf-8").replace("{gbt7714-nsfc}", "{" + style + "}"), encoding="utf-8")
+    text = tex.read_text(encoding="utf-8")
+    assert str(SKILL / "references/latex-template/gbt7714-nsfc") in text
+    if style == "plain":
+        text = re.sub(r"\\bibliographystyle\{[^}]+\}", lambda _: r"\bibliographystyle{plain}", text)
+    tex.write_text(text, encoding="utf-8")
     for script, args in [("compile_latex_with_bibtex.py", [tex, source / "topic_review.pdf"]),
                          ("convert_latex_to_word.py", [tex, support / "topic_参考文献.bib", source / "topic_review.docx"])]:
         result = cli(script, *args)
         assert result.returncode == 0, result.stderr
     published = tmp_path / "published"
     publish_deliverables(source, published, include_supporting=True)
-    assert (published / f"{style}.bst").is_file()
+    assert not list(published.glob("*.bst"))
+    assert not (published / "README.md").exists()
     with zipfile.ZipFile(published / "topic_review.docx") as archive:
         xml = ET.fromstring(archive.read("word/document.xml"))
         ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}

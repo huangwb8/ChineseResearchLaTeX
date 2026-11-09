@@ -96,7 +96,9 @@ metadata:
 
 #### 写作
 
-- 默认章节为摘要、引言、主体、讨论、展望、结论；正式系统综述另含必要的方法和结果，不隐藏检索筛选方法或偏倚评价。
+- 默认章节为摘要、引言、主体、讨论、展望、结论。正文直接呈现领域认识、研究发现、争议与证据边界；摘要、引言、主体、讨论、展望和结论均不叙述本次综述写作前如何调研文献，也不把这些内容挪到脚注、图表或附录。
+- 本次综述的数据库与平台、检索式、检索日期或更新截止日、追溯方式、纳排与筛选过程、文献数量、评分选文及 RoB/GRADE 是否实施等说明，统一写入工作条件、Search Log 或配套报告；不以“透明检索”“叙述性综述”或未实施某项方法的免责声明带回正文。主题、人群、疾病阶段等实质范围可在引言简要界定。
+- 讨论原始研究的设计、偏倚、异质性、疗效及外推限制仍是正文任务；区分“被综述研究的方法”与“本次综述的制作过程”。仅用户或目标期刊明确要求方法报告（如 PRISMA）时，才按要求另设方法章节或补充材料；仅称“系统综述”不自动加入流程叙述，也不得虚构已完成的方法或据此宣称符合报告规范。
 - 写作前读取 `word_budget_final.csv` 与完整证据资料，预算用于检查篇幅，不机械逐篇填空。关键主张核对人群、设计、终点、数值、不确定性及指南版本；证据深度在工作条件中如实说明。
 - 证据卡保留完整摘要和已有提取字段；显式截断时依 source_id/source_record 回读原始选文。缺证据先补检或缩小主张，不靠语言扩写填满预算。
 - 新稿用 `render_review_template.py --title ... --body ... --bib ... --output ...` 应用真实学术模板；已有完整 TeX 或指定版式保留。阅读 `references/review-tex-section-templates.md` 后再写导言区。
@@ -108,6 +110,7 @@ metadata:
 #### 有机扩写与验证
 
 - 若字数不足，先判断是否遗漏问题、比较或证据；只有新增内容有实际解释价值时扩写。结构或主张需要改变时回到证据与规划阶段，不为凑字数重复边界声明。
+- 交稿前逐段检查正文是否在回答“这篇综述是怎样做出来的”；若是，将过程信息移至配套材料，删去重复声明。该语义检查同时覆盖中文、英文、摘要、脚注、图表与附录，不能只凭流程关键词或数据库名判定，也不能据脚本通过宣称已完成。
 - 依次运行：
   - `validate_counts.py`
   - `validate_review_tex.py`
@@ -117,7 +120,7 @@ metadata:
 
 #### 导出与多语言
 
-- 通过 `compile_latex_with_bibtex.py` 生成 PDF；未解析引文/交叉引用及缺字阻断导出，最终 `.log/.blg` 留在内部供排查。`--template` 只提供搜索目录，不会应用版式。
+- 通过 `compile_latex_with_bibtex.py` 生成 PDF；内置 BST 直接引用当前宿主机 Skill 根目录下 `references/latex-template/` 中的样式文件，不另写或复制样式。未解析引文/交叉引用及缺字阻断导出，最终 `.log/.blg` 留在内部供排查。`--template` 只提供搜索目录，不会应用版式。
 - 通过 `convert_latex_to_word.py` 生成 Word，一级标题默认 Heading1，使用随 skill 提供的数字引文 CSL。
 - 导出后实际检查首页、正文、最长表格、图注与参考文献，并核对 PDF/Word 的正文、图表和书目完整性。把检查页码、结果及未验证项写入工作条件中的交付检查记录；编译成功不代表目视或证据审查通过。
 - 如用户要求多语言版本，使用 `multi_language.py` 翻译正文并智能编译；失败时保留错误报告与 broken 文件，并优先支持恢复备份。
@@ -169,7 +172,7 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 - `{主题}_review.pdf`
 - `{主题}_review.docx`
 
-同时包含 `{主题}_工作条件.md`、`{主题}_review.tex`、`{主题}_参考文献.bib`、`{主题}_验证报告.md` 及 TeX 实际引用的相对图表、片段与 BST。缺必需文件或资源时停止发布；保留原有文件，未经明确授权不覆盖。`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留为完整包入口。字数预算、候选文献、评分、选文、摘要补齐和证据卡始终属于内部材料，不进入正式发布目录。
+同时包含 `{主题}_工作条件.md`、`{主题}_review.tex`、`{主题}_参考文献.bib`、`{主题}_验证报告.md` 及 TeX 实际引用的相对图表、片段。成品不生成或交付 README；使用说明与限制写入已有工作条件。Skill 自带的 BST 由 TeX 直接引用宿主机上的绝对路径（不带 `.bst` 后缀），系统样式由 TeX 发行版提供，均不复制到成品目录；仅用户明确指定的本地自定义资源随稿保留。缺必需文件或资源时停止发布；保留原有文件，未经明确授权不覆盖。`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留为完整包入口。字数预算、候选文献、评分、选文、摘要补齐和证据卡始终属于内部材料，不进入正式发布目录。
 
 必要中间产物包括：
 
@@ -185,6 +188,7 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 
 - 默认 `run_pipeline.py` 将运行目录放在 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/<run-id>/`；查询输入位于 `input/`，内部状态和产物位于 `output/` 下的 `artifacts/`、`reference/`、`cache/`、`scripts/`、`deliverables/`（支持性文件单独位于 `deliverables/supporting/`）。
 - 正式交付目录必须通过 `--publish-dir` 显式指定，默认接收完整文稿包；仅阅读模式只接收 PDF/Word。不要把正式目录作为 `--work-dir`。
+- 任务工作区的内部 README 不属于综述成品，不复制到正式目录。不要自行向成品补写 README 或复制内置 BST/CSL；宿主机 Skill 路径变化或换机时，用接收端 Skill 资源路径更新 TeX 引用后重编译。
 - AI 临时脚本必须放到内部 `output/scripts/`；不要把临时文件写到运行目录根部，不要使用绝对路径写 `/tmp/*`，也不要读写其他 run 目录。
 - 以环境变量 `SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT` 和 `SYSTEMATIC_LITERATURE_REVIEW_SCRIPTS_DIR` 为准。
 - search bundle 位于当前 review run 的 `output/artifacts/search_bundle_{stem}/`，review 只读消费其 manifest 指向的相对路径；不得跨 run 猜测或直接信任外部绝对 artifact 路径。
@@ -224,7 +228,7 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 - 正文字数依用户要求与当前配置验收；参考数量为软预算，保留相关性门槛，不凑篇数；篇数缺口与停止理由写入工作条件。
 - 默认正文包含摘要、引言、3–7 个主体主题、讨论、展望和结论；结构检查不代替学术内容审查。
 - `\cite{key}` 必须与 BibTeX key 一致；缺失即报错。
-- 模型调用、内部评分和字数预算等 AI 工作流写入工作条件；正式系统综述应保留真实研究方法、检索筛选与偏倚评价。
+- 本次综述的文献调研与制作过程写入配套材料，默认不进入正文；方法报告仅按写作步骤所列的明确要求处理。保留对原始研究方法与证据局限的必要分析，不虚构检索、独立筛选或偏倚评价。
 - 摘要必须为单段，避免方法学流水账；表格宽度与样式约束见 `references/review-tex-section-templates.md`。
 - 不为凑引用而堆砌低分文献；无法确认时优先不改、不引。
 - 多查询 JSON 缺失、冲突、不可解析、有效查询少于配置下限或超过上限时，阶段 1 必须 fail-closed；不得以成功退出码伪装成多查询完成。

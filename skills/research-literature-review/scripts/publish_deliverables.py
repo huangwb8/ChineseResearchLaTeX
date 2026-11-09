@@ -8,6 +8,8 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from compile_latex_with_bibtex import bind_bundled_bst, find_bst_file
+
 
 class PublishError(RuntimeError):
     """文稿不完整、依赖越界或存在覆盖风险。"""
@@ -49,20 +51,26 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
     def add(raw: str, suffixes: tuple[str, ...], *, graphic=False, style=False):
         raw = raw.strip()
         rel = Path(raw)
+        if style:
+            # 内置样式只读引用宿主机；绝对路径仅允许指向 Skill 自带的 BST。
+            bst_path = rel if rel.suffix == ".bst" else Path(raw + ".bst")
+            if bst_path.is_absolute():
+                if bst_path.parent != BUNDLED_RESOURCES or bst_path.is_symlink():
+                    raise PublishError("外部 BST 仅允许引用当前 Skill 内置样式")
+                _safe_file(bst_path, BUNDLED_RESOURCES)
+                return
         if not raw or rel.is_absolute() or ".." in rel.parts or any(c in raw for c in "\\#$~{}"):
             raise PublishError(f"依赖必须使用静态相对路径：{raw}")
         choices = [directory / raw for directory in (graphics_dirs if graphic else [root])]
         candidates = [p if p.suffix else p.with_suffix(suffix) for p in choices for suffix in (suffixes if not p.suffix else ("",))]
         found = next((p for p in candidates if p.is_file() or p.is_symlink()), None)
         if found is None and style:
-            from compile_latex_with_bibtex import find_bst_file
-
             bst_name = raw if rel.suffix == ".bst" else raw + ".bst"
             found = find_bst_file(bst_name, [BUNDLED_RESOURCES], root)
             if found is None:
                 raise PublishError(f"缺少 TeX 依赖：{raw}")
             _safe_file(found, found.parent)
-            destination = found.name
+            return  # 系统样式由 TeX 发行版提供，不复制到成品。
         elif found is not None:
             _safe_file(found, root)
             destination = found.relative_to(root).as_posix()
@@ -83,7 +91,7 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
         if path in visited:
             continue
         visited.add(path)
-        tex = re.sub(r"(?<!\\)%[^\n]*", "", path.read_text(encoding="utf-8"))
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", bind_bundled_bst(path.read_text(encoding="utf-8")))
         for group in re.findall(r"\\graphicspath\s*\{((?:\s*\{[^{}]*\}\s*)+)\}", tex):
             for raw in re.findall(r"\{([^{}]+)\}", group):
                 rel = Path(raw)
@@ -175,7 +183,10 @@ def publish_deliverables(source_dir: Path, publish_dir: Path, *, include_support
         try:
             with temporary.open("xb") as handle, path.open("rb") as original:
                 created = True
-                shutil.copyfileobj(original, handle)
+                if path.suffix == ".tex":
+                    handle.write(bind_bundled_bst(original.read().decode("utf-8")).encode("utf-8"))
+                else:
+                    shutil.copyfileobj(original, handle)
             temporary.replace(destination)
         finally:
             if created and temporary.exists():

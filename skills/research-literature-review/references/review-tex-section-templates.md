@@ -14,9 +14,13 @@ Bib 应先放在输出目录或子目录。该入口实际应用 `references/lat
 
 `compile_latex_with_bibtex.py --template` 只追加资源搜索目录，不会替换导言区或应用 Pandoc 模板。旧 `nature-reviews-template.tex` 是 Pandoc 兼容资产，不能直接用 XeLaTeX 当正文编译。
 
+生成与编译入口将内置 `\bibliographystyle{gbt7714-nsfc}` 绑定为当前宿主机 Skill 根目录下 `references/latex-template/gbt7714-nsfc` 的绝对路径，省略 `.bst` 后缀。不要在成品中复制或重写 BST，也不添加 README；交付说明写入已有工作条件。换机或 Skill 安装路径变化后更新该引用再编译。
+
 ## 最小结构
 
 以下为默认结构；用户或期刊指定其它结构时遵从其要求，并同步调整结构检查参数。
+
+各部分直接呈现领域问题、发现与判断，不添加本次综述的检索来源、筛选方法、检索截止日、选文数量或方法学免责声明，也不挪到脚注、图表或附录；相关信息归入工作条件和配套报告。引言可简要界定主题与人群范围。原始研究的方法和证据局限按论证需要讨论；只有明确要求方法报告时才另设方法章节或补充材料，详见[内容分离原则](expert-review-writing.md#内容分离原则)。
 
 - `Abstract` / `摘要`
 - `Introduction`
@@ -33,7 +37,7 @@ Bib 应先放在输出目录或子目录。该入口实际应用 `references/lat
 \end{abstract}
 
 \section{Introduction}
-问题重要性、旧共识、研究缺口、本文路线。
+问题重要性、旧共识、研究缺口、核心问题与实质范围。
 
 \section{Topic 1}
 局部主张 + 关键证据 + 边界。
@@ -45,7 +49,7 @@ Bib 应先放在输出目录或子目录。该入口实际应用 `references/lat
 局部主张 + 关键证据 + 边界。
 
 \section{Questions and concerns}
-异质性、方法学陷阱、争议来源。
+原始研究的异质性、设计局限与争议来源。
 
 \section{Perspectives}
 可检验研究议程与现实约束。
@@ -84,6 +88,7 @@ Bib 应先放在输出目录或子目录。该入口实际应用 `references/lat
 - [ ] 有独立讨论段
 - [ ] 有独立展望段
 - [ ] 标题按概念命名，不是“步骤 1/2/3”
+- [ ] 已逐段复核摘要、正文、脚注、图表和附录，无本次文献调研过程叙述；原始研究的方法与证据边界仍清楚，明确要求的方法报告另按要求验收
 - [ ] 不同时使用自动编号和标题文字中的手写编号
 - [ ] 图表用相对路径；实际依赖放在 supporting 内，随完整文稿包发布
 - [ ] PDF 最后一次编译没有未解析引用/缺字；Word 从 Heading1 开始，数字引文可见

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed（正文聚焦研究结论 - 2026-11-09）
+
+- 默认从摘要、引言及其它正文位置排除本次文献调研过程，涵盖检索来源、截止日、筛选选文及本次 RoB/GRADE 实施声明；过程信息保留在工作条件、Search Log 和配套报告，不挪到文稿脚注、图表或附录。
+- 同步写作指南、章节模板、工作条件生成提示及逐段语义复核要求；保留原始研究设计、偏倚与适用边界的讨论。仅用户或目标期刊明确要求时另设方法报告，文稿类型名称不自动触发，也不宣称未满足的报告规范。
+- 配置 patch 版本更新；本轮不修改检索、选文和导出实现，不更新系统安装副本。
+- 验证：基础 Skill 校验、上游 strict 结构检查、Python 语法及实际 prepare-only 通过，9 项工作区/发布边界回归通过；相关本地链接和 diff 检查通过。未运行同题长篇写作对照或 PDF/Word 重导出；BAC 保留 3 条既有 actor/source_type 警告。
+
+### Fixed（成品目录精简 - 2026-11-09）
+
+- 成品不生成或交付 README，使用说明归入已有工作条件，任务工作区内部 README 保持独立。
+- 模板生成、PDF 编译及完整包发布将内置 BST 绑定为当前宿主机 Skill 资源的绝对引用；不复制内置或系统 BST，保留用户指定的本地自定义资源与图表依赖。
+- 更新配置 patch 版本与说明；跨机器或 Skill 路径变化时需更新 TeX 的资源引用。
+- 验证：48 项定向回归通过，含内置和系统 BST 的真实 PDF/Word 导出、无 BST 副本的宿主机重编译、README 排除及已有文件保护；基础 Skill 校验、上游 strict 结构检查与 diff 检查通过。
+
 ### Changed（模板资源归档 - 2026-11-09）
 
 - 将 `latex-template/` 移至 `references/latex-template/`，同步脚本默认路径、配置、参考说明和回归用例；六个资源文件内容保持不变，配置版本更新为 patch。

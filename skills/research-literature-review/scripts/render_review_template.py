@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 
 from path_scope import get_effective_scope_root, resolve_and_check
+from compile_latex_with_bibtex import bind_bundled_bst
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "references/latex-template/review-article.tex"
 
@@ -36,6 +37,7 @@ def render(title: str, body: Path, bib: Path, output: Path) -> None:
     # 一次替换，正文或题名中的标记不被二次求值。
     values = {"TITLE": escape_title(title), "BODY": content, "BIB": bib_name}
     rendered = re.sub(r"@@(TITLE|BODY|BIB)@@", lambda m: values[m.group(1)], template)
+    rendered = bind_bundled_bst(rendered)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as handle:
         handle.write(rendered)

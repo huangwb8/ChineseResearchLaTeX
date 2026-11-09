@@ -28,6 +28,26 @@ except Exception:
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_ROOT = SCRIPT_DIR.parent
 DEFAULT_TEMPLATE = SKILL_ROOT / "references/latex-template" / "nature-reviews-template.tex"
+BUNDLED_RESOURCES = DEFAULT_TEMPLATE.parent
+
+
+def bind_bundled_bst(text: str) -> str:
+    """将内置 BST 名称绑定到当前宿主机 Skill；不复制样式文件。"""
+    def replace(match: re.Match) -> str:
+        style = match.group(1).strip()
+        if Path(style).name != style or any(c in style for c in "\\#$~{}%"):
+            return match.group(0)
+        candidate = BUNDLED_RESOURCES / (style if style.endswith(".bst") else style + ".bst")
+        if not candidate.is_file():
+            return match.group(0)  # 自定义和系统样式保留原选择。
+        path = candidate.resolve().with_suffix("").as_posix()
+        if any(c.isspace() or c in "\\#$~{}%" for c in path):
+            raise ValueError("Skill 样式路径含 BibTeX 不支持的空白或控制字符，请使用无此类字符的安装路径")
+        return "\\bibliographystyle{" + path + "}"
+
+    # 不将注释中的示例变为依赖。
+    return re.sub(r"(?m)(?<!\\)%[^\n]*|\\bibliographystyle\s*\{([^{}]+)\}",
+                  lambda m: replace(m) if m.group(1) is not None else m.group(0), text)
 
 
 def _check_tool(name: str) -> bool:
@@ -188,9 +208,14 @@ def _verify_bst_in_template(tex_file: Path, template_dirs: list[Path]) -> list[s
     verified: list[str] = []
 
     for style in styles:
+        bst_name = style if style.endswith(".bst") else f"{style}.bst"
         if "/" in style or "\\" in style:
-            continue  # Skip if style includes a path
-        bst_name = f"{style}.bst"
+            candidate = Path(bst_name)
+            candidate = candidate if candidate.is_absolute() else tex_file.parent / candidate
+            if not candidate.is_file():
+                raise FileNotFoundError(f"❌ .bst 文件未找到：{bst_name}")
+            verified.append(str(candidate.resolve()))
+            continue
         found = find_bst_file(bst_name, template_dirs, tex_file.parent)
         if found is not None:
             verified.append(str(found))
@@ -307,6 +332,10 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
             default_style = "gbt7714-nsfc"
 
     _ensure_bibliographystyle(tex_file, default_style)
+    original = tex_file.read_text(encoding="utf-8")
+    bound = bind_bundled_bst(original)
+    if bound != original:
+        tex_file.write_text(bound, encoding="utf-8")
 
     # 设置环境变量引用模板目录（v3.5 优化：不再复制模板文件）
     # 说明：template_path 用于“追加搜索目录”（例如用户自定义模板/自定义 bst 的同级目录），
