@@ -12,6 +12,10 @@
 
 - `research-literature-review`：综述成品明确排除 README；模板、编译与发布直接引用宿主机 Skill 内置 BST，停止复制内置及系统样式到成品，同步交付说明与回归测试。
 
+- `research-literature-search`：将有效的检索契约回归脚本从 `tests/` 移至 `scripts/`，补充 README 运行入口；迁移前后 22 项离线测试均通过。
+
+- `research-literature-search`：Python 依赖及原版本约束统一由 `config.yaml:dependencies.python` 托管，删除 `requirements.txt`，同步依赖说明。
+
 - `research-literature-review`：将 `latex-template/` 移至 `references/latex-template/`，同步编译、Word 导出、多语言、交付及测试引用。
 
 - 修复 `research-literature-review` 本地记录中的预算配置隔离与档位、Unicode JSONL、禁止引用资格、Bib 元数据转义、natbib 分布检查和系统 BST 编译/完整交付问题；联动 `research-literature-search` 查询模块隔离与版本来源，补充定向回归并完成本地 resolution 闭环。

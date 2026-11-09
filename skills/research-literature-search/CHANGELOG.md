@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- 将 `tests/test_search_contract.py` 移至 `scripts/test_search_contract.py`，保留 22 项有效回归测试并补充 README 运行入口；迁移前后均通过离线验证。
+
+- Python 依赖及原版本约束迁入 `config.yaml:dependencies.python`，删除 `requirements.txt`，同步 README 依赖说明。
+
 - 查询解析迁入唯一命名的 `rls_contract.py`，旧 `query_contract.py` 保留兼容导入；修复先加载 review 模块后检索缺失 `query_id` 的问题。
 - manifest 的 Skill 版本改为读取自身 `config.yaml`，清除 README 冗余版本与旧 Python 下限，公共约束精确同步上游；配置更新为 patch，`rls.v1` 与候选 schema 保持兼容。
 - 同进程 review→search 检索与 bundle 校验、旧导入兼容、查询 ID、非法查询数量和配置版本一致性均通过回归；strict 结构检查通过。检索使用合成 provider，不把本轮结果表述为线上数据库召回验证。

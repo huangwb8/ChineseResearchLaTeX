@@ -50,4 +50,15 @@ OpenAlex 候选缺少嵌套来源元数据（例如 `primary_location.source` �
 
 ## 依赖
 
-Python 3.11+；联网 provider 使用 `requests`，配置读取使用 PyYAML。MCP/duckduckgo 需要宿主工具，纯 Python runner 会显式记录 skipped。详见 [paper-schema.md](references/paper-schema.md)、[bundle-schema.md](references/bundle-schema.md) 和 [provider-guide.md](references/provider-guide.md)。
+Python 3.11+；Python 包依赖及版本约束统一在 `config.yaml:dependencies.python` 中声明。联网 provider 使用 `requests`，配置读取使用 PyYAML。MCP/duckduckgo 需要宿主工具，纯 Python runner 会显式记录 skipped。详见 [paper-schema.md](references/paper-schema.md)、[bundle-schema.md](references/bundle-schema.md) 和 [provider-guide.md](references/provider-guide.md)。
+
+## 维护与回归测试
+
+`scripts/test_search_contract.py` 覆盖查询契约、候选规范化、去重、bundle 审计与路径安全，使用合成 provider，不请求线上数据库。
+
+从仓库根目录运行，将 `<本轮任务工作区>` 替换为当前任务目录；临时文件集中写入该目录，并禁用源码目录的字节码缓存：
+
+```bash
+mkdir -p "<本轮任务工作区>/test-tmp"
+TMPDIR="<本轮任务工作区>/test-tmp" PYTHONDONTWRITEBYTECODE=1 python skills/research-literature-search/scripts/test_search_contract.py
+```
