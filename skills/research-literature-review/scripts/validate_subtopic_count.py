@@ -27,6 +27,9 @@ STANDARD_SECTIONS = {
     "outlook",
     "展望",
     "future work",
+    "perspectives",
+    "methods",
+    "方法",
     "未来工作",
     "acknowledgement",
     "acknowledgments",
@@ -38,7 +41,7 @@ STANDARD_SECTIONS = {
 
 def count_subsections(tex_file: Path) -> dict:
     """统计子主题 section 数量"""
-    content = tex_file.read_text(encoding="utf-8")
+    content = re.sub(r"(?<!\\)%[^\n]*", "", tex_file.read_text(encoding="utf-8"))
 
     # 匹配 \section{...} 或 \section*{...}
     section_pattern = r"\\section\*?\{([^}]+)\}"

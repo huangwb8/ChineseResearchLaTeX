@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -37,15 +38,15 @@ def load_json_result(path: Path) -> Dict[str, Any]:
 def parse_review_tex_result(output: str) -> Dict[str, Any]:
     """解析 validate_review_tex.py 的输出"""
     result = {
-        "passed": "✓" in output or "passed" in output.lower(),
+        "passed": bool(re.fullmatch(
+            r"✓ LaTeX review validation passed \(cites=\d+, bib_keys=\d+\)(?: SECTIONS:\{.*\})?",
+            output.strip(),
+        )),
         "cites": 0,
         "bib_keys": 0,
         "sections": None,
     }
     # 提取 cites= 和 bib_keys= 的数值
-    import re
-    import json
-
     cites_match = re.search(r"cites=(\d+)", output)
     bib_match = re.search(r"bib_keys=(\d+)", output)
     if cites_match:
@@ -70,20 +71,20 @@ def compute_abstract_stats(selected_jsonl: Path, min_abstract_chars: int) -> Dic
     total = 0
     ok = 0
     examples: list[str] = []
-    if not selected_jsonl.exists():
-        return {"enabled": False, "reason": f"missing file: {selected_jsonl}"}
+    if not selected_jsonl.is_file():
+        raise ValueError("选文文件缺失，不能计算摘要覆盖率")
 
-    with selected_jsonl.open("r", encoding="utf-8", errors="replace") as f:
-        for line in f:
+    with selected_jsonl.open("r", encoding="utf-8") as f:
+        for line_number, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
             try:
                 obj = json.loads(line)
-            except Exception:
-                continue
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"选文文件第 {line_number} 行不是有效 JSON") from exc
             if not isinstance(obj, dict):
-                continue
+                raise ValueError(f"选文文件第 {line_number} 行不是文献对象")
             total += 1
             abstract = obj.get("abstract") or ""
             if isinstance(abstract, str) and len(abstract.strip()) >= int(min_abstract_chars):
@@ -93,6 +94,8 @@ def compute_abstract_stats(selected_jsonl: Path, min_abstract_chars: int) -> Dic
                 if title:
                     examples.append(title[:120])
 
+    if total == 0:
+        raise ValueError("选文文件为空，不能声明摘要覆盖率通过")
     missing = max(0, total - ok)
     coverage = (ok / total) if total else 0.0
     return {
@@ -122,7 +125,7 @@ def generate_markdown_report(
     """生成 Markdown 格式的验证报告"""
 
     lines = [
-        "# 系统综述验证报告",
+        "# 综述结构与资料可用性检查报告",
         "",
         f"**生成时间**: {timestamp}",
         f"**档位**: {review_level}",
@@ -139,7 +142,9 @@ def generate_markdown_report(
     overall_passed = counts_passed and review_tex_passed
 
     lines.extend([
-        f"**验证状态**: {format_status(overall_passed)}",
+        f"**结构检查状态**: {format_status(overall_passed)}",
+        "",
+        "本报告只汇总实际输入的结构、计数与摘要可用性检查，不认证研究结论或整体综述质量。",
         "",
         "---",
         "",
@@ -277,19 +282,12 @@ def generate_markdown_report(
 
         lines.extend([
             f"- **讨论**: {'✅ 存在' if sections.get('discussion') else '❌ 缺失'}",
-            f"- **展望/结论**: {'✅ 存在' if sections.get('outlook') else '❌ 缺失'}",
+            f"- **展望**: {'✅ 存在' if sections.get('outlook') else '❌ 缺失'}",
+            f"- **结论**: {'✅ 存在' if sections.get('conclusion') else '未验证或缺失'}",
             "",
         ])
     elif review_tex_passed:
-        # 兼容旧版本：没有详细章节信息但验证通过
-        lines.extend([
-            "- **摘要**: ✅ 存在",
-            "- **引言**: ✅ 存在",
-            "- **子主题段**: ✅ 至少1个",
-            "- **讨论**: ✅ 存在",
-            "- **展望/结论**: ✅ 存在",
-            "",
-        ])
+        lines.extend(["- 旧检查输出缺少逐章节证据；章节明细未验证。", ""])
     else:
         # 验证未通过或未执行
         lines.extend([
@@ -307,7 +305,7 @@ def generate_markdown_report(
 
     if overall_passed:
         lines.extend([
-            "✅ **所有验证项通过**，系统综述已满足质量标准，可以继续导出 PDF/Word。",
+            "✅ **所提供的计数和 TeX 结构检查通过**。还需完成下列证据与交付检查。",
             "",
         ])
     else:
@@ -342,7 +340,16 @@ def generate_markdown_report(
 
     lines.extend([
         "",
-        "**必需章节**: 摘要、引言、至少1个子主题段、讨论、展望/结论",
+        "**必需章节**: 摘要、引言、主体、讨论、展望、结论；子主题数量以阶段检查为准。",
+        "",
+        "## 需要另外核验的内容",
+        "",
+        "- 论断与原始研究对应、关键数字、指南版本与勘误：未验证。",
+        "- 全文读取深度、偏倚风险及证据确定性：未验证；摘要可用不代表全文已读。",
+        "- PDF/Word 导出、两种格式内容一致及页面目视检查：未验证。",
+        "- 支持文件、图表与样式资源在独立目录中的复现：未验证。",
+        "",
+        "执行者完成后在独立交付检查记录中引用命令、页码或文件证据；不得把本报告改写为未执行项目的通过证明。",
         "",
         "---",
         "",
@@ -431,6 +438,8 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+    if args.force_pass:
+        parser.error("--force-pass 已停用：测试数据不能生成真实通过报告")
 
     scope_root = get_effective_scope_root(args.scope_root)
     if scope_root is not None:

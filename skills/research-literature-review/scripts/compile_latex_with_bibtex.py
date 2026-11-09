@@ -220,6 +220,24 @@ def _resolve_template_dir(work_dir: Path, template_path: Path | None) -> Path | 
     return resolved.parent if resolved.is_file() else resolved
 
 
+def _check_final_log(path: Path) -> None:
+    """编译退出码不能检测缺字和未解析引用；只检查最后一轮日志。"""
+    if not path.is_file():
+        raise RuntimeError("最终 LaTeX 日志缺失，无法确认引用与字形是否正常")
+    log = path.read_text(encoding="utf-8", errors="replace")
+    fatal = [line for line in log.splitlines() if (
+        "Missing character:" in line
+        or "There were undefined references" in line
+        or re.search(r"(?:Citation|Reference) .+ undefined", line)
+        or "Label(s) may have changed" in line
+    )]
+    if fatal:
+        raise RuntimeError("PDF 存在缺字或未解析引用/交叉引用，保留日志供排查：\n" + "\n".join(fatal[:20]))
+    overfull = [line for line in log.splitlines() if "Overfull \\hbox" in line or "Overfull \\vbox" in line]
+    if overfull:
+        print("⚠️ PDF 有溢出版面警告，需目视检查：\n" + "\n".join(overfull[:20]), file=sys.stderr)
+
+
 def _ensure_template(tex_file: Path, configured_template: Path | None) -> Path | None:
     """Ensure the LaTeX template exists; copy from skill bundle if relative path is missing."""
     tex_dir = tex_file.parent
@@ -292,6 +310,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
         raise FileNotFoundError(f"Template directory not found: {template_dir}")
     override_dir = _resolve_template_dir(work_dir, template_path)
     template_dirs: list[Path] = []
+    template_dirs.append(work_dir)
     if override_dir and override_dir != template_dir:
         template_dirs.append(override_dir)
     template_dirs.append(template_dir)
@@ -308,6 +327,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
 
     base = tex_file.stem
 
+    succeeded = False
     try:
         # 1) xelatex
         _run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", tex_file.name], cwd=work_dir, env=env)
@@ -321,6 +341,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
         produced_pdf = work_dir / f"{base}.pdf"
         if not produced_pdf.exists():
             raise RuntimeError(f"PDF not produced: {produced_pdf}")
+        _check_final_log(work_dir / f"{base}.log")
 
         final_pdf = produced_pdf
         if output_pdf is not None:
@@ -329,13 +350,14 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
                 output_pdf.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(produced_pdf), str(output_pdf))
                 final_pdf = output_pdf
+        succeeded = True
     finally:
         # 无论编译成功与否，都执行清理（除非 keep_aux=True）
-        if not keep_aux:
+        if not keep_aux and succeeded:
             # LaTeX 中间文件后缀清单（按包分类）
             aux_suffixes = [
                 # 核心中间文件
-                ".aux", ".bbl", ".blg", ".log",
+                ".aux", ".bbl",
                 # hyperref 包
                 ".out",
                 # 目录相关

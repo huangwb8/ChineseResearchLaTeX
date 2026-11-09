@@ -103,13 +103,16 @@ class WorkspaceLayoutTests(unittest.TestCase):
             source.mkdir()
             (source / "supporting").mkdir()
             (source / "topic_review.pdf").write_bytes(b"pdf")
+            (source / "topic_review.docx").write_bytes(b"docx")
             (source / "supporting" / "topic_review.tex").write_text("% tex\n", encoding="utf-8")
+            for name in ("topic_参考文献.bib", "topic_工作条件.md", "topic_验证报告.md"):
+                (source / "supporting" / name).write_text("fixture\n", encoding="utf-8")
 
             PUBLISH.publish_deliverables(source, target, include_supporting=True)
 
             self.assertEqual(
                 sorted(p.name for p in target.iterdir()),
-                ["topic_review.pdf", "topic_review.tex"],
+                sorted(["topic_review.pdf", "topic_review.docx", "topic_review.tex", "topic_参考文献.bib", "topic_工作条件.md", "topic_验证报告.md"]),
             )
 
     def test_publish_rejects_unexpected_existing_file(self) -> None:

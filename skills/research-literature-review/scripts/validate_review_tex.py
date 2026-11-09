@@ -154,7 +154,7 @@ def main() -> int:
             print(f"✗ {e}", file=sys.stderr)
         return 1
 
-    tex = _read(args.tex)
+    tex = re.sub(r"(?<!\\)%[^\n]*", "", _read(args.tex))
     bib = _read(args.bib)
 
     # 必需章节关键字（轻量检查）
@@ -165,9 +165,11 @@ def main() -> int:
         "intro": ["引言", "Introduction"],
         "body": [],  # 至少一个额外 section
         "discussion": ["讨论", "Discussion"],
-        "outlook": ["展望", "Outlook", "Perspectives", "Conclusion", "结论"],
+        "outlook": ["展望", "Outlook", "Perspectives", "Future work"],
+        "conclusion": ["Conclusion", "结论"],
     }
-    if not _has_keyword(tex, musts["abstract"]) and not _has_keyword(section_titles, musts["abstract"]):
+    abstract_present = bool(re.search(r"\\begin\s*\{abstract\}", tex)) or _has_keyword(section_titles, musts["abstract"][1:])
+    if not abstract_present:
         errors.append("缺少摘要（abstract 环境或摘要/Abstract 标题）")
     if not _has_keyword(section_titles, musts["intro"]):
         errors.append("缺少引言（引言/Introduction）")
@@ -178,6 +180,7 @@ def main() -> int:
         if not _has_keyword(t, musts["intro"])
         and not _has_keyword(t, musts["discussion"])
         and not _has_keyword(t, musts["outlook"])
+        and not _has_keyword(t, musts["conclusion"])
         and not _has_keyword(t, musts["abstract"])
         and t.lower() not in {"references", "参考文献"}
     ]
@@ -186,8 +189,10 @@ def main() -> int:
 
     if not _has_keyword(section_titles, musts["discussion"]):
         errors.append("缺少讨论（讨论/Discussion）")
-    if not (_has_keyword(section_titles, musts["outlook"]) or _has_keyword(tex, musts["outlook"])):
-        errors.append("缺少展望/结论（展望/Outlook/Perspectives/结论）")
+    if not _has_keyword(section_titles, musts["outlook"]):
+        errors.append("缺少展望（展望/Outlook/Perspectives）")
+    if not _has_keyword(section_titles, musts["conclusion"]):
+        errors.append("缺少结论（结论/Conclusion）")
 
     # cite 与 bib 对齐 + 数量
     cite_keys = _extract_cite_keys(tex)
@@ -220,15 +225,21 @@ def main() -> int:
                 if args.verbose:
                     print(f"  - 引用分布不符合目标（详见上方报告）", file=sys.stderr)
 
+    if errors:
+        for error in errors:
+            print(error, file=sys.stderr)
+        return 1
+
     # 收集章节验证详情（用于 generate_validation_report.py 解析）
     import json
     sections_info = {
-        "abstract": _has_keyword(tex, musts["abstract"]) or _has_keyword(section_titles, musts["abstract"]),
+        "abstract": abstract_present,
         "intro": _has_keyword(section_titles, musts["intro"]),
         "body_count": len(body_titles),
         "body_titles": body_titles[:10],  # 最多记录前10个，避免输出过长
         "discussion": _has_keyword(section_titles, musts["discussion"]),
-        "outlook": _has_keyword(section_titles, musts["outlook"]) or _has_keyword(tex, musts["outlook"]),
+        "outlook": _has_keyword(section_titles, musts["outlook"]),
+        "conclusion": _has_keyword(section_titles, musts["conclusion"]),
     }
     sections_json = json.dumps(sections_info, ensure_ascii=False)
 

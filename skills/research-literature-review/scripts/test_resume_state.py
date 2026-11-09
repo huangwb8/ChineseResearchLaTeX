@@ -48,8 +48,12 @@ class ResumeStateTests(unittest.TestCase):
             existing.to_json(state_path)
 
             organizer = SimpleNamespace(returncode=0, stdout="no moves needed", stderr="")
-            with patch.object(MODULE.subprocess, "run", return_value=organizer):
+            with patch.object(MODULE.subprocess, "run", return_value=organizer), \
+                    patch.object(runner, "run_stage_6_validate", return_value=True) as validate, \
+                    patch.object(runner, "run_stage_7_export", return_value=True) as export:
                 self.assertTrue(runner.run(resume_from=99))
+                validate.assert_called_once()
+                export.assert_called_once()
 
             self.assertEqual(runner.state.topic, "original topic")
             self.assertEqual(runner.state.output_files["references_bib"], "references.bib")

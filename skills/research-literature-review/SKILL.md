@@ -1,6 +1,6 @@
 ---
 name: research-literature-review
-description: 当用户明确要求"做系统综述/文献综述/related work/相关工作/文献调研"，或为研究想法核对强近邻与新颖性时使用；兼容旧名 systematic-literature-review。标准模式执行查询、检索、评分、相关性选文、写作、引用校验与 PDF/Word 导出，novelty-check 模式只交付强近邻、反方证据和未确认项。查询缺失或无效时默认停止，不静默降级为单查询。支持 en/zh/ja/de/fr/es。
+description: 当用户要求系统综述、文献综述、related work、相关工作或文献调研时使用；也支持明确的研究查新任务。兼容旧名 systematic-literature-review。仅检索候选论文、单条引文核查或既有正文润色不属于本 Skill。
 metadata:
   author: Bensz Conan
 ---
@@ -15,7 +15,9 @@ metadata:
 - `research-literature-search` 是阶段 1/2 的必需依赖（contract `rls.v1`）。review 只消费其 manifest、canonical candidates 和 provenance，不再内嵌 provider 或执行第二套 canonical 去重。
 - 旧名 `systematic-literature-review` 仅作为 prompt 兼容别名保留；`.systematic-literature-review/` 仍是稳定历史工作区名。
 
-### 输入概览
+## 流程
+
+### 输入
 
 最少需要：
 
@@ -26,11 +28,7 @@ metadata:
 5. 输出目录或安全化前缀：未指定时使用安全化主题名。
 6. 查询输入：阶段 1 前必须提供符合公开 schema 的多查询 JSON；推荐用 `--query-file`，也可填写当前 run 的 `input/queries.json`。
 
-## 流程
-
-### 输入
-
-按用户请求和配置文件提供必要输入；缺失信息应明确列出并停止依赖该输入的步骤。
+明确叙述性进展综述、正式系统综述或 novelty-check。查询由 AI 按主题生成，不把内部 JSON 准备责任转嫁给用户；仅缺少会影响范围的关键信息时澄清。
 
 ### 执行步骤
 
@@ -38,7 +36,7 @@ metadata:
 - 若 AI 仍可通过 workaround 继续完成用户任务，应先记录 bug，再继续完成当前任务。
 - 当用户明确要求“report bensz skills bugs”等公开上报动作时，调用本地 `gh` 与 `bensz-collect-bugs`，仅上传新增 bug 到 `huangwb8/bensz-bugs`；不要 pull / clone 整个 bug 仓库。
 
-### 准备
+#### 准备
 
 - 记录主题、档位、字数/参考范围与输出目录。
 - 先读取 `references/ai_query_generation_prompt.md`，生成查询 JSON。公开 schema 支持以下三种形态：
@@ -54,7 +52,7 @@ metadata:
   - `references/review-tex-section-templates.md`
   - 涉及翻译时再读 `references/multilingual-guide.md`
 
-### 多查询检索（调用 research-literature-search）
+#### 多查询检索（调用 research-literature-search）
 
 - 查询来源优先级固定为：显式 `--query-file` → 当前 run 的 `input/queries.json` → `input/queries_{stem}.json` → `output/artifacts/queries_{stem}.json` → 当前 run 内唯一历史兼容文件。
 - 自动发现多个候选时停止并报告冲突；发现文件但 schema/数量无效时停止并给出修复提示。不得跨 run 猜测查询路径。
@@ -63,20 +61,20 @@ metadata:
 - Search Log 的 `search_mode/query_source/requested_query_count/accepted_query_count/fallback_reason` 由 manifest 单向生成；AI 不手写 provider 次数、候选数量或去重结论。
 - 单查询只作为显式后备：传 `--allow-single-query-fallback`，可用 `--fallback-reason` 写明原因；日志必须标记 `search_mode=single_query` 和醒目警告。
 
-### 去重（契约验证，不重复去重）
+#### 去重（契约验证，不重复去重）
 
 - 验证 manifest、artifact hash、`rls.paper.v1` 和 `candidates_deduped.jsonl`；保留 `2_dedupe` checkpoint 名称以兼容 resume。
 - 新运行不得再次执行旧 `dedupe_papers.py` 或改变 canonical 顺序；旧文件/旧 checkpoint 仅通过显式 legacy adapter 读取，并标记 `legacy_adapted`。
 - 所有后续流程只读取 search bundle 的 canonical 候选集。
 
-### AI 评分与数据抽取
+#### AI 评分与数据抽取
 
 - AI 按 `references/ai_scoring_prompt.md` 逐篇阅读标题与摘要，输出 `scored_papers.jsonl`。
 - 每篇至少包含：`score`、`subtopic`、`rationale`、`alignment`、`extraction`。
 - 评分范围固定为 1-10 分；仅对 `>=5` 分文献分配子主题，避免弱相关论文污染子主题规划。
-- 自检分布是否健康：高分约 20-40%，中分 40-60%，低分 10-30%。
+- 评分依主题适配程度，不强制高/中/低分比例；相关性不是偏倚风险或证据强度。
 
-### 选文与 Bib 生成
+#### 选文与 Bib 生成
 
 - `select_references.py` 按最低相关性、证据角色和软预算选出最终集合；`target_refs` 是预算目标，`max_refs` 是上限，不再用低分或无摘要条目填满旧 `min_refs`。
 - 生成 `selected_papers.jsonl`、`references.bib`、`selection_rationale.yaml`。
@@ -84,43 +82,47 @@ metadata:
 - 证据角色使用 `direct-neighbor`、`supporting`、`methodological`、`contradictory`、`boundary`；直接近邻和反方证据优先于宽泛方法相似。
 - 标准综述只把有摘要且达到相关性阈值的条目放入正式引用集合。合格论文少于软目标时照常交付较小集合，并在 rationale 写停止理由与证据缺口。
 
-### Novelty check
+#### Novelty check
 
 当调用目的为 `--purpose novelty-check` 时，只运行到阶段 4，输出强近邻、反方/边界证据、未确认项与证据深度，不自动生成长篇正文、PDF 或 Word。只有标题的直接近邻可保留为待升级记录并标记 `do_not_cite`；预印本与正式论文使用同一相关性尺度，发表状态单列。
 
-### 子主题与配额规划
+#### 子主题与配额规划
 
 - AI 基于评分结果规划 3-7 个子主题，并给出段落配额。
 - 默认思路：引言约 1.5k、讨论/展望各约 1k、结论约 0.6k，其余分给子主题段。
 - 结果写入工作条件与数据抽取表，作为写作锚点。
 
-### 字数预算
+#### 字数预算
 
 - 用 `plan_word_budget.py` 生成 3 份预算 CSV，再汇总为 `word_budget_final.csv`。
 - 引用段与无引用段预算均需覆盖；总字数误差必须控制在 `config.yaml.word_budget.tolerance` 内。
 
-### 写作
+#### 写作
 
-- 正文章节固定为：摘要、引言、子主题段、讨论、展望、结论。
-- 写作前读取 `word_budget_final.csv`，按文献综/述预算组织证据。
+- 默认章节为摘要、引言、主体、讨论、展望、结论；正式系统综述另含必要的方法和结果，不隐藏检索筛选方法或偏倚评价。
+- 写作前读取 `word_budget_final.csv` 与完整证据资料，预算用于检查篇幅，不机械逐篇填空。关键主张核对人群、设计、终点、数值、不确定性及指南版本；证据深度在工作条件中如实说明。
+- 证据卡保留完整摘要和已有提取字段；显式截断时依 source_id/source_record 回读原始选文。缺证据先补检或缩小主张，不靠语言扩写填满预算。
+- 新稿用 `render_review_template.py --title ... --body ... --bib ... --output ...` 应用真实学术模板；已有完整 TeX 或指定版式保留。阅读 `references/review-tex-section-templates.md` 后再写导言区。
 - 默认采用单篇引用优先；引用要紧跟所支撑的观点，避免段末堆砌。
 - 如需详细写作规范，直接遵循：
   - `references/expert-review-writing.md`
   - `references/review-tex-section-templates.md`
 
-### 有机扩写与验证
+#### 有机扩写与验证
 
-- 若字数不足，只允许在最短或证据不足的子主题段内做增量扩写，不新增子主题，不改原主张和引用。
+- 若字数不足，先判断是否遗漏问题、比较或证据；只有新增内容有实际解释价值时扩写。结构或主张需要改变时回到证据与规划阶段，不为凑字数重复边界声明。
 - 依次运行：
   - `validate_counts.py`
   - `validate_review_tex.py`
-  - 可选 `validate_word_budget.py`
+  - `validate_subtopic_count.py`（默认 3–7 个主体主题）
+  - `validate_word_budget.py`（已有预算时执行）
   - `generate_validation_report.py`
 
-### 导出与多语言
+#### 导出与多语言
 
-- 通过 `compile_latex_with_bibtex.py` 生成 PDF。
-- 通过 `convert_latex_to_word.py` 生成 Word。
+- 通过 `compile_latex_with_bibtex.py` 生成 PDF；未解析引文/交叉引用及缺字阻断导出，最终 `.log/.blg` 留在内部供排查。`--template` 只提供搜索目录，不会应用版式。
+- 通过 `convert_latex_to_word.py` 生成 Word，一级标题默认 Heading1，使用随 skill 提供的数字引文 CSL。
+- 导出后实际检查首页、正文、最长表格、图注与参考文献，并核对 PDF/Word 的正文、图表和书目完整性。把检查页码、结果及未验证项写入工作条件中的交付检查记录；编译成功不代表目视或证据审查通过。
 - 如用户要求多语言版本，使用 `multi_language.py` 翻译正文并智能编译；失败时保留错误报告与 broken 文件，并优先支持恢复备份。
 
 ```bash
@@ -148,10 +150,9 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 
 `--resume-from` 只决定继续执行的阶段，不会绕过已有 `pipeline_state.json`。状态文件损坏时先备份或修复，禁止用空 state 覆盖历史 checkpoint。
 
-- 运行环境：Python 3.9+、LaTeX（`xelatex`/`bibtex`）、pandoc。
+- 开发与完整运行环境：Python 3.11+、LaTeX（`xelatex`/`bibtex`）、pandoc；Python 包及版本约束统一读取 `config.yaml:dependencies.python`，环境准备时按该列表安装。
 - 关键脚本：
-  - 检索：`multi_query_search.py`、`openalex_search.py`
-  - 去重：`dedupe_papers.py`
+  - 检索与 canonical 验证：`search_skill_resolver.py`（旧 provider/去重脚本仅供显式 legacy 兼容）
   - 选文：`select_references.py`、`build_reference_bib_from_papers.py`
   - 数据抽取：`update_working_conditions_data_extraction.py`
   - 字数预算：`plan_word_budget.py`、`validate_word_budget.py`
@@ -173,12 +174,12 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 
 ### 输出
 
-默认发布以下核心文件（通过 `--publish-dir` 指定正式目录时复制）：
+标准运行默认发布完整文稿包（`--publish-dir` 指定正式目录）：
 
 - `{主题}_review.pdf`
 - `{主题}_review.docx`
 
-可选支持性文件（使用 `--include-supporting` 发布）包括 `{主题}_工作条件.md`、`{主题}_review.tex`、`{主题}_参考文献.bib` 和 `{主题}_验证报告.md`。字数预算、候选文献、评分、选文、摘要补齐和证据卡始终属于内部中间产物，不进入正式发布目录。
+同时包含 `{主题}_工作条件.md`、`{主题}_review.tex`、`{主题}_参考文献.bib`、`{主题}_验证报告.md` 及 TeX 实际引用的相对图表、片段与 BST。缺必需文件或资源时停止发布；保留原有文件，未经明确授权不覆盖。`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留为完整包入口。字数预算、候选文献、评分、选文、摘要补齐和证据卡始终属于内部材料，不进入正式发布目录。
 
 必要中间产物包括：
 
@@ -193,14 +194,14 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
 
 - 默认 `run_pipeline.py` 将运行目录放在 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/<run-id>/`；查询输入位于 `input/`，内部状态和产物位于 `output/` 下的 `artifacts/`、`reference/`、`cache/`、`scripts/`、`deliverables/`（支持性文件单独位于 `deliverables/supporting/`）。
-- 正式交付目录必须通过 `--publish-dir` 显式指定，并且只接收 PDF/Word（或显式开启的支持性文件）。不要把正式目录作为 `--work-dir`。
+- 正式交付目录必须通过 `--publish-dir` 显式指定，默认接收完整文稿包；仅阅读模式只接收 PDF/Word。不要把正式目录作为 `--work-dir`。
 - AI 临时脚本必须放到内部 `output/scripts/`；不要把临时文件写到运行目录根部，不要使用绝对路径写 `/tmp/*`，也不要读写其他 run 目录。
 - 以环境变量 `SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT` 和 `SYSTEMATIC_LITERATURE_REVIEW_SCRIPTS_DIR` 为准。
 - search bundle 位于当前 review run 的 `output/artifacts/search_bundle_{stem}/`，review 只读消费其 manifest 指向的相对路径；不得跨 run 猜测或直接信任外部绝对 artifact 路径。
 
 ### 校验
 
-完成后执行 Skill 已有的静态检查、脚本验证或人工复核，并记录通过标准。
+阶段 6 只有计数、TeX 结构、子主题、已有预算、摘要可用性和报告生成均通过才完成；恢复已完成运行也重新校验并导出当前稿件。报告只证明其实际检查范围，不能由 key 对齐推断论断正确或全文已读。最终交付另需实际渲染、内容一致性与资源复现检查；未执行项保持未验证。
 
 ### 失败与恢复
 
@@ -208,17 +209,13 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 
 ## 约束
 
-- 强制导出 PDF 与 Word；只有明确失败并记录原因时才允许缺失。
-- 正文字数与参考文献数必须落在当前档位范围内；可由用户覆盖，默认值以 `config.yaml` 为准。
-- 正文固定包含：摘要、引言、至少 1 个子主题段、讨论、展望、结论。
-- `\cite{key}` 必须与 BibTeX key 一致；缺失即报错。
-- 正文禁止泄露 AI 工作流，例如“检索/去重/评分/选文/字数预算”等元叙事只能写入 `{主题}_工作条件.md`。
-- 摘要必须为单段，避免方法学流水账；表格宽度与样式约束见 `references/review-tex-section-templates.md`。
-- 不为凑引用而堆砌低分文献；无法确认时优先不改、不引。
-- 多查询 JSON 缺失、冲突、不可解析、有效查询少于配置下限或超过上限时，阶段 1 必须 fail-closed；不得以成功退出码伪装成多查询完成。
-- 只有调用方显式传入 `--allow-single-query-fallback` 时才允许执行一次单查询，并在 state 与 Search Log 中记录模式、来源、原因和警告。
+<!-- BEGIN COMMON CONSTRAINTS -->
+<!-- Source-Hash: sha256:15120201e9e0c7569517261d57ecefb63ac279c26ed13876f8e95b6dc35854d3 -->
+<!-- Template-ID: skill-common-constraints; Template-Version: 1; Sync-Policy: exact-block -->
 
 ### 公共硬约束
+
+本块由 `docs/templates/skill-common-constraints.md` 统一维护；每个 `SKILL.md` 的 `## 约束` 必须逐字同步本块，不得在副本中改写公共规则。
 
 - 任务需要落盘时，使用唯一的 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/` 根目录；共享材料放入 `shared/`，Skill 专属材料放入该 Skill 的 `input/`、`output/`、`log/`。
 - 正式交付物、源代码和正式计划按项目约定保存，不写入任务工作区；未经授权不覆盖、删除、迁移或远程写入。
@@ -226,9 +223,23 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 - 不记录 API Key、访问令牌、密码、Cookie、环境/凭据文件、私有 Prompt、身份信息、本地用户名、主机名或不必要的大体积原始数据。
 - 文件路径必须规范化并限制在授权项目范围内；外部 URL、子进程和网络访问遵循最小权限，防止路径遍历、SSRF 和命令注入。
 - Skill 版本唯一记录在自身 `config.yaml:skill_info.version`；公开 API、协议、目录或配置变更同步文档与 `CHANGELOG.md`。
-- 仅将 Skill 或 Bensz 基础设施本身的设计缺陷交给 `bensz-collect-bugs`；先脱敏写入 `~/.bensz-skills/bugs/`，当前任务不中断，只有用户明确要求才公开上报，禁止直接修改用户已安装的 Skill 源码。
+- `bensz-collect-bugs` 是一个 Agent Skill；仅将 Bensz Agent Skill 或 Bensz 基础设施本身的设计缺陷交给它。先脱敏写入 `~/.bensz-skills/bugs/`，当前任务不中断，只有用户明确要求才公开上报，禁止直接修改用户已安装的 Skill 源码。
+
 <!-- End of canonical common constraints. -->
+<!-- END COMMON CONSTRAINTS -->
 
 ### Skill 专属约束
+
+- 完整综述必须导出 PDF 与 Word；失败时记录原因并保留未完成状态，缺任一格式不得发布。`novelty-check` 不适用。
+- 正文字数依用户要求与当前配置验收；参考数量为软预算，保留相关性门槛，不凑篇数；篇数缺口与停止理由写入工作条件。
+- 默认正文包含摘要、引言、3–7 个主体主题、讨论、展望和结论；结构检查不代替学术内容审查。
+- `\cite{key}` 必须与 BibTeX key 一致；缺失即报错。
+- 模型调用、内部评分和字数预算等 AI 工作流写入工作条件；正式系统综述应保留真实研究方法、检索筛选与偏倚评价。
+- 摘要必须为单段，避免方法学流水账；表格宽度与样式约束见 `references/review-tex-section-templates.md`。
+- 不为凑引用而堆砌低分文献；无法确认时优先不改、不引。
+- 多查询 JSON 缺失、冲突、不可解析、有效查询少于配置下限或超过上限时，阶段 1 必须 fail-closed；不得以成功退出码伪装成多查询完成。
+- 只有调用方显式传入 `--allow-single-query-fallback` 时才允许执行一次单查询，并在 state 与 Search Log 中记录模式、来源、原因和警告。
+
+
 
 不得超出本 Skill description 和上方流程所声明的范围；不将未验证的信息伪装成确定结论。

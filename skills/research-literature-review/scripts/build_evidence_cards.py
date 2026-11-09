@@ -71,7 +71,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build evidence cards from selected_papers.jsonl")
     parser.add_argument("--input", required=True, type=Path, help="selected_papers.jsonl (or enriched variant)")
     parser.add_argument("--output", required=True, type=Path, help="evidence_cards.jsonl")
-    parser.add_argument("--abstract-max-chars", type=int, default=800, help="Max chars for abstract (default: 800)")
+    parser.add_argument("--abstract-max-chars", type=int, default=0, help="摘要预览上限；0 保留全文（默认）")
     args = parser.parse_args()
 
     papers = _read_jsonl(args.input)
@@ -80,7 +80,7 @@ def main() -> int:
 
     used_lower: set[str] = set()
     cards: list[dict[str, Any]] = []
-    for p in papers:
+    for record_index, p in enumerate(papers, 1):
         title = str(p.get("title") or "")
         year = str(p.get("year") or "")
         bibkey = _make_unique_key(_bib_key_from_title(title, year), used_lower)
@@ -100,6 +100,15 @@ def main() -> int:
                 "do_not_cite": bool(p.get("do_not_cite", False)),
                 "quality_warnings": p.get("quality_warnings") or [],
                 "abstract": abstract_short,
+                "abstract_truncated": len(_norm_ws(str(abstract))) > len(abstract_short),
+                "abstract_chars": len(_norm_ws(str(abstract))),
+                "source_id": p.get("id") or p.get("paper_id") or p.get("doi"),
+                "source_record": record_index,
+                "extraction": p.get("extraction"),
+                "alignment": p.get("alignment"),
+                "evidence_role": p.get("evidence_role"),
+                "evidence_depth": p.get("evidence_depth"),
+                "provenance": p.get("provenance"),
             }
         )
 

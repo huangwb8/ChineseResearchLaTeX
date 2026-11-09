@@ -49,7 +49,9 @@ def main() -> int:
     parser.add_argument("--prepare-only", action="store_true", help="只生成查询输入模板，不启动检索")
     parser.add_argument("--resume-from", type=int, help="从阶段编号开始执行（0-based）")
     parser.add_argument("--publish-dir", type=Path, help="正式交付目录（与内部 work_dir 分离）")
-    parser.add_argument("--include-supporting", action="store_true", help="同时发布 tex/bib/工作条件/验证报告")
+    publication = parser.add_mutually_exclusive_group()
+    publication.add_argument("--include-supporting", action="store_true", help="发布完整文稿包（默认）")
+    publication.add_argument("--readers-only", action="store_true", help="显式仅发布 PDF/Word")
     parser.add_argument("--force-publish", action="store_true", help="允许覆盖发布目录中的同名文件")
     args = parser.parse_args()
 
@@ -98,6 +100,8 @@ def main() -> int:
         cmd += ["--publish-dir", str(args.publish_dir)]
     if args.include_supporting:
         cmd += ["--include-supporting"]
+    if args.readers_only:
+        cmd += ["--readers-only"]
     if args.force_publish:
         cmd += ["--force-publish"]
 

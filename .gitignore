@@ -209,6 +209,7 @@ test.md
 skills/*/plans/
 skills/*/tests/
 /tests/*
+!/tests/test_review_quality_regression.py
 !/tests/nsfc-justification-writer/
 /tests/nsfc-justification-writer/*
 !/tests/nsfc-justification-writer/*.py

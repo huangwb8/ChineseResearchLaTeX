@@ -2,12 +2,18 @@
 
 skill_info:
   name: research-literature-review
-  version: 2.0.0
+  version: 2.1.2
   description: 令人印象深刻的精准、全面的专家级综述；兼容旧名 systematic-literature-review 的 prompt 触发
   author: "Bensz Conan"
   category: writing
 
 dependencies:
+  python:
+    - "pyyaml>=6.0"
+    - "requests>=2.31"
+    - "numpy>=1.24"
+    - "scikit-learn>=1.3"
+    - "matplotlib>=3.7"
   required_skills:
     - name: research-literature-search
       contract: rls.v1
@@ -233,7 +239,7 @@ selection:
 writing:
   evidence_cards:
     enabled: true
-    abstract_max_chars: 800   # 每篇摘要截断上限（用于降低写作阶段上下文占用）
+    abstract_max_chars: 0     # 0 保留完整摘要；显式截断会记录标记，不能据预览断言结果
 
 # ============================================================================
 # 字数预算（70/30 + 综/述拆分）
@@ -279,18 +285,20 @@ validation:
 # LaTeX/PDF 与 Word 导出
 # ============================================================================
 latex:
-  template_path: "latex-template/nature-reviews-template.tex"
+  template_path: "latex-template/nature-reviews-template.tex" # 旧编译资源入口；新稿版式用 render_review_template.py
   template_path_override: ""        # 可选：显式指定任务目录中的模板路径；其同级目录会加入 TEXINPUTS/BSTINPUTS 搜索路径
   bibliographystyle: "gbt7714-nsfc"
   pandoc_options:
     - "--standalone"
     - "--pdf-engine=xelatex"
   chinese_font_support: true        # 仅在自定义模板显式设置字体时生效；默认模板使用 ctex 自动选择可用字体
-  chinese_font: "SimSun"            # 示例值：Windows 常见字体；跨平台建议通过 template_path_override 自定义模板处理字体
+  chinese_font: "SimSun"            # 兼容提示字段；自定义字体需写入实际 TeX 导言区，不能仅设置 template_path_override
 
 word:
   extract_review_draft_only: true
-  heading_level_shift: 2
+  heading_level_shift: 0
+  csl_path: "latex-template/review-numeric.csl"
+  reference_docx: "latex-template/review-reference.docx"
   include_toc: false
   include_numbering: false
 
@@ -334,9 +342,9 @@ output:
   validation_report: "{topic}_验证报告.md"
   dedupe_map: "dedupe_map_{topic}.json"
 
-# 发布配置：默认只把 PDF/Word 复制到用户指定的正式目录。
+# 默认交付可复现文稿包；--readers-only 显式只交 PDF/Word。
 publish:
-  include_supporting: false
+  include_supporting: true
   force: false
 
 # ============================================================================

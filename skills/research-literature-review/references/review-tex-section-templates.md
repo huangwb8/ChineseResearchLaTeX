@@ -2,6 +2,18 @@
 
 > 供 `research-literature-review` 生成稳定、可编译、像综述而不是像笔记的正文骨架。
 
+## 默认学术版式入口
+
+新稿先写含摘要和章节的正文片段，再运行：
+
+```bash
+python scripts/render_review_template.py --title "文稿题名" --body body.tex --bib 主题_参考文献.bib --output 主题_review.tex
+```
+
+Bib 应先放在输出目录或子目录。该入口实际应用 `latex-template/review-article.tex`，默认标题、摘要和正文连续排版，自动章节编号，数字上标引用，ctex 自动选择字体。默认不添加封面、目录、档位宣传或任务编号；已有完整 TeX 和用户指定模板不重写。
+
+`compile_latex_with_bibtex.py --template` 只追加资源搜索目录，不会替换导言区或应用 Pandoc 模板。旧 `nature-reviews-template.tex` 是 Pandoc 兼容资产，不能直接用 XeLaTeX 当正文编译。
+
 ## 最小结构
 
 - `Abstract` / `摘要`
@@ -48,13 +60,17 @@
 ## 表格规则
 
 - 列宽基于 `\textwidth` 按比例分配
-- 所有比例之和不得超过 1.0
+- 可用列宽需扣除每列两侧的 `\tabcolsep`；比例和为 1.0 仍可能溢出
 - 避免大段固定 `cm` 宽度
 
 示例：
 
 ```tex
-\begin{longtable}{p{0.14\textwidth} p{0.48\textwidth} p{0.22\textwidth} p{0.16\textwidth}}
+% 四列合计占满 textwidth，扣除八份 tabcolsep
+\begin{longtable}{p{\dimexpr0.14\textwidth-2\tabcolsep\relax}
+                  p{\dimexpr0.48\textwidth-2\tabcolsep\relax}
+                  p{\dimexpr0.22\textwidth-2\tabcolsep\relax}
+                  p{\dimexpr0.16\textwidth-2\tabcolsep\relax}}
 ```
 
 ## 快速自检
@@ -63,3 +79,7 @@
 - [ ] 有独立讨论段
 - [ ] 有独立展望段
 - [ ] 标题按概念命名，不是“步骤 1/2/3”
+- [ ] 不同时使用自动编号和标题文字中的手写编号
+- [ ] 图表用相对路径；实际依赖放在 supporting 内，随完整文稿包发布
+- [ ] PDF 最后一次编译没有未解析引用/缺字；Word 从 Heading1 开始，数字引文可见
+- [ ] 中文、最长表格、图注及书目经过实际渲染检查，记录页码与限制

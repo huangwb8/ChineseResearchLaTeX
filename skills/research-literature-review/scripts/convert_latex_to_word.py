@@ -9,9 +9,12 @@ convert_latex_to_word.py - 将 LaTeX（.tex + .bib）导出为 Word（.docx）
 """
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 from path_scope import get_effective_scope_root, resolve_and_check
@@ -24,6 +27,27 @@ except Exception:
 
 def _check_tool(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def _prepare_reference(reference: Path, destination: Path) -> Path:
+    """只替换默认宋体的已知本机回退；用户的其它字体保持原样。"""
+    if not _check_tool("fc-list"):
+        return reference
+    proc = subprocess.run(["fc-list", "--format=%{family}\n"], text=True, capture_output=True)
+    families = {name.strip() for line in proc.stdout.splitlines() for name in line.split(",")}
+    # macOS 的 LibreOffice 对 Songti SC 英文别名可能误替换，优先其本地化 family 名。
+    chosen = next((font for font in ("SimSun", "宋体-简", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC")
+                   if font in families), None)
+    if proc.returncode or chosen in (None, "SimSun"):
+        return reference
+    with zipfile.ZipFile(reference) as original, zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as updated:
+        for item in original.infolist():
+            content = original.read(item.filename)
+            if item.filename == "word/styles.xml":
+                content = content.replace(b'w:eastAsia="SimSun"', f'w:eastAsia="{chosen}"'.encode())
+            updated.writestr(item, content)
+    print(f"Word 中文字体：{chosen}（本机缺少 SimSun 时的宋体回退）", file=sys.stderr)
+    return destination
 
 
 def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
@@ -42,6 +66,7 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
 
     # 读取配置：latex.pandoc_options + word.* 导出选项
     pandoc_opts = []
+    reference = None
     if load_config:
         try:
             cfg = load_config()
@@ -52,6 +77,14 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
                     pandoc_opts.extend([str(x) for x in extra if str(x).strip()])
             word_cfg = cfg.get("word") if isinstance(cfg, dict) else {}
             if isinstance(word_cfg, dict):
+                csl = word_cfg.get("csl_path", "latex-template/review-numeric.csl")
+                csl_path = Path(__file__).resolve().parents[1] / csl
+                if not csl_path.is_file():
+                    raise FileNotFoundError(f"Word 引文样式缺失：{csl_path.name}")
+                pandoc_opts.append(f"--csl={csl_path}")
+                reference = Path(__file__).resolve().parents[1] / word_cfg.get("reference_docx", "latex-template/review-reference.docx")
+                if not reference.is_file():
+                    raise FileNotFoundError("Word 参考样式文件缺失")
                 shift = word_cfg.get("heading_level_shift")
                 if isinstance(shift, int):
                     pandoc_opts.append(f"--shift-heading-level-by={shift}")
@@ -59,8 +92,8 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
                     pandoc_opts.append("--toc")
                 if word_cfg.get("include_numbering"):
                     pandoc_opts.append("--number-sections")
-        except Exception:
-            pandoc_opts = []
+        except (OSError, ValueError, TypeError) as exc:
+            raise RuntimeError(f"Word 配置无效：{exc}") from exc
 
     # pandoc 对 LaTeX 引用的解析能力有限：
     # - 对 biblatex 命令通常能保留为占位或转为文本
@@ -74,9 +107,18 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
         "--standalone",
         "--citeproc",
         f"--bibliography={bib_file}",
+        f"--lua-filter={Path(__file__).resolve().parents[1] / 'latex-template/review-word.lua'}",
     ] + pandoc_opts
 
-    proc = subprocess.run(cmd, text=True, capture_output=True, cwd=tex_file.parent)
+    # 只按文稿实际字符选择中文标签，不把所有主题固定成中文。
+    if re.search(r"[\u4e00-\u9fff]", tex_file.read_text(encoding="utf-8")):
+        cmd += ["--metadata=lang:zh-CN", "--metadata=reference-section-title:参考文献"]
+
+    with tempfile.TemporaryDirectory(prefix=".word-style-", dir=output_docx.parent) as temporary:
+        if reference is not None:
+            prepared = _prepare_reference(reference, Path(temporary) / "reference.docx")
+            cmd.append(f"--reference-doc={prepared}")
+        proc = subprocess.run(cmd, text=True, capture_output=True, cwd=tex_file.parent)
     if proc.returncode != 0:
         raise RuntimeError(
             "pandoc failed:\n"
@@ -85,8 +127,16 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
             f"  stderr:\n{proc.stderr}\n"
         )
 
+    if proc.stderr.strip():
+        print(proc.stderr.strip(), file=sys.stderr)
+        if re.search(r"(?:citation .* not found|Could not (?:find|fetch|convert)|could not (?:find|fetch|convert))", proc.stderr):
+            raise RuntimeError("Word 导出有引文、图片或内容转换缺失；请处理 Pandoc 警告")
+
     if not output_docx.exists():
         raise RuntimeError(f"docx not produced: {output_docx}")
+    with zipfile.ZipFile(output_docx) as archive:
+        if not archive.read("word/document.xml"):
+            raise RuntimeError("Word 正文为空")
 
 
 def main() -> int:

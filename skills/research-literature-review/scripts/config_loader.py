@@ -26,7 +26,7 @@ from typing import Any, Dict, Optional
 
 
 # 配置文件路径（相对于技能根目录）
-_CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
+_CONFIG_PATH = Path(os.environ.get("SLR_CONFIG_PATH", str(Path(__file__).parent.parent / "config.yaml")))
 _cached_config: Optional[Dict] = None
 
 

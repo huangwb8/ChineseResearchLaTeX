@@ -37,7 +37,7 @@ try:
         normalize_output_stem,
         sha256_file,
     )
-except ModuleNotFoundError:  # 允许被 qa 动态加载
+except ModuleNotFoundError:  # 允许被测试动态加载
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from layout_paths import LayoutPaths
     from path_scope import resolve_and_check
@@ -255,7 +255,7 @@ class PipelineRunner:
         self.publish_dir = Path(publish_dir).expanduser().resolve() if publish_dir else None
         publish_cfg = self.config.get("publish", {}) if isinstance(self.config, dict) else {}
         self.publish_include_supporting = bool(
-            publish_cfg.get("include_supporting", False)
+            publish_cfg.get("include_supporting", True)
             if publish_include_supporting is None
             else publish_include_supporting
         )
@@ -604,7 +604,7 @@ class PipelineRunner:
         script_path = Path(__file__).parent / script_name
         cmd = [sys.executable, str(script_path)] + args
         # 固定 cwd 到 work_dir：避免相对路径输出散落到启动目录，影响 resume 与产物隔离
-        proc = subprocess.run(cmd, cwd=self.work_dir)
+        proc = subprocess.run(cmd, cwd=self.work_dir, env={**os.environ, "SLR_CONFIG_PATH": str(self.config_path.resolve())})
         if proc.returncode == 0:
             return True
         print(
@@ -618,7 +618,8 @@ class PipelineRunner:
         script_path = Path(__file__).parent / script_name
         cmd = [sys.executable, str(script_path)] + args
         try:
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=self.work_dir)
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=self.work_dir,
+                                    env={**os.environ, "SLR_CONFIG_PATH": str(self.config_path.resolve())})
             return True, result.stdout
         except subprocess.CalledProcessError as e:
             stdout = e.stdout or ""
@@ -1145,7 +1146,7 @@ class PipelineRunner:
             if ev_enabled:
                 cards_path = self.artifacts_dir / f"evidence_cards_{self.file_stem}.jsonl"
                 if not cards_path.exists():
-                    max_chars = int(ev_cfg.get("abstract_max_chars", 800) or 800)
+                    max_chars = int(ev_cfg.get("abstract_max_chars", 0) or 0)
                     ok = self._run_script(
                         "build_evidence_cards.py",
                         [
@@ -1179,6 +1180,8 @@ class PipelineRunner:
         print(f"    - {wc.name}（工作条件，包括评分/选文理由）")
         print(f"    - {review_tex.name}（综述正文 LaTeX，章节：摘要/引言/子主题/讨论/展望/结论）")
         print(f"    - {references_bib.name}（已由上一阶段生成）")
+        print("    默认版式：先写正文片段，再用 scripts/render_review_template.py --title ... --body ... --bib ... --output ... 生成完整 TeX。")
+        print("    已有完整 TeX 或用户指定模板时保留其版式；template_path 只提供编译资源搜索路径。")
         print("\n  ⚠️ 子主题数量约束：除摘要/引言/讨论/展望/结论外，应有 3-7 个子主题 section")
         print("     如超过 7 个，请合并相似主题（如 CNN/Transformer → '深度学习模型架构'）")
 
@@ -1193,22 +1196,26 @@ class PipelineRunner:
 
     def run_stage_6_validate(self) -> bool:
         print("\n[阶段6] 校验")
+        self.state.completed_stages = [stage for stage in self.state.completed_stages
+                                       if stage not in {"6_validate", "7_export"}]
+        self.save_state()
         wc = Path(self.state.output_files.get("working_conditions", ""))
         review_tex = Path(self.state.output_files.get("review_tex", ""))
         references_bib = Path(self.state.output_files.get("references_bib", ""))
-        if not wc.exists() or not review_tex.exists() or not references_bib.exists():
+        if not wc.is_file() or not review_tex.is_file() or not references_bib.is_file():
             print("  ✗ 缺少工作条件/tex/bib")
             return False
 
         selected_count = int(self.state.metrics.get("reference_count", 0) or 0)
         effective_min_refs = min(self.validation_refs["min"], selected_count)
 
-        # 可选：校验字数预算
+        # 已生成预算就必须校验；未生成不凭空补造。
+        budget_ok = True
         budget_final = self.state.output_files.get("word_budget_final")
         selected = self.state.input_files.get("selected_papers")
         if budget_final and selected:
             try:
-                self._run_script(
+                budget_ok = self._run_script(
                     "validate_word_budget.py",
                     [
                         "--budget",
@@ -1219,8 +1226,9 @@ class PipelineRunner:
                         str(self.config_path),
                     ],
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"  ✗ 字数预算校验失败: {exc}", file=sys.stderr)
+                budget_ok = False
 
         # 捕获验证脚本输出用于生成报告
         counts_ok, counts_output = self._run_script_capture_output(
@@ -1269,7 +1277,20 @@ class PipelineRunner:
         if not subtopic_ok:
             print("  ⚠️ 子主题数量超出范围，建议合并相似主题", file=sys.stderr)
 
-        # 生成验证报告
+        # 摘要可用性是数据检查，不代表已完成全文或论断核验。
+        from generate_validation_report import compute_abstract_stats
+        abstract_ok = False
+        try:
+            ae = self.config.get("search", {}).get("abstract_enrichment", {})
+            stats = compute_abstract_stats(Path(selected or ""), int(ae.get("min_abstract_chars", 80)))
+            abstract_ok = stats["abstract_missing"] == 0
+            if not abstract_ok:
+                print("  ✗ 正式选文仍有缺失/过短摘要，需补齐或调整引用集合", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"  ✗ 摘要覆盖率未通过: {exc}", file=sys.stderr)
+
+        # 生成验证报告；生成失败不得记为阶段完成。
+        report_ok = False
         validation_report_path = self._output_path("validation_report")
         counts_json_path: Optional[Path] = None
         try:
@@ -1302,11 +1323,13 @@ class PipelineRunner:
                     str(int(ae.get("min_abstract_chars", 80) or 80)),
                 ])
 
-            self._run_script("generate_validation_report.py", report_args)
+            report_ok = self._run_script("generate_validation_report.py", report_args)
+            report_ok = report_ok and validation_report_path.is_file() and validation_report_path.stat().st_size > 0
 
             # 记录报告路径到 output_files
-            self.state.output_files["validation_report"] = str(validation_report_path)
-            print(f"  ✓ 验证报告: {validation_report_path}")
+            if report_ok:
+                self.state.output_files["validation_report"] = str(validation_report_path)
+                print(f"  ✓ 验证报告: {validation_report_path}")
 
         except Exception as e:
             print(f"  ⚠️ 生成验证报告失败: {e}", file=sys.stderr)
@@ -1314,8 +1337,9 @@ class PipelineRunner:
             # counts_json_path 保留在 artifacts_dir 便于复盘与追溯
             pass
 
-        if counts_ok and tex_ok:
-            self.state.completed_stages.append("6_validate")
+        if counts_ok and tex_ok and subtopic_ok and budget_ok and abstract_ok and report_ok:
+            if "6_validate" not in self.state.completed_stages:
+                self.state.completed_stages.append("6_validate")
             self.save_state()
             return True
 
@@ -1324,6 +1348,8 @@ class PipelineRunner:
 
     def run_stage_7_export(self) -> bool:
         print("\n[阶段7] 导出 PDF/Word")
+        self.state.completed_stages = [stage for stage in self.state.completed_stages if stage != "7_export"]
+        self.save_state()
         review_tex = Path(self.state.output_files.get("review_tex", ""))
         references_bib = Path(self.state.output_files.get("references_bib", ""))
         if not review_tex.exists() or not references_bib.exists():
@@ -1347,7 +1373,8 @@ class PipelineRunner:
         if pdf_ok and word_ok and pdf_out.exists() and word_out.exists():
             self.state.output_files["review_pdf"] = str(pdf_out)
             self.state.output_files["review_word"] = str(word_out)
-            self.state.completed_stages.append("7_export")
+            if "7_export" not in self.state.completed_stages:
+                self.state.completed_stages.append("7_export")
             self.save_state()
             print("  ✓ 导出完成")
             return True
@@ -1415,6 +1442,9 @@ class PipelineRunner:
                     start_idx = stage_names.index(last) + 1
             except Exception:
                 start_idx = 0
+        # 完成后的恢复也重新检查当前稿件并重新导出，避免旧通过状态掩盖后续修改。
+        if self.purpose != "novelty-check":
+            start_idx = min(start_idx, next(i for i, stage in enumerate(stages) if stage[0] == "6_validate"))
         for i, (name, fn) in enumerate(stages):
             if i < start_idx:
                 print(f"⊙ 跳过已完成阶段: {name}")
@@ -1533,11 +1563,13 @@ def main() -> int:
     parser.add_argument("--resume", type=Path, help="从已有 work_dir 恢复（自动读取其中的 pipeline_state.json）")
     parser.add_argument("--resume-from", type=int, help="从阶段编号开始执行（0-based）")
     parser.add_argument("--publish-dir", type=Path, help="正式交付目录（与内部 work_dir 分离）")
-    parser.add_argument(
+    publication = parser.add_mutually_exclusive_group()
+    publication.add_argument(
         "--include-supporting",
         action="store_true",
-        help="发布 .tex/.bib/工作条件/验证报告等支持性文件（默认仅发布 PDF/Word）",
+        help="发布可复现文稿包（默认，包含源码、说明与资源）",
     )
+    publication.add_argument("--readers-only", action="store_true", help="显式仅发布 PDF/Word")
     parser.add_argument("--force-publish", action="store_true", help="允许覆盖发布目录中的同名核心文件")
     args = parser.parse_args()
 
@@ -1575,7 +1607,7 @@ def main() -> int:
         review_level=args.review_level,
         output_stem=output_stem,
         publish_dir=args.publish_dir,
-        publish_include_supporting=args.include_supporting if args.include_supporting else None,
+        publish_include_supporting=False if args.readers_only else (True if args.include_supporting else None),
         publish_force=args.force_publish if args.force_publish else None,
         query_file=args.query_file,
         allow_single_query_fallback=True if args.allow_single_query_fallback else None,

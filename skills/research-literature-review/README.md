@@ -2,9 +2,29 @@
 
 本 README 面向**使用者**：如何触发并正确使用 `research-literature-review` skill。执行指令与硬性规范在 `SKILL.md`；默认参数在 `config.yaml`。
 
-当前版本：`v1.3.1`。
+版本以 `config.yaml:skill_info.version` 为唯一来源。
+
+维护者：回归测试统一放在 `scripts/test_*.py`，运行方式见[开发验证指南](references/development-validation-guide.md)。
 
 检索依赖：`research-literature-search` `rls.v1`（`research-literature-search` v1.0.2+）。review 负责评分、选文、写作与 PDF/Word 导出；阶段 1/2 只消费 search 的 manifest bundle，不再复制 provider 或二次 canonical 去重。独立安装时可用 `--search-skill-root` 指定依赖路径。
+
+Python 依赖及版本约束统一维护在 `config.yaml:dependencies.python`，环境准备时按该列表安装；完整运行还需 Python 3.11+、XeLaTeX、BibTeX 和 Pandoc。
+
+## 文稿质量与完整交付
+
+默认生成紧凑的学术文稿：标题、摘要与正文连续排版，自动章节编号；Word 从 Heading1 开始，使用黑色标题、统一正文样式和数字引文。封面、目录或其它指定版式按用户要求处理。新稿正文片段可这样排版（Bib 先放到输出目录）：
+
+```bash
+python scripts/render_review_template.py --title "研究进展" --body body.tex --bib 主题_参考文献.bib --output 主题_review.tex
+```
+
+证据卡默认保留完整摘要和已有提取字段，不再用前 800 字符代替整段结果。每个关键结论仍需核对研究身份、人群、终点、数字及不确定性；摘要覆盖率不等于全文阅读，相关性评分不等于证据等级。叙述性进展综述与正式系统综述需明确区分，后者保留必要的方法与偏倚评价。
+
+自动报告只说明实际检查范围，未经执行的论断核验、全文审计、PDF/Word 目视与复现检查标为未验证。编译器检测缺字和未解析引用，保留最终日志；Word 显示 Pandoc 警告。交付前仍需实际比较正文、标题、图表与书目，并在工作条件中记录检查位置。
+
+迁移已有自动化时：默认标准运行会交完整包，若仍只需阅读文件使用 `--readers-only`；直接 Python 调用 `publish_deliverables` 保留 `include_supporting=False` 默认，但两种模式都要求非空 PDF/Word 配对。完整包资源应放在 supporting 内，以静态相对路径引用；动态宏路径先具体化，系统 TeX 包由用户发行版提供。恢复已完成运行会重新检查并导出当前稿件，不沿用旧结果证明新文件通过。`--force-pass` 已停用。
+
+Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保留在 `latex-template/review-numeric.csl`；PDF 使用现有 GB/T BST，两者引文编号均按首次出现顺序，书目排版不承诺逐像素一致。Word 保留摘要标签；默认宋体在支持 `fc-list` 的环境中可回退到本机已安装的宋体或 Noto/思源宋体，用户自定义字体保持原样。接收端仍需安装相应字体，跨系统打开后应复核换行和表格。
 
 ## 旧名兼容
 
@@ -32,7 +52,7 @@
 - AI 先生成并显式保存查询 JSON → 多源检索 → 去重 → 标题/摘要 1–10 分相关性与证据角色 → 相关性阈值与软预算选文 → **自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段，3 次采样均值，空 ID 行支持无引用大纲）** → 资深领域专家自由写作。
 - 档位影响默认字数与参考预算（可覆盖），支持三档：**Premium（旗舰级）**、**Standard（标准级）**、**Basic（基础级）**。参考范围是预算和上限；合格文献不足时不会用低相关材料填满。
 - `--purpose novelty-check` 面向研究想法查新，只运行到强近邻选文与缺口记录，不自动生成长篇正文、PDF 或 Word。
-- 强制导出 PDF/Word；硬校验：必需章节、字数 min/max、参考文献数 min/max、\cite 与 bib 对齐；可选校验字数预算覆盖率/总和。
+- 强制导出 PDF/Word；硬校验：必需章节、字数 min/max、相关性驱动的引用范围、\cite 与 bib 对齐、子主题与摘要可用性；已有预算时校验覆盖率/总和，报告生成失败也会阻止阶段完成。
 - **最高原则**：AI 不得偷懒或短视地为了速度做错误事；不确定必须说明；最终润色仅做衔接与结构调整，不得改动文献题目/摘要所含事实/数字。
 - **稳健性**：查询缺失、冲突、格式错误或数量越界时默认停止；`--resume-from` 始终先加载 checkpoint，并校验查询文件是否仍存在、SHA-256 指纹是否变化；Bib 自动转义 `&`、补充缺失字段并大小写无关去重 key。
 - **多语言支持**（v4.0 新增）：支持将综述翻译为多种语言（en/zh/ja/de/fr/es），自动修复 LaTeX 渲染错误，保留引用和结构不变。详见[多语言支持](#多语言支持)。
@@ -101,7 +121,7 @@ review 与 search 可能在同一 Python 进程内运行；search 的 manifest �
 - **为什么不严格限制？** 如果 AI 被强制按每篇文献的精确字数写作，会产生机械、割裂的文本，失去学术综述应有的流畅性和连贯性。
 - **实际作用**：字数预算作为 AI 写作时的**重要参考**，帮助 AI 理解各章节的相对权重和文献的重要性排序，但允许 AI 根据内容需要灵活调整。
 - **预期偏差**：各章节实际字数与预算偏差 ±30% 是正常的，这正是"资深领域专家自由写作"的体现。
-- **硬性约束**：只有**总字数范围**（如 6000-10000）和**参考文献数范围**（如 50-90）是硬性校验，确保综述的整体规模符合档位要求。
+- **硬性约束**：总字数范围与引用上限依配置检查，引用下限按实际合格选文调整；结构与资料可用性另行检查，篇幅不能证明内容质量。
 
 这种设计让 AI 既有章法可循，又保留了人类专家写作时的自然节奏和判断力。
 
@@ -277,15 +297,15 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 
 ### 校验流程
 
-- 阶段：`0_setup → 0.5_subtopics（写作前由 AI 给出并记录） → 1_search → 2_dedupe → 3_score → 4_select → 4.5_word_budget → 5_write → 6_validate（含有机扩写与可选预算校验） → 7_export`
+- 阶段：`0_setup → 0.5_subtopics（写作前由 AI 给出并记录） → 1_search → 2_dedupe → 3_score → 4_select → 4.5_word_budget → 5_write → 6_validate（含结构、摘要可用性与已有预算校验） → 7_export`
 - 校验：`validate_counts.py`（字数/引用 min/max）、`validate_review_tex.py`（必需章节 + cite/bib 对齐）
-- 导出：`compile_latex_with_bibtex.py {topic}_review.tex {topic}_review.pdf`；`convert_latex_to_word.py ...`；如需自定义模板可在 `config.yaml.latex.template_path_override` 或 CLI `--template` 指定路径（缺失会回退到内置模板并同步 `.bst`）。
+- 导出：`compile_latex_with_bibtex.py {topic}_review.tex {topic}_review.pdf`；`convert_latex_to_word.py ...`；`--template` 只追加资源搜索路径，不替换稿件版式。新稿用 `render_review_template.py` 应用原生学术模板；自定义完整 TeX 直接编译。
 
 ### 文件隔离
 
-- `output/artifacts/` 保存候选库、评分、选文、字数预算、证据卡和校验 JSON；`output/reference/` 保存数据抽取表；`output/deliverables/` 保存内部生成的 PDF/Word，`output/deliverables/supporting/` 保存可选支持性文件。
+- `output/artifacts/` 保存候选库、评分、选文、字数预算、证据卡和校验 JSON；`output/reference/` 保存数据抽取表；`output/deliverables/` 保存内部生成的 PDF/Word，`output/deliverables/supporting/` 保存源码与支持性文件。
 - `input/queries.json` 保存当前 run 的规范化查询输入；不要从其他 run 猜测或复用未声明路径。
-- 正式目录由 `--publish-dir` 接收白名单文件，默认只复制 PDF/Word；需要源码和审计材料时显式加 `--include-supporting`。
+- 正式目录由 `--publish-dir` 接收白名单文件，默认复制 PDF/Word、TeX、Bib、工作条件、验证报告及实际引用的相对图表/片段/BST；`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留兼容。缺必需文件、越界依赖或目标冲突会在写入前停止。
 - 历史 `.systematic-literature-review/` 目录只能通过显式 resume/整理/迁移处理，不再作为新运行的默认路径。
 
 ## 关键文件
@@ -295,14 +315,14 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 - `scripts/score_relevance.py`：子主题自动分组 + 1–10 分
 - `scripts/select_references.py`：按相关性阈值、证据角色和软预算选文，生成 Bib 与不足说明
 - `scripts/plan_word_budget.py`：三次采样生成字数预算 run1/2/3 + final（含无引用空 ID 行）
-- `scripts/validate_word_budget.py`：可选校验预算列/覆盖率/总和
+- `scripts/validate_word_budget.py`：已生成预算时校验列/覆盖率/总和
 - `scripts/update_working_conditions_data_extraction.py`：记录 score/subtopic 到数据抽取表
 
 ## 注意事项
 - 必需章节：摘要、引言、>=1 个子主题段落、讨论、展望、结论。
-- 只有字数/参考数与引用一致性是硬门槛；其余结构/密度不再强制。
+- 结构、计数、引文 key、摘要可用性和已有预算是自动检查；不再用任意成功字符、旧完成状态或文件存在性推断整体质量。语义证据核验与目视检查仍需执行者实际完成。
 - 输出文件仍采用 LaTeX-first：`{topic}_review.tex/.bib → .pdf/.docx`。
-- 字数不足时优先在最短/缺证据的子主题段内做“有机扩写”，不新增子主题，不改原主张与引用；最终整体润色仅做衔接与结构优化，不得篡改文献事实/数字/元数据。
+- 字数不足时先检查遗漏的问题、比较与证据，必要时回到补检和规划阶段；不以重复限制句填字数，不得篡改文献事实/数字/元数据。
 - resume 时查询文件缺失或 SHA-256 指纹变化会停止确认；不会静默换成另一查询来源。中文主题缺少英文 token 时仍会按既有搜索策略提示。
 
 ## WHICHMODEL - 模型选择最佳实践
@@ -359,7 +379,7 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 
 ### 概述
 
-research-literature-review 现在支持将综述正文翻译为多种语言，并自动修复 LaTeX 渲染错误，确保 PDF 和 Word 正确输出。
+research-literature-review 支持将综述正文翻译为多种语言，并尝试处理 LaTeX 渲染错误；输出仍须经过导出检查和人工目视复核。
 
 ### 支持的语言
 

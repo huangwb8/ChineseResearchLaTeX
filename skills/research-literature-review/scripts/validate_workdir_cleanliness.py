@@ -53,11 +53,17 @@ def validate_publish_dir(publish_dir: Path, include_supporting: bool = False) ->
     if not publish_dir.exists() or not publish_dir.is_dir():
         return []
     patterns = PUBLISH_ALLOWED_PATTERNS + (PUBLISH_SUPPORTING_PATTERNS if include_supporting else [])
-    return [
-        path
-        for path in sorted(publish_dir.iterdir())
-        if path.is_dir() or not any(path.match(pattern) for pattern in patterns)
-    ]
+    allowed = {p.relative_to(publish_dir).as_posix() for p in publish_dir.iterdir()
+               if p.is_file() and any(p.match(pattern) for pattern in patterns)}
+    if include_supporting:
+        from publish_deliverables import collect_tex_resources, PublishError
+        for tex in publish_dir.glob("*_review.tex"):
+            try:
+                allowed.update(collect_tex_resources(tex, publish_dir))
+            except PublishError:
+                return [tex]  # 依赖不能复现，不能只凭文件后缀宣布整洁。
+    return [p for p in sorted(publish_dir.rglob("*"))
+            if p.is_symlink() or (p.is_file() and p.relative_to(publish_dir).as_posix() not in allowed)]
 
 
 def validate_workdir(work_dir: Path, strict: bool = False) -> tuple[List[Path], List[Path]]:
@@ -108,7 +114,7 @@ def main() -> int:
     parser.add_argument(
         "--work-dir",
         type=Path,
-        required=True,
+        required=False,
         help="工作目录路径",
     )
     parser.add_argument(
@@ -136,6 +142,8 @@ def main() -> int:
         print("✓ 发布目录整洁")
         return 0
 
+    if args.work_dir is None:
+        parser.error("需要 --work-dir 或 --publish-dir")
     work_dir = args.work_dir.expanduser().resolve()
     if not work_dir.exists():
         print(f"错误：工作目录不存在: {work_dir}", file=sys.stderr)

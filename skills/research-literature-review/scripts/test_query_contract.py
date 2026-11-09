@@ -13,10 +13,11 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = SKILL_ROOT / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-import multi_query_search  # noqa: E402
-import pipeline_runner  # noqa: E402
+# 先加载 review 模块，避免兼容检索入口修改 sys.path 后绑定到 search 的同名模块。
 import query_contract  # noqa: E402
+import pipeline_runner  # noqa: E402
 import run_pipeline  # noqa: E402
+import multi_query_search  # noqa: E402
 
 
 def write_queries(path: Path, count: int = 5) -> None:
