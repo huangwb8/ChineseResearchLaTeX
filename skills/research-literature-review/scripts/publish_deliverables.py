@@ -21,7 +21,7 @@ class PublishResult:
 CORE_PATTERNS = ("*_review.pdf", "*_review.docx")
 SUPPORTING_PATTERNS = ("*_review.tex", "*_参考文献.bib", "*_工作条件.md", "*_验证报告.md")
 RESOURCE_SUFFIXES = {".tex", ".bib", ".bst", ".sty", ".cls", ".png", ".jpg", ".jpeg", ".pdf", ".eps"}
-BUNDLED_RESOURCES = Path(__file__).resolve().parents[1] / "latex-template"
+BUNDLED_RESOURCES = Path(__file__).resolve().parents[1] / "references/latex-template"
 
 
 def _allowed(name: str, include_supporting: bool) -> bool:
@@ -54,9 +54,14 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
         choices = [directory / raw for directory in (graphics_dirs if graphic else [root])]
         candidates = [p if p.suffix else p.with_suffix(suffix) for p in choices for suffix in (suffixes if not p.suffix else ("",))]
         found = next((p for p in candidates if p.is_file() or p.is_symlink()), None)
-        if found is None and style and rel.name == "gbt7714-nsfc":
-            found = BUNDLED_RESOURCES / "gbt7714-nsfc.bst"
-            _safe_file(found, BUNDLED_RESOURCES)
+        if found is None and style:
+            from compile_latex_with_bibtex import find_bst_file
+
+            bst_name = raw if rel.suffix == ".bst" else raw + ".bst"
+            found = find_bst_file(bst_name, [BUNDLED_RESOURCES], root)
+            if found is None:
+                raise PublishError(f"缺少 TeX 依赖：{raw}")
+            _safe_file(found, found.parent)
             destination = found.name
         elif found is not None:
             _safe_file(found, root)

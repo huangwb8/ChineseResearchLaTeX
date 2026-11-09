@@ -8,6 +8,14 @@
 
 ## [Unreleased]
 
+- `research-literature-review`：将 `latex-template/` 移至 `references/latex-template/`，同步编译、Word 导出、多语言、交付及测试引用。
+
+- 修复 `research-literature-review` 本地记录中的预算配置隔离与档位、Unicode JSONL、禁止引用资格、Bib 元数据转义、natbib 分布检查和系统 BST 编译/完整交付问题；联动 `research-literature-search` 查询模块隔离与版本来源，补充定向回归并完成本地 resolution 闭环。
+
+- 清理 `research-literature-review` 的开发验证指南、CRISPR 专用验证数据及两个配套脚本、静态示例 PDF；移除文档引用，将回归测试命令并入 README，Skill 配置版本更新为 patch。
+
+- 统一 `research-literature-review` 参考资料：合并评分/选文规范，删除重复迁移说明及过时引擎速记，示例 PDF 归入 assets；同步按阶段读取入口、开发验证说明和失效脚本配置，默认不强制评分分布或用低分补篇数。
+
 - `research-literature-review`：Python 依赖及原版本约束统一由 `config.yaml:dependencies.python` 托管，删除 `requirements.txt`，同步依赖说明。
 
 - `research-literature-review`：将 Skill 内 `qa/`、`tests/` 的 3 个测试文件统一迁入 `scripts/`，删除旧目录并更新开发验证入口；同步上游公共约束块。

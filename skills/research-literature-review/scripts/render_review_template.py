@@ -8,7 +8,7 @@ import re
 
 from path_scope import get_effective_scope_root, resolve_and_check
 
-TEMPLATE = Path(__file__).resolve().parents[1] / "latex-template/review-article.tex"
+TEMPLATE = Path(__file__).resolve().parents[1] / "references/latex-template/review-article.tex"
 
 
 def escape_title(text: str) -> str:

@@ -23,6 +23,24 @@ from statistics import stdev
 from typing import Dict, List, Tuple, Optional
 
 
+_CITE_PATTERN = re.compile(r"\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*\{([^}]*)\}")
+
+
+def _strip_comments(text: str) -> str:
+    """保留换行位置，忽略未转义百分号后的内容。"""
+    lines = []
+    for line in text.split('\n'):
+        for index, char in enumerate(line):
+            if char == '%':
+                prefix = line[:index]
+                slashes = len(prefix) - len(prefix.rstrip('\\'))
+                if slashes % 2 == 0:
+                    line = prefix
+                    break
+        lines.append(line)
+    return '\n'.join(lines)
+
+
 def extract_citations(tex_content: str) -> List[Tuple[str, int, int, List[str]]]:
     """
     提取所有 \\cite{} 命令及其位置
@@ -33,21 +51,16 @@ def extract_citations(tex_content: str) -> List[Tuple[str, int, int, List[str]]]
     Returns:
         List of (cite_command, number_of_keys, line_number, [keys])
     """
-    pattern = r'\\cite\{([^}]+)\}'
+    content = _strip_comments(tex_content)
     citations = []
-    lines = tex_content.split('\n')
-
-    for line_num, line in enumerate(lines, 1):
-        # 跳过注释行
-        stripped = line.strip()
-        if stripped.startswith('%'):
-            continue
-
-        matches = re.finditer(pattern, line)
-        for match in matches:
-            keys = [k.strip() for k in match.group(1).split(',') if k.strip()]
-            n_keys = len(keys)
-            citations.append((match.group(0), n_keys, line_num, keys))
+    # 整段匹配，支持命令与花括号分行，同时保留源文件行号。
+    line_num = 1
+    previous = 0
+    for match in _CITE_PATTERN.finditer(content):
+        line_num += content.count('\n', previous, match.start())
+        previous = match.start()
+        keys = [k.strip() for k in match.group(1).split(',') if k.strip()]
+        citations.append((match.group(0), len(keys), line_num, keys))
 
     return citations
 
@@ -201,14 +214,16 @@ def parse_paragraphs(tex_content: str) -> List[Dict]:
         段落列表，每个段落包含 text, cite_count, line_start, line_end
     """
     paragraphs = []
-    lines = tex_content.split('\n')
+    lines = _strip_comments(tex_content).split('\n')
 
     i = 0
     while i < len(lines):
         line = lines[i].strip()
 
         # 跳过注释行、空行、LaTeX 命令行
-        if not line or line.startswith('%') or line.startswith('\\'):
+        if not line or line.startswith('%') or (
+            line.startswith('\\') and not re.match(r'\\cite[a-zA-Z*]*(?:\s|\[|\{|$)', line)
+        ):
             i += 1
             continue
 
@@ -224,7 +239,7 @@ def parse_paragraphs(tex_content: str) -> List[Dict]:
 
         if paragraph_lines:
             paragraph_text = '\n'.join(paragraph_lines)
-            cite_count = len(re.findall(r'\\cite\{[^}]+\}', paragraph_text))
+            cite_count = len(extract_citations(paragraph_text))
             paragraphs.append({
                 'text': paragraph_text[:100] + '...' if len(paragraph_text) > 100 else paragraph_text,
                 'cite_count': cite_count,

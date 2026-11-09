@@ -4,9 +4,23 @@
 
 版本以 `config.yaml:skill_info.version` 为唯一来源。
 
-维护者：回归测试统一放在 `scripts/test_*.py`，运行方式见[开发验证指南](references/development-validation-guide.md)。
+维护者：回归测试统一放在 `scripts/test_*.py`，运行方式见[维护与回归测试](#维护与回归测试)。
 
-检索依赖：`research-literature-search` `rls.v1`（`research-literature-search` v1.0.2+）。review 负责评分、选文、写作与 PDF/Word 导出；阶段 1/2 只消费 search 的 manifest bundle，不再复制 provider 或二次 canonical 去重。独立安装时可用 `--search-skill-root` 指定依赖路径。
+## 参考资料与读取时机
+
+`references/` 保存按阶段读取的现行规范，无需在每次任务开始时全部加载。执行流程由 `SKILL.md` 定义，可配置默认值以 `config.yaml` 为准；参考资料展开对应阶段的细节。
+
+| 资料 | 用途与读取时机 |
+| --- | --- |
+| [查询生成模板](references/ai_query_generation_prompt.md) | 检索前生成符合查询契约的 JSON |
+| [评分与选文说明](references/ai_scoring_prompt.md) | 评分时确定相关性、子主题与数据抽取要求，说明软预算选文边界 |
+| [专家写作指南](references/expert-review-writing.md) | 写作时形成综合判断，核对证据与引用 |
+| [TeX 章节模板](references/review-tex-section-templates.md) | 新建或调整稿件结构、表格及版式时读取 |
+| [多语言指南](references/multilingual-guide.md) | 用户明确要求翻译时读取 |
+
+历史评分迁移说明已合并至本 Skill 的 `CHANGELOG.md`，不再单独维护多份现行规则。检索引擎及参数由必需依赖 `research-literature-search` 管理，review 不维护第二套引擎优先级。
+
+检索依赖：`research-literature-search` `rls.v1`，最低版本见 `config.yaml:dependencies.required_skills`。review 负责评分、选文、写作与 PDF/Word 导出；阶段 1/2 只消费 search 的 manifest bundle，不再复制 provider 或二次 canonical 去重。独立安装时可用 `--search-skill-root` 指定依赖路径。
 
 Python 依赖及版本约束统一维护在 `config.yaml:dependencies.python`，环境准备时按该列表安装；完整运行还需 Python 3.11+、XeLaTeX、BibTeX 和 Pandoc。
 
@@ -24,7 +38,7 @@ python scripts/render_review_template.py --title "研究进展" --body body.tex 
 
 迁移已有自动化时：默认标准运行会交完整包，若仍只需阅读文件使用 `--readers-only`；直接 Python 调用 `publish_deliverables` 保留 `include_supporting=False` 默认，但两种模式都要求非空 PDF/Word 配对。完整包资源应放在 supporting 内，以静态相对路径引用；动态宏路径先具体化，系统 TeX 包由用户发行版提供。恢复已完成运行会重新检查并导出当前稿件，不沿用旧结果证明新文件通过。`--force-pass` 已停用。
 
-Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保留在 `latex-template/review-numeric.csl`；PDF 使用现有 GB/T BST，两者引文编号均按首次出现顺序，书目排版不承诺逐像素一致。Word 保留摘要标签；默认宋体在支持 `fc-list` 的环境中可回退到本机已安装的宋体或 Noto/思源宋体，用户自定义字体保持原样。接收端仍需安装相应字体，跨系统打开后应复核换行和表格。
+Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保留在 `references/latex-template/review-numeric.csl`；PDF 使用现有 GB/T BST，两者引文编号均按首次出现顺序，书目排版不承诺逐像素一致。Word 保留摘要标签；默认宋体在支持 `fc-list` 的环境中可回退到本机已安装的宋体或 Noto/思源宋体，用户自定义字体保持原样。接收端仍需安装相应字体，跨系统打开后应复核换行和表格。
 
 ## 旧名兼容
 
@@ -46,8 +60,6 @@ Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保�
 
 技能会先生成并保存 5–25 条查询，再启动检索。你不需要猜 `queries_{stem}.json` 之类的内部文件名。
 
-> 💡 **示例**：查看 [examples/](examples/) 目录，包含本 skill 实际生成的专家级综述示例，可参考输出格式和质量标准。
-
 ## 设计理念
 - AI 先生成并显式保存查询 JSON → 多源检索 → 去重 → 标题/摘要 1–10 分相关性与证据角色 → 相关性阈值与软预算选文 → **自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段，3 次采样均值，空 ID 行支持无引用大纲）** → 资深领域专家自由写作。
 - 档位影响默认字数与参考预算（可覆盖），支持三档：**Premium（旗舰级）**、**Standard（标准级）**、**Basic（基础级）**。参考范围是预算和上限；合格文献不足时不会用低相关材料填满。
@@ -55,7 +67,7 @@ Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保�
 - 强制导出 PDF/Word；硬校验：必需章节、字数 min/max、相关性驱动的引用范围、\cite 与 bib 对齐、子主题与摘要可用性；已有预算时校验覆盖率/总和，报告生成失败也会阻止阶段完成。
 - **最高原则**：AI 不得偷懒或短视地为了速度做错误事；不确定必须说明；最终润色仅做衔接与结构调整，不得改动文献题目/摘要所含事实/数字。
 - **稳健性**：查询缺失、冲突、格式错误或数量越界时默认停止；`--resume-from` 始终先加载 checkpoint，并校验查询文件是否仍存在、SHA-256 指纹是否变化；Bib 自动转义 `&`、补充缺失字段并大小写无关去重 key。
-- **多语言支持**（v4.0 新增）：支持将综述翻译为多种语言（en/zh/ja/de/fr/es），自动修复 LaTeX 渲染错误，保留引用和结构不变。详见[多语言支持](#多语言支持)。
+- **多语言支持**：支持将综述翻译为多种语言（en/zh/ja/de/fr/es），尝试修复 LaTeX 渲染错误，保留引用和结构不变。详见[多语言支持](#多语言支持)。
 
 ## 多查询输入契约
 
@@ -112,7 +124,15 @@ provenance.jsonl / dedupe_map.json / search_log.json
 
 `manifest.json` 记录 `rls.v1`、候选 schema、查询 SHA-256、provider attempts、截断/失败统计和每个 artifact hash。阶段 2 仅做完整性验证并保留旧 `2_dedupe` checkpoint 名称；缺依赖、契约不兼容、文件删除或 hash 改变时 fail-closed。
 
-review 与 search 可能在同一 Python 进程内运行；search 的 manifest 校验使用独立命名的 `rls_contract.py`，不会与 review 自身的 `query_contract.py` 发生模块遮蔽。
+review 与 search 可能在同一 Python 进程内运行；search 的查询解析与 manifest 校验均使用独立命名的 `rls_contract.py`，旧 `query_contract.py` 保留兼容导入，避免误用 review 查询结构而丢失 `query_id`。
+
+## 本地缺陷修复后的运行边界
+
+预算生成可读取 Skill 自带的只读配置，任务自定义配置须位于当前工作目录内；候选、大纲和输出仍执行路径隔离。预算校验新增 `--review-level standard|basic|premium`，流水线会传递当前档位与目标字数，独立调用也可用 `--target-words` 覆盖。
+
+标准综述排除显式标记 `do_not_cite=true` 的记录，保留原评分审计，并在选文理由中统计此类候选；查新模式仍允许把它们保留为待核验线索。Bib 生成会将独立的字面换行转义正规化为空格，并保留已有 LaTeX 转义和命名宏。
+
+PDF 编译先查工作目录及模板资源，再用 `kpsewhich` 查询 TeX 发行版中的 BST；完整交付会携带实际使用的系统 BST。引用分布检查支持 `citep`、`citet` 等命令、可选参数和跨行花括号，忽略注释中的引用。历史 JSONL 去重入口按文件行读取，保留摘要内合法的 Unicode 行分隔符。
 
 ## 字数预算的设计哲学
 
@@ -312,18 +332,34 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 - `SKILL.md`：工作流、输入输出、最高原则与硬校验
 - `config.yaml`：查询数量/后备策略、档位字数/参考范围和搜索默认参数
 - `scripts/query_contract.py`：查询 schema、共享 stem 和 SHA-256 指纹
-- `scripts/score_relevance.py`：子主题自动分组 + 1–10 分
+- `references/ai_scoring_prompt.md`：宿主 AI 直接评分与数据抽取，不提供关键词脚本评分后备
 - `scripts/select_references.py`：按相关性阈值、证据角色和软预算选文，生成 Bib 与不足说明
 - `scripts/plan_word_budget.py`：三次采样生成字数预算 run1/2/3 + final（含无引用空 ID 行）
 - `scripts/validate_word_budget.py`：已生成预算时校验列/覆盖率/总和
 - `scripts/update_working_conditions_data_extraction.py`：记录 score/subtopic 到数据抽取表
 
 ## 注意事项
-- 必需章节：摘要、引言、>=1 个子主题段落、讨论、展望、结论。
+- 默认章节：摘要、引言、3–7 个主体主题、讨论、展望、结论；用户或期刊另有要求时同步调整结构检查参数。
 - 结构、计数、引文 key、摘要可用性和已有预算是自动检查；不再用任意成功字符、旧完成状态或文件存在性推断整体质量。语义证据核验与目视检查仍需执行者实际完成。
 - 输出文件仍采用 LaTeX-first：`{topic}_review.tex/.bib → .pdf/.docx`。
 - 字数不足时先检查遗漏的问题、比较与证据，必要时回到补检和规划阶段；不以重复限制句填字数，不得篡改文献事实/数字/元数据。
 - resume 时查询文件缺失或 SHA-256 指纹变化会停止确认；不会静默换成另一查询来源。中文主题缺少英文 token 时仍会按既有搜索策略提示。
+
+## 维护与回归测试
+
+以下命令从仓库根目录执行。Skill 自带回归测试：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s skills/research-literature-review/scripts -p 'test_*.py'
+```
+
+联合运行仓库级回归时，将 `<本轮任务工作区>` 替换为当前任务目录：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/test_review_quality_regression.py skills/research-literature-review/scripts tests/research-literature-review -q --basetemp <本轮任务工作区>/test-output -o cache_dir=<本轮任务工作区>/pytest-cache
+```
+
+真实导出测试需要 XeLaTeX、BibTeX 和 Pandoc；缺依赖时应报告跳过，不计为导出通过。版式变更还需渲染 PDF/Word 核对标题、中文、图表和参考文献；自动回归不能代替内容核验或真实长篇写作质量评估。
 
 ## WHICHMODEL - 模型选择最佳实践
 

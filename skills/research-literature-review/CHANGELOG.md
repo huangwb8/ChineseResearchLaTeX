@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed（模板资源归档 - 2026-11-09）
+
+- 将 `latex-template/` 移至 `references/latex-template/`，同步脚本默认路径、配置、参考说明和回归用例；六个资源文件内容保持不变，配置版本更新为 patch。
+- 验证：六个资源哈希一致，基础 Skill 校验、上游 strict 结构检查、旧路径清理及脚本语法检查通过；15 项定向回归通过，覆盖真实 PDF/Word 导出与交付包独立重编译。禁用 pytest 缓存插件时出现一条 `cache_dir` 未识别配置警告。
+
+### Fixed（本地缺陷闭环 - 2026-11-09）
+
+- 预算生成允许只读加载 Skill 自带配置，继续拒绝其它工作目录外配置及符号链接越界；预算生成、校验统一使用当前档位与目标字数。
+- 旧 JSONL 去重入口按文件行读取，避免 U+0085/U+2028/U+2029 切断有效记录；标准选文排除显式 `do_not_cite`，查新模式继续保留待核验线索。
+- Bib 生成正规化独立的字面换行转义，避免重复转义已有特殊字符；引用分布及主验证器的可选分布检查统一支持 natbib 命令、可选参数、跨行和注释。
+- 编译与完整交付共用 BST 查找逻辑，支持 `kpsewhich` 可解析的系统样式；复核已有 checkpoint 恢复、相对配置规范化、导出配置传递、报告解析及评分入口清理的修复。
+- 联动 search 的查询模块隔离修复，同步上游公共约束精确块，版本由配置更新为 patch；本地原始 bug 证据保持不变，验证后追加 resolution。
+- 验证：67 项回归与 17 个 subtest 通过，覆盖系统 `plain.bst` 与内置 BST 的 PDF/Word 导出、完整交付和独立重编译、本地模板覆盖项及预算档位/路径隔离。两个 Skill 的上游 strict 结构检查通过；25 条本地记录全部具备 resolution（新增 22 条，保留原有 3 条）。未更新系统安装副本。
+
+### Removed（开发资源清理 - 2026-11-09）
+
+- 删除独立开发验证指南、CRISPR Gold Set 及 `build_gold_feng_zhang_crispr_cong2013.py`、`validate_feng_zhang_crispr_cong2013.py`；检索覆盖验证不再由 review 维护专用用例。
+- 删除静态示例 PDF 及空的 `assets/` 目录，清理 README 中的资源索引和展示链接；必要的回归测试命令与导出核验边界并入 README，执行规范同步移除开发资料入口。配置版本更新为 patch，生产综述流程不变。
+- 验证：基础 Skill 校验、上游 strict 结构检查和 3 项既有选文回归通过；7 份现行 Markdown 中的 9 个本地文件链接有效，全仓现行文件无已删除资源的残留引用。未修改导出实现，本轮未重跑真实 PDF/Word 导出。
+
+### Changed（参考资料统一 - 2026-11-09）
+
+- 将 AI 评分、子主题和选文说明合并至 `references/ai_scoring_prompt.md`，统一为自然评分分布、默认 3–7 个主体主题及相关性门槛与软预算；保留反方/边界证据与查新模式的区别。
+- 删除重复的 `relevance-scoring-notes.md`、`skill_update_ai_scoring.md`、`v3.0_ai_scoring_summary.md` 和迁移完成清单。历史迁移结论为宿主 AI 语义评分替代关键词脚本；旧文档中的关键词后备、低分补数及固定分布不再适用，迁移历史保留在本文件。
+- 移除过时的 MCP 引擎速记：引擎顺序和参数由 `research-literature-search` 管理；开发指南保留 Gold Set 用途与离线验证入口，清理不存在的 citation chase 脚本引用。
+- 示例 PDF 移至 `assets/`，明确仅作输出形式参考；README 列出全部参考资料的用途和读取阶段，清理失效示例目录与关键词评分脚本入口。配置版本更新为 patch，实际检索与选文代码不变。
+- 验证：基础 Skill 校验、上游 strict 结构检查通过；3 项既有选文回归通过；8 份现行 Markdown 中的 15 个本地链接及 10 项配置脚本路径有效，示例 PDF 迁移前后哈希一致。
+
 ### Changed（依赖配置归并 - 2026-11-09）
 
 - 将五项 Python 依赖及原版本约束迁入 `config.yaml:dependencies.python`，删除 `requirements.txt`；同步 README 与执行环境说明，Skill 版本更新为 patch。

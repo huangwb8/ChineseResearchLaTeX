@@ -93,10 +93,12 @@ def _escape_bib_value(value: str) -> tuple[str, dict[str, int]]:
 
     We keep this conservative to avoid breaking intentional LaTeX macros.
     """
-    escaped = value
+    # 外部元数据有时把换行再次编码为字面量；只替换独立转义，保留 \nabla 等宏。
+    escaped = re.sub(r"(?<!\\)\\(?:r\\n|[nrt])(?![a-z])", " ", value)
+    escaped = re.sub(r"\s+", " ", escaped).strip()
     counts: dict[str, int] = {}
     for ch, repl in _LATEX_SPECIALS.items():
-        escaped, n = re.subn(rf"(?<!\\\\){re.escape(ch)}", lambda m, r=repl: r, escaped)
+        escaped, n = re.subn(rf"(?<!\\){re.escape(ch)}", lambda m, r=repl: r, escaped)
         if n:
             counts[ch] = n
     return escaped, counts
@@ -218,7 +220,7 @@ def _select_papers(
 
     qualified = [paper for paper in items if float(paper.get("score") or 0) >= float(min_score)]
     if purpose == "standard-review":
-        qualified = [paper for paper in qualified if _has_abstract(paper)]
+        qualified = [paper for paper in qualified if _has_abstract(paper) and not paper.get("do_not_cite")]
     elif purpose != "novelty-check":
         raise ValueError(f"unsupported purpose: {purpose}")
     qualified.sort(
@@ -267,6 +269,7 @@ def _select_papers(
     rationale = {
         "total_candidates": total,
         "qualified_candidates": len(qualified),
+        "do_not_cite_candidates": sum(1 for p in items if p.get("do_not_cite")),
         "selected": len(selected),
         "purpose": purpose,
         "minimum_score": float(min_score),

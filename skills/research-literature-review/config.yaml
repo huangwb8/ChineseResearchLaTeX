@@ -2,7 +2,7 @@
 
 skill_info:
   name: research-literature-review
-  version: 2.1.2
+  version: 2.1.6
   description: 令人印象深刻的精准、全面的专家级综述；兼容旧名 systematic-literature-review 的 prompt 触发
   author: "Bensz Conan"
   category: writing
@@ -285,7 +285,7 @@ validation:
 # LaTeX/PDF 与 Word 导出
 # ============================================================================
 latex:
-  template_path: "latex-template/nature-reviews-template.tex" # 旧编译资源入口；新稿版式用 render_review_template.py
+  template_path: "references/latex-template/nature-reviews-template.tex" # 旧编译资源入口；新稿版式用 render_review_template.py
   template_path_override: ""        # 可选：显式指定任务目录中的模板路径；其同级目录会加入 TEXINPUTS/BSTINPUTS 搜索路径
   bibliographystyle: "gbt7714-nsfc"
   pandoc_options:
@@ -297,8 +297,8 @@ latex:
 word:
   extract_review_draft_only: true
   heading_level_shift: 0
-  csl_path: "latex-template/review-numeric.csl"
-  reference_docx: "latex-template/review-reference.docx"
+  csl_path: "references/latex-template/review-numeric.csl"
+  reference_docx: "references/latex-template/review-reference.docx"
   include_toc: false
   include_numbering: false
 
@@ -359,7 +359,6 @@ dedupe:
 # 脚本路径
 # ============================================================================
 scripts:
-  score_relevance: "scripts/score_relevance.py"
   select_references: "scripts/select_references.py"
   build_reference_bib: "scripts/build_reference_bib_from_papers.py"
   update_data_extraction: "scripts/update_working_conditions_data_extraction.py"

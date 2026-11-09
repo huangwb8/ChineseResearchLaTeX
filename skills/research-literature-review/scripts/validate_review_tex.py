@@ -49,26 +49,10 @@ def _check_citation_distribution(tex: str, verbose: bool = False) -> dict:
     """
     import json
 
-    # 提取所有 \cite{} 命令
-    cite_pattern = re.compile(r"\\cite\{([^}]+)\}", re.MULTILINE)
-    citations = []
+    from validate_citation_distribution import extract_citations
 
-    lines = tex.split('\n')
-    for line_num, line in enumerate(lines, 1):
-        # 跳过注释行
-        stripped = line.strip()
-        if stripped.startswith('%'):
-            continue
-
-        matches = cite_pattern.finditer(line)
-        for match in matches:
-            keys = match.group(1).split(',')
-            n_keys = len([k.strip() for k in keys if k.strip()])
-            citations.append({
-                "command": match.group(0),
-                "count": n_keys,
-                "line": line_num
-            })
+    citations = [{"command": command, "count": count, "line": line}
+                 for command, count, line, _ in extract_citations(tex)]
 
     if not citations:
         return {

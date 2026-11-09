@@ -16,7 +16,8 @@ from dedupe_papers import dedupe_records  # noqa: E402
 
 def load_papers(path: Path) -> list[dict[str, Any]]:
     if path.suffix.lower() == ".jsonl":
-        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        with path.open(encoding="utf-8") as handle:
+            return [json.loads(line) for line in handle if line.strip()]
     data = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(data, list):
         return [item for item in data if isinstance(item, dict)]

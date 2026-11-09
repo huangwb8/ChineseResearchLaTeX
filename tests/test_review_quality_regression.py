@@ -220,7 +220,8 @@ def test_runner_passes_config_to_export_scripts(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(not all(shutil.which(tool) for tool in ("xelatex", "bibtex", "pandoc")),
                     reason="真实导出需要 XeLaTeX、BibTeX 与 Pandoc")
-def test_real_pdf_word_and_isolated_rebuild(tmp_path, monkeypatch):
+@pytest.mark.parametrize("style", ["gbt7714-nsfc", "plain"])
+def test_real_pdf_word_and_isolated_rebuild(tmp_path, monkeypatch, style):
     # 其它 runner 用例可能设置过 scope；本用例显式限定在自己的临时目录。
     monkeypatch.setenv("SYSTEMATIC_LITERATURE_REVIEW_SCOPE_ROOT", str(tmp_path))
     source = bundle(tmp_path); support = source / "supporting"
@@ -234,12 +235,14 @@ def test_real_pdf_word_and_isolated_rebuild(tmp_path, monkeypatch):
     result = cli("render_review_template.py", "--title", "合成格式测试", "--body", body,
                  "--bib", support / "topic_参考文献.bib", "--output", tex)
     assert result.returncode == 0, result.stderr
+    tex.write_text(tex.read_text(encoding="utf-8").replace("{gbt7714-nsfc}", "{" + style + "}"), encoding="utf-8")
     for script, args in [("compile_latex_with_bibtex.py", [tex, source / "topic_review.pdf"]),
                          ("convert_latex_to_word.py", [tex, support / "topic_参考文献.bib", source / "topic_review.docx"])]:
         result = cli(script, *args)
         assert result.returncode == 0, result.stderr
     published = tmp_path / "published"
     publish_deliverables(source, published, include_supporting=True)
+    assert (published / f"{style}.bst").is_file()
     with zipfile.ZipFile(published / "topic_review.docx") as archive:
         xml = ET.fromstring(archive.read("word/document.xml"))
         ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}

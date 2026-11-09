@@ -77,12 +77,12 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
                     pandoc_opts.extend([str(x) for x in extra if str(x).strip()])
             word_cfg = cfg.get("word") if isinstance(cfg, dict) else {}
             if isinstance(word_cfg, dict):
-                csl = word_cfg.get("csl_path", "latex-template/review-numeric.csl")
+                csl = word_cfg.get("csl_path", "references/latex-template/review-numeric.csl")
                 csl_path = Path(__file__).resolve().parents[1] / csl
                 if not csl_path.is_file():
                     raise FileNotFoundError(f"Word 引文样式缺失：{csl_path.name}")
                 pandoc_opts.append(f"--csl={csl_path}")
-                reference = Path(__file__).resolve().parents[1] / word_cfg.get("reference_docx", "latex-template/review-reference.docx")
+                reference = Path(__file__).resolve().parents[1] / word_cfg.get("reference_docx", "references/latex-template/review-reference.docx")
                 if not reference.is_file():
                     raise FileNotFoundError("Word 参考样式文件缺失")
                 shift = word_cfg.get("heading_level_shift")
@@ -107,7 +107,7 @@ def convert(tex_file: Path, bib_file: Path, output_docx: Path) -> None:
         "--standalone",
         "--citeproc",
         f"--bibliography={bib_file}",
-        f"--lua-filter={Path(__file__).resolve().parents[1] / 'latex-template/review-word.lua'}",
+        f"--lua-filter={Path(__file__).resolve().parents[1] / 'references/latex-template/review-word.lua'}",
     ] + pandoc_opts
 
     # 只按文稿实际字符选择中文标签，不把所有主题固定成中文。

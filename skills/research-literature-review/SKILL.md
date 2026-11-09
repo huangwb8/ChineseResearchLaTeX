@@ -45,12 +45,7 @@ metadata:
   - `["query 1", "query 2"]`
 - 剔除空查询后，有效数量必须满足 `config.yaml:query_input.min_queries/max_queries`（默认 5–25）。
 - 已知工作目录时，直接将文件保存到 `<work-dir>/input/queries.json`，或用 `--query-file <path>` 让 runner 将显式输入复制到该位置。工作目录尚未建立时，先运行 `--prepare-only`，填充打印出的 `input/queries.json`，再以 `--resume ... --resume-from 1` 继续。
-- 开始前优先阅读：
-  - `references/ai_query_generation_prompt.md`
-  - `references/ai_scoring_prompt.md`
-  - `references/expert-review-writing.md`
-  - `references/review-tex-section-templates.md`
-  - 涉及翻译时再读 `references/multilingual-guide.md`
+- 参考资料按阶段读取，入口与用途见 [README 的参考资料索引](README.md#参考资料与读取时机)；评分时读评分模板，写作时读写作指南与 TeX 模板，翻译资料仅在翻译任务中读取。
 
 #### 多查询检索（调用 research-literature-search）
 
@@ -71,7 +66,7 @@ metadata:
 
 - AI 按 `references/ai_scoring_prompt.md` 逐篇阅读标题与摘要，输出 `scored_papers.jsonl`。
 - 每篇至少包含：`score`、`subtopic`、`rationale`、`alignment`、`extraction`。
-- 评分范围固定为 1-10 分；仅对 `>=5` 分文献分配子主题，避免弱相关论文污染子主题规划。
+- 评分范围为 `config.yaml:scoring.score_scale`（默认 1–10）；达到 `selection.minimum_score`（默认 5）才分配子主题，避免弱相关论文污染子主题规划。
 - 评分依主题适配程度，不强制高/中/低分比例；相关性不是偏倚风险或证据强度。
 
 #### 选文与 Bib 生成
@@ -81,6 +76,7 @@ metadata:
 - Bib 清洗必须保留：大小写无关去重 key、LaTeX 特殊字符转义、缺失字段警告。
 - 证据角色使用 `direct-neighbor`、`supporting`、`methodological`、`contradictory`、`boundary`；直接近邻和反方证据优先于宽泛方法相似。
 - 标准综述只把有摘要且达到相关性阈值的条目放入正式引用集合。合格论文少于软目标时照常交付较小集合，并在 rationale 写停止理由与证据缺口。
+- 显式 `do_not_cite=true` 的条目不得进入标准综述的选文和 Bib；原始评分审计保留，查新模式仍可保留禁止引用的待核验线索。
 
 #### Novelty check
 
@@ -96,6 +92,7 @@ metadata:
 
 - 用 `plan_word_budget.py` 生成 3 份预算 CSV，再汇总为 `word_budget_final.csv`。
 - 引用段与无引用段预算均需覆盖；总字数误差必须控制在 `config.yaml.word_budget.tolerance` 内。
+- 生成和验证预算必须传递同一档位与目标字数；独立校验可用 `--review-level` 或 `--target-words`。预算生成仅额外允许读取 Skill 自带的只读配置，其余输入和输出仍限于当前工作目录。
 
 #### 写作
 
@@ -164,13 +161,6 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 - 记录 token：`pipeline_cost.py log ...`
 - 汇总：`pipeline_cost.py summary`
 - 所有成本数据写到内部 `output/cost/`（旧运行仍可显式使用 legacy 目录）。
-
-- `references/ai_query_generation_prompt.md`
-- `references/ai_scoring_prompt.md`
-- `references/expert-review-writing.md`
-- `references/review-tex-section-templates.md`
-- `references/multilingual-guide.md`
-- `references/development-validation-guide.md`
 
 ### 输出
 

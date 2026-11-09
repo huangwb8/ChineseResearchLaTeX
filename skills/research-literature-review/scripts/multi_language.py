@@ -567,7 +567,7 @@ def compile_with_smart_fix(
         return False, tex_file, "bibtex 未找到，请安装包含 bibtex 的 TeX 发行版"
 
     # 设置环境变量（引用模板目录）
-    template_dir = SKILL_ROOT / "latex-template"
+    template_dir = SKILL_ROOT / "references/latex-template"
     separator = ";" if sys.platform == "win32" else ":"
     env = {
         "TEXINPUTS": f".//{separator}{template_dir}{separator}//",

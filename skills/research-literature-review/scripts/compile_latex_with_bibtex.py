@@ -27,7 +27,7 @@ except Exception:
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_ROOT = SCRIPT_DIR.parent
-DEFAULT_TEMPLATE = SKILL_ROOT / "latex-template" / "nature-reviews-template.tex"
+DEFAULT_TEMPLATE = SKILL_ROOT / "references/latex-template" / "nature-reviews-template.tex"
 
 
 def _check_tool(name: str) -> bool:
@@ -160,18 +160,29 @@ def _ensure_bibliographystyle(tex_file: Path, default_style: str | None) -> None
     tex_file.write_text(text, encoding="utf-8")
 
 
+def find_bst_file(bst_name: str, template_dirs: list[Path], work_dir: Path) -> Path | None:
+    """编译和完整文稿交付共用同一套本地及系统 BST 查找规则。"""
+    for directory in template_dirs:
+        candidate = directory / bst_name
+        if candidate.is_file():
+            return candidate
+    if shutil.which("kpsewhich"):
+        proc = subprocess.run(
+            ["kpsewhich", "--format=bst", bst_name], cwd=work_dir,
+            env={**os.environ, **_setup_tex_inputs(template_dirs)},
+            text=True, capture_output=True, timeout=10,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            candidate = Path(proc.stdout.strip())
+            if not candidate.is_absolute():
+                candidate = work_dir / candidate
+            if candidate.is_file():
+                return candidate.resolve()
+    return None
+
+
 def _verify_bst_in_template(tex_file: Path, template_dirs: list[Path]) -> list[str]:
-    """Verify that required .bst files exist in the provided template directories.
-
-    Strategy: parse \\bibliographystyle{...}, and verify the .bst file exists
-    in one of the template dirs (to be resolved via BSTINPUTS). Does NOT copy files.
-
-    Returns:
-        List of verified .bst file paths (for logging/debugging)
-
-    Raises:
-        FileNotFoundError: if required .bst file not found in template directory
-    """
+    """按本地资源目录与 TeX 发行版搜索路径验证 BST，不复制系统资源。"""
     text = tex_file.read_text(encoding="utf-8", errors="replace")
     styles = re.findall(r"\\bibliographystyle\{([^}]+)\}", text)
     verified: list[str] = []
@@ -180,19 +191,14 @@ def _verify_bst_in_template(tex_file: Path, template_dirs: list[Path]) -> list[s
         if "/" in style or "\\" in style:
             continue  # Skip if style includes a path
         bst_name = f"{style}.bst"
-        found = None
-        for d in template_dirs:
-            cand = d / bst_name
-            if cand.exists():
-                found = cand
-                break
+        found = find_bst_file(bst_name, template_dirs, tex_file.parent)
         if found is not None:
             verified.append(str(found))
         else:
             raise FileNotFoundError(
                 f"❌ .bst 文件未找到：{bst_name}\n"
                 f"   搜索目录：{', '.join(str(d) for d in template_dirs)}\n"
-                f"   请确认模板目录中包含该文件，或在 tex 中改用可解析到的 bst。"
+                f"   本地资源及 TeX 系统搜索均未找到；请安装该样式或选择可解析的 bst。"
             )
     return verified
 
@@ -305,7 +311,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
     # 设置环境变量引用模板目录（v3.5 优化：不再复制模板文件）
     # 说明：template_path 用于“追加搜索目录”（例如用户自定义模板/自定义 bst 的同级目录），
     #      以 TEXINPUTS/BSTINPUTS 的形式参与编译过程；不会改变 review.tex 的内容。
-    template_dir = SKILL_ROOT / "latex-template"
+    template_dir = SKILL_ROOT / "references/latex-template"
     if not template_dir.exists():
         raise FileNotFoundError(f"Template directory not found: {template_dir}")
     override_dir = _resolve_template_dir(work_dir, template_path)
@@ -315,7 +321,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
         template_dirs.append(override_dir)
     template_dirs.append(template_dir)
 
-    # 验证 .bst 文件存在于模板目录（v3.6 优化：不再复制到工作目录）
+    # 同时支持模板资源和 TeX 发行版的系统样式，不复制到工作目录。
     verified_bsts = _verify_bst_in_template(tex_file, template_dirs)
     if verified_bsts:
         print(f"  ✓ 已验证 .bst 文件：{', '.join([Path(p).name for p in verified_bsts])}", file=sys.stderr)

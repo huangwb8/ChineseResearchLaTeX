@@ -65,6 +65,8 @@ def main() -> int:
     p.add_argument("--budget", required=True, type=Path, help="word_budget_final.csv")
     p.add_argument("--selected", required=True, type=Path, help="selected_papers.jsonl")
     p.add_argument("--config", required=True, type=Path, help="config.yaml")
+    p.add_argument("--review-level", choices=("premium", "standard", "basic"), default="premium",
+                   help="用于推导默认目标字数的档位")
     p.add_argument("--target-words", type=float, help="override target words")
     args = p.parse_args()
 
@@ -73,7 +75,7 @@ def main() -> int:
     target = args.target_words
     if target is None:
         scoring = (yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}).get("scoring", {})
-        word_range = (scoring.get("default_word_range") or {}).get("premium", {})
+        word_range = (scoring.get("default_word_range") or {}).get(args.review_level, {})
         lo, hi = float(word_range.get("min", 0)), float(word_range.get("max", 0))
         target = (lo + hi) / 2 if (lo + hi) > 0 else 0.0
 

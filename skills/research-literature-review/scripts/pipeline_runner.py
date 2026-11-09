@@ -1067,6 +1067,8 @@ class PipelineRunner:
             str(self.config_path),
             "--output-dir",
             str(self.artifacts_dir),
+            "--review-level",
+            self.review_level,
         ]
         # 传递目标字数中点
         midpoint = 0
@@ -1224,6 +1226,10 @@ class PipelineRunner:
                         selected,
                         "--config",
                         str(self.config_path),
+                        "--review-level",
+                        self.review_level,
+                        "--target-words",
+                        str((self.target_words["min"] + self.target_words["max"]) / 2),
                     ],
                 )
             except Exception as exc:

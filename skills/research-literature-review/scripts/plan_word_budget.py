@@ -33,7 +33,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
-from path_scope import get_effective_scope_root, resolve_and_check
+from path_scope import get_effective_scope_root, resolve_and_check, resolve_readonly_config
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +327,7 @@ def main() -> int:
         args.selected = resolve_and_check(args.selected, scope_root, must_exist=True)
         if args.outline is not None:
             args.outline = resolve_and_check(args.outline, scope_root, must_exist=True)
-        args.config = resolve_and_check(args.config, scope_root, must_exist=True)
+        args.config = resolve_readonly_config(args.config, scope_root)
         args.output_dir = resolve_and_check(args.output_dir, scope_root, must_exist=False)
 
     cfg = load_cfg(args.config)

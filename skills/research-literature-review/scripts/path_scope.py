@@ -112,6 +112,15 @@ def get_scope_root_from_env() -> Optional[Path]:
     return Path(env_var).expanduser().resolve() if env_var else None
 
 
+def resolve_readonly_config(path: Union[str, Path], scope_root: Path) -> Path:
+    """仅豁免 Skill 自带配置的只读加载；其它输入、输出继续受 run 隔离约束。"""
+    bundled = Path(__file__).resolve().parents[1] / "config.yaml"
+    candidate = Path(path).expanduser().resolve()
+    if candidate == bundled and candidate.is_file():
+        return candidate
+    return resolve_and_check(path, scope_root, must_exist=True)
+
+
 def get_effective_scope_root(scope_root: Optional[Union[str, Path]]) -> Optional[Path]:
     """优先使用显式 scope_root，其次读取环境变量。"""
     if scope_root is None:
