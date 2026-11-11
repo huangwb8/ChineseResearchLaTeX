@@ -100,7 +100,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 <!-- TEMPLATE-LIST:START -->
 <!-- 由 scripts/update_readme_template_list.py 自动生成，请勿手动编辑。 -->
 > ⚠️ **建议优先使用下表中的最新正式 zip 下载包。** 该列表由 GitHub Actions 每小时自动检查一次，也支持手动触发同步。
-> 本版本下载包：`huangwb8/ChineseResearchLaTeX@v4.1.3`，打包日期：2026-11-12。
+> 当前同步源：`huangwb8/ChineseResearchLaTeX@v4.1.3`，发布时间：2026-11-12 07:15（UTC+8）。
 
 ### NSFC 模板
 
