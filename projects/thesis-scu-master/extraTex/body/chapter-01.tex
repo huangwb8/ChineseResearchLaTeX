@@ -1,18 +1,27 @@
-\chapter{理想链模型与基本统计量}
-\section{模型定义}
-\subsection{链段与末端矢量}
-\subsubsection{独立链段假设}
-设一条链由$N$个长度为$b$的独立链段组成，链段取向各向同性。末端矢量及其均方值分别为
-\begin{align}
-  \boldsymbol{R} &= \sum_{i=1}^{N}\boldsymbol{b}_i,\\
-  \langle R^2\rangle &= \sum_{i=1}^{N}\langle b_i^2\rangle
-  +2\sum_{i<j}\langle\boldsymbol{b}_i\cdot\boldsymbol{b}_j\rangle=Nb^2.
-\end{align}
-交叉项为零来自统计独立性与各向同性；对于真实链，应先检查局部相关性是否可通过有效链段吸收。
+\chapter{跨媒介表达的分析框架}
+\section{材料与观察维度}
+\subsection{媒介场景}
+\subsubsection{杂志与影视}
+以佐佐木希相关公开内容为例，杂志封面可以从服饰、构图和文字标题入手，影视材料则需结合角色设定、对白与情节分析。两类材料承担的表达任务不同，不能仅凭单张画面的相似程度判断人物形象是否一致。
 
-\subsubsection{回转半径}
-长理想链满足$\langle R_g^2\rangle=Nb^2/6$。有限链长修正与链段定义有关，因此比较不同模型时必须保持统计量定义一致。
+\subsubsection{社交平台}
+社交平台的观察重点可以放在发布主题、叙述语气及互动形式上。日常化表达可能缩短观看者感受到的距离，但是否形成稳定认同，还需要受众材料支持。
 
-\section{模型的边界}
-独立链段模型忽略了排除体积。讨论良溶剂中的链尺寸时，需要重新考虑构象之间的相互作用，不能只改变拟合参数而保持原有解释。\footnote{参见 de Gennes P G. Scaling Concepts in Polymer Physics[M]. Ithaca: Cornell University Press, 1979.}
-本章与引言的注码连续递增，用于检查跨章脚注编号。
+\section{比较思路}
+跨媒介分析需要同时关注内容的延续与变化。媒介融合的讨论提示我们，不同渠道之间存在内容流动和受众参与，但这些联系仍需在具体材料中辨认。\footnote{参见 Jenkins H. Convergence Culture: Where Old and New Media Collide[M]. New York: New York University Press, 2006.}
+本文将材料整理为“媒介类型—角色呈现—叙事方式”的记录，再比较相同主题在不同渠道中的表达。本章脚注与引言连续编号，保留跨章引注示例。
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[x=1cm,y=1cm]
+    \node[draw,minimum width=2.6cm,minimum height=0.9cm] (a) at (0,0) {公开材料整理};
+    \node[draw,minimum width=2.6cm,minimum height=0.9cm] (b) at (4,0) {媒介与表达分类};
+    \node[draw,minimum width=2.6cm,minimum height=0.9cm] (c) at (8,0) {比较与语境复核};
+    \draw[->,thick] (a) -- (b);
+    \draw[->,thick] (b) -- (c);
+  \end{tikzpicture}
+  \caption{佐佐木希跨媒介内容的示例分析流程}
+  \label{fig:media-flow}
+\end{figure}
+
+图\ref{fig:media-flow}给出基本顺序。正式研究还需明确材料出处、采集时段和纳入标准，避免只选择符合预设印象的内容。

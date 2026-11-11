@@ -1,5 +1,54 @@
-\chapter{尺度关系与演示结果}
-\section{无量纲比较}
+\chapter{内容比较与排版示例}
+\section{媒介中的表达侧重}
+在本文的示例框架中，佐佐木希的杂志内容用于观察视觉辨识度，影视内容用于讨论角色叙事，社交平台内容用于分析日常表达。三者可以围绕相似主题形成联系，也可能因创作目的不同而各有侧重。这里的分类是分析起点，不能替代逐条阅读材料。
+
+\begin{table}[htbp]
+  \centering
+  \caption{媒介类型与模拟材料计数}
+  \label{tab:media-counts}
+  \begin{tabular}{lrl}
+    \toprule
+    媒介类型 & 模拟条数 & 观察重点\\
+    \midrule
+    杂志 & 12 & 造型、构图与视觉风格\\
+    影视 & 8 & 角色、对白与叙事情境\\
+    社交平台 & 20 & 主题、语气与互动形式\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{占比计算}
+设第$k$类材料的数量为$n_k$，媒介类型数为$K$，其占比为
+\begin{equation}
+  p_k=\frac{n_k}{\sum_{j=1}^{K}n_j},\qquad \sum_{k=1}^{K}p_k=1.
+  \label{eq:media-share}
+\end{equation}
+由表\ref{tab:media-counts}中的模拟计数，可得杂志、影视和社交平台的占比分别为$30\%$、$20\%$和$50\%$。式\eqref{eq:media-share}描述的是材料构成；一条影视材料与一条社交动态的传播范围并不相同，因此占比不能直接解释为影响力或受欢迎程度。
+
+\section{讨论}
+比较公众形象时，数量统计帮助说明材料来自哪里，文本分析则解释内容呈现了什么。若要判断某种表达是否获得受众认同，还需补充访谈、评论分析或其他独立材料，并检查平台推荐和样本选择的影响。本示例不据此对佐佐木希的职业成效作判断。
+
+\section{多行公式与矢量排版}
+以下保留一组高分子链统计用例，展示矢量、求和与多行公式的排版。链统计的基础可参见文献\cite{flory1953}。
+\subsection{模型假设}
+\subsubsection{独立链段假设}
+设一条链由$N$个长度为$b$的独立链段组成，链段取向各向同性。末端矢量及其均方值分别为
+\begin{align}
+  \boldsymbol{R} &= \sum_{i=1}^{N}\boldsymbol{b}_i,\\
+  \langle R^2\rangle &= \sum_{i=1}^{N}\langle b_i^2\rangle
+  +2\sum_{i<j}\langle\boldsymbol{b}_i\cdot\boldsymbol{b}_j\rangle=Nb^2.
+\end{align}
+交叉项为零来自统计独立性与各向同性；对于真实链，应先检查局部相关性是否可通过有效链段吸收。
+
+\subsubsection{回转半径}
+长理想链满足$\langle R_g^2\rangle=Nb^2/6$。有限链长修正与链段定义有关，因此比较不同模型时必须保持统计量定义一致。
+
+\subsection{模型的边界}
+独立链段模型忽略了排除体积。讨论良溶剂中的链尺寸时，需要重新考虑构象之间的相互作用，不能只改变拟合参数而保持原有解释。相关讨论可参见文献\cite{degennes1979}。
+
+
+\section{函数曲线与比较表}
+\subsection{无量纲比较}
 采用$R/b=N^\nu$展示不同指数对应的尺寸变化，理想链取$\nu=1/2$；另一条曲线取$\nu=3/5$作为Flory近似的示意值，不能将其当作精确临界指数。
 \begin{figure}[htbp]
   \centering
@@ -32,5 +81,5 @@
   \end{tabular}
 \end{table}
 
-\section{解释与验证}
+\subsection{解释与验证}
 表\ref{tab:models}中的前提属于解释的一部分。实验验证应比较多个链长区间，报告拟合区间变化带来的不确定性，并避免用同一组数据同时定义和验证结论。
