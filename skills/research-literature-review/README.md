@@ -16,6 +16,7 @@
 | [评分与选文说明](references/ai_scoring_prompt.md) | 评分时确定相关性、子主题与数据抽取要求，说明软预算选文边界 |
 | [专家写作指南](references/expert-review-writing.md) | 写作时形成综合判断，核对证据与引用 |
 | [TeX 章节模板](references/review-tex-section-templates.md) | 新建或调整稿件结构、表格及版式时读取 |
+| [正式交付规范](references/output-delivery.md) | 写作准备时确认布局，导出、发布和最终交付前必读；规定正文、文献、质检和辅助材料的位置 |
 | [多语言指南](references/multilingual-guide.md) | 用户明确要求翻译时读取 |
 
 历史评分迁移说明已合并至本 Skill 的 `CHANGELOG.md`，不再单独维护多份现行规则。检索引擎及参数由必需依赖 `research-literature-search` 管理，review 不维护第二套引擎优先级。
@@ -38,7 +39,9 @@ python scripts/render_review_template.py --title "研究进展" --body body.tex 
 
 自动报告只说明实际检查范围，未经执行的论断核验、全文审计、PDF/Word 目视与复现检查标为未验证。编译器检测缺字和未解析引用，保留最终日志；Word 显示 Pandoc 警告。交付前仍需实际比较正文、标题、图表与书目，并在工作条件中记录检查位置。
 
-迁移已有自动化时：默认标准运行会交完整包，若仍只需阅读文件使用 `--readers-only`；直接 Python 调用 `publish_deliverables` 保留 `include_supporting=False` 默认，但两种模式都要求非空 PDF/Word 配对。图表、片段和用户指定的本地自定义资源应放在 supporting 内，以静态相对路径引用；动态宏路径先具体化。内置 BST 直接引用宿主机 Skill 的绝对路径，系统 TeX 包与样式由发行版提供，均不复制到成品。恢复已完成运行会重新检查并导出当前稿件，不沿用旧结果证明新文件通过。`--force-pass` 已停用。
+正式目录根部仅有正文 DOCX、PDF、TeX；Bib 放入 `references/`，工作条件和验证报告放入 `qc/`，正文图表、片段与可选导读、统计等放入 `materials/`。AI 可自主保留有价值的辅助材料，不要求每轮生成。完整规则与示例见[正式交付规范](references/output-delivery.md)。
+
+迁移已有自动化时，需更新原先读取根目录 Bib 和质检说明的路径；旧成品不自动移动，恢复后应发布到新目录。内部暂存布局不变，可选材料整理进 `output/deliverables/supporting/materials/`，发布器对交付副本同步改写静态 TeX 依赖。若只需阅读文件使用 `--readers-only`；直接 Python 调用 `publish_deliverables` 保留 `include_supporting=False` 默认，两种模式都要求非空 PDF/Word 配对。内置 BST 直接引用宿主机 Skill 的绝对路径，系统样式由发行版提供，均不复制到成品。恢复已完成运行会重新检查并导出当前稿件；`--force-pass` 已停用。
 
 Word CSL 复用仓库既有 Vancouver 样式，版权及 CC BY-SA 3.0 说明保留在 `references/latex-template/review-numeric.csl`；PDF 使用现有 GB/T BST，两者引文编号均按首次出现顺序，书目排版不承诺逐像素一致。Word 保留摘要标签；默认宋体在支持 `fc-list` 的环境中可回退到本机已安装的宋体或 Noto/思源宋体，用户自定义字体保持原样。接收端仍需安装相应字体，跨系统打开后应复核换行和表格。
 
@@ -329,7 +332,7 @@ python scripts/run_pipeline.py --topic "主题" --allow-single-query-fallback --
 
 - `output/artifacts/` 保存候选库、评分、选文、字数预算、证据卡和校验 JSON；`output/reference/` 保存数据抽取表；`output/deliverables/` 保存内部生成的 PDF/Word，`output/deliverables/supporting/` 保存源码与支持性文件。
 - `input/queries.json` 保存当前 run 的规范化查询输入；不要从其他 run 猜测或复用未声明路径。
-- 正式目录由 `--publish-dir` 接收白名单文件，默认复制 PDF/Word、TeX、Bib、工作条件、验证报告及实际引用的相对图表/片段；内置和系统 BST 不随包复制；`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留兼容。缺必需文件、越界依赖或目标冲突会在写入前停止。
+- 正式目录由 `--publish-dir` 按[正式交付规范](references/output-delivery.md)归类：根目录正文三格式，文献在 `references/`，质检在 `qc/`，正文依赖和整理好的可选材料在 `materials/`。内置和系统 BST 不随包复制；`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留兼容。缺必需文件、越界依赖或目标冲突会在写入前停止。
 - 历史 `.systematic-literature-review/` 目录只能通过显式 resume/整理/迁移处理，不再作为新运行的默认路径。
 
 ## 关键文件

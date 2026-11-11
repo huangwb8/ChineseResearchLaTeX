@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""发布完整综述文稿；仅复制声明文件及 TeX 显式引用的本地资源。"""
+"""按正文、references、qc、materials 发布综述及经整理的辅助材料。"""
 from __future__ import annotations
 
 import fnmatch
@@ -24,6 +24,8 @@ CORE_PATTERNS = ("*_review.pdf", "*_review.docx")
 SUPPORTING_PATTERNS = ("*_review.tex", "*_参考文献.bib", "*_工作条件.md", "*_验证报告.md")
 RESOURCE_SUFFIXES = {".tex", ".bib", ".bst", ".sty", ".cls", ".png", ".jpg", ".jpeg", ".pdf", ".eps"}
 BUNDLED_RESOURCES = Path(__file__).resolve().parents[1] / "references/latex-template"
+PUBLISH_DIRS = {"references", "qc", "materials"}
+INTERNAL_SUFFIXES = {".aux", ".log", ".blg", ".bbl", ".out", ".fls", ".fdb_latexmk", ".py", ".pyc"}
 
 
 def _allowed(name: str, include_supporting: bool) -> bool:
@@ -42,8 +44,15 @@ def _safe_file(path: Path, root: Path) -> Path:
     return path
 
 
-def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
-    """收集静态相对依赖；动态宏路径须先具体化，不猜测路径。"""
+def resource_destination(name: str) -> str:
+    """书目进入 references，其余正文依赖进入 materials；已归类路径不重复嵌套。"""
+    path = Path(name)
+    directory = "references" if path.suffix.lower() == ".bib" else "materials"
+    return name if path.parts[0] == directory else (Path(directory) / path).as_posix()
+
+
+def collect_tex_resources(tex_file: Path, root: Path, *, rewritten: dict[str, str] | None = None) -> dict[str, Path]:
+    """收集静态依赖；发布时可同时生成归类后路径的源码副本，不改变输入。"""
     files: dict[str, Path] = {}
     pending = [tex_file]
     graphics_dirs = [root]
@@ -58,7 +67,7 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
                 if bst_path.parent != BUNDLED_RESOURCES or bst_path.is_symlink():
                     raise PublishError("外部 BST 仅允许引用当前 Skill 内置样式")
                 _safe_file(bst_path, BUNDLED_RESOURCES)
-                return
+                return None
         if not raw or rel.is_absolute() or ".." in rel.parts or any(c in raw for c in "\\#$~{}"):
             raise PublishError(f"依赖必须使用静态相对路径：{raw}")
         choices = [directory / raw for directory in (graphics_dirs if graphic else [root])]
@@ -70,7 +79,7 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
             if found is None:
                 raise PublishError(f"缺少 TeX 依赖：{raw}")
             _safe_file(found, found.parent)
-            return  # 系统样式由 TeX 发行版提供，不复制到成品。
+            return None  # 系统样式由 TeX 发行版提供，不复制到成品。
         elif found is not None:
             _safe_file(found, root)
             destination = found.relative_to(root).as_posix()
@@ -82,6 +91,7 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
             files[destination] = found
             if found.suffix in {".tex", ".sty", ".cls"}:
                 pending.append(found)
+        return destination
 
     _safe_file(tex_file, root)
     files[tex_file.relative_to(root).as_posix()] = tex_file
@@ -91,30 +101,70 @@ def collect_tex_resources(tex_file: Path, root: Path) -> dict[str, Path]:
         if path in visited:
             continue
         visited.add(path)
-        tex = re.sub(r"(?<!\\)%[^\n]*", "", bind_bundled_bst(path.read_text(encoding="utf-8")))
+        text = bind_bundled_bst(path.read_text(encoding="utf-8"))
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", text)
         for group in re.findall(r"\\graphicspath\s*\{((?:\s*\{[^{}]*\}\s*)+)\}", tex):
             for raw in re.findall(r"\{([^{}]+)\}", group):
                 rel = Path(raw)
                 if rel.is_absolute() or ".." in rel.parts or "\\" in raw:
                     raise PublishError("graphicspath 必须在支持文件目录内")
                 graphics_dirs.append(root / rel)
-        for match in re.finditer(r"\\(input|include|includegraphics\*?|bibliography|bibliographystyle)\s*(?:\[[^\]]*\]\s*)?\{([^{}]+)\}", tex):
-            command, raw = match.groups()
+        def replace(match):
+            if match.group("comment") is not None:
+                return match.group(0)
+            command, raw = match.group("command", "raw")
             if command in {"input", "include"}:
-                add(raw, (".tex",))
+                resolved = [add(raw, (".tex",))]
             elif command.startswith("includegraphics"):
-                add(raw, (".pdf", ".png", ".jpg", ".jpeg", ".eps"), graphic=True)
+                resolved = [add(raw, (".pdf", ".png", ".jpg", ".jpeg", ".eps"), graphic=True)]
             elif command == "bibliography":
-                for name in raw.split(","):
-                    add(name, (".bib",))
-            else:
-                add(raw, (".bst",), style=True)
-        # 本地自定义样式随稿带走；系统 TeX 包仍由发行版提供。
-        for command, raw in re.findall(r"\\(usepackage|RequirePackage|documentclass|LoadClass)\s*(?:\[[^\]]*\]\s*)?\{([^{}]+)\}", tex):
-            for name in raw.split(","):
+                resolved = [add(name, (".bib",)) for name in raw.split(",")]
+            elif command == "bibliographystyle":
+                resolved = [add(raw, (".bst",), style=True)]
+            else:  # 本地自定义样式随稿带走；系统 TeX 包仍由发行版提供。
                 suffix = ".sty" if command in {"usepackage", "RequirePackage"} else ".cls"
-                if (root / (name.strip() + suffix)).exists():
-                    add(name, (suffix,))
+                resolved = [add(name, (suffix,)) if (root / (name.strip() + suffix)).exists() else None
+                            for name in raw.split(",")]
+            if rewritten is None:
+                return match.group(0)
+            names = []
+            originals = raw.split(",") if command in {"bibliography", "usepackage", "RequirePackage", "documentclass", "LoadClass"} else [raw]
+            for original, dependency in zip(originals, resolved):
+                name = resource_destination(dependency) if dependency else original.strip()
+                if dependency and command != "input" and not command.startswith("includegraphics"):
+                    name = str(Path(name).with_suffix(""))
+                names.append(name)
+            return match.group("prefix") + ",".join(names) + "}"
+
+        pattern = (r"(?P<comment>(?<!\\)%[^\n]*)|(?P<prefix>\\(?P<command>input|include|includegraphics\*?|"
+                   r"bibliography|bibliographystyle|usepackage|RequirePackage|documentclass|LoadClass)"
+                   r"\s*(?:\[[^\]]*\]\s*)?\{)(?P<raw>[^{}]+)\}")
+        rendered = re.sub(pattern, replace, text)
+        if rewritten is not None:
+            # 图片引用已具体化，不再依赖原来的搜索目录。
+            rendered = re.sub(r"(?<!\\)%[^\n]*|\\graphicspath\s*\{((?:\s*\{[^{}]*\}\s*)+)\}",
+                              lambda m: m.group(0) if m.group(0).startswith("%") else "", rendered)
+            rewritten[path.relative_to(root).as_posix()] = rendered
+    return files
+
+
+def collect_materials(root: Path) -> dict[str, Path]:
+    """只接收 AI 已整理进 materials 的正式附件；过程文件不作为附件发布。"""
+    directory = root / "materials"
+    if not directory.exists() and not directory.is_symlink():
+        return {}
+    if directory.is_symlink() or not directory.is_dir():
+        raise PublishError("materials 必须是非符号链接目录")
+    files = {}
+    for path in sorted(directory.rglob("*")):
+        relative = path.relative_to(root)
+        if path.is_symlink() or any(part.startswith(".") for part in relative.parts):
+            raise PublishError(f"materials 不接受隐藏或符号链接条目：{relative}")
+        if path.is_dir():
+            continue
+        if path.suffix.lower() in INTERNAL_SUFFIXES or path.name.startswith(("word_budget", "scored_papers", "selected_papers", "pipeline_state", "evidence_cards")):
+            raise PublishError(f"materials 含内部过程文件：{relative}")
+        files[relative.as_posix()] = _safe_file(path, root)
     return files
 
 
@@ -129,6 +179,7 @@ def publish_deliverables(source_dir: Path, publish_dir: Path, *, include_support
     if target == source or source in target.parents or target in source.parents:
         raise PublishError("发布目录与交付源必须相互独立")
     candidates: dict[str, Path] = {}
+    rendered: dict[str, str] = {}
     core = [p for p in source.iterdir() if _allowed(p.name, False)]
     stems = {p.name.rsplit("_review.", 1)[0] for p in core}
     if not stems:
@@ -146,14 +197,25 @@ def publish_deliverables(source_dir: Path, publish_dir: Path, *, include_support
         for stem in sorted(stems):
             for suffix in ("review.tex", "参考文献.bib", "工作条件.md", "验证报告.md"):
                 path = support_root / f"{stem}_{suffix}"
-                candidates[path.name] = _safe_file(path, support_root)
-            for name, path in collect_tex_resources(support_root / f"{stem}_review.tex", support_root).items():
-                if name in candidates and candidates[name] != path:
-                    raise PublishError(f"交付资源重名：{name}")
-                candidates[name] = path
-    # 主目录只允许交付物；supporting 内草稿不发布，只有实际依赖进入集合。
-    allowed_roots = {Path(name).parts[0] for name in candidates}
-    unexpected = [p.name for p in source.iterdir() if p.name != "supporting" and p.name not in allowed_roots
+                directory = "references/" if suffix.endswith(".bib") else ("qc/" if suffix.endswith(".md") else "")
+                candidates[directory + path.name] = _safe_file(path, support_root)
+            rewritten: dict[str, str] = {}
+            tex_name = f"{stem}_review.tex"
+            for name, path in collect_tex_resources(support_root / tex_name, support_root, rewritten=rewritten).items():
+                destination = name if name == tex_name else resource_destination(name)
+                if destination in candidates and candidates[destination] != path:
+                    raise PublishError(f"交付资源重名：{destination}")
+                candidates[destination] = path
+                if name in rewritten:
+                    rendered[destination] = rewritten[name]
+        # 可选导读、统计、数据与图片由 AI 整理后显式放入此目录，保留内部相对链接。
+        for name, path in collect_materials(support_root).items():
+            if name in candidates and candidates[name] != path:
+                raise PublishError(f"交付资源重名：{name}")
+            candidates[name] = path
+    # 主目录只允许交付物；supporting 内仅发布必需项、正文依赖和已整理的 materials。
+    source_roots = {p.relative_to(source).parts[0] for p in candidates.values()}
+    unexpected = [p.name for p in source.iterdir() if p.name != "supporting" and p.name not in source_roots
                   and not (source == support_root and _allowed(p.name, True))]
     if unexpected:
         raise PublishError("交付源含非交付材料：" + ", ".join(sorted(unexpected)))
@@ -162,7 +224,9 @@ def publish_deliverables(source_dir: Path, publish_dir: Path, *, include_support
     if target.exists():
         for path in target.rglob("*"):
             name = path.relative_to(target).as_posix()
-            if path.is_symlink() or (path.is_file() and name not in candidates):
+            if path.is_symlink() or (path.is_file() and name not in candidates) or (
+                path.is_dir() and path.parent == target and path.name not in (PUBLISH_DIRS if include_supporting else set())
+            ):
                 raise PublishError(f"发布目录含未授权文件：{name}")
     for name in candidates:
         destination = target / name
@@ -183,8 +247,8 @@ def publish_deliverables(source_dir: Path, publish_dir: Path, *, include_support
         try:
             with temporary.open("xb") as handle, path.open("rb") as original:
                 created = True
-                if path.suffix == ".tex":
-                    handle.write(bind_bundled_bst(original.read().decode("utf-8")).encode("utf-8"))
+                if name in rendered:
+                    handle.write(rendered[name].encode("utf-8"))
                 else:
                     shutil.copyfileobj(original, handle)
             temporary.replace(destination)

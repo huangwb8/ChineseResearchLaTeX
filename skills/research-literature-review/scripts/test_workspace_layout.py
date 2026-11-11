@@ -112,8 +112,11 @@ class WorkspaceLayoutTests(unittest.TestCase):
 
             self.assertEqual(
                 sorted(p.name for p in target.iterdir()),
-                sorted(["topic_review.pdf", "topic_review.docx", "topic_review.tex", "topic_参考文献.bib", "topic_工作条件.md", "topic_验证报告.md"]),
+                sorted(["topic_review.pdf", "topic_review.docx", "topic_review.tex", "references", "qc"]),
             )
+            self.assertTrue((target / "references/topic_参考文献.bib").is_file())
+            self.assertTrue((target / "qc/topic_工作条件.md").is_file())
+            self.assertTrue((target / "qc/topic_验证报告.md").is_file())
 
     def test_publish_rejects_unexpected_existing_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

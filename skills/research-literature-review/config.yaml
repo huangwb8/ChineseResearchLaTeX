@@ -2,7 +2,7 @@
 
 skill_info:
   name: research-literature-review
-  version: 2.1.8
+  version: 3.0.0
   description: 令人印象深刻的精准、全面的专家级综述；兼容旧名 systematic-literature-review 的 prompt 触发
   author: "Bensz Conan"
   category: writing
@@ -342,7 +342,8 @@ output:
   validation_report: "{topic}_验证报告.md"
   dedupe_map: "dedupe_map_{topic}.json"
 
-# 默认交付可复现文稿包；--readers-only 显式只交 PDF/Word。
+# 正式布局见 references/output-delivery.md；内部 output 文件名保持不变。
+# 默认根目录仅正文三格式，其余分入 references/qc/materials；--readers-only 只交 PDF/Word。
 publish:
   include_supporting: true
   force: false

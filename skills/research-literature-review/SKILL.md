@@ -39,6 +39,7 @@ metadata:
 #### 准备
 
 - 记录主题、档位、字数/参考范围与输出目录。
+- 读取 [正式交付规范](references/output-delivery.md)，确定文献、质检、正文资源和可选材料的目标位置。
 - 先读取 `references/ai_query_generation_prompt.md`，生成查询 JSON。公开 schema 支持以下三种形态：
   - `{"queries": [{"query": "...", "rationale": "..."}]}`
   - `[{"query": "...", "rationale": "..."}]`
@@ -120,6 +121,7 @@ metadata:
 
 #### 导出与多语言
 
+- 导出、发布和最终交付前必须读取 [正式交付规范](references/output-delivery.md)：标准根目录仅正文 DOCX/PDF/TeX，书目归 `references/`，质检归 `qc/`，正文资源与可选辅助材料归 `materials/`；同步核对资源和导航相对路径。
 - 通过 `compile_latex_with_bibtex.py` 生成 PDF；内置 BST 直接引用当前宿主机 Skill 根目录下 `references/latex-template/` 中的样式文件，不另写或复制样式。未解析引文/交叉引用及缺字阻断导出，最终 `.log/.blg` 留在内部供排查。`--template` 只提供搜索目录，不会应用版式。
 - 通过 `convert_latex_to_word.py` 生成 Word，一级标题默认 Heading1，使用随 skill 提供的数字引文 CSL。
 - 导出后实际检查首页、正文、最长表格、图注与参考文献，并核对 PDF/Word 的正文、图表和书目完整性。把检查页码、结果及未验证项写入工作条件中的交付检查记录；编译成功不代表目视或证据审查通过。
@@ -167,12 +169,9 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 
 ### 输出
 
-标准运行默认发布完整文稿包（`--publish-dir` 指定正式目录）：
+标准运行默认向 `--publish-dir` 发布完整文稿包，目录、可选材料取舍和验收以 [正式交付规范](references/output-delivery.md) 为准。根目录只保留 `{主题}_review.docx`、`{主题}_review.pdf`、`{主题}_review.tex`；Bib 在 `references/`，工作条件和验证报告在 `qc/`，正文依赖及 AI 判断有价值的可选材料在 `materials/`。阅读地图、热度统计等不属于每次必做项，已有分析若保留，应连同解释、必要数据和图像一起归档。成品不生成 README，内部评分、预算、证据卡和日志不进入附件。
 
-- `{主题}_review.pdf`
-- `{主题}_review.docx`
-
-同时包含 `{主题}_工作条件.md`、`{主题}_review.tex`、`{主题}_参考文献.bib`、`{主题}_验证报告.md` 及 TeX 实际引用的相对图表、片段。成品不生成或交付 README；使用说明与限制写入已有工作条件。Skill 自带的 BST 由 TeX 直接引用宿主机上的绝对路径（不带 `.bst` 后缀），系统样式由 TeX 发行版提供，均不复制到成品目录；仅用户明确指定的本地自定义资源随稿保留。缺必需文件或资源时停止发布；保留原有文件，未经明确授权不覆盖。`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留为完整包入口。字数预算、候选文献、评分、选文、摘要补齐和证据卡始终属于内部材料，不进入正式发布目录。
+缺必需文件或资源时停止发布；保留已有用户文件。`--readers-only` 显式只交 PDF/Word，`--include-supporting` 保留为完整包入口；`novelty-check` 不要求完整文稿包。
 
 必要中间产物包括：
 
@@ -187,6 +186,7 @@ python3 scripts/pipeline_runner.py --resume .bensz-api/task-{yyyymmdd-hhmm}-{简
 本 Skill 的新任务中间文件统一写入 `./.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/{skill名}/input|output|log/`。同一任务复用一个任务根目录；多 Skill 协作才创建 `shared/`。正式交付物不写入该目录，历史隐藏目录只允许显式兼容读取、迁移或清理。
 
 - 默认 `run_pipeline.py` 将运行目录放在 `.bensz-api/task-{yyyymmdd-hhmm}-{简短描述}/research-literature-review/<run-id>/`；查询输入位于 `input/`，内部状态和产物位于 `output/` 下的 `artifacts/`、`reference/`、`cache/`、`scripts/`、`deliverables/`（支持性文件单独位于 `deliverables/supporting/`）。
+- 决定交付的可选辅助材料先整理进内部 `deliverables/supporting/materials/`，发布器保留其目录关系；不要把整个内部运行目录当作附件。用户可见目录与内部暂存目录分别遵循正式交付规范和本节。
 - 正式交付目录必须通过 `--publish-dir` 显式指定，默认接收完整文稿包；仅阅读模式只接收 PDF/Word。不要把正式目录作为 `--work-dir`。
 - 任务工作区的内部 README 不属于综述成品，不复制到正式目录。不要自行向成品补写 README 或复制内置 BST/CSL；宿主机 Skill 路径变化或换机时，用接收端 Skill 资源路径更新 TeX 引用后重编译。
 - AI 临时脚本必须放到内部 `output/scripts/`；不要把临时文件写到运行目录根部，不要使用绝对路径写 `/tmp/*`，也不要读写其他 run 目录。

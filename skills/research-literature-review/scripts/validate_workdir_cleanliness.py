@@ -39,12 +39,7 @@ ALLOWED_HIDDEN = [
 ]
 
 PUBLISH_ALLOWED_PATTERNS = ["*_review.pdf", "*_review.docx"]
-PUBLISH_SUPPORTING_PATTERNS = [
-    "*_review.tex",
-    "*_参考文献.bib",
-    "*_工作条件.md",
-    "*_验证报告.md",
-]
+PUBLISH_SUPPORTING_PATTERNS = ["*_review.tex"]
 
 
 def validate_publish_dir(publish_dir: Path, include_supporting: bool = False) -> List[Path]:
@@ -56,14 +51,26 @@ def validate_publish_dir(publish_dir: Path, include_supporting: bool = False) ->
     allowed = {p.relative_to(publish_dir).as_posix() for p in publish_dir.iterdir()
                if p.is_file() and any(p.match(pattern) for pattern in patterns)}
     if include_supporting:
-        from publish_deliverables import collect_tex_resources, PublishError
+        from publish_deliverables import collect_tex_resources, collect_materials, resource_destination, PUBLISH_DIRS, PublishError
+        allowed.update(p.relative_to(publish_dir).as_posix() for pattern in (
+            "references/*.bib", "qc/*_工作条件.md", "qc/*_验证报告.md") for p in publish_dir.glob(pattern) if p.is_file())
+        try:
+            allowed.update(collect_materials(publish_dir))
+        except PublishError:
+            return [publish_dir / "materials"]
         for tex in publish_dir.glob("*_review.tex"):
             try:
-                allowed.update(collect_tex_resources(tex, publish_dir))
+                for name in collect_tex_resources(tex, publish_dir):
+                    # 依赖存在也不能把旧的平铺文件视为符合新规范。
+                    if name == tex.name or resource_destination(name) == name:
+                        allowed.add(name)
             except PublishError:
                 return [tex]  # 依赖不能复现，不能只凭文件后缀宣布整洁。
+    else:
+        PUBLISH_DIRS = set()
     return [p for p in sorted(publish_dir.rglob("*"))
-            if p.is_symlink() or (p.is_file() and p.relative_to(publish_dir).as_posix() not in allowed)]
+            if p.is_symlink() or (p.is_file() and p.relative_to(publish_dir).as_posix() not in allowed)
+            or (p.is_dir() and p.parent == publish_dir and p.name not in PUBLISH_DIRS)]
 
 
 def validate_workdir(work_dir: Path, strict: bool = False) -> tuple[List[Path], List[Path]]:
@@ -128,7 +135,7 @@ def main() -> int:
         help="以 JSON 格式输出结果",
     )
     parser.add_argument("--publish-dir", type=Path, help="改为校验正式发布目录")
-    parser.add_argument("--include-supporting", action="store_true", help="允许 tex/bib/工作条件/验证报告")
+    parser.add_argument("--include-supporting", action="store_true", help="按 references/qc/materials 结构校验完整包")
     args = parser.parse_args()
 
     if args.publish_dir:

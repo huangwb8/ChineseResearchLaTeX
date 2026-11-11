@@ -67,12 +67,91 @@ def test_full_publication_carries_only_referenced_resources(tmp_path):
     tex = support / "topic_review.tex"
     tex.write_text(tex.read_text().replace(r"\end{document}", r"\includegraphics{figures/plot.png}\end{document}"))
     result = publish_deliverables(source, tmp_path / "published", include_supporting=True)
-    assert "figures/plot.png" in result.published
+    assert "materials/figures/plot.png" in result.published
     assert not any(name.endswith(".bst") for name in result.published)
     assert "README.md" not in result.published
     expected = (SKILL / "references/latex-template/gbt7714-nsfc").as_posix()
     assert rf"\bibliographystyle{{{expected}}}" in (tmp_path / "published/topic_review.tex").read_text()
-    assert (tmp_path / "published/topic_参考文献.bib").exists()
+    assert (tmp_path / "published/references/topic_参考文献.bib").exists()
+    assert r"\bibliography{references/topic_参考文献}" in (tmp_path / "published/topic_review.tex").read_text()
+    assert r"\includegraphics{materials/figures/plot.png}" in (tmp_path / "published/topic_review.tex").read_text()
+
+
+def test_publication_preserves_curated_materials_and_relative_links(tmp_path):
+    source = bundle(tmp_path)
+    materials = source / "supporting/materials"
+    materials.mkdir()
+    contents = {"阅读地图.md": "![热度](研究热度.png)\n[数据](研究热度.csv)",
+                "研究热度.png": "image", "研究热度.csv": "year,count\n2025,12", "研究热度.pdf": "figure"}
+    for name, content in contents.items():
+        (materials / name).write_text(content, encoding="utf-8")
+    (source / "supporting/unused-draft.md").write_text("internal")
+    target = tmp_path / "published"
+    publish_deliverables(source, target, include_supporting=True)
+    assert {p.name for p in target.iterdir()} == {
+        "topic_review.docx", "topic_review.pdf", "topic_review.tex", "references", "qc", "materials"}
+    assert {p.name for p in (target / "materials").iterdir()} == set(contents)
+    assert (target / "materials/阅读地图.md").read_text() == contents["阅读地图.md"]
+    from validate_workdir_cleanliness import validate_publish_dir
+    assert validate_publish_dir(target, include_supporting=True) == []
+
+
+def test_publication_rewrites_nested_tex_and_graphicspath_without_changing_source(tmp_path):
+    source = bundle(tmp_path)
+    support = source / "supporting"
+    (support / "figures").mkdir()
+    (support / "sections").mkdir()
+    (support / "figures/plot.png").write_bytes(b"image")
+    (support / "sections/part.tex").write_text(r"\includegraphics[width=1cm]{plot}")
+    tex = support / "topic_review.tex"
+    original = document().replace(r"\end{document}", r"\graphicspath{{figures/}}\input{sections/part}\end{document}")
+    original += "\n% \\includegraphics{missing-comment.png}\n"
+    tex.write_text(original)
+    target = tmp_path / "published"
+    publish_deliverables(source, target, include_supporting=True)
+    assert tex.read_text() == original
+    assert r"\input{materials/sections/part.tex}" in (target / tex.name).read_text()
+    assert (target / "materials/sections/part.tex").read_text() == r"\includegraphics[width=1cm]{materials/figures/plot.png}"
+    from validate_workdir_cleanliness import validate_publish_dir
+    assert validate_publish_dir(target, include_supporting=True) == []
+
+
+@pytest.mark.parametrize("name", ["word_budget_final.csv", "pipeline_state.json", "compile.log", "script.py"])
+def test_publication_rejects_internal_materials_before_writing(tmp_path, name):
+    source = bundle(tmp_path)
+    materials = source / "supporting/materials"
+    materials.mkdir()
+    (materials / name).write_text("internal")
+    with pytest.raises(PublishError):
+        publish_deliverables(source, tmp_path / "published", include_supporting=True)
+    assert not (tmp_path / "published").exists()
+
+
+def test_materials_symlink_rejected_and_readers_only_excludes_materials(tmp_path):
+    source = bundle(tmp_path)
+    materials = source / "supporting/materials"
+    materials.mkdir()
+    (materials / "private.txt").symlink_to(source / "supporting/topic_工作条件.md")
+    with pytest.raises(PublishError):
+        publish_deliverables(source, tmp_path / "rejected", include_supporting=True)
+    target = tmp_path / "readers"
+    publish_deliverables(source, target)
+    assert {p.name for p in target.iterdir()} == {"topic_review.pdf", "topic_review.docx"}
+
+
+def test_publish_cleanliness_rejects_flat_support_and_unknown_root_directory(tmp_path):
+    source = bundle(tmp_path)
+    target = tmp_path / "published"
+    publish_deliverables(source, target, include_supporting=True)
+    misplaced = target / "topic_参考文献.bib"
+    misplaced.write_text("old flat layout")
+    unknown = target / "other"
+    unknown.mkdir()
+    from validate_workdir_cleanliness import validate_publish_dir
+    assert set(validate_publish_dir(target, include_supporting=True)) == {misplaced, unknown}
+    with pytest.raises(PublishError):
+        publish_deliverables(source, target, include_supporting=True, force=True)
+    assert misplaced.read_text() == "old flat layout"
 
 
 def test_publication_does_not_copy_stale_bundled_bst_or_internal_readme(tmp_path):
@@ -265,9 +344,21 @@ def test_real_pdf_word_and_isolated_rebuild(tmp_path, monkeypatch, style):
         p.unlink()
     tex = support / "topic_review.tex"; tex.unlink()
     body = support / "body.tex"
+    # 同时验证归类后的正文片段、图片与书目，不只检查文件名。
+    import struct
+    import zlib
+    def chunk(kind, data):
+        return struct.pack("!I", len(data)) + kind + data + struct.pack("!I", zlib.crc32(kind + data))
+    (support / "figures").mkdir()
+    (support / "figures/plot.png").write_bytes(
+        b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack("!2I5B", 1, 1, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(b"\x00\x40\x80\xc0")) + chunk(b"IEND", b""))
+    (support / "sections").mkdir()
+    (support / "sections/extra.tex").write_text(r"补充片段。\includegraphics[width=1cm]{figures/plot.png}", encoding="utf-8")
     body.write_text(r"\begin{abstract}这是合成格式测试。\end{abstract}"
                     r"\section{引言}合成内容。\cite{a}\subsection{边界}仅验证转换。"
-                    r"\begin{tabular}{ll}项目 & 结果\\正文 & 保留\end{tabular}", encoding="utf-8")
+                    r"\begin{tabular}{ll}项目 & 结果\\正文 & 保留\end{tabular}"
+                    r"\input{sections/extra}", encoding="utf-8")
     result = cli("render_review_template.py", "--title", "合成格式测试", "--body", body,
                  "--bib", support / "topic_参考文献.bib", "--output", tex)
     assert result.returncode == 0, result.stderr

@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- `research-literature-review`：统一正式交付布局，根目录仅正文 PDF/Word/TeX，书目归 `references/`，质检归 `qc/`，正文资源与可选辅助材料归 `materials/`；新增独立输出规范，同步发布路径及目录校验。
+
 - `research-literature-review`：综述正文默认不叙述本次文献检索、筛选等调研过程，相关信息归入工作条件和配套报告；同步写作指南、章节模板、工作条件提示与语义复核要求，保留原始研究方法和证据边界的分析。
 
 - `research-literature-review`：综述成品明确排除 README；模板、编译与发布直接引用宿主机 Skill 内置 BST，停止复制内置及系统样式到成品，同步交付说明与回归测试。

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed（统一正式交付结构 - 2026-11-10）
+
+- 新增 `references/output-delivery.md` 作为用户可见交付规范；标准根目录仅正文 DOCX/PDF/TeX，Bib 归 `references/`，工作条件与验证报告归 `qc/`，正文资源与可选辅助材料归 `materials/`。
+- AI 可自主保留有价值的导读、统计及必要数据和图像，不要求每次生成；内部候选、评分、预算、证据卡与日志不作为附件交付。
+- 发布器归类文件并同步改写交付副本的静态 TeX 依赖，复制内部 `supporting/materials/` 的整理材料；同步正式目录检查、Skill 入口和 README。内部暂存布局和仅阅读模式不变，旧成品不自动迁移。
+- 正式目录路径发生不兼容变化，配置提升 Skill 主版本；已有自动化需更新 Bib/质检路径，旧运行应发布到新目标目录。
+- 验证：77 项定向回归及 17 个 subtest 通过，包含内置/系统 BST 的真实 PDF/Word 导出及归类后图片、嵌套片段、书目的独立重编译；基础 Skill 校验、上游 strict 结构检查与 diff 检查通过。未修改历史综述或系统安装副本；BAC 保留 3 条既有 actor/source_type 警告。
+
 ### Changed（正文聚焦研究结论 - 2026-11-09）
 
 - 默认从摘要、引言及其它正文位置排除本次文献调研过程，涵盖检索来源、截止日、筛选选文及本次 RoB/GRADE 实施声明；过程信息保留在工作条件、Search Log 和配套报告，不挪到文稿脚注、图表或附录。
