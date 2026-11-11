@@ -100,7 +100,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 <!-- TEMPLATE-LIST:START -->
 <!-- 由 scripts/update_readme_template_list.py 自动生成，请勿手动编辑。 -->
 > ⚠️ **建议优先使用下表中的最新正式 zip 下载包。** 该列表由 GitHub Actions 每小时自动检查一次，也支持手动触发同步。
-> 本版本下载包：`huangwb8/ChineseResearchLaTeX@v4.1.2`，打包日期：2026-10-17。
+> 本版本下载包：`huangwb8/ChineseResearchLaTeX@v4.1.3`，打包日期：2026-11-12。
 
 ### NSFC 模板
 
@@ -108,9 +108,9 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [青年 C](projects/NSFC_Young/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/NSFC_Young-v4.1.2.zip)（2.24 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/NSFC_Young-Overleaf-v4.1.2.zip)（7.85 MB） |
-| [面上](projects/NSFC_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/NSFC_General-v4.1.2.zip)（0.96 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/NSFC_General-Overleaf-v4.1.2.zip)（7.22 MB） |
-| [地区](projects/NSFC_Local/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/NSFC_Local-v4.1.2.zip)（1.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/NSFC_Local-Overleaf-v4.1.2.zip)（7.90 MB） |
+| [青年 C](projects/NSFC_Young/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/NSFC_Young-v4.1.3.zip)（2.24 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/NSFC_Young-Overleaf-v4.1.3.zip)（7.85 MB） |
+| [面上](projects/NSFC_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/NSFC_General-v4.1.3.zip)（0.96 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/NSFC_General-Overleaf-v4.1.3.zip)（7.22 MB） |
+| [地区](projects/NSFC_Local/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/NSFC_Local-v4.1.3.zip)（1.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/NSFC_Local-Overleaf-v4.1.3.zip)（7.90 MB） |
 
 ### 广东省自然科学基金模板
 
@@ -118,8 +118,8 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [广东省面上](projects/GDNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/GDNSF_General-v4.1.2.zip)（0.14 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/GDNSF_General-Overleaf-v4.1.2.zip)（30.1 MB） |
-| [区域联合青年](projects/GDNSF_Regional_Young/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/GDNSF_Regional_Young-v4.1.2.zip)（0.17 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/GDNSF_Regional_Young-Overleaf-v4.1.2.zip)（30.1 MB） |
+| [广东省面上](projects/GDNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/GDNSF_General-v4.1.3.zip)（0.14 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/GDNSF_General-Overleaf-v4.1.3.zip)（30.1 MB） |
+| [区域联合青年](projects/GDNSF_Regional_Young/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/GDNSF_Regional_Young-v4.1.3.zip)（0.17 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/GDNSF_Regional_Young-Overleaf-v4.1.3.zip)（30.1 MB） |
 
 ### 广西壮族自治区自然科学基金模板
 
@@ -127,7 +127,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [广西面上](projects/GXNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/GXNSF_General-v4.1.2.zip)（0.51 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/GXNSF_General-Overleaf-v4.1.2.zip)（32.0 MB） |
+| [广西面上](projects/GXNSF_General/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/GXNSF_General-v4.1.3.zip)（0.51 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/GXNSF_General-Overleaf-v4.1.3.zip)（32.0 MB） |
 
 ### SCI 论文模板
 
@@ -136,8 +136,8 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [paper-coverletter-01](projects/paper-coverletter-01/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/paper-coverletter-01-v4.1.2.zip)（0.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/paper-coverletter-01-Overleaf-v4.1.2.zip)（0.01 MB） |
-| [paper-sci-01](projects/paper-sci-01/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/paper-sci-01-v4.1.2.zip)（0.38 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/paper-sci-01-Overleaf-v4.1.2.zip)（0.02 MB） |
+| [paper-coverletter-01](projects/paper-coverletter-01/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/paper-coverletter-01-v4.1.3.zip)（0.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/paper-coverletter-01-Overleaf-v4.1.3.zip)（0.01 MB） |
+| [paper-sci-01](projects/paper-sci-01/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/paper-sci-01-v4.1.3.zip)（0.38 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/paper-sci-01-Overleaf-v4.1.3.zip)（0.02 MB） |
 
 ### 学位论文 / 博士后模板
 
@@ -146,21 +146,21 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 院校 | 类型 | 标准包 | Overleaf 包 |
 |------|------|------|--------|-------------|
-| [thesis-ahnu-master](projects/thesis-ahnu-master/) | 安徽师范大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-ahnu-master-v4.1.2.zip)（0.34 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-ahnu-master-Overleaf-v4.1.2.zip)（0.05 MB） |
-| [thesis-cas-postdoc](projects/thesis-cas-postdoc/) | 中国科学院 | 博士后 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-cas-postdoc-v4.1.2.zip)（0.38 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-cas-postdoc-Overleaf-v4.1.2.zip)（0.06 MB） |
-| [thesis-hit-doctor](projects/thesis-hit-doctor/) | 哈尔滨工业大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-hit-doctor-v4.1.2.zip)（0.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-hit-doctor-Overleaf-v4.1.2.zip)（0.02 MB） |
-| [thesis-jlau-doctor](projects/thesis-jlau-doctor/) | 吉林农业大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-jlau-doctor-v4.1.2.zip)（1.18 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-jlau-doctor-Overleaf-v4.1.2.zip)（0.47 MB） |
-| [thesis-jlau-master](projects/thesis-jlau-master/) | 吉林农业大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-jlau-master-v4.1.2.zip)（1.19 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-jlau-master-Overleaf-v4.1.2.zip)（0.47 MB） |
-| [thesis-just-bachelor](projects/thesis-just-bachelor/) | 江苏科技大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-just-bachelor-v4.1.2.zip)（1.40 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-just-bachelor-Overleaf-v4.1.2.zip)（0.58 MB） |
-| [thesis-jxust-bachelor](projects/thesis-jxust-bachelor/) | 江西理工大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-jxust-bachelor-v4.1.2.zip)（0.39 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-jxust-bachelor-Overleaf-v4.1.2.zip)（0.12 MB） |
-| [thesis-nju-master](projects/thesis-nju-master/) | 南京大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-nju-master-v4.1.2.zip)（1.90 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-nju-master-Overleaf-v4.1.2.zip)（1.24 MB） |
-| [thesis-nwu-doctor](projects/thesis-nwu-doctor/) | 西北大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-nwu-doctor-v4.1.2.zip)（0.99 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-nwu-doctor-Overleaf-v4.1.2.zip)（0.35 MB） |
-| [thesis-scu-master](projects/thesis-scu-master/) | 四川大学 | 硕士 | 暂未发布 | 暂未发布 |
-| [thesis-smu-master](projects/thesis-smu-master/) | 南方医科大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-smu-master-v4.1.2.zip)（0.54 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-smu-master-Overleaf-v4.1.2.zip)（0.18 MB） |
-| [thesis-smu-postdoc](projects/thesis-smu-postdoc/) | 南方医科大学 | 博士后 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-smu-postdoc-v4.1.2.zip)（0.41 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-smu-postdoc-Overleaf-v4.1.2.zip)（0.08 MB） |
-| [thesis-sysu-doctor](projects/thesis-sysu-doctor/) | 中山大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-sysu-doctor-v4.1.2.zip)（0.55 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-sysu-doctor-Overleaf-v4.1.2.zip)（0.63 MB） |
-| [thesis-ucas-doctor](projects/thesis-ucas-doctor/) | 中国科学院大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-ucas-doctor-v4.1.2.zip)（0.41 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-ucas-doctor-Overleaf-v4.1.2.zip)（0.53 MB） |
-| [thesis-xdu-bachelor](projects/thesis-xdu-bachelor/) | 西安电子科技大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-xdu-bachelor-v4.1.2.zip)（2.82 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/thesis-xdu-bachelor-Overleaf-v4.1.2.zip)（24.4 MB） |
+| [thesis-ahnu-master](projects/thesis-ahnu-master/) | 安徽师范大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-ahnu-master-v4.1.3.zip)（0.34 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-ahnu-master-Overleaf-v4.1.3.zip)（0.05 MB） |
+| [thesis-cas-postdoc](projects/thesis-cas-postdoc/) | 中国科学院 | 博士后 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-cas-postdoc-v4.1.3.zip)（0.38 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-cas-postdoc-Overleaf-v4.1.3.zip)（0.06 MB） |
+| [thesis-hit-doctor](projects/thesis-hit-doctor/) | 哈尔滨工业大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-hit-doctor-v4.1.3.zip)（0.30 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-hit-doctor-Overleaf-v4.1.3.zip)（0.02 MB） |
+| [thesis-jlau-doctor](projects/thesis-jlau-doctor/) | 吉林农业大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-jlau-doctor-v4.1.3.zip)（1.18 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-jlau-doctor-Overleaf-v4.1.3.zip)（0.47 MB） |
+| [thesis-jlau-master](projects/thesis-jlau-master/) | 吉林农业大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-jlau-master-v4.1.3.zip)（1.19 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-jlau-master-Overleaf-v4.1.3.zip)（0.47 MB） |
+| [thesis-just-bachelor](projects/thesis-just-bachelor/) | 江苏科技大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-just-bachelor-v4.1.3.zip)（1.40 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-just-bachelor-Overleaf-v4.1.3.zip)（0.58 MB） |
+| [thesis-jxust-bachelor](projects/thesis-jxust-bachelor/) | 江西理工大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-jxust-bachelor-v4.1.3.zip)（0.39 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-jxust-bachelor-Overleaf-v4.1.3.zip)（0.12 MB） |
+| [thesis-nju-master](projects/thesis-nju-master/) | 南京大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-nju-master-v4.1.3.zip)（1.90 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-nju-master-Overleaf-v4.1.3.zip)（1.24 MB） |
+| [thesis-nwu-doctor](projects/thesis-nwu-doctor/) | 西北大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-nwu-doctor-v4.1.3.zip)（0.99 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-nwu-doctor-Overleaf-v4.1.3.zip)（0.35 MB） |
+| [thesis-scu-master](projects/thesis-scu-master/) | 四川大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-scu-master-v4.1.3.zip)（0.38 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-scu-master-Overleaf-v4.1.3.zip)（0.05 MB） |
+| [thesis-smu-master](projects/thesis-smu-master/) | 南方医科大学 | 硕士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-smu-master-v4.1.3.zip)（0.54 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-smu-master-Overleaf-v4.1.3.zip)（0.18 MB） |
+| [thesis-smu-postdoc](projects/thesis-smu-postdoc/) | 南方医科大学 | 博士后 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-smu-postdoc-v4.1.3.zip)（0.41 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-smu-postdoc-Overleaf-v4.1.3.zip)（0.08 MB） |
+| [thesis-sysu-doctor](projects/thesis-sysu-doctor/) | 中山大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-sysu-doctor-v4.1.3.zip)（0.55 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-sysu-doctor-Overleaf-v4.1.3.zip)（0.63 MB） |
+| [thesis-ucas-doctor](projects/thesis-ucas-doctor/) | 中国科学院大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-ucas-doctor-v4.1.3.zip)（0.41 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-ucas-doctor-Overleaf-v4.1.3.zip)（0.53 MB） |
+| [thesis-xdu-bachelor](projects/thesis-xdu-bachelor/) | 西安电子科技大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-xdu-bachelor-v4.1.3.zip)（2.82 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-xdu-bachelor-Overleaf-v4.1.3.zip)（24.4 MB） |
 
 ### 简历模板
 
@@ -168,8 +168,8 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 
 | 模板 | 状态 | 标准包 | Overleaf 包 |
 |------|------|--------|-------------|
-| [cv-01](projects/cv-01/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/cv-01-v4.1.2.zip)（1.99 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.2/cv-01-Overleaf-v4.1.2.zip)（38.6 MB） |
-
+| [cv-01](projects/cv-01/) | ✅ 已发布 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/cv-01-v4.1.3.zip)（1.99 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/cv-01-Overleaf-v4.1.3.zip)（38.6 MB） |
+<!-- TEMPLATE-LIST:END -->
 
 ---
 
@@ -276,8 +276,8 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [make-latex-model](skills/make-latex-model/) | 🔧 模板开发 | v3.1.2 | 面向 ChineseResearchLaTeX 全仓库的模板落地与高保真对齐 | ✅ 稳定 |
 | [complete-example](skills/complete-example/) | 🔧 模板开发 | v1.4.1 | 智能示例生成和补全 | ✅ 稳定 |
 | [transfer-old-latex-to-new](skills/transfer-old-latex-to-new/) | 🔧 模板开发 | v2.1.0 | 模板迁移与重构编排，支持任意输入并由 AI 自主决定输出 | ✅ 稳定 |
-| [research-literature-search](skills/research-literature-search/) | 📚 文献调研 | v1.0.4 | 独立多源文献检索、规范化、canonical 去重与 manifest 审计包 | ✅ 稳定 |
-| [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v2.0.0 | 消费 search manifest 的显式多查询、可审计专家级综述 | ✅ 稳定 |
+| [research-literature-search](skills/research-literature-search/) | 📚 文献调研 | v1.0.7 | 独立多源文献检索、规范化、canonical 去重与 manifest 审计包 | ✅ 稳定 |
+| [research-literature-review](skills/research-literature-review/) | 📚 文献调研 | v3.0.0 | 消费 search manifest 的显式多查询、可审计专家级综述 | ✅ 稳定 |
 | [research-citation-check](skills/research-citation-check/) | 📚 文献调研 | v1.1.0 | 综述引用语义一致性检查 | ✅ 稳定 |
 | [research-topic-extractor](skills/research-topic-extractor/) | 📚 文献调研 | v1.1.0 | 结构化综述主题提取 | ✅ 稳定 |
 | [research-guide-updater](skills/research-guide-updater/) | 📚 文献调研 | v1.1.0 | 项目指南优化与写作规范沉淀 | ✅ 稳定 |
@@ -288,8 +288,8 @@ AI 会自动联网访问项目文档了解安装方式并完成安装。小白�
 | [nsfc-code](skills/nsfc-code/) | ✍️ 标书写作 | v1.0.0 | NSFC 申请代码推荐（5 组 code1/code2 + 理由，只读） | ✅ 稳定 |
 | [nsfc-abstract](skills/nsfc-abstract/) | ✍️ 标书写作 | v2.1.2 | 标题建议 + NSFC 中英文摘要生成（中文≤400字；英文≤4000字符） | ✅ 稳定 |
 | [nsfc-budget](skills/nsfc-budget/) | ✍️ 标书写作 | v0.1.2 | NSFC 预算说明书生成（LaTeX 项目 + `budget.pdf`） | 🚧 开发中 |
-| [nsfc-justification-writer](skills/nsfc-justification-writer/) | ✍️ 标书写作 | [配置版本](skills/nsfc-justification-writer/config.yaml) | 诊断后选择修订幅度，公允界定缺口、衔接假设证据并保留科学含义；支持只读审查与可逆写入 | ✅ 稳定 |
-| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | ✍️ 标书写作 | [配置](skills/nsfc-research-content-writer/config.yaml) | NSFC 研究内容及关联章节写作、审查与润色 | ✅ 稳定 |
+| [nsfc-justification-writer](skills/nsfc-justification-writer/) | ✍️ 标书写作 | v1.10.0 | 立项依据叙事写作与专业可读性复核；科学问题/假设从现状缺口自然收束，验证协议后置，可逆写入 | ✅ 稳定 |
+| [nsfc-research-content-writer](skills/nsfc-research-content-writer/) | ✍️ 标书写作 | v1.1.0 | NSFC 研究内容编排写作 | ✅ 稳定 |
 | [nsfc-research-foundation-writer](skills/nsfc-research-foundation-writer/) | ✍️ 标书写作 | v0.1.2 | NSFC 研究基础编排写作 | 🚧 开发中 |
 | [nsfc-qc](skills/nsfc-qc/) | ✍️ 标书写作 | v1.2.1 | NSFC 标书只读质量控制（多线程检查文风/引用/篇幅/逻辑 + 全文级缩写注册表 QC） | ✅ 稳定 |
 | [nsfc-ref-alignment](skills/nsfc-ref-alignment/) | ✍️ 标书写作 | v0.1.1 | NSFC 参考文献与正文引用一致性核查（只读） | 🚧 开发中 |
