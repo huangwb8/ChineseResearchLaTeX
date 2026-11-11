@@ -1,0 +1,26 @@
+%!TEX program = xelatex
+\documentclass[UTF8,zihao=-4,oneside,openany,fontset=none]{ctexbook}
+\input{extraTex/@config.tex}
+\input{extraTex/meta.tex}
+\begin{document}
+\scuMakeCover
+\frontmatter
+\pagestyle{scu-main}
+\input{extraTex/front/abstract_zh.tex}
+\clearpage
+\input{extraTex/front/abstract_en.tex}
+\clearpage
+\tableofcontents
+\mainmatter
+\input{extraTex/body/introduction.tex}
+\input{extraTex/body/chapter-01.tex}
+\input{extraTex/body/chapter-02.tex}
+\input{extraTex/body/conclusion.tex}
+\backmatter
+\input{extraTex/back/references.tex}
+\appendix
+\input{extraTex/back/appendix.tex}
+\input{extraTex/back/thanks.tex}
+\input{extraTex/back/achievements.tex}
+\input{extraTex/back/statements.tex}
+\end{document}

@@ -9,7 +9,7 @@ README 只描述公共包本身的职责、稳定入口和目录结构；具体�
 - 提供毕业论文模板的公共入口包、profile 与样式装配逻辑
 - 提供 PDF 构建、DOCX 初稿导出、缓存清理与像素级比较脚本入口
 - 依赖 `bensz-fonts` 统一管理共享字体资源
-- 当前已注册独立模板：`thesis-smu-master`、`thesis-nju-master`、`thesis-just-bachelor`、`thesis-jxust-bachelor`、`thesis-xdu-bachelor`、`thesis-ahnu-master`、`thesis-hit-doctor`、`thesis-jlau-doctor`、`thesis-jlau-master`、`thesis-nwu-doctor`、`thesis-cas-postdoc`、`thesis-smu-postdoc`、`thesis-sysu-doctor`、`thesis-ucas-doctor`
+- 当前已注册独立模板：`thesis-smu-master`、`thesis-nju-master`、`thesis-scu-master`、`thesis-just-bachelor`、`thesis-jxust-bachelor`、`thesis-xdu-bachelor`、`thesis-ahnu-master`、`thesis-hit-doctor`、`thesis-jlau-doctor`、`thesis-jlau-master`、`thesis-nwu-doctor`、`thesis-cas-postdoc`、`thesis-smu-postdoc`、`thesis-sysu-doctor`、`thesis-ucas-doctor`
 
 ## 目录说明
 

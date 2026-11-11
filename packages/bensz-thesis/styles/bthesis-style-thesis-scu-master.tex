@@ -1,0 +1,148 @@
+\ProvidesFile{bthesis-style-thesis-scu-master.tex}
+  [2026/11/11 Thesis style: thesis-scu-master]
+
+\RequirePackage{geometry}
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+\RequirePackage{booktabs}
+\RequirePackage{caption}
+\RequirePackage{titletoc}
+\RequirePackage{fancyhdr}
+\RequirePackage{indentfirst}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{tikz}
+\RequirePackage{hyperref}
+\RequirePackage{etoolbox}
+
+% 附件5的16开纸约197×273 mm；附件4示意图的版心为145×225 mm。
+\geometry{papersize={197mm,273mm},textwidth=145mm,textheight=225mm,
+  centering,headheight=14pt,headsep=5mm,footskip=10mm}
+% 使用TeX Live自带字体，独立工程与Overleaf不依赖本机商业中文字体。
+\setmainfont{texgyretermes-regular.otf}[BoldFont=texgyretermes-bold.otf,
+  ItalicFont=texgyretermes-italic.otf,BoldItalicFont=texgyretermes-bolditalic.otf]
+% Fandol不含GSUB，使用fontspec默认脚本而非请求不存在的CJK脚本。
+\setCJKmainfont[Script=CustomDefault,BoldFont=FandolSong-Bold.otf,ItalicFont=FandolKai-Regular.otf]{FandolSong-Regular.otf}
+\setCJKsansfont[Script=CustomDefault]{FandolHei-Regular.otf}
+\setCJKfamilyfont{scusong}[Script=CustomDefault]{FandolSong-Regular.otf}
+\setCJKfamilyfont{scuhei}[Script=CustomDefault]{FandolHei-Regular.otf}
+\setCJKfamilyfont{scukai}[Script=CustomDefault]{FandolKai-Regular.otf}
+\newcommand{\scuSong}{\CJKfamily{scusong}}
+\newcommand{\scuHei}{\CJKfamily{scuhei}}
+\newcommand{\scuKai}{\CJKfamily{scukai}}
+\newcommand{\scuBodyFont}{\scuSong\fontsize{12bp}{20bp}\selectfont}
+\newcommand{\scuSmallFont}{\scuSong\fontsize{10.5bp}{16bp}\selectfont}
+\linespread{1}
+\AtBeginDocument{\scuBodyFont}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\xeCJKsetup{PunctStyle=plain}
+\hypersetup{hidelinks,hypertexnames=false,bookmarksnumbered=true}
+
+% 四级标题按issue要求顶格；紧邻标题不额外空行。
+\ctexset{
+  chapter={name={第,章},number=\chinese{chapter},format=\raggedright\scuHei\zihao{-3},
+    beforeskip=20bp,afterskip=6bp,aftername=\quad,fixskip=true},
+  section={name={第,节},number=\chinese{section},format=\raggedright\scuHei\zihao{4},
+    beforeskip=20bp,afterskip=0bp,aftername=\quad},
+  subsection={number=\chinese{subsection}、,format=\raggedright\scuHei\zihao{-4},
+    beforeskip=20bp,afterskip=0bp,aftername=\hspace{0pt}},
+  subsubsection={number=（\chinese{subsubsection}）,format=\raggedright\scuKai\zihao{-4},
+    beforeskip=20bp,afterskip=0bp,aftername=\hspace{0pt}}
+}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{目\quad 录}
+\titlecontents{chapter}[0pt]{\scuBodyFont}{\thecontentslabel\quad}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{section}[2em]{\scuBodyFont}{\thecontentslabel\quad}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{subsection}[4em]{\scuBodyFont}{\thecontentslabel}{}{\titlerule*[0.6pc]{.}\contentspage}
+\fancypagestyle{scu-main}{%
+  \fancyhf{}%
+  \fancyhead[C]{\scuSong\fontsize{9bp}{12bp}\selectfont 四川大学硕士学位论文}%
+  \fancyfoot[C]{\scuSmallFont\thepage}%
+  \renewcommand{\headrulewidth}{0.4pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+}
+\fancypagestyle{plain}[scu-main]{}
+\DeclareCaptionFont{scucaption}{\scuHei\fontsize{10.5bp}{16bp}\selectfont}
+\captionsetup{font=scucaption,labelsep=quad,skip=10bp}
+\setlength{\textfloatsep}{20bp}
+\setlength{\intextsep}{20bp}
+\AtBeginEnvironment{tabular}{\scuSmallFont}
+\AtBeginEnvironment{tabular*}{\scuSmallFont}
+
+% 附件6：连续阿拉伯数字上标脚注，小五宋体；跨章不重置。
+\makeatletter
+% 章节、列表和浮动体结束时会重新调用normalsize，须同时固定其基线。
+\renewcommand{\normalsize}{\@setfontsize\normalsize{12bp}{20bp}%
+  \abovedisplayskip=10bp\belowdisplayskip=10bp%
+  \abovedisplayshortskip=0bp\belowdisplayshortskip=6bp}
+\@removefromreset{footnote}{chapter}
+\renewcommand{\footnotesize}{\scuSong\fontsize{9bp}{12bp}\selectfont}
+\makeatother
+\renewcommand{\thefootnote}{\arabic{footnote}}
+% thebibliography自行生成标题，调用方不再另写chapter*。
+\AtBeginEnvironment{thebibliography}{\scuSmallFont}
+\apptocmd{\thebibliography}{\addcontentsline{toc}{chapter}{参考文献}\scuSmallFont}{}{}
+\newcommand{\scuReferenceGroup}[1]{\par\addvspace{10bp}\item[] {\scuHei #1}\par\nopagebreak}
+
+\providecommand{\scuTitleZh}{硕士学位论文题目}
+\providecommand{\scuTitleEn}{Title of the Master's Thesis}
+\providecommand{\scuAuthor}{作者姓名}
+\providecommand{\scuSupervisor}{导师姓名及职称}
+\providecommand{\scuSchool}{四川大学高分子科学与工程学院}
+\providecommand{\scuMajor}{材料科学与工程}
+\providecommand{\scuDirection}{高分子材料}
+\providecommand{\scuCompletionDate}{二〇二六年十一月}
+\providecommand{\scuDegreeDate}{填写授予学位日期}
+\providecommand{\scuKeywordsZh}{高分子；链构象；尺度关系}
+\providecommand{\scuKeywordsEn}{polymer; chain conformation; scaling}
+\providecommand{\scuWordmark}{assets/branding/scu-wordmark.png}
+
+\newcommand{\scuMakeCover}{%
+  \thispagestyle{empty}%
+  \begin{center}
+    \vspace*{8mm}
+    \includegraphics[width=76mm]{\scuWordmark}\par
+    \vspace{12mm}
+    {\scuSong\zihao{1} 硕\quad 士\quad 学\quad 位\quad 论\quad 文\par}
+    \vspace{18mm}
+    {\scuHei\zihao{3} \scuTitleZh\par}
+    \vspace{12mm}
+    {\scuBodyFont 作者：\scuAuthor\quad 完成日期：\scuCompletionDate\par}
+    \vspace{14mm}
+    \renewcommand{\arraystretch}{1.8}
+    \begin{tabular}{rl}
+      培养单位 & \scuSchool\\
+      指导教师 & \scuSupervisor\\
+      专业 & \scuMajor\\
+      研究方向 & \scuDirection\\
+      授予学位日期 & \scuDegreeDate
+    \end{tabular}
+  \end{center}
+  \clearpage
+}
+\newcommand{\scuAbstractZhHeading}{%
+  \phantomsection\addcontentsline{toc}{chapter}{中文摘要}%
+  \begin{center}
+    \vspace*{40bp}
+    {\scuSong\zihao{-2}\scuTitleZh\par}
+    \vspace{20bp}
+    {\scuBodyFont\scuMajor\par}
+    \vspace{20bp}
+    {\scuHei\zihao{-4}研究生：{\scuKai\scuAuthor}\quad 指导教师：{\scuKai\scuSupervisor}\par}
+    \vspace{40bp}
+    {\scuHei\zihao{4}摘\quad 要\par}
+  \end{center}\vspace{20bp}
+}
+\newcommand{\scuAbstractEnHeading}{%
+  \phantomsection\addcontentsline{toc}{chapter}{Abstract}%
+  \begin{center}
+    \vspace*{40bp}
+    {\bfseries\zihao{-2}\scuTitleEn\par}
+    \vspace{40bp}
+    {\bfseries\zihao{4}ABSTRACT\par}
+  \end{center}\vspace{20bp}
+}
