@@ -23,3 +23,5 @@ python skills/nsfc-justification-writer/scripts/run.py wordcount --project-root 
 ```
 
 `core/` 中的模块按职责拆分：`coordinator.py` 负责目标和诊断编排，`security.py` 负责路径白名单，`change_guard.py` 负责正文 diff，`editor.py` 和 `versioning.py` 负责备份、写入和回滚。脚本没有信息表生成入口；输入清单和写作方法见 [`../references/section_writing.md`](../references/section_writing.md)。
+
+维护源码时，从仓库根目录运行 `python tests/nsfc-justification-writer/test_revision_safety.py --task-root <已声明的任务目录>`，验证记录随任务工作区归档。

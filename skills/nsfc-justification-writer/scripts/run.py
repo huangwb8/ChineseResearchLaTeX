@@ -6,11 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
-import subprocess
 import sys
 import traceback
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -36,131 +33,6 @@ from core.editor import apply_new_content
 from core.versioning import find_backup_for_run, list_runs, rollback_from_backup, unified_diff
 
 logger = logging.getLogger(__name__)
-
-@dataclass(frozen=True)
-class _CmdResult:
-    cmd: list[str]
-    returncode: int
-    stdout: str
-    stderr: str
-
-
-def _now_ts() -> str:
-    import datetime as _dt
-
-    return _dt.datetime.now().strftime("%Y%m%d%H%M%S")
-
-
-def _make_test_session_dir(
-    skill_root: Path,
-    *,
-    round_label: str,
-    session_id: Optional[str],
-    reuse_if_exists: bool = False,
-) -> Path:
-    """
-    每次测试创建一个独立目录（可追溯、可归档）。默认按秒级时间戳，避免同分钟冲突。
-    """
-    tests_root = (Path(skill_root) / "tests").resolve()
-    tests_root.mkdir(parents=True, exist_ok=True)
-
-    sid = (session_id or f"v{_now_ts()}").strip()
-    if not sid:
-        sid = f"v{_now_ts()}"
-    name = sid if round_label == "A" else f"{round_label}-{sid}"
-
-    out = (tests_root / name).resolve()
-    if out.exists() and (not reuse_if_exists):
-        # 极小概率冲突：再加一次时间戳兜底
-        out = (tests_root / f"{name}-{_now_ts()}").resolve()
-    out.mkdir(parents=True, exist_ok=True)
-    return out
-
-
-def _run_capture(cmd: list[str], *, cwd: Path, env: dict[str, str]) -> _CmdResult:
-    p = subprocess.run(cmd, cwd=str(cwd), env=env, capture_output=True, text=True)
-    return _CmdResult(cmd=list(cmd), returncode=int(p.returncode), stdout=p.stdout or "", stderr=p.stderr or "")
-
-def _pick_pytest_cmd(*, cwd: Path, env: dict[str, str]) -> list[str]:
-    """
-    优先用 `python -m pytest`（与当前解释器一致），若当前解释器未安装 pytest，
-    则回退到 PATH 里的 `pytest` 可执行文件（很多环境只装了命令而非系统 python 模块）。
-    """
-    probe = subprocess.run(
-        [sys.executable, "-c", "import pytest"],
-        cwd=str(cwd),
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    if int(probe.returncode) == 0:
-        return [sys.executable, "-m", "pytest"]
-    return ["pytest"]
-
-
-def _write_cmd_artifacts(session_dir: Path, name: str, r: _CmdResult) -> None:
-    out_dir = (session_dir / "_artifacts" / "cmd").resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"{name}.cmd.txt").write_text(" ".join(r.cmd) + "\n", encoding="utf-8")
-    (out_dir / f"{name}.stdout.txt").write_text(r.stdout, encoding="utf-8")
-    (out_dir / f"{name}.stderr.txt").write_text(r.stderr, encoding="utf-8")
-
-
-def _write_test_plan(session_dir: Path, *, skill_root: Path, round_label: str, session_id: str) -> None:
-    plan = (
-        "# 轻量测试计划（TEST_PLAN）\n\n"
-        f"**测试ID**: {session_id}\n"
-        f"**目标技能**: nsfc-justification-writer\n"
-        f"**目标技能路径**: {skill_root}\n"
-        f"**轮次类型**: {round_label}\n"
-        f"**计划时间**: {session_id[1:] if session_id.startswith('v') else session_id}\n\n"
-        "---\n\n"
-        "## 验证点（默认）\n\n"
-        "- [ ] `python3 scripts/run.py validate-config`\n"
-        "- [ ] `pytest -q tests/pytest`\n\n"
-        "说明：\n"
-        "- 本次会话的命令输出将写入 `tests/<session>/_artifacts/cmd/`（已被 gitignore）。\n"
-        "- 如需补充诊断类验证，可在本会话目录记录额外命令与结果。\n"
-    )
-    (session_dir / "TEST_PLAN.md").write_text(plan, encoding="utf-8")
-
-
-def _write_test_report(
-    session_dir: Path,
-    *,
-    skill_root: Path,
-    round_label: str,
-    session_id: str,
-    results: list[tuple[str, _CmdResult]],
-) -> None:
-    ok = all(r.returncode == 0 for _, r in results)
-    lines = [
-        f"# 测试报告（{session_dir.name}）",
-        "",
-        f"**测试ID**: {session_id}  ",
-        f"**目标技能**: nsfc-justification-writer  ",
-        f"**目标技能路径**: {skill_root}  ",
-        f"**轮次类型**: {round_label}  ",
-        "",
-        "---",
-        "",
-        "## 结论",
-        "",
-        f"- 状态：{'✅ 通过' if ok else '❌ 失败'}",
-        "",
-        "---",
-        "",
-        "## 执行命令与结果",
-        "",
-    ]
-    for name, r in results:
-        lines.append(f"### {name}")
-        lines.append("")
-        lines.append(f"- 命令：`{' '.join(r.cmd)}`")
-        lines.append(f"- returncode：{r.returncode}")
-        lines.append(f"- 输出：见 `tests/{session_dir.name}/_artifacts/cmd/{name}.stdout.txt` / `{name}.stderr.txt`")
-        lines.append("")
-    (session_dir / "TEST_REPORT.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def _write_json(path: Path, data: Dict[str, Any]) -> None:
@@ -276,62 +148,6 @@ def cmd_validate_config(args: argparse.Namespace) -> int:
         return 2
     print("✅ 配置有效")
     return 0
-
-
-def cmd_test_session(args: argparse.Namespace) -> int:
-    skill_root = Path(__file__).resolve().parent.parent
-    round_label = str(getattr(args, "round", "A")).strip() or "A"
-    if round_label not in {"A", "B轮"}:
-        round_label = "A"
-
-    sid_raw = getattr(args, "session_id", None)
-    sid = str(sid_raw or "").strip()
-    if not sid:
-        sid = f"v{_now_ts()}"
-
-    session_dir = _make_test_session_dir(
-        skill_root,
-        round_label=round_label,
-        session_id=sid,
-        reuse_if_exists=bool(sid_raw),
-    )
-    _write_test_plan(session_dir, skill_root=skill_root, round_label=round_label, session_id=sid)
-
-    env = os.environ.copy()
-    # 测试环境避免受用户全局 override.yaml 影响；并把 runs/cache 隔离到本次会话目录
-    env.setdefault("NSFC_JUSTIFICATION_WRITER_DISABLE_USER_OVERRIDE", "1")
-    env["NSFC_JUSTIFICATION_WRITER_RUNS_DIR"] = str((session_dir / "_artifacts" / "runs").resolve())
-    # 将 Python/pytest 的缓存也隔离到会话目录（满足“测试中间产物全部落在 tests/<session>/”的约束）
-    env.setdefault("PYTHONPYCACHEPREFIX", str((session_dir / "_artifacts" / "pycache").resolve()))
-
-    results: list[tuple[str, _CmdResult]] = []
-
-    r1 = _run_capture([sys.executable, str(Path(__file__).resolve()), "validate-config"], cwd=skill_root, env=env)
-    _write_cmd_artifacts(session_dir, "validate-config", r1)
-    results.append(("validate-config", r1))
-
-    pytest_cmd = _pick_pytest_cmd(cwd=skill_root, env=env)
-    r2 = _run_capture(
-        pytest_cmd
-        + [
-            "-q",
-            "-o",
-            f"cache_dir={str((session_dir / '_artifacts' / 'pytest_cache').resolve())}",
-            str((skill_root / "tests").resolve()),
-        ],
-        cwd=skill_root,
-        env=env,
-    )
-    _write_cmd_artifacts(session_dir, "pytest", r2)
-    results.append(("pytest", r2))
-
-    _write_test_report(session_dir, skill_root=skill_root, round_label=round_label, session_id=sid, results=results)
-
-    if all(r.returncode == 0 for _, r in results):
-        print(f"✅ 测试通过：{session_dir}")
-        return 0
-    print(f"❌ 测试失败：{session_dir}")
-    return 2
 
 
 def cmd_preview(args: argparse.Namespace) -> int:
@@ -567,11 +383,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_cfg = sub.add_parser("validate-config", help="校验当前配置（默认配置 + override）")
     p_cfg.set_defaults(func=cmd_validate_config)
-
-    p_ts = sub.add_parser("test-session", help="创建一次可追溯测试会话目录，并运行最小自检（validate-config + pytest）")
-    p_ts.add_argument("--round", default="A", choices=["A", "B轮"], help="会话目录前缀（A 或 B轮）")
-    p_ts.add_argument("--session-id", help="可选：指定会话 ID（默认 vYYYYMMDDHHMMSS）")
-    p_ts.set_defaults(func=cmd_test_session)
 
     return p
 

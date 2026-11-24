@@ -1,6 +1,6 @@
 skill_info:
   name: nsfc-justification-writer
-  version: 1.10.1
+  version: 1.10.2
   description: "撰写、重构、审查和润色 NSFC/科研基金申请书立项依据，保留可核验事实与 LaTeX 结构并通过安全写入链落盘。"
   category: writing
   author: "Bensz Conan"
@@ -9,8 +9,8 @@ skill_info:
 style:
   mode: theoretical
 
-# 仅为宿主 AI 的默认软建议，包括 max_* 与标题字段；不改变解析语义，也不作为结构通过条件。
-# 用户篇幅要求优先；必要证据、限定、引用与已有合理结构优先于段数、比例和标题建议。
+# 以下标题、段数与比例仅在需要排布参考时使用，包括字段名带 max_* 的建议。
+# 正文详略随论证所需的证据、推理和限定调整。用户明确的篇幅要求优先。
 structure:
   canonical_status_title: "国内外研究现状"
   research_significance:
