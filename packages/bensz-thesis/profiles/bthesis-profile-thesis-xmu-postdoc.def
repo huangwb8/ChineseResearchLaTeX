@@ -1,0 +1,8 @@
+\ProvidesFile{bthesis-profile-thesis-xmu-postdoc.def}
+  [2026/11/26 v1.0.0 Thesis profile: thesis-xmu-postdoc]
+
+\makeatletter
+\def\bthesis@template{thesis-xmu-postdoc}
+\def\bthesis@templateversion{t_v20261126}
+\def\bthesis@stylefile{styles/bthesis-style-thesis-xmu-postdoc.tex}
+\makeatother

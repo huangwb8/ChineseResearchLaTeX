@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 新增厦门大学博士后研究工作报告 LaTeX 模板 `thesis-xmu-postdoc`（[#57](https://github.com/huangwb8/ChineseResearchLaTeX/issues/57)）。独立 profile 提供厦大封面、双语题名页、著作权使用声明和小四宋体正文，示例包含中英文摘要、目次、参考文献、附录和出站后置材料。同步公共包版本、校验入口和模板清单。
+
 ### Changed
 
 - `nsfc-justification-writer`：明确资深国自然标书撰写者角色和成稿目标。证据与推理优先于段数、篇幅比例和参考句式。写入前逐段检查论证推进、证据强度与假设承接，并从评审视角复核正文。仓库维护统一使用任务工作区内的安全回归入口。

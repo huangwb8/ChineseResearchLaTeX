@@ -1,0 +1,107 @@
+% 厦门大学博士后研究工作报告版式
+\RequirePackage{geometry}
+\RequirePackage{setspace}
+\RequirePackage{tabularx,booktabs}
+\RequirePackage{graphicx}
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{caption}
+\RequirePackage[titles]{tocloft}
+\RequirePackage{fancyhdr}
+\RequirePackage[hidelinks,bookmarksnumbered]{hyperref}
+\RequirePackage[backend=biber,style=gb7714-2015,sorting=none]{biblatex}
+
+% A4 版心采用博士后报告编写规则，字号遵循厦大范本。
+\geometry{left=35mm,right=20mm,top=30mm,bottom=25mm,footskip=12mm}
+\IfFontExistsTF{Times New Roman}
+  {\setmainfont{Times New Roman}}
+  {\setmainfont{texgyretermes}[
+    Extension=.otf,
+    UprightFont=*-regular,
+    BoldFont=*-bold,
+    ItalicFont=*-italic,
+    BoldItalicFont=*-bolditalic
+  ]}
+\IfFontExistsTF{SimSun}
+  {\setCJKmainfont[Script=CustomDefault,AutoFakeBold,AutoFakeSlant]{SimSun}}
+  {\IfFontExistsTF{Songti SC}
+    {\setCJKmainfont[Script=CustomDefault,AutoFakeSlant]{Songti SC}}
+    {\setCJKmainfont[Script=CustomDefault,BoldFont=FandolSong-Bold.otf,ItalicFont=FandolKai-Regular.otf]{FandolSong-Regular.otf}}}
+\IfFontExistsTF{SimHei}
+  {\setCJKsansfont[Script=CustomDefault,AutoFakeBold]{SimHei}}
+  {\setCJKsansfont[Script=CustomDefault,BoldFont=FandolHei-Bold.otf]{FandolHei-Regular.otf}}
+
+\AtBeginDocument{\setstretch{1.5}\zihao{-4}}
+\setlength{\parindent}{2\ccwd}
+\setlength{\parskip}{0pt}
+
+\ctexset{
+  contentsname = {目\quad 次},
+  chapter = {
+    name = {,}, number = \arabic{chapter},
+    format = \centering\sffamily\bfseries\zihao{3},
+    aftername = \quad,
+    beforeskip = 0pt, afterskip = 18pt,
+    afterindent = true, pagestyle = empty
+  },
+  section = {
+    format = \sffamily\bfseries\zihao{4},
+    beforeskip = 12pt, afterskip = 6pt,
+    afterindent = true
+  },
+  subsection = {
+    format = \sffamily\bfseries\zihao{-4},
+    beforeskip = 8pt, afterskip = 4pt,
+    afterindent = true
+  },
+  appendix = {name = {附录\space,}, number = \Alph{chapter}}
+}
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{2}
+\cftsetindents{chapter}{0pt}{3.5em}
+\cftsetindents{section}{1em}{2.5em}
+\cftsetindents{subsection}{2em}{3.2em}
+\cftsetpnumwidth{2.8em}
+\cftsetrmarg{3.5em}
+\setlength{\cftbeforechapskip}{0pt}
+\renewcommand{\cftchapfont}{\normalfont}
+\renewcommand{\cftchappagefont}{\normalfont}
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[R]{\zihao{-4}\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+\newcommand{\XmuPostdocMainMatter}{%
+  \clearpage
+  \pagenumbering{arabic}%
+  \hypersetup{pageanchor=true}%
+  \ctexset{chapter/pagestyle=plain}%
+  \pagestyle{plain}%
+}
+
+\captionsetup{font=small,labelsep=space}
+\captionsetup[figure]{position=bottom}
+\captionsetup[table]{position=top}
+\numberwithin{equation}{chapter}
+\newcommand{\XmuPostdocAppendix}{%
+  \appendix
+  \renewcommand{\thefigure}{\Alph{chapter}\arabic{figure}}%
+  \renewcommand{\thetable}{\Alph{chapter}\arabic{table}}%
+  \renewcommand{\theequation}{\Alph{chapter}\arabic{equation}}%
+}
+\newcommand{\XmuPostdocBackChapter}[1]{%
+  \chapter*{#1}%
+  \addcontentsline{toc}{chapter}{#1}%
+}
+
+% 封面和题名页采用对称版心。标题和较长的元信息可自动折行。
+\newenvironment{XmuPostdocTitleSheet}{%
+  \newgeometry{left=28mm,right=28mm,top=30mm,bottom=29mm}%
+  \thispagestyle{empty}%
+  \centering
+}{%
+  \par\restoregeometry
+}
+\newcommand{\XmuPostdocTitleField}[2]{#1 & #2\\}
+\newcommand{\XmuPostdocBlank}[1]{\rule[-.3ex]{#1}{.4pt}}

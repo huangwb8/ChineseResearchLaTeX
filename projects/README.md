@@ -112,8 +112,9 @@
 | [`thesis-sysu-doctor/`](./thesis-sysu-doctor/) | 中山大学博士论文示例项目 | 需要 SYSU 博士论文版式模板 |
 | [`thesis-ucas-doctor/`](./thesis-ucas-doctor/) | 中国科学院大学博士论文示例项目 | 需要 UCAS 博士论文版式模板 |
 | [`thesis-smu-postdoc/`](./thesis-smu-postdoc/) | 南方医科大学博士后研究报告示例项目 | 需要按博士后研究报告规范组织封面、题名页、中英文摘要、正文与后置材料 |
+| [`thesis-xmu-postdoc/`](./thesis-xmu-postdoc/) | 厦门大学博士后研究工作报告模板 | 需要厦大版式、著作权使用声明与出站报告完整结构 |
 
-如果你的目标是博士后出站研究报告，请优先进入 `thesis-cas-postdoc/` 或 `thesis-smu-postdoc/`；如果你的目标是学位论文，请进入学校和类型最接近的其他 `thesis-*` 项目。
+请按学校和报告类型选择对应的 `thesis-*` 项目。
 
 ## 简历（CV）
 
@@ -142,7 +143,7 @@
 - 写 SCI 论文正文：进入 `paper-sci-01/`
 - 写投稿 cover letter：进入 `paper-coverletter-01/`
 - 写毕业论文：进入与你学校和类型最接近的 `thesis-*` 项目（如 `thesis-smu-master/`、`thesis-nju-master/`、`thesis-nwu-doctor/`、`thesis-sysu-doctor/`、`thesis-ucas-doctor/`）
-- 写博士后研究报告：进入 `thesis-cas-postdoc/` 或 `thesis-smu-postdoc/`
+- 写博士后研究报告：按所在单位选择 `thesis-cas-postdoc/`、`thesis-smu-postdoc/` 或 `thesis-xmu-postdoc/`
 - 写中英文简历：进入 `cv-01/`
 
 若你的问题涉及共享样式、公共宏、构建脚本或安装逻辑，再回到 `packages/` 目录定位对应公共包。

@@ -1,0 +1,41 @@
+\chapter{时序特征提取与匹配}
+\label{chap:methods}
+
+\section{样本构建}
+
+\subsection{样本划分}
+
+以原始视频为单位划分调参与评估样本。同一原片的重编码、裁切或分辨率变体归入同一组。检索集同时保留重复片段和视觉内容相近的非重复片段。
+
+\begin{table}[htbp]
+  \centering
+  \caption{片段类别与评估用途}
+  \label{tab:groups}
+  \begin{tabular}{ll}
+    \toprule
+    片段类别 & 评估用途 \\
+    \midrule
+    同源重编码片段 & 检查对编码变化的稳定性 \\
+    同源裁切片段 & 检查对画面裁切的稳定性 \\
+    相似场景的异源片段 & 检查误匹配 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{特征匹配}
+
+对长度为 \(T\) 的窗口，将各帧特征 \(\mathbf{f}_t\) 求平均，再将窗口描述符归一化。
+\begin{equation}
+  \mathbf{v} = \frac{1}{T}\sum_{t=1}^{T}\mathbf{f}_t .
+  \label{eq:pooling}
+\end{equation}
+按归一化描述符的内积对候选片段排序。特征范数为零的窗口单独标记，并从匹配评分中排除。图~\ref{fig:workflow}~与表~\ref{tab:groups}~分别给出处理流程和样本用途。
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{帧特征提取}\enspace\(\longrightarrow\)\enspace
+  \fbox{窗口池化}\enspace\(\longrightarrow\)\enspace
+  \fbox{相似度排序}
+  \caption{短时片段匹配流程}
+  \label{fig:workflow}
+\end{figure}

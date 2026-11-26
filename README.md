@@ -161,6 +161,7 @@ AI 负责格式对齐、参考文献管理、章节重构、中英双语内容�
 | [thesis-sysu-doctor](projects/thesis-sysu-doctor/) | 中山大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-sysu-doctor-v4.1.3.zip)（0.55 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-sysu-doctor-Overleaf-v4.1.3.zip)（0.63 MB） |
 | [thesis-ucas-doctor](projects/thesis-ucas-doctor/) | 中国科学院大学 | 博士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-ucas-doctor-v4.1.3.zip)（0.41 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-ucas-doctor-Overleaf-v4.1.3.zip)（0.53 MB） |
 | [thesis-xdu-bachelor](projects/thesis-xdu-bachelor/) | 西安电子科技大学 | 学士 | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-xdu-bachelor-v4.1.3.zip)（2.82 MB） | [下载](https://github.com/huangwb8/ChineseResearchLaTeX/releases/download/v4.1.3/thesis-xdu-bachelor-Overleaf-v4.1.3.zip)（24.4 MB） |
+| [thesis-xmu-postdoc](projects/thesis-xmu-postdoc/) | 厦门大学 | 博士后 | 暂未发布 | 暂未发布 |
 
 ### 简历模板
 

@@ -47,6 +47,7 @@ def validate_required_files() -> list[str]:
         "profiles/bthesis-profile-thesis-nwu-doctor.def",
         "profiles/bthesis-profile-thesis-cas-postdoc.def",
         "profiles/bthesis-profile-thesis-smu-postdoc.def",
+        "profiles/bthesis-profile-thesis-xmu-postdoc.def",
         "profiles/bthesis-profile-thesis-sysu-doctor.def",
         "profiles/bthesis-profile-thesis-ucas-doctor.def",
         "styles/bthesis-style-thesis-smu-master.tex",
@@ -67,6 +68,7 @@ def validate_required_files() -> list[str]:
         "styles/bthesis-style-thesis-nwu-doctor.tex",
         "styles/bthesis-style-thesis-cas-postdoc.tex",
         "styles/bthesis-style-thesis-smu-postdoc.tex",
+        "styles/bthesis-style-thesis-xmu-postdoc.tex",
         "styles/bthesis-style-thesis-sysu-doctor.tex",
         "styles/bthesis-style-thesis-ucas-doctor.tex",
         "styles/ucas/ucasDissertation.cls",
@@ -109,7 +111,7 @@ def compile_project(project_name: str) -> dict[str, object]:
 
 
 def main() -> int:
-    """CLI 入口：依次执行文件完整性检查和（可选）七个示例项目的编译验证。
+    """CLI 入口：依次执行文件完整性检查和（可选）示例项目编译。
 
     Returns:
         0 表示校验通过，1 表示存在缺失文件或编译失败。
@@ -141,6 +143,7 @@ def main() -> int:
             "thesis-nwu-doctor",
             "thesis-cas-postdoc",
             "thesis-smu-postdoc",
+            "thesis-xmu-postdoc",
             "thesis-sysu-doctor",
             "thesis-ucas-doctor",
         ):
