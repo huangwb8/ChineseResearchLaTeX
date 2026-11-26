@@ -8,13 +8,17 @@
 
 ## [Unreleased]
 
+## [4.1.4] - 2026-11-26
+
+本次发布汇总 `v4.1.3` 之后的全部提交。新增厦门大学博士后研究工作报告模板，将 `nsfc-justification-writer` 更新至 v1.10.2，同步 25 个项目的标准版与 Overleaf 版下载链接及 Skill 清单。
+
 ### Added
 
 - 新增厦门大学博士后研究工作报告 LaTeX 模板 `thesis-xmu-postdoc`（[#57](https://github.com/huangwb8/ChineseResearchLaTeX/issues/57)）。独立 profile 提供厦大封面、双语题名页、著作权使用声明和小四宋体正文，示例包含中英文摘要、目次、参考文献、附录和出站后置材料。同步公共包版本、校验入口和模板清单。
 
 ### Changed
 
-- `nsfc-justification-writer`：明确资深国自然标书撰写者角色和成稿目标。证据与推理优先于段数、篇幅比例和参考句式。写入前逐段检查论证推进、证据强度与假设承接，并从评审视角复核正文。仓库维护统一使用任务工作区内的安全回归入口。
+- `nsfc-justification-writer`：明确资深国自然标书撰写者角色和成稿目标。证据与推理优先于段数、篇幅比例和参考句式。写入前逐段检查论证推进、证据强度与假设承接，并从评审视角复核正文。移除残留的 `test-session` CLI，维护时统一使用 `tests/nsfc-justification-writer/test_revision_safety.py` 进行安全回归。
 - `nsfc-justification-writer`：研究意义默认采用两段递进，首段解释研究需求、次段指出一个总的认识缺口；避免连续以“重要问题”或同义判断收束，完整核心科学问题留到研究现状之后正式提出。同步分节指引、语义质控、回归样例和 README，Skill patch 版本递增。
 
 ## [4.1.3] - 2026-11-12

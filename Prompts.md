@@ -10,7 +10,7 @@
 
 ```
 github项目：huangwb8/ChineseResearchLaTeX
-version=4.1.3
+version=4.1.4
 git-commit skill保存变更; 最后一个commit要新增 tag 为 v{version}，并且该commit信息要提到更新版本（写commit信息的时候，不能仅根据最近1次commit； 而是版本间所有commit的总结的综合形成版本特异性commit信息）； git-publish-release skill 发布为一个release到github仓库。项目zip文件记得同步生成。
 ```
 
@@ -35,6 +35,10 @@ version=17
 ```
 
 # 日常
+
+---
+
+你搞一下 https://github.com/huangwb8/ChineseResearchLaTeX/issues/57 。 目前我们已经有博士后的模板了，你可以把它作为起点为这个issue的要求再定制一个新的。如果工作时有疑问，或者有更好的方案，自己选个最优方案优化，不要问我。不要破坏其它模板或包的样式、功能。要保证最终成品能正常、稳定、高效地工作。
 
 ---
 
